@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <SDL_keyboard.h>
+
 #include <osgViewer/ViewerEventHandlers>
 
 #include "json.hpp"
@@ -26,6 +28,7 @@ namespace MWAutomation
     // Lets an external tool drive the game for UI testing. It is only created when openmw is started with
     // --automation-port. Requests and replies are single lines of JSON. A request names a command in "cmd" and may
     // carry an "id", which the reply repeats. A reply has "ok": true and a "result", or "ok": false and an "error".
+    class InputInjector;
     class Screenshotter;
 
     class Automation
@@ -56,11 +59,16 @@ namespace MWAutomation
         Server mServer;
         SDL_Window* mWindow;
         std::unique_ptr<Screenshotter> mScreenshotter;
+        std::unique_ptr<InputInjector> mInput;
         std::uint64_t mFrame = 0;
         std::unordered_map<std::string, Handler> mHandlers;
         std::vector<Pending> mPending;
 
         void registerHandlers();
+
+        // Runs each step at its frame offset from now, then finishes. Offset 0 runs straight away.
+        Poll sequence(std::vector<std::pair<int, std::function<void()>>> steps);
+        static SDL_Keymod parseModifiers(const Json& request);
         void start(const Request& request);
         // Returns true when the command finished, successfully or not.
         bool step(Pending& pending);
