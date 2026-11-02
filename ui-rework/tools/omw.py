@@ -80,6 +80,17 @@ class Profile:
     def log_file(self):
         return self.config_dir / "openmw.log"
 
+    @property
+    def crash_dump(self):
+        # Written by OpenMW's crash handler, which then shows a "Fatal Error" message box and waits.
+        return self.config_dir / "openmw-crash.dmp"
+
+    def crash_message(self):
+        if not self.crash_dump.is_file():
+            return None
+        return (f"The game crashed and is showing an error box. The dump is {self.crash_dump}. "
+                f"Run 'omw.py stack -p {self.name}' for the call stack, then 'omw.py quit -p {self.name} --kill'.")
+
     def read_run(self):
         if not self.run_file.is_file():
             return None
@@ -181,25 +192,47 @@ def free_port():
 class Connection:
     """One TCP connection to a game's automation server."""
 
-    def __init__(self, port, timeout):
+    def __init__(self, port, timeout, profile=None):
         self.sock = socket.create_connection(("127.0.0.1", port), timeout=timeout)
-        self.reader = self.sock.makefile("r", encoding="utf-8", newline="\n")
+        self.buffer = b""
         self.next_id = 1
+        self.profile = profile
 
     def close(self):
-        self.reader.close()
         self.sock.close()
+
+    def read_line(self):
+        """Returns the next line, or "" when the game closed the connection. Raises TimeoutError if none arrives
+        within the socket timeout."""
+        while b"\n" not in self.buffer:
+            chunk = self.sock.recv(65536)
+            if not chunk:
+                return ""
+            self.buffer += chunk
+        line, self.buffer = self.buffer.split(b"\n", 1)
+        return line.decode("utf-8")
 
     def request(self, message, timeout):
         message = dict(message)
         message.setdefault("id", self.next_id)
         self.next_id += 1
-        self.sock.settimeout(timeout)
         self.sock.sendall((json.dumps(message) + "\n").encode("utf-8"))
+        # Wait in short steps, so that a crash is reported as soon as the dump appears.
+        deadline = time.monotonic() + timeout
+        self.sock.settimeout(0.5)
         while True:
-            line = self.reader.readline()
+            try:
+                line = self.read_line()
+            except TimeoutError:
+                crash = self.profile.crash_message() if self.profile else None
+                if crash:
+                    raise HarnessError(crash)
+                if time.monotonic() > deadline:
+                    raise HarnessError(f"No reply to {message['cmd']!r} after {timeout} s.")
+                continue
             if not line:
-                raise HarnessError("The game closed the connection.")
+                crash = self.profile.crash_message() if self.profile else None
+                raise HarnessError(crash or "The game closed the connection.")
             reply = json.loads(line)
             if reply.get("id") == message["id"]:
                 return reply
@@ -212,7 +245,7 @@ def connect(profile, timeout=5):
     if not run.get("port"):
         raise HarnessError(f"The game for profile {profile.name} was launched without an automation port.")
     try:
-        return Connection(run["port"], timeout)
+        return Connection(run["port"], timeout, profile)
     except OSError as error:
         raise HarnessError(f"Could not connect to the game on port {run['port']}: {error}")
 
@@ -223,8 +256,11 @@ def wait_until_ready(profile, pid, port, timeout):
     while time.monotonic() < deadline:
         if not process_alive(pid):
             raise HarnessError(f"The game exited during startup. See {profile.log_file}.")
+        crash = profile.crash_message()
+        if crash:
+            raise HarnessError(crash)
         try:
-            connection = Connection(port, timeout=2)
+            connection = Connection(port, timeout=2, profile=profile)
         except OSError:
             time.sleep(0.25)
             continue
@@ -246,7 +282,10 @@ def parse_value(text):
 
 
 def build_request(words):
-    """Turns ["wait", "frames=10"] into {"cmd": "wait", "frames": 10}."""
+    """Turns ["wait", "frames=10"] into {"cmd": "wait", "frames": 10}.
+
+    The game's working folder is the build folder, so a relative "path" parameter is made absolute here.
+    """
     if not words:
         raise HarnessError("Missing command name.")
     request = {"cmd": words[0]}
@@ -254,7 +293,7 @@ def build_request(words):
         if "=" not in word:
             raise HarnessError(f"Parameters must look like key=value, got {word!r}.")
         key, value = word.split("=", 1)
-        request[key] = parse_value(value)
+        request[key] = str(Path(value).resolve()) if key == "path" else parse_value(value)
     return request
 
 
@@ -299,6 +338,8 @@ def cmd_launch(args):
         for leftover in profile.config_dir.iterdir():
             if leftover.is_file():
                 leftover.unlink()
+    if profile.crash_dump.is_file():
+        profile.crash_dump.unlink()
     write_openmw_cfg(profile, Path(args.user_cfg) if args.user_cfg else default_user_cfg(), args.movies)
     write_settings_cfg(profile, args)
 
@@ -407,6 +448,26 @@ def cmd_send(args):
         connection.close()
 
 
+def cmd_screenshot(args):
+    profile = Profile(args.profile)
+    if args.path:
+        path = Path(args.path).resolve()
+    else:
+        path = profile.root / "shots" / (time.strftime("%Y%m%d-%H%M%S") + ".png")
+    request = {"cmd": "screenshot", "path": str(path)}
+    if args.scale:
+        request["scale"] = args.scale
+    if args.crop:
+        request["crop"] = args.crop
+    connection = connect(profile)
+    try:
+        if args.settle:
+            connection.request({"cmd": "wait", "frames": args.settle}, timeout=args.timeout)
+        print_reply(connection.request(request, timeout=args.timeout))
+    finally:
+        connection.close()
+
+
 def cmd_run(args):
     """Runs a file of commands, one per line, and stops at the first failure."""
     profile = Profile(args.profile)
@@ -449,6 +510,43 @@ def cmd_log(args):
         lines = [line for line in lines if "[E]" in line or "[W]" in line or "rror" in line]
     for line in lines[-args.lines :]:
         print(line)
+
+
+def find_cdb():
+    for root in (os.environ.get("ProgramFiles(x86)"), os.environ.get("ProgramFiles")):
+        if root:
+            path = Path(root) / "Windows Kits" / "10" / "Debuggers" / "x64" / "cdb.exe"
+            if path.is_file():
+                return path
+    return None
+
+
+def cmd_stack(args):
+    """Prints the call stack of the crash in the profile's crash dump."""
+    profile = Profile(args.profile)
+    if not profile.crash_dump.is_file():
+        raise HarnessError(f"There is no crash dump at {profile.crash_dump}.")
+    cdb = find_cdb()
+    if cdb is None:
+        raise HarnessError("cdb.exe was not found. It comes with the Windows SDK debugging tools.")
+    run = profile.read_run() or {}
+    binary_dir = Path(run["command"][0]).parent if run.get("command") else default_build_dir()
+    result = subprocess.run(
+        [str(cdb), "-z", str(profile.crash_dump), "-y", str(binary_dir), "-c", f".ecxr; kn {args.frames}; q"],
+        capture_output=True,
+        text=True,
+        errors="replace",
+    )
+    # Keep the exception context and the stack, and drop cdb's banner and module loading noise.
+    printing = False
+    for line in result.stdout.splitlines():
+        if "Reading initial command" in line:
+            printing = True
+            continue
+        if line.startswith("quit:"):
+            break
+        if printing and line.strip():
+            print(line)
 
 
 def cmd_clean(args):
@@ -504,6 +602,15 @@ def build_parser():
     p.add_argument("words", nargs="+", metavar="WORD", help="the command name, then key=value parameters")
     p.set_defaults(func=cmd_send)
 
+    p = sub.add_parser("screenshot", help="capture the next frame, including the UI")
+    add_profile(p)
+    p.add_argument("path", nargs="?", help="output file (default: shots/<time>.png in the profile folder)")
+    p.add_argument("--scale", type=float, help="shrink the image by this factor, such as 0.5")
+    p.add_argument("--crop", type=int, nargs=4, metavar=("X", "Y", "W", "H"), help="window pixels from the top left")
+    p.add_argument("--settle", type=int, default=2, help="frames to wait before capturing (default 2)")
+    p.add_argument("--timeout", type=float, default=60)
+    p.set_defaults(func=cmd_screenshot)
+
     p = sub.add_parser("run", help="run a file of commands, one per line")
     add_profile(p)
     p.add_argument("script")
@@ -520,6 +627,11 @@ def build_parser():
     p.add_argument("--lines", "-n", type=int, default=40)
     p.add_argument("--errors", action="store_true", help="only warnings and errors")
     p.set_defaults(func=cmd_log)
+
+    p = sub.add_parser("stack", help="print the call stack from the profile's crash dump")
+    add_profile(p)
+    p.add_argument("--frames", type=int, default=30)
+    p.set_defaults(func=cmd_stack)
 
     p = sub.add_parser("clean", help="delete a profile folder")
     add_profile(p)
