@@ -338,8 +338,9 @@ namespace MWGui
         {
             if (mButtons.find(id) == mButtons.end())
             {
+                // The name lets UI automation find the button, since it shows an image instead of text.
                 Gui::ImageButton* button = mButtonBox->createWidget<Gui::ImageButton>(
-                    "ImageBox", MyGUI::IntCoord(0, curH, 0, 0), MyGUI::Align::Default);
+                    "ImageBox", MyGUI::IntCoord(0, curH, 0, 0), MyGUI::Align::Default, "MainMenu_" + std::string(id));
                 const std::string& buttonId = mButtons.emplace(id, button).first->first;
                 button->setProperty("ImageHighlighted", "textures\\menu_" + buttonId + "_over.dds");
                 button->setProperty("ImageNormal", "textures\\menu_" + buttonId + ".dds");
