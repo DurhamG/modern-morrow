@@ -80,6 +80,8 @@
 #include "mwclass/classes.hpp"
 
 #include "mwdialogue/dialoguemanagerimp.hpp"
+#include "mwautomation/automation.hpp"
+
 #include "mwdialogue/journalimp.hpp"
 #include "mwdialogue/scripttest.hpp"
 
@@ -228,6 +230,9 @@ bool OMW::Engine::frame(unsigned frameNumber, float frametime)
         // Input handling can run Lua (the menu key does), so the state
         // must not be collected from this point on.
         mLuaWorker->finishGc();
+
+        if (mAutomation)
+            mAutomation->update();
 
         // update input
         {
@@ -439,6 +444,7 @@ OMW::Engine::~Engine()
     }
     mScreenCaptureHandler = nullptr;
 
+    mAutomation = nullptr;
     mMechanicsManager = nullptr;
     mDialogueManager = nullptr;
     mJournal = nullptr;
@@ -968,6 +974,9 @@ void OMW::Engine::prepareEngine()
     // starts a separate lua thread if "lua num threads" > 0
     mFrameStats = std::make_unique<OsgFrameStats>(mViewer->getViewerStats());
     mLuaWorker = std::make_unique<MWLua::Worker>(*mLuaManager);
+
+    if (mAutomationPort != 0)
+        mAutomation = std::make_unique<MWAutomation::Automation>(static_cast<std::uint16_t>(mAutomationPort), mWindow);
 }
 
 // Initialise and enter main loop.

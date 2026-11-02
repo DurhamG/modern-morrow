@@ -33,6 +33,11 @@ namespace VFS
     class Manager;
 }
 
+namespace MWAutomation
+{
+    class Automation;
+}
+
 namespace Compiler
 {
     class Context;
@@ -150,6 +155,7 @@ namespace OMW
         std::unique_ptr<Misc::FrameStats> mFrameStats;
         std::unique_ptr<MWLua::Worker> mLuaWorker;
         std::unique_ptr<L10n::Manager> mL10nManager;
+        std::unique_ptr<MWAutomation::Automation> mAutomation;
         MWBase::Environment mEnvironment;
         ToUTF8::FromType mEncoding;
         std::unique_ptr<ToUTF8::Utf8Encoder> mEncoder;
@@ -182,6 +188,7 @@ namespace OMW
 
         bool mExportFonts;
         unsigned int mRandomSeed;
+        unsigned int mAutomationPort = 0;
         Debug::Level mMaxRecastLogLevel = Debug::Error;
 
         Compiler::Extensions mExtensions;
@@ -273,6 +280,9 @@ namespace OMW
         void setRandomSeed(unsigned int seed);
 
         void setRecastMaxLogLevel(Debug::Level value) { mMaxRecastLogLevel = value; }
+
+        /// Listen for UI automation commands on this port. 0 disables the automation server.
+        void setAutomationPort(unsigned int port) { mAutomationPort = port; }
     };
 }
 

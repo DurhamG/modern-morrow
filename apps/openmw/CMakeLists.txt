@@ -116,6 +116,10 @@ add_openmw_dir (mwbase
     inputmanager windowmanager statemanager luamanager
     )
 
+add_openmw_dir (mwautomation
+    automation json server
+    )
+
 # Main executable
 
 add_library(openmw-lib STATIC
@@ -227,6 +231,11 @@ endif()
 
 if (NOT UNIX)
     target_link_libraries(openmw-lib ${SDL2MAIN_LIBRARY})
+endif()
+
+if (WIN32)
+    # Sockets for the automation server
+    target_link_libraries(openmw-lib ws2_32)
 endif()
 
 # Fix for not visible pthreads functions for linker with glibc 2.15
