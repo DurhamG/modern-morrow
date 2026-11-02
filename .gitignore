@@ -90,3 +90,6 @@ venv/
 ## operating system files
 .DS_Store
 Thumbs.db
+
+## UI rework automation harness: per-run game profiles, logs and screenshots
+/.automation/
