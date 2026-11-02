@@ -1,7 +1,9 @@
 #include "scalinglayer.hpp"
 
 #include <MyGUI_RenderManager.h>
+#include <MyGUI_StringUtility.h>
 #include <algorithm>
+#include <cmath>
 
 namespace MyGUIPlatform
 {
@@ -111,7 +113,40 @@ namespace MyGUIPlatform
 
     void ScalingLayer::resizeView(const MyGUI::IntSize& /*viewSize*/)
     {
-        // do nothing
+        // A fixed-size layer keeps its size. A fixed-height layer follows the screen's aspect ratio.
+        if (mFixedHeight > 0)
+            updateFixedHeightViewSize();
+    }
+
+    void ScalingLayer::setFixedHeight(int height)
+    {
+        mFixedHeight = height;
+        if (mFixedHeight > 0)
+            updateFixedHeightViewSize();
+    }
+
+    void ScalingLayer::updateFixedHeightViewSize()
+    {
+        const MyGUI::IntSize globalViewSize = MyGUI::RenderManager::getInstance().getViewSize();
+        if (globalViewSize.height <= 0)
+            return;
+        mViewSize.height = mFixedHeight;
+        mViewSize.width = static_cast<int>(
+            std::lround(globalViewSize.width * static_cast<double>(mFixedHeight) / globalViewSize.height));
+    }
+
+    MyGUI::IntCoord ScalingLayer::layerToScreenCoords(const MyGUI::IntCoord& coord) const
+    {
+        const float scale = getScaleFactor(mViewSize);
+        const MyGUI::IntSize globalViewSize = MyGUI::RenderManager::getInstance().getViewSize();
+        const auto toScreen = [scale](int value, int layerSize, int screenSize) {
+            return static_cast<int>(std::lround((value - layerSize / 2.f) * scale + screenSize / 2.f));
+        };
+        const int left = toScreen(coord.left, mViewSize.width, globalViewSize.width);
+        const int top = toScreen(coord.top, mViewSize.height, globalViewSize.height);
+        const int right = toScreen(coord.right(), mViewSize.width, globalViewSize.width);
+        const int bottom = toScreen(coord.bottom(), mViewSize.height, globalViewSize.height);
+        return MyGUI::IntCoord(left, top, right - left, bottom - top);
     }
 
     void ScalingLayer::deserialization(MyGUI::xml::ElementPtr node, MyGUI::Version version)
@@ -129,6 +164,10 @@ namespace MyGUIPlatform
                 if (key == "Size")
                 {
                     mViewSize = MyGUI::IntSize::parse(value);
+                }
+                else if (key == "Height")
+                {
+                    setFixedHeight(MyGUI::utility::parseInt(value));
                 }
             }
         }
