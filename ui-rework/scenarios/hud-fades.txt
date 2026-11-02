@@ -1,0 +1,25 @@
+# Steps through the HUD's fading: full bars hide, the weapon and spell boxes show after a change and while ready.
+launch --start "Balmora, Caius Cosades' House"
+console "command=player->additem \"iron saber\" 1"
+console "command=player->equip \"iron saber\""
+console "command=player->addspell \"fire bite\""
+lua "code=types.Actor.setSelectedSpell(self, 'fire bite')"
+wait frames=30
+# The weapon changed, so its box shows. The bars are full, so they have faded out.
+shot changed
+wait seconds=6
+# Nothing changed for over five seconds, so the weapon box has faded out too.
+shot idle
+console "command=player->modcurrenthealth -10"
+console "command=player->modcurrentfatigue -100"
+wait frames=40
+# Health and fatigue are no longer full, so their bars show. Magicka stays hidden.
+shot damaged
+key key=F
+wait seconds=1.5
+# The weapon is drawn, so its box shows.
+shot weapon-ready
+key key=R
+wait seconds=1.5
+# A spell is ready instead, so the spell box shows and the weapon box fades out.
+shot spell-ready

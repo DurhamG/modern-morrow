@@ -1,0 +1,14 @@
+# Everything on the HUD shows during combat, even full bars, and fades again afterwards.
+launch --start "Balmora, Caius Cosades' House"
+console command=tgm
+wait seconds=6
+# Nothing has changed for a while, so everything has faded out.
+shot before
+console "command=\"caius cosades\"->startcombat player"
+wait seconds=2
+# Caius is attacking, so all the bars and both boxes show, although the bars are full.
+shot combat
+console "command=\"caius cosades\"->stopcombat"
+wait seconds=2
+# The fight is over, so full bars and the boxes fade out again.
+shot after

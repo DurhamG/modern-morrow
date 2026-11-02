@@ -1,4 +1,9 @@
-# The in-game HUD, standing in a quiet interior.
+# The in-game HUD, standing in a quiet interior, with a weapon equipped and a few lasting effects.
 launch --start "Balmora, Caius Cosades' House"
+console "command=player->addspell \"immune to poison\""
+console "command=player->addspell \"resist shock_50\""
+console "command=player->addspell \"weakness frost_25\""
+console "command=player->additem \"iron saber\" 1"
+console "command=player->equip \"iron saber\""
 wait frames=30
 shot hud
