@@ -95,6 +95,9 @@ namespace OpenMW
         addOption("random-seed", bpo::value<unsigned int>()->default_value(Misc::Rng::generateDefaultSeed()),
             "seed value for random number generator");
 
+        addOption("automation-port", bpo::value<unsigned int>()->default_value(0),
+            "listen on this 127.0.0.1 port for UI automation commands (0 = disabled)");
+
         return desc;
     }
 }
