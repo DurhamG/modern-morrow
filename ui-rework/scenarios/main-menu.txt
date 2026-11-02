@@ -1,0 +1,6 @@
+# The main menu, and its Options window.
+launch
+shot main-menu
+click-name MainMenu_options
+wait frames=5
+shot options

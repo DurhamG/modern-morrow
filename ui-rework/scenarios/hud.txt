@@ -1,0 +1,4 @@
+# The in-game HUD, standing in a quiet interior.
+launch --start "Balmora, Caius Cosades' House"
+wait frames=30
+shot hud

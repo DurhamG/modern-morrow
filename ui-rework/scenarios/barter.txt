@@ -1,0 +1,9 @@
+# Dialogue with a merchant, then the barter screen.
+launch --start "Balmora, Clagius Clanler: Outfitter"
+console "command=player->additem gold_001 500"
+console "command=\"clagius clanler\"->forcegreeting"
+wait frames=10
+shot dialogue
+click-text Barter
+wait frames=10
+shot barter

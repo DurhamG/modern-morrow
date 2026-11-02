@@ -1,0 +1,5 @@
+# The in-game menu opened with the gamepad's start button.
+launch --start "Balmora, Caius Cosades' House"
+pad button=start
+wait frames=10
+shot game-menu

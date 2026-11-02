@@ -1,0 +1,11 @@
+# The inventory screen in the existing "controller menus" mode.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true" --set "GUI.controller tooltips=true"
+console "command=player->additem \"iron saber\" 1"
+console "command=player->additem netch_leather_cuirass 1"
+console "command=player->additem p_restore_health_s 3"
+pad button=b
+wait frames=10
+shot inventory
+pad button=dpdown
+wait frames=5
+shot inventory-moved

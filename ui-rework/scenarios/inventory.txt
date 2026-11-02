@@ -1,0 +1,14 @@
+# The inventory screen, which also shows the stats, map and magic windows, with a mix of items.
+launch --start "Balmora, Caius Cosades' House"
+console "command=player->additem gold_001 250"
+console "command=player->additem \"iron saber\" 1"
+console "command=player->additem \"chitin dagger\" 1"
+console "command=player->additem netch_leather_cuirass 1"
+console "command=player->additem iron_shield 1"
+console "command=player->additem p_restore_health_s 3"
+console "command=player->additem ingred_kwama_cuttle_01 5"
+console "command=player->additem bk_BriefHistoryEmpire1 1"
+console "command=player->additem pick_apprentice_01 2"
+pad button=b
+wait frames=10
+shot inventory
