@@ -12,7 +12,9 @@ Run "omw.py <command> --help" for the options of each command.
 import argparse
 import json
 import os
+import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -31,6 +33,10 @@ RESOLUTIONS = {
 
 # openmw.cfg keys that the profile sets itself, so they are not copied from the user's file.
 PROFILE_OWNED_CFG_KEYS = {"config", "user-data", "data-local", "resources", "replace", "no-sound"}
+
+# Movies that play on startup and at the start of a new game. Each costs several seconds, so the profile leaves them
+# out unless launch is given --movies.
+STARTUP_MOVIE_FALLBACKS = {"Movies_Company_Logo", "Movies_Morrowind_Logo", "Movies_New_Game"}
 
 
 class HarnessError(Exception):
@@ -105,7 +111,7 @@ def kill_process(pid):
         os.kill(pid, 9)
 
 
-def write_openmw_cfg(profile, user_cfg):
+def write_openmw_cfg(profile, user_cfg, movies):
     if not user_cfg.is_file():
         raise HarnessError(
             f"{user_cfg} does not exist. Set OMW_USER_CFG to an openmw.cfg that lists the Morrowind data files."
@@ -118,8 +124,11 @@ def write_openmw_cfg(profile, user_cfg):
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             continue
-        key = stripped.split("=", 1)[0].strip()
+        key, _, value = stripped.partition("=")
+        key = key.strip()
         if key in PROFILE_OWNED_CFG_KEYS:
+            continue
+        if key == "fallback" and not movies and value.split(",", 1)[0].strip() in STARTUP_MOVIE_FALLBACKS:
             continue
         lines.append(stripped)
     (profile.config_dir / "openmw.cfg").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -163,6 +172,99 @@ def write_settings_cfg(profile, args):
     (profile.config_dir / "settings.cfg").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.bind(("127.0.0.1", 0))
+        return probe.getsockname()[1]
+
+
+class Connection:
+    """One TCP connection to a game's automation server."""
+
+    def __init__(self, port, timeout):
+        self.sock = socket.create_connection(("127.0.0.1", port), timeout=timeout)
+        self.reader = self.sock.makefile("r", encoding="utf-8", newline="\n")
+        self.next_id = 1
+
+    def close(self):
+        self.reader.close()
+        self.sock.close()
+
+    def request(self, message, timeout):
+        message = dict(message)
+        message.setdefault("id", self.next_id)
+        self.next_id += 1
+        self.sock.settimeout(timeout)
+        self.sock.sendall((json.dumps(message) + "\n").encode("utf-8"))
+        while True:
+            line = self.reader.readline()
+            if not line:
+                raise HarnessError("The game closed the connection.")
+            reply = json.loads(line)
+            if reply.get("id") == message["id"]:
+                return reply
+
+
+def connect(profile, timeout=5):
+    run = profile.read_run()
+    if not run or not process_alive(run["pid"]):
+        raise HarnessError(f"No game is running for profile {profile.name}. Use 'omw.py launch' first.")
+    if not run.get("port"):
+        raise HarnessError(f"The game for profile {profile.name} was launched without an automation port.")
+    try:
+        return Connection(run["port"], timeout)
+    except OSError as error:
+        raise HarnessError(f"Could not connect to the game on port {run['port']}: {error}")
+
+
+def wait_until_ready(profile, pid, port, timeout):
+    """Waits until the automation server answers a ping."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if not process_alive(pid):
+            raise HarnessError(f"The game exited during startup. See {profile.log_file}.")
+        try:
+            connection = Connection(port, timeout=2)
+        except OSError:
+            time.sleep(0.25)
+            continue
+        try:
+            reply = connection.request({"cmd": "ping"}, timeout=max(1, deadline - time.monotonic()))
+            if reply.get("ok"):
+                return
+        finally:
+            connection.close()
+    raise HarnessError(f"Timed out after {timeout} s waiting for the automation server.")
+
+
+def parse_value(text):
+    """Reads a command-line parameter value as JSON when possible, otherwise as a plain string."""
+    try:
+        return json.loads(text)
+    except ValueError:
+        return text
+
+
+def build_request(words):
+    """Turns ["wait", "frames=10"] into {"cmd": "wait", "frames": 10}."""
+    if not words:
+        raise HarnessError("Missing command name.")
+    request = {"cmd": words[0]}
+    for word in words[1:]:
+        if "=" not in word:
+            raise HarnessError(f"Parameters must look like key=value, got {word!r}.")
+        key, value = word.split("=", 1)
+        request[key] = parse_value(value)
+    return request
+
+
+def print_reply(reply):
+    if reply.get("ok"):
+        print(json.dumps(reply.get("result"), indent=2))
+    else:
+        raise HarnessError(reply.get("error", "the command failed"))
+
+
 def start_arguments(args):
     if args.save:
         save = Path(args.save)
@@ -197,7 +299,7 @@ def cmd_launch(args):
         for leftover in profile.config_dir.iterdir():
             if leftover.is_file():
                 leftover.unlink()
-    write_openmw_cfg(profile, Path(args.user_cfg) if args.user_cfg else default_user_cfg())
+    write_openmw_cfg(profile, Path(args.user_cfg) if args.user_cfg else default_user_cfg(), args.movies)
     write_settings_cfg(profile, args)
 
     command = [
@@ -213,6 +315,8 @@ def cmd_launch(args):
         str(profile.data_dir / "data"),
         "--no-grab",
     ]
+    port = free_port()
+    command += ["--automation-port", str(port)]
     if not args.sound:
         command.append("--no-sound")
     command += start_arguments(args)
@@ -234,14 +338,19 @@ def cmd_launch(args):
     profile.write_run(
         {
             "pid": process.pid,
+            "port": port,
             "command": command,
             "resolution": args.resolution,
             "started": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
     )
-    print(f"Launched {binary.name} (pid {process.pid}) with profile {profile.name} at {args.resolution}.")
+    print(f"Launched {binary.name} (pid {process.pid}, port {port}) with profile {profile.name} at {args.resolution}.")
     print(f"Log: {profile.log_file}")
 
+    if not args.no_wait:
+        start = time.monotonic()
+        wait_until_ready(profile, process.pid, port, args.timeout)
+        print(f"The automation server answered after {time.monotonic() - start:.1f} s.")
     if args.wait_for:
         wait_for_log(profile, process.pid, args.wait_for, args.timeout)
         print(f"Saw {args.wait_for!r} in the log.")
@@ -264,13 +373,57 @@ def cmd_quit(args):
     if not run or not process_alive(run["pid"]):
         print(f"No game is running for profile {profile.name}.")
         return
-    kill_process(run["pid"])
+
+    pid = run["pid"]
+    if run.get("port") and not args.kill:
+        try:
+            connection = connect(profile)
+            try:
+                connection.request({"cmd": "quit"}, timeout=5)
+            finally:
+                connection.close()
+        except (HarnessError, OSError) as error:
+            print(f"Asking the game to quit failed ({error}). Stopping the process instead.")
+
     deadline = time.monotonic() + args.timeout
-    while process_alive(run["pid"]) and time.monotonic() < deadline:
-        time.sleep(0.25)
-    if process_alive(run["pid"]):
-        raise HarnessError(f"pid {run['pid']} is still running.")
-    print(f"Stopped pid {run['pid']}.")
+    while process_alive(pid) and time.monotonic() < deadline:
+        time.sleep(0.1)
+    if process_alive(pid):
+        kill_process(pid)
+        time.sleep(0.5)
+        if process_alive(pid):
+            raise HarnessError(f"pid {pid} is still running.")
+        print(f"Stopped pid {pid}.")
+    else:
+        print(f"The game (pid {pid}) exited.")
+
+
+def cmd_send(args):
+    profile = Profile(args.profile)
+    connection = connect(profile)
+    try:
+        print_reply(connection.request(build_request(args.words), timeout=args.timeout))
+    finally:
+        connection.close()
+
+
+def cmd_run(args):
+    """Runs a file of commands, one per line, and stops at the first failure."""
+    profile = Profile(args.profile)
+    script = Path(args.script)
+    connection = connect(profile)
+    try:
+        for number, line in enumerate(script.read_text(encoding="utf-8").splitlines(), start=1):
+            words = shlex.split(line, comments=True)
+            if not words:
+                continue
+            reply = connection.request(build_request(words), timeout=args.timeout)
+            if not reply.get("ok"):
+                raise HarnessError(f"{script}:{number}: {line.strip()}: {reply.get('error')}")
+            if args.verbose:
+                print(f"{number}: {line.strip()} -> {json.dumps(reply.get('result'))}")
+    finally:
+        connection.close()
 
 
 def cmd_status(args):
@@ -329,18 +482,34 @@ def build_parser():
     start.add_argument("--skip-chargen", action="store_true", help="start a new game without character creation")
     start.add_argument("--start", metavar="CELL", help="start a new game in this cell, without character creation")
     p.add_argument("--sound", action="store_true", help="leave sound on")
+    p.add_argument("--movies", action="store_true", help="play the startup and new-game movies")
     p.add_argument("--fresh", action="store_true", help="delete the profile's leftover config files first")
-    p.add_argument("--wait-for", metavar="TEXT", help="wait until this text appears in openmw.log")
+    p.add_argument("--no-wait", action="store_true", help="don't wait for the automation server to answer")
+    p.add_argument("--wait-for", metavar="TEXT", help="also wait until this text appears in openmw.log")
     p.add_argument("--timeout", type=float, default=120)
     p.add_argument("--build-dir", help="folder holding the openmw binary (default: $OMW_BUILD_DIR or the MSVC build)")
     p.add_argument("--user-cfg", help="openmw.cfg that lists the game data (default: $OMW_USER_CFG or the user's)")
     p.add_argument("extra", nargs="*", help="extra arguments passed to openmw after --")
     p.set_defaults(func=cmd_launch)
 
-    p = sub.add_parser("quit", help="stop the game")
+    p = sub.add_parser("quit", help="ask the game to quit, and stop the process if it doesn't")
     add_profile(p)
     p.add_argument("--timeout", type=float, default=10)
+    p.add_argument("--kill", action="store_true", help="stop the process without asking")
     p.set_defaults(func=cmd_quit)
+
+    p = sub.add_parser("send", help="send one command, such as 'send wait frames=10'. 'send' can be left out.")
+    add_profile(p)
+    p.add_argument("--timeout", type=float, default=60, help="seconds to wait for the reply")
+    p.add_argument("words", nargs="+", metavar="WORD", help="the command name, then key=value parameters")
+    p.set_defaults(func=cmd_send)
+
+    p = sub.add_parser("run", help="run a file of commands, one per line")
+    add_profile(p)
+    p.add_argument("script")
+    p.add_argument("--timeout", type=float, default=60, help="seconds to wait for each reply")
+    p.add_argument("--verbose", "-v", action="store_true", help="print each command's result")
+    p.set_defaults(func=cmd_run)
 
     p = sub.add_parser("status", help="show which profiles have a running game")
     p.add_argument("--profile", "-p")
@@ -360,7 +529,13 @@ def build_parser():
 
 
 def main():
-    args = build_parser().parse_args()
+    parser = build_parser()
+    argv = sys.argv[1:]
+    subcommands = next(a for a in parser._actions if isinstance(a, argparse._SubParsersAction)).choices
+    # "omw.py state" is short for "omw.py send state".
+    if argv and not argv[0].startswith("-") and argv[0] not in subcommands:
+        argv.insert(0, "send")
+    args = parser.parse_args(argv)
     try:
         args.func(args)
     except HarnessError as error:
