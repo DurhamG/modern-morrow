@@ -9,6 +9,7 @@ These documents are for the people and agents working on the project. They are n
 - [plan.md](plan.md) describes the overall goals, the phases of the project, and the current phase.
 - [harness.md](harness.md) describes the automation harness. The harness lets an agent launch the game, send it keyboard and gamepad input, set up game states, and take screenshots from inside the game.
 - [progress.md](progress.md) is a dated log of what has been done, what was learned, and what is next.
+- [screens.md](screens.md) lists every piece of Morrowind's UI, with the code and layout files behind each one.
 - [research/gamepad-ui-references.md](research/gamepad-ui-references.md) lists games with well-regarded gamepad UIs, and sites for browsing their screens.
 
 ## How to keep these up to date
