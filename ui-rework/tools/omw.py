@@ -23,6 +23,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AUTOMATION_DIR = REPO_ROOT / ".automation"
 PROFILES_DIR = AUTOMATION_DIR / "profiles"
+SCENARIOS_DIR = REPO_ROOT / "ui-rework" / "scenarios"
+OUTPUT_DIR = AUTOMATION_DIR / "out"
 
 # Window sizes for the target devices. See ui-rework/plan.md.
 RESOLUTIONS = {
@@ -516,23 +518,210 @@ def cmd_ui(args):
     print("\n".join(lines))
 
 
+def iter_widgets(node):
+    yield node
+    for child in node.get("children", []):
+        yield from iter_widgets(child)
+
+
+def find_widget_by_text(dump, text):
+    """Returns the last visible widget whose text matches, ignoring case and surrounding space. Later roots are
+    usually drawn on top, so the last match is the one a player would see."""
+    wanted = text.strip().lower()
+    found = None
+    for root in dump["widgets"]:
+        for node in iter_widgets(root):
+            if node.get("text", "").strip().lower() == wanted and not node.get("disabled"):
+                found = node
+    return found
+
+
+def find_widget_by_name(dump, name):
+    found = None
+    for root in dump["widgets"]:
+        for node in iter_widgets(root):
+            if node.get("name") == name and not node.get("disabled"):
+                found = node
+    return found
+
+
+def click_text(connection, text, timeout, by_name=False):
+    reply = connection.request({"cmd": "ui"}, timeout=timeout)
+    if not reply.get("ok"):
+        raise HarnessError(reply.get("error"))
+    if by_name:
+        widget = find_widget_by_name(reply["result"], text)
+        if widget is None:
+            raise HarnessError(f"No visible, enabled widget is named {text!r}.")
+    else:
+        widget = find_widget_by_text(reply["result"], text)
+        if widget is None:
+            raise HarnessError(f"No visible, enabled widget shows the text {text!r}.")
+    x, y, w, h = widget["rect"]
+    reply = connection.request({"cmd": "mouse", "action": "click", "x": x + w // 2, "y": y + h // 2}, timeout=timeout)
+    if not reply.get("ok"):
+        raise HarnessError(reply.get("error"))
+    return {"clicked": widget["type"], "text": widget.get("text"), "x": x + w // 2, "y": y + h // 2}
+
+
+def take_shot(connection, out_dir, name, timeout, scale=None):
+    """Saves a screenshot and a text UI dump side by side."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    connection.request({"cmd": "wait", "frames": 2}, timeout=timeout)
+    request = {"cmd": "screenshot", "path": str((out_dir / f"{name}.png").resolve())}
+    if scale:
+        request["scale"] = scale
+    reply = connection.request(request, timeout=timeout)
+    if not reply.get("ok"):
+        raise HarnessError(reply.get("error"))
+    reply = connection.request({"cmd": "ui"}, timeout=timeout)
+    if not reply.get("ok"):
+        raise HarnessError(reply.get("error"))
+    result = reply["result"]
+    lines = [f"modes: {result.get('modes')}  keyFocus: {result.get('keyFocus')}  mouseFocus: {result.get('mouseFocus')}"]
+    for widget in result["widgets"]:
+        format_widget(widget, 0, lines)
+    (out_dir / f"{name}.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return out_dir / f"{name}.png"
+
+
+def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False):
+    """Runs script lines against a running game. Besides server commands, a script can use:
+
+    click-text TEXT   click the visible widget that shows TEXT
+    click-name NAME   click the visible widget with this name, as the UI dump shows it
+    shot NAME         save NAME.png and NAME.txt (a UI dump) in the output folder
+    """
+    shots = []
+    for number, line in lines:
+        words = shlex.split(line, comments=True)
+        if not words:
+            continue
+        where = f"{source}:{number}: {line.strip()}"
+        if words[0] in ("click-text", "click-name"):
+            if len(words) != 2:
+                raise HarnessError(f"{where}: {words[0]} takes one argument; quote text with spaces")
+            try:
+                result = click_text(connection, words[1], timeout, by_name=words[0] == "click-name")
+            except HarnessError as error:
+                raise HarnessError(f"{where}: {error}")
+        elif words[0] == "shot":
+            if len(words) != 2 or out_dir is None:
+                raise HarnessError(f"{where}: shot takes one name, and needs an output folder")
+            shots.append(take_shot(connection, out_dir, words[1], timeout))
+            result = str(shots[-1])
+        else:
+            reply = connection.request(build_request(words), timeout=timeout)
+            if not reply.get("ok"):
+                raise HarnessError(f"{where}: {reply.get('error')}")
+            result = reply.get("result")
+        if verbose:
+            print(f"{number}: {line.strip()} -> {json.dumps(result)}")
+    return shots
+
+
 def cmd_run(args):
     """Runs a file of commands, one per line, and stops at the first failure."""
     profile = Profile(args.profile)
     script = Path(args.script)
+    lines = list(enumerate(script.read_text(encoding="utf-8").splitlines(), start=1))
+    out_dir = Path(args.out) if args.out else profile.root / "shots"
     connection = connect(profile)
     try:
-        for number, line in enumerate(script.read_text(encoding="utf-8").splitlines(), start=1):
-            words = shlex.split(line, comments=True)
-            if not words:
-                continue
-            reply = connection.request(build_request(words), timeout=args.timeout)
-            if not reply.get("ok"):
-                raise HarnessError(f"{script}:{number}: {line.strip()}: {reply.get('error')}")
-            if args.verbose:
-                print(f"{number}: {line.strip()} -> {json.dumps(reply.get('result'))}")
+        run_lines(connection, lines, script, args.timeout, out_dir, args.verbose)
     finally:
         connection.close()
+
+
+def cmd_click_text(args):
+    profile = Profile(args.profile)
+    connection = connect(profile)
+    try:
+        print(json.dumps(click_text(connection, args.text, args.timeout, by_name=args.name)))
+    finally:
+        connection.close()
+
+
+def scenario_path(name):
+    path = SCENARIOS_DIR / f"{name}.txt"
+    if not path.is_file():
+        known = ", ".join(sorted(p.stem for p in SCENARIOS_DIR.glob("*.txt")))
+        raise HarnessError(f"No scenario named {name!r}. Known scenarios: {known}")
+    return path
+
+
+def run_scenario(parser, name, resolution, args):
+    """Launches the game as the scenario's first line says, runs the rest of the scenario, and quits. Returns the
+    screenshots it took."""
+    path = scenario_path(name)
+    lines = [(n, l) for n, l in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1)
+             if l.strip() and not l.strip().startswith("#")]
+    if not lines or not lines[0][1].strip().startswith("launch"):
+        raise HarnessError(f"{path}: the first command must be a launch line")
+    profile_name = f"scenario-{name}"
+    launch_words = shlex.split(lines[0][1])[1:]
+    launch_args = parser.parse_args(["launch", *launch_words, "-p", profile_name, "-r", resolution,
+                                     "--scale", str(args.scale)] + (["--fresh"] if args.fresh else []))
+    out_dir = OUTPUT_DIR / name / f"{resolution}-x{args.scale:g}"
+    if out_dir.is_dir():
+        shutil.rmtree(out_dir)
+
+    start = time.monotonic()
+    cmd_launch(launch_args)
+    profile = Profile(profile_name)
+    try:
+        connection = connect(profile)
+        try:
+            shots = run_lines(connection, lines[1:], path, args.timeout, out_dir, args.verbose)
+        finally:
+            connection.close()
+    finally:
+        if not args.keep:
+            quit_args = argparse.Namespace(profile=profile_name, timeout=10, kill=False)
+            cmd_quit(quit_args)
+    print(f"{name} at {resolution}: {len(shots)} shots in {time.monotonic() - start:.1f} s -> {out_dir}")
+    return shots
+
+
+def cmd_scenario(args, parser):
+    names = args.names
+    if names == ["all"]:
+        names = sorted(p.stem for p in SCENARIOS_DIR.glob("*.txt"))
+    resolutions = list(RESOLUTIONS) if args.resolution == ["all"] else args.resolution
+    failures = []
+    for name in names:
+        for resolution in resolutions:
+            try:
+                run_scenario(parser, name, resolution, args)
+            except HarnessError as error:
+                failures.append(f"{name} at {resolution}: {error}")
+                print(f"FAILED {name} at {resolution}: {error}", file=sys.stderr)
+                if args.keep:
+                    raise
+    write_gallery()
+    print(f"Gallery: {OUTPUT_DIR / 'index.html'}")
+    if failures:
+        raise HarnessError(f"{len(failures)} scenario run(s) failed.")
+
+
+def write_gallery():
+    """Writes .automation/out/index.html, which shows every saved shot grouped by scenario and resolution."""
+    if not OUTPUT_DIR.is_dir():
+        return
+    parts = ["<!doctype html><meta charset='utf-8'><title>Scenario shots</title>",
+             "<style>body{font-family:sans-serif;background:#222;color:#ddd;margin:16px}"
+             "img{max-width:100%;border:1px solid #555}figure{display:inline-block;margin:8px;max-width:640px}"
+             "a{color:#9cf}</style>"]
+    for scenario in sorted(p for p in OUTPUT_DIR.iterdir() if p.is_dir()):
+        parts.append(f"<h2>{scenario.name}</h2>")
+        for variant in sorted(p for p in scenario.iterdir() if p.is_dir()):
+            parts.append(f"<h3>{variant.name}</h3>")
+            for image in sorted(variant.glob("*.png")):
+                rel = image.relative_to(OUTPUT_DIR).as_posix()
+                dump = image.with_suffix(".txt").relative_to(OUTPUT_DIR).as_posix()
+                parts.append(f"<figure><img src='{rel}' loading='lazy'><figcaption>{image.stem} "
+                             f"(<a href='{dump}'>UI dump</a>)</figcaption></figure>")
+    (OUTPUT_DIR / "index.html").write_text("\n".join(parts), encoding="utf-8")
 
 
 def cmd_status(args):
@@ -668,12 +857,31 @@ def build_parser():
     p.add_argument("--timeout", type=float, default=60)
     p.set_defaults(func=cmd_ui)
 
-    p = sub.add_parser("run", help="run a file of commands, one per line")
+    p = sub.add_parser("run", help="run a file of commands, one per line, against a running game")
     add_profile(p)
     p.add_argument("script")
+    p.add_argument("--out", help="folder for 'shot' lines (default: shots/ in the profile folder)")
     p.add_argument("--timeout", type=float, default=60, help="seconds to wait for each reply")
     p.add_argument("--verbose", "-v", action="store_true", help="print each command's result")
     p.set_defaults(func=cmd_run)
+
+    p = sub.add_parser("click-text", help="click the visible widget that shows this text")
+    add_profile(p)
+    p.add_argument("text")
+    p.add_argument("--name", action="store_true", help="match the widget's name instead of its text")
+    p.add_argument("--timeout", type=float, default=60)
+    p.set_defaults(func=cmd_click_text)
+
+    p = sub.add_parser("scenario", help="launch, run and quit scenarios from ui-rework/scenarios/")
+    p.add_argument("names", nargs="+", help="scenario names, or 'all'")
+    p.add_argument("--resolution", "-r", nargs="+", default=["deck"],
+                   help=f"one or more of {', '.join(RESOLUTIONS)}, or 'all' (default deck)")
+    p.add_argument("--scale", type=float, default=1.0, help="GUI scaling factor (default 1.0)")
+    p.add_argument("--fresh", action="store_true", help="delete leftover profile config files first")
+    p.add_argument("--keep", action="store_true", help="leave the game running, and stop at the first failure")
+    p.add_argument("--timeout", type=float, default=60, help="seconds to wait for each reply")
+    p.add_argument("--verbose", "-v", action="store_true", help="print each command's result")
+    p.set_defaults(func=cmd_scenario)
 
     p = sub.add_parser("status", help="show which profiles have a running game")
     p.add_argument("--profile", "-p")
@@ -706,7 +914,10 @@ def main():
         argv.insert(0, "send")
     args = parser.parse_args(argv)
     try:
-        args.func(args)
+        if args.func is cmd_scenario:
+            cmd_scenario(args, parser)
+        else:
+            args.func(args)
     except HarnessError as error:
         print(f"error: {error}", file=sys.stderr)
         sys.exit(1)
