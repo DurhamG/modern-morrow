@@ -468,6 +468,54 @@ def cmd_screenshot(args):
         connection.close()
 
 
+def format_widget(node, depth, lines):
+    parts = ["  " * depth + node["type"]]
+    if "name" in node:
+        parts.append(repr(node["name"]))
+    x, y, w, h = node["rect"]
+    parts.append(f"[{x},{y} {w}x{h}]")
+    if "text" in node:
+        text = node["text"].replace("\n", "\\n")
+        if len(text) > 80:
+            text = text[:77] + "..."
+        parts.append(f"text={text!r} {node.get('font', '')}@{node.get('fontHeight', '?')}px")
+    for flag in ("hidden", "disabled", "keyFocus", "mouseFocus"):
+        if node.get(flag):
+            parts.append(flag)
+    if "layer" in node:
+        parts.append(f"layer={node['layer']}")
+    if "childCount" in node:
+        parts.append(f"(+{node['childCount']} children)")
+    lines.append(" ".join(parts))
+    for child in node.get("children", []):
+        format_widget(child, depth + 1, lines)
+
+
+def cmd_ui(args):
+    profile = Profile(args.profile)
+    request = {"cmd": "ui", "hidden": args.hidden}
+    if args.root:
+        request["root"] = args.root
+    if args.depth:
+        request["depth"] = args.depth
+    connection = connect(profile)
+    try:
+        reply = connection.request(request, timeout=args.timeout)
+    finally:
+        connection.close()
+    if not reply.get("ok"):
+        raise HarnessError(reply.get("error"))
+    result = reply["result"]
+    if args.json:
+        print(json.dumps(result, indent=1))
+        return
+    print(f"modes: {result.get('modes')}  keyFocus: {result.get('keyFocus')}  mouseFocus: {result.get('mouseFocus')}")
+    lines = []
+    for widget in result["widgets"]:
+        format_widget(widget, 0, lines)
+    print("\n".join(lines))
+
+
 def cmd_run(args):
     """Runs a file of commands, one per line, and stops at the first failure."""
     profile = Profile(args.profile)
@@ -610,6 +658,15 @@ def build_parser():
     p.add_argument("--settle", type=int, default=2, help="frames to wait before capturing (default 2)")
     p.add_argument("--timeout", type=float, default=60)
     p.set_defaults(func=cmd_screenshot)
+
+    p = sub.add_parser("ui", help="print the widget tree as indented text")
+    add_profile(p)
+    p.add_argument("--hidden", action="store_true", help="include hidden widgets")
+    p.add_argument("--root", help="only the subtrees of widgets with this name")
+    p.add_argument("--depth", type=int, help="levels below each root to show")
+    p.add_argument("--json", action="store_true", help="print the raw JSON")
+    p.add_argument("--timeout", type=float, default=60)
+    p.set_defaults(func=cmd_ui)
 
     p = sub.add_parser("run", help="run a file of commands, one per line")
     add_profile(p)
