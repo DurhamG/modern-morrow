@@ -3,25 +3,38 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include <osgViewer/ViewerEventHandlers>
 
 #include "json.hpp"
 #include "server.hpp"
 
 struct SDL_Window;
 
+namespace osgViewer
+{
+    class Viewer;
+}
+
 namespace MWAutomation
 {
     // Lets an external tool drive the game for UI testing. It is only created when openmw is started with
     // --automation-port. Requests and replies are single lines of JSON. A request names a command in "cmd" and may
     // carry an "id", which the reply repeats. A reply has "ok": true and a "result", or "ok": false and an "error".
+    class Screenshotter;
+
     class Automation
     {
     public:
-        Automation(std::uint16_t port, SDL_Window* window);
+        Automation(std::uint16_t port, SDL_Window* window, osgViewer::Viewer& viewer,
+            osgViewer::ScreenCaptureHandler& screenCaptureHandler,
+            osgViewer::ScreenCaptureHandler::CaptureOperation& screenCaptureOperation);
+        ~Automation();
 
         // Runs once per frame, before input is processed, so that any input a command injects is handled in the
         // same frame.
@@ -42,6 +55,7 @@ namespace MWAutomation
 
         Server mServer;
         SDL_Window* mWindow;
+        std::unique_ptr<Screenshotter> mScreenshotter;
         std::uint64_t mFrame = 0;
         std::unordered_map<std::string, Handler> mHandlers;
         std::vector<Pending> mPending;

@@ -976,7 +976,9 @@ void OMW::Engine::prepareEngine()
     mLuaWorker = std::make_unique<MWLua::Worker>(*mLuaManager);
 
     if (mAutomationPort != 0)
-        mAutomation = std::make_unique<MWAutomation::Automation>(static_cast<std::uint16_t>(mAutomationPort), mWindow);
+        mAutomation = std::make_unique<MWAutomation::Automation>(
+            static_cast<std::uint16_t>(mAutomationPort), mWindow, *mViewer, *mScreenCaptureHandler,
+            *mScreenCaptureOperation);
 }
 
 // Initialise and enter main loop.

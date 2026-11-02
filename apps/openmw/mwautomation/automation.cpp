@@ -6,6 +6,7 @@
 #include <SDL_video.h>
 
 #include <components/debug/debuglog.hpp>
+#include <components/files/conversion.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -14,6 +15,8 @@
 #include "../mwbase/world.hpp"
 
 #include "../mwgui/mode.hpp"
+
+#include "screenshot.hpp"
 
 namespace MWAutomation
 {
@@ -109,12 +112,17 @@ namespace MWAutomation
         }
     }
 
-    Automation::Automation(std::uint16_t port, SDL_Window* window)
+    Automation::Automation(std::uint16_t port, SDL_Window* window, osgViewer::Viewer& viewer,
+        osgViewer::ScreenCaptureHandler& screenCaptureHandler,
+        osgViewer::ScreenCaptureHandler::CaptureOperation& screenCaptureOperation)
         : mServer(port)
         , mWindow(window)
+        , mScreenshotter(std::make_unique<Screenshotter>(viewer, screenCaptureHandler, screenCaptureOperation))
     {
         registerHandlers();
     }
+
+    Automation::~Automation() = default;
 
     void Automation::update()
     {
@@ -247,6 +255,41 @@ namespace MWAutomation
         };
 
         mHandlers["state"] = [this](const Json&) -> Poll { return [this] { return describeState(); }; };
+
+        // Captures the next frame, including the UI, to "path". The format comes from the extension. Optional
+        // "crop": [x, y, width, height] in window pixels from the top left, and "scale" (0 to 1) to shrink the image.
+        mHandlers["screenshot"] = [this](const Json& request) -> Poll {
+            ScreenshotRequest screenshot;
+            const std::string path = request.getString("path");
+            if (path.empty())
+                throw std::runtime_error("screenshot needs a \"path\"");
+            screenshot.mPath = Files::pathFromUnicodeString(path);
+            screenshot.mScale = static_cast<float>(request.getNumber("scale", 1));
+            if (const Json* cropField = request.find("crop"); cropField != nullptr && !cropField->isNull())
+            {
+                if (!cropField->isArray() || cropField->asArray().size() != 4)
+                    throw std::runtime_error("\"crop\" must be [x, y, width, height]");
+                const Json::Array& values = cropField->asArray();
+                screenshot.mCrop
+                    = CropRect{ static_cast<int>(values[0].asNumber()), static_cast<int>(values[1].asNumber()),
+                          static_cast<int>(values[2].asNumber()), static_cast<int>(values[3].asNumber()) };
+            }
+            mScreenshotter->start(std::move(screenshot));
+
+            const std::uint64_t deadline = mFrame + 300;
+            return [this, deadline]() -> std::optional<Json> {
+                std::optional<ScreenshotResult> result = mScreenshotter->poll();
+                if (!result)
+                {
+                    if (mFrame < deadline)
+                        return std::nullopt;
+                    mScreenshotter->cancel();
+                    throw std::runtime_error("no frame was rendered for the screenshot");
+                }
+                return Json::object({ { "path", Files::pathToUnicodeString(result->mPath) },
+                    { "width", result->mWidth }, { "height", result->mHeight }, { "frame", mFrame } });
+            };
+        };
 
         mHandlers["quit"] = [](const Json&) -> Poll {
             return [] {

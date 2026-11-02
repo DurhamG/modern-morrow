@@ -118,7 +118,7 @@ add_openmw_dir (mwbase
     )
 
 add_openmw_dir (mwautomation
-    automation json server
+    automation json screenshot server
     )
 
 # Main executable
