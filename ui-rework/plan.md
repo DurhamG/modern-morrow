@@ -21,7 +21,7 @@ Getting something that looks and feels good comes first. Making the changes clea
 
 ## Phases
 
-### Phase 1: automation harness (current)
+### Phase 1: automation harness (built, awaiting review)
 
 Build the tools an agent needs to iterate on the UI without help:
 
@@ -35,7 +35,7 @@ See [harness.md](harness.md) for the design and the order of the work.
 
 Phase 1 is done when the agent can run a script that opens each major UI screen at each target resolution, and get back a screenshot and a text dump of each one.
 
-### Phase 2: UI discussion and direction
+### Phase 2: UI discussion and direction (next)
 
 Review the current UI with the harness. Discuss the direction together: layout, navigation model, visual style, and which screens matter most.
 
