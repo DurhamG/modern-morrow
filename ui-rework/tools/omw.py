@@ -147,28 +147,62 @@ def write_openmw_cfg(profile, user_cfg, movies):
     (profile.config_dir / "openmw.cfg").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def parse_resolution(text):
+    """Accepts a name from RESOLUTIONS, or WIDTHxHEIGHT such as 2560x1440."""
+    if text in RESOLUTIONS:
+        return RESOLUTIONS[text]
+    try:
+        width, height = text.lower().split("x")
+        return int(width), int(height)
+    except ValueError:
+        raise HarnessError(f"Unknown resolution {text!r}. Use {', '.join(RESOLUTIONS)} or WIDTHxHEIGHT.")
+
+
+def read_settings_cfg(path):
+    """Reads a settings.cfg into {section: {key: value}}, keeping the file's order."""
+    sections = {}
+    current = None
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("[") and stripped.endswith("]"):
+            current = sections.setdefault(stripped[1:-1].strip(), {})
+        elif current is not None and "=" in stripped:
+            key, value = stripped.split("=", 1)
+            current[key.strip()] = value.strip()
+    return sections
+
+
 def write_settings_cfg(profile, args):
-    width, height = RESOLUTIONS[args.resolution]
-    sections = {
+    width, height = parse_resolution(args.resolution)
+    sections = {}
+    if args.user_settings:
+        user_settings = Path(args.user_cfg).parent if args.user_cfg else default_user_cfg().parent
+        sections = read_settings_cfg(user_settings / "settings.cfg")
+
+    harness_settings = {
         "Video": {
             "resolution x": width,
             "resolution y": height,
-            # 2 is windowed mode.
-            "window mode": 2,
+            # 1 is borderless windowed fullscreen, and 2 is windowed mode.
+            "window mode": 1 if args.fullscreen else 2,
             "window border": "true",
             "screen": args.screen,
             "minimize on focus loss": "false",
-            "framerate limit": 60,
-            "vsync mode": 0,
-        },
-        "GUI": {
-            "scaling factor": args.scale,
         },
         "General": {
             "screenshot format": "png",
             "notify on saved screenshot": "false",
         },
     }
+    if not args.user_settings:
+        # Keep test runs light. With the user's settings, keep their frame rate and vsync.
+        harness_settings["Video"].update({"framerate limit": 60, "vsync mode": 0})
+    if args.scale is not None or not args.user_settings:
+        harness_settings["GUI"] = {"scaling factor": args.scale if args.scale is not None else 1.0}
+    for section, values in harness_settings.items():
+        sections.setdefault(section, {}).update(values)
     for setting in args.set or []:
         try:
             name, value = setting.split("=", 1)
@@ -806,8 +840,13 @@ def build_parser():
 
     p = sub.add_parser("launch", help="start the game in an isolated profile")
     add_profile(p)
-    p.add_argument("--resolution", "-r", choices=RESOLUTIONS, default="deck")
-    p.add_argument("--scale", type=float, default=1.0, help="GUI scaling factor (default 1.0)")
+    p.add_argument("--resolution", "-r", default="deck",
+                   help=f"{', '.join(RESOLUTIONS)}, or WIDTHxHEIGHT such as 2560x1440 (default deck)")
+    p.add_argument("--fullscreen", action="store_true",
+                   help="borderless fullscreen on the chosen screen; the resolution should match that screen")
+    p.add_argument("--user-settings", action="store_true",
+                   help="start from the user's own settings.cfg, then apply the harness's window settings")
+    p.add_argument("--scale", type=float, help="GUI scaling factor (default 1.0, or the user's with --user-settings)")
     p.add_argument("--screen", type=int, default=int(os.environ.get("OMW_SCREEN", "1")),
                    help="SDL display index for the window (default: $OMW_SCREEN or 1)")
     p.add_argument("--set", action="append", metavar="Section.key=value", help="extra setting; repeatable")
