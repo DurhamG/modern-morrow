@@ -1,7 +1,9 @@
 #include "scalinglayer.hpp"
 
 #include <MyGUI_RenderManager.h>
+#include <MyGUI_StringUtility.h>
 #include <algorithm>
+#include <cmath>
 
 namespace MyGUIPlatform
 {
@@ -111,7 +113,27 @@ namespace MyGUIPlatform
 
     void ScalingLayer::resizeView(const MyGUI::IntSize& /*viewSize*/)
     {
-        // do nothing
+        // A fixed-size layer keeps its size. A fixed-height layer follows the screen's aspect ratio.
+        if (mFixedHeight > 0)
+            updateFixedHeightViewSize();
+    }
+
+    void ScalingLayer::setFixedHeight(int height)
+    {
+        if (height <= 0)
+            return;
+        mFixedHeight = height;
+        updateFixedHeightViewSize();
+    }
+
+    void ScalingLayer::updateFixedHeightViewSize()
+    {
+        const MyGUI::IntSize globalViewSize = MyGUI::RenderManager::getInstance().getViewSize();
+        if (globalViewSize.height <= 0)
+            return;
+        mViewSize.height = mFixedHeight;
+        mViewSize.width = static_cast<int>(
+            std::lround(globalViewSize.width * static_cast<double>(mFixedHeight) / globalViewSize.height));
     }
 
     void ScalingLayer::deserialization(MyGUI::xml::ElementPtr node, MyGUI::Version version)
@@ -129,6 +151,10 @@ namespace MyGUIPlatform
                 if (key == "Size")
                 {
                     mViewSize = MyGUI::IntSize::parse(value);
+                }
+                else if (key == "Height")
+                {
+                    setFixedHeight(MyGUI::utility::parseInt(value));
                 }
             }
         }
