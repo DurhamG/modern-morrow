@@ -21,7 +21,7 @@ Getting something that looks and feels good comes first. Making the changes clea
 
 ## Phases
 
-### Phase 1: automation harness (built, awaiting review)
+### Phase 1: automation harness (done)
 
 Build the tools an agent needs to iterate on the UI without help:
 
@@ -35,13 +35,17 @@ See [harness.md](harness.md) for the design and the order of the work.
 
 Phase 1 is done when the agent can run a script that opens each major UI screen at each target resolution, and get back a screenshot and a text dump of each one.
 
-### Phase 2: UI discussion and direction (next)
+### Phase 2: rework the UI one piece at a time (current)
 
-Review the current UI with the harness. Discuss the direction together: layout, navigation model, visual style, and which screens matter most.
+Go through the pieces listed in [screens.md](screens.md), discussing each one with the user and iterating on it with the harness. The games in [research/gamepad-ui-references.md](research/gamepad-ui-references.md) are a reference for each piece.
 
-### Phase 3 and later: iterate on the UI
+Done so far:
 
-To be planned in phase 2.
+- **HUD.** The minimap and weapon name text are gone. The rest is gathered in the bottom left corner, sized relative to the screen height, and fades out when it has nothing to show.
+
+### Phase 3: make the changes clean enough to upstream
+
+Once the UI looks and feels right, work out how OpenMW could support it cleanly. Not a priority yet.
 
 ## Target screens and resolutions
 

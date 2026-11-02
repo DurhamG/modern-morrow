@@ -23,4 +23,18 @@
   - launching the game takes about a second,
   - a scenario takes 2 to 5 seconds per resolution.
 
-Next: review the harness with the user, then start phase 2, the UI discussion.
+- Started phase 2. Wrote [research/gamepad-ui-references.md](research/gamepad-ui-references.md), a reading list of games with well-regarded gamepad UIs, and [screens.md](screens.md), a list of every piece of Morrowind's UI.
+- Reworked the HUD with the user, as the first piece:
+  - The minimap and the weapon or spell name text are gone.
+  - Everything sits in the bottom left corner. The effect icons are in the corner, the energy bars above them, and the weapon, spell and sneak boxes to the right.
+  - The HUD is sized relative to the screen height, through a fixed-height `ScalingLayer`, and ignores the GUI scaling factor. The `[HUD] size` setting tunes it.
+  - Full bars fade out. The weapon and spell boxes show for five seconds after a change, and while the weapon or a spell is ready. Everything shows during combat.
+  - The `hud`, `hud-fades` and `hud-combat` scenarios cover it.
+- Working style agreed with the user:
+  - After each change, launch the user's test save on their right monitor for them to look at: `omw.py launch -p review --user-settings --resolution 3840x2160 --fullscreen --screen 1 --save "C:/Users/Durham/Documents/My Games/OpenMW/saves/Lendias/Test.omwsave"`.
+  - The commit stack should show the final design, not the iteration that led to it. Fix-ups and tweaks get folded into the commit they belong to.
+- Lessons learned:
+  - When the user is running another game, 32 parallel compiles run out of memory. Add `-- //p:CL_MPCount=8` to the build command.
+  - Python's `Path.write_text` writes Windows line endings on Windows. Pass `newline="\n"` when editing source files from Python.
+
+Next: choose the next piece of the UI to rework with the user.
