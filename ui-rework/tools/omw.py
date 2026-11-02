@@ -951,6 +951,18 @@ def main():
     # "omw.py state" is short for "omw.py send state".
     if argv and not argv[0].startswith("-") and argv[0] not in subcommands:
         argv.insert(0, "send")
+    if argv and argv[0] == "send":
+        # argparse can't take options between the command words, as in "send wait -p review frames=60", so move
+        # them to the front.
+        options, words = [], []
+        rest = argv[1:]
+        while rest:
+            word = rest.pop(0)
+            if word in ("-p", "--profile", "--timeout") and rest:
+                options += [word, rest.pop(0)]
+            else:
+                words.append(word)
+        argv = ["send", *options, *words]
     args = parser.parse_args(argv)
     try:
         if args.func is cmd_scenario:
