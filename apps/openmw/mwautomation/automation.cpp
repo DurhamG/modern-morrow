@@ -7,6 +7,7 @@
 
 #include <components/debug/debuglog.hpp>
 #include <components/files/conversion.hpp>
+#include <components/misc/strings/lower.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -16,6 +17,7 @@
 
 #include "../mwgui/mode.hpp"
 
+#include "input.hpp"
 #include "screenshot.hpp"
 
 namespace MWAutomation
@@ -118,6 +120,7 @@ namespace MWAutomation
         : mServer(port)
         , mWindow(window)
         , mScreenshotter(std::make_unique<Screenshotter>(viewer, screenCaptureHandler, screenCaptureOperation))
+        , mInput(std::make_unique<InputInjector>(window))
     {
         registerHandlers();
     }
@@ -297,6 +300,125 @@ namespace MWAutomation
                 MWBase::Environment::get().getStateManager()->requestQuit();
                 return Json::object();
             };
+        };
+
+        // Keyboard input. With "text", types that text. Otherwise "key" names an SDL key, such as Escape, Return or
+        // A, and "action" is "tap" (the default), "down" or "up". A tap holds the key for "hold" frames (default 2).
+        // "mods" lists held modifiers: shift, ctrl, alt.
+        mHandlers["key"] = [this](const Json& request) -> Poll {
+            if (const Json* text = request.find("text"); text != nullptr && !text->isNull())
+            {
+                if (!text->isString())
+                    throw std::runtime_error("\"text\" must be a string");
+                mInput->text(text->asString());
+                return sequence({});
+            }
+
+            const SDL_Scancode scancode = InputInjector::parseKey(request.getString("key"));
+            const SDL_Keymod modifiers = parseModifiers(request);
+            const std::string action = request.getString("action", "tap");
+            if (action == "down")
+                return sequence({ { 0, [=, this] { mInput->key(scancode, true, modifiers); } } });
+            if (action == "up")
+                return sequence({ { 0, [=, this] { mInput->key(scancode, false, modifiers); } } });
+            if (action != "tap")
+                throw std::runtime_error("\"action\" must be tap, down or up");
+            const int hold = std::max(1, static_cast<int>(request.getNumber("hold", 2)));
+            return sequence({
+                { 0, [=, this] { mInput->key(scancode, true, modifiers); } },
+                { hold, [=, this] { mInput->key(scancode, false, modifiers); } },
+            });
+        };
+
+        // Mouse input, in window pixels from the top left. "action" is "move", "down", "up", "click" (the default)
+        // or "wheel". "x" and "y" give the position; down, up and click move there first when they are given.
+        // "button" is left (the default), middle, right, x1 or x2. A click holds the button for "hold" frames
+        // (default 2). A wheel action scrolls by "y" notches, and by "x" notches sideways.
+        mHandlers["mouse"] = [this](const Json& request) -> Poll {
+            const std::string action = request.getString("action", "click");
+            if (action == "wheel")
+            {
+                const float x = static_cast<float>(request.getNumber("x", 0));
+                const float y = static_cast<float>(request.getNumber("y", 0));
+                return sequence({ { 0, [=, this] { mInput->mouseWheel(x, y); } } });
+            }
+
+            std::vector<std::pair<int, std::function<void()>>> steps;
+            const bool hasPosition = request.find("x") != nullptr || request.find("y") != nullptr;
+            if (hasPosition)
+            {
+                const int x = static_cast<int>(request.getNumber("x"));
+                const int y = static_cast<int>(request.getNumber("y"));
+                steps.emplace_back(0, [=, this] { mInput->mouseMove(x, y); });
+            }
+            else if (action == "move")
+                throw std::runtime_error("move needs \"x\" and \"y\"");
+
+            const std::uint8_t button = InputInjector::parseMouseButton(request.getString("button", "left"));
+            // Leave a frame after moving, so the UI updates which widget is under the cursor before the press.
+            const int pressFrame = hasPosition ? 1 : 0;
+            if (action == "down")
+                steps.emplace_back(pressFrame, [=, this] { mInput->mouseButton(button, true); });
+            else if (action == "up")
+                steps.emplace_back(pressFrame, [=, this] { mInput->mouseButton(button, false); });
+            else if (action == "click")
+            {
+                const int hold = std::max(1, static_cast<int>(request.getNumber("hold", 2)));
+                steps.emplace_back(pressFrame, [=, this] { mInput->mouseButton(button, true); });
+                steps.emplace_back(pressFrame + hold, [=, this] { mInput->mouseButton(button, false); });
+            }
+            else if (action != "move")
+                throw std::runtime_error("\"action\" must be move, down, up, click or wheel");
+            return sequence(std::move(steps));
+        };
+    }
+
+    SDL_Keymod Automation::parseModifiers(const Json& request)
+    {
+        const Json* field = request.find("mods");
+        if (field == nullptr || field->isNull())
+            return KMOD_NONE;
+        std::vector<std::string> names;
+        if (field->isString())
+            names.push_back(field->asString());
+        else if (field->isArray())
+        {
+            for (const Json& item : field->asArray())
+            {
+                if (!item.isString())
+                    throw std::runtime_error("\"mods\" must be a list of names");
+                names.push_back(item.asString());
+            }
+        }
+        else
+            throw std::runtime_error("\"mods\" must be a name or a list of names");
+
+        int modifiers = KMOD_NONE;
+        for (const std::string& name : names)
+        {
+            const std::string lower = Misc::StringUtils::lowerCase(name);
+            if (lower == "shift")
+                modifiers |= KMOD_SHIFT;
+            else if (lower == "ctrl")
+                modifiers |= KMOD_CTRL;
+            else if (lower == "alt")
+                modifiers |= KMOD_ALT;
+            else
+                throw std::runtime_error("unknown modifier '" + name + "'");
+        }
+        return static_cast<SDL_Keymod>(modifiers);
+    }
+
+    Automation::Poll Automation::sequence(std::vector<std::pair<int, std::function<void()>>> steps)
+    {
+        const std::uint64_t start = mFrame;
+        std::size_t next = 0;
+        return [this, start, next, steps = std::move(steps)]() mutable -> std::optional<Json> {
+            while (next < steps.size() && mFrame >= start + static_cast<std::uint64_t>(steps[next].first))
+                steps[next++].second();
+            if (next < steps.size())
+                return std::nullopt;
+            return Json::object({ { "frame", mFrame } });
         };
     }
 }
