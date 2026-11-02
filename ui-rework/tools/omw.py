@@ -515,6 +515,8 @@ def format_widget(node, depth, lines):
         if len(text) > 80:
             text = text[:77] + "..."
         parts.append(f"text={text!r} {node.get('font', '')}@{node.get('fontHeight', '?')}px")
+    if "alpha" in node:
+        parts.append(f"alpha={node['alpha']}")
     for flag in ("hidden", "disabled", "keyFocus", "mouseFocus"):
         if node.get(flag):
             parts.append(flag)
