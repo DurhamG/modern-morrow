@@ -17,6 +17,7 @@
 
 #include "../mwgui/mode.hpp"
 
+#include "gamepad.hpp"
 #include "input.hpp"
 #include "screenshot.hpp"
 
@@ -121,8 +122,10 @@ namespace MWAutomation
         , mWindow(window)
         , mScreenshotter(std::make_unique<Screenshotter>(viewer, screenCaptureHandler, screenCaptureOperation))
         , mInput(std::make_unique<InputInjector>(window))
+        , mGamepad(std::make_unique<VirtualGamepad>())
     {
         registerHandlers();
+        registerGamepadHandler();
     }
 
     Automation::~Automation() = default;
@@ -369,6 +372,65 @@ namespace MWAutomation
             }
             else if (action != "move")
                 throw std::runtime_error("\"action\" must be move, down, up, click or wheel");
+            return sequence(std::move(steps));
+        };
+    }
+
+    void Automation::registerGamepadHandler()
+    {
+        // Virtual gamepad input. "action" is "connect", "disconnect", "tap", "down", "up" or "axis". A button action
+        // needs "button": a, b, x, y, back, guide, start, leftstick, rightstick, leftshoulder, rightshoulder, dpup,
+        // dpdown, dpleft or dpright. A tap holds the button for "hold" frames (default 2), and is the default action
+        // when a button is given. An axis action sets "axis" (leftx, lefty, rightx, righty, lefttrigger or
+        // righttrigger) to "value": -1 to 1 for sticks, with positive y down, and 0 to 1 for triggers. With "hold",
+        // the axis goes back to rest after that many frames. The gamepad connects on first use. The game needs a few
+        // frames to open it, so the first command waits before it presses anything.
+        mHandlers["pad"] = [this](const Json& request) -> Poll {
+            const bool hasButton = request.find("button") != nullptr;
+            const std::string action
+                = request.getString("action", hasButton ? "tap" : (request.find("axis") ? "axis" : "connect"));
+
+            std::vector<std::pair<int, std::function<void()>>> steps;
+            int start = 0;
+            if (action != "disconnect" && !mGamepad->isConnected())
+            {
+                mGamepad->connect();
+                start = 3;
+            }
+
+            if (action == "connect" || action == "disconnect")
+            {
+                if (action == "disconnect")
+                    mGamepad->disconnect();
+                steps.emplace_back(start, [] {});
+            }
+            else if (action == "axis")
+            {
+                const SDL_GameControllerAxis axis = VirtualGamepad::parseAxis(request.getString("axis"));
+                const float value = static_cast<float>(request.getNumber("value", 0));
+                steps.emplace_back(start, [=, this] { mGamepad->setAxis(axis, value); });
+                if (request.find("hold") != nullptr)
+                {
+                    const int hold = std::max(1, static_cast<int>(request.getNumber("hold")));
+                    steps.emplace_back(start + hold, [=, this] { mGamepad->setAxis(axis, 0); });
+                }
+            }
+            else
+            {
+                const SDL_GameControllerButton button = VirtualGamepad::parseButton(request.getString("button"));
+                if (action == "down")
+                    steps.emplace_back(start, [=, this] { mGamepad->setButton(button, true); });
+                else if (action == "up")
+                    steps.emplace_back(start, [=, this] { mGamepad->setButton(button, false); });
+                else if (action == "tap")
+                {
+                    const int hold = std::max(1, static_cast<int>(request.getNumber("hold", 2)));
+                    steps.emplace_back(start, [=, this] { mGamepad->setButton(button, true); });
+                    steps.emplace_back(start + hold, [=, this] { mGamepad->setButton(button, false); });
+                }
+                else
+                    throw std::runtime_error("\"action\" must be connect, disconnect, tap, down, up or axis");
+            }
             return sequence(std::move(steps));
         };
     }

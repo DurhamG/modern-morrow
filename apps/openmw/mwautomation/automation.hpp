@@ -30,6 +30,7 @@ namespace MWAutomation
     // carry an "id", which the reply repeats. A reply has "ok": true and a "result", or "ok": false and an "error".
     class InputInjector;
     class Screenshotter;
+    class VirtualGamepad;
 
     class Automation
     {
@@ -60,11 +61,13 @@ namespace MWAutomation
         SDL_Window* mWindow;
         std::unique_ptr<Screenshotter> mScreenshotter;
         std::unique_ptr<InputInjector> mInput;
+        std::unique_ptr<VirtualGamepad> mGamepad;
         std::uint64_t mFrame = 0;
         std::unordered_map<std::string, Handler> mHandlers;
         std::vector<Pending> mPending;
 
         void registerHandlers();
+        void registerGamepadHandler();
 
         // Runs each step at its frame offset from now, then finishes. Offset 0 runs straight away.
         Poll sequence(std::vector<std::pair<int, std::function<void()>>> steps);
