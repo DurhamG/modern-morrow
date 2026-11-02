@@ -670,7 +670,6 @@ namespace MWGui
             setKeyFocusWidget(nullptr);
 
         // Icons of forced hidden windows are displayed
-        setMinimapVisibility((mAllowed & GW_Map) && (!mMap->pinned() || (mForceHidden & GW_Map)));
         setWeaponVisibility(
             (mAllowed & GW_Inventory) && (!mInventoryWindow->pinned() || (mForceHidden & GW_Inventory)));
         setSpellVisibility((mAllowed & GW_Magic) && (!mSpellWindow->pinned() || (mForceHidden & GW_Magic)));
@@ -1165,11 +1164,6 @@ namespace MWGui
     void WindowManager::setHMSVisibility(bool visible)
     {
         mHud->setHmsVisible(visible);
-    }
-
-    void WindowManager::setMinimapVisibility(bool visible)
-    {
-        mHud->setMinimapVisible(visible);
     }
 
     bool WindowManager::toggleFogOfWar()

@@ -167,10 +167,9 @@ namespace MWGui
 
         if (adjustSize)
         {
+            // Grow to the right, keeping the left edge in place.
             const int newWidth = horizontalOffset > 2 ? horizontalOffset + 2 : 0;
-            const int diff = parent->getWidth() - newWidth;
             parent->setSize(newWidth, parent->getHeight());
-            parent->setPosition(parent->getLeft() + diff, parent->getTop());
         }
 
         for (auto& [effectId, widget] : mWidgetMap)

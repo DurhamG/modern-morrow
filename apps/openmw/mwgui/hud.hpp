@@ -37,7 +37,6 @@ namespace MWGui
         void setSneakVisible(bool visible);
 
         void setEffectVisible(bool visible);
-        void setMinimapVisible(bool visible);
 
         void setSelectedSpell(const ESM::RefId& spellId, int successChancePercent);
         void setSelectedEnchantItem(const MWWorld::Ptr& item, int chargePercent);
@@ -80,7 +79,6 @@ namespace MWGui
         MyGUI::ImageBox* mCrosshair = nullptr;
         MyGUI::ImageBox* mMouseEmulationCursor = nullptr;
         MyGUI::TextBox* mCellNameBox = nullptr;
-        MyGUI::TextBox* mWeaponSpellBox = nullptr;
         MyGUI::Widget *mDrowningBar = nullptr, *mDrowningFrame = nullptr, *mDrowningFlash = nullptr;
         DragAndDrop* mDragAndDrop;
         std::string mCellName;
@@ -91,15 +89,12 @@ namespace MWGui
 
         // bottom left elements
         int mHealthManaStaminaBaseLeft, mWeapBoxBaseLeft, mSpellBoxBaseLeft, mSneakBoxBaseLeft;
-        // bottom right elements
-        int mMinimapBoxBaseRight, mEffectBoxBaseRight;
+
 
         float mCellNameTimer = 0.f;
-        float mWeaponSpellTimer = 0.f;
         float mEnemyHealthTimer = -1;
         float mDrowningFlashTheta = 0.f;
 
-        bool mMapVisible = true;
         bool mWeaponVisible = true;
         bool mSpellVisible = true;
         bool mWorldMouseOver = false;

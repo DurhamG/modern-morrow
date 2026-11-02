@@ -1248,8 +1248,6 @@ namespace MWGui
     void MapWindow::onPinToggled()
     {
         Settings::windows().mMapPin.set(mPinned);
-
-        MWBase::Environment::get().getWindowManager()->setMinimapVisibility(!mPinned);
     }
 
     void MapWindow::onTitleDoubleClicked()

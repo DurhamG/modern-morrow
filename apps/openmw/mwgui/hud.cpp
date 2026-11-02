@@ -61,8 +61,6 @@ namespace MWGui
         getWidget(mDrowningFlash, "Flash");
         mDrowning->setProgressRange(200);
 
-        const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-
         // Item and spell images and status bars
         getWidget(mWeapBox, "WeapBox");
         getWidget(mWeapImage, "WeapImage");
@@ -80,17 +78,17 @@ namespace MWGui
         mSneakBoxBaseLeft = mSneakBox->getLeft();
 
         getWidget(mEffectBox, "EffectBox");
-        mEffectBoxBaseRight = viewSize.width - mEffectBox->getRight();
 
+        // The minimap is still updated, because the HUD shares the local map code with the map window, but
+        // it is never shown.
         getWidget(mMinimapBox, "MiniMapBox");
-        mMinimapBoxBaseRight = viewSize.width - mMinimapBox->getRight();
+        mMinimapBox->setVisible(false);
         getWidget(mMinimap, "MiniMap");
         getWidget(mCompass, "Compass");
         getWidget(mMinimapButton, "MiniMapButton");
         mMinimapButton->eventMouseButtonClick += MyGUI::newDelegate(this, &HUD::onMapClicked);
 
         getWidget(mCellNameBox, "CellName");
-        getWidget(mWeaponSpellBox, "WeaponSpellName");
 
         getWidget(mCrosshair, "Crosshair");
         getWidget(mMouseEmulationCursor, "MouseEmulationCursor");
@@ -290,7 +288,7 @@ namespace MWGui
             mCellName = cellName;
 
             mCellNameBox->setCaptionWithReplacing("#{sCell=" + mCellName + "}");
-            mCellNameBox->setVisible(mMapVisible);
+            mCellNameBox->setVisible(true);
         }
     }
 
@@ -299,18 +297,12 @@ namespace MWGui
         LocalMapBase::onFrame(dt);
 
         mCellNameTimer -= dt;
-        mWeaponSpellTimer -= dt;
         if (mCellNameTimer < 0)
             mCellNameBox->setVisible(false);
-        if (mWeaponSpellTimer < 0)
-            mWeaponSpellBox->setVisible(false);
 
         mEnemyHealthTimer -= dt;
         if (mEnemyHealth->getVisible() && mEnemyHealthTimer < 0)
-        {
             mEnemyHealth->setVisible(false);
-            mWeaponSpellBox->setPosition(mWeaponSpellBox->getPosition() + MyGUI::IntPoint(0, 20));
-        }
 
         mSpellIcons->updateWidgets(mEffectBox, true);
 
@@ -340,10 +332,7 @@ namespace MWGui
         const std::string& spellName = spell->mName;
         if (spellName != mSpellName && mSpellVisible)
         {
-            mWeaponSpellTimer = 5.0f;
             mSpellName = spellName;
-            mWeaponSpellBox->setCaption(mSpellName);
-            mWeaponSpellBox->setVisible(true);
         }
 
         mSpellStatus->setProgressRange(100);
@@ -371,10 +360,7 @@ namespace MWGui
         std::string_view itemName = item.getClass().getName(item);
         if (itemName != mSpellName && mSpellVisible)
         {
-            mWeaponSpellTimer = 5.0f;
             mSpellName = itemName;
-            mWeaponSpellBox->setCaption(mSpellName);
-            mWeaponSpellBox->setVisible(true);
         }
 
         mSpellStatus->setProgressRange(100);
@@ -391,10 +377,7 @@ namespace MWGui
         std::string_view itemName = item.getClass().getName(item);
         if (itemName != mWeaponName && mWeaponVisible)
         {
-            mWeaponSpellTimer = 5.0f;
             mWeaponName = itemName;
-            mWeaponSpellBox->setCaption(mWeaponName);
-            mWeaponSpellBox->setVisible(true);
         }
 
         mWeapBox->clearUserStrings();
@@ -412,10 +395,7 @@ namespace MWGui
         std::string_view spellName = "#{Interface:None}";
         if (spellName != mSpellName && mSpellVisible)
         {
-            mWeaponSpellTimer = 5.0f;
             mSpellName = spellName;
-            mWeaponSpellBox->setCaptionWithReplacing(mSpellName);
-            mWeaponSpellBox->setVisible(true);
         }
 
         mSpellStatus->setProgressRange(100);
@@ -430,10 +410,7 @@ namespace MWGui
         std::string itemName = "#{sSkillHandtohand}";
         if (itemName != mWeaponName && mWeaponVisible)
         {
-            mWeaponSpellTimer = 5.0f;
             mWeaponName = itemName;
-            mWeaponSpellBox->setCaptionWithReplacing(mWeaponName);
-            mWeaponSpellBox->setVisible(true);
         }
 
         mWeapStatus->setProgressRange(100);
@@ -520,12 +497,6 @@ namespace MWGui
         updatePositions();
     }
 
-    void HUD::setMinimapVisible(bool visible)
-    {
-        mMinimapBox->setVisible(visible);
-        updatePositions();
-    }
-
     void HUD::updatePositions()
     {
         int weapDx = 0, spellDx = 0, sneakDx = 0;
@@ -543,26 +514,10 @@ namespace MWGui
 
         mWeaponVisible = mWeapBox->getVisible();
         mSpellVisible = mSpellBox->getVisible();
-        if (!mWeaponVisible && !mSpellVisible)
-            mWeaponSpellBox->setVisible(false);
 
         mWeapBox->setPosition(mWeapBoxBaseLeft - weapDx, mWeapBox->getTop());
         mSpellBox->setPosition(mSpellBoxBaseLeft - spellDx, mSpellBox->getTop());
         mSneakBox->setPosition(mSneakBoxBaseLeft - sneakDx, mSneakBox->getTop());
-
-        const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-
-        // effect box can have variable width -> variable left coordinate
-        int effectsDx = 0;
-        if (!mMinimapBox->getVisible())
-            effectsDx = mEffectBoxBaseRight - mMinimapBoxBaseRight;
-
-        mMapVisible = mMinimapBox->getVisible();
-        if (!mMapVisible)
-            mCellNameBox->setVisible(false);
-
-        mEffectBox->setPosition(
-            (viewSize.width - mEffectBoxBaseRight) - mEffectBox->getWidth() + effectsDx, mEffectBox->getTop());
     }
 
     void HUD::updateEnemyHealthBar()
@@ -593,8 +548,6 @@ namespace MWGui
                                 ->get<ESM::GameSetting>()
                                 .find("fNPCHealthBarTime")
                                 ->mValue.getFloat();
-        if (!mEnemyHealth->getVisible())
-            mWeaponSpellBox->setPosition(mWeaponSpellBox->getPosition() - MyGUI::IntPoint(0, 20));
         mEnemyHealth->setVisible(true);
         updateEnemyHealthBar();
     }
@@ -604,10 +557,8 @@ namespace MWGui
         mEnemyActor = {};
         mEnemyHealthTimer = -1;
 
-        mWeaponSpellTimer = 0.f;
         mWeaponName.clear();
         mSpellName.clear();
-        mWeaponSpellBox->setVisible(false);
 
         mWeapStatus->setProgressRange(100);
         mWeapStatus->setProgressPosition(0);

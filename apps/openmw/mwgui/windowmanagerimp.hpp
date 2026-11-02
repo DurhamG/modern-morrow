@@ -229,7 +229,6 @@ namespace MWGui
         // sets the visibility of the hud health/magicka/stamina bars
         void setHMSVisibility(bool visible) override;
         // sets the visibility of the hud minimap
-        void setMinimapVisibility(bool visible) override;
         void setWeaponVisibility(bool visible) override;
         void setSpellVisibility(bool visible) override;
         void setSneakVisibility(bool visible) override;

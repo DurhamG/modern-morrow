@@ -215,7 +215,6 @@ namespace MWBase
         virtual void setHMSVisibility(bool visible) = 0;
 
         /// sets the visibility of the hud minimap
-        virtual void setMinimapVisibility(bool visible) = 0;
         virtual void setWeaponVisibility(bool visible) = 0;
         virtual void setSpellVisibility(bool visible) = 0;
         virtual void setSneakVisibility(bool visible) = 0;
