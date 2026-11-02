@@ -7,9 +7,12 @@
 #include <MyGUI_RenderManager.h>
 #include <MyGUI_ScrollView.h>
 
+#include <cmath>
+
 #include <components/esm3/loadgmst.hpp>
 #include <components/esm3/loadmgef.hpp>
 #include <components/misc/resourcehelpers.hpp>
+#include <components/myguiplatform/scalinglayer.hpp>
 #include <components/resource/resourcesystem.hpp>
 #include <components/settings/values.hpp>
 
@@ -33,6 +36,12 @@
 
 namespace MWGui
 {
+    namespace
+    {
+        // At a HUD size of 1, the HUD is laid out as if the screen were this many pixels tall.
+        constexpr float sDesignHeight = 720.f;
+    }
+
     HUD::HUD(CustomMarkerCollection& customMarkers, DragAndDrop* dragAndDrop, MWRender::LocalMap* localMapRender)
         : WindowBase("openmw_hud.layout")
         , LocalMapBase(customMarkers, localMapRender, Settings::map().mLocalMapHudFogOfWar)
@@ -102,6 +111,8 @@ namespace MWGui
         mMainWidget->eventMouseLostFocus += MyGUI::newDelegate(this, &HUD::onWorldMouseLostFocus);
 
         mSpellIcons = std::make_unique<SpellIcons>();
+
+        updateSize();
     }
 
     HUD::~HUD()
@@ -518,6 +529,19 @@ namespace MWGui
         mWeapBox->setPosition(mWeapBoxBaseLeft - weapDx, mWeapBox->getTop());
         mSpellBox->setPosition(mSpellBoxBaseLeft - spellDx, mSpellBox->getTop());
         mSneakBox->setPosition(mSneakBoxBaseLeft - sneakDx, mSneakBox->getTop());
+    }
+
+    void HUD::onResChange(int /*width*/, int /*height*/)
+    {
+        // The HUD layer scales its contents, so the HUD fills the layer's own size rather than the screen's.
+        mMainWidget->setCoord(MyGUI::IntCoord(MyGUI::IntPoint(), mMainWidget->getLayer()->getSize()));
+    }
+
+    void HUD::updateSize()
+    {
+        if (auto* layer = dynamic_cast<MyGUIPlatform::ScalingLayer*>(mMainWidget->getLayer()))
+            layer->setFixedHeight(static_cast<int>(std::lround(sDesignHeight / Settings::hud().mSize.get())));
+        onResChange(0, 0);
     }
 
     void HUD::updateEnemyHealthBar()

@@ -1315,6 +1315,8 @@ namespace MWGui
                 mVideoWrapper->setSyncToVBlank(Settings::video().mVsyncMode);
             else if (setting.first == "Video" && (setting.second == "gamma" || setting.second == "contrast"))
                 mVideoWrapper->setGammaContrast(Settings::video().mGamma, Settings::video().mContrast);
+            else if (setting.first == "HUD" && setting.second == "size")
+                mHud->updateSize();
         }
 
         if (changeRes)

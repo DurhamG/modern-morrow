@@ -63,6 +63,11 @@ namespace MWGui
 
         void clear() override;
 
+        void onResChange(int width, int height) override;
+
+        /// Applies the "HUD size" setting.
+        void updateSize();
+
         void dropDraggedItem(float mouseX, float mouseY);
 
     private:

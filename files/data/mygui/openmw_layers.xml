@@ -4,7 +4,11 @@
     <Layer name="Scene" overlapped="false" pick="false"/>
     <Layer name="FadeToBlack" overlapped="false" pick="false"/>
     <Layer name="HitOverlay" type="AdditiveLayer" pick="false"/>
-    <Layer name="HUD" overlapped="false" pick="true"/>
+    <!-- The HUD keeps a constant size relative to the screen height. The HUD sets the height from the
+         "HUD size" setting. -->
+    <Layer name="HUD" type="ScalingLayer" pick="true">
+        <Property key="Height" value="720"/>
+    </Layer>
     <Layer name="JournalBooks" type="ScalingLayer" pick="true">
         <Property key="Size" value="600 520"/>
     </Layer>

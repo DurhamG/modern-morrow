@@ -19,6 +19,7 @@ namespace Settings
 
         SettingValue<bool> mCrosshair{ mIndex, "HUD", "crosshair" };
         SettingValue<bool> mMouseEmulationCursor{ mIndex, "HUD", "mouse emulation cursor" };
+        SettingValue<float> mSize{ mIndex, "HUD", "size", makeClampSanitizerFloat(0.25f, 4.f) };
     };
 }
 
