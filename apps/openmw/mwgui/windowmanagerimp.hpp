@@ -304,6 +304,8 @@ namespace MWGui
         MWWorld::Ptr getWatchedActor() const override;
 
         void executeInConsole(const std::filesystem::path& path) override;
+        void executeConsoleCommand(const std::string& command) override;
+        void setConsolePrintListener(std::function<void(const std::string&, std::string_view)> listener) override;
 
         void enableRest() override { mRestAllowed = true; }
         bool getRestEnabled() override;

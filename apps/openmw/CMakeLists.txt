@@ -117,7 +117,7 @@ add_openmw_dir (mwbase
     )
 
 add_openmw_dir (mwautomation
-    automation gamepad input json screenshot server
+    automation gamepad input json screenshot server uidump
     )
 
 # Main executable

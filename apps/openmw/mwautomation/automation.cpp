@@ -7,19 +7,24 @@
 
 #include <components/debug/debuglog.hpp>
 #include <components/files/conversion.hpp>
+#include <components/misc/strings/algorithm.hpp>
 #include <components/misc/strings/lower.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/statemanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
 #include "../mwgui/mode.hpp"
 
+#include "../mwworld/ptr.hpp"
+
 #include "gamepad.hpp"
 #include "input.hpp"
 #include "screenshot.hpp"
+#include "uidump.hpp"
 
 namespace MWAutomation
 {
@@ -126,6 +131,7 @@ namespace MWAutomation
     {
         registerHandlers();
         registerGamepadHandler();
+        registerScriptingHandlers();
     }
 
     Automation::~Automation() = default;
@@ -433,6 +439,147 @@ namespace MWAutomation
             }
             return sequence(std::move(steps));
         };
+    }
+
+    void Automation::registerScriptingHandlers()
+    {
+        // Runs a console command, in the legacy script language, or a "lua ..." console command. Waits "frames"
+        // frames (default 3) for output, and replies with the lines the console printed. Fails when the console
+        // printed an error.
+        mHandlers["console"] = [this](const Json& request) -> Poll {
+            const std::string command = request.getString("command");
+            if (command.empty())
+                throw std::runtime_error("console needs a \"command\"");
+            const std::uint64_t done = mFrame + static_cast<std::uint64_t>(request.getNumber("frames", 3));
+            beginConsoleCapture();
+            MWBase::Environment::get().getWindowManager()->executeConsoleCommand(command);
+            // The console echoes the command first. Leave that out of the reply.
+            if (!mConsoleOutput.empty() && mConsoleOutput.front().first.starts_with("> "))
+                mConsoleOutput.erase(mConsoleOutput.begin());
+            return [this, done]() -> std::optional<Json> {
+                if (mFrame < done)
+                    return std::nullopt;
+                return endConsoleCapture();
+            };
+        };
+
+        // Runs Lua code in the "player" (the default while a game is running), "global" or "menu" (the default at
+        // the main menu) context, the same way the console's Lua mode does. A lone expression's value is printed.
+        // Waits "frames" frames (default 3, or 6 for global) for output, and replies with the printed lines. Fails
+        // when the code raised an error.
+        mHandlers["lua"] = [this](const Json& request) -> Poll {
+            const std::string code = request.getString("code");
+            if (code.empty())
+                throw std::runtime_error("lua needs \"code\"");
+            const bool running
+                = MWBase::Environment::get().getStateManager()->getState() == MWBase::StateManager::State_Running;
+            const std::string context = request.getString("context", running ? "player" : "menu");
+            std::string enter;
+            std::string mode;
+            if (context == "player")
+            {
+                enter = "luap";
+                mode = "Lua[Player]";
+            }
+            else if (context == "global")
+            {
+                enter = "luag";
+                mode = "Lua[Global]";
+            }
+            else if (context == "menu")
+            {
+                enter = "luam";
+                mode = "Lua[Menu]";
+            }
+            else
+                throw std::runtime_error("\"context\" must be player, global or menu");
+            if (context != "menu" && !running)
+                throw std::runtime_error("the " + context + " context needs a running game");
+            const int frames = static_cast<int>(request.getNumber("frames", context == "global" ? 6 : 3));
+
+            // Entering Lua mode prints a message and changes the console's mode in a later frame, so run the code
+            // two frames after entering it.
+            MWBase::LuaManager& lua = *MWBase::Environment::get().getLuaManager();
+            lua.handleConsoleCommand("", enter, MWWorld::Ptr());
+            const std::uint64_t runFrame = mFrame + 2;
+            const std::uint64_t doneFrame = runFrame + frames;
+            bool started = false;
+            return [this, &lua, code, mode, runFrame, doneFrame, started]() mutable -> std::optional<Json> {
+                if (mFrame < runFrame)
+                    return std::nullopt;
+                if (!started)
+                {
+                    beginConsoleCapture();
+                    lua.handleConsoleCommand(mode, code, MWWorld::Ptr());
+                    started = true;
+                }
+                if (mFrame < doneFrame)
+                    return std::nullopt;
+                Json result;
+                try
+                {
+                    result = endConsoleCapture();
+                }
+                catch (...)
+                {
+                    lua.handleConsoleCommand(mode, "exit()", MWWorld::Ptr());
+                    throw;
+                }
+                lua.handleConsoleCommand(mode, "exit()", MWWorld::Ptr());
+                return result;
+            };
+        };
+
+        // Describes the widget tree. See uidump.hpp for the format. "hidden": true includes hidden widgets, "root"
+        // limits the dump to widgets with that name, and "depth" limits how deep it goes.
+        mHandlers["ui"] = [this](const Json& request) -> Poll {
+            UiDumpOptions options;
+            options.mHidden = request.getBool("hidden");
+            options.mRoot = request.getString("root");
+            options.mMaxDepth = static_cast<int>(request.getNumber("depth", 0));
+            return [this, options] {
+                Json result = dumpUi(options);
+                const Json state = describeState();
+                if (const Json* modes = state.find("modes"))
+                    result.set("modes", *modes);
+                return result;
+            };
+        };
+    }
+
+    void Automation::beginConsoleCapture()
+    {
+        if (mCapturingConsole)
+            throw std::runtime_error("another console or lua command is still running");
+        mCapturingConsole = true;
+        mConsoleOutput.clear();
+        MWBase::Environment::get().getWindowManager()->setConsolePrintListener(
+            [this](const std::string& text, std::string_view color) {
+                mConsoleOutput.emplace_back(
+                    text, Misc::StringUtils::ciEqual(color, MWBase::WindowManager::sConsoleColor_Error));
+            });
+    }
+
+    Json Automation::endConsoleCapture()
+    {
+        MWBase::Environment::get().getWindowManager()->setConsolePrintListener(nullptr);
+        mCapturingConsole = false;
+
+        Json lines = Json::array();
+        std::string errors;
+        for (auto& [text, isError] : mConsoleOutput)
+        {
+            std::string line = text;
+            while (!line.empty() && (line.back() == '\n' || line.back() == '\r'))
+                line.pop_back();
+            if (isError)
+                errors += (errors.empty() ? "" : "\n") + line;
+            lines.push(std::move(line));
+        }
+        mConsoleOutput.clear();
+        if (!errors.empty())
+            throw std::runtime_error(errors);
+        return Json::object({ { "output", std::move(lines) } });
     }
 
     SDL_Keymod Automation::parseModifiers(const Json& request)

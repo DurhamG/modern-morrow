@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <functional>
 #include <map>
 #include <memory>
 #include <set>
@@ -281,6 +282,13 @@ namespace MWBase
         virtual void processChangedSettings(const std::set<std::pair<std::string, std::string>>& changed) = 0;
 
         virtual void executeInConsole(const std::filesystem::path& path) = 0;
+
+        /// Runs one command as if it was typed into the console.
+        virtual void executeConsoleCommand(const std::string& command) = 0;
+
+        /// Calls the listener with every message printed to the console, and its color. An empty function removes
+        /// the listener.
+        virtual void setConsolePrintListener(std::function<void(const std::string&, std::string_view)> listener) = 0;
 
         virtual void enableRest() = 0;
         virtual bool getRestEnabled() = 0;

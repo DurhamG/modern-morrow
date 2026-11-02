@@ -210,6 +210,8 @@ namespace MWGui
     void Console::print(const std::string& msg, std::string_view color)
     {
         mHistory->addText(std::string(color) + MyGUI::TextIterator::toTagsString(msg));
+        if (mPrintListener)
+            mPrintListener(msg, color);
     }
 
     void Console::printOK(const std::string& msg)
