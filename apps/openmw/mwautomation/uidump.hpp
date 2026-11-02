@@ -18,7 +18,8 @@ namespace MWAutomation
     };
 
     // Describes the MyGUI widget tree. Each widget has its type, its name when it has one, and "rect": [x, y, width,
-    // height] in window pixels from the top left. Widgets that show text also have "text", "font" and "fontHeight".
+    // height] in window pixels from the top left. Widgets on layers that scale their contents, such as the HUD, are
+    // converted to window pixels too. Widgets that show text also have "text", "font" and "fontHeight".
     // "disabled", "keyFocus" and "mouseFocus" appear only when true. The result also names the widgets that have key
     // and mouse focus.
     Json dumpUi(const UiDumpOptions& options);

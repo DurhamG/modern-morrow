@@ -9,6 +9,8 @@
 #include <MyGUI_TextBox.h>
 #include <MyGUI_Widget.h>
 
+#include <components/myguiplatform/scalinglayer.hpp>
+
 namespace MWAutomation
 {
     namespace
@@ -31,6 +33,9 @@ namespace MWAutomation
             const UiDumpOptions& mOptions;
             MyGUI::Widget* mKeyFocus;
             MyGUI::Widget* mMouseFocus;
+            // Set while describing widgets on a layer that scales its contents, whose coordinates are not window
+            // pixels.
+            const MyGUIPlatform::ScalingLayer* mScalingLayer = nullptr;
         };
 
         Json describe(MyGUI::Widget* widget, const Context& context, int depth)
@@ -38,7 +43,9 @@ namespace MWAutomation
             Json node = Json::object({ { "type", widget->getTypeName() } });
             if (!widget->getName().empty())
                 node.set("name", stripLayoutPrefix(widget->getName()));
-            const MyGUI::IntCoord coord = widget->getAbsoluteCoord();
+            MyGUI::IntCoord coord = widget->getAbsoluteCoord();
+            if (context.mScalingLayer != nullptr)
+                coord = context.mScalingLayer->layerToScreenCoords(coord);
             node.set("rect", Json::array({ coord.left, coord.top, coord.width, coord.height }));
 
             if (MyGUI::TextBox* text = widget->castType<MyGUI::TextBox>(false))
@@ -106,7 +113,7 @@ namespace MWAutomation
     Json dumpUi(const UiDumpOptions& options)
     {
         MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
-        const Context context{ options, input.getKeyFocusWidget(), input.getMouseFocusWidget() };
+        Context context{ options, input.getKeyFocusWidget(), input.getMouseFocusWidget() };
 
         std::vector<MyGUI::Widget*> roots;
         MyGUI::EnumeratorWidgetPtr enumerator = MyGUI::Gui::getInstance().getEnumerator();
@@ -122,6 +129,7 @@ namespace MWAutomation
         Json widgets = Json::array();
         for (MyGUI::Widget* root : roots)
         {
+            context.mScalingLayer = dynamic_cast<const MyGUIPlatform::ScalingLayer*>(root->getLayer());
             Json node = describe(root, context, 0);
             if (MyGUI::ILayer* layer = root->getLayer())
                 node.set("layer", layer->getName());
