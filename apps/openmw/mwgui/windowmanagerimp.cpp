@@ -1721,6 +1721,16 @@ namespace MWGui
         mConsole->executeFile(path);
     }
 
+    void WindowManager::executeConsoleCommand(const std::string& command)
+    {
+        mConsole->execute(command);
+    }
+
+    void WindowManager::setConsolePrintListener(std::function<void(const std::string&, std::string_view)> listener)
+    {
+        mConsole->setPrintListener(std::move(listener));
+    }
+
     std::vector<MWGui::WindowBase*> WindowManager::getGuiModeWindows(GuiMode mode)
     {
         return mGuiModeStates[mode].mWindows;

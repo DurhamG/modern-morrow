@@ -65,9 +65,18 @@ namespace MWAutomation
         std::uint64_t mFrame = 0;
         std::unordered_map<std::string, Handler> mHandlers;
         std::vector<Pending> mPending;
+        bool mCapturingConsole = false;
+        // Each printed message, and whether it was printed as an error.
+        std::vector<std::pair<std::string, bool>> mConsoleOutput;
 
         void registerHandlers();
         void registerGamepadHandler();
+        void registerScriptingHandlers();
+
+        // Collects what the console prints until endConsoleCapture(), which returns {"output": [lines]}. It throws
+        // with the error lines instead if any were printed.
+        void beginConsoleCapture();
+        Json endConsoleCapture();
 
         // Runs each step at its frame offset from now, then finishes. Offset 0 runs straight away.
         Poll sequence(std::vector<std::pair<int, std::function<void()>>> steps);

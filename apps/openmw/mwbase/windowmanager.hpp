@@ -298,6 +298,13 @@ namespace MWBase
         /// step does when the player is done with it.
         virtual void finishCharGenStep(MWGui::GuiMode mode) = 0;
 
+        /// Runs one command as if it was typed into the console.
+        virtual void executeConsoleCommand(const std::string& command) = 0;
+
+        /// Calls the listener with every message printed to the console, and its color. An empty function removes
+        /// the listener.
+        virtual void setConsolePrintListener(std::function<void(const std::string&, std::string_view)> listener) = 0;
+
         virtual void enableRest() = 0;
         virtual bool getRestEnabled() = 0;
         virtual bool getJournalAllowed() = 0;

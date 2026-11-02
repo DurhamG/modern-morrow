@@ -62,6 +62,12 @@ namespace MWGui
 
         void executeFile(const std::filesystem::path& path);
 
+        // Called with every message printed to the console, and its color. An empty function removes the listener.
+        void setPrintListener(std::function<void(const std::string&, std::string_view)> listener)
+        {
+            mPrintListener = std::move(listener);
+        }
+
         void updateSelectedObjectPtr(const MWWorld::Ptr& currentPtr, const MWWorld::Ptr& newPtr);
 
         void onFrame(float dt) override { checkReferenceAvailable(); }
@@ -77,6 +83,7 @@ namespace MWGui
 
     private:
         std::string mConsoleMode;
+        std::function<void(const std::string&, std::string_view)> mPrintListener;
 
         void updateConsoleTitle();
 
