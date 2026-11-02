@@ -95,6 +95,23 @@ namespace MWGui
         // bottom left elements
         int mHealthManaStaminaBaseLeft, mWeapBoxBaseLeft, mSpellBoxBaseLeft, mSneakBoxBaseLeft;
 
+        // Fades a widget, and its children, toward fully shown or fully hidden.
+        struct Fader
+        {
+            MyGUI::Widget* mWidget = nullptr;
+            float mAlpha = 1.f;
+
+            void update(bool shown, float dt);
+        };
+
+        Fader mHealthFader, mMagickaFader, mFatigueFader, mWeaponFader, mSpellFader;
+        bool mHealthFull = false;
+        bool mMagickaFull = false;
+        bool mFatigueFull = false;
+        float mWeaponShowTimer = 0.f;
+        float mSpellShowTimer = 0.f;
+        float mCombatCheckTimer = 0.f;
+        bool mInCombat = false;
 
         float mCellNameTimer = 0.f;
         float mEnemyHealthTimer = -1;

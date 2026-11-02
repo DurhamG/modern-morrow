@@ -7,6 +7,7 @@
 #include <MyGUI_RenderManager.h>
 #include <MyGUI_ScrollView.h>
 
+#include <algorithm>
 #include <cmath>
 
 #include <components/esm3/loadgmst.hpp>
@@ -18,11 +19,13 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
+#include "../mwbase/statemanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
+#include "../mwworld/player.hpp"
 #include "../mwworld/worldmodel.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
@@ -40,6 +43,32 @@ namespace MWGui
     {
         // At a HUD size of 1, the HUD is laid out as if the screen were this many pixels tall.
         constexpr float sDesignHeight = 720.f;
+
+        // How long HUD elements take to fade in or out, in seconds.
+        constexpr float sFadeTime = 0.4f;
+
+        // How long the weapon or spell box stays on screen after the selection changes.
+        constexpr float sShowAfterChangeTime = 5.f;
+
+        // How long the cell name stays on screen after entering a cell.
+        constexpr float sCellNameTime = 5.f;
+
+        // How often to check whether the player is in combat, in seconds.
+        constexpr float sCombatCheckInterval = 0.5f;
+
+        // The opacity of something that is shown for a limited time: it fades in when the time starts and fades
+        // out as the time runs out.
+        float timedAlpha(float timeLeft, float totalTime)
+        {
+            return std::clamp(std::min(timeLeft, totalTime - timeLeft) / sFadeTime, 0.f, 1.f);
+        }
+    }
+
+    void HUD::Fader::update(bool shown, float dt)
+    {
+        const float step = dt / sFadeTime;
+        mAlpha = shown ? std::min(1.f, mAlpha + step) : std::max(0.f, mAlpha - step);
+        mWidget->setAlpha(mAlpha);
     }
 
     HUD::HUD(CustomMarkerCollection& customMarkers, DragAndDrop* dragAndDrop, MWRender::LocalMap* localMapRender)
@@ -82,6 +111,12 @@ namespace MWGui
         getWidget(mSpellStatus, "SpellStatus");
         mSpellBoxBaseLeft = mSpellBox->getLeft();
         mSpellBox->eventMouseButtonClick += MyGUI::newDelegate(this, &HUD::onMagicClicked);
+
+        mHealthFader.mWidget = healthFrame;
+        mMagickaFader.mWidget = magickaFrame;
+        mFatigueFader.mWidget = fatigueFrame;
+        mWeaponFader.mWidget = mWeapBox;
+        mSpellFader.mWidget = mSpellBox;
 
         getWidget(mSneakBox, "SneakBox");
         mSneakBoxBaseLeft = mSneakBox->getLeft();
@@ -132,8 +167,11 @@ namespace MWGui
 
         MyGUI::Widget* w;
         std::string valStr = MyGUI::utility::toString(current) + " / " + MyGUI::utility::toString(modified);
+        // A full bar has nothing to tell the player, so it fades out.
+        const bool full = current >= modified;
         if (id == "HBar")
         {
+            mHealthFull = full;
             mHealth->setProgressRange(std::max(0, modified));
             mHealth->setProgressPosition(std::max(0, current));
             getWidget(w, "HealthFrame");
@@ -141,6 +179,7 @@ namespace MWGui
         }
         else if (id == "MBar")
         {
+            mMagickaFull = full;
             mMagicka->setProgressRange(std::max(0, modified));
             mMagicka->setProgressPosition(std::max(0, current));
             getWidget(w, "MagickaFrame");
@@ -148,6 +187,7 @@ namespace MWGui
         }
         else if (id == "FBar")
         {
+            mFatigueFull = full;
             mStamina->setProgressRange(std::max(0, modified));
             mStamina->setProgressPosition(std::max(0, current));
             getWidget(w, "FatigueFrame");
@@ -295,7 +335,7 @@ namespace MWGui
     {
         if (mCellName != cellName)
         {
-            mCellNameTimer = 5.0f;
+            mCellNameTimer = sCellNameTime;
             mCellName = cellName;
 
             mCellNameBox->setCaptionWithReplacing("#{sCell=" + mCellName + "}");
@@ -310,6 +350,36 @@ namespace MWGui
         mCellNameTimer -= dt;
         if (mCellNameTimer < 0)
             mCellNameBox->setVisible(false);
+        mCellNameBox->setAlpha(timedAlpha(mCellNameTimer, sCellNameTime));
+
+        // The weapon and spell boxes show while the weapon or spell is ready, and for a while after it changes.
+        mWeaponShowTimer -= dt;
+        mSpellShowTimer -= dt;
+        MWMechanics::DrawState drawState = MWMechanics::DrawState::Nothing;
+        if (MWBase::Environment::get().getStateManager()->getState() == MWBase::StateManager::State_Running)
+        {
+            const MWWorld::Ptr player = MWMechanics::getPlayer();
+            drawState = player.getClass().getCreatureStats(player).getDrawState();
+
+            // Finding who is fighting the player means looking at every nearby actor, so don't do it every frame.
+            mCombatCheckTimer -= dt;
+            if (mCombatCheckTimer <= 0)
+            {
+                mCombatCheckTimer = sCombatCheckInterval;
+                mInCombat = MWBase::Environment::get().getWorld()->getPlayer().isInCombat();
+            }
+        }
+        else
+            mInCombat = false;
+
+        // During combat everything stays on screen, including an enemy the player attacked first.
+        const bool showAll = mInCombat || mEnemyHealth->getVisible();
+        mWeaponFader.update(showAll || drawState == MWMechanics::DrawState::Weapon || mWeaponShowTimer > 0, dt);
+        mSpellFader.update(showAll || drawState == MWMechanics::DrawState::Spell || mSpellShowTimer > 0, dt);
+
+        mHealthFader.update(showAll || !mHealthFull, dt);
+        mMagickaFader.update(showAll || !mMagickaFull, dt);
+        mFatigueFader.update(showAll || !mFatigueFull, dt);
 
         mEnemyHealthTimer -= dt;
         if (mEnemyHealth->getVisible() && mEnemyHealthTimer < 0)
@@ -343,6 +413,7 @@ namespace MWGui
         const std::string& spellName = spell->mName;
         if (spellName != mSpellName && mSpellVisible)
         {
+            mSpellShowTimer = sShowAfterChangeTime;
             mSpellName = spellName;
         }
 
@@ -371,6 +442,7 @@ namespace MWGui
         std::string_view itemName = item.getClass().getName(item);
         if (itemName != mSpellName && mSpellVisible)
         {
+            mSpellShowTimer = sShowAfterChangeTime;
             mSpellName = itemName;
         }
 
@@ -388,6 +460,7 @@ namespace MWGui
         std::string_view itemName = item.getClass().getName(item);
         if (itemName != mWeaponName && mWeaponVisible)
         {
+            mWeaponShowTimer = sShowAfterChangeTime;
             mWeaponName = itemName;
         }
 
@@ -406,6 +479,7 @@ namespace MWGui
         std::string_view spellName = "#{Interface:None}";
         if (spellName != mSpellName && mSpellVisible)
         {
+            mSpellShowTimer = sShowAfterChangeTime;
             mSpellName = spellName;
         }
 
@@ -421,6 +495,7 @@ namespace MWGui
         std::string itemName = "#{sSkillHandtohand}";
         if (itemName != mWeaponName && mWeaponVisible)
         {
+            mWeaponShowTimer = sShowAfterChangeTime;
             mWeaponName = itemName;
         }
 
