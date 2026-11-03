@@ -90,4 +90,7 @@
 
 - During controller conversations, the camera turns to frame the NPC's face above the panel, and turns back when the conversation ends.
 
-Next: the user reviews the camera framing.
+- The camera framing in conversations only happens in first person. In third person the camera looked steeply down past the player's head.
+- Replaced the menu the start button opens during a game, in controller menus mode. It's a panel in the style of the other screens, over a darkened view of the game, with Save, Load, Options and Exit. B returns to the game. The `controller-pause-menu` scenario covers it. The save dialog, the options and the exit confirmation still use the old windows.
+
+Next: the user reviews the pause menu.

@@ -22,6 +22,7 @@ namespace MWGui
 {
 
     class BackgroundImage;
+    class PauseMenu;
     class VideoWidget;
     class MenuVideo
     {
@@ -48,6 +49,7 @@ namespace MWGui
 
     public:
         MainMenu(int w, int h, const VFS::Manager* vfs, const std::string& versionDescription);
+        ~MainMenu() override;
 
         void onResChange(int w, int h) override;
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
@@ -79,6 +81,10 @@ namespace MWGui
         void updateMenu();
 
         std::unique_ptr<SaveGameDialog> mSaveGameDialog;
+
+        // In controller menus mode, the menu during a game is drawn by this instead of the image buttons.
+        std::unique_ptr<PauseMenu> mPauseMenu;
+        bool usePauseMenu() const;
     };
 
 }

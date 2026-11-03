@@ -1,0 +1,32 @@
+# The pause menu in controller menus mode, opened with the start button during a game. A new game has no saves, so
+# the menu has Save, Options and Exit. It opens the save dialog, the options and the exit confirmation, then closes
+# with B.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+pad button=start
+wait frames=10
+shot pause-menu
+pad button=dpdown
+wait frames=5
+shot pause-menu-options
+pad button=dpup
+pad button=a
+wait frames=10
+shot save-dialog
+pad button=b
+wait frames=10
+pad button=dpdown
+pad button=a
+wait frames=10
+shot options
+pad button=b
+wait frames=10
+shot after-options
+pad button=dpdown
+pad button=a
+wait frames=10
+shot exit-confirmation
+pad button=b
+wait frames=10
+pad button=b
+wait frames=10
+shot returned

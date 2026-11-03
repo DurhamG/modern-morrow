@@ -20,6 +20,7 @@
 
 #include "backgroundimage.hpp"
 #include "confirmationdialog.hpp"
+#include "pausemenu.hpp"
 #include "savegamedialog.hpp"
 #include "settingswindow.hpp"
 #include "videowidget.hpp"
@@ -113,8 +114,18 @@ namespace MWGui
 
         mHasAnimatedMenu = mVFS->exists(menuBackgroundVideo);
         mDisableGamepadCursor = Settings::gui().mControllerMenus;
+        if (Settings::gui().mControllerMenus)
+            mPauseMenu = std::make_unique<PauseMenu>();
 
         updateMenu();
+    }
+
+    MainMenu::~MainMenu() = default;
+
+    bool MainMenu::usePauseMenu() const
+    {
+        return mPauseMenu != nullptr
+            && MWBase::Environment::get().getStateManager()->getState() == MWBase::StateManager::State_Running;
     }
 
     void MainMenu::onResChange(int w, int h)
@@ -137,6 +148,9 @@ namespace MWGui
 
         showBackground(isMainMenu);
 
+        if (mPauseMenu != nullptr && !(visible && usePauseMenu()))
+            mPauseMenu->hide();
+
         if (visible)
         {
             if (isMainMenu)
@@ -151,6 +165,10 @@ namespace MWGui
         }
 
         Layout::setVisible(visible);
+
+        // The pause menu shows once the main menu is visible.
+        if (visible && usePauseMenu())
+            updateMenu();
     }
 
     void MainMenu::onNewGameConfirmed()
@@ -216,6 +234,14 @@ namespace MWGui
 
     bool MainMenu::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPauseMenu != nullptr && mPauseMenu->isVisible())
+        {
+            const std::string item = mPauseMenu->onControllerButtonEvent(arg);
+            if (!item.empty())
+                onButtonClicked(mButtons[item]);
+            return true;
+        }
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::Space, 0, false);
@@ -279,10 +305,12 @@ namespace MWGui
         }
     }
 
-    void MainMenu::onFrame(float)
+    void MainMenu::onFrame(float duration)
     {
         if (mVideo)
             mVideo->commitFrame();
+        if (mPauseMenu != nullptr && MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() == this)
+            mPauseMenu->onFrame(duration);
     }
 
     bool MainMenu::exit()
@@ -312,10 +340,13 @@ namespace MWGui
 
         std::vector<std::string> buttons;
 
-        if (state == MWBase::StateManager::State_Running)
+        // The pause menu in controller menus mode has no Return or New, since B returns to the game.
+        const bool pauseMenu = usePauseMenu();
+        if (state == MWBase::StateManager::State_Running && !pauseMenu)
             buttons.emplace_back("return");
 
-        buttons.emplace_back("newgame");
+        if (!pauseMenu)
+            buttons.emplace_back("newgame");
 
         if (state == MWBase::StateManager::State_Running
             && MWBase::Environment::get().getWorld()->getGlobalInt(MWWorld::Globals::sCharGenState) == -1
@@ -382,6 +413,15 @@ namespace MWGui
                 static_cast<int>(requested.width / scale), static_cast<int>(height / scale - 16));
             curH += static_cast<int>(height / scale - 16);
         }
+
+        if (pauseMenu)
+        {
+            mButtonBox->setVisible(false);
+            if (isVisible())
+                mPauseMenu->show(buttons);
+            return;
+        }
+        mButtonBox->setVisible(true);
 
         if (state == MWBase::StateManager::State_NoGame)
         {

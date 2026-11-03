@@ -46,6 +46,7 @@ Done so far:
 - **Map.** The bottom button bar is gone from all menus. The map has Local and World tabs like the other screens, fills the screen below them, shows its own button hints, pans with the right stick, and shows 7x7 cells when distant terrain is on.
 - **Magic.** A new screen with tabs for recent spells, an Active tab with the effects on the character and the spell ready to cast, and tabs for spells, powers, magic items and scrolls. Every entry writes out its effects. See [design/magic.md](design/magic.md).
 - **Dialogue.** An opaque panel along the bottom of the screen, with the NPC in view above it. New topics come first, services have their own tab, and replies to choices replace the topics. See [design/dialogue.md](design/dialogue.md).
+- **Pause menu.** The start button's menu during a game lists Save, Load, Options and Exit in a panel over a darkened view of the game. B returns to the game.
 - **Stats.** A new screen with Character, Skills and Factions tabs. The Character tab shows the character as tiles, with each attribute's bonus at the next level up. Everything can be selected for its details. See [design/stats.md](design/stats.md).
 
 ### Phase 3: make the changes clean enough to upstream
