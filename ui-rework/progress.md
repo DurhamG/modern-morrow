@@ -43,7 +43,7 @@
 - The user's 2026 Steam Controller only works under Steam Input, so `omw.py launch --steam` starts the game through a Steam shortcut.
 - Reworked the map screen with the user, in controller menus mode:
   - The button hint bar along the bottom of every menu is gone. Windows will show their own hints where they need them.
-  - The map fills the height below the tab bar. Its width is the 3x3 active grid, so some of the game world shows at each side.
+  - The map fills the screen below the tab bar, with no window frame, like the inventory screen.
   - The map shows "Y Center" and "X World" hints in its bottom left corner. The World button is hidden in this mode.
   - The map has an opaque black background, and the world map scales to fit the window.
   - The right stick pans the local map smoothly.

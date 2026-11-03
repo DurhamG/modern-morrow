@@ -1515,16 +1515,17 @@ namespace MWGui
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         if (winMgr->getMode() == MWGui::GM_Inventory)
         {
-            // Fill the height below the tab bar. Limit the width to the active grid of cells around the player, so
-            // some of the game world still shows at each side even when the local map covers more cells.
-            MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-            MyGUI::IntSize borderSize = mMainWidget->getSize() - mMainWidget->getClientWidget()->getSize();
-            const int activeGridWidth = static_cast<int>((2 * Constants::CellGridRadius + 1) * getWidgetSize());
+            // Fill the screen below the tab bar, as the inventory does. The window's frame and title bar sit just
+            // outside that area, off the screen's edges and under the tab bar, so only the map shows.
+            const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            const MyGUI::IntCoord client = mMainWidget->getClientWidget()->getCoord();
+            const MyGUI::IntSize borderSize = mMainWidget->getSize() - client.size();
+            const int mapHeight = winMgr->getControllerMenuHeight();
 
-            int width = std::min(viewSize.width, activeGridWidth + borderSize.width);
-            int height = winMgr->getControllerMenuHeight();
-            int x = (viewSize.width - width) / 2;
-            int y = viewSize.height - height;
+            const int width = viewSize.width + borderSize.width;
+            const int height = mapHeight + borderSize.height;
+            const int x = -client.left;
+            const int y = viewSize.height - mapHeight - client.top;
 
             MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>();
             window->setCoord(x, active ? y : viewSize.height + 1, width, height);
