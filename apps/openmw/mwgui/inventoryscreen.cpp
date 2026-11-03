@@ -12,10 +12,7 @@
 #include <components/esm3/loadarmo.hpp>
 #include <components/esm3/loadbook.hpp>
 #include <components/esm3/loadclot.hpp>
-#include <components/esm3/loadcrea.hpp>
-#include <components/esm3/loadench.hpp>
 #include <components/esm3/loadingr.hpp>
-#include <components/esm3/loadligh.hpp>
 #include <components/esm3/loadlock.hpp>
 #include <components/esm3/loadmisc.hpp>
 #include <components/esm3/loadprob.hpp>
@@ -26,14 +23,10 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
 #include "../mwbase/luamanager.hpp"
-#include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
-#include "../mwmechanics/magiceffects.hpp"
-#include "../mwmechanics/npcstats.hpp"
-#include "../mwmechanics/weapontype.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
@@ -44,6 +37,7 @@
 #include "countdialog.hpp"
 #include "formatting.hpp"
 #include "inventoryitemmodel.hpp"
+#include "itemdetails.hpp"
 #include "worlditemmodel.hpp"
 
 namespace MWGui
@@ -51,6 +45,7 @@ namespace MWGui
     namespace
     {
         using namespace ControllerUi;
+        using namespace ItemDetails;
         using Inventory = MWWorld::InventoryStore;
 
         constexpr int sRowHeight = 42;
@@ -133,151 +128,6 @@ namespace MWGui
             return *MWBase::Environment::get().getESMStore();
         }
 
-        bool isAmmunition(const ESM::Weapon& weapon)
-        {
-            const ESM::WeaponType* type = MWMechanics::getWeaponType(weapon.mData.mType);
-            return type != nullptr && type->mWeaponClass == ESM::WeaponType::Ammo;
-        }
-
-        std::pair<int, int> bestAttack(const ESM::Weapon& weapon)
-        {
-            std::pair<int, int> best(weapon.mData.mChop[0], weapon.mData.mChop[1]);
-            for (const auto& attack : { weapon.mData.mSlash, weapon.mData.mThrust })
-                if (attack[1] > best.second)
-                    best = { attack[0], attack[1] };
-            return best;
-        }
-
-        std::string rangeText(int low, int high)
-        {
-            return std::to_string(low) + "-" + std::to_string(high);
-        }
-
-        std::string effectName(const ESM::RefId& effect, const ESM::RefId& skill, const ESM::RefId& attribute)
-        {
-            return MWMechanics::EffectKey(effect, skill.empty() ? attribute : skill).toString();
-        }
-
-        std::vector<std::string> enchantmentEffects(const ESM::RefId& enchantment)
-        {
-            std::vector<std::string> names;
-            if (enchantment.empty())
-                return names;
-            const ESM::Enchantment* record = store().get<ESM::Enchantment>().search(enchantment);
-            if (record == nullptr)
-                return names;
-            for (const ESM::IndexedENAMstruct& effect : record->mEffects.mList)
-                names.push_back(MWMechanics::EffectKey(effect.mData).toString());
-            return names;
-        }
-
-        // The effects the player can see, as the alchemy rules allow for ingredients.
-        std::vector<std::string> itemEffects(const MWWorld::Ptr& ptr)
-        {
-            std::vector<std::string> names;
-            const unsigned int type = ptr.getType();
-            if (type == ESM::Potion::sRecordId)
-            {
-                for (const ESM::IndexedENAMstruct& effect : ptr.get<ESM::Potion>()->mBase->mEffects.mList)
-                    names.push_back(MWMechanics::EffectKey(effect.mData).toString());
-            }
-            else if (type == ESM::Ingredient::sRecordId)
-            {
-                const ESM::Ingredient& ingredient = *ptr.get<ESM::Ingredient>()->mBase;
-                const MWWorld::Ptr actor = player();
-                const float alchemy = actor.getClass().getSkill(actor, ESM::Skill::Alchemy);
-                const float wortChance
-                    = store().get<ESM::GameSetting>().find("fWortChanceValue")->mValue.getFloat();
-                const int known = wortChance > 0 ? static_cast<int>(alchemy / wortChance) : 4;
-                for (int i = 0; i < 4; ++i)
-                {
-                    if (ingredient.mData.mEffectID[i].empty())
-                        continue;
-                    if (i < known)
-                        names.push_back(effectName(ingredient.mData.mEffectID[i], ingredient.mData.mSkills[i],
-                            ingredient.mData.mAttributes[i]));
-                    else
-                        names.emplace_back("?");
-                }
-            }
-            else
-                names = enchantmentEffects(ptr.getClass().getEnchantment(ptr));
-            return names;
-        }
-
-        bool isSkillBookUnread(const MWWorld::Ptr& ptr)
-        {
-            if (ptr.getType() != ESM::Book::sRecordId)
-                return false;
-            const ESM::Book& book = *ptr.get<ESM::Book>()->mBase;
-            if (book.mData.mSkillId.empty())
-                return false;
-            const MWWorld::Ptr actor = player();
-            return !actor.getClass().getNpcStats(actor).hasBeenUsed(book.mId);
-        }
-
-        bool isStolen(const MWWorld::Ptr& ptr)
-        {
-            return !MWBase::Environment::get()
-                        .getMechanicsManager()
-                        ->getStolenItemOwners(ptr.getCellRef().getRefId())
-                        .empty();
-        }
-
-        // A short description of the item, such as "Long Blade" or "Medium armor".
-        std::string describe(const MWWorld::Ptr& ptr)
-        {
-            const unsigned int type = ptr.getType();
-            if (type == ESM::Weapon::sRecordId)
-            {
-                const ESM::WeaponType* weaponType
-                    = MWMechanics::getWeaponType(ptr.get<ESM::Weapon>()->mBase->mData.mType);
-                if (weaponType != nullptr)
-                    if (const ESM::Skill* skill = store().get<ESM::Skill>().search(weaponType->mSkill))
-                        return skill->mName;
-                return "#{sWeapon}";
-            }
-            if (type == ESM::Armor::sRecordId)
-            {
-                const ESM::RefId skill = ptr.getClass().getEquipmentSkill(ptr);
-                if (skill == ESM::Skill::LightArmor)
-                    return "#{sLight}";
-                if (skill == ESM::Skill::MediumArmor)
-                    return "#{sMedium}";
-                return "#{sHeavy}";
-            }
-            if (type == ESM::Clothing::sRecordId)
-                return "#{Interface:InventoryKindClothing}";
-            if (type == ESM::Potion::sRecordId)
-                return "#{Interface:InventoryKindPotion}";
-            if (type == ESM::Ingredient::sRecordId)
-                return "#{sIngredients}";
-            if (type == ESM::Book::sRecordId)
-            {
-                const ESM::Book& book = *ptr.get<ESM::Book>()->mBase;
-                if (!book.mEnchant.empty())
-                    return "#{Interface:InventoryKindScroll}";
-                if (const ESM::Skill* skill = store().get<ESM::Skill>().search(book.mData.mSkillId))
-                    return "#{Interface:InventoryKindSkillBook}: " + skill->mName;
-                return "#{Interface:InventoryKindBook}";
-            }
-            if (type == ESM::Lockpick::sRecordId)
-                return "#{Interface:InventoryKindLockpick}";
-            if (type == ESM::Probe::sRecordId)
-                return "#{Interface:InventoryKindProbe}";
-            if (type == ESM::Repair::sRecordId)
-                return "#{Interface:InventoryKindRepair}";
-            if (type == ESM::Apparatus::sRecordId)
-                return "#{Interface:InventoryKindApparatus}";
-            if (type == ESM::Light::sRecordId)
-                return "#{Interface:InventoryKindLight}";
-            if (ptr.getClass().isSoulGem(ptr))
-                return "#{Interface:InventoryKindSoulGem}";
-            if (ptr.getClass().isKey(ptr))
-                return "#{Interface:InventoryKindKey}";
-            return "#{Interface:InventoryKindMisc}";
-        }
-
         enum class Stat
         {
             Armor,
@@ -305,21 +155,6 @@ namespace MWGui
             int mWidth;
         };
 
-        // The quality of a lockpick, probe, repair tool or alchemy apparatus, or -1 for other items.
-        float toolQuality(const MWWorld::Ptr& ptr)
-        {
-            const unsigned int type = ptr.getType();
-            if (type == ESM::Lockpick::sRecordId)
-                return ptr.get<ESM::Lockpick>()->mBase->mData.mQuality;
-            if (type == ESM::Probe::sRecordId)
-                return ptr.get<ESM::Probe>()->mBase->mData.mQuality;
-            if (type == ESM::Repair::sRecordId)
-                return ptr.get<ESM::Repair>()->mBase->mData.mQuality;
-            if (type == ESM::Apparatus::sRecordId)
-                return ptr.get<ESM::Apparatus>()->mBase->mData.mQuality;
-            return -1.f;
-        }
-
         std::string statText(Stat stat, const ItemStack& item)
         {
             const MWWorld::Ptr& ptr = item.mBase;
@@ -329,7 +164,7 @@ namespace MWGui
                 case Stat::Armor:
                     if (type != ESM::Armor::sRecordId)
                         return "-";
-                    return formatNumber(std::floor(ptr.getClass().getSkillAdjustedArmorRating(ptr, player(), true)));
+                    return formatNumber(armorRating(ptr));
                 case Stat::Damage:
                 {
                     if (type != ESM::Weapon::sRecordId)
@@ -365,83 +200,6 @@ namespace MWGui
                     return escaped(ptr.getClass().getName(ptr));
             }
             return {};
-        }
-
-        // A row in the details panel. Numbers are compared with the equipped item's, where there is one.
-        struct DetailRow
-        {
-            std::string mLabel;
-            std::string mValue;
-            float mNumber = 0;
-            bool mComparable = false;
-            bool mHigherIsBetter = true;
-        };
-
-        DetailRow numberRow(std::string label, float value, bool higherIsBetter = true)
-        {
-            return DetailRow{ std::move(label), formatNumber(value), value, true, higherIsBetter };
-        }
-
-        DetailRow rangeRow(std::string label, int low, int high)
-        {
-            return DetailRow{ std::move(label), rangeText(low, high), static_cast<float>(high), true, true };
-        }
-
-        std::vector<DetailRow> detailRows(const MWWorld::Ptr& ptr)
-        {
-            std::vector<DetailRow> rows;
-            const MWWorld::Class& cls = ptr.getClass();
-            const unsigned int type = ptr.getType();
-            if (type == ESM::Weapon::sRecordId)
-            {
-                const ESM::Weapon& weapon = *ptr.get<ESM::Weapon>()->mBase;
-                const ESM::WeaponType* weaponType = MWMechanics::getWeaponType(weapon.mData.mType);
-                const bool melee = weaponType == nullptr || weaponType->mWeaponClass == ESM::WeaponType::Melee;
-                if (melee)
-                {
-                    rows.push_back(rangeRow("#{sChop}", weapon.mData.mChop[0], weapon.mData.mChop[1]));
-                    rows.push_back(rangeRow("#{sSlash}", weapon.mData.mSlash[0], weapon.mData.mSlash[1]));
-                    rows.push_back(rangeRow("#{sThrust}", weapon.mData.mThrust[0], weapon.mData.mThrust[1]));
-                }
-                else
-                    rows.push_back(rangeRow("#{sAttack}", weapon.mData.mChop[0], weapon.mData.mChop[1]));
-                if (!isAmmunition(weapon))
-                {
-                    rows.push_back(numberRow("#{Interface:InventoryColumnSpeed}", weapon.mData.mSpeed));
-                    if (melee)
-                        rows.push_back(numberRow("#{sRange}", weapon.mData.mReach));
-                }
-            }
-            if (type == ESM::Armor::sRecordId)
-                rows.push_back(numberRow(
-                    "#{sArmorRating}", std::floor(cls.getSkillAdjustedArmorRating(ptr, player(), true))));
-            if (type == ESM::Lockpick::sRecordId || type == ESM::Probe::sRecordId || type == ESM::Repair::sRecordId
-                || type == ESM::Apparatus::sRecordId)
-                rows.push_back(numberRow("#{sQuality}", toolQuality(ptr)));
-            if (cls.hasItemHealth(ptr))
-            {
-                const bool tool = type == ESM::Lockpick::sRecordId || type == ESM::Probe::sRecordId
-                    || type == ESM::Repair::sRecordId;
-                rows.push_back(
-                    numberRow(tool ? "#{sUses}" : "#{sCondition}", static_cast<float>(cls.getItemHealth(ptr))));
-            }
-            if (cls.isSoulGem(ptr))
-            {
-                const ESM::RefId& soul = ptr.getCellRef().getSoul();
-                const ESM::Creature* creature = soul.empty() ? nullptr : store().get<ESM::Creature>().search(soul);
-                rows.push_back(DetailRow{ "#{Interface:Soul}",
-                    creature != nullptr ? escaped(creature->mName) : std::string("#{Interface:None}") });
-            }
-            rows.push_back(numberRow("#{sWeight}", cls.getWeight(ptr), false));
-            rows.push_back(numberRow("#{sValue}", static_cast<float>(cls.getValue(ptr))));
-            return rows;
-        }
-
-        bool isEquipment(const MWWorld::Ptr& ptr)
-        {
-            const unsigned int type = ptr.getType();
-            return type == ESM::Weapon::sRecordId || type == ESM::Armor::sRecordId || type == ESM::Clothing::sRecordId
-                || type == ESM::Light::sRecordId;
         }
 
         int tabOf(const MWWorld::Ptr& ptr)
@@ -515,7 +273,7 @@ namespace MWGui
         {
             const unsigned int type = ptr.getType();
             if (stat == Stat::Armor && type == ESM::Armor::sRecordId)
-                return std::floor(ptr.getClass().getSkillAdjustedArmorRating(ptr, player(), true));
+                return armorRating(ptr);
             if (stat == Stat::Damage && type == ESM::Weapon::sRecordId)
                 return static_cast<float>(bestAttack(*ptr.get<ESM::Weapon>()->mBase).second);
             return 0.f;
@@ -1359,32 +1117,11 @@ namespace MWGui
     void InventoryScreen::drawDetailsHeader(int x, int y, int w, int h, int item)
     {
         const ItemStack& stack = mItems[item];
-        const MWWorld::Ptr& ptr = stack.mBase;
         addRect(mContent, x, y, w, h, sPanelColour, 0.9f);
         addRect(mContent, x, y, w, 1, sAccentColour, 0.3f);
         if (mTab != Tab::Equipment || mFocus == Focus::Items)
-            setHighlighted(ptr.getCellRef().getRefId());
-
-        addIcon(mContent, x + 16, y + 16, 64, ptr, stack.mType == ItemStack::Type_Equipped);
-        std::string name = escaped(ptr.getClass().getName(ptr));
-        if (stack.mCount > 1)
-            name += " (" + std::to_string(stack.mCount) + ")";
-        addText(mContent, x + 92, y + 14, w - 108, 34, name, sFontLarge, sBrightColour);
-        addText(mContent, x + 92, y + 46, w - 108, 26, describe(ptr), sFontSmall, sDimColour);
-        int tx = x + 92;
-        const MWWorld::Player& worldPlayer = MWBase::Environment::get().getWorld()->getPlayer();
-        const auto addTag = [&](std::string_view label, const MyGUI::Colour& colour) {
-            MyGUI::TextBox* tag = addText(mContent, tx, y + 70, 120, 20, label, sFontSmall, colour);
-            tx += tag->getTextSize().width + 12;
-        };
-        if (stack.mType == ItemStack::Type_Equipped)
-            addTag("#{Interface:InventoryEquipped}", sDimColour);
-        if (worldPlayer.isRecentItemNew(ptr.getCellRef().getRefId()))
-            addTag("#{Interface:InventoryNew}", sNewColour);
-        if (isStolen(ptr))
-            addTag("#{Interface:InventoryStolen}", sWorseColour);
-        if (isSkillBookUnread(ptr))
-            addTag("#{Interface:InventoryUnread}", sNewColour);
+            setHighlighted(stack.mBase.getCellRef().getRefId());
+        ItemDetails::drawHeader(mContent, x, y, w, stack);
     }
 
     int InventoryScreen::drawButtonHints(int x, int y, int h, const std::string& action)
@@ -1411,63 +1148,10 @@ namespace MWGui
         const MWWorld::Ptr& ptr = mItems[item].mBase;
         drawDetailsHeader(x, y, w, h, item);
 
-        const int compare = compareItem(item);
-        const std::vector<DetailRow> rows = detailRows(ptr);
-        std::vector<DetailRow> otherRows;
-        if (compare >= 0)
-            otherRows = detailRows(mItems[compare].mBase);
-
-        int ry = y + 104;
-        const int valueW = 80;
-        if (compare >= 0)
-        {
-            addText(mContent, x + w - 16 - 2 * valueW, ry, valueW, 24, "#{Interface:InventoryColumnThis}", sFontSmall,
-                sDimColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
-            addText(mContent, x + w - 16 - valueW, ry, valueW, 24, "#{Interface:InventoryEquipped}", sFontSmall,
-                sDimColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
-            ry += 26;
-        }
-        for (const DetailRow& row : rows)
-        {
-            addText(mContent, x + 16, ry, w - 32, 28, row.mLabel, sFontNormal, sTextColour);
-            MyGUI::Colour colour = sBrightColour;
-            const DetailRow* other = nullptr;
-            for (const DetailRow& candidate : otherRows)
-                if (candidate.mLabel == row.mLabel)
-                    other = &candidate;
-            if (other != nullptr && row.mComparable && other->mComparable && row.mNumber != other->mNumber)
-                colour = (row.mNumber > other->mNumber) == row.mHigherIsBetter ? sBetterColour : sWorseColour;
-            const int valueX = x + w - 16 - (compare >= 0 ? 2 * valueW : valueW);
-            addText(mContent, valueX, ry, valueW, 28, row.mValue, sFontNormal, colour,
-                MyGUI::Align::Right | MyGUI::Align::VCenter);
-            if (compare >= 0)
-                addText(mContent, x + w - 16 - valueW, ry, valueW, 28, other != nullptr ? other->mValue : "-",
-                    sFontNormal, sDimColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
-            ry += 30;
-        }
-
-        const std::vector<std::string> effects = itemEffects(ptr);
-        if (!effects.empty())
-        {
-            ry += 8;
-            const bool isConsumable = tabOf(ptr) == 2;
-            addText(mContent, x + 16, ry, w - 32, 24,
-                isConsumable ? "#{Interface:MagicEffects}" : "#{Interface:InventoryEnchantment}", sFontSmall,
-                sDimColour);
-            ry += 24;
-            for (const std::string& effect : effects)
-            {
-                if (ry + 26 > y + h - 56)
-                    break;
-                addText(mContent, x + 16, ry, w - 32, 26, escaped(effect), sFontNormal, sNewColour);
-                ry += 26;
-            }
-        }
-        if (compare >= 0 && ry + 36 < y + h - 56)
-            addText(mContent, x + 16, ry + 12, w - 32, 24,
-                "#{Interface:InventoryReplaces} "
-                    + escaped(mItems[compare].mBase.getClass().getName(mItems[compare].mBase)),
-                sFontSmall, sDimColour);
+        std::vector<Compared> compared;
+        if (const int compare = compareItem(item); compare >= 0)
+            compared.push_back(Compared{ "#{Interface:InventoryEquipped}", mItems[compare].mBase });
+        drawStats(mContent, x, y + 104, w, y + h - 56, ptr, compared);
 
         drawButtonHints(x, y, h, action);
     }
