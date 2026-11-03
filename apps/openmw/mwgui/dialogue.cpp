@@ -32,6 +32,7 @@
 #include "../mwmechanics/npcstats.hpp"
 
 #include "bookpage.hpp"
+#include "dialoguepanel.hpp"
 #include "textcolours.hpp"
 
 namespace MWGui
@@ -355,7 +356,16 @@ namespace MWGui
         mControllerButtons.mA = "#{Interface:Ask}";
         mControllerButtons.mB = "#{Interface:Goodbye}";
         mControllerButtons.mRStick = "#{Interface:ScrollUp}";
+
+        if (Settings::gui().mControllerMenus)
+        {
+            mPanel = std::make_unique<DialoguePanel>(*this);
+            mControllerScrollWidget = nullptr;
+            mDisableGamepadCursor = true;
+        }
     }
+
+    DialogueWindow::~DialogueWindow() = default;
 
     void DialogueWindow::onTradeComplete()
     {
@@ -545,8 +555,22 @@ namespace MWGui
         mDeleteLater.clear();
     }
 
+    void DialogueWindow::onOpen()
+    {
+        if (mPanel == nullptr)
+            return;
+        // The panel shows the conversation, so this window stays invisible. Its text ignores the window's alpha, so
+        // its contents are hidden too.
+        mMainWidget->setAlpha(0.f);
+        if (MyGUI::Widget* client = mMainWidget->getClientWidget())
+            client->setVisible(false);
+        mPanel->show();
+    }
+
     void DialogueWindow::onClose()
     {
+        if (mPanel != nullptr)
+            mPanel->hide(!MWBase::Environment::get().getWindowManager()->containsMode(GM_Dialogue));
         if (MWBase::Environment::get().getWindowManager()->containsMode(GM_Dialogue))
             return;
         // Reset history
@@ -583,41 +607,8 @@ namespace MWGui
         mTopicLinks.clear();
         mKeywordSearch.clear();
 
-        int services = mPtr.getClass().getServices(mPtr);
-
-        bool travel = (mPtr.getType() == ESM::NPC::sRecordId && !mPtr.get<ESM::NPC>()->mBase->getTransport().empty())
-            || (mPtr.getType() == ESM::Creature::sRecordId
-                && !mPtr.get<ESM::Creature>()->mBase->getTransport().empty());
-
-        const MWWorld::Store<ESM::GameSetting>& gmst
-            = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
-
-        if (mPtr.getType() == ESM::NPC::sRecordId)
-            mTopicsList->addItem(gmst.find("sPersuasion")->mValue.getString());
-
-        if (services & ESM::NPC::AllItems)
-            mTopicsList->addItem(gmst.find("sBarter")->mValue.getString());
-
-        if (services & ESM::NPC::Spells)
-            mTopicsList->addItem(gmst.find("sSpells")->mValue.getString());
-
-        if (travel)
-            mTopicsList->addItem(gmst.find("sTravel")->mValue.getString());
-
-        if (services & ESM::NPC::Spellmaking)
-            mTopicsList->addItem(gmst.find("sSpellmakingMenuTitle")->mValue.getString());
-
-        if (services & ESM::NPC::Enchanting)
-            mTopicsList->addItem(gmst.find("sEnchanting")->mValue.getString());
-
-        if (services & ESM::NPC::Training)
-            mTopicsList->addItem(gmst.find("sServiceTrainingTitle")->mValue.getString());
-
-        if (services & ESM::NPC::Repair)
-            mTopicsList->addItem(gmst.find("sRepair")->mValue.getString());
-
-        if (isCompanion())
-            mTopicsList->addItem(gmst.find("sCompanionShare")->mValue.getString());
+        for (const std::string& service : getServiceNames())
+            mTopicsList->addItem(service);
 
         if (mTopicsList->getItemCount() > 0)
             mTopicsList->addSeparator();
@@ -644,6 +635,51 @@ namespace MWGui
 
         if (Settings::gui().mControllerMenus)
             setControllerFocus(mControllerFocus, true);
+    }
+
+    std::vector<std::string> DialogueWindow::getServiceNames()
+    {
+        std::vector<std::string> names;
+        if (mPtr.isEmpty())
+            return names;
+
+        const int services = mPtr.getClass().getServices(mPtr);
+        const bool travel
+            = (mPtr.getType() == ESM::NPC::sRecordId && !mPtr.get<ESM::NPC>()->mBase->getTransport().empty())
+            || (mPtr.getType() == ESM::Creature::sRecordId
+                && !mPtr.get<ESM::Creature>()->mBase->getTransport().empty());
+
+        const MWWorld::Store<ESM::GameSetting>& gmst
+            = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
+
+        if (mPtr.getType() == ESM::NPC::sRecordId)
+            names.push_back(gmst.find("sPersuasion")->mValue.getString());
+
+        if (services & ESM::NPC::AllItems)
+            names.push_back(gmst.find("sBarter")->mValue.getString());
+
+        if (services & ESM::NPC::Spells)
+            names.push_back(gmst.find("sSpells")->mValue.getString());
+
+        if (travel)
+            names.push_back(gmst.find("sTravel")->mValue.getString());
+
+        if (services & ESM::NPC::Spellmaking)
+            names.push_back(gmst.find("sSpellmakingMenuTitle")->mValue.getString());
+
+        if (services & ESM::NPC::Enchanting)
+            names.push_back(gmst.find("sEnchanting")->mValue.getString());
+
+        if (services & ESM::NPC::Training)
+            names.push_back(gmst.find("sServiceTrainingTitle")->mValue.getString());
+
+        if (services & ESM::NPC::Repair)
+            names.push_back(gmst.find("sRepair")->mValue.getString());
+
+        if (isCompanion(mPtr))
+            names.push_back(gmst.find("sCompanionShare")->mValue.getString());
+
+        return names;
     }
 
     void DialogueWindow::updateHistory(bool scrollbar)
@@ -735,6 +771,9 @@ namespace MWGui
 
         bool topicsEnabled = !MWBase::Environment::get().getDialogueManager()->isInChoice() && !mGoodbye;
         mTopicsList->setEnabled(topicsEnabled);
+
+        if (mPanel != nullptr)
+            mPanel->update();
     }
 
     void DialogueWindow::notifyLinkClicked(TypesetBook::InteractiveId link)
@@ -832,6 +871,9 @@ namespace MWGui
         updateDisposition();
         deleteLater();
 
+        if (mPanel != nullptr)
+            mPanel->onFrame(dt);
+
         if (mChoices != MWBase::Environment::get().getDialogueManager()->getChoices()
             || mGoodbye != MWBase::Environment::get().getDialogueManager()->isGoodbye())
             updateHistory();
@@ -877,7 +919,12 @@ namespace MWGui
     {
         // Topic formatting needs to be updated regardless of whether the topic list has changed
         if (!setKeywords(MWBase::Environment::get().getDialogueManager()->getAvailableTopics()))
+        {
             updateTopicFormat();
+            // Asking a topic can mark it as asked without changing the list of topics.
+            if (mPanel != nullptr)
+                mPanel->update();
+        }
     }
 
     bool DialogueWindow::isCompanion()
@@ -930,8 +977,17 @@ namespace MWGui
         }
     }
 
+    bool DialogueWindow::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
+    {
+        // The panel reads both sticks every frame.
+        return mPanel != nullptr;
+    }
+
     bool DialogueWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             if (mChoices.size() > 0)

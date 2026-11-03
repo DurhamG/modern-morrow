@@ -1,13 +1,24 @@
-# The dialogue window in controller menus mode, talking to Arrille, a trader with persuasion and barter services.
+# The dialogue panel in controller menus mode, talking to Arrille, a trader with persuasion, barter and spells.
 launch --start "Seyda Neen, Arrille's Tradehouse" --set "GUI.controller menus=true"
 console "command=\"arrille\"->forcegreeting"
 wait frames=20
 shot greeting
-pad button=dpdown
-pad button=dpdown
-pad button=dpdown
-wait frames=5
-shot topic-highlighted
 pad button=a
 wait frames=10
 shot topic-answer
+pad button=y
+wait frames=5
+shot next-group
+pad axis=righty value=-1 hold=20
+wait frames=25
+shot earlier
+pad button=rightshoulder
+wait frames=5
+shot services
+pad button=dpdown
+pad button=a
+wait frames=10
+shot barter
+pad button=b
+wait frames=10
+shot back-from-barter

@@ -1,0 +1,14 @@
+# The dialogue panel offering a choice: Fargoth's "ring" topic asks whether the player found his ring.
+launch --start "Seyda Neen" --set "GUI.controller menus=true"
+console "command=\"fargoth\"->forcegreeting"
+wait frames=20
+shot greeting
+pad button=a
+wait frames=10
+shot choice
+pad button=b
+wait frames=5
+shot choice-after-b
+pad button=a
+wait frames=10
+shot answered

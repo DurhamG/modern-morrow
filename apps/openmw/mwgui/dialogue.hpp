@@ -21,6 +21,7 @@ namespace Gui
 
 namespace MWGui
 {
+    class DialoguePanel;
     class DialogueWindow;
 
     class ResponseCallback : public MWBase::DialogueManager::ResponseCallback
@@ -139,6 +140,7 @@ namespace MWGui
     {
     public:
         DialogueWindow();
+        ~DialogueWindow() override;
 
         void onTradeComplete();
 
@@ -158,8 +160,12 @@ namespace MWGui
         void onFrame(float dt) override;
         void clear() override { resetReference(); }
 
+        /// The services this NPC offers, by name, such as Barter and Spells.
+        std::vector<std::string> getServiceNames();
+
         void updateTopics();
 
+        void onOpen() override;
         void onClose() override;
 
         std::string_view getWindowIdForLua() const override { return "Dialogue"; }
@@ -184,6 +190,7 @@ namespace MWGui
         void onReferenceUnavailable() override;
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+        bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
 
     private:
         void updateDisposition();
@@ -221,6 +228,11 @@ namespace MWGui
         std::unique_ptr<ResponseCallback> mGreetingCallback;
 
         void setControllerFocus(size_t index, bool focused);
+
+        // In controller menus mode, a panel along the bottom of the screen shows the conversation instead of this
+        // window. It reads the conversation from here.
+        friend class DialoguePanel;
+        std::unique_ptr<DialoguePanel> mPanel;
         size_t mControllerFocus = 0;
         int mControllerChoice = -1;
 

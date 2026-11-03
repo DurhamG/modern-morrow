@@ -668,7 +668,9 @@ namespace MWGui
         if (!mMap)
             return; // UI not created yet
 
-        mHud->setVisible(mHudEnabled && !loading);
+        // In controller menus mode, a conversation shows only the dialogue panel over the world, without the HUD.
+        const bool controllerDialogue = Settings::gui().mControllerMenus && getMode() == GM_Dialogue;
+        mHud->setVisible(mHudEnabled && !loading && !controllerDialogue);
         mToolTips->setVisible(mHudEnabled && !loading);
 
         bool gameMode = !isGuiMode();
