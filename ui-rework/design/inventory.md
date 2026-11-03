@@ -39,10 +39,12 @@ This is the design for the reworked inventory screen, agreed with the user. It i
   - Choosing a slot first narrows the list to the items that fit that slot.
 - **Lists, not grids.** Each row shows the item's name and the stats that matter in that view, so no hovering is needed. For example, weapons show damage. The rows lay their stats out across the row, so the list stays dense. Lists scroll vertically.
 - **A details panel** shows the highlighted item in full, next to the equipped item it would replace, with the differences marked.
-- **Sorting.** One button cycles the sort order.
+- **Sorting.** One button cycles the sort order through the list's columns, then the name. Each list starts sorted by its main stat: armor lists by armor rating, weapon and ammunition lists by damage, tools by quality, and everything else by value.
+- **Armor ratings and damage in the lists are green or red** where they beat or fall short of what the item's slot holds now, so the player sees at a glance what to consider equipping.
 - **Row markers** show equipped, new and stolen items. They also show "better than equipped", where a clear number such as the armour rating decides it.
 - **Consumables** are grouped by effect, so all Restore Health potions sit together.
 - **The details panel says what the main button does** for the highlighted item, such as Equip, Drink, Read or Use.
+- **Books and notes can be read in place.** In the Notes tab, the list and the details panel share the width equally. The details panel shows the highlighted book's text on a page, laid out as the book window does, instead of its weight and value. The right stick scrolls the text, as sub-panels scroll in modern games.
 
 ## Equipment areas
 
@@ -63,8 +65,37 @@ There are twelve areas:
 | Rings | Left ring, right ring |
 | Belt | Belt |
 
-## Open questions
+## Implementation decisions
 
-- What the rule for "top-most" is when a robe is worn over a cuirass.
-- Which ring a new ring replaces, when both hands are full.
-- Whether the inventory should be sized relative to the screen height, as the HUD is, instead of following the GUI scaling factor. The mock-ups do this.
+These were chosen when the first version was built, and can be revisited.
+
+- **Top-most item in an area.** Armour comes first, then the outer clothing layer: robe over shirt, and skirt over pants.
+- **Picking a slot.** If an item fits exactly one slot, choosing it equips it straight away. The slot step only appears when there's a real choice, such as a ring when both hands are full. If one ring hand is free, a new ring goes there without asking.
+- **Recent and "new".** The player's save keeps a log of the items that entered the inventory, newest first. Each entry also records whether the player has seen it. An item counts as seen once it is highlighted in a list. "New" markers show unseen items, and the overview marks each area that has a new item that fits it. The Recent tab lists the 40 newest entries. Older entries stay in the log only while they are unseen, up to 200, so the first items of a big haul still show as new.
+- **Scope.** The new screen replaces the inventory only in controller menus mode. Container, barter and companion screens, and the mouse-driven inventory, keep the old window for now.
+- **Size.** The screen is sized relative to the screen height, as the HUD is, and ignores the GUI scaling factor.
+- **Skill books.** Showing a book's text in the Notes tab doesn't count as reading it, so it doesn't raise a skill or run the game's reading logic. A still reads the book in the normal book window. For an unread skill book, the A hint says which skill it raises, such as "Read (+1 Enchant)".
+
+## The first version
+
+`apps/openmw/mwgui/inventoryscreen.cpp` implements the screen. It replaces the inventory window in the controller tab cycle, and the old window still handles using items, and the container and barter screens. The `inventory-screen` scenario walks through it.
+
+### Controls
+
+| Button | What it does |
+| --- | --- |
+| L1, R1 | Switch tabs. |
+| D-pad, left stick | Move the selection. Holding repeats. In the equipment overview, left and right switch columns. In an area, left and right move between the slots and the item list. |
+| A | Open an area, use or equip the highlighted item, or unequip it if it's equipped. On a slot, show only the items for that slot. While choosing a ring's hand, put the ring there. |
+| B | Go back: cancel a ring choice, show every slot again, return to the overview, or close the inventory. |
+| X | Drop the highlighted item, asking how many for a stack. On a slot, unequip it. |
+| Y | Cycle the sort order through the list's columns, then the name. |
+| Right stick | In the Notes tab, scroll the highlighted book's text. |
+| L2, R2 | Switch between the map, inventory, magic and stats screens, as before. |
+
+### Not done yet
+
+- Mouse input. The screen only responds to a gamepad.
+- Sorting the Recent tab, which always lists the newest items first.
+- Better groups in Misc, such as keys and soul gems.
+- Splitting the Notes tab into skill books, letters and other books.

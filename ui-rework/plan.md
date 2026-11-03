@@ -42,6 +42,7 @@ Go through the pieces listed in [screens.md](screens.md), discussing each one wi
 Done so far:
 
 - **HUD.** The minimap and weapon name text are gone. The rest is gathered in the bottom left corner, sized relative to the screen height, and fades out when it has nothing to show.
+- **Inventory.** A new screen with tabs for recent items, equipment by body area, consumables, notes, tools and misc. Every list shows names and stats, and a details panel compares items with the equipped ones. See [design/inventory.md](design/inventory.md).
 - **Map.** The bottom button bar is gone from all menus. The map fills the screen height, shows its own button hints, pans with the right stick, and shows 7x7 cells when distant terrain is on.
 
 ### Phase 3: make the changes clean enough to upstream

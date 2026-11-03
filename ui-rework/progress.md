@@ -52,4 +52,20 @@
 - Fixed distant scenery that was cut off differently as the camera turned. The far clip plane is flat, so it reaches further at the sides of the view. The user now plays with `[Fog] radial fog` and `sky blending` on, which hide the cut. With sky blending on, the scene is now drawn past the viewing distance, so the fade to sky starts where the fog is fully opaque. Before, mountain tops faded into the sky while their detail still showed.
 - Ideas for later: a tilted, Skyrim-style 3D map. The local map is drawn once per cell from straight above, so this needs a live camera instead.
 
-Next: choose the next piece of the UI to rework with the user.
+- Designed the inventory screen with the user, recorded in [design/inventory.md](design/inventory.md). Static mock-ups came first, built by `ui-rework/mockups/inventory.py` and shown with the harness's new `layout` command.
+- Built the inventory screen for real, working alone:
+  - The player's save now keeps a log of the items that recently entered the inventory, and whether each has been seen. That needed a save format bump, to 42.
+  - The tab bar above the map, inventory, magic and stats screens moved to a new `ControllerMenus` layer, sized relative to the screen height like the HUD. It now has the mock-up's styling.
+  - `InventoryScreen` replaces the inventory window in controller menus mode. It has the Recent, Equipment, Consumables, Notes, Tools and Misc tabs, the equipment areas, ring hand choice, the details panel with comparisons, dropping and sorting.
+  - The `inventory-screen` scenario covers it.
+- Lessons learned:
+  - The console's Lua mode mangles backslashes in code, so Lua sent through the harness builds them with `string.char(92)`.
+
+- First review changes from the user:
+  - Each list starts sorted by its main stat, such as armor rating or damage, and the sort button cycles through the list's columns.
+  - Armor ratings and damage in the lists are green or red against what the slot holds now.
+  - Unseen items past the Recent tab's 40 stay in the log, so they keep their "New" markers.
+  - The Notes tab shows the highlighted book's text in a wide details panel, which the right stick scrolls.
+- The user's test save now carries a wide spread of items for testing: armour and clothing for every area, every weapon kind, potions, ingredients, scrolls, books, tools and misc items. The character's strength was raised to 240 so they can carry it all. The original save is kept next to it as `Test-before-items.omwsave.bak`.
+
+Next: the user keeps reviewing the inventory screen.
