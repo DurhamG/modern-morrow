@@ -67,5 +67,13 @@
   - Unseen items past the Recent tab's 40 stay in the log, so they keep their "New" markers.
   - The Notes tab shows the highlighted book's text in a wide details panel, which the right stick scrolls.
 - The user's test save now carries a wide spread of items for testing: armour and clothing for every area, every weapon kind, potions, ingredients, scrolls, books, tools and misc items. The character's strength was raised to 240 so they can carry it all. The original save is kept next to it as `Test-before-items.omwsave.bak`.
+- Built the magic screen, recorded in [design/magic.md](design/magic.md):
+  - The player's save now also keeps the spells, powers, magic items and scrolls the player recently readied or cast. It shares save format 42 with the recent items, and older saves load with an empty list.
+  - `MagicScreen` replaces the magic menu in controller menus mode. The Active tab shows the effects on the character, the spell ready to cast, and recent spells to switch to. The other tabs list spells by school, powers, magic items and scrolls, with a details panel.
+  - The inventory and magic screens share a base class, sizes and drawing code in `controllerscreen.cpp`.
+  - The `magic-screen` scenario covers it.
+  - Y jumps between the spell schools, and between the Self, Touch and Target groups of items and scrolls.
+- Fixed the menus reopening on the inventory tab after the player closed them on the map tab. They now reopen on whichever tab was open.
+- The user's test save now also knows 24 spells from every school. The save from before that is kept as `Test-before-spells.omwsave.bak`.
 
-Next: the user keeps reviewing the inventory screen.
+Next: the user reviews the magic screen.
