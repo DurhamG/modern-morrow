@@ -1,0 +1,33 @@
+# The controller stats screen: the Character tab's tiles and level-up bonuses, then the Skills and Factions tabs.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=PCJoinFaction \"Fighters Guild\""
+console "command=PCJoinFaction \"Mages Guild\""
+console "command=PCRaiseRank \"Mages Guild\""
+console "command=player->additem p_fortify_strength_s 1"
+console "command=player->equip p_fortify_strength_s"
+lua "code=local l = require('openmw.types').Actor.stats.level(require('openmw.self')); l.progress = 6; l.skillIncreasesForAttribute.strength = 5; l.skillIncreasesForAttribute.agility = 8"
+pad button=b
+pad axis=righttrigger value=1 hold=5
+wait frames=5
+pad axis=righttrigger value=1 hold=5
+wait frames=10
+shot character
+pad button=dpdown
+wait frames=3
+shot level
+pad button=dpdown
+pad button=dpdown
+wait frames=3
+shot attribute
+pad button=rightshoulder
+wait frames=5
+shot skills
+pad button=y
+wait frames=3
+shot skills-next-group
+pad button=rightshoulder
+wait frames=5
+pad button=dpdown
+pad button=dpdown
+wait frames=3
+shot factions

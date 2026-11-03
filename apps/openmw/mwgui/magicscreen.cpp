@@ -4,8 +4,6 @@
 #include <cmath>
 #include <map>
 
-#include <MyGUI_LanguageManager.h>
-
 #include <components/esm3/loadbsgn.hpp>
 #include <components/esm3/loadench.hpp>
 #include <components/esm3/loadmgef.hpp>
@@ -63,12 +61,6 @@ namespace MWGui
         const MWWorld::ESMStore& store()
         {
             return *MWBase::Environment::get().getESMStore();
-        }
-
-        // Replaces "#{...}" strings with their text, so the length of the text is known before wrapping it.
-        std::string localised(const std::string& text)
-        {
-            return MyGUI::LanguageManager::getInstance().replaceTags(MyGUI::UString(text)).asUTF8();
         }
 
         std::string bigIcon(const ESM::MagicEffect& effect)

@@ -88,6 +88,10 @@ namespace MWGui
         /// Escapes text, such as an item name, that can contain characters MyGUI reads as colour codes.
         std::string escaped(std::string_view text);
 
+        /// Replaces "#{...}" strings with their localised text, so the length of the text is known before it is
+        /// wrapped.
+        std::string localised(const std::string& text);
+
         /// Formats a number with at most two decimals, and none for whole numbers.
         std::string formatNumber(float value);
 

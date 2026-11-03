@@ -7,6 +7,7 @@
 #include <MyGUI_Gui.h>
 #include <MyGUI_ILayer.h>
 #include <MyGUI_ImageBox.h>
+#include <MyGUI_LanguageManager.h>
 #include <MyGUI_TextIterator.h>
 
 #include <components/misc/resourcehelpers.hpp>
@@ -109,6 +110,11 @@ namespace MWGui
         std::string escaped(std::string_view text)
         {
             return MyGUI::TextIterator::toTagsString(MyGUI::UString(std::string(text))).asUTF8();
+        }
+
+        std::string localised(const std::string& text)
+        {
+            return MyGUI::LanguageManager::getInstance().replaceTags(MyGUI::UString(text)).asUTF8();
         }
 
         std::string formatNumber(float value)
