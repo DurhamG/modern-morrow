@@ -36,6 +36,7 @@ namespace ESM
     inline constexpr FormatVersion MaxWeatherIndexFormatVersion = 40;
     inline constexpr FormatVersion MaxNoRecentItemsFormatVersion = 41;
     inline constexpr FormatVersion MaxNoRecentSpellsFormatVersion = 41;
+    inline constexpr FormatVersion MaxNoJournalSourceFormatVersion = 41;
     inline constexpr FormatVersion CurrentSaveGameFormatVersion = 42;
 
     inline constexpr FormatVersion MinSupportedSaveGameFormatVersion = 5;

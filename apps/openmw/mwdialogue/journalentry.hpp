@@ -62,6 +62,10 @@ namespace MWDialogue
         int mDay;
         int mMonth;
         int mDayOfMonth;
+        // The actor the player was talking to when the entry was added, and the cell the player was in. Entries from
+        // older saves have neither.
+        ESM::RefId mActor;
+        ESM::RefId mCell;
 
         StampedJournalEntry();
 
