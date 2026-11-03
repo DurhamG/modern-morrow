@@ -1,0 +1,49 @@
+# The barter panel in controller menus mode, trading with Arrille in Seyda Neen. The player buys a weapon and a
+# cuirass, sells a cuirass, and haggles too far, so the offer is refused. Pressing the right stick goes back to
+# Arrille's price, which he accepts.
+launch --start "Seyda Neen, Arrille's Tradehouse" --set "GUI.controller menus=true"
+console "command=player->additem gold_001 500"
+console "command=player->additem netch_leather_cuirass 1"
+console "command=player->equip netch_leather_cuirass"
+console "command=player->additem \"chitin cuirass\" 1"
+console "command=player->additem p_restore_health_s 3"
+console "command=\"arrille\"->forcegreeting"
+wait frames=20
+pad button=rightshoulder
+pad button=dpdown
+pad button=a
+wait frames=20
+shot buy
+pad button=y
+wait frames=5
+shot buy-next-group
+pad button=a
+wait frames=5
+shot added
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpright
+pad button=dpright
+wait frames=5
+shot added-cuirass
+pad button=rightshoulder
+wait frames=5
+shot sell
+pad button=a
+wait frames=5
+shot selling
+pad axis=rightx value=1 hold=20
+wait frames=5
+shot haggled
+pad button=x
+wait frames=20
+shot refused
+pad button=rightstick
+wait frames=5
+pad button=x
+wait frames=20
+shot accepted

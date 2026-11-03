@@ -30,6 +30,7 @@
 #include "itemview.hpp"
 #include "sortfilteritemmodel.hpp"
 #include "tooltips.hpp"
+#include "barterpanel.hpp"
 #include "tradeitemmodel.hpp"
 
 namespace
@@ -193,7 +194,37 @@ namespace MWGui
             mControllerButtons.mX = "#{Interface:Offer}";
             mControllerButtons.mR3 = "#{Interface:Info}";
             mControllerButtons.mL2 = "#{Interface:Inventory}";
+
+            mPanel = std::make_unique<BarterPanel>(*this);
+            mDisableGamepadCursor = true;
         }
+    }
+
+    TradeWindow::~TradeWindow() = default;
+
+    int TradeWindow::getTradePrice(const MWWorld::Ptr& merchant, const MWWorld::Ptr& item, int count, bool playerBuys)
+    {
+        // The price is capped at 75% of the base price to avoid exploits connected to buying and selling the same
+        // item. This value has been determined by researching the limitations of the vanilla formula and may not be
+        // sufficient if getBarterOffer behavior has been changed.
+        const int basePrice = getEffectiveValue(item, count);
+        const int cap = static_cast<int>(std::max(1.f, 0.75f * basePrice));
+        const int offer
+            = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(merchant, basePrice, playerBuys);
+        if (playerBuys)
+            return std::max(cap, offer);
+        return merchant.getClass().isNpc() ? std::min(cap, offer) : offer;
+    }
+
+    void TradeWindow::onOpen()
+    {
+        if (mPanel == nullptr)
+            return;
+        // The panel shows the trade, so this window stays invisible.
+        mMainWidget->setAlpha(0.f);
+        if (MyGUI::Widget* client = mMainWidget->getClientWidget())
+            client->setVisible(false);
+        mPanel->show();
     }
 
     void TradeWindow::setPtr(const MWWorld::Ptr& actor)
@@ -231,11 +262,17 @@ namespace MWGui
         // Cycle to the buy window if it's not active.
         if (Settings::gui().mControllerMenus && !mActiveControllerWindow)
             MWBase::Environment::get().getWindowManager()->cycleActiveControllerWindow(true);
+
+        if (mPanel != nullptr)
+            mPanel->show();
     }
 
     void TradeWindow::onFrame(float dt)
     {
         checkReferenceAvailable();
+
+        if (mPanel != nullptr)
+            mPanel->onFrame(dt);
 
         if (isVisible() && mUpdateNextFrame)
         {
@@ -612,31 +649,10 @@ namespace MWGui
 
         int merchantOffer = 0;
 
-        // The offered price must be capped at 75% of the base price to avoid exploits
-        // connected to buying and selling the same item.
-        // This value has been determined by researching the limitations of the vanilla formula
-        // and may not be sufficient if getBarterOffer behavior has been changed.
-        const std::vector<ItemStack>& playerBorrowed = playerTradeModel->getItemsBorrowedToUs();
-        for (const ItemStack& itemStack : playerBorrowed)
-        {
-            const int basePrice = getEffectiveValue(itemStack.mBase, static_cast<int>(itemStack.mCount));
-            const int cap
-                = static_cast<int>(std::max(1.f, 0.75f * basePrice)); // Minimum buying price -- 75% of the base
-            const int buyingPrice
-                = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mPtr, basePrice, true);
-            merchantOffer -= std::max(cap, buyingPrice);
-        }
-
-        const std::vector<ItemStack>& merchantBorrowed = mTradeModel->getItemsBorrowedToUs();
-        for (const ItemStack& itemStack : merchantBorrowed)
-        {
-            const int basePrice = getEffectiveValue(itemStack.mBase, static_cast<int>(itemStack.mCount));
-            const int cap
-                = static_cast<int>(std::max(1.f, 0.75f * basePrice)); // Maximum selling price -- 75% of the base
-            const int sellingPrice
-                = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mPtr, basePrice, false);
-            merchantOffer += mPtr.getClass().isNpc() ? std::min(cap, sellingPrice) : sellingPrice;
-        }
+        for (const ItemStack& itemStack : playerTradeModel->getItemsBorrowedToUs())
+            merchantOffer -= getTradePrice(mPtr, itemStack.mBase, static_cast<int>(itemStack.mCount), true);
+        for (const ItemStack& itemStack : mTradeModel->getItemsBorrowedToUs())
+            merchantOffer += getTradePrice(mPtr, itemStack.mBase, static_cast<int>(itemStack.mCount), false);
 
         int diff = merchantOffer - mCurrentMerchantOffer;
         mCurrentMerchantOffer = merchantOffer;
@@ -668,6 +684,8 @@ namespace MWGui
 
     void TradeWindow::onClose()
     {
+        if (mPanel != nullptr)
+            mPanel->hide();
         // Make sure the window was actually closed and not temporarily hidden.
         if (MWBase::Environment::get().getWindowManager()->containsMode(GM_Barter))
             return;
@@ -680,8 +698,17 @@ namespace MWGui
             MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Barter);
     }
 
+    bool TradeWindow::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
+    {
+        // The panel reads both sticks every frame.
+        return mPanel != nullptr && mPanel->onControllerThumbstickEvent(arg);
+    }
+
     bool TradeWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             int index = mItemView->getControllerFocus();

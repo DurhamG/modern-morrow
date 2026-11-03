@@ -1,6 +1,8 @@
 #ifndef MWGUI_TRADEWINDOW_H
 #define MWGUI_TRADEWINDOW_H
 
+#include <memory>
+
 #include "referenceinterface.hpp"
 #include "windowbase.hpp"
 
@@ -18,15 +20,21 @@ namespace MWGui
 {
     class ItemView;
     class SortFilterItemModel;
+    class BarterPanel;
     class TradeItemModel;
 
     class TradeWindow : public WindowBase, public ReferenceInterface
     {
     public:
         TradeWindow();
+        ~TradeWindow() override;
+
+        /// What a merchant charges for an item when the player buys it, or pays for it when the player sells it.
+        static int getTradePrice(const MWWorld::Ptr& merchant, const MWWorld::Ptr& item, int count, bool playerBuys);
 
         void setPtr(const MWWorld::Ptr& actor) override;
 
+        void onOpen() override;
         void onClose() override;
         void onFrame(float dt) override;
         void clear() override { resetReference(); }
@@ -47,10 +55,15 @@ namespace MWGui
         std::string_view getWindowIdForLua() const override { return "Trade"; }
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+        bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
         void setActiveControllerWindow(bool active) override;
 
     private:
         friend class InventoryWindow;
+        // In controller menus mode, a panel on the right side of the screen shows the trade instead of this window.
+        // It reads the deal from here.
+        friend class BarterPanel;
+        std::unique_ptr<BarterPanel> mPanel;
 
         ItemView* mItemView;
         SortFilterItemModel* mSortModel;

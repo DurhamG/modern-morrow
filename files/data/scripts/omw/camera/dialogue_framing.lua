@@ -1,12 +1,13 @@
 -- Turns the camera to the NPC's face during a conversation in controller menus mode, so the face sits in the
 -- space above the dialogue panel, then turns it back once the conversation ends. This is only done in first person.
 -- The third person camera sits behind and above the player, so it would look steeply down at the NPC, past the
--- player's own head. The turn is an extra pitch and
--- yaw on top of where the player looks, so the player's own view direction never changes.
+-- player's own head. The turn is an extra pitch and yaw on top of where the player looks, so the player's own view
+-- direction never changes.
 
 local camera = require('openmw.camera')
 local core = require('openmw.core')
 local input = require('openmw.input')
+local ui = require('openmw.ui')
 local util = require('openmw.util')
 
 local M = {}
@@ -16,8 +17,12 @@ local M = {}
 local faceHeight = 0.28
 -- How fast the camera turns, as the fraction of the remaining turn made per second.
 local turnRate = 6
+-- Where the face goes across the screen during barter, as a fraction of the screen width from the left. The barter
+-- panel covers the screen from 40% of its width rightward, so this is the middle of the space beside it.
+local barterFaceLeft = 0.2
 
 local speaker = nil
+local bartering = false
 local yaw = 0
 local pitch = 0
 
@@ -34,6 +39,12 @@ local function faceTarget()
         return 0, 0
     end
     local targetYaw = math.atan2(toFace.x, toFace.y)
+    if bartering then
+        -- Looking to the right of the face puts it in the space left of the barter panel.
+        local size = ui.screenSize()
+        local halfWidth = math.atan(math.tan(camera.getFieldOfView() / 2) * size.x / size.y)
+        targetYaw = targetYaw + math.atan((1 - 2 * barterFaceLeft) * math.tan(halfWidth))
+    end
     -- Looking further down than the face puts it above the middle of the screen.
     local belowFace = math.atan((1 - 2 * faceHeight) * math.tan(camera.getFieldOfView() / 2))
     local targetPitch = -math.atan2(toFace.z, flat) + belowFace
@@ -41,6 +52,7 @@ local function faceTarget()
 end
 
 function M.onUiModeChanged(data)
+    bartering = data.newMode == 'Barter'
     if data.newMode == 'Dialogue' and data.arg and input._isControllerMenusEnabled()
         and camera.getMode() == camera.MODE.FirstPerson then
         speaker = data.arg
