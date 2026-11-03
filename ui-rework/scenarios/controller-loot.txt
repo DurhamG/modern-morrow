@@ -1,0 +1,8 @@
+# The loot window in controller menus mode, opened on Fargoth's body in Seyda Neen. Setting his health to 0 isn't a
+# crime, so the guards stay calm. Activating the body as the player opens the loot window, as the use button does.
+launch --start "Seyda Neen" --set "GUI.controller menus=true"
+console "command=\"fargoth\"->sethealth 0"
+wait seconds=2
+lua "context=global" "code=local w = require('openmw.world'); for _, a in ipairs(w.activeActors) do if a.recordId == 'fargoth' then a:activateBy(w.players[1]) end end"
+wait frames=20
+shot loot

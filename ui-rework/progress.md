@@ -33,6 +33,7 @@
 - Working style agreed with the user:
   - After each change, launch the user's test save on their right monitor for them to look at: `omw.py launch -p review --steam --user-settings --set "Terrain.distant terrain=true" --set "Fog.radial fog=true" --set "Fog.sky blending=true" --resolution 3840x2160 --fullscreen --screen 1 --save "C:/Users/Durham/Documents/My Games/OpenMW/saves/Lendias/Test.omwsave"`.
   - The test save stands next to Fargoth in Seyda Neen. To open a conversation with him for review, send `omw.py send -p review console "command=\"fargoth\"->forcegreeting"`. ForceGreeting works on any NPC near enough to be loaded, wherever the player stands.
+  - To open a loot window in the test save, kill Fargoth with `omw.py send -p review console "command=\"fargoth\"->sethealth 0"`, then open his body with `omw.py send -p review lua "context=global" "code=local w = require('openmw.world'); for _, a in ipairs(w.activeActors) do if a.recordId == 'fargoth' then a:activateBy(w.players[1]) end end"`. Setting his health isn't a crime, so the guards stay calm. Don't save afterwards.
   - The commit stack should show the final design, not the iteration that led to it. Fix-ups and tweaks get folded into the commit they belong to.
 - Lessons learned:
   - When the user is running another game, 32 parallel compiles run out of memory. Add `-- //p:CL_MPCount=8` to the build command.
@@ -93,4 +94,6 @@
 - The camera framing in conversations only happens in first person. In third person the camera looked steeply down past the player's head.
 - Replaced the menu the start button opens during a game, in controller menus mode. It's a panel in the style of the other screens, over a darkened view of the game, with Save, Load, Options and Exit. B returns to the game. The `controller-pause-menu` scenario covers it. The save dialog, the options and the exit confirmation still use the old windows.
 
-Next: the user reviews the pause menu.
+- Started on the loot window. The `controller-loot` scenario opens Fargoth's body in Seyda Neen.
+
+Next: design the loot window with the user.
