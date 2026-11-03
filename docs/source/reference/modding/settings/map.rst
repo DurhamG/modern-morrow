@@ -65,3 +65,15 @@ Map Settings
 
    Controls viewing distance on the local map when 'distant terrain' is enabled.
    Increasing this may increase cell load times.
+
+.. omw-setting::
+   :title: local map cell distance
+   :type: int
+   :range: ≥ 1
+   :default: 3
+
+   Sets how many cells the local map shows in each direction from the player's cell, when 'distant terrain' is enabled.
+   With 'allow zooming' on, the map can also grow to the viewing distance.
+   Either way, it shows at most 'max local viewing distance' cells in each direction.
+   Terrain and distant objects are loaded far enough to draw the whole map, even beyond the viewing distance.
+   Increasing this may increase cell load times and memory use.

@@ -40,6 +40,9 @@ namespace MWRender
 {
     class LocalMapRenderToTexture;
 
+    /// How many cells the local map shows in each direction from the player's cell in an exterior.
+    int getLocalMapCellDistance();
+
     ///
     /// \brief Local map rendering
     ///

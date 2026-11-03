@@ -1,5 +1,6 @@
 #include "localmap.hpp"
 
+#include <algorithm>
 #include <cstdint>
 
 #include <osg/ComputeBoundsVisitor>
@@ -53,6 +54,18 @@ namespace
 
 namespace MWRender
 {
+    int getLocalMapCellDistance()
+    {
+        // The map is drawn from the loaded scene, so cells beyond the active grid need distant terrain.
+        if (!Settings::terrain().mDistantTerrain)
+            return Constants::CellGridRadius;
+        int distance = Settings::map().mLocalMapCellDistance;
+        if (Settings::map().mAllowZooming)
+            distance = std::max(distance,
+                static_cast<int>(Settings::camera().mViewingDistance / Constants::CellSizeInUnits));
+        return std::clamp(distance, Constants::CellGridRadius, Settings::map().mMaxLocalViewingDistance.get());
+    }
+
     class LocalMapRenderToTexture : public SceneUtil::RTTNode
     {
     public:

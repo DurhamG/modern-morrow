@@ -288,6 +288,7 @@ namespace MWRender
         void getPagedRefnums(const osg::Vec4i& activeGrid, std::vector<ESM::RefNum>& out);
 
         void updateProjectionMatrix();
+        float getTerrainViewDistance(float fov) const;
 
         void setScreenRes(int width, int height);
 

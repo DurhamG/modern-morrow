@@ -27,6 +27,8 @@ namespace Settings
         SettingValue<bool> mAllowZooming{ mIndex, "Map", "allow zooming" };
         SettingValue<int> mMaxLocalViewingDistance{ mIndex, "Map", "max local viewing distance",
             makeMaxSanitizerInt(Constants::CellGridRadius) };
+        SettingValue<int> mLocalMapCellDistance{ mIndex, "Map", "local map cell distance",
+            makeMaxSanitizerInt(Constants::CellGridRadius) };
     };
 }
 

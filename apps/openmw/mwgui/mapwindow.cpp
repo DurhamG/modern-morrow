@@ -90,14 +90,7 @@ namespace MWGui
 
     int getLocalViewingDistance()
     {
-        if (!Settings::map().mAllowZooming)
-            return Constants::CellGridRadius;
-        if (!Settings::terrain().mDistantTerrain)
-            return Constants::CellGridRadius;
-        const int viewingDistanceInCells
-            = static_cast<int>(Settings::camera().mViewingDistance / Constants::CellSizeInUnits);
-        return std::clamp(
-            viewingDistanceInCells, Constants::CellGridRadius, Settings::map().mMaxLocalViewingDistance.get());
+        return MWRender::getLocalMapCellDistance();
     }
 
     ESM::RefId getCellIdInWorldSpace(const MWWorld::Cell& cell, int x, int y)
@@ -1522,13 +1515,13 @@ namespace MWGui
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         if (winMgr->getMode() == MWGui::GM_Inventory)
         {
-            // Fill the height below the tab bar. Limit the width to the size that shows the entire
-            // local map without scrolling.
+            // Fill the height below the tab bar. Limit the width to the active grid of cells around the player, so
+            // some of the game world still shows at each side even when the local map covers more cells.
             MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-            MyGUI::IntSize canvasSize = mLocalMap->getCanvasSize();
             MyGUI::IntSize borderSize = mMainWidget->getSize() - mMainWidget->getClientWidget()->getSize();
+            const int activeGridWidth = static_cast<int>((2 * Constants::CellGridRadius + 1) * getWidgetSize());
 
-            int width = std::min(viewSize.width, canvasSize.width + borderSize.width);
+            int width = std::min(viewSize.width, activeGridWidth + borderSize.width);
             int height = winMgr->getControllerMenuHeight();
             int x = (viewSize.width - width) / 2;
             int y = viewSize.height - height;

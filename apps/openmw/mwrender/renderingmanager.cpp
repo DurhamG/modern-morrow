@@ -1241,6 +1241,22 @@ namespace MWRender
         mWater->emitRipple(pos);
     }
 
+    float RenderingManager::getTerrainViewDistance(float fov) const
+    {
+        // Since our fog is not radial yet, we should take FOV in account, otherwise terrain near viewing distance may
+        // disappear. Limit FOV here just for sure, otherwise viewing distance can be too high.
+        const float distanceMult = std::cos(osg::DegreesToRadians(std::min(fov, 140.f)) / 2.f);
+        const float viewDistance = mViewDistance * (distanceMult ? 1.f / distanceMult : 1.f);
+
+        // The local map draws cells beyond the active grid from the loaded terrain and distant objects, so load them
+        // out to the map's farthest corner. The camera's far plane still hides everything past the viewing distance.
+        const int mapCellDistance = getLocalMapCellDistance();
+        if (mapCellDistance <= Constants::CellGridRadius)
+            return viewDistance;
+        const float mapDistance = static_cast<float>(mapCellDistance + 1) * Constants::CellSizeInUnits * std::sqrt(2.f);
+        return std::max(viewDistance, mapDistance);
+    }
+
     void RenderingManager::updateProjectionMatrix()
     {
         if (mNearClip < 0.0f)
@@ -1290,10 +1306,7 @@ namespace MWRender
             setScreenRes(width, height);
         }
 
-        // Since our fog is not radial yet, we should take FOV in account, otherwise terrain near viewing distance may
-        // disappear. Limit FOV here just for sure, otherwise viewing distance can be too high.
-        float distanceMult = std::cos(osg::DegreesToRadians(std::min(fov, 140.f)) / 2.f);
-        mTerrain->setViewDistance(mViewDistance * (distanceMult ? 1.f / distanceMult : 1.f));
+        mTerrain->setViewDistance(getTerrainViewDistance(fov));
 
         if (mPostProcessor)
         {
@@ -1380,8 +1393,7 @@ namespace MWRender
                 mTerrainStorage.get(), Mask_Terrain, worldspace, expiryDelay, Mask_PreCompile, Mask_Debug);
 
         newChunkMgr.mTerrain->setTargetFrameRate(Settings::cells().mTargetFramerate);
-        float distanceMult = std::cos(osg::DegreesToRadians(std::min(mFieldOfView, 140.f)) / 2.f);
-        newChunkMgr.mTerrain->setViewDistance(mViewDistance * (distanceMult ? 1.f / distanceMult : 1.f));
+        newChunkMgr.mTerrain->setViewDistance(getTerrainViewDistance(mFieldOfView));
         newChunkMgr.mTerrain->enableHeightCullCallback(Settings::terrain().mWaterCulling);
 
         return mWorldspaceChunks.emplace(worldspace, std::move(newChunkMgr)).first->second;
@@ -1416,6 +1428,12 @@ namespace MWRender
             else if (it->first == "Camera" && it->second == "viewing distance")
             {
                 setViewDistance(Settings::camera().mViewingDistance);
+            }
+            else if (it->first == "Map"
+                && (it->second == "local map cell distance" || it->second == "max local viewing distance"
+                    || it->second == "allow zooming"))
+            {
+                updateProjection = true;
             }
             else if (it->first == "General"
                 && (it->second == "texture filter" || it->second == "texture mipmap" || it->second == "anisotropy"))
