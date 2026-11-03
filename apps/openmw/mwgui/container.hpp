@@ -1,6 +1,8 @@
 #ifndef MGUI_CONTAINER_H
 #define MGUI_CONTAINER_H
 
+#include <memory>
+
 #include "itemmodel.hpp"
 #include "referenceinterface.hpp"
 #include "windowbase.hpp"
@@ -19,11 +21,13 @@ namespace MWGui
     class ItemView;
     class SortFilterItemModel;
     class ItemTransfer;
+    class LootPanel;
 
     class ContainerWindow : public WindowBase, public ReferenceInterface
     {
     public:
         explicit ContainerWindow(DragAndDrop& dragAndDrop, ItemTransfer& itemTransfer);
+        ~ContainerWindow() override;
 
         void setPtr(const MWWorld::Ptr& container) override;
 
@@ -47,6 +51,7 @@ namespace MWGui
 
         ControllerButtons* getControllerButtons() override;
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+        bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
         void setActiveControllerWindow(bool active) override;
 
         MWGui::ItemView* getItemView() { return mItemView; }
@@ -76,6 +81,11 @@ namespace MWGui
         void onDisposeCorpseButtonClicked(MyGUI::Widget* sender);
 
         void onReferenceUnavailable() override;
+
+        // In controller menus mode, a panel on the right side of the screen shows the container instead of this
+        // window. It reads the items from here.
+        friend class LootPanel;
+        std::unique_ptr<LootPanel> mPanel;
     };
 }
 #endif // CONTAINER_H

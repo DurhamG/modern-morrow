@@ -27,6 +27,7 @@
 #include "inventorywindow.hpp"
 #include "itemtransfer.hpp"
 #include "itemview.hpp"
+#include "lootpanel.hpp"
 #include "pickpocketitemmodel.hpp"
 #include "sortfilteritemmodel.hpp"
 #include "tooltips.hpp"
@@ -64,7 +65,15 @@ namespace MWGui
         mControllerButtons.mX = "#{Interface:TakeAll}";
         mControllerButtons.mR3 = "#{Interface:Info}";
         mControllerButtons.mL2 = "#{Interface:Inventory}";
+
+        if (Settings::gui().mControllerMenus)
+        {
+            mPanel = std::make_unique<LootPanel>(*this);
+            mDisableGamepadCursor = true;
+        }
     }
+
+    ContainerWindow::~ContainerWindow() = default;
 
     void ContainerWindow::onItemSelected(int index)
     {
@@ -203,10 +212,19 @@ namespace MWGui
     void ContainerWindow::onOpen()
     {
         mItemTransfer->addTarget(*mItemView);
+        if (mPanel == nullptr)
+            return;
+        // The panel shows the container, so this window stays invisible.
+        mMainWidget->setAlpha(0.f);
+        if (MyGUI::Widget* client = mMainWidget->getClientWidget())
+            client->setVisible(false);
+        mPanel->show();
     }
 
     void ContainerWindow::onClose()
     {
+        if (mPanel != nullptr)
+            mPanel->hide();
         // Make sure the window was actually closed and not temporarily hidden.
         if (MWBase::Environment::get().getWindowManager()->containsMode(GM_Container))
             return;
@@ -361,8 +379,17 @@ namespace MWGui
         return &mControllerButtons;
     }
 
+    bool ContainerWindow::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
+    {
+        // The panel reads the left stick every frame.
+        return mPanel != nullptr && (arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY);
+    }
+
     bool ContainerWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             int index = mItemView->getControllerFocus();
@@ -401,6 +428,9 @@ namespace MWGui
     void ContainerWindow::onFrame(float dt)
     {
         checkReferenceAvailable();
+
+        if (mPanel != nullptr)
+            mPanel->onFrame(dt);
 
         if (mUpdateNextFrame)
         {
