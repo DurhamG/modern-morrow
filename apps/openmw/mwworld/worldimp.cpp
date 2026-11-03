@@ -2985,6 +2985,8 @@ namespace MWWorld
         if (!selectedSpell.empty())
         {
             const ESM::Spell* spell = mStore.get<ESM::Spell>().find(selectedSpell);
+            if (casterIsPlayer && !scriptedSpell)
+                mPlayer->addRecentSpell(selectedSpell);
             cast.cast(spell);
         }
         else
@@ -2993,6 +2995,8 @@ namespace MWWorld
             if (inv.getSelectedEnchantItem() != inv.end())
             {
                 const auto& itemPtr = *inv.getSelectedEnchantItem();
+                if (casterIsPlayer && !scriptedSpell)
+                    mPlayer->addRecentSpell(itemPtr.getCellRef().getRefId());
                 cast.cast(itemPtr);
             }
         }

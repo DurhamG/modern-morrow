@@ -43,6 +43,8 @@ namespace ESM
         };
         // Items that recently entered the inventory, newest first
         std::vector<RecentItem> mRecentItems;
+        // Spells, and enchanted items or scrolls, that the player recently readied or cast, most recent first
+        std::vector<ESM::RefId> mRecentSpells;
 
         void load(ESMReader& esm);
         void save(ESMWriter& esm) const;

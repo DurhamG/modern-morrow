@@ -265,6 +265,7 @@ namespace MWWorld
         mPaidCrimeId = -1;
         mPreviousItems.clear();
         mRecentItems.clear();
+        mRecentSpells.clear();
         mLastKnownExteriorPosition = osg::Vec3f(0, 0, 0);
 
         mSaveSkills.clear();
@@ -308,6 +309,7 @@ namespace MWWorld
 
         player.mPreviousItems = mPreviousItems;
         player.mRecentItems = mRecentItems;
+        player.mRecentSpells = mRecentSpells;
 
         writer.startRecord(ESM::REC_PLAY);
         player.save(writer);
@@ -407,6 +409,7 @@ namespace MWWorld
 
             mPreviousItems = player.mPreviousItems;
             mRecentItems = player.mRecentItems;
+            mRecentSpells = player.mRecentSpells;
 
             return true;
         }
@@ -518,6 +521,16 @@ namespace MWWorld
             if (i < sRecentItemsShown || !mRecentItems[i].mSeen)
                 kept.push_back(mRecentItems[i]);
         mRecentItems = std::move(kept);
+    }
+
+    void Player::addRecentSpell(const ESM::RefId& spellOrItem)
+    {
+        // Enough to fill the magic screen's Recent tab
+        constexpr std::size_t maxRecentSpells = 40;
+        std::erase(mRecentSpells, spellOrItem);
+        mRecentSpells.insert(mRecentSpells.begin(), spellOrItem);
+        if (mRecentSpells.size() > maxRecentSpells)
+            mRecentSpells.resize(maxRecentSpells);
     }
 
     void Player::markRecentItemSeen(const ESM::RefId& item)

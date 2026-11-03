@@ -1571,6 +1571,7 @@ namespace MWGui
         mSelectedSpell = spellId;
         mSelectedEnchantItem = MWWorld::Ptr();
         mHud->setSelectedSpell(spellId, successChancePercent);
+        MWBase::Environment::get().getWorld()->getPlayer().addRecentSpell(spellId);
 
         const ESM::Spell* spell = mStore->get<ESM::Spell>().find(spellId);
 
@@ -1581,6 +1582,7 @@ namespace MWGui
     {
         mSelectedEnchantItem = item;
         mSelectedSpell = ESM::RefId();
+        MWBase::Environment::get().getWorld()->getPlayer().addRecentSpell(item.getCellRef().getRefId());
         const ESM::Enchantment* ench = mStore->get<ESM::Enchantment>().find(item.getClass().getEnchantment(item));
 
         int chargePercent = static_cast<int>(item.getCellRef().getNormalizedEnchantmentCharge(*ench) * 100);

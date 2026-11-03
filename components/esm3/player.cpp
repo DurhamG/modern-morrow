@@ -118,6 +118,13 @@ namespace ESM
                 item.mSeen = seen != 0;
             }
         }
+
+        mRecentSpells.clear();
+        if (esm.getFormatVersion() > MaxNoRecentSpellsFormatVersion)
+        {
+            while (esm.isNextSub("RCSP"))
+                mRecentSpells.push_back(esm.getRefId());
+        }
     }
 
     void Player::save(ESMWriter& esm) const
@@ -193,6 +200,12 @@ namespace ESM
                 esm.writeHNRefId("RCIT", item.mItem);
                 esm.writeHNT("RCSN", static_cast<unsigned char>(item.mSeen ? 1 : 0));
             }
+        }
+
+        if (esm.getFormatVersion() > MaxNoRecentSpellsFormatVersion)
+        {
+            for (const ESM::RefId& spell : mRecentSpells)
+                esm.writeHNRefId("RCSP", spell);
         }
     }
 

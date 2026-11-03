@@ -53,6 +53,9 @@ namespace MWWorld
         // Items that recently entered the inventory, newest first, and whether the player has seen them
         std::vector<ESM::Player::RecentItem> mRecentItems;
 
+        // Spells, and enchanted items or scrolls, that the player recently readied or cast, most recent first
+        std::vector<ESM::RefId> mRecentSpells;
+
         // Saved stats prior to becoming a werewolf
         std::map<ESM::RefId, float> mSaveSkills;
         std::map<ESM::RefId, float> mSaveAttributes;
@@ -73,6 +76,10 @@ namespace MWWorld
         void markRecentItemSeen(const ESM::RefId& item);
         const std::vector<ESM::Player::RecentItem>& getRecentItems() const { return mRecentItems; }
         bool isRecentItemNew(const ESM::RefId& item) const;
+
+        /// Moves a spell, or an enchanted item or scroll, to the front of the recently used spells.
+        void addRecentSpell(const ESM::RefId& spellOrItem);
+        const std::vector<ESM::RefId>& getRecentSpells() const { return mRecentSpells; }
         void restoreStats();
         void setWerewolfStats();
 
