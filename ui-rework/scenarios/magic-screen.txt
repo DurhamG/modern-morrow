@@ -1,0 +1,73 @@
+# The controller magic screen: the Active tab with effects, the ready spell and recent spells, then the other tabs.
+# It ends by checking that the menus reopen on the map tab after closing on it.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->addspell fireball"
+console "command=player->addspell \"hearth heal\""
+console "command=player->addspell shield"
+console "command=player->addspell levitate"
+console "command=player->addspell mark"
+console "command=player->addspell recall"
+console "command=player->addspell \"bound dagger\""
+console "command=player->addspell chameleon"
+console "command=player->addspell frostbite"
+console "command=player->addspell \"summon scamp\""
+console "command=player->additem \"flamebolt ring\" 1"
+console "command=player->additem \"life ring\" 1"
+console "command=player->additem sc_icarianflight 2"
+console "command=player->additem sc_reddeath 1"
+console "command=player->additem sc_hellfire 1"
+console "command=player->additem sc_restoration 1"
+console "command=player->additem p_fortify_strength_s 1"
+console "command=player->equip p_fortify_strength_s"
+pad button=b
+pad axis=righttrigger value=1 hold=5
+wait frames=10
+shot active-empty
+pad button=rightshoulder
+wait frames=5
+shot spells
+pad button=y
+wait frames=5
+shot spells-next-group
+pad button=y
+pad button=y
+pad button=y
+pad button=y
+pad button=y
+pad button=a
+pad button=dpdown
+pad button=dpdown
+pad button=a
+pad button=rightshoulder
+pad button=rightshoulder
+wait frames=5
+shot items
+pad button=a
+wait frames=10
+pad button=rightshoulder
+wait frames=5
+shot scrolls
+pad button=y
+wait frames=5
+shot scrolls-next-group
+pad button=leftshoulder
+pad button=leftshoulder
+pad button=leftshoulder
+pad button=leftshoulder
+wait frames=5
+shot active
+pad button=a
+wait frames=10
+shot active-switched
+pad button=leftshoulder
+wait frames=5
+shot recent
+pad axis=lefttrigger value=1 hold=5
+wait frames=5
+pad axis=lefttrigger value=1 hold=5
+wait frames=5
+pad button=b
+wait frames=10
+pad button=b
+wait frames=10
+shot map-reopened

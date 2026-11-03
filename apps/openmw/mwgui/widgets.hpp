@@ -67,6 +67,10 @@ namespace MWGui
 
         typedef std::vector<SpellEffectParams> SpellEffectList;
 
+        /// Describes a spell effect the way spell tooltips do, such as "Fire Damage 2 to 20 pts for 5 secs in 5 ft
+        /// on Target". The text can contain "#{...}" strings to replace with their localised text.
+        std::string describeSpellEffect(SpellEffectParams params);
+
         class MWSkill final : public MyGUI::Widget
         {
             MYGUI_RTTI_DERIVED(MWSkill)

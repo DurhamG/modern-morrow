@@ -97,6 +97,7 @@ namespace MWGui
     class StatsWindow;
     class InventoryWindow;
     class InventoryScreen;
+    class MagicScreen;
     struct JournalWindow;
     class TextInputDialog;
     class InfoBoxDialog;
@@ -463,6 +464,7 @@ namespace MWGui
         InventoryWindow* mInventoryWindow;
         // Replaces the inventory window in the inventory tabs, in controller menus mode
         InventoryScreen* mInventoryScreen = nullptr;
+        MagicScreen* mMagicScreen = nullptr;
         ScrollWindow* mScrollWindow;
         BookWindow* mBookWindow;
         CountDialog* mCountDialog;

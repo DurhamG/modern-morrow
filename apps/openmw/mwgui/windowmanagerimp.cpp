@@ -109,6 +109,7 @@
 #include "keyboardnavigation.hpp"
 #include "levelupdialog.hpp"
 #include "loadingscreen.hpp"
+#include "magicscreen.hpp"
 #include "mainmenu.hpp"
 #include "merchantrepair.hpp"
 #include "postprocessorhud.hpp"
@@ -354,17 +355,23 @@ namespace MWGui
         mWindows.push_back(std::move(spellWindow));
         trackWindow(mSpellWindow, makeSpellsWindowSettingValues());
 
-        // In controller menus mode, the inventory tab shows the inventory screen. The inventory window still
-        // handles using items, and the container and barter screens.
+        // In controller menus mode, the inventory and magic tabs show full screen menus. The inventory window still
+        // handles using items, and the container and barter screens. The spell window still handles cycling through
+        // spells during play.
         if (Settings::gui().mControllerMenus)
         {
             auto inventoryScreen = std::make_unique<InventoryScreen>();
             mInventoryScreen = inventoryScreen.get();
             mWindows.push_back(std::move(inventoryScreen));
+            auto magicScreen = std::make_unique<MagicScreen>();
+            mMagicScreen = magicScreen.get();
+            mWindows.push_back(std::move(magicScreen));
         }
         WindowBase* inventoryTab = mInventoryScreen != nullptr ? static_cast<WindowBase*>(mInventoryScreen)
                                                                : static_cast<WindowBase*>(mInventoryWindow);
-        mGuiModeStates[GM_Inventory] = GuiModeState({ mMap, inventoryTab, mSpellWindow, mStatsWindow });
+        WindowBase* magicTab
+            = mMagicScreen != nullptr ? static_cast<WindowBase*>(mMagicScreen) : static_cast<WindowBase*>(mSpellWindow);
+        mGuiModeStates[GM_Inventory] = GuiModeState({ mMap, inventoryTab, magicTab, mStatsWindow });
         mGuiModeStates[GM_None] = GuiModeState({ mMap, mInventoryWindow, mSpellWindow, mStatsWindow });
 
         auto tradeWindow = std::make_unique<TradeWindow>();
@@ -694,6 +701,8 @@ namespace MWGui
                 mSpellWindow->pinned() && !isConsoleMode() && !(mForceHidden & GW_Magic) && (mAllowed & GW_Magic));
             if (mInventoryScreen != nullptr)
                 mInventoryScreen->setVisible(false);
+            if (mMagicScreen != nullptr)
+                mMagicScreen->setVisible(false);
 
             if (Settings::gui().mControllerMenus && mInventoryTabsOverlay)
                 mInventoryTabsOverlay->setVisible(false);
@@ -709,6 +718,8 @@ namespace MWGui
                 getMode() == GM_Container || getMode() == GM_Barter || getMode() == GM_Companion);
             if (mInventoryScreen != nullptr)
                 mInventoryScreen->setVisible(false);
+            if (mMagicScreen != nullptr)
+                mMagicScreen->setVisible(false);
         }
 
         GuiMode mode = mGuiModes.back();
@@ -726,7 +737,9 @@ namespace MWGui
             mInventoryWindow->setVisible(mInventoryScreen == nullptr && (eff & GW_Inventory));
             if (mInventoryScreen != nullptr)
                 mInventoryScreen->setVisible(eff & GW_Inventory);
-            mSpellWindow->setVisible(eff & GW_Magic);
+            mSpellWindow->setVisible(mMagicScreen == nullptr && (eff & GW_Magic));
+            if (mMagicScreen != nullptr)
+                mMagicScreen->setVisible(eff & GW_Magic);
             mStatsWindow->setVisible(eff & GW_Stats);
         }
 

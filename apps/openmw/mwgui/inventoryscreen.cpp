@@ -1169,7 +1169,7 @@ namespace MWGui
             {
                 addIcon(mContent, sMargin + 16, y, 40, *it, false);
                 const std::vector<std::string> lines
-                    = wrapText(std::string(it->getClass().getName(*it)), slotsW - 80, sFontSmall);
+                    = wrapText(mContent, std::string(it->getClass().getName(*it)), slotsW - 80, sFontSmall);
                 const int lineH = 40 / static_cast<int>(lines.size());
                 for (std::size_t line = 0; line < lines.size(); ++line)
                     addText(mContent, sMargin + 64, y + static_cast<int>(line) * lineH, slotsW - 80, lineH,

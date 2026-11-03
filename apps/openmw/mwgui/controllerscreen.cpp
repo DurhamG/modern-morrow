@@ -181,20 +181,25 @@ namespace MWGui
             image->setNeedMouseFocus(false);
         }
 
-        std::vector<std::string> wrapText(const std::string& text, int width, int fontHeight)
+        std::vector<std::string> wrapText(
+            MyGUI::Widget* parent, const std::string& text, int width, int fontHeight, std::size_t maxLines)
         {
-            const std::size_t perLine = std::max<std::size_t>(1, static_cast<std::size_t>(width / (fontHeight * 0.5f)));
+            MyGUI::TextBox* probe = addText(parent, 0, 0, width, fontHeight * 2, {}, fontHeight, sTextColour);
+            probe->setVisible(false);
             std::vector<std::string> lines(1);
             std::istringstream words(text);
             std::string word;
             while (words >> word)
             {
                 std::string& line = lines.back();
-                if (!line.empty() && line.size() + 1 + word.size() > perLine && lines.size() < 2)
+                const std::string longer = line.empty() ? word : line + " " + word;
+                probe->setCaption(MyGUI::UString(longer));
+                if (!line.empty() && probe->getTextSize().width > width && lines.size() < maxLines)
                     lines.emplace_back(word);
                 else
-                    line += (line.empty() ? "" : " ") + word;
+                    line = longer;
             }
+            MyGUI::Gui::getInstance().destroyWidget(probe);
             return lines;
         }
 

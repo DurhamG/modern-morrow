@@ -108,8 +108,10 @@ namespace MWGui
         /// Shows an image, such as a magic effect's icon, on a dark square.
         void addImage(MyGUI::Widget* parent, int x, int y, int size, const std::string& texture);
 
-        /// Splits text into at most two lines that fit the width, guessing at the font's average character width.
-        std::vector<std::string> wrapText(const std::string& text, int width, int fontHeight);
+        /// Splits text into lines that fit the width, at most maxLines of them. The last line holds whatever is left.
+        /// The text is measured in a hidden text box on the parent.
+        std::vector<std::string> wrapText(
+            MyGUI::Widget* parent, const std::string& text, int width, int fontHeight, std::size_t maxLines = 2);
 
         /// Draws the screen's own tabs, switched with the shoulder buttons, and a status line at their right.
         void drawTabRow(MyGUI::Widget* parent, int width, const std::vector<std::string>& captions, int selected,
