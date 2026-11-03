@@ -84,4 +84,6 @@
 
 - Started on the dialogue window. The `controller-dialogue` scenario talks to Arrille, a trader in Seyda Neen, and picks a topic.
 
-Next: design the dialogue window with the user.
+- Designed the dialogue window with the user, recorded in [design/dialogue.md](design/dialogue.md). `ui-rework/mockups/dialogue.py` builds its mock-ups, over the game with the NPC in view. The mock-up generators now share their helpers in `ui-rework/mockups/mockup.py`.
+
+Next: the user reviews the dialogue mock-ups.

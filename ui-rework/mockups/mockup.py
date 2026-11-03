@@ -9,7 +9,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from xml.sax.saxutils import quoteattr
+from xml.sax.saxutils import escape
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 import omw  # noqa: E402
@@ -70,6 +70,11 @@ def read_from_game(lua_file, names, cache, refresh=False):
 # Layout building
 
 
+def attribute(value):
+    """Escapes a value for an XML attribute. MyGUI's parser rejects quotes of either kind inside one."""
+    return escape(str(value), {'"': "&quot;", "'": "&apos;"})
+
+
 class Layout:
     """Collects widgets for one MyGUI layout file. Coordinates are canvas units, from the top left."""
 
@@ -78,7 +83,7 @@ class Layout:
         self.widgets = []
 
     def add(self, widget_type, skin, x, y, w, h, properties):
-        props = "".join(f'<Property key="{k}" value={quoteattr(str(v))}/>' for k, v in properties.items())
+        props = "".join(f'<Property key="{k}" value="{attribute(v)}"/>' for k, v in properties.items())
         self.widgets.append(
             f'<Widget type="{widget_type}" skin="{skin}" position="{int(x)} {int(y)} {int(w)} {int(h)}">'
             f'<Property key="NeedMouse" value="false"/>{props}</Widget>')
