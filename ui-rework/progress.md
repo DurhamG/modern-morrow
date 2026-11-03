@@ -31,7 +31,7 @@
   - Full bars fade out. The weapon and spell boxes show for five seconds after a change, and while the weapon or a spell is ready. Everything shows during combat.
   - The `hud`, `hud-fades` and `hud-combat` scenarios cover it.
 - Working style agreed with the user:
-  - After each change, launch the user's test save on their right monitor for them to look at: `omw.py launch -p review --steam --user-settings --set "Terrain.distant terrain=true" --resolution 3840x2160 --fullscreen --screen 1 --save "C:/Users/Durham/Documents/My Games/OpenMW/saves/Lendias/Test.omwsave"`.
+  - After each change, launch the user's test save on their right monitor for them to look at: `omw.py launch -p review --steam --user-settings --set "Terrain.distant terrain=true" --set "Fog.radial fog=true" --set "Fog.sky blending=true" --resolution 3840x2160 --fullscreen --screen 1 --save "C:/Users/Durham/Documents/My Games/OpenMW/saves/Lendias/Test.omwsave"`.
   - The commit stack should show the final design, not the iteration that led to it. Fix-ups and tweaks get folded into the commit they belong to.
 - Lessons learned:
   - When the user is running another game, 32 parallel compiles run out of memory. Add `-- //p:CL_MPCount=8` to the build command.
@@ -39,5 +39,17 @@
   - The user's 2026 Steam Controller is only a gamepad under Steam Input, because OpenMW's SDL2 doesn't recognize it. Steam Input only works in the program a Steam shortcut starts, so `launch --steam` uses a shortcut to `openmw.exe` itself.
   - After adding a member to a settings category in `components/settings/categories/`, the incremental Visual Studio build didn't recompile the game files that read settings, apparently because the header comes in through the precompiled header. The game then crashed at startup with "bad allocation", while reading other settings. Delete `MSVC2022_64/apps/openmw/openmw-lib.dir/RelWithDebInfo/*.obj` and its `cmake_pch.pch` after changing a settings category, which costs a 4 to 5 minute rebuild.
   - OpenMW reads stick positions only from the first controller connected. If the harness's virtual gamepad is still attached, a real controller plugged in later seems not to work. Send `pad action=disconnect` before handing the game to the user.
+- Reviewed OpenMW's gamepad support before reworking the menus. See [research/controller-support.md](research/controller-support.md).
+- The user's 2026 Steam Controller only works under Steam Input, so `omw.py launch --steam` starts the game through a Steam shortcut.
+- Reworked the map screen with the user, in controller menus mode:
+  - The button hint bar along the bottom of every menu is gone. Windows will show their own hints where they need them.
+  - The map fills the height below the tab bar. Its width is the 3x3 active grid, so some of the game world shows at each side.
+  - The map shows "Y Center" and "X World" hints in its bottom left corner. The World button is hidden in this mode.
+  - The map has an opaque black background, and the world map scales to fit the window.
+  - The right stick pans the local map smoothly.
+  - With distant terrain on, the local map shows 7x7 cells, set by the new `[Map] local map cell distance` setting. It no longer needs "allow zooming". Terrain loads far enough to draw the whole map, even past the viewing distance.
+  - The `controller-map` scenario covers it.
+- Fixed distant scenery that was cut off differently as the camera turned. The far clip plane is flat, so it reaches further at the sides of the view. The user now plays with `[Fog] radial fog` and `sky blending` on, which hide the cut. With sky blending on, the scene is now drawn past the viewing distance, so the fade to sky starts where the fog is fully opaque. Before, mountain tops faded into the sky while their detail still showed.
+- Ideas for later: a tilted, Skyrim-style 3D map. The local map is drawn once per cell from straight above, so this needs a live camera instead.
 
 Next: choose the next piece of the UI to rework with the user.
