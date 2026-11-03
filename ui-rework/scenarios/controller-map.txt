@@ -1,4 +1,5 @@
-# The map screen in the existing "controller menus" mode: the local map, panned with the right stick, then the world map.
+# The map screen in controller menus mode: the local map, panned with the right stick, then the World tab.
+# It ends by switching to the inventory, then closing the menus from the map, to check the map's tabs go away.
 launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true" --set "GUI.controller tooltips=true"
 pad button=b
 wait frames=10
@@ -8,6 +9,14 @@ shot map-local
 pad axis=righty value=1 hold=30
 wait frames=35
 shot map-local-panned
-pad button=x
+pad button=rightshoulder
 wait frames=10
 shot map-world
+pad axis=righttrigger value=1 hold=5
+wait frames=10
+shot inventory-after-map
+pad axis=lefttrigger value=1 hold=5
+wait frames=10
+pad button=b
+wait frames=10
+shot closed-from-map

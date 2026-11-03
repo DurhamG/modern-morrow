@@ -5,6 +5,7 @@
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_InputManager.h>
+#include <MyGUI_LayerManager.h>
 #include <MyGUI_LanguageManager.h>
 #include <MyGUI_RenderManager.h>
 #include <MyGUI_RotatingSkin.h>
@@ -31,6 +32,7 @@
 #include "../mwrender/localmap.hpp"
 
 #include "confirmationdialog.hpp"
+#include "controllerscreen.hpp"
 
 #include <numeric>
 
@@ -819,13 +821,10 @@ namespace MWGui
         mButton->eventMouseButtonClick += MyGUI::newDelegate(this, &MapWindow::onWorldButtonClicked);
 
         getWidget(mControllerGuide, "ControllerGuide");
-        getWidget(mGuideWorldText, "GuideWorldText");
         MyGUI::ImageBox* guideImage;
-        MWBase::InputManager* inputManager = MWBase::Environment::get().getInputManager();
         getWidget(guideImage, "GuideCenterImage");
-        guideImage->setImageTexture(inputManager->getControllerButtonIcon(SDL_CONTROLLER_BUTTON_Y));
-        getWidget(guideImage, "GuideWorldImage");
-        guideImage->setImageTexture(inputManager->getControllerButtonIcon(SDL_CONTROLLER_BUTTON_X));
+        guideImage->setImageTexture(
+            MWBase::Environment::get().getInputManager()->getControllerButtonIcon(SDL_CONTROLLER_BUTTON_Y));
         mControllerGuide->setVisible(false);
 
         const bool global = Settings::map().mGlobal;
@@ -860,8 +859,8 @@ namespace MWGui
     {
         const bool global = Settings::map().mGlobal;
         mButton->setCaptionWithReplacing(global ? "#{sLocal}" : "#{sWorld}");
-        mGuideWorldText->setCaptionWithReplacing(global ? "#{Interface:Local}" : "#{Interface:World}");
-        mControllerGuide->castType<Gui::VBox>()->notifyChildrenSizeChanged();
+        if (mControllerTabs != nullptr && mControllerTabs->getVisible())
+            drawControllerTabs();
     }
 
     void MapWindow::onNoteEditOk()
@@ -1046,6 +1045,8 @@ namespace MWGui
         const bool inMenu = visible && mode != MWGui::GM_None;
         mButton->setVisible(inMenu && !Settings::gui().mControllerMenus);
         mControllerGuide->setVisible(inMenu && Settings::gui().mControllerMenus);
+        if (!visible && mControllerTabs != nullptr)
+            mControllerTabs->setVisible(false);
 
         if (Settings::gui().mControllerMenus && mode == MWGui::GM_None && pinned() && visible)
         {
@@ -1071,6 +1072,8 @@ namespace MWGui
     void MapWindow::setCellName(const std::string& cellName)
     {
         setTitle("#{sCell=" + cellName + "}");
+        if (mControllerTabs != nullptr && mControllerTabs->getVisible())
+            drawControllerTabs();
     }
 
     MyGUI::IntCoord MapWindow::createMarkerCoords(float x, float y, float agregatedWeight) const
@@ -1429,8 +1432,11 @@ namespace MWGui
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
             MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
-        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
+        else if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER
+            || arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
         {
+            // The shoulder buttons switch between the Local and World tabs. There are only two, so either one
+            // switches to the other.
             onWorldButtonClicked(mButton);
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
@@ -1515,12 +1521,13 @@ namespace MWGui
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         if (winMgr->getMode() == MWGui::GM_Inventory)
         {
-            // Fill the screen below the tab bar, as the inventory does. The window's frame and title bar sit just
-            // outside that area, off the screen's edges and under the tab bar, so only the map shows.
+            // Fill the screen below the map's own tabs, as the inventory does. The window's frame and title bar sit
+            // just outside that area, off the screen's edges and under the tabs, so only the map shows.
             const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
             const MyGUI::IntCoord client = mMainWidget->getClientWidget()->getCoord();
             const MyGUI::IntSize borderSize = mMainWidget->getSize() - client.size();
-            const int mapHeight = winMgr->getControllerMenuHeight();
+            const int tabsBottom = static_cast<int>(std::round(sTabsBottom * viewSize.height / 720.f));
+            const int mapHeight = viewSize.height - tabsBottom;
 
             const int width = viewSize.width + borderSize.width;
             const int height = mapHeight + borderSize.height;
@@ -1533,10 +1540,37 @@ namespace MWGui
             {
                 fitGlobalMapToView();
                 layoutControllerGuide();
+                drawControllerTabs();
             }
+            else if (mControllerTabs != nullptr)
+                mControllerTabs->setVisible(false);
         }
 
         WindowBase::setActiveControllerWindow(active);
+    }
+
+    void MapWindow::drawControllerTabs()
+    {
+        // The Local and World tabs sit on the same layer as the inventory screen's tabs, so they look the same. The
+        // current cell's name goes where the inventory shows the armour rating and gold.
+        MyGUI::ILayer* layer = MyGUI::LayerManager::getInstance().getByName("ControllerMenus", false);
+        if (layer == nullptr)
+            return;
+        const MyGUI::IntSize size = layer->getSize();
+        if (mControllerTabs == nullptr)
+            mControllerTabs = MyGUI::Gui::getInstance().createWidget<MyGUI::Widget>(
+                "", MyGUI::IntCoord(0, 0, size.width, sTabsBottom), MyGUI::Align::Default, "ControllerMenus");
+        mControllerTabs->setNeedMouseFocus(false);
+        mControllerTabs->setCoord(0, 0, size.width, sTabsBottom);
+        while (mControllerTabs->getChildCount() > 0)
+            MyGUI::Gui::getInstance().destroyWidget(mControllerTabs->getChildAt(0));
+
+        ControllerUi::addRect(mControllerTabs, 0, ControllerUi::sTabBarHeight, size.width,
+            sTabsBottom - ControllerUi::sTabBarHeight, MyGUI::Colour::Black);
+        const std::string cellName = mMainWidget->castType<MyGUI::Window>()->getCaption().asUTF8();
+        ControllerUi::drawTabRow(mControllerTabs, size.width, { "#{sLocal}", "#{sWorld}" },
+            Settings::map().mGlobal ? 1 : 0, ControllerUi::escaped(cellName));
+        mControllerTabs->setVisible(true);
     }
 
     void MapWindow::layoutControllerGuide()
@@ -1548,26 +1582,20 @@ namespace MWGui
         const int glyphSize = scaled(26);
         const int rowHeight = scaled(34);
 
-        for (std::string_view row : { "GuideCenter", "GuideWorld" })
-        {
-            MyGUI::Widget* box;
-            MyGUI::ImageBox* image;
-            MyGUI::TextBox* text;
-            getWidget(box, std::string(row));
-            getWidget(image, std::string(row) + "Image");
-            getWidget(text, std::string(row) + "Text");
-            box->setProperty("Spacing", std::to_string(scaled(8)));
-            image->setSize(glyphSize, glyphSize);
-            text->setFontHeight(scaled(18));
-            text->setTextColour(MyGUI::Colour::parse("#dfc99f"));
-            box->setSize(box->getWidth(), rowHeight);
-        }
+        MyGUI::Widget* box;
+        MyGUI::ImageBox* image;
+        MyGUI::TextBox* text;
+        getWidget(box, "GuideCenter");
+        getWidget(image, "GuideCenterImage");
+        getWidget(text, "GuideCenterText");
+        box->setProperty("Spacing", std::to_string(scaled(8)));
+        image->setSize(glyphSize, glyphSize);
+        text->setFontHeight(scaled(18));
+        text->setTextColour(MyGUI::Colour::parse("#dfc99f"));
+        box->setSize(box->getWidth(), rowHeight);
 
         MyGUI::Widget* client = mMainWidget->getClientWidget();
-        const int guideHeight = 2 * rowHeight + scaled(4);
-        mControllerGuide->setProperty("Spacing", std::to_string(scaled(4)));
-        mControllerGuide->setCoord(
-            scaled(32), client->getHeight() - scaled(24) - guideHeight, scaled(400), guideHeight);
+        mControllerGuide->setCoord(scaled(32), client->getHeight() - scaled(24) - rowHeight, scaled(400), rowHeight);
         mControllerGuide->castType<Gui::VBox>()->notifyChildrenSizeChanged();
     }
 

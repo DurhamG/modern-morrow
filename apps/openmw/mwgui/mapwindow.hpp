@@ -298,6 +298,7 @@ namespace MWGui
         void panLocalMapWithStick(float dt);
         void updateWorldToggleCaptions();
         void layoutControllerGuide();
+        void drawControllerTabs();
         void worldPosToGlobalMapImageSpace(float x, float z, float& imageX, float& imageY) const;
         MyGUI::IntCoord createMarkerCoords(float x, float y, float agregatedWeight) const;
         MyGUI::Widget* createMarker(const std::string& name, float x, float y, float agregatedWeight);
@@ -311,7 +312,10 @@ namespace MWGui
         MyGUI::ImageBox* mPlayerArrowGlobal;
         MyGUI::Button* mButton;
         MyGUI::Widget* mControllerGuide;
-        MyGUI::TextBox* mGuideWorldText;
+        // The Local and World tabs in controller menus mode, below the tab bar
+        MyGUI::Widget* mControllerTabs = nullptr;
+        // Where the tabs end, on the canvas 720 units tall that the tab bar uses
+        static constexpr int sTabsBottom = 95;
         MyGUI::IntPoint mLastDragPos;
         // The part of a pixel that the stick moved the local map by, carried over to the next frame.
         MyGUI::FloatPoint mStickPanRemainder;
