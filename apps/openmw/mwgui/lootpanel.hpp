@@ -48,6 +48,12 @@ namespace MWGui
         std::vector<ItemStack> mItems;
         int mFocus = 0;
         int mScroll = 0;
+
+        // Whether the panel shows the player's own items, to put into the container, under one of the inventory
+        // screen's tabs. The selection in the container's items is kept for when the player comes back.
+        bool mYourItems = false;
+        int mYourTab = 0;
+        int mContainerFocus = 0;
         std::string mShownState;
         float mRefreshTimer = 0.f;
         HeldDirection mHeldDirection;
@@ -67,6 +73,9 @@ namespace MWGui
         void take(bool equip);
         void takeAll();
         void onTakeAllConfirmed();
+        void putIn();
+        void switchView();
+        bool canPutIn() const;
     };
 }
 

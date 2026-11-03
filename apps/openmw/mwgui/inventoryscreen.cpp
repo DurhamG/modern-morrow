@@ -105,13 +105,6 @@ namespace MWGui
             return "#{Interface:InventoryArea" + std::string(sAreas[area].mName) + "}";
         }
 
-        std::string tabKey(int tab)
-        {
-            static const std::array<std::string_view, 6> names
-                = { "Recent", "Equipment", "Consumables", "Notes", "Tools", "Misc" };
-            return "#{Interface:InventoryTab" + std::string(names[tab]) + "}";
-        }
-
         MWWorld::Ptr player()
         {
             return MWMechanics::getPlayer();
@@ -200,21 +193,6 @@ namespace MWGui
                     return escaped(ptr.getClass().getName(ptr));
             }
             return {};
-        }
-
-        int tabOf(const MWWorld::Ptr& ptr)
-        {
-            const unsigned int type = ptr.getType();
-            if (isEquipment(ptr))
-                return 1;
-            if (type == ESM::Potion::sRecordId || type == ESM::Ingredient::sRecordId)
-                return 2;
-            if (type == ESM::Book::sRecordId)
-                return ptr.get<ESM::Book>()->mBase->mEnchant.empty() ? 3 : 2;
-            if (type == ESM::Lockpick::sRecordId || type == ESM::Probe::sRecordId || type == ESM::Repair::sRecordId
-                || type == ESM::Apparatus::sRecordId)
-                return 4;
-            return 5;
         }
 
         std::vector<Column> areaColumns(int area)
@@ -597,7 +575,7 @@ namespace MWGui
 
         std::vector<int> items;
         for (std::size_t i = 0; i < mItems.size(); ++i)
-            if (tabOf(mItems[i].mBase) == tab)
+            if (inventoryTab(mItems[i].mBase) == tab)
                 items.push_back(static_cast<int>(i));
         std::stable_sort(items.begin(), items.end(), sorter);
 
@@ -777,7 +755,7 @@ namespace MWGui
     {
         std::vector<std::string> captions;
         for (int tab = 0; tab < sTabCount; ++tab)
-            captions.push_back(tabKey(tab));
+            captions.push_back(inventoryTabKey(tab));
 
         // The armour rating, encumbrance and gold.
         const MWWorld::Ptr actor = player();

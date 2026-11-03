@@ -24,6 +24,7 @@
 #include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
+#include "../mwbase/world.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
 
@@ -31,6 +32,7 @@
 #include "../mwworld/containerstore.hpp"
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/inventorystore.hpp"
+#include "../mwworld/player.hpp"
 
 #include "confirmationdialog.hpp"
 #include "container.hpp"
@@ -180,6 +182,9 @@ namespace MWGui
         mRoot->setVisible(true);
         mFocus = 0;
         mScroll = 0;
+        mYourItems = false;
+        mYourTab = 0;
+        mContainerFocus = 0;
         mHeldDirection.reset();
         update();
     }
@@ -201,14 +206,43 @@ namespace MWGui
         return dynamic_cast<const PickpocketItemModel*>(mWindow.mModel) != nullptr;
     }
 
+    bool LootPanel::canPutIn() const
+    {
+        // The game doesn't let the player put items into an NPC's pockets.
+        return mWindow.mModel != nullptr && !isPickpocketing();
+    }
+
     void LootPanel::readItems()
     {
         mItems.clear();
         if (mWindow.mModel == nullptr)
             return;
-        mWindow.mModel->update();
-        for (std::size_t i = 0; i < mWindow.mModel->getItemCount(); ++i)
-            mItems.push_back(mWindow.mModel->getItem(static_cast<ItemModel::ModelIndex>(i)));
+        if (!mYourItems)
+        {
+            mWindow.mModel->update();
+            for (std::size_t i = 0; i < mWindow.mModel->getItemCount(); ++i)
+                mItems.push_back(mWindow.mModel->getItem(static_cast<ItemModel::ModelIndex>(i)));
+            return;
+        }
+
+        InventoryItemModel model(player());
+        model.update();
+        std::vector<ItemStack> all;
+        for (std::size_t i = 0; i < model.getItemCount(); ++i)
+            all.push_back(model.getItem(static_cast<ItemModel::ModelIndex>(i)));
+        if (mYourTab == 0)
+        {
+            // The Recent tab lists what the player picked up last, which is often what a quest asks them to leave.
+            for (const auto& recent : MWBase::Environment::get().getWorld()->getPlayer().getRecentItems())
+                for (const ItemStack& item : all)
+                    if (item.mBase.getCellRef().getRefId() == recent.mItem
+                        && mItems.size() < MWWorld::Player::sRecentItemsShown)
+                        mItems.push_back(item);
+            return;
+        }
+        for (const ItemStack& item : all)
+            if (inventoryTab(item.mBase) == mYourTab)
+                mItems.push_back(item);
     }
 
     std::string LootPanel::currentState() const
@@ -221,6 +255,24 @@ namespace MWGui
 
     std::vector<LootPanel::Row> LootPanel::buildRows() const
     {
+        // The player's own items keep the order readItems gave them: newest first on the Recent tab, and the most
+        // valuable first on the others.
+        if (mYourItems)
+        {
+            std::vector<int> order(mItems.size());
+            for (std::size_t i = 0; i < order.size(); ++i)
+                order[i] = static_cast<int>(i);
+            if (mYourTab != 0)
+                std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
+                    return mItems[a].mBase.getClass().getValue(mItems[a].mBase)
+                        > mItems[b].mBase.getClass().getValue(mItems[b].mBase);
+                });
+            std::vector<Row> rows;
+            for (int item : order)
+                rows.push_back(Row{ {}, item });
+            return rows;
+        }
+
         // Gold comes first, then the items by kind, with the most valuable first in each group.
         std::vector<int> order(mItems.size());
         for (std::size_t i = 0; i < order.size(); ++i)
@@ -313,10 +365,32 @@ namespace MWGui
 
         // The container's name, and a warning when taking from it is a crime.
         const MWWorld::Ptr& container = mWindow.mPtr;
-        const std::string name = container.isEmpty() ? std::string() : escaped(container.getClass().getName(container));
+        std::string name = container.isEmpty() ? std::string() : escaped(container.getClass().getName(container));
+        if (mYourItems)
+            name = "#{Interface:LootPutIn} " + name;
         addText(mRoot, x + 20, sPanelTop + 10, w - 40, 34, name, sFontTitle, sBrightColour);
         std::string warning;
-        if (isPickpocketing())
+        if (mYourItems)
+        {
+            // The inventory screen's tabs, switched with the shoulder buttons.
+            int tx = x + 20;
+            addGlyph(mRoot, tx, sPanelTop + 48, 20, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+            tx += 28;
+            for (int tab = 0; tab < sInventoryTabCount; ++tab)
+            {
+                const bool selected = tab == mYourTab;
+                MyGUI::TextBox* label = addText(mRoot, tx, sPanelTop + 42, 200, 30, inventoryTabKey(tab), sFontSmall,
+                    selected ? sBrightColour : sDimColour);
+                const int labelW = label->getTextSize().width + 16;
+                label->setCoord(tx, sPanelTop + 42, labelW, 30);
+                label->setTextAlign(MyGUI::Align::Center);
+                if (selected)
+                    addRect(mRoot, tx + 6, sPanelTop + 68, labelW - 12, 2, sAccentColour);
+                tx += labelW + 2;
+            }
+            addGlyph(mRoot, tx + 4, sPanelTop + 48, 20, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+        }
+        else if (isPickpocketing())
             warning = "#{Interface:LootPickpocketing}";
         else if (isStealing())
         {
@@ -351,7 +425,8 @@ namespace MWGui
             itemCount += row.mItem >= 0 ? 1 : 0;
         if (itemCount == 0)
         {
-            addText(mRoot, x + 12, y + 4, w - 24, 30, "#{Interface:LootEmpty}", sFontNormal, sDimColour);
+            addText(mRoot, x + 12, y + 4, w - 24, 30,
+                mYourItems ? "#{Interface:InventoryNoItems}" : "#{Interface:LootEmpty}", sFontNormal, sDimColour);
             return;
         }
         mFocus = std::clamp(mFocus, 0, itemCount - 1);
@@ -419,10 +494,19 @@ namespace MWGui
             if (!ptr.getClass().isGold(ptr))
                 addText(mRoot, textX, rowY + 27, x + w - textX - rightW - 4, 20, summary(ptr), sFontSmall, sDimColour);
 
-            // Markers: an upgrade over what's equipped, and items that would be stolen.
+            // Markers: an upgrade over what's equipped, and items that would be stolen. The player's own items show
+            // which are equipped.
             std::string marker;
             MyGUI::Colour markerColour = sBetterColour;
-            if (stealing && !isPickpocketing())
+            if (mYourItems)
+            {
+                if (item.mType == ItemStack::Type_Equipped)
+                {
+                    marker = "#{Interface:InventoryEquipped}";
+                    markerColour = sDimColour;
+                }
+            }
+            else if (stealing && !isPickpocketing())
             {
                 marker = "#{Interface:LootStealing}";
                 markerColour = sWorseColour;
@@ -435,7 +519,7 @@ namespace MWGui
             const float itemWeight = ptr.getClass().getWeight(ptr) * static_cast<float>(item.mCount);
             if (itemWeight > 0.f)
                 addText(mRoot, x + w - rightW - 8, rowY + 27, rightW, 20, "#{sWeight} " + formatNumber(itemWeight),
-                    sFontSmall, itemWeight > spare ? sWorseColour : sDimColour,
+                    sFontSmall, !mYourItems && itemWeight > spare ? sWorseColour : sDimColour,
                     MyGUI::Align::Right | MyGUI::Align::VCenter);
             rowY += sEntryHeight;
             ++index;
@@ -448,11 +532,12 @@ namespace MWGui
             return;
         const ItemStack& stack = mItems[item];
         const MWWorld::Ptr& ptr = stack.mBase;
-        drawHeader(mRoot, x, y, w, stack);
+        drawHeader(mRoot, x, y, w, stack, mYourItems);
 
-        // What the item would replace: the item in each slot it fits that holds one.
+        // What the item would replace: the item in each slot it fits that holds one. The player's own items aren't
+        // compared, since they're already theirs.
         std::vector<Compared> compared;
-        if (isEquipment(ptr))
+        if (isEquipment(ptr) && !mYourItems)
         {
             const std::vector<int> slots = ptr.getClass().getEquipmentSlots(ptr).first;
             Inventory& inventory = playerInventory();
@@ -478,15 +563,24 @@ namespace MWGui
         // Taking from an owned container, or from an NPC's pockets, is stealing, and the hints say so.
         const bool stealing = isStealing() || isPickpocketing();
         std::vector<std::pair<SDL_GameControllerButton, std::string>> hints;
-        hints.emplace_back(SDL_CONTROLLER_BUTTON_A, stealing ? "#{Interface:LootSteal}" : "#{Interface:LootTake}");
-        if (!isPickpocketing())
+        if (mYourItems)
+        {
+            hints.emplace_back(SDL_CONTROLLER_BUTTON_A, "#{Interface:LootPutInAction}");
+            hints.emplace_back(SDL_CONTROLLER_BUTTON_B, "#{Interface:LootBack}");
+        }
+        else
+            hints.emplace_back(
+                SDL_CONTROLLER_BUTTON_A, stealing ? "#{Interface:LootSteal}" : "#{Interface:LootTake}");
+        if (!mYourItems && !isPickpocketing())
             hints.emplace_back(
                 SDL_CONTROLLER_BUTTON_Y, stealing ? "#{Interface:LootStealAll}" : "#{Interface:LootTakeAll}");
-        if (canTakeAndEquip(stack))
+        if (!mYourItems && canTakeAndEquip(stack))
             hints.emplace_back(SDL_CONTROLLER_BUTTON_X,
                 stealing ? "#{Interface:LootStealAndEquip}" : "#{Interface:LootTakeAndEquip}");
-        if (mWindow.mDisposeCorpseButton->getVisible())
+        if (!mYourItems && mWindow.mDisposeCorpseButton->getVisible())
             hints.emplace_back(SDL_CONTROLLER_BUTTON_BACK, "#{Interface:DisposeOfCorpse}");
+        if (!mYourItems && canPutIn())
+            hints.emplace_back(SDL_CONTROLLER_BUTTON_LEFTSTICK, "#{Interface:LootYourItems}");
 
         // The hints wrap onto as many rows as they need, and the rows end at the bottom of the panel.
         constexpr int rowHeight = 34;
@@ -557,10 +651,41 @@ namespace MWGui
     bool LootPanel::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (mYourItems)
+        {
+            switch (arg.button)
+            {
+                case SDL_CONTROLLER_BUTTON_A:
+                    putIn();
+                    break;
+                case SDL_CONTROLLER_BUTTON_B:
+                case SDL_CONTROLLER_BUTTON_LEFTSTICK:
+                    switchView();
+                    break;
+                case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+                case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+                {
+                    const int delta = arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER ? -1 : 1;
+                    mYourTab = (mYourTab + delta + sInventoryTabCount) % sInventoryTabCount;
+                    mFocus = 0;
+                    mScroll = 0;
+                    winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
+                    update();
+                    break;
+                }
+                default:
+                    break;
+            }
+            return true;
+        }
         switch (arg.button)
         {
             case SDL_CONTROLLER_BUTTON_A:
                 take(false);
+                break;
+            case SDL_CONTROLLER_BUTTON_LEFTSTICK:
+                if (canPutIn())
+                    switchView();
                 break;
             case SDL_CONTROLLER_BUTTON_X:
                 if (const int item = focusedItem(); item >= 0 && canTakeAndEquip(mItems[item]))
@@ -630,5 +755,41 @@ namespace MWGui
     void LootPanel::onTakeAllConfirmed()
     {
         mWindow.onTakeAllButtonClicked(mWindow.mTakeButton);
+    }
+
+    void LootPanel::switchView()
+    {
+        if (mYourItems)
+        {
+            mYourItems = false;
+            mFocus = mContainerFocus;
+        }
+        else
+        {
+            mYourItems = true;
+            mContainerFocus = mFocus;
+            mFocus = 0;
+        }
+        mScroll = 0;
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        update();
+    }
+
+    void LootPanel::putIn()
+    {
+        const int index = focusedItem();
+        ItemModel* model = mWindow.mModel;
+        if (index < 0 || model == nullptr)
+            return;
+        const ItemStack item = mItems[index];
+        // The container can refuse, such as when it's full, and shows why.
+        if (!model->onDropItem(item.mBase, static_cast<int>(item.mCount)))
+            return;
+        InventoryItemModel playerModel(player());
+        playerModel.update();
+        MWBase::Environment::get().getWindowManager()->playSound(item.mBase.getClass().getDownSoundId(item.mBase));
+        // Moving an equipped item out of the inventory takes it off first.
+        playerModel.moveItem(item, item.mCount, model);
+        update();
     }
 }

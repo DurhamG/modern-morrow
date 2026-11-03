@@ -1,6 +1,7 @@
 #include "itemdetails.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <optional>
 
@@ -289,18 +290,40 @@ namespace MWGui::ItemDetails
             || type == ESM::Light::sRecordId;
     }
 
+    std::string inventoryTabKey(int tab)
+    {
+        static const std::array<std::string_view, sInventoryTabCount> names
+            = { "Recent", "Equipment", "Consumables", "Notes", "Tools", "Misc" };
+        return "#{Interface:InventoryTab" + std::string(names[tab]) + "}";
+    }
+
+    int inventoryTab(const MWWorld::Ptr& ptr)
+    {
+        const unsigned int type = ptr.getType();
+        if (isEquipment(ptr))
+            return 1;
+        if (type == ESM::Potion::sRecordId || type == ESM::Ingredient::sRecordId)
+            return 2;
+        if (type == ESM::Book::sRecordId)
+            return ptr.get<ESM::Book>()->mBase->mEnchant.empty() ? 3 : 2;
+        if (type == ESM::Lockpick::sRecordId || type == ESM::Probe::sRecordId || type == ESM::Repair::sRecordId
+            || type == ESM::Apparatus::sRecordId)
+            return 4;
+        return 5;
+    }
+
     float armorRating(const MWWorld::Ptr& ptr)
     {
         return std::floor(ptr.getClass().getSkillAdjustedArmorRating(ptr, player(), true));
     }
 
-    std::vector<std::pair<std::string, MyGUI::Colour>> markers(const ItemStack& stack)
+    std::vector<std::pair<std::string, MyGUI::Colour>> markers(const ItemStack& stack, bool showNew)
     {
         std::vector<std::pair<std::string, MyGUI::Colour>> result;
         const MWWorld::Ptr& ptr = stack.mBase;
         if (stack.mType == ItemStack::Type_Equipped)
             result.emplace_back("#{Interface:InventoryEquipped}", sDimColour);
-        if (MWBase::Environment::get().getWorld()->getPlayer().isRecentItemNew(ptr.getCellRef().getRefId()))
+        if (showNew && MWBase::Environment::get().getWorld()->getPlayer().isRecentItemNew(ptr.getCellRef().getRefId()))
             result.emplace_back("#{Interface:InventoryNew}", sNewColour);
         if (isStolen(ptr))
             result.emplace_back("#{Interface:InventoryStolen}", sWorseColour);
@@ -309,7 +332,7 @@ namespace MWGui::ItemDetails
         return result;
     }
 
-    void drawHeader(MyGUI::Widget* parent, int x, int y, int w, const ItemStack& stack)
+    void drawHeader(MyGUI::Widget* parent, int x, int y, int w, const ItemStack& stack, bool showNew)
     {
         const MWWorld::Ptr& ptr = stack.mBase;
         addIcon(parent, x + 16, y + 16, 64, ptr, stack.mType == ItemStack::Type_Equipped);
@@ -319,7 +342,7 @@ namespace MWGui::ItemDetails
         addText(parent, x + 92, y + 14, w - 108, 34, name, sFontLarge, sBrightColour);
         addText(parent, x + 92, y + 46, w - 108, 26, describe(ptr), sFontSmall, sDimColour);
         int tx = x + 92;
-        for (const auto& [label, colour] : markers(stack))
+        for (const auto& [label, colour] : markers(stack, showNew))
         {
             MyGUI::TextBox* tag = addText(parent, tx, y + 70, 120, 20, label, sFontSmall, colour);
             tx += tag->getTextSize().width + 12;

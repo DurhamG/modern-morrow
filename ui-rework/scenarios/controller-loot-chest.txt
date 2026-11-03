@@ -1,5 +1,6 @@
-# The loot panel on a chest full of mixed items, beside a player wearing a cuirass and two rings, then on a crate
-# Arrille owns, which shows the stealing warning.
+# The loot panel on a chest full of mixed items, beside a player wearing a cuirass and two rings. It takes and equips
+# a cuirass, then switches to the player's own items and puts one in. Last, it opens a crate Arrille owns, which shows
+# the stealing warning.
 launch --start "Seyda Neen, Arrille's Tradehouse" --set "GUI.controller menus=true"
 console "command=player->additem netch_leather_cuirass 1"
 console "command=player->equip netch_leather_cuirass"
@@ -26,6 +27,19 @@ pad button=dpup
 pad button=x
 wait frames=10
 shot took-and-equipped
+pad button=leftstick
+wait frames=5
+shot your-items
+pad button=rightshoulder
+wait frames=5
+shot your-equipment
+pad button=dpdown
+pad button=a
+wait frames=10
+shot put-in
+pad button=b
+wait frames=5
+shot back-to-chest
 pad button=y
 wait frames=10
 shot after-take-all
