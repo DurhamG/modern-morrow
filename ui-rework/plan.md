@@ -45,11 +45,12 @@ Done so far:
 - **Inventory.** A new screen with tabs for recent items, equipment by body area, consumables, notes, tools and misc. Every list shows names and stats, and a details panel compares items with the equipped ones. See [design/inventory.md](design/inventory.md).
 - **Map.** The bottom button bar is gone from all menus. The map has Local and World tabs like the other screens, fills the screen below them, shows its own button hints, pans with the right stick, and shows 7x7 cells when distant terrain is on.
 - **Loot.** An opaque panel on the right side of the screen lists a container's items, grouped by kind, with upgrades marked and a details panel that compares with what's worn. Stealing is spelled out. See [design/loot.md](design/loot.md).
-- **Barter.** The loot panel's look, with Buy and Sell tabs, prices on every entry, a deal box, and haggling on the right stick. See [design/barter.md](design/barter.md). Not reviewed yet.
+- **Barter.** The loot panel's look, with Buy and Sell tabs, prices on every entry, a deal box, and haggling on the right stick. See [design/barter.md](design/barter.md).
 - **Magic.** A new screen with tabs for recent spells, an Active tab with the effects on the character and the spell ready to cast, and tabs for spells, powers, magic items and scrolls. Every entry writes out its effects. See [design/magic.md](design/magic.md).
 - **Dialogue.** An opaque panel along the bottom of the screen, with the NPC in view above it. New topics come first, services have their own tab, and replies to choices replace the topics. See [design/dialogue.md](design/dialogue.md).
 - **Pause menu.** The start button's menu during a game lists Save, Load, Options and Exit in a panel over a darkened view of the game. B returns to the game.
 - **Stats.** A new screen with Character, Skills and Factions tabs. The Character tab shows the character as tiles, with each attribute's bonus at the next level up. Everything can be selected for its details. See [design/stats.md](design/stats.md).
+- **Journal.** A fifth tab of the menus lists quests, the ones in progress first, sorted by the last update, by town or by faction. The details panel shows who gave a quest, where, and its entries, newest first. See [design/journal.md](design/journal.md).
 
 ### Phase 3: make the changes clean enough to upstream
 
