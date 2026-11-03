@@ -11,6 +11,7 @@ These documents are for the people and agents working on the project. They are n
 - [progress.md](progress.md) is a dated log of what has been done, what was learned, and what is next.
 - [screens.md](screens.md) lists every piece of Morrowind's UI, with the code and layout files behind each one.
 - [research/gamepad-ui-references.md](research/gamepad-ui-references.md) lists games with well-regarded gamepad UIs, and sites for browsing their screens.
+- [research/controller-support.md](research/controller-support.md) assesses OpenMW's existing gamepad code, and what it would take to use the 2026 Steam Controller's extra inputs.
 
 ## How to keep these up to date
 
