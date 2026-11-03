@@ -150,6 +150,10 @@ Fog Settings
    :location: :bdg-success:`Launcher > Settings > Visuals > Fog`
 
    The fraction of the maximum distance at which blending with the sky starts.
+   With sky blending on, the scene is drawn past the viewing distance, out to the viewing distance divided by this value.
+   Blending with the sky then starts at the viewing distance, where the fog is fully opaque.
+   For example, 0.8 draws the scene out to 1.25 times the viewing distance.
+   Values below 0.5 are treated as 0.5.
 
 .. omw-setting::
    :title: sky rtt resolution

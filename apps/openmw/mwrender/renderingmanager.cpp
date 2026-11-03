@@ -801,7 +801,7 @@ namespace MWRender
         const auto& stateUpdater = mPostProcessor->getStateUpdater();
 
         stateUpdater->setFogRange(fogStart, fogEnd);
-        stateUpdater->setNearFar(mNearClip, mViewDistance);
+        stateUpdater->setNearFar(mNearClip, getFarClipDistance());
         stateUpdater->setIsUnderwater(isUnderwater);
         stateUpdater->setFogColor(fogColor);
         stateUpdater->setGameHour(world->getTimeStamp().getHour());
@@ -1241,12 +1241,21 @@ namespace MWRender
         mWater->emitRipple(pos);
     }
 
+    float RenderingManager::getFarClipDistance() const
+    {
+        if (!mSkyBlending)
+            return mViewDistance;
+        // Draw the scene past the viewing distance, where the fog is fully opaque, so that sky blending starts at the
+        // viewing distance. Mountain tops then fade into the sky only after the fog has hidden their detail.
+        return mViewDistance / std::max(Settings::fog().mSkyBlendingStart.get(), 0.5f);
+    }
+
     float RenderingManager::getTerrainViewDistance(float fov) const
     {
         // Since our fog is not radial yet, we should take FOV in account, otherwise terrain near viewing distance may
         // disappear. Limit FOV here just for sure, otherwise viewing distance can be too high.
         const float distanceMult = std::cos(osg::DegreesToRadians(std::min(fov, 140.f)) / 2.f);
-        const float viewDistance = mViewDistance * (distanceMult ? 1.f / distanceMult : 1.f);
+        const float viewDistance = getFarClipDistance() * (distanceMult ? 1.f / distanceMult : 1.f);
 
         // The local map draws cells beyond the active grid from the loaded terrain and distant objects, so load them
         // out to the map's farthest corner. The camera's far plane still hides everything past the viewing distance.
@@ -1270,10 +1279,11 @@ namespace MWRender
         const double aspect = (height == 0) ? 1.0 : static_cast<double>(width) / height;
         const float fov = mFieldOfViewOverridden ? mFieldOfViewOverride : mFieldOfView;
 
-        osg::Matrix unreversedProjectionMatrix = osg::Matrix::perspective(fov, aspect, mNearClip, mViewDistance);
+        const float farClip = getFarClipDistance();
+        osg::Matrix unreversedProjectionMatrix = osg::Matrix::perspective(fov, aspect, mNearClip, farClip);
 
         osg::Matrix projectionMatrix = SceneUtil::AutoDepth::isReversed()
-            ? SceneUtil::getReversedZProjectionMatrixAsPerspective(fov, aspect, mNearClip, mViewDistance)
+            ? SceneUtil::getReversedZProjectionMatrixAsPerspective(fov, aspect, mNearClip, farClip)
             : unreversedProjectionMatrix;
 
         if (width != 0 && height != 0)
@@ -1293,7 +1303,7 @@ namespace MWRender
         mPerViewUniformStateUpdater->setProjectionMatrix(projectionMatrix);
 
         mSharedUniformStateUpdater->setNear(mNearClip);
-        mSharedUniformStateUpdater->setFar(mViewDistance);
+        mSharedUniformStateUpdater->setFar(farClip);
 
         if (Stereo::getStereo())
         {
