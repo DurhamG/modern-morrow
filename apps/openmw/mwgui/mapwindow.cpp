@@ -15,8 +15,10 @@
 #include <components/esm3/esmwriter.hpp>
 #include <components/esm3/globalmap.hpp>
 #include <components/settings/values.hpp>
+#include <components/widgets/box.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
@@ -823,9 +825,19 @@ namespace MWGui
         getWidget(mButton, "WorldButton");
         mButton->eventMouseButtonClick += MyGUI::newDelegate(this, &MapWindow::onWorldButtonClicked);
 
+        getWidget(mControllerGuide, "ControllerGuide");
+        getWidget(mGuideWorldText, "GuideWorldText");
+        MyGUI::ImageBox* guideImage;
+        MWBase::InputManager* inputManager = MWBase::Environment::get().getInputManager();
+        getWidget(guideImage, "GuideCenterImage");
+        guideImage->setImageTexture(inputManager->getControllerButtonIcon(SDL_CONTROLLER_BUTTON_Y));
+        getWidget(guideImage, "GuideWorldImage");
+        guideImage->setImageTexture(inputManager->getControllerButtonIcon(SDL_CONTROLLER_BUTTON_X));
+        mControllerGuide->setVisible(false);
+
         const bool global = Settings::map().mGlobal;
 
-        mButton->setCaptionWithReplacing(global ? "#{sLocal}" : "#{sWorld}");
+        updateWorldToggleCaptions();
 
         getWidget(mEventBoxGlobal, "EventBoxGlobal");
         mEventBoxGlobal->eventMouseDrag += MyGUI::newDelegate(this, &MapWindow::onMouseDrag);
@@ -849,14 +861,14 @@ namespace MWGui
         mGlobalMap->setVisible(global);
         mLocalMap->setVisible(!global);
 
-        if (Settings::gui().mControllerMenus)
-        {
-            mControllerButtons.mB = "#{Interface:Back}";
-            mControllerButtons.mX = global ? "#{Interface:Local}" : "#{Interface:World}";
-            mControllerButtons.mY = "#{Interface:Center}";
-            if (!Settings::map().mAllowZooming)
-                mControllerButtons.mDpad = "#{Interface:Move}";
-        }
+    }
+
+    void MapWindow::updateWorldToggleCaptions()
+    {
+        const bool global = Settings::map().mGlobal;
+        mButton->setCaptionWithReplacing(global ? "#{sLocal}" : "#{sWorld}");
+        mGuideWorldText->setCaptionWithReplacing(global ? "#{Interface:Local}" : "#{Interface:World}");
+        mControllerGuide->castType<Gui::VBox>()->notifyChildrenSizeChanged();
     }
 
     void MapWindow::onNoteEditOk()
@@ -1038,7 +1050,9 @@ namespace MWGui
     {
         WindowBase::setVisible(visible);
         MWGui::GuiMode mode = MWBase::Environment::get().getWindowManager()->getMode();
-        mButton->setVisible(visible && mode != MWGui::GM_None);
+        const bool inMenu = visible && mode != MWGui::GM_None;
+        mButton->setVisible(inMenu && !Settings::gui().mControllerMenus);
+        mControllerGuide->setVisible(inMenu && Settings::gui().mControllerMenus);
 
         if (Settings::gui().mControllerMenus && mode == MWGui::GM_None && pinned() && visible)
         {
@@ -1190,6 +1204,17 @@ namespace MWGui
         mGlobalMapImage->setSize(width, height);
     }
 
+    void MapWindow::fitGlobalMapToView()
+    {
+        const int mapWidth = mGlobalMapRender->getWidth();
+        const int mapHeight = mGlobalMapRender->getHeight();
+        if (mapWidth <= 0 || mapHeight <= 0)
+            return;
+        mGlobalMapZoom = std::min(float(mGlobalMap->getWidth()) / float(mapWidth),
+            float(mGlobalMap->getHeight()) / float(mapHeight));
+        updateGlobalMap();
+    }
+
     void MapWindow::worldPosToGlobalMapImageSpace(float x, float y, float& imageX, float& imageY) const
     {
         mGlobalMapRender->worldPosToImageSpace(x, y, imageX, imageY);
@@ -1240,9 +1265,7 @@ namespace MWGui
         mGlobalMap->setVisible(global);
         mLocalMap->setVisible(!global);
 
-        mButton->setCaptionWithReplacing(global ? "#{sLocal}" : "#{sWorld}");
-        mControllerButtons.mX = global ? "#{Interface:Local}" : "#{Interface:World}";
-        MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
+        updateWorldToggleCaptions();
     }
 
     void MapWindow::onPinToggled()
@@ -1454,19 +1477,21 @@ namespace MWGui
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         if (winMgr->getMode() == MWGui::GM_Inventory)
         {
-            // Fill the screen, or limit to a certain size on large screens. Size chosen to
-            // show the entire local map without scrolling.
+            // Fill the height below the tab bar. Limit the width to the size that shows the entire
+            // local map without scrolling.
             MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
             MyGUI::IntSize canvasSize = mLocalMap->getCanvasSize();
             MyGUI::IntSize borderSize = mMainWidget->getSize() - mMainWidget->getClientWidget()->getSize();
 
             int width = std::min(viewSize.width, canvasSize.width + borderSize.width);
-            int height = std::min(winMgr->getControllerMenuHeight(), canvasSize.height + borderSize.height);
+            int height = winMgr->getControllerMenuHeight();
             int x = (viewSize.width - width) / 2;
-            int y = (viewSize.height - height) / 2;
+            int y = viewSize.height - height;
 
             MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>();
             window->setCoord(x, active ? y : viewSize.height + 1, width, height);
+            if (active)
+                fitGlobalMapToView();
         }
 
         WindowBase::setActiveControllerWindow(active);

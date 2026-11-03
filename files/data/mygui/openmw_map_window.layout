@@ -4,6 +4,11 @@
     <Widget type="Window" skin="MW_Window_Pinnable" layer="Windows" position="0 0 300 300" name="_Main">
         <Property key="MinSize" value="40 40"/>
 
+        <!-- Opaque backing, so the world map's margins match the unexplored parts of the local map -->
+        <Widget type="Widget" skin="FullBlackBG" position="0 0 284 264" align="Stretch">
+            <Property key="NeedMouse" value="false"/>
+        </Widget>
+
         <!-- Local map -->
         <Widget type="ScrollView" skin="MW_MapView" position="0 0 284 264" align="Stretch" name="LocalMap">
             <Widget type="ImageBox" skin="RotatingSkin" position="0 0 32 32" align="Top Left" name="CompassLocal">
@@ -32,6 +37,48 @@
         <Widget type="AutoSizedButton" skin="MW_Button" position="213 233 61 22" align="Bottom Right" name="WorldButton">
             <Property key="ExpandDirection" value="Left"/>
             <Property key="NeedKey" value="false"/>
+        </Widget>
+
+        <!-- Controller button guidance -->
+        <Widget type="VBox" position="8 200 200 56" align="Left Bottom" name="ControllerGuide">
+            <Property key="Padding" value="0"/>
+            <Property key="Spacing" value="4"/>
+            <Property key="NeedMouse" value="false"/>
+
+            <Widget type="Spacer"/>
+
+            <Widget type="HBox" name="GuideCenter">
+                <UserString key="HStretch" value="true"/>
+                <Property key="Padding" value="0"/>
+                <Property key="Spacing" value="4"/>
+                <Property key="NeedMouse" value="false"/>
+                <Widget type="ImageBox" skin="ImageBox" align="Center" position="0 0 24 24" name="GuideCenterImage">
+                    <Property key="Colour" value="#ccb589"/>
+                    <Property key="NeedMouse" value="false"/>
+                </Widget>
+                <Widget type="AutoSizedTextBox" skin="HeaderText" name="GuideCenterText">
+                    <Property key="Caption" value="#{Interface:Center}"/>
+                    <Property key="TextShadow" value="true"/>
+                    <Property key="TextShadowColour" value="0 0 0"/>
+                    <Property key="NeedMouse" value="false"/>
+                </Widget>
+            </Widget>
+
+            <Widget type="HBox" name="GuideWorld">
+                <UserString key="HStretch" value="true"/>
+                <Property key="Padding" value="0"/>
+                <Property key="Spacing" value="4"/>
+                <Property key="NeedMouse" value="false"/>
+                <Widget type="ImageBox" skin="ImageBox" align="Center" position="0 0 24 24" name="GuideWorldImage">
+                    <Property key="Colour" value="#ccb589"/>
+                    <Property key="NeedMouse" value="false"/>
+                </Widget>
+                <Widget type="AutoSizedTextBox" skin="HeaderText" name="GuideWorldText">
+                    <Property key="TextShadow" value="true"/>
+                    <Property key="TextShadowColour" value="0 0 0"/>
+                    <Property key="NeedMouse" value="false"/>
+                </Widget>
+            </Widget>
         </Widget>
 
     </Widget>
