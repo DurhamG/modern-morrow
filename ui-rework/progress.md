@@ -100,4 +100,15 @@
 
 - Built the barter panel while the user was away, recorded in [design/barter.md](design/barter.md). It uses the loot panel's look, with Buy and Sell tabs, a deal box, and haggling on the right stick. The loot panel's item groups and summaries moved into `itemdetails.cpp` for it.
 
-Next: the user reviews the loot and barter panels.
+- The user reviewed the loot and barter panels and was happy with them.
+
+- Built the journal tab, recorded in [design/journal.md](design/journal.md):
+  - Quest entries in the save now keep the actor the player was talking to and the cell the player was in. They share save format 42 with the recent items and spells.
+  - For older entries, `questlog.cpp` finds the quest giver from the conversation that sets the quest's earliest stage, and the place from where that person stands.
+  - `JournalScreen` is a fifth tab of the menus in controller menus mode, and the journal key opens it. It lists quests in progress, then finished ones, sorted by the last update, by town, or by faction.
+  - The `controller-journal` scenario covers it.
+- Lessons learned:
+  - `ESMStore::getRefCells` says which cells an object is placed in, without loading the cells.
+  - The console's Journal command records the player's cell. With `"arrille"->journal ...` it also records Arrille as the one who gave the quest.
+
+Next: the user reviews the journal tab.
