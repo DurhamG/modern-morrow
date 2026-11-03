@@ -32,6 +32,7 @@
   - The `hud`, `hud-fades` and `hud-combat` scenarios cover it.
 - Working style agreed with the user:
   - After each change, launch the user's test save on their right monitor for them to look at: `omw.py launch -p review --steam --user-settings --set "Terrain.distant terrain=true" --set "Fog.radial fog=true" --set "Fog.sky blending=true" --resolution 3840x2160 --fullscreen --screen 1 --save "C:/Users/Durham/Documents/My Games/OpenMW/saves/Lendias/Test.omwsave"`.
+  - The test save stands next to Fargoth in Seyda Neen. To open a conversation with him for review, send `omw.py send -p review console "command=\"fargoth\"->forcegreeting"`. ForceGreeting works on any NPC near enough to be loaded, wherever the player stands.
   - The commit stack should show the final design, not the iteration that led to it. Fix-ups and tweaks get folded into the commit they belong to.
 - Lessons learned:
   - When the user is running another game, 32 parallel compiles run out of memory. Add `-- //p:CL_MPCount=8` to the build command.
@@ -81,4 +82,6 @@
   - The Character tab shows each attribute's bonus at the next level up, which the normal menu only shows in a tooltip.
   - The `stats-screen` scenario covers it.
 
-Next: the user reviews the stats screen.
+- Started on the dialogue window. The `controller-dialogue` scenario talks to Arrille, a trader in Seyda Neen, and picks a topic.
+
+Next: design the dialogue window with the user.
