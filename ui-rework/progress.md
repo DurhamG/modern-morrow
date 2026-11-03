@@ -96,4 +96,6 @@
 
 - Started on the loot window. The `controller-loot` scenario opens Fargoth's body in Seyda Neen.
 
-Next: design the loot window with the user.
+- Built the loot panel, recorded in [design/loot.md](design/loot.md). In controller menus mode, an opaque panel on the right side of the screen lists what a container or body holds, with details and comparisons beside the list. A takes, Y takes all, X takes and equips, and the window closes after the last item. The left stick press swaps to the player's own items, to put one in. The item details code the inventory screen used moved into `itemdetails.cpp`, so both screens share it.
+
+Next: the user reviews the loot panel.
