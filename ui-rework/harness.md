@@ -46,6 +46,14 @@ Changing a header that many files include, such as `apps/openmw/mwbase/windowman
 - The window goes on SDL display 1, which is the user's second monitor. Use `--screen` or `$OMW_SCREEN` to change it.
 - Sound is off, and the startup and new-game movies are skipped. `--sound` and `--movies` turn them back on. With the movies skipped, the game answers commands about a second after launch.
 - The game runs in a window that does not minimize when it loses focus. It does not need focus to receive the harness's input.
+- `--steam` starts the game through Steam, so a real controller gets Steam Input. The 2026 Steam Controller needs this, because OpenMW's SDL2 doesn't recognize it.
+  - Steam needs a non-Steam game shortcut whose target is the build's `openmw.exe`, with the launch options `--replace=config --config "D:\Code\openmw\.automation\steam-config"`. The shortcut must point at the game itself. Steam Input only works in the program Steam starts, so a script that starts the game doesn't work.
+  - Those launch options never change. Before each launch, the client points `.automation/steam-config` at the profile's config folder, using a directory junction. It writes the options that would have gone on the command line into the profile's `openmw.cfg`, such as the automation port and the save to load.
+  - The client finds the shortcut in Steam's `shortcuts.vdf`, and finds the game's process by the `steam-config` path in its command line. Only one game started through Steam can run at a time.
+
+### Handing the game to the user
+
+The `pad` command connects a virtual gamepad, which stays connected. OpenMW reads sticks only from the first gamepad connected, so a real gamepad plugged in later seems not to work. Send `pad action=disconnect` before handing a running game to the user.
 
 ## Commands
 
@@ -57,11 +65,12 @@ Changing a header that many files include, such as `apps/openmw/mwbase/windowman
 | `state` | | The game state (`menu`, `running` or `ended`, which means the player died), the open UI modes, the window size, the UI scale and the current cell. |
 | `wait` | `frames` or `seconds` | Waits, then replies. |
 | `screenshot` | `path`, `scale`, `crop=[x,y,w,h]` | Captures the next frame, including the UI. The format comes from the extension. |
-| `key` | `key`, `action` (tap, down, up), `hold`, `mods` | Presses a key by its SDL name, such as `Escape`, `Return`, `A`, `F1` or `` ` ``. |
+| `key` | `key`, `action` (tap, down, up), `hold`, `mods` | Presses a key by its SDL name, such as `Escape`, `Return`, `A`, `F1` or `` ` ``. A tap holds the key for `hold` frames, 2 by default. |
 | `key` | `text` | Types text. |
 | `mouse` | `action` (click, move, down, up, wheel), `x`, `y`, `button`, `hold` | Mouse input in window pixels from the top left. A click moves first, then waits a frame before pressing. |
+| `pad` | `action` (connect, disconnect) | Plugs the virtual gamepad in or out. Other `pad` commands plug it in first. |
 | `pad` | `button`, `action` (tap, down, up), `hold` | Virtual gamepad buttons: a, b, x, y, back, guide, start, leftstick, rightstick, leftshoulder, rightshoulder, dpup, dpdown, dpleft, dpright. |
-| `pad` | `axis`, `value`, `hold` | Sticks (`leftx`, `lefty`, `rightx`, `righty`) take -1 to 1, with positive y pointing down. Triggers (`lefttrigger`, `righttrigger`) take 0 to 1. With `hold`, the axis returns to rest afterwards. |
+| `pad` | `axis`, `value`, `hold` | Sticks (`leftx`, `lefty`, `rightx`, `righty`) take -1 to 1, with positive y pointing down. Triggers (`lefttrigger`, `righttrigger`) take 0 to 1. With `hold`, the axis returns to rest after that many frames. Without it, the axis stays where it was set. |
 | `console` | `command`, `frames` | Runs a console command and returns what the console printed. Fails if the console printed an error. |
 | `lua` | `code`, `context` (player, global, menu), `frames` | Runs Lua as the console's Lua mode does, and returns what was printed. A lone expression's value is printed. |
 | `ui` | `hidden`, `root`, `depth` | The widget tree. See below. |

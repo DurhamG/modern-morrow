@@ -26,6 +26,13 @@ PROFILES_DIR = AUTOMATION_DIR / "profiles"
 SCENARIOS_DIR = REPO_ROOT / "ui-rework" / "scenarios"
 OUTPUT_DIR = AUTOMATION_DIR / "out"
 
+# "launch --steam" asks Steam to start the game, so that Steam Input gives it a gamepad. Some controllers need
+# this, such as the 2026 Steam Controller. Steam needs a non-Steam game shortcut to the openmw binary, with
+# STEAM_LAUNCH_OPTIONS as its launch options. Those options never change, so the client points STEAM_CONFIG_LINK at
+# the profile's config folder before each launch, and writes the other options into the profile's openmw.cfg.
+STEAM_CONFIG_LINK = AUTOMATION_DIR / "steam-config"
+STEAM_LAUNCH_OPTIONS = f'--replace=config --config "{STEAM_CONFIG_LINK}"'
+
 # Window sizes for the target devices. See ui-rework/plan.md.
 RESOLUTIONS = {
     "deck": (1280, 800),
@@ -286,6 +293,122 @@ def connect(profile, timeout=5):
         raise HarnessError(f"Could not connect to the game on port {run['port']}: {error}")
 
 
+def read_binary_vdf(data):
+    """Parses Steam's binary VDF format, used by shortcuts.vdf, into nested dicts."""
+    pos = 0
+
+    def read_cstring():
+        nonlocal pos
+        end = data.index(b"\0", pos)
+        text = data[pos:end].decode("utf-8", errors="replace")
+        pos = end + 1
+        return text
+
+    def read_map():
+        nonlocal pos
+        result = {}
+        while pos < len(data):
+            kind = data[pos]
+            pos += 1
+            if kind == 0x08:
+                return result
+            key = read_cstring()
+            if kind == 0x00:
+                result[key] = read_map()
+            elif kind == 0x01:
+                result[key] = read_cstring()
+            elif kind == 0x02:
+                result[key] = int.from_bytes(data[pos:pos + 4], "little")
+                pos += 4
+            else:
+                raise HarnessError(f"Unknown value type {kind} in shortcuts.vdf.")
+        return result
+
+    return read_map()
+
+
+def steam_dir():
+    import winreg
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as key:
+            return Path(winreg.QueryValueEx(key, "SteamPath")[0])
+    except OSError:
+        raise HarnessError("Steam doesn't seem to be installed.")
+
+
+def find_steam_shortcut(binary):
+    """Returns the app ID of the non-Steam game shortcut that starts the binary."""
+    wanted = os.path.normcase(str(binary))
+    for vdf in (steam_dir() / "userdata").glob("*/config/shortcuts.vdf"):
+        shortcuts = read_binary_vdf(vdf.read_bytes()).get("shortcuts", {})
+        for shortcut in shortcuts.values():
+            exe = shortcut.get("Exe") or shortcut.get("exe") or ""
+            if os.path.normcase(exe.strip('"')) != wanted:
+                continue
+            options = shortcut.get("LaunchOptions", "")
+            if options.strip() != STEAM_LAUNCH_OPTIONS:
+                raise HarnessError(
+                    f"The Steam shortcut to {binary} has the launch options {options!r}. "
+                    f"Set them to: {STEAM_LAUNCH_OPTIONS}")
+            return shortcut.get("appid") or shortcut.get("AppId")
+    raise HarnessError(
+        f"Steam has no shortcut to {binary}. In Steam, choose Games, Add a Non-Steam Game to My Library, browse to "
+        f"that file, and set the shortcut's launch options to: {STEAM_LAUNCH_OPTIONS}")
+
+
+def point_steam_config_link(profile):
+    if STEAM_CONFIG_LINK.exists() or os.path.isjunction(STEAM_CONFIG_LINK):
+        if not os.path.isjunction(STEAM_CONFIG_LINK):
+            raise HarnessError(f"{STEAM_CONFIG_LINK} should be a directory junction. Delete it and try again.")
+        # Removes the junction itself, not the folder it points at.
+        os.rmdir(STEAM_CONFIG_LINK)
+    import _winapi
+
+    _winapi.CreateJunction(str(profile.config_dir), str(STEAM_CONFIG_LINK))
+
+
+def append_cfg_options(profile, arguments):
+    """Writes command-line options such as ["--start", "Balmora", "--no-grab"] into the profile's openmw.cfg."""
+    lines = ["# Options for this launch, which went through Steam and couldn't be passed on the command line."]
+    i = 0
+    while i < len(arguments):
+        key = arguments[i].removeprefix("--")
+        if i + 1 < len(arguments) and not arguments[i + 1].startswith("--"):
+            value = arguments[i + 1]
+            if key in ("user-data", "data-local", "load-savegame"):
+                value = f'"{value}"'
+            i += 2
+        else:
+            value = "true"
+            i += 1
+        lines.append(f"{key}={value}")
+    with open(profile.config_dir / "openmw.cfg", "a", encoding="utf-8") as cfg:
+        cfg.write("\n".join(lines) + "\n")
+
+
+def find_steam_process_now():
+    script = ("Get-CimInstance Win32_Process -Filter \"Name='openmw.exe'\" | "
+              "ForEach-Object { \"$($_.ProcessId) $($_.CommandLine)\" }")
+    result = subprocess.run(["powershell", "-NoProfile", "-Command", script], capture_output=True, text=True)
+    for line in result.stdout.splitlines():
+        pid, _, command_line = line.strip().partition(" ")
+        if os.path.normcase(str(STEAM_CONFIG_LINK)) in os.path.normcase(command_line):
+            return int(pid)
+    return None
+
+
+def find_steam_process(timeout):
+    """Waits for the openmw process that Steam starts with STEAM_LAUNCH_OPTIONS, and returns its pid."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        pid = find_steam_process_now()
+        if pid:
+            return pid
+        time.sleep(0.5)
+    raise HarnessError(f"Steam didn't start the game within {timeout} s.")
+
+
 def wait_until_ready(profile, pid, port, timeout):
     """Waits until the automation server answers a ping."""
     deadline = time.monotonic() + timeout
@@ -399,37 +522,50 @@ def cmd_launch(args):
     command += start_arguments(args)
     command += args.extra
 
-    with open(profile.stdout_file, "w", encoding="utf-8") as stdout:
-        creation_flags = 0
-        if sys.platform == "win32":
-            creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
-        process = subprocess.Popen(
-            command,
-            cwd=build_dir,
-            stdout=stdout,
-            stderr=subprocess.STDOUT,
-            stdin=subprocess.DEVNULL,
-            creationflags=creation_flags,
-        )
+    if args.steam:
+        if args.extra:
+            raise HarnessError("--steam can't pass extra arguments to openmw.")
+        if find_steam_process_now():
+            raise HarnessError("A game that Steam started is still running. Quit it first.")
+        app_id = find_steam_shortcut(binary)
+        # Everything after the binary and its config options goes into openmw.cfg instead.
+        append_cfg_options(profile, command[4:])
+        point_steam_config_link(profile)
+        os.startfile(f"steam://rungameid/{(app_id << 32) | 0x02000000}")
+        pid = find_steam_process(args.timeout)
+    else:
+        with open(profile.stdout_file, "w", encoding="utf-8") as stdout:
+            creation_flags = 0
+            if sys.platform == "win32":
+                creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
+            process = subprocess.Popen(
+                command,
+                cwd=build_dir,
+                stdout=stdout,
+                stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL,
+                creationflags=creation_flags,
+            )
+        pid = process.pid
 
     profile.write_run(
         {
-            "pid": process.pid,
+            "pid": pid,
             "port": port,
             "command": command,
             "resolution": args.resolution,
             "started": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
     )
-    print(f"Launched {binary.name} (pid {process.pid}, port {port}) with profile {profile.name} at {args.resolution}.")
+    print(f"Launched {binary.name} (pid {pid}, port {port}) with profile {profile.name} at {args.resolution}.")
     print(f"Log: {profile.log_file}")
 
     if not args.no_wait:
         start = time.monotonic()
-        wait_until_ready(profile, process.pid, port, args.timeout)
+        wait_until_ready(profile, pid, port, args.timeout)
         print(f"The automation server answered after {time.monotonic() - start:.1f} s.")
     if args.wait_for:
-        wait_for_log(profile, process.pid, args.wait_for, args.timeout)
+        wait_for_log(profile, pid, args.wait_for, args.timeout)
         print(f"Saw {args.wait_for!r} in the log.")
 
 
@@ -859,6 +995,9 @@ def build_parser():
     start.add_argument("--start", metavar="CELL", help="start a new game in this cell, without character creation")
     p.add_argument("--sound", action="store_true", help="leave sound on")
     p.add_argument("--movies", action="store_true", help="play the startup and new-game movies")
+    p.add_argument("--steam", action="store_true",
+                   help="start the game through Steam, for Steam Input; needs a non-Steam game shortcut to the "
+                        f"openmw binary, with the launch options {STEAM_LAUNCH_OPTIONS}")
     p.add_argument("--fresh", action="store_true", help="delete the profile's leftover config files first")
     p.add_argument("--no-wait", action="store_true", help="don't wait for the automation server to answer")
     p.add_argument("--wait-for", metavar="TEXT", help="also wait until this text appears in openmw.log")
