@@ -45,6 +45,7 @@ Done so far:
 - **Inventory.** A new screen with tabs for recent items, equipment by body area, consumables, notes, tools and misc. Every list shows names and stats, and a details panel compares items with the equipped ones. See [design/inventory.md](design/inventory.md).
 - **Map.** The bottom button bar is gone from all menus. The map fills the screen below the tab bar, shows its own button hints, pans with the right stick, and shows 7x7 cells when distant terrain is on.
 - **Magic.** A new screen with tabs for recent spells, an Active tab with the effects on the character and the spell ready to cast, and tabs for spells, powers, magic items and scrolls. Every entry writes out its effects. See [design/magic.md](design/magic.md).
+- **Stats.** A new screen with Character, Skills and Factions tabs. The Character tab shows the character as tiles, with each attribute's bonus at the next level up. Everything can be selected for its details. See [design/stats.md](design/stats.md).
 
 ### Phase 3: make the changes clean enough to upstream
 

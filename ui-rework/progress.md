@@ -75,5 +75,9 @@
   - Y jumps between the spell schools, and between the Self, Touch and Target groups of items and scrolls.
 - Fixed the menus reopening on the inventory tab after the player closed them on the map tab. They now reopen on whichever tab was open.
 - The user's test save now also knows 24 spells from every school. The save from before that is kept as `Test-before-spells.omwsave.bak`.
+- Built the stats screen, recorded in [design/stats.md](design/stats.md):
+  - `StatsScreen` replaces the stats menu in controller menus mode, with Character, Skills and Factions tabs and a details panel.
+  - The Character tab shows each attribute's bonus at the next level up, which the normal menu only shows in a tooltip.
+  - The `stats-screen` scenario covers it.
 
-Next: the user reviews the magic screen.
+Next: the user reviews the stats screen.
