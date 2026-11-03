@@ -104,6 +104,7 @@
 #include "itemview.hpp"
 #include "itemwidget.hpp"
 #include "jailscreen.hpp"
+#include "journalscreen.hpp"
 #include "journalviewmodel.hpp"
 #include "journalwindow.hpp"
 #include "keyboardnavigation.hpp"
@@ -356,9 +357,9 @@ namespace MWGui
         mWindows.push_back(std::move(spellWindow));
         trackWindow(mSpellWindow, makeSpellsWindowSettingValues());
 
-        // In controller menus mode, the inventory, magic and stats tabs show full screen menus. The inventory window
-        // still handles using items, and the container and barter screens. The spell window still handles cycling
-        // through spells during play.
+        // In controller menus mode, the inventory, magic and stats tabs show full screen menus, and the journal is a
+        // tab beside them. The inventory window still handles using items, and the container and barter screens. The
+        // spell window still handles cycling through spells during play.
         if (Settings::gui().mControllerMenus)
         {
             auto inventoryScreen = std::make_unique<InventoryScreen>();
@@ -370,6 +371,9 @@ namespace MWGui
             auto statsScreen = std::make_unique<StatsScreen>();
             mStatsScreen = statsScreen.get();
             mWindows.push_back(std::move(statsScreen));
+            auto journalScreen = std::make_unique<JournalScreen>();
+            mJournalScreen = journalScreen.get();
+            mWindows.push_back(std::move(journalScreen));
         }
         WindowBase* inventoryTab = mInventoryScreen != nullptr ? static_cast<WindowBase*>(mInventoryScreen)
                                                                : static_cast<WindowBase*>(mInventoryWindow);
@@ -377,7 +381,10 @@ namespace MWGui
             = mMagicScreen != nullptr ? static_cast<WindowBase*>(mMagicScreen) : static_cast<WindowBase*>(mSpellWindow);
         WindowBase* statsTab
             = mStatsScreen != nullptr ? static_cast<WindowBase*>(mStatsScreen) : static_cast<WindowBase*>(mStatsWindow);
-        mGuiModeStates[GM_Inventory] = GuiModeState({ mMap, inventoryTab, magicTab, statsTab });
+        if (mJournalScreen != nullptr)
+            mGuiModeStates[GM_Inventory] = GuiModeState({ mMap, inventoryTab, magicTab, statsTab, mJournalScreen });
+        else
+            mGuiModeStates[GM_Inventory] = GuiModeState({ mMap, inventoryTab, magicTab, statsTab });
         mGuiModeStates[GM_None] = GuiModeState({ mMap, mInventoryWindow, mSpellWindow, mStatsWindow });
 
         auto tradeWindow = std::make_unique<TradeWindow>();
@@ -718,6 +725,8 @@ namespace MWGui
                 mMagicScreen->setVisible(false);
             if (mStatsScreen != nullptr)
                 mStatsScreen->setVisible(false);
+            if (mJournalScreen != nullptr)
+                mJournalScreen->setVisible(false);
 
             if (Settings::gui().mControllerMenus && mInventoryTabsOverlay)
                 mInventoryTabsOverlay->setVisible(false);
@@ -739,6 +748,8 @@ namespace MWGui
                 mMagicScreen->setVisible(false);
             if (mStatsScreen != nullptr)
                 mStatsScreen->setVisible(false);
+            if (mJournalScreen != nullptr)
+                mJournalScreen->setVisible(false);
         }
 
         GuiMode mode = mGuiModes.back();
@@ -762,6 +773,8 @@ namespace MWGui
             mStatsWindow->setVisible(mStatsScreen == nullptr && (eff & GW_Stats));
             if (mStatsScreen != nullptr)
                 mStatsScreen->setVisible(eff & GW_Stats);
+            if (mJournalScreen != nullptr)
+                mJournalScreen->setVisible(getJournalAllowed());
         }
 
         updateControllerButtonsOverlay();
@@ -1451,6 +1464,14 @@ namespace MWGui
 
     void WindowManager::pushGuiMode(GuiMode mode, const MWWorld::Ptr& arg, bool force)
     {
+        // In controller menus mode, the journal is a tab of the menus, so opening the journal opens the menus on it.
+        if (mode == GM_Journal && mJournalScreen != nullptr)
+        {
+            const std::vector<WindowBase*>& tabs = mGuiModeStates[GM_Inventory].mWindows;
+            mActiveControllerWindows[GM_Inventory] = std::find(tabs.begin(), tabs.end(), mJournalScreen) - tabs.begin();
+            mode = GM_Inventory;
+        }
+
         if (mode == GM_Inventory && mAllowed == GW_None)
             return;
 

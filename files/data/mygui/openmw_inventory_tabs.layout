@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- The tabs above the map, inventory, magic and stats screens in controller menus mode. InventoryTabsOverlay
+<!-- The tabs above the map, inventory, magic, stats and journal screens in controller menus mode. InventoryTabsOverlay
      places the tabs in code. -->
 <MyGUI type="Layout">
     <Widget type="Widget" skin="" layer="ControllerMenus" position="0 0 1280 44" align="HStretch Top" name="_Main">
@@ -32,6 +32,9 @@
         </Widget>
         <Widget type="TextBox" skin="NormalText" position="0 0 120 44" name="TabStats">
             <Property key="Caption" value="#{sStats}"/>
+        </Widget>
+        <Widget type="TextBox" skin="NormalText" position="0 0 120 44" name="TabJournal">
+            <Property key="Caption" value="#{sJournal}"/>
         </Widget>
         <Widget type="ImageBox" skin="ImageBox" position="0 38 80 2" name="TabUnderline">
             <Property key="ImageTexture" value="white"/>

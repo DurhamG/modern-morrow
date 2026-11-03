@@ -1,0 +1,41 @@
+# The journal tab in controller menus mode. The scenario adds quests to the journal, some through Arrille so the
+# journal records him as the one who gave them, then opens the journal and looks at each way of sorting it.
+launch --start "Seyda Neen, Arrille's Tradehouse" --set "GUI.controller menus=true"
+console "command=journal a1_1_findspymaster 1"
+console "command=journal fg_rathunt 10"
+console "command=journal fg_rathunt 50"
+console "command=journal fg_rathunt 105"
+console "command=\"arrille\"->journal fg_egg_poachers 1"
+console "command=journal a1_2_antabolisinformant 1"
+console "command=journal fg_alofsfarm 10"
+console "command=journal fg_alofsfarm 15"
+console "command=journal a1_11_zainsubaniinformant 1"
+console "command=journal a1_11_zainsubaniinformant 10"
+console "command=\"arrille\"->journal ms_fargothring 10"
+console "command=journal ms_fargothring 100"
+console "command=journal hh_bankcourier 10"
+console "command=journal a1_1_findspymaster 10"
+# Wait for the "journal updated" messages to go away.
+wait frames=900
+key key=J
+wait frames=20
+shot recent
+pad button=dpdown
+pad button=dpdown
+wait frames=5
+shot recent-moved
+pad axis=righty value=1 hold=30
+wait frames=5
+shot recent-scrolled
+pad button=rightshoulder
+wait frames=5
+shot places
+pad button=y
+wait frames=5
+shot places-next-group
+pad button=rightshoulder
+wait frames=5
+shot factions
+pad button=b
+wait frames=10
+shot closed

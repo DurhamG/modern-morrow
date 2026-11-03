@@ -22,7 +22,7 @@ namespace MWGui
     InventoryTabsOverlay::InventoryTabsOverlay()
         : WindowBase("openmw_inventory_tabs.layout")
     {
-        constexpr std::string_view kTabIds[] = { "TabMap", "TabInventory", "TabSpells", "TabStats" };
+        constexpr std::string_view kTabIds[] = { "TabMap", "TabInventory", "TabSpells", "TabStats", "TabJournal" };
 
         for (const std::string_view id : kTabIds)
         {

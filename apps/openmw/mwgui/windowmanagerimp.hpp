@@ -99,6 +99,7 @@ namespace MWGui
     class InventoryScreen;
     class MagicScreen;
     class StatsScreen;
+    class JournalScreen;
     struct JournalWindow;
     class TextInputDialog;
     class InfoBoxDialog;
@@ -467,6 +468,7 @@ namespace MWGui
         InventoryScreen* mInventoryScreen = nullptr;
         MagicScreen* mMagicScreen = nullptr;
         StatsScreen* mStatsScreen = nullptr;
+        JournalScreen* mJournalScreen = nullptr;
         ScrollWindow* mScrollWindow;
         BookWindow* mBookWindow;
         CountDialog* mCountDialog;

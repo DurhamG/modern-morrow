@@ -45,7 +45,8 @@ add_openmw_dir (mwgui
     recharge mode videowidget backgroundimage itemwidget screenfader debugwindow spellmodel spellview
     draganddrop timeadvancer jailscreen itemchargeview keyboardnavigation textcolours statswatcher
     postprocessorhud settings worlditemmodel itemtransfer inventorytabsoverlay controllerscreen inventoryscreen
-    magicscreen statsscreen dialoguepanel pausemenu itemdetails lootpanel barterpanel
+    magicscreen statsscreen dialoguepanel pausemenu itemdetails lootpanel barterpanel questlog
+    journalscreen
     )
 
 add_openmw_dir (mwdialogue
