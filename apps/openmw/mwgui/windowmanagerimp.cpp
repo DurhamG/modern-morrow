@@ -1478,10 +1478,14 @@ namespace MWGui
             }
             else
             {
-                // Activate first visible window. This needs to be called after updateVisible.
-                if (mActiveControllerWindows[mode] != 0)
-                    mActiveControllerWindows[mode] = mActiveControllerWindows[mode] - 1;
-                cycleActiveControllerWindow(true);
+                // Return to the window that was active when this mode was last open, or the next visible one if
+                // that one is hidden now. This needs to be called after updateVisible.
+                const size_t remembered = mActiveControllerWindows[mode];
+                const std::vector<WindowBase*>& windows = mGuiModeStates[mode].mWindows;
+                if (remembered < windows.size() && windows[remembered]->isVisible())
+                    setActiveControllerWindow(mode, remembered);
+                else
+                    cycleActiveControllerWindow(true);
             }
         }
     }
