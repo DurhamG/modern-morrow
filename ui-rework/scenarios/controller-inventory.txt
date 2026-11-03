@@ -1,4 +1,4 @@
-# The inventory screen in the existing "controller menus" mode.
+# The inventory in "controller menus" mode, which shows the controller inventory screen.
 launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true" --set "GUI.controller tooltips=true"
 console "command=player->additem \"iron saber\" 1"
 console "command=player->additem netch_leather_cuirass 1"

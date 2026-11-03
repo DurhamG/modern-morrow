@@ -1,0 +1,77 @@
+# The controller inventory screen: the equipment overview, an area, a ring choice, scrolling a book, and the
+# other tabs.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->additem netch_leather_cuirass 1"
+console "command=player->equip netch_leather_cuirass"
+console "command=player->additem common_shirt_02 1"
+console "command=player->equip common_shirt_02"
+console "command=player->additem \"iron longsword\" 1"
+console "command=player->equip \"iron longsword\""
+console "command=player->additem expensive_ring_01 1"
+console "command=player->equip expensive_ring_01"
+console "command=player->additem common_ring_01 1"
+console "command=player->equip common_ring_01"
+console "command=player->additem extravagant_ring_01 1"
+console "command=player->additem \"chitin cuirass\" 1"
+console "command=player->additem netch_leather_boiled_cuirass 1"
+console "command=player->additem expensive_robe_01 1"
+console "command=player->additem \"steel longsword\" 1"
+console "command=player->additem \"silver longsword\" 1"
+console "command=player->additem \"steel dagger\" 1"
+console "command=player->additem common_amulet_01 1"
+console "command=player->additem p_restore_health_s 3"
+console "command=player->additem p_restore_magicka_s 2"
+console "command=player->additem ingred_bread_01 4"
+console "command=player->additem pick_apprentice_01 2"
+console "command=player->additem probe_apprentice_01 1"
+console "command=player->additem misc_soulgem_petty 1"
+console "command=player->additem bookskill_enchant1 1"
+console "command=player->additem bk_notefromsondaale 1"
+console "command=player->additem bonemold_cuirass 1"
+pad button=b
+wait frames=10
+shot overview
+pad button=dpdown
+pad button=dpdown
+wait frames=5
+shot overview-chest
+pad button=a
+wait frames=5
+shot chest
+pad button=dpdown
+wait frames=5
+shot chest-second
+pad button=b
+pad button=dpright
+pad button=dpdown
+pad button=dpdown
+pad button=a
+wait frames=5
+shot rings
+pad button=a
+wait frames=5
+shot rings-pick
+pad button=dpdown
+pad button=a
+wait frames=10
+shot rings-replaced
+pad button=b
+pad button=leftshoulder
+wait frames=5
+shot recent
+pad button=rightshoulder
+pad button=rightshoulder
+wait frames=5
+shot consumables
+pad button=rightshoulder
+wait frames=5
+shot notes
+pad axis=righty value=1 hold=30
+wait frames=5
+shot notes-scrolled
+pad button=rightshoulder
+wait frames=5
+shot tools
+pad axis=righttrigger value=1 hold=5
+wait frames=10
+shot magic-tab

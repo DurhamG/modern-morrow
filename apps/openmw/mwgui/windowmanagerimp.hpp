@@ -96,6 +96,7 @@ namespace MWGui
     class MainMenu;
     class StatsWindow;
     class InventoryWindow;
+    class InventoryScreen;
     struct JournalWindow;
     class TextInputDialog;
     class InfoBoxDialog;
@@ -460,6 +461,8 @@ namespace MWGui
         std::unique_ptr<DragAndDrop> mDragAndDrop;
         std::unique_ptr<ItemTransfer> mItemTransfer;
         InventoryWindow* mInventoryWindow;
+        // Replaces the inventory window in the inventory tabs, in controller menus mode
+        InventoryScreen* mInventoryScreen = nullptr;
         ScrollWindow* mScrollWindow;
         BookWindow* mBookWindow;
         CountDialog* mCountDialog;

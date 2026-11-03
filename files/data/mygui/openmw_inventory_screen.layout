@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- The inventory in controller menus mode. InventoryScreen builds its contents in code. -->
+<MyGUI type="Layout">
+    <Widget type="Widget" skin="" layer="ControllerMenus" position="0 0 1280 720" name="_Main">
+        <Property key="NeedMouse" value="false"/>
+    </Widget>
+</MyGUI>
