@@ -74,6 +74,7 @@ The `pad` command connects a virtual gamepad, which stays connected. OpenMW read
 | `console` | `command`, `frames` | Runs a console command and returns what the console printed. Fails if the console printed an error. |
 | `lua` | `code`, `context` (player, global, menu), `frames` | Runs Lua as the console's Lua mode does, and returns what was printed. A lone expression's value is printed. |
 | `ui` | `hidden`, `root`, `depth` | The widget tree. See below. |
+| `layout` | `path`, or `close` | Shows the widgets from a MyGUI layout file, replacing the ones from the last `layout` command. `close=true` removes them. The file is read each time, so a mock-up can be changed and shown again without rebuilding. Mock-ups go on the `Mockup` layer, which is sized relative to the screen height on a canvas 720 units tall. |
 | `quit` | | Exits the game cleanly. |
 
 The client adds these commands of its own:

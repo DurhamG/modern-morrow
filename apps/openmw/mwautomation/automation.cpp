@@ -1,7 +1,12 @@
 #include "automation.hpp"
 
 #include <chrono>
+#include <fstream>
 #include <stdexcept>
+
+#include <MyGUI_Gui.h>
+#include <MyGUI_ResourceLayout.h>
+#include <MyGUI_XmlDocument.h>
 
 #include <SDL_video.h>
 
@@ -132,6 +137,7 @@ namespace MWAutomation
         registerHandlers();
         registerGamepadHandler();
         registerScriptingHandlers();
+        registerLayoutHandler();
     }
 
     Automation::~Automation() = default;
@@ -545,6 +551,42 @@ namespace MWAutomation
                 return result;
             };
         };
+    }
+
+    void Automation::registerLayoutHandler()
+    {
+        // Shows the widgets from a MyGUI layout file at "path", replacing the ones from any layout loaded before.
+        // "close": true removes them instead. The file is read when the command runs, so a layout can be changed
+        // and shown again without rebuilding the game. This is meant for UI mock-ups.
+        mHandlers["layout"] = [this](const Json& request) -> Poll {
+            const bool close = request.getBool("close");
+            const std::string path = request.getString("path");
+            if (!close && path.empty())
+                throw std::runtime_error("layout needs a \"path\", or \"close\": true");
+            return [this, close, path]() -> std::optional<Json> {
+                closeLayout();
+                if (close)
+                    return Json::object();
+
+                std::ifstream stream(Files::pathFromUnicodeString(path));
+                if (!stream)
+                    throw std::runtime_error("can't open " + path);
+                MyGUI::xml::Document document;
+                if (!document.open(stream))
+                    throw std::runtime_error("can't parse " + path + ": " + document.getLastError());
+                MyGUI::ResourceLayout layout(document.getRoot(), path);
+                for (MyGUI::Widget* widget : layout.createLayout())
+                    mLayoutWidgets.push_back(widget);
+                return Json::object({ { "widgets", static_cast<double>(mLayoutWidgets.size()) } });
+            };
+        };
+    }
+
+    void Automation::closeLayout()
+    {
+        for (MyGUI::Widget* widget : mLayoutWidgets)
+            MyGUI::Gui::getInstance().destroyWidget(widget);
+        mLayoutWidgets.clear();
     }
 
     void Automation::beginConsoleCapture()

@@ -1085,9 +1085,9 @@ def build_parser():
     return parser
 
 
-def main():
+def main(argv=None):
     parser = build_parser()
-    argv = sys.argv[1:]
+    argv = sys.argv[1:] if argv is None else list(argv)
     subcommands = next(a for a in parser._actions if isinstance(a, argparse._SubParsersAction)).choices
     # "omw.py state" is short for "omw.py send state".
     if argv and not argv[0].startswith("-") and argv[0] not in subcommands:

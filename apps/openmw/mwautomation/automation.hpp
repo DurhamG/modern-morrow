@@ -18,6 +18,11 @@
 
 struct SDL_Window;
 
+namespace MyGUI
+{
+    class Widget;
+}
+
 namespace osgViewer
 {
     class Viewer;
@@ -68,10 +73,14 @@ namespace MWAutomation
         bool mCapturingConsole = false;
         // Each printed message, and whether it was printed as an error.
         std::vector<std::pair<std::string, bool>> mConsoleOutput;
+        // The top-level widgets of the layout file that the "layout" command loaded.
+        std::vector<MyGUI::Widget*> mLayoutWidgets;
 
         void registerHandlers();
         void registerGamepadHandler();
         void registerScriptingHandlers();
+        void registerLayoutHandler();
+        void closeLayout();
 
         // Collects what the console prints until endConsoleCapture(), which returns {"output": [lines]}. It throws
         // with the error lines instead if any were printed.

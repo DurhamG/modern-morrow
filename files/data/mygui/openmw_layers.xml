@@ -24,6 +24,11 @@
     <Layer name="Console" overlapped="true" pick="true"/>
     <Layer name="Modal" overlapped="true" pick="true"/>
     <Layer name="Popup" overlapped="true" pick="true"/>
+    <!-- For UI mock-ups that the automation harness loads. Like the HUD, it keeps a constant size relative to the
+         screen height. -->
+    <Layer name="Mockup" type="ScalingLayer" pick="false">
+        <Property key="Height" value="720"/>
+    </Layer>
     <Layer name="Notification" overlapped="false" pick="false"/>
     <Layer name="Video" overlapped="false" pick="true"/>
     <Layer name="InputBlocker" overlapped="false" pick="true"/>
