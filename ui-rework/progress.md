@@ -86,4 +86,8 @@
 
 - Designed the dialogue window with the user, recorded in [design/dialogue.md](design/dialogue.md). `ui-rework/mockups/dialogue.py` builds its mock-ups, over the game with the NPC in view. The mock-up generators now share their helpers in `ui-rework/mockups/mockup.py`.
 
-Next: the user reviews the dialogue mock-ups.
+- Built the dialogue panel. In controller menus mode, an opaque panel along the bottom of the screen replaces the dialogue window. It groups topics into New and Asked, puts services in their own tab, and shows only the choices when a reply is needed.
+
+- During controller conversations, the camera turns to frame the NPC's face above the panel, and turns back when the conversation ends.
+
+Next: the user reviews the camera framing.
