@@ -127,6 +127,7 @@ set(BUILTIN_DATA_FILES
     scripts/omw/activationhandlers.lua
     scripts/omw/ai.lua
     scripts/omw/camera/camera.lua
+    scripts/omw/camera/dialogue_framing.lua
     scripts/omw/camera/head_bobbing.lua
     scripts/omw/camera/third_person.lua
     scripts/omw/camera/settings.lua

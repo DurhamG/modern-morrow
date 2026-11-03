@@ -35,6 +35,7 @@ local head_bobbing = require('scripts.omw.camera.head_bobbing')
 local third_person = require('scripts.omw.camera.third_person')
 local pov_auto_switch = require('scripts.omw.camera.first_person_auto_switch')
 local move360 = require('scripts.omw.camera.move360')
+local dialogue_framing = require('scripts.omw.camera.dialogue_framing')
 
 local MODE = camera.MODE
 
@@ -193,6 +194,7 @@ local function onUpdate(dt)
     camera.setExtraPitch(0)
     camera.setExtraYaw(0)
     camera.setExtraRoll(0)
+    if dialogue_framing.active() then dialogue_framing.apply() end
     camera.setFirstPersonOffset(util.vector3(0, 0, 0))
     updateSmoothedSpeed(dt)
     pov_auto_switch.onUpdate(dt)
@@ -209,6 +211,7 @@ local function updateIdleTimer(dt)
 end
 
 local function onFrame(dt)
+    if dialogue_framing.active() then dialogue_framing.update() end
     if core.isWorldPaused() or I.UI.getMode() then return end
     updateIdleTimer(dt)
     local mode = camera.getMode()
@@ -336,6 +339,9 @@ return {
         -- @function [parent=#Camera] enableThirdPersonOffsetControl
         -- @param #string tag (optional, empty string by default)
         enableThirdPersonOffsetControl = function(tag) third_person.noOffsetControl[tag or ''] = nil end,
+    },
+    eventHandlers = {
+        UiModeChanged = dialogue_framing.onUiModeChanged,
     },
     engineHandlers = {
         onUpdate = onUpdate,
