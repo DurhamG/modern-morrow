@@ -5,7 +5,8 @@
 
 namespace MyGUI
 {
-    class Button;
+    class ImageBox;
+    class TextBox;
 }
 
 namespace MWGui
@@ -15,12 +16,19 @@ namespace MWGui
     public:
         InventoryTabsOverlay();
 
+        /// The tab bar's height in the units of the Windows layer, for the windows that sit below it.
         int getHeight();
         void setTab(size_t index);
+        void onResChange(int width, int height) override;
 
     private:
-        std::vector<MyGUI::Button*> mTabs;
+        std::vector<MyGUI::TextBox*> mTabs;
+        MyGUI::ImageBox* mUnderline;
+        MyGUI::ImageBox* mL2Image;
+        MyGUI::ImageBox* mR2Image;
+        size_t mTab = 0;
 
+        void layoutTabs();
         void onTabClicked(MyGUI::Widget* sender);
     };
 }

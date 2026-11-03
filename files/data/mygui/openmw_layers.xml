@@ -13,6 +13,11 @@
         <Property key="Size" value="600 520"/>
     </Layer>
     <Layer name="Windows" overlapped="true" pick="true"/>
+    <!-- The screens built for controller menus mode, such as the inventory. Like the HUD, they keep a constant size
+         relative to the screen height. -->
+    <Layer name="ControllerMenus" type="ScalingLayer" pick="true">
+        <Property key="Height" value="720"/>
+    </Layer>
     <Layer name="DragAndDrop" overlapped="false" pick="false"/>
     <Layer name="DrowningBar" overlapped="false" pick="false"/>
     <Layer name="MainMenuBackground" overlapped="true" pick="true"/>
