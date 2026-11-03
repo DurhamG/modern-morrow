@@ -1,10 +1,13 @@
-# The map screen in the existing "controller menus" mode, local then world map.
+# The map screen in the existing "controller menus" mode: the local map, panned with the right stick, then the world map.
 launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true" --set "GUI.controller tooltips=true"
 pad button=b
 wait frames=10
-pad axis=lefttrigger value=1 hold=0.1
+pad axis=lefttrigger value=1 hold=5
 wait frames=10
 shot map-local
+pad axis=righty value=1 hold=30
+wait frames=35
+shot map-local-panned
 pad button=x
 wait frames=10
 shot map-world

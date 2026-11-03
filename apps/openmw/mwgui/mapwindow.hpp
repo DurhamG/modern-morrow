@@ -272,6 +272,7 @@ namespace MWGui
 
     protected:
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+        bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
         void setActiveControllerWindow(bool active) override;
 
     private:
@@ -294,6 +295,7 @@ namespace MWGui
         void resizeGlobalMap();
         void fitGlobalMapToView();
         void shiftMap(int dx, int dy);
+        void panLocalMapWithStick(float dt);
         void updateWorldToggleCaptions();
         void worldPosToGlobalMapImageSpace(float x, float z, float& imageX, float& imageY) const;
         MyGUI::IntCoord createMarkerCoords(float x, float y, float agregatedWeight) const;
@@ -310,6 +312,8 @@ namespace MWGui
         MyGUI::Widget* mControllerGuide;
         MyGUI::TextBox* mGuideWorldText;
         MyGUI::IntPoint mLastDragPos;
+        // The part of a pixel that the stick moved the local map by, carried over to the next frame.
+        MyGUI::FloatPoint mStickPanRemainder;
 
         MyGUI::IntCoord mLastScrollWindowCoordinates;
 

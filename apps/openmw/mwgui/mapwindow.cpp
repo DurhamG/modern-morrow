@@ -1164,6 +1164,10 @@ namespace MWGui
     {
         LocalMapBase::onFrame(dt);
         NoDrop::onFrame(dt);
+
+        if (Settings::gui().mControllerMenus && !Settings::map().mGlobal
+            && MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() == this)
+            panLocalMapWithStick(dt);
     }
 
     void MapWindow::setGlobalMapMarkerTooltip(MyGUI::Widget* markerWidget, int x, int y)
@@ -1452,6 +1456,47 @@ namespace MWGui
             shiftMap(-100, 0);
 
         return true;
+    }
+
+    bool MapWindow::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
+    {
+        // The right stick pans the local map, which onFrame does by reading the stick's position.
+        return arg.axis == SDL_CONTROLLER_AXIS_RIGHTX || arg.axis == SDL_CONTROLLER_AXIS_RIGHTY;
+    }
+
+    void MapWindow::panLocalMapWithStick(float dt)
+    {
+        // How far the map pans per second with the stick pushed all the way, as a fraction of the map's height.
+        constexpr float panSpeed = 1.f;
+        constexpr float deadzone = 0.15f;
+
+        // Squaring the deflection gives finer control near the centre of the stick.
+        const auto response = [](float value) {
+            const float magnitude = std::abs(value);
+            if (magnitude < deadzone)
+                return 0.f;
+            const float scaled = (magnitude - deadzone) / (1.f - deadzone);
+            return std::copysign(scaled * scaled, value);
+        };
+
+        const MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
+        const float x = response(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTX));
+        const float y = response(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTY));
+        if (x == 0.f && y == 0.f)
+        {
+            mStickPanRemainder = {};
+            return;
+        }
+
+        // Pushing the stick right moves the view right, so the map itself moves left.
+        const float distance = panSpeed * static_cast<float>(mLocalMap->getHeight()) * dt;
+        mStickPanRemainder.left -= x * distance;
+        mStickPanRemainder.top -= y * distance;
+        const int dx = static_cast<int>(mStickPanRemainder.left);
+        const int dy = static_cast<int>(mStickPanRemainder.top);
+        mStickPanRemainder.left -= static_cast<float>(dx);
+        mStickPanRemainder.top -= static_cast<float>(dy);
+        shiftMap(dx, dy);
     }
 
     void MapWindow::shiftMap(int dx, int dy)
