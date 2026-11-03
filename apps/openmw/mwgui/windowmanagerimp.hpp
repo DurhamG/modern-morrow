@@ -120,7 +120,6 @@ namespace MWGui
     class JailScreen;
     class KeyboardNavigation;
     class ItemTransfer;
-    class ControllerButtonsOverlay;
     class InventoryTabsOverlay;
 
     class WindowManager : public MWBase::WindowManager
@@ -482,7 +481,6 @@ namespace MWGui
         PostProcessorHud* mPostProcessorHud;
         JailScreen* mJailScreen;
         ContainerWindow* mContainerWindow;
-        ControllerButtonsOverlay* mControllerButtonsOverlay;
         InventoryTabsOverlay* mInventoryTabsOverlay;
 
         std::vector<std::unique_ptr<WindowBase>> mWindows;

@@ -88,7 +88,6 @@
 #include "confirmationdialog.hpp"
 #include "console.hpp"
 #include "container.hpp"
-#include "controllerbuttonsoverlay.hpp"
 #include "controllers.hpp"
 #include "countdialog.hpp"
 #include "cursor.hpp"
@@ -190,7 +189,6 @@ namespace MWGui
         , mPostProcessorHud(nullptr)
         , mJailScreen(nullptr)
         , mContainerWindow(nullptr)
-        , mControllerButtonsOverlay(nullptr)
         , mInventoryTabsOverlay(nullptr)
         , mTranslationDataStorage(translationDataStorage)
         , mInputBlocker(nullptr)
@@ -518,10 +516,6 @@ namespace MWGui
         mWindows.push_back(std::move(postProcessorHud));
         trackWindow(mPostProcessorHud, makePostprocessorWindowSettingValues());
 
-        auto controllerButtonsOverlay = std::make_unique<ControllerButtonsOverlay>();
-        mControllerButtonsOverlay = controllerButtonsOverlay.get();
-        mWindows.push_back(std::move(controllerButtonsOverlay));
-
         auto inventoryTabsOverlay = std::make_unique<InventoryTabsOverlay>();
         mInventoryTabsOverlay = inventoryTabsOverlay.get();
         mWindows.push_back(std::move(inventoryTabsOverlay));
@@ -688,13 +682,8 @@ namespace MWGui
             mSpellWindow->setVisible(
                 mSpellWindow->pinned() && !isConsoleMode() && !(mForceHidden & GW_Magic) && (mAllowed & GW_Magic));
 
-            if (Settings::gui().mControllerMenus)
-            {
-                if (mControllerButtonsOverlay)
-                    mControllerButtonsOverlay->setVisible(false);
-                if (mInventoryTabsOverlay)
-                    mInventoryTabsOverlay->setVisible(false);
-            }
+            if (Settings::gui().mControllerMenus && mInventoryTabsOverlay)
+                mInventoryTabsOverlay->setVisible(false);
             return;
         }
         else if (getMode() != GM_Inventory)
@@ -1060,9 +1049,6 @@ namespace MWGui
 
         if (isSettingsWindowVisible())
             mSettingsWindow->onFrame(frameDuration);
-
-        if (mControllerButtonsOverlay && mControllerButtonsOverlay->isVisible())
-            mControllerButtonsOverlay->onFrame(frameDuration);
 
         if (mInventoryTabsOverlay && mInventoryTabsOverlay->isVisible())
             mInventoryTabsOverlay->onFrame(frameDuration);
@@ -2753,8 +2739,6 @@ namespace MWGui
     int WindowManager::getControllerMenuHeight()
     {
         int height = MyGUI::RenderManager::getInstance().getViewSize().height;
-        if (mControllerButtonsOverlay != nullptr && mControllerButtonsOverlay->isVisible())
-            height -= mControllerButtonsOverlay->getHeight();
         if (mInventoryTabsOverlay != nullptr && mInventoryTabsOverlay->isVisible())
             height -= mInventoryTabsOverlay->getHeight();
         return height;
@@ -2787,7 +2771,7 @@ namespace MWGui
 
     void WindowManager::updateControllerButtonsOverlay()
     {
-        if (!Settings::gui().mControllerMenus || !mControllerButtonsOverlay)
+        if (!Settings::gui().mControllerMenus || !mInventoryTabsOverlay)
             return;
 
         if (mWindows.empty())
@@ -2796,13 +2780,10 @@ namespace MWGui
         WindowBase* topWin = getActiveControllerWindow();
         if (!topWin || !topWin->isVisible())
         {
-            mControllerButtonsOverlay->setVisible(false);
             mInventoryTabsOverlay->setVisible(false);
             return;
         }
 
-        // setButtons will handle setting visibility based on if any buttons are defined.
-        mControllerButtonsOverlay->setButtons(topWin->getControllerButtons());
         if (getMode() == GM_Inventory)
         {
             mInventoryTabsOverlay->setVisible(true);
