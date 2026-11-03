@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Builds mock-ups of the reworked inventory screen as MyGUI layout files, and shows them in a running game.
 
-The mock-ups are static: they don't respond to input. They use real item names, icons and stats, which this script
-reads from the game the first time it runs and caches in .automation/mockups/items.json. The layouts go on the
-"Mockup" layer, which is sized relative to the screen height, on a canvas 720 units tall.
+The mock-ups use real item names, icons and stats, which this script reads from the game the first time it runs and
+caches in .automation/mockups/items.json. mockup.py has the parts all the mock-up generators share.
 
     python ui-rework/mockups/inventory.py show equipment     # show one mock-up in the running "mockup" profile
     python ui-rework/mockups/inventory.py shots -r deck tv4k # launch, capture every mock-up, quit
@@ -11,35 +10,13 @@ reads from the game the first time it runs and caches in .automation/mockups/ite
 See ui-rework/design/inventory.md for the design.
 """
 
-import argparse
-import json
-import sys
-from pathlib import Path
-from xml.sax.saxutils import quoteattr
+from mockup import COLOURS, Layout, button_glyph, chrome, column_headers, fmt, icon, read_from_game, run, wrap
+from mockup import CANVAS_HEIGHT, OUT_DIR
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-import omw  # noqa: E402
-
-HERE = Path(__file__).resolve().parent
-OUT_DIR = omw.AUTOMATION_DIR / "mockups"
 ITEM_CACHE = OUT_DIR / "items.json"
-PROFILE = "mockup"
-CANVAS_HEIGHT = 720
 
-COLOURS = {
-    "text": "#caa560",  # Morrowind's normal text colour
-    "bright": "#dfc99f",  # Morrowind's header colour
-    "dim": "#8c7a55",
-    "active": "#ffffff",
-    "accent": "#caa560",
-    "new": "#7fb3ff",
-    "better": "#7fd36b",
-    "worse": "#e0675a",
-    "stolen": "#e0675a",
-    "panel": "#000000",
-}
-
-FONT = {"small": 15, "normal": 18, "large": 22, "title": 26}
+SUB_TABS = ["Recent", "Equipment", "Consumables", "Notes", "Tools", "Misc"]
+STATUS = "Armor  21      Weight  96 / 250      Gold  1,250"
 
 WEAPON_TYPES = ["Short Blade", "Long Blade", "Long Blade, two-handed", "Blunt", "Blunt, two-handed",
                 "Blunt, two-handed", "Spear", "Axe", "Axe, two-handed", "Bow", "Crossbow", "Thrown", "Arrow", "Bolt"]
@@ -108,25 +85,8 @@ AREAS = [
 
 
 def load_items(refresh=False):
-    if ITEM_CACHE.is_file() and not refresh:
-        return json.loads(ITEM_CACHE.read_text(encoding="utf-8"))
     names = sorted({entry["name"] for entry in INVENTORY} | {"Bonemold Cuirass", "Steel Longsword"})
-    code = (HERE / "itemdata.lua").read_text(encoding="utf-8")
-    code = code.replace("local NAMES = {}", "local NAMES = {" + ", ".join(json.dumps(n) for n in names) + "}")
-    connection = omw.connect(omw.Profile(PROFILE))
-    reply = connection.request({"cmd": "lua", "code": code, "context": "player"}, 60)
-    if not reply.get("ok"):
-        raise SystemExit(f"Reading item data failed: {reply.get('error')}")
-    items = {}
-    for line in reply["result"]["output"]:
-        record = json.loads(line)
-        items[record["name"]] = record
-    missing = [n for n in names if n not in items]
-    if missing:
-        print("No records named: " + ", ".join(missing), file=sys.stderr)
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    ITEM_CACHE.write_text(json.dumps(items, indent=1), encoding="utf-8")
-    return items
+    return read_from_game("itemdata.lua", names, ITEM_CACHE, refresh)
 
 
 def inventory(items):
@@ -170,102 +130,6 @@ def slot_of(record):
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Layout building
-
-
-class Layout:
-    """Collects widgets for one MyGUI layout file. Coordinates are canvas units, from the top left."""
-
-    def __init__(self, width):
-        self.width = width
-        self.widgets = []
-
-    def add(self, widget_type, skin, x, y, w, h, properties):
-        props = "".join(f'<Property key="{k}" value={quoteattr(str(v))}/>' for k, v in properties.items())
-        self.widgets.append(
-            f'<Widget type="{widget_type}" skin="{skin}" position="{int(x)} {int(y)} {int(w)} {int(h)}">'
-            f'<Property key="NeedMouse" value="false"/>{props}</Widget>')
-
-    def rect(self, x, y, w, h, colour, alpha=1.0):
-        self.add("ImageBox", "ImageBox", x, y, w, h, {"ImageTexture": "white", "Colour": colour, "Alpha": alpha})
-
-    def image(self, x, y, w, h, texture, alpha=1.0, colour=None):
-        props = {"ImageTexture": texture, "Alpha": alpha}
-        if colour:
-            props["Colour"] = colour
-        self.add("ImageBox", "ImageBox", x, y, w, h, props)
-
-    def text(self, x, y, w, h, caption, size="normal", colour="text", align="Left VCenter", shadow=True):
-        self.add("TextBox", "NormalText", x, y, w, h, {
-            "Caption": caption, "FontHeight": FONT[size], "TextColour": COLOURS.get(colour, colour),
-            "TextAlign": align, "TextShadow": "true" if shadow else "false", "TextShadowColour": "0 0 0"})
-
-    def xml(self):
-        body = "\n        ".join(self.widgets)
-        return ('<?xml version="1.0" encoding="UTF-8"?>\n<MyGUI type="Layout">\n'
-                f'    <Widget type="Widget" skin="" layer="Mockup" position="0 0 {self.width} {CANVAS_HEIGHT}">\n'
-                f'        {body}\n    </Widget>\n</MyGUI>\n')
-
-
-def wrap(text, width, size):
-    """Splits text into lines that fit the width, guessing at the font's average character width."""
-    per_line = max(1, int(width / (FONT[size] * 0.5)))
-    lines, line = [], ""
-    for word in text.split():
-        if line and len(line) + 1 + len(word) > per_line:
-            lines.append(line)
-            line = word
-        else:
-            line = f"{line} {word}".strip()
-    lines.append(line)
-    return lines
-
-
-def icon(layout, x, y, size, record, alpha=1.0):
-    layout.rect(x, y, size, size, "#1a1610", 0.9)
-    layout.image(x + 2, y + 2, size - 4, size - 4, record["icon"], alpha)
-
-
-def button_glyph(layout, x, y, name, size=22):
-    layout.image(x, y, size, size, f"textures/omw_steam_button_{name}.dds", 0.85, "#ccb589")
-
-
-def chrome(layout, sub_tab):
-    """The parts every inventory mock-up shares: background, the two rows of tabs and the status line."""
-    w = layout.width
-    layout.rect(0, 0, w, CANVAS_HEIGHT, COLOURS["panel"], 0.97)
-
-    # Top tabs, which switch between the map, inventory, magic and stats screens.
-    tabs = ["Map", "Inventory", "Magic", "Stats"]
-    tab_w = 120
-    x = (w - tab_w * len(tabs)) / 2
-    button_glyph(layout, x - 34, 11, "l2")
-    for name in tabs:
-        selected = name == "Inventory"
-        layout.text(x, 0, tab_w, 44, name, "large", "active" if selected else "dim", "Center")
-        if selected:
-            layout.rect(x + 20, 38, tab_w - 40, 2, COLOURS["accent"])
-        x += tab_w
-    button_glyph(layout, x + 12, 11, "r2")
-    layout.rect(0, 44, w, 1, COLOURS["accent"], 0.35)
-
-    # Inventory tabs.
-    subs = ["Recent", "Equipment", "Consumables", "Notes", "Tools", "Misc"]
-    x = 32
-    button_glyph(layout, x, 59, "l1")
-    x += 34
-    for name in subs:
-        width = 26 + len(name) * 9
-        selected = name == sub_tab
-        layout.text(x, 50, width, 40, name, "normal", "bright" if selected else "dim", "Center")
-        if selected:
-            layout.rect(x + 8, 84, width - 16, 2, COLOURS["accent"])
-        x += width + 6
-    button_glyph(layout, x + 4, 59, "r1")
-
-    # Status line: armour rating, encumbrance and gold.
-    layout.text(w - 32 - 380, 50, 380, 40, "Armor  21      Weight  96 / 250      Gold  1,250", "small", "dim",
-                "Right VCenter")
-    layout.rect(0, 94, w, 1, COLOURS["accent"], 0.2)
 
 
 def details_panel(layout, x, y, w, h, title_entry, rows, compare_entry=None, action=None):
@@ -348,12 +212,6 @@ def describe(record):
     return kind.capitalize()
 
 
-def fmt(value):
-    if isinstance(value, float):
-        return f"{value:.2f}".rstrip("0").rstrip(".")
-    return str(value)
-
-
 def list_row(layout, x, y, w, entry, columns, focused=False, row_h=40):
     """One row of an item list: icon, name with markers, then stat columns from the right edge."""
     record = entry["record"]
@@ -389,14 +247,6 @@ def list_row(layout, x, y, w, entry, columns, focused=False, row_h=40):
         cx += cw
 
 
-def column_headers(layout, x, y, w, headers):
-    stats_w = sum(cw for _, cw in headers)
-    cx = x + w - stats_w - 8
-    for label, cw in headers:
-        layout.text(cx, y, cw, 22, label, "small", "dim", "Right VCenter")
-        cx += cw
-
-
 # ---------------------------------------------------------------------------------------------------------------------
 # The mock-ups
 
@@ -422,7 +272,7 @@ def mock_equipment(width, items):
     """The equipment overview, with the Chest area highlighted."""
     entries = inventory(items)
     layout = Layout(width)
-    chrome(layout, "Equipment")
+    chrome(layout, "Inventory", SUB_TABS, "Equipment", STATUS)
 
     panel_w = max(320, int(width * 0.3))
     cols_w = width - 64 - panel_w - 24
@@ -484,7 +334,7 @@ def mock_area(width, items, area, slots, focus_name, headers, columns_for, detai
     """An equipment area: its slots on the left, the items that fit in the middle, details on the right."""
     entries = inventory(items)
     layout = Layout(width)
-    chrome(layout, "Equipment")
+    chrome(layout, "Inventory", SUB_TABS, "Equipment", STATUS)
 
     top = 110
     bottom = CANVAS_HEIGHT - 24
@@ -591,68 +441,5 @@ def mock_weapon(width, items):
 MOCKUPS = {"equipment": mock_equipment, "chest": mock_chest, "weapon": mock_weapon}
 
 
-# ---------------------------------------------------------------------------------------------------------------------
-# Commands
-
-
-def canvas_width(connection):
-    state = connection.request({"cmd": "state"}, 10)["result"]
-    window = state["window"]
-    return round(CANVAS_HEIGHT * window["width"] / window["height"])
-
-
-def show(connection, name, items):
-    width = canvas_width(connection)
-    layout = MOCKUPS[name](width, items)
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    path = OUT_DIR / f"inventory-{name}-{width}.layout"
-    path.write_text(layout.xml(), encoding="utf-8")
-    reply = connection.request({"cmd": "layout", "path": str(path)}, 10)
-    if not reply.get("ok"):
-        raise SystemExit(f"Showing {path} failed: {reply.get('error')}")
-    return path
-
-
-def cmd_show(args):
-    items = load_items(args.refresh)
-    connection = omw.connect(omw.Profile(args.profile))
-    path = show(connection, args.name, items)
-    print(f"Showing {path}")
-
-
-def cmd_shots(args):
-    resolutions = list(omw.RESOLUTIONS) if args.resolution == ["all"] else args.resolution
-    for resolution in resolutions:
-        omw.main(["launch", "-p", PROFILE, "--resolution", resolution, "--start", "Balmora, Caius Cosades' House"])
-        try:
-            items = load_items(args.refresh)
-            connection = omw.connect(omw.Profile(PROFILE))
-            for name in MOCKUPS:
-                show(connection, name, items)
-                out = omw.OUTPUT_DIR / "mockups" / f"inventory-{name}-{resolution}.png"
-                out.parent.mkdir(parents=True, exist_ok=True)
-                connection.request({"cmd": "wait", "frames": 3}, 10)
-                connection.request({"cmd": "screenshot", "path": str(out)}, 30)
-                print(f"Saved {out}")
-        finally:
-            omw.main(["quit", "-p", PROFILE])
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    sub = parser.add_subparsers(dest="command", required=True)
-    p = sub.add_parser("show", help="show one mock-up in a running game")
-    p.add_argument("name", choices=list(MOCKUPS))
-    p.add_argument("--profile", "-p", default=PROFILE)
-    p.add_argument("--refresh", action="store_true", help="read the item data from the game again")
-    p.set_defaults(func=cmd_show)
-    p = sub.add_parser("shots", help="launch the game, capture every mock-up, and quit")
-    p.add_argument("--resolution", "-r", nargs="+", default=["deck"], help="deck, tv1080, tv4k, or all")
-    p.add_argument("--refresh", action="store_true", help="read the item data from the game again")
-    p.set_defaults(func=cmd_shots)
-    args = parser.parse_args()
-    args.func(args)
-
-
 if __name__ == "__main__":
-    main()
+    run(__doc__, "inventory", MOCKUPS, load_items)
