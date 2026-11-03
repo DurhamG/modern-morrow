@@ -2,15 +2,10 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iomanip>
 #include <optional>
-#include <sstream>
 
-#include <MyGUI_Gui.h>
-#include <MyGUI_ILayer.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_TextBox.h>
-#include <MyGUI_TextIterator.h>
 
 #include <components/esm3/loadalch.hpp>
 #include <components/esm3/loadappa.hpp>
@@ -45,51 +40,27 @@
 #include "../mwworld/inventorystore.hpp"
 #include "../mwworld/player.hpp"
 
+#include "controllerscreen.hpp"
 #include "countdialog.hpp"
 #include "formatting.hpp"
 #include "inventoryitemmodel.hpp"
-#include "itemwidget.hpp"
 #include "worlditemmodel.hpp"
 
 namespace MWGui
 {
     namespace
     {
+        using namespace ControllerUi;
         using Inventory = MWWorld::InventoryStore;
 
-        // The screen is laid out on a canvas 720 units tall, the size of its layer. The tab bar overlay covers the
-        // top 44 units.
-        constexpr int sTabBarHeight = 44;
-        constexpr int sMargin = 32;
-        constexpr int sContentTop = 110;
-        constexpr int sContentBottomMargin = 24;
         constexpr int sRowHeight = 42;
         constexpr int sHeaderRowHeight = 28;
 
-        constexpr int sFontSmall = 15;
-        constexpr int sFontNormal = 18;
-        constexpr int sFontLarge = 22;
-        constexpr int sFontTitle = 26;
-
-        constexpr float sRepeatDelay = 0.35f;
-        constexpr float sRepeatInterval = 0.08f;
-        constexpr float sStickThreshold = 0.5f;
-        constexpr float sStickDeadzone = 0.15f;
         // How far a book scrolls per second with the right stick pushed all the way, in canvas units.
         constexpr float sBookScrollSpeed = 600.f;
 
-        const MyGUI::Colour sTextColour = MyGUI::Colour::parse("#caa560");
-        const MyGUI::Colour sBrightColour = MyGUI::Colour::parse("#dfc99f");
-        const MyGUI::Colour sDimColour = MyGUI::Colour::parse("#8c7a55");
-        const MyGUI::Colour sActiveColour = MyGUI::Colour::White;
-        const MyGUI::Colour sAccentColour = MyGUI::Colour::parse("#caa560");
-        const MyGUI::Colour sNewColour = MyGUI::Colour::parse("#7fb3ff");
-        const MyGUI::Colour sBetterColour = MyGUI::Colour::parse("#7fd36b");
-        const MyGUI::Colour sWorseColour = MyGUI::Colour::parse("#e0675a");
-        const MyGUI::Colour sPanelColour = MyGUI::Colour::parse("#15120c");
         // Book text is dark, as the books set it, so it sits on a page of this colour.
         const MyGUI::Colour sPageColour = MyGUI::Colour::parse("#d8c7a0");
-        const MyGUI::Colour sIconBackColour = MyGUI::Colour::parse("#1a1610");
 
         struct AreaDef
         {
@@ -144,91 +115,6 @@ namespace MWGui
             static const std::array<std::string_view, 6> names
                 = { "Recent", "Equipment", "Consumables", "Notes", "Tools", "Misc" };
             return "#{Interface:InventoryTab" + std::string(names[tab]) + "}";
-        }
-
-        // Item names can contain characters that MyGUI reads as colour codes.
-        std::string escaped(std::string_view text)
-        {
-            return MyGUI::TextIterator::toTagsString(MyGUI::UString(std::string(text))).asUTF8();
-        }
-
-        std::string formatNumber(float value)
-        {
-            if (std::abs(value - std::round(value)) < 0.005f)
-                return std::to_string(static_cast<int>(std::round(value)));
-            std::ostringstream stream;
-            stream << std::fixed << std::setprecision(2) << value;
-            std::string text = stream.str();
-            while (!text.empty() && text.back() == '0')
-                text.pop_back();
-            if (!text.empty() && text.back() == '.')
-                text.pop_back();
-            return text;
-        }
-
-        MyGUI::ImageBox* addRect(
-            MyGUI::Widget* parent, int x, int y, int w, int h, const MyGUI::Colour& colour, float alpha = 1.f)
-        {
-            auto* box = parent->createWidget<MyGUI::ImageBox>(
-                "ImageBox", MyGUI::IntCoord(x, y, w, h), MyGUI::Align::Default);
-            box->setImageTexture("white");
-            box->setColour(colour);
-            box->setAlpha(alpha);
-            box->setNeedMouseFocus(false);
-            return box;
-        }
-
-        // Shows text, where "#{Context:Key}" is replaced with the localised string.
-        MyGUI::TextBox* addText(MyGUI::Widget* parent, int x, int y, int w, int h, std::string_view caption,
-            int fontHeight, const MyGUI::Colour& colour, MyGUI::Align align = MyGUI::Align::Left | MyGUI::Align::VCenter)
-        {
-            auto* text = parent->createWidget<MyGUI::TextBox>(
-                "NormalText", MyGUI::IntCoord(x, y, w, h), MyGUI::Align::Default);
-            text->setFontHeight(fontHeight);
-            text->setTextColour(colour);
-            text->setTextAlign(align);
-            text->setTextShadow(true);
-            text->setTextShadowColour(MyGUI::Colour::Black);
-            text->setCaptionWithReplacing(std::string(caption));
-            text->setNeedMouseFocus(false);
-            return text;
-        }
-
-        void addGlyph(MyGUI::Widget* parent, int x, int y, int size, SDL_GameControllerButton button)
-        {
-            auto* image = parent->createWidget<MyGUI::ImageBox>(
-                "ImageBox", MyGUI::IntCoord(x, y, size, size), MyGUI::Align::Default);
-            image->setImageTexture(MWBase::Environment::get().getInputManager()->getControllerButtonIcon(button));
-            image->setColour(MyGUI::Colour::parse("#ccb589"));
-            image->setAlpha(0.85f);
-            image->setNeedMouseFocus(false);
-        }
-
-        void addIcon(MyGUI::Widget* parent, int x, int y, int size, const MWWorld::Ptr& ptr, bool equipped)
-        {
-            addRect(parent, x, y, size, size, sIconBackColour, 0.9f);
-            auto* icon = parent->createWidget<ItemWidget>(
-                "MW_ItemIcon", MyGUI::IntCoord(x, y, size, size), MyGUI::Align::Default);
-            icon->setItem(ptr, equipped ? ItemWidget::Equip : ItemWidget::None);
-            icon->setNeedMouseFocus(false);
-        }
-
-        // Splits text into at most two lines that fit the width, guessing at the font's average character width.
-        std::vector<std::string> wrapText(const std::string& text, int width, int fontHeight)
-        {
-            const std::size_t perLine = std::max<std::size_t>(1, static_cast<std::size_t>(width / (fontHeight * 0.5f)));
-            std::vector<std::string> lines(1);
-            std::istringstream words(text);
-            std::string word;
-            while (words >> word)
-            {
-                std::string& line = lines.back();
-                if (!line.empty() && line.size() + 1 + word.size() > perLine && lines.size() < 2)
-                    lines.emplace_back(word);
-                else
-                    line += (line.empty() ? "" : " ") + word;
-            }
-            return lines;
         }
 
         MWWorld::Ptr player()
@@ -671,11 +557,7 @@ namespace MWGui
         }
     }
 
-    InventoryScreen::InventoryScreen()
-        : WindowBase("openmw_inventory_screen.layout")
-    {
-        mDisableGamepadCursor = true;
-    }
+    InventoryScreen::InventoryScreen() = default;
 
     InventoryScreen::~InventoryScreen() = default;
 
@@ -699,8 +581,7 @@ namespace MWGui
     {
         mModel = std::make_unique<InventoryItemModel>(player());
         mPendingRing = -1;
-        mHeldDirectionX = 0;
-        mHeldDirectionY = 0;
+        mHeldDirection.reset();
         updateItems();
         redraw();
     }
@@ -708,14 +589,6 @@ namespace MWGui
     void InventoryScreen::onClose()
     {
         setHighlighted(ESM::RefId());
-    }
-
-    void InventoryScreen::onResChange(int /*width*/, int /*height*/)
-    {
-        // The layer scales its contents, so the screen fills the layer's own size rather than the screen's.
-        mMainWidget->setCoord(MyGUI::IntCoord(MyGUI::IntPoint(), mMainWidget->getLayer()->getSize()));
-        if (isVisible())
-            redraw();
     }
 
     void InventoryScreen::onInventoryUpdate(const MWWorld::Ptr& ptr)
@@ -771,46 +644,19 @@ namespace MWGui
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         if (winMgr->getActiveControllerWindow() != this)
         {
-            mHeldDirectionX = 0;
-            mHeldDirectionY = 0;
+            mHeldDirection.reset();
             return;
         }
 
         // The d-pad and the left stick move the selection, repeating while held.
-        const MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
-        const float stickX = input->getControllerAxisValue(SDL_CONTROLLER_AXIS_LEFTX);
-        const float stickY = input->getControllerAxisValue(SDL_CONTROLLER_AXIS_LEFTY);
         int dx = 0;
         int dy = 0;
-        if (input->isControllerButtonPressed(SDL_CONTROLLER_BUTTON_DPAD_LEFT) || stickX < -sStickThreshold)
-            dx = -1;
-        else if (input->isControllerButtonPressed(SDL_CONTROLLER_BUTTON_DPAD_RIGHT) || stickX > sStickThreshold)
-            dx = 1;
-        if (input->isControllerButtonPressed(SDL_CONTROLLER_BUTTON_DPAD_UP) || stickY < -sStickThreshold)
-            dy = -1;
-        else if (input->isControllerButtonPressed(SDL_CONTROLLER_BUTTON_DPAD_DOWN) || stickY > sStickThreshold)
-            dy = 1;
-
-        if (dx != mHeldDirectionX || dy != mHeldDirectionY)
-        {
-            mHeldDirectionX = dx;
-            mHeldDirectionY = dy;
-            mRepeatTimer = sRepeatDelay;
-            if (dx != 0 || dy != 0)
-                move(dx, dy);
-        }
-        else if (dx != 0 || dy != 0)
-        {
-            mRepeatTimer -= duration;
-            if (mRepeatTimer <= 0)
-            {
-                mRepeatTimer = sRepeatInterval;
-                move(dx, dy);
-            }
-        }
+        if (mHeldDirection.update(duration, dx, dy))
+            move(dx, dy);
 
         if (mBookPaper != nullptr)
-            scrollBook(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTY), duration);
+            scrollBook(MWBase::Environment::get().getInputManager()->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTY),
+                duration);
     }
 
     void InventoryScreen::scrollBook(float stick, float duration)
@@ -863,17 +709,6 @@ namespace MWGui
         // onFrame.
         return arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY
             || arg.axis == SDL_CONTROLLER_AXIS_RIGHTX || arg.axis == SDL_CONTROLLER_AXIS_RIGHTY;
-    }
-
-    void InventoryScreen::setActiveControllerWindow(bool active)
-    {
-        // Other tabs hide this screen by moving it out of view, because the window manager only cycles through
-        // visible windows.
-        const MyGUI::IntSize size = mMainWidget->getLayer()->getSize();
-        mMainWidget->setCoord(0, active ? 0 : size.height + 1, size.width, size.height);
-        WindowBase::setActiveControllerWindow(active);
-        if (active)
-            redraw();
     }
 
     void InventoryScreen::changeTab(int delta)
@@ -1143,18 +978,13 @@ namespace MWGui
 
     void InventoryScreen::redraw()
     {
-        if (mContent != nullptr)
-            MyGUI::Gui::getInstance().destroyWidget(mContent);
+        clearContent();
         mBookPaper = nullptr;
         mBookScrollThumb = nullptr;
         const MyGUI::IntSize size = mMainWidget->getSize();
-        mContent = mMainWidget->createWidget<MyGUI::Widget>(
-            "", MyGUI::IntCoord(0, 0, size.width, size.height), MyGUI::Align::Stretch);
-        mContent->setNeedMouseFocus(false);
         if (!mModel)
             return;
 
-        addRect(mContent, 0, sTabBarHeight, size.width, size.height - sTabBarHeight, MyGUI::Colour::Black, 0.97f);
         drawHeader(size.width);
 
         const int top = sContentTop;
@@ -1187,22 +1017,9 @@ namespace MWGui
 
     void InventoryScreen::drawHeader(int width)
     {
-        int x = sMargin;
-        addGlyph(mContent, x, 59, 22, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-        x += 34;
+        std::vector<std::string> captions;
         for (int tab = 0; tab < sTabCount; ++tab)
-        {
-            const bool selected = tab == static_cast<int>(mTab);
-            MyGUI::TextBox* label = addText(mContent, x, 50, 200, 40, tabKey(tab), sFontNormal,
-                selected ? sBrightColour : sDimColour, MyGUI::Align::Left | MyGUI::Align::VCenter);
-            const int labelW = label->getTextSize().width + 24;
-            label->setCoord(x, 50, labelW, 40);
-            label->setTextAlign(MyGUI::Align::Center);
-            if (selected)
-                addRect(mContent, x + 8, 84, labelW - 16, 2, sAccentColour);
-            x += labelW + 6;
-        }
-        addGlyph(mContent, x + 4, 59, 22, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+            captions.push_back(tabKey(tab));
 
         // The armour rating, encumbrance and gold.
         const MWWorld::Ptr actor = player();
@@ -1211,9 +1028,7 @@ namespace MWGui
             + "      #{sEncumbrance}  " + formatNumber(std::floor(cls.getEncumbrance(actor))) + " / "
             + formatNumber(std::floor(cls.getCapacity(actor))) + "      #{sGold}  "
             + std::to_string(playerInventory().count(MWWorld::ContainerStore::sGoldId));
-        addText(mContent, width - sMargin - 420, 50, 420, 40, status, sFontSmall, sDimColour,
-            MyGUI::Align::Right | MyGUI::Align::VCenter);
-        addRect(mContent, 0, 94, width, 1, sAccentColour, 0.2f);
+        drawTabRow(mContent, width, captions, static_cast<int>(mTab), status);
     }
 
     void InventoryScreen::drawEquipmentOverview(int width)

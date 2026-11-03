@@ -11,7 +11,7 @@
 #include <components/esm/refid.hpp>
 
 #include "itemmodel.hpp"
-#include "windowbase.hpp"
+#include "controllerscreen.hpp"
 
 namespace MyGUI
 {
@@ -25,7 +25,7 @@ namespace MWGui
     /// The inventory in controller menus mode. Items are sorted into tabs and listed with the stats that matter
     /// for them, and a details panel compares the highlighted item with the equipped one, so the player never
     /// needs a tooltip. See ui-rework/design/inventory.md.
-    class InventoryScreen : public WindowBase
+    class InventoryScreen : public ControllerScreen
     {
     public:
         InventoryScreen();
@@ -34,14 +34,12 @@ namespace MWGui
         void onOpen() override;
         void onClose() override;
         void onFrame(float duration) override;
-        void onResChange(int width, int height) override;
         void onInventoryUpdate(const MWWorld::Ptr& ptr) override;
         void clear() override;
 
     protected:
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
-        void setActiveControllerWindow(bool active) override;
 
     private:
         enum class Tab
@@ -81,8 +79,6 @@ namespace MWGui
         std::vector<ItemStack> mItems;
         bool mNeedsUpdate = true;
 
-        MyGUI::Widget* mContent = nullptr;
-
         Tab mTab = Tab::Equipment;
         std::array<ListState, sTabCount> mLists;
 
@@ -101,9 +97,7 @@ namespace MWGui
         // The item last highlighted, which is marked as seen once the selection moves off it.
         ESM::RefId mHighlighted;
 
-        int mHeldDirectionX = 0;
-        int mHeldDirectionY = 0;
-        float mRepeatTimer = 0.f;
+        HeldDirection mHeldDirection;
         int mPendingDropItem = -1;
 
         // The book shown in the Notes tab, and how far its text is scrolled.
@@ -115,7 +109,7 @@ namespace MWGui
         MyGUI::IntCoord mBookTrack;
 
         void updateItems();
-        void redraw();
+        void redraw() override;
         void setHighlighted(const ESM::RefId& item);
 
         std::vector<Row> buildRows();

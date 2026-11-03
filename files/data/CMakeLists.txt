@@ -196,6 +196,7 @@ set(BUILTIN_DATA_FILES
     mygui/openmw_console.layout
     mygui/openmw_console.skin.xml
     mygui/openmw_container_window.layout
+    mygui/openmw_controller_screen.layout
     mygui/openmw_count_window.layout
     mygui/openmw_dialogue_window.layout
     mygui/openmw_dialogue_window.skin.xml
@@ -207,7 +208,6 @@ set(BUILTIN_DATA_FILES
     mygui/openmw_interactive_messagebox.layout
     mygui/openmw_interactive_messagebox_notransp.layout
     mygui/openmw_inventory_tabs.layout
-    mygui/openmw_inventory_screen.layout
     mygui/openmw_inventory_window.layout
     mygui/openmw_journal.layout
     mygui/openmw_journal.skin.xml
