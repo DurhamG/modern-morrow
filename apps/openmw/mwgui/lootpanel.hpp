@@ -64,7 +64,6 @@ namespace MWGui
         int focusedItem() const;
         bool isStealing() const;
         bool isPickpocketing() const;
-        bool isBetter(const ItemStack& item) const;
         bool canTakeAndEquip(const ItemStack& item) const;
 
         void drawList(int x, int y, int w, int h, const std::vector<Row>& rows);

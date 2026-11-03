@@ -8,17 +8,7 @@
 #include <MyGUI_ILayer.h>
 #include <MyGUI_LayerManager.h>
 
-#include <components/esm3/loadalch.hpp>
-#include <components/esm3/loadappa.hpp>
-#include <components/esm3/loadarmo.hpp>
-#include <components/esm3/loadbook.hpp>
-#include <components/esm3/loadclot.hpp>
 #include <components/esm3/loadfact.hpp>
-#include <components/esm3/loadingr.hpp>
-#include <components/esm3/loadlock.hpp>
-#include <components/esm3/loadprob.hpp>
-#include <components/esm3/loadrepa.hpp>
-#include <components/esm3/loadweap.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/luamanager.hpp"
@@ -59,46 +49,6 @@ namespace MWGui
 
         const MyGUI::Colour sPanelBackColour = MyGUI::Colour::parse("#0d0b08");
 
-        enum class Group
-        {
-            Gold,
-            Weapons,
-            Armor,
-            Clothing,
-            Consumables,
-            Books,
-            Tools,
-            Misc,
-        };
-
-        Group groupOf(const MWWorld::Ptr& ptr)
-        {
-            const unsigned int type = ptr.getType();
-            if (ptr.getClass().isGold(ptr))
-                return Group::Gold;
-            if (type == ESM::Weapon::sRecordId)
-                return Group::Weapons;
-            if (type == ESM::Armor::sRecordId)
-                return Group::Armor;
-            if (type == ESM::Clothing::sRecordId)
-                return Group::Clothing;
-            if (type == ESM::Potion::sRecordId || type == ESM::Ingredient::sRecordId)
-                return Group::Consumables;
-            if (type == ESM::Book::sRecordId)
-                return ptr.get<ESM::Book>()->mBase->mEnchant.empty() ? Group::Books : Group::Consumables;
-            if (type == ESM::Lockpick::sRecordId || type == ESM::Probe::sRecordId || type == ESM::Repair::sRecordId
-                || type == ESM::Apparatus::sRecordId)
-                return Group::Tools;
-            return Group::Misc;
-        }
-
-        std::string groupKey(Group group)
-        {
-            static const std::array<std::string_view, 8> names
-                = { "", "Weapons", "Armor", "Clothing", "Consumables", "Books", "Tools", "Misc" };
-            return "#{Interface:LootGroup" + std::string(names[static_cast<int>(group)]) + "}";
-        }
-
         MWWorld::Ptr player()
         {
             return MWMechanics::getPlayer();
@@ -108,36 +58,6 @@ namespace MWGui
         {
             const MWWorld::Ptr actor = player();
             return actor.getClass().getInventoryStore(actor);
-        }
-
-        // The armour rating or highest damage, which decides whether an item is an upgrade. -1 for other items.
-        float upgradeNumber(const MWWorld::Ptr& ptr)
-        {
-            if (ptr.getType() == ESM::Armor::sRecordId)
-                return armorRating(ptr);
-            if (ptr.getType() == ESM::Weapon::sRecordId)
-                return static_cast<float>(bestAttack(*ptr.get<ESM::Weapon>()->mBase).second);
-            return -1.f;
-        }
-
-        // The second line of an entry: what the item is, and its main stat.
-        std::string summary(const MWWorld::Ptr& ptr)
-        {
-            std::string text = describe(ptr);
-            if (ptr.getType() == ESM::Armor::sRecordId)
-                text += ",  #{sArmor} " + formatNumber(armorRating(ptr));
-            else if (ptr.getType() == ESM::Weapon::sRecordId)
-            {
-                const auto [low, high] = bestAttack(*ptr.get<ESM::Weapon>()->mBase);
-                text += ",  " + rangeText(low, high);
-            }
-            else
-            {
-                const std::vector<std::string> effects = itemEffects(ptr);
-                if (!effects.empty())
-                    text += ",  " + escaped(effects.front());
-            }
-            return text;
         }
 
         // Who owns a container, for the warning that taking from it is stealing.
@@ -280,25 +200,25 @@ namespace MWGui
         std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
             const MWWorld::Ptr& left = mItems[a].mBase;
             const MWWorld::Ptr& right = mItems[b].mBase;
-            if (groupOf(left) != groupOf(right))
-                return groupOf(left) < groupOf(right);
+            if (itemGroup(left) != itemGroup(right))
+                return itemGroup(left) < itemGroup(right);
             return left.getClass().getValue(left) > right.getClass().getValue(right);
         });
 
         int groups = 0;
         for (std::size_t i = 0; i < order.size(); ++i)
-            if (groupOf(mItems[order[i]].mBase) != Group::Gold
-                && (i == 0 || groupOf(mItems[order[i]].mBase) != groupOf(mItems[order[i - 1]].mBase)))
+            if (itemGroup(mItems[order[i]].mBase) != ItemGroup::Gold
+                && (i == 0 || itemGroup(mItems[order[i]].mBase) != itemGroup(mItems[order[i - 1]].mBase)))
                 ++groups;
 
         // Group headers only help when there is more than one group.
         std::vector<Row> rows;
         for (std::size_t i = 0; i < order.size(); ++i)
         {
-            const Group group = groupOf(mItems[order[i]].mBase);
-            if (groups > 1 && group != Group::Gold
-                && (i == 0 || group != groupOf(mItems[order[i - 1]].mBase)))
-                rows.push_back(Row{ groupKey(group), -1 });
+            const ItemGroup group = itemGroup(mItems[order[i]].mBase);
+            if (groups > 1 && group != ItemGroup::Gold
+                && (i == 0 || group != itemGroup(mItems[order[i - 1]].mBase)))
+                rows.push_back(Row{ itemGroupKey(group), -1 });
             rows.push_back(Row{ {}, order[i] });
         }
         return rows;
@@ -315,22 +235,6 @@ namespace MWGui
                 return row.mItem;
         }
         return -1;
-    }
-
-    bool LootPanel::isBetter(const ItemStack& item) const
-    {
-        const float number = upgradeNumber(item.mBase);
-        if (number < 0)
-            return false;
-        const std::vector<int> slots = item.mBase.getClass().getEquipmentSlots(item.mBase).first;
-        Inventory& inventory = playerInventory();
-        for (int slot : slots)
-        {
-            const auto equipped = inventory.getSlot(slot);
-            if (equipped == inventory.end() || upgradeNumber(*equipped) < number)
-                return true;
-        }
-        return false;
     }
 
     bool LootPanel::canTakeAndEquip(const ItemStack& item) const
@@ -511,7 +415,7 @@ namespace MWGui
                 marker = "#{Interface:LootStealing}";
                 markerColour = sWorseColour;
             }
-            else if (isBetter(item))
+            else if (isUpgrade(item.mBase))
                 marker = "#{Interface:LootBetter}";
             addText(mRoot, x + w - rightW - 8, rowY + 3, rightW, 26, marker, sFontSmall, markerColour,
                 MyGUI::Align::Right | MyGUI::Align::VCenter);

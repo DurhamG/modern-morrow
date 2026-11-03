@@ -52,6 +52,30 @@ namespace MWGui
         /// arrived, not what they are, so no item belongs in it.
         int inventoryTab(const MWWorld::Ptr& ptr);
 
+        /// The groups the loot and barter lists sort items into, in the order they show.
+        enum class ItemGroup
+        {
+            Gold,
+            Weapons,
+            Armor,
+            Clothing,
+            Consumables,
+            Books,
+            Tools,
+            Misc,
+        };
+        ItemGroup itemGroup(const MWWorld::Ptr& ptr);
+        std::string itemGroupKey(ItemGroup group);
+
+        /// The armour rating or highest damage, which decides whether an item is an upgrade. -1 for other items.
+        float upgradeNumber(const MWWorld::Ptr& ptr);
+
+        /// Whether the item beats what the player wears in a slot it fits, or fits a free slot.
+        bool isUpgrade(const MWWorld::Ptr& ptr);
+
+        /// The second line of a list entry: what the item is, and its main stat, such as "Long Blade, 1-20".
+        std::string summary(const MWWorld::Ptr& ptr);
+
         /// A short description of the item, such as "Long Blade" or "Medium armor".
         std::string describe(const MWWorld::Ptr& ptr);
 

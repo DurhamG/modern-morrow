@@ -33,6 +33,7 @@
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
+#include "../mwworld/inventorystore.hpp"
 #include "../mwworld/player.hpp"
 
 #include "controllerscreen.hpp"
@@ -315,6 +316,90 @@ namespace MWGui::ItemDetails
     float armorRating(const MWWorld::Ptr& ptr)
     {
         return std::floor(ptr.getClass().getSkillAdjustedArmorRating(ptr, player(), true));
+    }
+
+    enum class Group
+    {
+        Gold,
+        Weapons,
+        Armor,
+        Clothing,
+        Consumables,
+        Books,
+        Tools,
+        Misc,
+    };
+
+    ItemGroup itemGroup(const MWWorld::Ptr& ptr)
+    {
+        const unsigned int type = ptr.getType();
+        if (ptr.getClass().isGold(ptr))
+            return ItemGroup::Gold;
+        if (type == ESM::Weapon::sRecordId)
+            return ItemGroup::Weapons;
+        if (type == ESM::Armor::sRecordId)
+            return ItemGroup::Armor;
+        if (type == ESM::Clothing::sRecordId)
+            return ItemGroup::Clothing;
+        if (type == ESM::Potion::sRecordId || type == ESM::Ingredient::sRecordId)
+            return ItemGroup::Consumables;
+        if (type == ESM::Book::sRecordId)
+            return ptr.get<ESM::Book>()->mBase->mEnchant.empty() ? ItemGroup::Books : ItemGroup::Consumables;
+        if (type == ESM::Lockpick::sRecordId || type == ESM::Probe::sRecordId || type == ESM::Repair::sRecordId
+            || type == ESM::Apparatus::sRecordId)
+            return ItemGroup::Tools;
+        return ItemGroup::Misc;
+    }
+
+    std::string itemGroupKey(ItemGroup group)
+    {
+        static const std::array<std::string_view, 8> names
+            = { "", "Weapons", "Armor", "Clothing", "Consumables", "Books", "Tools", "Misc" };
+        return "#{Interface:LootGroup" + std::string(names[static_cast<int>(group)]) + "}";
+    }
+
+    float upgradeNumber(const MWWorld::Ptr& ptr)
+    {
+        if (ptr.getType() == ESM::Armor::sRecordId)
+            return armorRating(ptr);
+        if (ptr.getType() == ESM::Weapon::sRecordId)
+            return static_cast<float>(bestAttack(*ptr.get<ESM::Weapon>()->mBase).second);
+        return -1.f;
+    }
+
+    std::string summary(const MWWorld::Ptr& ptr)
+    {
+        std::string text = describe(ptr);
+        if (ptr.getType() == ESM::Armor::sRecordId)
+            text += ",  #{sArmor} " + formatNumber(armorRating(ptr));
+        else if (ptr.getType() == ESM::Weapon::sRecordId)
+        {
+            const auto [low, high] = bestAttack(*ptr.get<ESM::Weapon>()->mBase);
+            text += ",  " + rangeText(low, high);
+        }
+        else
+        {
+            const std::vector<std::string> effects = itemEffects(ptr);
+            if (!effects.empty())
+                text += ",  " + escaped(effects.front());
+        }
+        return text;
+    }
+
+    bool isUpgrade(const MWWorld::Ptr& ptr)
+    {
+        const float number = upgradeNumber(ptr);
+        if (number < 0)
+            return false;
+        const MWWorld::Ptr actor = player();
+        MWWorld::InventoryStore& inventory = actor.getClass().getInventoryStore(actor);
+        for (int slot : ptr.getClass().getEquipmentSlots(ptr).first)
+        {
+            const auto equipped = inventory.getSlot(slot);
+            if (equipped == inventory.end() || upgradeNumber(*equipped) < number)
+                return true;
+        }
+        return false;
     }
 
     std::vector<std::pair<std::string, MyGUI::Colour>> markers(const ItemStack& stack, bool showNew)
