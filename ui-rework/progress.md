@@ -44,7 +44,7 @@
 - Reworked the map screen with the user, in controller menus mode:
   - The button hint bar along the bottom of every menu is gone. Windows will show their own hints where they need them.
   - The map fills the screen below the tab bar, with no window frame, like the inventory screen.
-  - The map shows "Y Center" and "X World" hints in its bottom left corner. The World button is hidden in this mode.
+  - The map shows "Y Center" and "X World" hints in its bottom left corner, the same size as the inventory screen's hints. The World button is hidden in this mode.
   - The map has an opaque black background, and the world map scales to fit the window.
   - The right stick pans the local map smoothly.
   - With distant terrain on, the local map shows 7x7 cells, set by the new `[Map] local map cell distance` setting. It no longer needs "allow zooming". Terrain loads far enough to draw the whole map, even past the viewing distance.

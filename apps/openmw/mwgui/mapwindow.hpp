@@ -297,6 +297,7 @@ namespace MWGui
         void shiftMap(int dx, int dy);
         void panLocalMapWithStick(float dt);
         void updateWorldToggleCaptions();
+        void layoutControllerGuide();
         void worldPosToGlobalMapImageSpace(float x, float z, float& imageX, float& imageY) const;
         MyGUI::IntCoord createMarkerCoords(float x, float y, float agregatedWeight) const;
         MyGUI::Widget* createMarker(const std::string& name, float x, float y, float agregatedWeight);

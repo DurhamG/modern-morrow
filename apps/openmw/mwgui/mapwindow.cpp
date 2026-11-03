@@ -1530,10 +1530,45 @@ namespace MWGui
             MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>();
             window->setCoord(x, active ? y : viewSize.height + 1, width, height);
             if (active)
+            {
                 fitGlobalMapToView();
+                layoutControllerGuide();
+            }
         }
 
         WindowBase::setActiveControllerWindow(active);
+    }
+
+    void MapWindow::layoutControllerGuide()
+    {
+        // The button hints match the inventory screen's, which are sized for a canvas 720 units tall whatever the
+        // GUI scaling factor.
+        const float scale = MyGUI::RenderManager::getInstance().getViewSize().height / 720.f;
+        const auto scaled = [&](int units) { return static_cast<int>(std::round(units * scale)); };
+        const int glyphSize = scaled(26);
+        const int rowHeight = scaled(34);
+
+        for (std::string_view row : { "GuideCenter", "GuideWorld" })
+        {
+            MyGUI::Widget* box;
+            MyGUI::ImageBox* image;
+            MyGUI::TextBox* text;
+            getWidget(box, std::string(row));
+            getWidget(image, std::string(row) + "Image");
+            getWidget(text, std::string(row) + "Text");
+            box->setProperty("Spacing", std::to_string(scaled(8)));
+            image->setSize(glyphSize, glyphSize);
+            text->setFontHeight(scaled(18));
+            text->setTextColour(MyGUI::Colour::parse("#dfc99f"));
+            box->setSize(box->getWidth(), rowHeight);
+        }
+
+        MyGUI::Widget* client = mMainWidget->getClientWidget();
+        const int guideHeight = 2 * rowHeight + scaled(4);
+        mControllerGuide->setProperty("Spacing", std::to_string(scaled(4)));
+        mControllerGuide->setCoord(
+            scaled(32), client->getHeight() - scaled(24) - guideHeight, scaled(400), guideHeight);
+        mControllerGuide->castType<Gui::VBox>()->notifyChildrenSizeChanged();
     }
 
     // -------------------------------------------------------------------
