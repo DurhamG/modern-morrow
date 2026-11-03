@@ -35,6 +35,10 @@ namespace MWDialogue
         };
 
         std::set<ESM::RefId> mKnownTopics; // Those are the topics the player knows.
+        // Topic answers the player heard since the game was loaded, as topic and answer IDs. Some answers remove
+        // themselves from the journal, such as most answers to "Background", so the journal can't tell whether
+        // the player heard them.
+        std::set<std::pair<ESM::RefId, ESM::RefId>> mHeardAnswers;
 
         // Modified faction reactions. <Faction1, <Faction2, Difference> >
         typedef std::map<ESM::RefId, std::map<ESM::RefId, int>> ModFactionReactionMap;

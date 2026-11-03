@@ -73,6 +73,7 @@ namespace MWDialogue
     void DialogueManager::clear()
     {
         mKnownTopics.clear();
+        mHeardAnswers.clear();
         mTalkedTo = false;
         mOriginalDisposition = 0;
         mCurrentDisposition = 0;
@@ -320,7 +321,10 @@ namespace MWDialogue
                 // Make sure the returned DialInfo is from the Dialogue we supplied. If could also be from the Info
                 // refusal group, in which case it should not be added to the journal.
                 if (responseTopic == &dialogue)
+                {
                     MWBase::Environment::get().getJournal()->addTopic(topic, info->mId, mActor);
+                    mHeardAnswers.emplace(dialogue.mId, info->mId);
+                }
             }
 
             mLastTopic = topic;
@@ -361,7 +365,7 @@ namespace MWDialogue
                 if (answer != nullptr)
                 {
                     int topicFlags = 0;
-                    if (!inJournal(topicId, answer->mId))
+                    if (!inJournal(topicId, answer->mId) && !mHeardAnswers.contains({ topicId, answer->mId }))
                     {
                         // Does this dialogue contains some actor-specific answer?
                         if (answer->mActor == mActor.getCellRef().getRefId())
