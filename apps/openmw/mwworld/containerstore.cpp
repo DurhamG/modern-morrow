@@ -462,6 +462,9 @@ MWWorld::ContainerStoreIterator MWWorld::ContainerStore::add(
             item.getRefData().getLocals().setVarByInt(script, "onpcadd", 1);
     }
 
+    if (contPtr == player && !item.getClass().isGold(item))
+        MWBase::Environment::get().getWorld()->getPlayer().addRecentItem(item.getCellRef().getRefId());
+
     // we should not fire event for InventoryStore yet - it has some custom logic
     if (mListener && typeid(*this) == typeid(ContainerStore))
         mListener->itemAdded(item, count);

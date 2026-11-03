@@ -264,6 +264,7 @@ namespace MWWorld
         mCurrentCrimeId = -1;
         mPaidCrimeId = -1;
         mPreviousItems.clear();
+        mRecentItems.clear();
         mLastKnownExteriorPosition = osg::Vec3f(0, 0, 0);
 
         mSaveSkills.clear();
@@ -306,6 +307,7 @@ namespace MWWorld
         player.mSaveSkills = mSaveSkills;
 
         player.mPreviousItems = mPreviousItems;
+        player.mRecentItems = mRecentItems;
 
         writer.startRecord(ESM::REC_PLAY);
         player.save(writer);
@@ -404,6 +406,7 @@ namespace MWWorld
             mTeleported = false;
 
             mPreviousItems = player.mPreviousItems;
+            mRecentItems = player.mRecentItems;
 
             return true;
         }
@@ -503,4 +506,32 @@ namespace MWWorld
         rendering->setNightEyeFactor(std::min(1.f, (nightEye / 100.f)));
     }
 
+    void Player::addRecentItem(const ESM::RefId& item)
+    {
+        // Items older than the Recent tab shows are only kept while the player hasn't seen them, so the first items
+        // of a big haul still show as new elsewhere in the inventory.
+        constexpr std::size_t maxRecentItems = 200;
+        std::erase_if(mRecentItems, [&](const ESM::Player::RecentItem& recent) { return recent.mItem == item; });
+        mRecentItems.insert(mRecentItems.begin(), ESM::Player::RecentItem{ item, false });
+        std::vector<ESM::Player::RecentItem> kept;
+        for (std::size_t i = 0; i < mRecentItems.size() && kept.size() < maxRecentItems; ++i)
+            if (i < sRecentItemsShown || !mRecentItems[i].mSeen)
+                kept.push_back(mRecentItems[i]);
+        mRecentItems = std::move(kept);
+    }
+
+    void Player::markRecentItemSeen(const ESM::RefId& item)
+    {
+        for (ESM::Player::RecentItem& recent : mRecentItems)
+            if (recent.mItem == item)
+                recent.mSeen = true;
+    }
+
+    bool Player::isRecentItemNew(const ESM::RefId& item) const
+    {
+        for (const ESM::Player::RecentItem& recent : mRecentItems)
+            if (recent.mItem == item)
+                return !recent.mSeen;
+        return false;
+    }
 }

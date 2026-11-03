@@ -105,6 +105,19 @@ namespace ESM
                 mSaveSkills[skill] = value;
             }
         }
+
+        mRecentItems.clear();
+        if (esm.getFormatVersion() > MaxNoRecentItemsFormatVersion)
+        {
+            while (esm.isNextSub("RCIT"))
+            {
+                RecentItem& item = mRecentItems.emplace_back();
+                item.mItem = esm.getRefId();
+                unsigned char seen = 0;
+                esm.getHNT(seen, "RCSN");
+                item.mSeen = seen != 0;
+            }
+        }
     }
 
     void Player::save(ESMWriter& esm) const
@@ -170,6 +183,15 @@ namespace ESM
                 esm.writeT(value);
                 esm.writeHRefId(id);
                 esm.endRecord("WWSK");
+            }
+        }
+
+        if (esm.getFormatVersion() > MaxNoRecentItemsFormatVersion)
+        {
+            for (const RecentItem& item : mRecentItems)
+            {
+                esm.writeHNRefId("RCIT", item.mItem);
+                esm.writeHNT("RCSN", static_cast<unsigned char>(item.mSeen ? 1 : 0));
             }
         }
     }

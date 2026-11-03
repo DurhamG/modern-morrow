@@ -2,6 +2,7 @@
 #define OPENMW_ESM_PLAYER_H
 
 #include <string>
+#include <vector>
 
 #include <components/esm/attr.hpp>
 #include <components/esm/position.hpp>
@@ -34,6 +35,14 @@ namespace ESM
         std::map<ESM::RefId, float> mSaveSkills;
 
         std::map<ESM::RefId, ESM::RefId> mPreviousItems; // previous equipped items, needed for bound spells
+
+        struct RecentItem
+        {
+            ESM::RefId mItem;
+            bool mSeen = false;
+        };
+        // Items that recently entered the inventory, newest first
+        std::vector<RecentItem> mRecentItems;
 
         void load(ESMReader& esm);
         void save(ESMWriter& esm) const;

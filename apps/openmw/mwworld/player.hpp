@@ -11,6 +11,7 @@
 #include <components/esm/refid.hpp>
 #include <components/esm3/loadnpc.hpp>
 #include <components/esm3/loadskil.hpp>
+#include <components/esm3/player.hpp>
 
 namespace ESM
 {
@@ -49,6 +50,9 @@ namespace MWWorld
         typedef std::map<ESM::RefId, ESM::RefId> PreviousItems; // previous equipped items, needed for bound spells
         PreviousItems mPreviousItems;
 
+        // Items that recently entered the inventory, newest first, and whether the player has seen them
+        std::vector<ESM::Player::RecentItem> mRecentItems;
+
         // Saved stats prior to becoming a werewolf
         std::map<ESM::RefId, float> mSaveSkills;
         std::map<ESM::RefId, float> mSaveAttributes;
@@ -56,9 +60,19 @@ namespace MWWorld
         bool mJumping;
 
     public:
+        /// How many recent items the inventory's Recent tab lists.
+        static constexpr std::size_t sRecentItemsShown = 40;
+
         Player(const ESM::NPC* player);
 
         void saveStats();
+
+        /// Moves the item to the front of the recent items, as not yet seen.
+        void addRecentItem(const ESM::RefId& item);
+        /// Marks the item as seen, so the inventory stops showing it as new.
+        void markRecentItemSeen(const ESM::RefId& item);
+        const std::vector<ESM::Player::RecentItem>& getRecentItems() const { return mRecentItems; }
+        bool isRecentItemNew(const ESM::RefId& item) const;
         void restoreStats();
         void setWerewolfStats();
 
