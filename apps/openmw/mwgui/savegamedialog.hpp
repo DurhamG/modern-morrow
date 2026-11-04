@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "controllerscreen.hpp"
 #include "windowbase.hpp"
 
 namespace MWState
@@ -18,6 +19,7 @@ namespace MWGui
     {
     public:
         SaveGameDialog();
+        ~SaveGameDialog() override;
 
         void onOpen() override;
         void onClose() override;
@@ -72,6 +74,22 @@ namespace MWGui
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         bool mOkButtonFocus = true;
+
+        // In controller menus mode, a full screen panel shows the saves instead of this window. When saving, the
+        // first entry is a new save with the name the dialog made up.
+        MyGUI::Widget* mPanel = nullptr;
+        std::size_t mPanelFocus = 0;
+        int mPanelScroll = 0;
+        std::string mNewSaveName;
+        HeldDirection mHeldDirection;
+        std::size_t panelEntryCount() const;
+        void selectPanelEntry();
+        void showPanel();
+        void drawPanel();
+        void changeCharacter(int delta);
+
+    public:
+        void onFrame(float duration) override;
     };
 
 }

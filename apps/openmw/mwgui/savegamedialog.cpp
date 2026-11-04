@@ -4,9 +4,12 @@
 #include <sstream>
 
 #include <MyGUI_ComboBox.h>
+#include <MyGUI_Gui.h>
+#include <MyGUI_ILayer.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_InputManager.h>
 #include <MyGUI_LanguageManager.h>
+#include <MyGUI_LayerManager.h>
 #include <MyGUI_UString.h>
 
 #include <components/debug/debuglog.hpp>
@@ -64,6 +67,225 @@ namespace MWGui
 
         mControllerButtons.mA = "#{Interface:Select}";
         mControllerButtons.mB = "#{Interface:Cancel}";
+
+        if (Settings::gui().mControllerMenus)
+            if (MyGUI::ILayer* layer = MyGUI::LayerManager::getInstance().getByName("ControllerModal", false))
+            {
+                mPanel = MyGUI::Gui::getInstance().createWidget<MyGUI::Widget>(
+                    "", MyGUI::IntCoord(MyGUI::IntPoint(), layer->getSize()), MyGUI::Align::Default, "ControllerModal");
+                mPanel->setVisible(false);
+            }
+    }
+
+    SaveGameDialog::~SaveGameDialog()
+    {
+        if (mPanel != nullptr)
+            MyGUI::Gui::getInstance().destroyWidget(mPanel);
+    }
+
+    void SaveGameDialog::showPanel()
+    {
+        if (mPanel == nullptr)
+            return;
+        ControllerUi::hideWindow(mMainWidget);
+        mPanelFocus = 0;
+        mPanelScroll = 0;
+        mHeldDirection.reset();
+        mPanel->setVisible(true);
+        MyGUI::LayerManager::getInstance().upLayerItem(mPanel);
+        drawPanel();
+    }
+
+    std::size_t SaveGameDialog::panelEntryCount() const
+    {
+        return mSaveList->getItemCount() + (mSaving ? 1 : 0);
+    }
+
+    void SaveGameDialog::selectPanelEntry()
+    {
+        // When saving, the first entry is the new save, and the others overwrite the saves in the list.
+        const std::size_t count = panelEntryCount();
+        mPanelFocus = count == 0 ? 0 : std::min(mPanelFocus, count - 1);
+        if (mSaving && mPanelFocus == 0)
+        {
+            mSaveList->setIndexSelected(MyGUI::ITEM_NONE);
+            onSlotSelected(mSaveList, MyGUI::ITEM_NONE);
+            mSaveNameEdit->setCaption(MyGUI::UString(mNewSaveName));
+            return;
+        }
+        const std::size_t slot = mPanelFocus - (mSaving ? 1 : 0);
+        if (slot < mSaveList->getItemCount())
+        {
+            mSaveList->setIndexSelected(slot);
+            onSlotSelected(mSaveList, slot);
+        }
+    }
+
+    void SaveGameDialog::changeCharacter(int delta)
+    {
+        const std::size_t count = mCharacterSelection->getItemCount();
+        if (mSaving || count < 2)
+            return;
+        std::size_t index = mCharacterSelection->getIndexSelected();
+        index = wrap(index == MyGUI::ITEM_NONE ? 0 : index, count, delta);
+        mCharacterSelection->setIndexSelected(index);
+        onCharacterSelected(mCharacterSelection, index);
+        mPanelFocus = 0;
+        mPanelScroll = 0;
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+    }
+
+    void SaveGameDialog::onFrame(float duration)
+    {
+        if (mPanel == nullptr || !mPanel->getVisible())
+            return;
+        // The confirmations that loading, saving over a save and deleting ask for take the controller meanwhile.
+        if (MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() != this)
+        {
+            mHeldDirection.reset();
+            return;
+        }
+        int dx = 0;
+        int dy = 0;
+        if (mHeldDirection.update(duration, dx, dy) && dy != 0 && panelEntryCount() > 0)
+        {
+            mPanelFocus = static_cast<std::size_t>(
+                std::clamp(static_cast<int>(mPanelFocus) + dy, 0, static_cast<int>(panelEntryCount()) - 1));
+            drawPanel();
+        }
+    }
+
+    void SaveGameDialog::drawPanel()
+    {
+        using namespace ControllerUi;
+        if (mPanel == nullptr || !mPanel->getVisible())
+            return;
+        selectPanelEntry();
+        mPanel->setSize(mPanel->getLayer()->getSize());
+        while (mPanel->getChildCount() > 0)
+            MyGUI::Gui::getInstance().destroyWidget(mPanel->getChildAt(0));
+        const MyGUI::IntSize size = mPanel->getSize();
+        addRect(mPanel, 0, 0, size.width, size.height, MyGUI::Colour::Black, 0.6f)->setNeedMouseFocus(true);
+        const int x = sMargin;
+        const int y = 24;
+        const int w = size.width - 2 * sMargin;
+        const int h = size.height - 48;
+        addRect(mPanel, x, y, w, h, MyGUI::Colour::parse("#0d0b08"));
+        addRect(mPanel, x, y, w, 1, sAccentColour, 0.6f);
+
+        // The title, and the character whose saves these are. Loading can switch characters.
+        addText(mPanel, x + 24, y + 12, w - 48, 36,
+            mSaving ? "#{Interface:SavesSaveTitle}" : "#{Interface:SavesLoadTitle}", sFontTitle, sBrightColour);
+        const std::size_t character = mCharacterSelection->getIndexSelected();
+        std::string characterName;
+        if (character != MyGUI::ITEM_NONE && character < mCharacterSelection->getItemCount())
+            characterName = mCharacterSelection->getItemNameAt(character).asUTF8();
+        int cx = x + w - 24;
+        if (!mSaving && mCharacterSelection->getItemCount() > 1)
+        {
+            addGlyph(mPanel, cx - 22, y + 20, 22, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+            cx -= 30;
+        }
+        MyGUI::TextBox* nameText = addText(mPanel, x + 24, y + 12, cx - x - 24, 36, escaped(characterName), sFontNormal,
+            sTextColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
+        if (!mSaving && mCharacterSelection->getItemCount() > 1)
+            addGlyph(mPanel, cx - nameText->getTextSize().width - 30, y + 20, 22, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+        const int contentTop = y + 64;
+        addRect(mPanel, x + 24, contentTop - 8, w - 48, 1, sAccentColour, 0.2f);
+
+        // The saves on the left.
+        constexpr int entryH = 52;
+        const int listX = x + 16;
+        const int listW = static_cast<int>(w * 0.5f) - 16;
+        const int listBottom = y + h - 56;
+        const int count = static_cast<int>(panelEntryCount());
+        const int visible = std::max(1, (listBottom - contentTop) / entryH);
+        const int focus = static_cast<int>(mPanelFocus);
+        mPanelScroll = std::clamp(mPanelScroll, std::max(0, focus - visible + 1), std::max(0, focus));
+        if (count == 0)
+            addText(mPanel, listX + 12, contentTop, listW - 24, 30, "#{Interface:SavesNone}", sFontNormal, sDimColour);
+        for (int i = mPanelScroll; i < count && i < mPanelScroll + visible; ++i)
+        {
+            const int ry = contentTop + (i - mPanelScroll) * entryH;
+            const bool focused = i == focus;
+            if (focused)
+            {
+                addRect(mPanel, listX, ry, listW, entryH - 2, sAccentColour, 0.16f);
+                addRect(mPanel, listX, ry, 3, entryH - 2, sAccentColour);
+            }
+            std::string name;
+            std::string subtitle;
+            if (mSaving && i == 0)
+            {
+                name = "#{Interface:SavesNewSave}";
+                subtitle = escaped(mNewSaveName);
+            }
+            else
+            {
+                const std::size_t slot = static_cast<std::size_t>(i - (mSaving ? 1 : 0));
+                name = escaped(mSaveList->getItemNameAt(slot).asUTF8());
+                std::size_t index = 0;
+                for (auto it = mCurrentCharacter->begin(); it != mCurrentCharacter->end(); ++it, ++index)
+                    if (index == slot)
+                        subtitle = localised(std::format("#{{sCell={}}}", it->mProfile.mPlayerCellName)) + ",  "
+                            + Misc::fileTimeToString(it->mTimeStamp, "%Y.%m.%d %H:%M");
+            }
+            addText(
+                mPanel, listX + 14, ry + 3, listW - 28, 26, name, sFontNormal, focused ? sActiveColour : sBrightColour);
+            addText(mPanel, listX + 14, ry + 27, listW - 28, 20, subtitle, sFontSmall, sDimColour);
+        }
+
+        // The highlighted save's screenshot and details on the right.
+        const int dx = x + static_cast<int>(w * 0.5f) + 16;
+        const int dw = x + w - 24 - dx;
+        if (mCurrentSlot != nullptr)
+        {
+            const int shotH = dw * 9 / 16;
+            addRect(mPanel, dx, contentTop, dw, shotH, MyGUI::Colour::Black);
+            if (mScreenshotTexture != nullptr)
+            {
+                MyGUI::ImageBox* shot = mPanel->createWidget<MyGUI::ImageBox>(
+                    "ImageBox", MyGUI::IntCoord(dx, contentTop, dw, shotH), MyGUI::Align::Default);
+                shot->setRenderItemTexture(mScreenshotTexture.get());
+                // The widget is Y-down, the screenshot is Y-up, so this UV is inverted
+                shot->getSubWidgetMain()->_setUVSet(MyGUI::FloatRect(0.f, 1.f, 1.f, 0.f));
+                shot->setNeedMouseFocus(false);
+            }
+            int ty = contentTop + shotH + 14;
+            addText(mPanel, dx, ty, dw, 30, escaped(mCellName->getCaption().asUTF8()), sFontLarge, sBrightColour);
+            ty += 34;
+            std::istringstream info(mInfoText->getCaption().asUTF8());
+            for (std::string line; std::getline(info, line);)
+            {
+                if (line.empty() || ty + 26 > listBottom)
+                    continue;
+                addText(mPanel, dx, ty, dw, 26, escaped(line), sFontNormal, sTextColour);
+                ty += 26;
+            }
+        }
+        else if (mSaving)
+        {
+            int ty = contentTop;
+            for (const std::string& line :
+                wrapText(mPanel, localised("#{Interface:SavesNewSaveText}"), dw, sFontNormal, 4))
+            {
+                addText(mPanel, dx, ty, dw, 26, escaped(line), sFontNormal, sTextColour);
+                ty += 26;
+            }
+        }
+
+        // The button hints along the bottom.
+        int hx = x + 24;
+        const int hintY = y + h - 44;
+        const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
+            addGlyph(mPanel, hx, hintY + 4, 22, button);
+            MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 220, 30, label, sFontNormal, sBrightColour);
+            hx += 30 + text->getTextSize().width + 22;
+        };
+        if (count > 0)
+            hint(SDL_CONTROLLER_BUTTON_A, mSaving ? "#{Interface:SavesSave}" : "#{Interface:SavesLoad}");
+        if (!mSaving && mCurrentSlot != nullptr)
+            hint(SDL_CONTROLLER_BUTTON_X, "#{Interface:SavesDelete}");
     }
 
     void SaveGameDialog::onSlotActivated(MyGUI::ListBox* sender, size_t pos)
@@ -94,6 +316,8 @@ namespace MWGui
     {
         MWBase::Environment::get().getStateManager()->deleteGame(mCurrentCharacter, mCurrentSlot);
         mSaveList->removeItemAt(mSaveList->getIndexSelected());
+        if (mPanelFocus > 0 && mPanelFocus >= mSaveList->getItemCount())
+            --mPanelFocus;
         onSlotSelected(mSaveList, mSaveList->getIndexSelected());
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSaveList);
 
@@ -111,6 +335,7 @@ namespace MWGui
             else
                 mCharacterSelection->setIndexSelected(MyGUI::ITEM_NONE);
         }
+        drawPanel();
     }
 
     void SaveGameDialog::onDeleteSlotCancel()
@@ -136,6 +361,8 @@ namespace MWGui
     void SaveGameDialog::onClose()
     {
         mSaveList->setIndexSelected(MyGUI::ITEM_NONE);
+        if (mPanel != nullptr)
+            mPanel->setVisible(false);
 
         WindowModal::onClose();
     }
@@ -165,6 +392,7 @@ namespace MWGui
                 timeManager.getTimeStamp().getDay(), currentDate.mDay, month, hour, formattedHour);
 
             mSaveNameEdit->setCaptionWithReplacing(autoFilename);
+            mNewSaveName = mSaveNameEdit->getCaption().asUTF8();
         }
         if (mSaving)
             MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSaveNameEdit);
@@ -189,7 +417,10 @@ namespace MWGui
 
         MWBase::StateManager* mgr = MWBase::Environment::get().getStateManager();
         if (mgr->characterBegin() == mgr->characterEnd())
+        {
+            showPanel();
             return;
+        }
 
         mCurrentCharacter = mgr->getCurrentCharacter();
 
@@ -248,6 +479,7 @@ namespace MWGui
             mCharacterSelection->setCaptionWithReplacing("#{OMWEngine:SelectCharacter}");
 
         fillSaveList();
+        showPanel();
     }
 
     void SaveGameDialog::setLoadOrSave(bool load)
@@ -508,6 +740,37 @@ namespace MWGui
 
     bool SaveGameDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+        {
+            MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+            switch (arg.button)
+            {
+                case SDL_CONTROLLER_BUTTON_A:
+                    if (panelEntryCount() > 0)
+                    {
+                        winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
+                        accept();
+                    }
+                    break;
+                case SDL_CONTROLLER_BUTTON_X:
+                    if (!mSaving && mCurrentSlot != nullptr)
+                        confirmDeleteSave();
+                    break;
+                case SDL_CONTROLLER_BUTTON_B:
+                    onCancelButtonClicked(mCancelButton);
+                    break;
+                case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+                case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+                    changeCharacter(arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER ? -1 : 1);
+                    drawPanel();
+                    break;
+                default:
+                    // The d-pad is read every frame in onFrame, so it can repeat while held.
+                    break;
+            }
+            return true;
+        }
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             if (mOkButtonFocus)

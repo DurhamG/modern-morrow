@@ -50,6 +50,7 @@ namespace MWGui
         mCancel = cancel;
         mRoot->setSize(mRoot->getLayer()->getSize());
         mRoot->setVisible(true);
+        MyGUI::LayerManager::getInstance().upLayerItem(mRoot);
         draw();
     }
 
