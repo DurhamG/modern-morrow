@@ -5,6 +5,7 @@
 
 #include <components/esm3/loadbook.hpp>
 #include <components/esm4/loadbook.hpp>
+#include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -14,6 +15,7 @@
 #include "../mwworld/actiontake.hpp"
 #include "../mwworld/class.hpp"
 
+#include "controllerscreen.hpp"
 #include "formatting.hpp"
 
 namespace MWGui
@@ -69,8 +71,41 @@ namespace MWGui
         mControllerButtons.mL1 = "#{Interface:Prev}";
         mControllerButtons.mR1 = "#{Interface:Next}";
         mControllerButtons.mB = "#{Interface:Close}";
+        if (Settings::gui().mControllerMenus)
+            mPanel = std::make_unique<ReadingPanel>();
 
         center();
+    }
+
+    BookWindow::~BookWindow() = default;
+
+    void BookWindow::onOpen()
+    {
+        if (mPanel != nullptr)
+            showPanel();
+    }
+
+    void BookWindow::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+    }
+
+    void BookWindow::onFrame(float duration)
+    {
+        if (mPanel != nullptr)
+            mPanel->onFrame(duration);
+    }
+
+    void BookWindow::showPanel()
+    {
+        if (mBook.isEmpty())
+            return;
+        ControllerUi::hideWindow(mMainWidget);
+        const bool esm3 = mBook.getType() == ESM::REC_BOOK;
+        mPanel->show(std::string(mBook.getClass().getName(mBook)),
+            esm3 ? mBook.get<ESM::Book>()->mBase->mText : mBook.get<ESM4::Book>()->mBase->mText, esm3,
+            mTakeButton->getVisible());
     }
 
     void BookWindow::onMouseWheel(MyGUI::Widget* /*sender*/, int rel)
@@ -114,6 +149,9 @@ namespace MWGui
         setTakeButtonShow(showTakeButton);
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mCloseButton);
+
+        if (mPanel != nullptr && isVisible())
+            showPanel();
     }
 
     void BookWindow::setTakeButtonShow(bool show)
@@ -240,6 +278,10 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)
             onCloseButtonClicked(mCloseButton);
+        else if (mPanel != nullptr)
+        {
+            // The panel shows the whole text, and scrolls it in onFrame.
+        }
         else if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
             prevPage();
         else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)

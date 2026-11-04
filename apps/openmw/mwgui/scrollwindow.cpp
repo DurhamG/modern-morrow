@@ -4,6 +4,7 @@
 
 #include <components/esm3/loadbook.hpp>
 #include <components/esm4/loadbook.hpp>
+#include <components/settings/values.hpp>
 #include <components/widgets/imagebutton.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -15,6 +16,7 @@
 #include "../mwworld/actiontake.hpp"
 #include "../mwworld/class.hpp"
 
+#include "controllerscreen.hpp"
 #include "formatting.hpp"
 
 namespace MWGui
@@ -44,6 +46,33 @@ namespace MWGui
         mControllerButtons.mDpad = "#{Interface:ScrollDown}";
 
         center();
+        if (Settings::gui().mControllerMenus)
+            mPanel = std::make_unique<ReadingPanel>();
+    }
+
+    ScrollWindow::~ScrollWindow() = default;
+
+    void ScrollWindow::onOpen()
+    {
+        if (mPanel != nullptr)
+            showPanel();
+    }
+
+    void ScrollWindow::onFrame(float duration)
+    {
+        if (mPanel != nullptr)
+            mPanel->onFrame(duration);
+    }
+
+    void ScrollWindow::showPanel()
+    {
+        if (mScroll.isEmpty())
+            return;
+        ControllerUi::hideWindow(mMainWidget);
+        const bool esm3 = mScroll.getType() == ESM::REC_BOOK;
+        mPanel->show(std::string(mScroll.getClass().getName(mScroll)),
+            esm3 ? mScroll.get<ESM::Book>()->mBase->mText : mScroll.get<ESM4::Book>()->mBase->mText, esm3,
+            mTakeButton->getVisible());
     }
 
     void ScrollWindow::setPtr(const MWWorld::Ptr& scroll)
@@ -80,6 +109,9 @@ namespace MWGui
         setTakeButtonShow(showTakeButton);
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mCloseButton);
+
+        if (mPanel != nullptr && isVisible())
+            showPanel();
     }
 
     void ScrollWindow::onKeyButtonPressed(MyGUI::Widget* /*sender*/, MyGUI::KeyCode key, MyGUI::Char character)
@@ -123,6 +155,8 @@ namespace MWGui
 
     void ScrollWindow::onClose()
     {
+        if (mPanel != nullptr)
+            mPanel->hide();
         if (Settings::gui().mControllerMenus)
             MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(true);
         BookWindowBase::onClose();
@@ -146,7 +180,8 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)
             onCloseButtonClicked(mCloseButton);
-        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+        else if (mPanel == nullptr
+            && (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN))
             return false; // Fall through to keyboard
 
         return true;

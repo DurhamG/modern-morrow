@@ -1,6 +1,9 @@
 #ifndef MWGUI_BOOKWINDOW_H
 #define MWGUI_BOOKWINDOW_H
 
+#include <memory>
+
+#include "readingpanel.hpp"
 #include "windowbase.hpp"
 
 #include "../mwworld/ptr.hpp"
@@ -13,6 +16,11 @@ namespace MWGui
     {
     public:
         BookWindow();
+        ~BookWindow() override;
+
+        void onOpen() override;
+        void onClose() override;
+        void onFrame(float duration) override;
 
         void setPtr(const MWWorld::Ptr& book) override;
         void setInventoryAllowed(bool allowed);
@@ -60,6 +68,10 @@ namespace MWGui
 
         bool mTakeButtonShow;
         bool mTakeButtonAllowed;
+
+        // In controller menus mode, the text shows in a panel in the style of the controller screens instead.
+        std::unique_ptr<ReadingPanel> mPanel;
+        void showPanel();
     };
 
 }
