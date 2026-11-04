@@ -166,3 +166,4 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   - The enchanting window can open before it is told who enchants, so the panel starts over when it is told.
   - A global Lua script can teach the player a spell with `types.Actor.spells(player):add(id)`, which helps when a spell's ID isn't known.
   - A global Lua script can damage an item with `types.Item.itemData(item).condition`, and drain a magic item with `enchantmentCharge`, for testing repairs and recharges.
+- The HUD leaves out effects that last for good: abilities, such as from race and birthsign, and worn gear with a constant enchantment. Diseases, curses and effects that run out still show.

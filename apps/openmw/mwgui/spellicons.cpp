@@ -115,6 +115,10 @@ namespace MWGui
         const MWMechanics::CreatureStats& stats = player.getClass().getCreatureStats(player);
         for (const auto& params : stats.getActiveSpells())
         {
+            if (mHideLasting
+                && (params.hasFlag(ESM::ActiveSpells::Flag_AffectsBaseValues)
+                    || params.hasFlag(ESM::ActiveSpells::Flag_Equipment)))
+                continue;
             for (const auto& source : params.getEffects())
             {
                 if (!(source.mFlags & ESM::ActiveEffect::Flag_Applied))

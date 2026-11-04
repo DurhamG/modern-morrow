@@ -150,7 +150,9 @@ namespace MWGui
         mMainWidget->eventMouseMove += MyGUI::newDelegate(this, &HUD::onWorldMouseOver);
         mMainWidget->eventMouseLostFocus += MyGUI::newDelegate(this, &HUD::onWorldMouseLostFocus);
 
-        mSpellIcons = std::make_unique<SpellIcons>();
+        // The HUD shows effects that will run out, and diseases and curses, but not the effects that last for good,
+        // which would keep the effect box on screen all the time.
+        mSpellIcons = std::make_unique<SpellIcons>(true);
 
         updateSize();
     }

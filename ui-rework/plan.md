@@ -41,7 +41,7 @@ Go through the pieces listed in [screens.md](screens.md), discussing each one wi
 
 Done so far:
 
-- **HUD.** The minimap and weapon name text are gone. The rest is gathered in the bottom left corner, sized relative to the screen height, and fades out when it has nothing to show.
+- **HUD.** The minimap and weapon name text are gone. The rest is gathered in the bottom left corner, sized relative to the screen height, and fades out when it has nothing to show. Effects that last for good, such as from race and birthsign, leave no icon.
 - **Inventory.** A new screen with tabs for recent items, equipment by body area, consumables, notes, tools and misc. Every list shows names and stats, and a details panel compares items with the equipped ones. See [design/inventory.md](design/inventory.md).
 - **Map.** The bottom button bar is gone from all menus. The map has Local and World tabs like the other screens, fills the screen below them, shows its own button hints, pans with the right stick, and shows 7x7 cells when distant terrain is on.
 - **Loot.** An opaque panel on the right side of the screen lists a container's items, grouped by kind, with upgrades marked and a details panel that compares with what's worn. Stealing is spelled out. See [design/loot.md](design/loot.md).
