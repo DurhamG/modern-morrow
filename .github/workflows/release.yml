@@ -42,9 +42,9 @@ jobs:
         path: windows
 
     - name: Fetch the AppImage
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v8
       with:
-        name: modern-morrow-linux-appimage
+        name: ${{ needs.Linux.outputs.appimage }}
         path: linux
 
     - name: Make a draft release
