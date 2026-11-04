@@ -118,6 +118,13 @@ namespace MWGui
         float mFocusToolTipX;
         float mFocusToolTipY;
 
+        /// In controller menus mode, a larger panel below the crosshair, on the HUD's layer, shows what the player
+        /// looks at in place of the small tooltip box. Returns false when the panel isn't used.
+        bool showWorldPanel();
+        MyGUI::Widget* mWorldPanel = nullptr;
+        /// What the panel shows, so that it is only drawn again when that changes.
+        std::string mWorldPanelKey;
+
         /// Adjust position for a tooltip so that it doesn't leave the screen and does not obscure the mouse cursor
         void position(MyGUI::IntPoint& position, MyGUI::IntSize size, MyGUI::IntSize viewportSize);
 

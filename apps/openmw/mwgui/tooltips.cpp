@@ -26,7 +26,9 @@
 #include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
 
+#include "controllerscreen.hpp"
 #include "inventorywindow.hpp"
+#include "itemdetails.hpp"
 #include "mapwindow.hpp"
 
 #include "itemmodel.hpp"
@@ -83,6 +85,8 @@ namespace MWGui
         {
             mMainWidget->getChildAt(i)->setVisible(false);
         }
+        if (mWorldPanel != nullptr)
+            mWorldPanel->setVisible(false);
 
         const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
 
@@ -306,7 +310,7 @@ namespace MWGui
         }
         else
         {
-            if (!mFocusObject.isEmpty())
+            if (!mFocusObject.isEmpty() && !showWorldPanel())
             {
                 MyGUI::IntSize tooltipSize = getToolTipViaPtr(mFocusObject.getCellRef().getCount(), true, checkOwned());
 
@@ -334,6 +338,106 @@ namespace MWGui
         {
             position.top = MyGUI::InputManager::getInstance().getMousePosition().top - size.height - 8;
         }
+    }
+
+    bool ToolTips::showWorldPanel()
+    {
+        using namespace ControllerUi;
+        if (mWorldPanel == nullptr)
+            mWorldPanel = createPanelRoot("HUD");
+        if (mWorldPanel == nullptr)
+            return false;
+
+        const MWWorld::Class& objectClass = mFocusObject.getClass();
+        if (!objectClass.hasToolTip(mFocusObject))
+            return true;
+
+        const ToolTipInfo info = objectClass.getToolTipInfo(mFocusObject, mFocusObject.getCellRef().getCount());
+        // Taking an owned item, or from an owned container, is a crime, so the panel always says so for those, as the
+        // loot screen does. Objects without an owner, such as most in dungeons, aren't owned. The "show owned" setting
+        // still decides whether the panel is coloured red for any owned object, as it does for the small tooltip box.
+        const bool owned = checkOwned();
+        const int showOwned = Settings::game().mShowOwned;
+        const bool red = owned && (showOwned == 1 || showOwned == 3);
+        const bool isItem = objectClass.isItem(mFocusObject);
+        const bool stealing = owned && (isItem || mFocusObject.getType() == ESM::Container::sRecordId);
+        const std::vector<std::string> effects
+            = isItem ? ItemDetails::itemEffects(mFocusObject) : std::vector<std::string>();
+        const bool better = isItem && ItemDetails::isUpgrade(mFocusObject);
+
+        std::string key = info.caption + '\n' + info.text + (stealing ? "\nstealing" : "") + (red ? "\nred" : "")
+            + (better ? "\nbetter" : "");
+        for (const std::string& effect : effects)
+            key += '\n' + effect;
+        mWorldPanel->setVisible(true);
+        if (key == mWorldPanelKey)
+            return true;
+        mWorldPanelKey = std::move(key);
+
+        clearPanel(mWorldPanel);
+        mWorldPanel->setVisible(true);
+        const MyGUI::IntSize size = mWorldPanel->getSize();
+        constexpr int maxWidth = 460;
+        constexpr int padding = 14;
+        constexpr int iconSize = 44;
+        const int textX = padding + (isItem ? iconSize + 12 : 0);
+        const int textW = maxWidth - textX - padding;
+
+        MyGUI::Widget* box
+            = mWorldPanel->createWidget<MyGUI::Widget>("", MyGUI::IntCoord(0, 0, maxWidth, 100), MyGUI::Align::Default);
+        box->setNeedMouseFocus(false);
+        MyGUI::ImageBox* back = addRect(box, 0, 0, maxWidth, 100, sPanelColour, 0.88f);
+        MyGUI::ImageBox* edge = addRect(box, 0, 0, maxWidth, 1, red ? sWorseColour : sAccentColour, 0.5f);
+        if (isItem)
+            addIcon(box, padding, padding, iconSize, mFocusObject, false);
+
+        // The name, then the details the object's class gives, such as the weight and value, a lock or where a door
+        // leads, then the item's effects. The details can hold colour codes, so only the name and effects are
+        // escaped.
+        int y = padding - 4;
+        int widest = 0;
+        const auto addLines
+            = [&](const std::string& text, bool escape, int fontHeight, int lineHeight, const MyGUI::Colour& colour) {
+                  for (const std::string& line : wrapText(box, text, textW, fontHeight, 3))
+                  {
+                      MyGUI::TextBox* widget = addText(
+                          box, textX, y, textW, lineHeight, escape ? escaped(line) : line, fontHeight, colour);
+                      widest = std::max(widest, widget->getTextSize().width);
+                      y += lineHeight;
+                  }
+              };
+        addLines(localised(info.caption), true, sFontLarge, 30, red ? sWorseColour : sBrightColour);
+        std::size_t start = 0;
+        while (start <= info.text.size())
+        {
+            const std::size_t end = std::min(info.text.find('\n', start), info.text.size());
+            if (end > start)
+                addLines(localised(info.text.substr(start, end - start)), false, sFontNormal, 24, sTextColour);
+            start = end + 1;
+        }
+        for (const std::string& effect : effects)
+            addLines(localised(effect), true, sFontNormal, 24, sBrightColour);
+
+        int markerX = textX;
+        const auto addMarker = [&](const std::string& label, const MyGUI::Colour& colour) {
+            MyGUI::TextBox* widget = addText(box, markerX, y + 2, 200, 22, label, sFontSmall, colour);
+            markerX += widget->getTextSize().width + 12;
+            widest = std::max(widest, markerX - 12 - textX);
+        };
+        if (stealing)
+            addMarker("#{Interface:LootStealing}", sWorseColour);
+        if (better)
+            addMarker("#{Interface:LootBetter}", sBetterColour);
+        if (markerX != textX)
+            y += 26;
+
+        // The panel fits its widest line, centred just below the crosshair.
+        const int boxWidth = std::min(maxWidth, textX + widest + padding);
+        const int boxHeight = std::max(y, isItem ? padding + iconSize : 0) + padding - 4;
+        box->setCoord((size.width - boxWidth) / 2, size.height / 2 + 48, boxWidth, boxHeight);
+        back->setSize(boxWidth, boxHeight);
+        edge->setSize(boxWidth, 1);
+        return true;
     }
 
     void ToolTips::clear()
