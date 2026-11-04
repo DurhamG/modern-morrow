@@ -628,6 +628,37 @@ namespace MWGui
             return rows;
         }
 
+        // Some tabs are split into groups by kind, in a fixed order, each under its own header. The sort order still
+        // applies within each group.
+        const auto grouped = [&](const std::vector<std::string>& headers, const auto& groupOf) {
+            for (std::size_t group = 0; group < headers.size(); ++group)
+            {
+                bool header = false;
+                for (int item : items)
+                {
+                    if (groupOf(mItems[item].mBase) != static_cast<int>(group))
+                        continue;
+                    if (!header)
+                    {
+                        rows.push_back(Row{ headers[group], -1 });
+                        header = true;
+                    }
+                    rows.push_back(Row{ {}, item });
+                }
+            }
+            return rows;
+        };
+        if (mTab == Tab::Misc)
+            return grouped({ "#{Interface:InventoryGroupKeys}", "#{Interface:InventoryGroupSoulGems}",
+                               "#{Interface:InventoryGroupOther}" },
+                [](const MWWorld::Ptr& ptr) {
+                    if (ptr.getClass().isKey(ptr))
+                        return 0;
+                    if (ptr.getClass().isSoulGem(ptr))
+                        return 1;
+                    return 2;
+                });
+
         for (int item : items)
             rows.push_back(Row{ {}, item });
         return rows;

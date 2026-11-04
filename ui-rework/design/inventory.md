@@ -29,7 +29,7 @@ This is the design for the reworked inventory screen, agreed with the user. It i
 - **No character portrait.** It takes too much room on a handheld. The armour rating, encumbrance and gold go in free space on the screen.
 - **The screen fills everything below the top tab bar.** The bottom button bar is gone, as on the map. Button hints come back later, where they're needed.
 - **Tabs** replace the filters. There are six: Recent, Equipment, Consumables, Notes, Tools and Misc. There is no All tab.
-  - **Misc** holds whatever doesn't fit elsewhere, such as soul gems, keys and clutter. It gets split into better groups as they become clear.
+  - **Misc** holds whatever doesn't fit elsewhere. It is split into keys, soul gems, and other things, in that order, each under its own header.
   - There is no Quest tab for now. Marking quest items needs an analysis of which items the quests refer to, and a quest journal elsewhere may show them better.
 - **Recent** lists everything that has entered the inventory, newest first, up to a fixed limit such as 40 items. It doesn't clear items once they've been seen. Recording when each item arrived needs a save format change, which is acceptable.
 - **"New until seen"** markers are for other places, such as an equipment area with new items that fit it.
@@ -97,5 +97,4 @@ These were chosen when the first version was built, and can be revisited.
 
 - Mouse input. The screen only responds to a gamepad.
 - Sorting the Recent tab, which always lists the newest items first.
-- Better groups in Misc, such as keys and soul gems.
 - Splitting the Notes tab into skill books, letters and other books.

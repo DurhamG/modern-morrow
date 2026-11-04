@@ -1,0 +1,19 @@
+# The inventory's Misc and Notes tabs in controller menus mode, split into groups by kind: keys, soul gems and other
+# things, and skill books, other books, and letters and notes.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->additem misc_soulgem_petty 2"
+console "command=player->additem bookskill_enchant1 1"
+console "command=player->additem bk_notefromsondaale 1"
+lua "code=local types=require('openmw.types'); local world=require('openmw.world'); local inventory=types.Actor.inventory(world.players[1]); local key, other, book; for _, record in pairs(types.Miscellaneous.records) do if record.isKey and not key then key = record.id elseif not record.isKey and not other and record.id:find('misc_com') then other = record.id end end; for _, record in pairs(types.Book.records) do if not book and not record.isScroll and record.skill == nil and (record.enchant == nil or record.enchant == '') and record.id:find('^bk_') then book = record.id end end; for _, id in ipairs({key, other, book}) do world.createObject(id):moveInto(inventory) end; print(key, other, book)" context=global
+pad button=b
+wait frames=10
+pad button=leftshoulder
+wait frames=5
+pad button=leftshoulder
+wait frames=5
+shot misc
+pad button=leftshoulder
+wait frames=5
+pad button=leftshoulder
+wait frames=5
+shot notes
