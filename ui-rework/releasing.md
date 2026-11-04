@@ -22,9 +22,4 @@ The builds aren't signed, so Windows SmartScreen warns the first time someone ru
 
 ## Playing on the Steam Deck
 
-1. In Desktop Mode, download the AppImage, and make it executable: right-click it, Properties, Permissions, "Is executable".
-2. Run it. It opens the launcher, which finds the Morrowind data files the first time, including a Steam copy of Morrowind installed with Proton.
-3. In Steam, "Add a Non-Steam Game", and pick the AppImage. In the shortcut's properties, set the launch options to `--game`, so it starts the game itself instead of the launcher.
-4. Back in Game Mode, start it from the library. Steam Input passes the controller through as a gamepad.
-
-The AppImage also takes `--wizard`, which opens the setup wizard again.
+The steps for installing the AppImage on a Steam Deck or a Steam Machine are in the README, in [Steam Deck and Steam Machine](../README.md#steam-deck-and-steam-machine).
