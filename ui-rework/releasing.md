@@ -8,6 +8,8 @@ GitHub Actions builds the release files. The release workflow, `.github/workflow
 
 The Linux build runs on AlmaLinux 9, like OpenMW's portable Linux package, so it works on newer systems such as SteamOS. Its libraries are inside the AppImage.
 
+Both builds run the game on SDL3 through sdl2-compat, SDL's library for running SDL2 programs on SDL3, so newer controllers such as the 2026 Steam Controller work without Steam. `CI/sdl2_compat_versions.sh` pins both releases. To update them, change the versions there and copy each file's SHA-256 digest from its GitHub release page.
+
 ## Making a release
 
 1. Push a tag that starts with `v`, such as `git tag v0.1.0` and `git push origin v0.1.0`.

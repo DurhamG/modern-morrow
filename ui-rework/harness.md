@@ -46,7 +46,8 @@ Changing a header that many files include, such as `apps/openmw/mwbase/windowman
 - The window goes on SDL display 1, which is the user's second monitor. Use `--screen` or `$OMW_SCREEN` to change it.
 - Sound is off, and the startup and new-game movies are skipped. `--sound` and `--movies` turn them back on. With the movies skipped, the game answers commands about a second after launch.
 - The game runs in a window that does not minimize when it loses focus. It does not need focus to receive the harness's input.
-- `--steam` starts the game through Steam, so a real controller gets Steam Input. The 2026 Steam Controller needs this, because OpenMW's SDL2 doesn't recognize it.
+- The 2026 Steam Controller works without Steam once the build folder has sdl2-compat and SDL3, as the release builds do. OpenMW's own SDL2 doesn't recognize it. To set up a build folder, run `CI/fetch_sdl2_compat_windows.sh MSVC2022_64/RelWithDebInfo` after building. Later builds keep the new DLLs, because vcpkg only copies its SDL2.dll over an older file.
+- `--steam` starts the game through Steam, so a real controller gets Steam Input.
   - Steam needs a non-Steam game shortcut whose target is the build's `openmw.exe`, with the launch options `--replace=config --config "D:\Code\openmw\.automation\steam-config"`. The shortcut must point at the game itself. Steam Input only works in the program Steam starts, so a script that starts the game doesn't work.
   - Those launch options never change. Before each launch, the client points `.automation/steam-config` at the profile's config folder, using a directory junction. It writes the options that would have gone on the command line into the profile's `openmw.cfg`, such as the automation port and the save to load.
   - The client finds the shortcut in Steam's `shortcuts.vdf`, and finds the game's process by the `steam-config` path in its command line. Only one game started through Steam can run at a time.

@@ -127,6 +127,11 @@ jobs:
         cp -Filter *.dll -Recurse ${{ github.workspace }}/deps/vcpkg-x64-windows-${{ inputs.msvc }}-${{ env.VCPKG_TAG }}/installed/x64-windows/bin/osgPlugins-3.6.5 ${{ github.workspace }}/build
         cp ${{ github.workspace }}/deps/vcpkg-x64-windows-${{ inputs.msvc }}-${{ env.VCPKG_TAG }}/installed/x64-windows/bin/*.dll ${{ github.workspace }}/build
 
+    # After the DLLs above, so it replaces their SDL2.dll.
+    - name: Use sdl2-compat and SDL3
+      shell: bash
+      run: CI/fetch_sdl2_compat_windows.sh "$(cygpath -u '${{ github.workspace }}')/build"
+
     - name: Copy Qt DLLs
       working-directory: ${{ github.workspace }}/deps/Qt/${{ env.QT_VER }}/msvc2019_64
       run: |

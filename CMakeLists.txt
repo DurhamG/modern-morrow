@@ -1045,6 +1045,9 @@ elseif(NOT APPLE)
                 "${RUNTIME_OUTPUT_DIRECTORY}/platforms"
                 "${RUNTIME_OUTPUT_DIRECTORY}/styles"
             DESTINATION "." FILES_MATCHING PATTERN "*.dll")
+        # The release builds replace SDL2.dll with sdl2-compat's, using CI/fetch_sdl2_compat_windows.sh. That SDL2.dll
+        # loads SDL3.dll when the program starts, so the scan for the programs' libraries doesn't find SDL3.dll.
+        INSTALL(FILES "${RUNTIME_OUTPUT_DIRECTORY}/SDL3.dll" DESTINATION "." OPTIONAL)
         INSTALL(DIRECTORY "${RUNTIME_OUTPUT_DIRECTORY}/" DESTINATION "." CONFIGURATIONS Debug;RelWithDebInfo FILES_MATCHING PATTERN "*.pdb"
                                                                                                                             PATTERN ".cmake" EXCLUDE
                                                                                                                             PATTERN ".qt" EXCLUDE

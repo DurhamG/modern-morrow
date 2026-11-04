@@ -54,6 +54,12 @@ cp ../files/launcher/images/openmw.png AppDir/modern-morrow.png
 mkdir AppDir/lib/openal-fallback
 cp -P /usr/lib64/libopenal.so.1* AppDir/lib/openal-fallback/
 
+# The AppImage runs the game on SDL3 through sdl2-compat, which replaces the package's SDL2. SDL3 recognizes newer
+# controllers, such as the 2026 Steam Controller. The versions are in CI/sdl2_compat_versions.sh.
+../CI/linux/build_sdl2_compat.sh sdl-install sdl-work
+rm -f AppDir/lib/libSDL2-2.0.so*
+cp -P sdl-install/lib/libSDL2-2.0.so.0* sdl-install/lib/libSDL3.so.0* AppDir/lib/
+
 if [[ ! -x appimagetool ]]; then
     curl --fail --retry 3 -L -o appimagetool \
         https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
