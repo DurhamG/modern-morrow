@@ -1,0 +1,17 @@
+# Choosing how many of a stack to drop from the inventory screen, in controller menus mode.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->additem \"iron arrow\" 40"
+pad button=b
+wait frames=10
+pad button=leftshoulder
+wait frames=5
+shot inventory
+pad button=x
+wait frames=10
+shot count
+pad axis=leftx value=-1 hold=40
+wait frames=5
+shot count-changed
+pad button=b
+wait frames=10
+shot count-cancelled

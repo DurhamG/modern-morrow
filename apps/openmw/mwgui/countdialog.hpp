@@ -1,6 +1,7 @@
 #ifndef MWGUI_COUNTDIALOG_H
 #define MWGUI_COUNTDIALOG_H
 
+#include "controllerscreen.hpp"
 #include "windowbase.hpp"
 
 namespace Gui
@@ -14,7 +15,10 @@ namespace MWGui
     {
     public:
         CountDialog();
+        ~CountDialog() override;
         void openCountDialog(const std::string& item, const std::string& message, const int maxCount);
+        void onClose() override;
+        void onFrame(float duration) override;
         void setCount(int count);
 
         /** Event : Ok button was clicked.\n
@@ -36,6 +40,13 @@ namespace MWGui
         void onSliderMoved(MyGUI::ScrollBar* sender, size_t position);
         void onEnterKeyPressed(MyGUI::EditBox* sender);
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+
+        // In controller menus mode, a panel in the middle of the screen shows the count instead of this window.
+        MyGUI::Widget* mPanel = nullptr;
+        std::string mItem;
+        std::string mMessage;
+        HeldDirection mHeldDirection;
+        void drawPanel();
     };
 
 }

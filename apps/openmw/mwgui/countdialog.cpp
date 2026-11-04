@@ -1,9 +1,14 @@
 #include "countdialog.hpp"
 
 #include <MyGUI_Button.h>
+#include <MyGUI_Gui.h>
+#include <MyGUI_ILayer.h>
+#include <MyGUI_ImageBox.h>
+#include <MyGUI_LayerManager.h>
 #include <MyGUI_RenderManager.h>
 #include <MyGUI_ScrollBar.h>
 
+#include <components/settings/values.hpp>
 #include <components/widgets/numericeditbox.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -30,6 +35,85 @@ namespace MWGui
 
         mControllerButtons.mA = "#{Interface:OK}";
         mControllerButtons.mB = "#{Interface:Cancel}";
+
+        if (Settings::gui().mControllerMenus)
+            if (MyGUI::ILayer* layer = MyGUI::LayerManager::getInstance().getByName("ControllerModal", false))
+            {
+                mPanel = MyGUI::Gui::getInstance().createWidget<MyGUI::Widget>(
+                    "", MyGUI::IntCoord(MyGUI::IntPoint(), layer->getSize()), MyGUI::Align::Default, "ControllerModal");
+                mPanel->setVisible(false);
+            }
+    }
+
+    CountDialog::~CountDialog()
+    {
+        if (mPanel != nullptr)
+            MyGUI::Gui::getInstance().destroyWidget(mPanel);
+    }
+
+    void CountDialog::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->setVisible(false);
+        WindowModal::onClose();
+    }
+
+    void CountDialog::onFrame(float duration)
+    {
+        // The d-pad and the left stick change the count, repeating while held.
+        int dx = 0;
+        int dy = 0;
+        if (mPanel != nullptr && mPanel->getVisible() && mHeldDirection.update(duration, dx, dy) && dx != 0)
+        {
+            setCount(static_cast<int>(mSlider->getScrollPosition()) + 1 + dx);
+            drawPanel();
+        }
+    }
+
+    void CountDialog::drawPanel()
+    {
+        using namespace ControllerUi;
+        mPanel->setSize(mPanel->getLayer()->getSize());
+        while (mPanel->getChildCount() > 0)
+            MyGUI::Gui::getInstance().destroyWidget(mPanel->getChildAt(0));
+        const MyGUI::IntSize size = mPanel->getSize();
+        addRect(mPanel, 0, 0, size.width, size.height, MyGUI::Colour::Black, 0.55f)->setNeedMouseFocus(true);
+        constexpr int w = 520;
+        constexpr int h = 250;
+        const int x = (size.width - w) / 2;
+        const int y = (size.height - h) / 2;
+        addRect(mPanel, x, y, w, h, MyGUI::Colour::parse("#0d0b08"));
+        addRect(mPanel, x, y, w, 1, sAccentColour, 0.6f);
+        const int innerX = x + 28;
+        const int innerW = w - 56;
+
+        // What happens to the item, such as "Drop", and which item.
+        addText(mPanel, innerX, y + 16, innerW, 34, mMessage, sFontTitle, sBrightColour);
+        addText(mPanel, innerX, y + 52, innerW, 26, mItem, sFontNormal, sTextColour);
+
+        // The count, with arrows for the d-pad, and a bar for how much of the stack it is.
+        const int count = static_cast<int>(mSlider->getScrollPosition()) + 1;
+        const int total = static_cast<int>(mSlider->getScrollRange());
+        const int ty = y + 92;
+        addGlyph(mPanel, innerX, ty + 10, 26, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+        addGlyph(mPanel, innerX + innerW - 26, ty + 10, 26, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+        addText(mPanel, innerX, ty, innerW, 46, std::to_string(count) + " / " + std::to_string(total), sFontTitle,
+            sActiveColour, MyGUI::Align::Center);
+        addRect(mPanel, innerX, ty + 56, innerW, 8, MyGUI::Colour::Black, 0.6f);
+        if (total > 0)
+            addRect(mPanel, innerX, ty + 56, innerW * count / total, 8, sAccentColour);
+
+        // The button hints along the bottom.
+        int hx = innerX;
+        const int hintY = y + h - 44;
+        const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
+            addGlyph(mPanel, hx, hintY + 4, 22, button);
+            MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 200, 30, label, sFontNormal, sBrightColour);
+            hx += 30 + text->getTextSize().width + 22;
+        };
+        hint(SDL_CONTROLLER_BUTTON_A, "#{Interface:OK}");
+        hint(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, "#{Interface:CountOne}");
+        hint(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, "#{Interface:CountAll}");
     }
 
     void CountDialog::openCountDialog(const std::string& item, const std::string& message, const int maxCount)
@@ -55,6 +139,17 @@ namespace MWGui
         mItemEdit->setMinValue(1);
         mItemEdit->setMaxValue(maxCount);
         mItemEdit->setValue(maxCount);
+
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mItem = ControllerUi::escaped(ControllerUi::localised(item));
+            mMessage = ControllerUi::localised(message);
+            mHeldDirection.reset();
+            mPanel->setVisible(true);
+            MyGUI::LayerManager::getInstance().upLayerItem(mPanel);
+            drawPanel();
+        }
     }
 
     void CountDialog::setCount(int count)
@@ -106,11 +201,17 @@ namespace MWGui
             setCount(1);
         else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
             setCount(static_cast<int>(mSlider->getScrollRange()));
+        else if (mPanel != nullptr)
+        {
+            // The panel reads the d-pad every frame in onFrame, so it can repeat while held.
+        }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
             MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::ArrowDown, 0, false);
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
             MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::ArrowUp, 0, false);
 
+        if (mPanel != nullptr && mPanel->getVisible())
+            drawPanel();
         return true;
     }
 }
