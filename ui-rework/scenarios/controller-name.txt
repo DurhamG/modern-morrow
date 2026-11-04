@@ -1,0 +1,17 @@
+# Typing the character's name on the on-screen keyboard in controller menus mode.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console command=EnableNameMenu
+wait frames=10
+shot keyboard
+pad button=dpright
+pad button=dpright
+pad button=dpright
+pad button=a
+pad button=dpdown
+pad button=dpleft
+pad button=a
+pad button=dpdown
+pad button=dpleft
+pad button=a
+wait frames=5
+shot keyboard-typed
