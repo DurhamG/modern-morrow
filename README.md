@@ -113,6 +113,9 @@ Other improvements
 Trying it
 ---------
 
+> [!WARNING]
+> **Released versions of OpenMW can't load saves that Modern Morrow writes.** Modern Morrow keeps its saves in a folder of its own, so it never changes your OpenMW saves. To continue an OpenMW game in Modern Morrow, copy the save over rather than moving it, so that OpenMW still has the original.
+
 You need a copy of Morrowind. The [Releases page](https://github.com/DurhamG/modern-morrow/releases) has a Windows installer, a Windows zip and a Linux AppImage. To build this fork yourself, build it the same way as OpenMW: see the [OpenMW build instructions](https://wiki.openmw.org/index.php?title=Development_Environment_Setup), or [CLAUDE.md](CLAUDE.md) for notes on building on Windows.
 
 The new screens are on by default. They only respond to a gamepad for now, and mouse support is planned. To get OpenMW's normal interface back, turn off **Enable Controller Menus** in the launcher's settings, or set this in `settings.cfg`:
@@ -122,7 +125,7 @@ The new screens are on by default. They only respond to a gamepad for now, and m
 controller menus = false
 ```
 
-Modern Morrow keeps its settings and saves apart from OpenMW's: in `Documents/My Games/Modern Morrow` on Windows, and in `~/.config/modern-morrow` and `~/.local/share/modern-morrow` on Linux. To bring over an existing OpenMW setup and its saves, copy OpenMW's folders there. Saves made in Modern Morrow use a newer format, so released versions of OpenMW can't load them.
+Modern Morrow keeps its settings and saves apart from OpenMW's: in `Documents/My Games/Modern Morrow` on Windows, and in `~/.config/modern-morrow` and `~/.local/share/modern-morrow` on Linux. To bring over an existing OpenMW setup and its saves, copy OpenMW's folders there.
 
 Steam Deck and Steam Machine
 ----------------------------
