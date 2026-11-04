@@ -50,7 +50,8 @@ A warrior might know 10 to 30 spells, while a dedicated mage can know 100 or mor
 
 `apps/openmw/mwgui/magicscreen.cpp` implements the screen. It shares its base class, sizes and drawing code with the inventory screen, in `controllerscreen.cpp`. The `magic-screen` scenario walks through it.
 
+- **The next and previous spell keys step through the recent spells** during play, newest first. Presses in quick succession step through the list as it was at the first press, like switching windows on a desktop, because readying a spell moves it to the front. After two seconds without a press, the next one starts over. With fewer than two recent spells, the keys step through every spell as before.
+
 ### Not done yet
 
 - Mouse input. The screen only responds to a gamepad.
-- The in-game "next spell" and "previous spell" keys still step through the full list. They could step through the recent spells instead. This was deferred until the menus are done.

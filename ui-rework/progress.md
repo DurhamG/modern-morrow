@@ -158,6 +158,8 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   - The `controller-enchanting` scenario enchants a ring with a soul gem. The `controller-enchanting-service` scenario buys an enchantment from Galbedir and adds an effect on an attribute.
 - Built the custom class screen in character creation without a review first, as the user asked. `CreateClassPanel` shows the class on the left and the choices for the highlighted line on the right. The `controller-create-class` scenario names a class, picks a specialization and swaps a skill.
 - Persuasion now shows in the question dialog, with the person's disposition and the player's gold. The `controller-persuasion` scenario admires Arrille.
+- The inventory's Misc tab is split into keys, soul gems and other things, and the Notes tab into skill books, books, and letters and notes. The `controller-inventory-groups` scenario shows both.
+- The next and previous spell keys step through the recent spells in controller menus mode, like switching windows on a desktop. Checked by hand with the harness: three readied spells came up in order, and a pause started over.
 - Lessons learned:
   - `Alchemy::countPotionsToBrew` returns 0 until the potion has a name, so the panel gives it the window's name before showing the count.
   - Lua's `I.UI.addMode('Alchemy')` opens alchemy without going through the inventory, for testing. `addMode('Enchanting', {target = gem})` opens enchanting with a soul gem, and `{target = npc}` with an enchanter.

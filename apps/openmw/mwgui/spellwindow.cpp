@@ -259,6 +259,9 @@ namespace MWGui
         if (itemCount == 0)
             return;
 
+        if (Settings::gui().mControllerMenus && cycleRecent(next))
+            return;
+
         SpellModel::ModelIndex nextIndex;
         SpellModel::ModelIndex currentIndex = mSpellView->getModel()->getSelectedIndex();
 
@@ -300,6 +303,64 @@ namespace MWGui
             else
                 onSpellSelected(selectedSpell.mId);
         }
+    }
+
+    bool SpellWindow::cycleRecent(bool next)
+    {
+        // A pause this long between presses starts over from the recent spells as they are now.
+        constexpr std::chrono::milliseconds sequenceGap(2000);
+        const auto now = std::chrono::steady_clock::now();
+        const SpellModel& model = *mSpellView->getModel();
+
+        // The model entry for a recent spell or item. Items are kept by their record ID, so the first one in the
+        // inventory stands for them.
+        const auto find = [&](const ESM::RefId& id) -> SpellModel::ModelIndex {
+            for (std::size_t i = 0; i < model.getItemCount(); ++i)
+            {
+                const Spell& spell = model.getItem(static_cast<SpellModel::ModelIndex>(i));
+                const ESM::RefId spellId
+                    = spell.mType == Spell::Type_EnchantedItem ? spell.mItem.getCellRef().getRefId() : spell.mId;
+                if (spellId == id)
+                    return static_cast<SpellModel::ModelIndex>(i);
+            }
+            return -1;
+        };
+
+        if (mCycleOrder.empty() || now - mLastCycle > sequenceGap)
+        {
+            // The recent spells and items the player still has, newest first.
+            mCycleOrder.clear();
+            for (const ESM::RefId& id : MWBase::Environment::get().getWorld()->getPlayer().getRecentSpells())
+                if (find(id) >= 0)
+                    mCycleOrder.push_back(id);
+            mCyclePosition = 0;
+            const SpellModel::ModelIndex selected = model.getSelectedIndex();
+            for (std::size_t i = 0; i < mCycleOrder.size(); ++i)
+                if (find(mCycleOrder[i]) == selected)
+                    mCyclePosition = i;
+        }
+        if (mCycleOrder.size() < 2)
+        {
+            mCycleOrder.clear();
+            return false;
+        }
+        mLastCycle = now;
+
+        const std::size_t count = mCycleOrder.size();
+        mCyclePosition = (mCyclePosition + (next ? 1 : count - 1)) % count;
+        const SpellModel::ModelIndex index = find(mCycleOrder[mCyclePosition]);
+        if (index < 0)
+        {
+            // The spell or item went away since the first press, so the next press starts over.
+            mCycleOrder.clear();
+            return false;
+        }
+        const Spell& selected = model.getItem(index);
+        if (selected.mType == Spell::Type_EnchantedItem)
+            onEnchantedItemSelected(selected.mItem, selected.mActive);
+        else
+            onSpellSelected(selected.mId);
+        return true;
     }
 
     bool SpellWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
