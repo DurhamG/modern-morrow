@@ -4,6 +4,7 @@
 #include <components/files/configurationmanager.hpp>
 #include <components/lua_ui/adapter.hpp>
 
+#include "controllerscreen.hpp"
 #include "windowbase.hpp"
 
 namespace MWGui
@@ -138,6 +139,21 @@ namespace MWGui
     private:
         void resetScrollbars();
         Files::ConfigurationManager& mCfgMgr;
+
+        // In controller menus mode, a full screen panel lists the current tab's settings instead of this window,
+        // with a row for each slider, button, drop-down list and list. Tabs whose settings it can't list, such as the
+        // key bindings and the scripts' pages, show this window instead.
+        MyGUI::Widget* mPanel = nullptr;
+        std::vector<MyGUI::Widget*> mPanelRows;
+        int mPanelFocus = 0;
+        int mPanelScroll = 0;
+        HeldDirection mHeldDirection;
+        void collectPanelRows(MyGUI::Widget* widget);
+        bool panelShowsTab();
+        void showPanelOrWindow();
+        void drawPanel();
+        void changePanelRow(int delta);
+        void activatePanelRow();
     };
 }
 

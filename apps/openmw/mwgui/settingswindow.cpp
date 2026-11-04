@@ -7,10 +7,14 @@
 
 #include <MyGUI_ComboBox.h>
 #include <MyGUI_Gui.h>
+#include <MyGUI_ImageBox.h>
 #include <MyGUI_LanguageManager.h>
+#include <MyGUI_LayerManager.h>
+#include <MyGUI_ListBox.h>
 #include <MyGUI_ScrollBar.h>
 #include <MyGUI_ScrollView.h>
 #include <MyGUI_TabControl.h>
+#include <MyGUI_TabItem.h>
 #include <MyGUI_UString.h>
 #include <MyGUI_Window.h>
 
@@ -250,6 +254,290 @@ namespace MWGui
             if (mScriptView->getCanvasSize() != scriptsSize)
                 mScriptView->setCanvasSize(scriptsSize);
         }
+
+        // Up and down move between rows, and left and right change the highlighted setting. Both repeat while held.
+        int dx = 0;
+        int dy = 0;
+        if (mPanel != nullptr && mPanel->getVisible() && mHeldDirection.update(duration, dx, dy))
+        {
+            if (dy != 0 && !mPanelRows.empty())
+            {
+                // Headings are skipped.
+                int focus = mPanelFocus + dy;
+                while (focus >= 0 && focus < static_cast<int>(mPanelRows.size())
+                    && mPanelRows[focus]->isType<MyGUI::TabItem>())
+                    focus += dy;
+                if (focus >= 0 && focus < static_cast<int>(mPanelRows.size()))
+                    mPanelFocus = focus;
+                drawPanel();
+            }
+            else if (dx != 0)
+                changePanelRow(dx);
+        }
+    }
+
+    void SettingsWindow::collectPanelRows(MyGUI::Widget* widget)
+    {
+        // The settings in the order the tab shows them. The parts of lists and sliders are not settings of their own.
+        for (std::size_t i = 0; i < widget->getChildCount(); ++i)
+        {
+            MyGUI::Widget* child = widget->getChildAt(i);
+            // A tab with tabs of its own, such as Video, lists all of them, each under a heading.
+            if (MyGUI::TabControl* tabs = child->castType<MyGUI::TabControl>(false))
+            {
+                for (std::size_t item = 0; item < tabs->getItemCount(); ++item)
+                {
+                    mPanelRows.push_back(tabs->getItemAt(item));
+                    collectPanelRows(tabs->getItemAt(item));
+                }
+                continue;
+            }
+            if (!child->getVisible())
+                continue;
+            if (child->isType<MyGUI::ScrollBar>())
+            {
+                if (getSettingType(child) == "Slider")
+                    mPanelRows.push_back(child);
+            }
+            else if (child->isType<MyGUI::ComboBox>() || child->isType<MyGUI::ListBox>()
+                || child->isType<MyGUI::Button>())
+                mPanelRows.push_back(child);
+            else
+                collectPanelRows(child);
+        }
+    }
+
+    bool SettingsWindow::panelShowsTab()
+    {
+        mPanelRows.clear();
+        MyGUI::Widget* page = mSettingsTab->getItemAt(mSettingsTab->getIndexSelected());
+        // The key bindings and the scripts' pages are built from code, and need this window.
+        const auto isOnPage = [&](MyGUI::Widget* widget) {
+            for (; widget != nullptr; widget = widget->getParent())
+                if (widget == page)
+                    return true;
+            return false;
+        };
+        if (page == nullptr || isOnPage(mControlsBox) || isOnPage(mScriptView))
+            return false;
+        collectPanelRows(page);
+        return !mPanelRows.empty();
+    }
+
+    void SettingsWindow::showPanelOrWindow()
+    {
+        if (mPanel == nullptr)
+            return;
+        const bool panel = panelShowsTab();
+        mMainWidget->setAlpha(panel ? 0.f : 1.f);
+        if (MyGUI::Widget* client = mMainWidget->getClientWidget())
+            client->setVisible(!panel);
+        mPanel->setVisible(panel);
+        mPanelFocus = !mPanelRows.empty() && mPanelRows[0]->isType<MyGUI::TabItem>() ? 1 : 0;
+        mPanelScroll = 0;
+        mHeldDirection.reset();
+        if (panel)
+        {
+            MyGUI::LayerManager::getInstance().upLayerItem(mPanel);
+            drawPanel();
+        }
+    }
+
+    void SettingsWindow::drawPanel()
+    {
+        using namespace ControllerUi;
+        if (mPanel == nullptr || !mPanel->getVisible())
+            return;
+        clearPanel(mPanel);
+        const MyGUI::IntSize size = mPanel->getSize();
+        addRect(mPanel, 0, 0, size.width, size.height, MyGUI::Colour::Black, 0.97f)->setNeedMouseFocus(true);
+
+        // The tabs, switched with the shoulder buttons.
+        std::vector<std::string> captions;
+        for (std::size_t i = 0; i < mSettingsTab->getItemCount(); ++i)
+            captions.push_back(mSettingsTab->getItemNameAt(i).asUTF8());
+        addText(
+            mPanel, sMargin, 6, size.width - 2 * sMargin, 40, "#{Interface:OptionsTitle}", sFontTitle, sBrightColour);
+        drawTabRow(mPanel, size.width, captions, static_cast<int>(mSettingsTab->getIndexSelected()), {});
+
+        // A row for each setting, with its label on the left and its value on the right.
+        constexpr int rowH = 46;
+        const int top = sContentTop;
+        const int bottom = size.height - 64;
+        const int x = sMargin;
+        const int w = size.width - 2 * sMargin;
+        const int count = static_cast<int>(mPanelRows.size());
+        const int visible = std::max(1, (bottom - top) / rowH);
+        // The heading above the first row stays in view.
+        if (mPanelFocus == 1 && mPanelRows[0]->isType<MyGUI::TabItem>())
+            mPanelScroll = 0;
+        mPanelFocus = std::clamp(mPanelFocus, 0, std::max(0, count - 1));
+        mPanelScroll = std::clamp(mPanelScroll, std::max(0, mPanelFocus - visible + 1), mPanelFocus);
+        const int valueW = std::min(460, w / 2);
+        for (int i = mPanelScroll; i < count && i < mPanelScroll + visible; ++i)
+        {
+            MyGUI::Widget* row = mPanelRows[i];
+            const int ry = top + (i - mPanelScroll) * rowH;
+            const bool focused = i == mPanelFocus;
+            if (MyGUI::TabItem* heading = row->castType<MyGUI::TabItem>(false))
+            {
+                addText(mPanel, x + 4, ry + 8, w - 8, rowH - 14, escaped(localised(heading->getCaption().asUTF8())),
+                    sFontSmall, sDimColour);
+                addRect(mPanel, x + 4, ry + rowH - 8, w - 8, 1, sAccentColour, 0.25f);
+                continue;
+            }
+            addRect(mPanel, x, ry, w, rowH - 6, sPanelColour, 0.9f);
+            if (focused)
+            {
+                addRect(mPanel, x, ry, w, rowH - 6, sAccentColour, 0.16f);
+                addRect(mPanel, x, ry, 3, rowH - 6, sAccentColour);
+            }
+
+            // The label is the text beside the setting: before it for sliders and lists, after it for buttons.
+            std::string label;
+            MyGUI::Widget* parent = row->getParent();
+            std::size_t index = 0;
+            while (index < parent->getChildCount() && parent->getChildAt(index) != row)
+                ++index;
+            const auto isLabel = [](MyGUI::Widget* widget) {
+                return widget->isType<MyGUI::TextBox>() && !widget->isType<MyGUI::Button>()
+                    && !widget->isType<MyGUI::EditBox>() && widget->getVisible()
+                    && !widget->castType<MyGUI::TextBox>()->getCaption().empty();
+            };
+            const auto labelBefore = [&](MyGUI::Widget* container, std::size_t position) {
+                for (std::size_t j = position; j-- > 0;)
+                    if (isLabel(container->getChildAt(j)))
+                        return container->getChildAt(j)->castType<MyGUI::TextBox>()->getCaption().asUTF8();
+                return std::string();
+            };
+            label = labelBefore(parent, index);
+            if (label.empty() && row->isType<MyGUI::Button>())
+                for (std::size_t j = index + 1; j < parent->getChildCount(); ++j)
+                    if (isLabel(parent->getChildAt(j)))
+                    {
+                        label = parent->getChildAt(j)->castType<MyGUI::TextBox>()->getCaption().asUTF8();
+                        break;
+                    }
+            // A drop-down list in a box of its own has its label before the box.
+            if (label.empty() && parent->getParent() != nullptr)
+            {
+                MyGUI::Widget* grandparent = parent->getParent();
+                std::size_t parentIndex = 0;
+                while (parentIndex < grandparent->getChildCount() && grandparent->getChildAt(parentIndex) != parent)
+                    ++parentIndex;
+                label = labelBefore(grandparent, parentIndex);
+            }
+            if (row == mResolutionList)
+                label = localised("#{Interface:OptionsResolution}");
+            addText(mPanel, x + 16, ry, w - valueW - 32, rowH - 6, escaped(label), sFontNormal,
+                focused ? sActiveColour : sBrightColour);
+
+            const int vx = x + w - valueW - 16;
+            if (MyGUI::ScrollBar* slider = row->castType<MyGUI::ScrollBar>(false))
+            {
+                const std::size_t range = slider->getScrollRange();
+                const float fraction = range > 1 ? static_cast<float>(slider->getScrollPosition()) / (range - 1) : 0.f;
+                addRect(mPanel, vx, ry + 16, valueW - 70, 8, MyGUI::Colour::Black, 0.6f);
+                addRect(mPanel, vx, ry + 16, static_cast<int>((valueW - 70) * fraction), 8, sAccentColour);
+                addText(mPanel, vx + valueW - 64, ry, 64, rowH - 6,
+                    std::to_string(static_cast<int>(fraction * 100)) + "%", sFontSmall, sTextColour,
+                    MyGUI::Align::Right | MyGUI::Align::VCenter);
+            }
+            else
+            {
+                std::string value;
+                if (MyGUI::ComboBox* combo = row->castType<MyGUI::ComboBox>(false))
+                    value = combo->getCaption().asUTF8();
+                else if (MyGUI::ListBox* list = row->castType<MyGUI::ListBox>(false))
+                {
+                    if (list->getIndexSelected() != MyGUI::ITEM_NONE)
+                        value = list->getItemNameAt(list->getIndexSelected()).asUTF8();
+                }
+                else if (MyGUI::Button* button = row->castType<MyGUI::Button>(false))
+                    value = button->getCaption().asUTF8();
+                const bool choice = !row->isType<MyGUI::Button>();
+                if (choice && focused)
+                {
+                    addGlyph(mPanel, vx, ry + 9, 22, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+                    addGlyph(mPanel, vx + valueW - 22, ry + 9, 22, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+                }
+                addText(mPanel, vx + 28, ry, valueW - 56, rowH - 6, escaped(value), sFontNormal, sTextColour,
+                    MyGUI::Align::Center);
+            }
+        }
+
+        // The button hints along the bottom.
+        int hx = sMargin;
+        const int hintY = size.height - 48;
+        const auto hint = [&](SDL_GameControllerButton button, const std::string& caption) {
+            addGlyph(mPanel, hx, hintY + 4, 22, button);
+            MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 260, 30, caption, sFontNormal, sBrightColour);
+            hx += 30 + text->getTextSize().width + 22;
+        };
+        hint(SDL_CONTROLLER_BUTTON_DPAD_LEFT, "#{Interface:OptionsChange}");
+        hint(SDL_CONTROLLER_BUTTON_A, "#{Interface:Select}");
+    }
+
+    void SettingsWindow::changePanelRow(int delta)
+    {
+        if (mPanelRows.empty())
+            return;
+        MyGUI::Widget* row = mPanelRows[mPanelFocus];
+        // Each change goes through the same event as a click, so the window applies it as before.
+        if (MyGUI::ScrollBar* slider = row->castType<MyGUI::ScrollBar>(false))
+        {
+            const int range = static_cast<int>(slider->getScrollRange());
+            const int step = std::max(1, range / 50);
+            const int position = std::clamp(static_cast<int>(slider->getScrollPosition()) + delta * step, 0, range - 1);
+            slider->setScrollPosition(position);
+            slider->eventScrollChangePosition(slider, position);
+        }
+        else if (MyGUI::ComboBox* combo = row->castType<MyGUI::ComboBox>(false))
+        {
+            const std::size_t count = combo->getItemCount();
+            if (count == 0)
+                return;
+            const std::size_t current = combo->getIndexSelected() == MyGUI::ITEM_NONE ? 0 : combo->getIndexSelected();
+            const std::size_t next = wrap(current, count, delta);
+            combo->setIndexSelected(next);
+            combo->eventComboChangePosition(combo, next);
+        }
+        else if (MyGUI::ListBox* list = row->castType<MyGUI::ListBox>(false))
+        {
+            const std::size_t count = list->getItemCount();
+            if (count == 0)
+                return;
+            const std::size_t current = list->getIndexSelected() == MyGUI::ITEM_NONE ? 0 : list->getIndexSelected();
+            const std::size_t next = wrap(current, count, delta);
+            list->setIndexSelected(next);
+            list->eventListChangePosition(list, next);
+        }
+        else if (getSettingType(row) == "CheckButton")
+            activatePanelRow();
+        else
+            return;
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        drawPanel();
+    }
+
+    void SettingsWindow::activatePanelRow()
+    {
+        if (mPanelRows.empty())
+            return;
+        MyGUI::Widget* row = mPanelRows[mPanelFocus];
+        if (row->isType<MyGUI::Button>())
+            row->eventMouseButtonClick(row);
+        else if (MyGUI::ListBox* list = row->castType<MyGUI::ListBox>(false))
+        {
+            if (list->getIndexSelected() != MyGUI::ITEM_NONE)
+                list->eventListSelectAccept(list, list->getIndexSelected());
+        }
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        // A setting can show or hide others, such as the shadow settings.
+        const int focus = mPanelFocus;
+        showPanelOrWindow();
+        mPanelFocus = focus;
+        drawPanel();
     }
 
     MyGUI::TextBox* SettingsWindow::getSliderLabel(MyGUI::ScrollBar* scroller) const
@@ -1184,10 +1472,16 @@ namespace MWGui
         resetScrollbars();
         renderScriptSettings();
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mOkButton);
+
+        if (Settings::gui().mControllerMenus && mPanel == nullptr)
+            mPanel = ControllerUi::createPanelRoot("ControllerModal");
+        showPanelOrWindow();
     }
 
     void SettingsWindow::onClose()
     {
+        if (mPanel != nullptr)
+            mPanel->setVisible(false);
         // Save user settings
         Settings::Manager::saveUser(mCfgMgr.getUserConfigPath() / "settings.cfg");
         MWBase::Environment::get().getLuaManager()->savePermanentStorage(mCfgMgr.getUserConfigPath());
@@ -1244,6 +1538,7 @@ namespace MWGui
             index = wrap(index, mSettingsTab->getItemCount(), -1);
             mSettingsTab->setIndexSelected(index);
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+            showPanelOrWindow();
             return true;
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
@@ -1252,6 +1547,14 @@ namespace MWGui
             index = wrap(index, mSettingsTab->getItemCount(), 1);
             mSettingsTab->setIndexSelected(index);
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+            showPanelOrWindow();
+            return true;
+        }
+        else if (mPanel != nullptr && mPanel->getVisible())
+        {
+            if (arg.button == SDL_CONTROLLER_BUTTON_A)
+                activatePanelRow();
+            // The d-pad is read every frame in onFrame, so it can repeat while held.
             return true;
         }
 
