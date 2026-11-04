@@ -102,6 +102,12 @@ The rest of the game has controller screens in the same style too:
 - **The options**, as rows a controller can change.
 - **Messages** such as "Your spell failed", in large text.
 
+Other improvements
+------------------
+
+- **The Steam Controller works without Steam.** The release builds run the game on SDL3, the newest version of the library that reads controllers, through SDL's sdl2-compat layer. SDL3 recognizes newer controllers, such as the 2026 Steam Controller, without Steam Input. With OpenMW's SDL2, that controller only works when Steam starts the game.
+- **The tutorial talks about the controller.** On a controller, Morrowind's tutorial messages use the text the game was written with for the Xbox, such as "The LEFT THUMBSTICK moves you", instead of key names and mouse clicks.
+
 Trying it
 ---------
 
