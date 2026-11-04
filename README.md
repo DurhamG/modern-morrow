@@ -12,23 +12,6 @@ Morrowind's menus were made for a mouse on a small monitor. They are grids of ic
 Screenshots
 -----------
 
-### The HUD gets out of the way
-
-**Exploring**
-
-![The bottom-left corner while exploring, with no HUD on screen](ui-rework/screenshots/hud-quiet.jpg)
-
-**When it matters**
-
-![The bottom-left corner with low health, the weapon and an active spell effect](ui-rework/screenshots/hud-busy.jpg)
-
-These show the bottom-left corner of the screen, where the HUD sits. The HUD hides itself until there is something worth knowing:
-
-- The minimap is gone.
-- Health, magicka and fatigue bars fade away when they're full, unless you're in combat.
-- Effect icons leave out permanent effects, such as those of your race and birthsign.
-- The weapon and spell boxes only show when you ready or change them, or in combat.
-
 ### Inventory
 
 **Equipment, by body area**
@@ -80,6 +63,19 @@ Trading uses the same panel style. Every item shows its price, items better than
 ![Looting a crate that belongs to a merchant, with every item marked as stealing](ui-rework/screenshots/loot.jpg)
 
 Containers open in a panel beside the world, grouped by kind, with upgrades marked. When the container belongs to someone, the panel says so, and every action is named for what it is: Steal, not Take.
+
+### HUD
+
+**The HUD hides when it isn't useful**
+
+![The bottom-left corner with low health, the weapon and an active spell effect](ui-rework/screenshots/hud-busy.jpg)
+
+This shows the bottom-left corner of the screen, where the HUD sits. The HUD hides itself until there is something worth knowing:
+
+- The minimap is gone.
+- Health, magicka and fatigue bars fade away when they're full, unless you're in combat.
+- Effect icons leave out permanent effects, such as those of your race and birthsign.
+- The weapon and spell boxes only show when you ready or change them, or in combat.
 
 ### Crafting
 
