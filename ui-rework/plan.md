@@ -51,6 +51,7 @@ Done so far:
 - **Pause menu.** The start button's menu during a game lists Save, Load, Options and Exit in a panel over a darkened view of the game. B returns to the game.
 - **Stats.** A new screen with Character, Skills and Factions tabs. The Character tab shows the character as tiles, with each attribute's bonus at the next level up. Everything can be selected for its details. See [design/stats.md](design/stats.md).
 - **Journal.** A fifth tab of the menus lists quests, the ones in progress first, sorted by the last update, by town or by faction. The details panel shows who gave a quest, where, and its entries, newest first. See [design/journal.md](design/journal.md).
+- **Everything else except quick keys and crafting.** The merchant services, questions and confirmations, rest and level up, books, saving and loading, the count dialog, companion sharing, loading and jail, character creation and the options all have controller panels in the same style. See [design/other-screens.md](design/other-screens.md). Not reviewed yet.
 
 ### Phase 3: make the changes clean enough to upstream
 

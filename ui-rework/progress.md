@@ -111,4 +111,25 @@
   - `ESMStore::getRefCells` says which cells an object is placed in, without loading the cells.
   - The console's Journal command records the player's cell. With `"arrille"->journal ...` it also records Arrille as the one who gave the quest.
 
-Next: the user reviews the journal tab.
+- The user reviewed the journal tab and was happy with it.
+
+- Reworked the rest of the screens while the user was away, recorded in [design/other-screens.md](design/other-screens.md). Each keeps its old window hidden as the model, and shows a panel in the controller screens' style:
+  - the merchant services: spells, training, travel and repair,
+  - message boxes, confirmations and the class questions, in a shared dialog,
+  - rest and wait, its progress, and the level up,
+  - books and scrolls, as one scrolling page,
+  - the save and load lists,
+  - the count dialog,
+  - companion sharing,
+  - the loading and jail progress,
+  - character creation: the name, with an on-screen keyboard, the race, the class and birthsign lists, the class result, and the review,
+  - the options, as rows built from the settings window's layout.
+- Videos can now be skipped with a controller.
+- Each piece has a scenario, from `controller-spells` to `controller-options`. Screenshots for the user's review are in `ui-rework/review/`, which git ignores.
+- Lessons learned:
+  - The window manager only gives the top dialog its frame updates. A dialog owned by another window, such as the save dialog, still gets them while it is on top.
+  - The harness can't take pictures while the game loads or plays a video, because both run their own loops.
+  - `GoToJail` and `SetPCCrimeLevel` in the console send the player to jail, for testing.
+  - Sleeping is illegal in towns, so the rest scenario moves to the wilderness with `coe -3 -8`.
+
+Next: the user reviews the other screens. Still left: quick keys, crafting, and creating a custom class.
