@@ -1,3 +1,4 @@
+#include <MyGUI_Gui.h>
 #include <MyGUI_ScrollBar.h>
 
 #include <components/misc/rng.hpp>
@@ -17,6 +18,8 @@
 
 #include "jailscreen.hpp"
 
+#include "controllerscreen.hpp"
+
 namespace MWGui
 {
     JailScreen::JailScreen()
@@ -30,6 +33,34 @@ namespace MWGui
         mTimeAdvancer.eventFinished += MyGUI::newDelegate(this, &JailScreen::onJailFinished);
 
         center();
+        mPanel = ControllerUi::createPanelRoot("ControllerLoading");
+    }
+
+    JailScreen::~JailScreen()
+    {
+        if (mPanel != nullptr)
+            MyGUI::Gui::getInstance().destroyWidget(mPanel);
+    }
+
+    void JailScreen::onOpen()
+    {
+        if (mPanel == nullptr)
+            return;
+        ControllerUi::hideWindow(mMainWidget);
+        mProgress = 0.f;
+        mPanel->setVisible(true);
+        drawPanel();
+    }
+
+    void JailScreen::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->setVisible(false);
+    }
+
+    void JailScreen::drawPanel()
+    {
+        ControllerUi::drawProgressPanel(mPanel, "#{sInPrisonTitle}", mProgress);
     }
 
     void JailScreen::goToJail(int days)
@@ -67,8 +98,13 @@ namespace MWGui
         }
     }
 
-    void JailScreen::onJailProgressChanged(int cur, int /*total*/)
+    void JailScreen::onJailProgressChanged(int cur, int total)
     {
+        if (mPanel != nullptr && total > 0)
+        {
+            mProgress = static_cast<float>(cur) / total;
+            drawPanel();
+        }
         mProgressBar->setScrollPosition(0);
         mProgressBar->setTrackSize(
             static_cast<int>(cur / (float)(mProgressBar->getScrollRange()) * mProgressBar->getLineSize()));

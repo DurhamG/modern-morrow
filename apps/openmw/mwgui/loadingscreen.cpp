@@ -26,6 +26,7 @@
 #include "../mwbase/windowmanager.hpp"
 
 #include "backgroundimage.hpp"
+#include "controllerscreen.hpp"
 
 namespace MWGui
 {
@@ -52,9 +53,28 @@ namespace MWGui
         mProgressBar->setScrollViewPage(1);
 
         findSplashScreens();
+
+        mPanel = ControllerUi::createPanelRoot("ControllerLoading");
+        if (mPanel != nullptr)
+            mLoadingBox->setVisible(false);
     }
 
-    LoadingScreen::~LoadingScreen() {}
+    LoadingScreen::~LoadingScreen()
+    {
+        if (mPanel != nullptr)
+            MyGUI::Gui::getInstance().destroyWidget(mPanel);
+    }
+
+    void LoadingScreen::drawPanel()
+    {
+        if (mPanel == nullptr || !mPanel->getVisible())
+            return;
+        const std::size_t range = mProgressBar->getScrollRange();
+        // An important label, such as "Your journal has been updated", goes in the middle of the screen.
+        ControllerUi::drawProgressPanel(mPanel, ControllerUi::escaped(mPanelLabel),
+            range > 1 ? static_cast<float>(mProgress) / (range - 1) : 0.f,
+            MWBase::Environment::get().getWindowManager()->getMessagesCount() == 0);
+    }
 
     void LoadingScreen::findSplashScreens()
     {
@@ -80,6 +100,8 @@ namespace MWGui
         mImportantLabel = important;
 
         mLoadingText->setCaptionWithReplacing(label);
+        mPanelLabel = mLoadingText->getCaption().asUTF8();
+        drawPanel();
         int padding = mLoadingBox->getWidth() - mLoadingText->getWidth();
         MyGUI::IntSize size(mLoadingText->getTextSize().width + padding, mLoadingBox->getHeight());
         size.width = std::max(300, size.width);
@@ -98,6 +120,11 @@ namespace MWGui
         WindowBase::setVisible(visible);
         mSplashImage->setVisible(visible);
         mSceneImage->setVisible(visible);
+        if (mPanel != nullptr)
+        {
+            mPanel->setVisible(visible);
+            drawPanel();
+        }
     }
 
     double LoadingScreen::getTargetFrameRate() const
@@ -240,6 +267,7 @@ namespace MWGui
         mProgressBar->setScrollPosition(0);
         mProgressBar->setTrackSize(
             static_cast<int>(value / (float)(mProgressBar->getScrollRange()) * mProgressBar->getLineSize()));
+        drawPanel();
         draw();
     }
 
@@ -251,6 +279,7 @@ namespace MWGui
         mProgress = value;
         mProgressBar->setTrackSize(
             static_cast<int>(value / (float)(mProgressBar->getScrollRange()) * mProgressBar->getLineSize()));
+        drawPanel();
         draw();
     }
 

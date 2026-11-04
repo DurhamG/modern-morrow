@@ -10,7 +10,11 @@ namespace MWGui
     {
     public:
         JailScreen();
+        ~JailScreen() override;
         void goToJail(int days);
+
+        void onOpen() override;
+        void onClose() override;
 
         void onFrame(float dt) override;
 
@@ -29,6 +33,11 @@ namespace MWGui
         void onJailFinished();
 
         TimeAdvancer mTimeAdvancer;
+
+        // In controller menus mode, the progress shows in a panel that scales with the screen instead.
+        MyGUI::Widget* mPanel = nullptr;
+        float mProgress = 0.f;
+        void drawPanel();
     };
 }
 

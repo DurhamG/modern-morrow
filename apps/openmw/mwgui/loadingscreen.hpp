@@ -83,6 +83,12 @@ namespace MWGui
 
         std::vector<std::string> mSplashScreens;
 
+        // In controller menus mode, the label and progress show in a panel that scales with the screen, instead of
+        // the small loading box.
+        MyGUI::Widget* mPanel = nullptr;
+        std::string mPanelLabel;
+        void drawPanel();
+
         osg::ref_ptr<osg::Texture2D> mTexture;
         osg::ref_ptr<CopyFramebufferToTextureCallback> mCopyFramebufferToTextureCallback;
         std::unique_ptr<MyGUI::ITexture> mGuiTexture;

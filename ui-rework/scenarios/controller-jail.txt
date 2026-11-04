@@ -1,0 +1,14 @@
+# Going to jail in controller menus mode, which shows the time served as a panel, then the release message. A cell
+# change afterwards runs the loading panel, though the harness can't take a picture while loading.
+launch --start "Balmora" --set "GUI.controller menus=true"
+console "command=SetPCCrimeLevel 500"
+console "command=GoToJail"
+wait frames=50
+shot jail
+wait frames=400
+shot jail-done
+pad button=a
+wait frames=10
+console "command=coc \"Vivec, Arena\""
+wait frames=30
+shot after-loading
