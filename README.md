@@ -1,16 +1,14 @@
 OpenMW, reworked for controllers
 ================================
 
-This is a fork of [OpenMW](https://gitlab.com/OpenMW/openmw), the open-source engine for Morrowind. It replaces the game's whole user interface with a modern one built for a controller, a TV and handhelds such as the Steam Deck. The game itself is unchanged: the same rules, quests and saves, with new screens on top.
+This is a fork of [OpenMW](https://gitlab.com/OpenMW/openmw). It replaces the game's whole user interface with a modern one built for a controller, a TV and handhelds such as the Steam Deck. The game itself is unchanged: the same rules, quests and saves, with new screens on top.
 
 Morrowind's menus were made for a mouse on a small monitor. They are grids of icons with the information hidden in tooltips, in small windows that overlap. This fork turns each of them into a full screen or panel in one consistent style: lists that say what each thing is, a details panel that compares it with what you have, large text that reads from the couch, and button hints for the controller in your hands.
 
-**This fork was vibe coded.** A person directed the work, played the game, and reviewed every screen in screenshots and in play. Claude, an AI model made by Anthropic, wrote nearly all of the code, the tests and the design notes. It is an experiment, and it has not been reviewed by the OpenMW developers. Expect rough edges.
+**This fork was vibe coded.** A person directed the work, played the game, and reviewed every screen in screenshots and in play. Claude wrote nearly all of the code, the tests and the design notes. It is an experiment, and it has not been reviewed by the OpenMW developers. Expect rough edges.
 
 Screenshots
 -----------
-
-All of these are at 1920x1080, from a real character early in the game.
 
 ### The HUD gets out of the way
 
@@ -18,21 +16,28 @@ All of these are at 1920x1080, from a real character early in the game.
 | --- | --- |
 | ![The bottom-left corner while exploring, with no HUD on screen](ui-rework/screenshots/hud-quiet.jpg) | ![The bottom-left corner with low health, the weapon and an active spell effect](ui-rework/screenshots/hud-busy.jpg) |
 
-These two show the bottom-left corner of the screen, where the HUD sits. The HUD hides itself until there is something worth knowing. Health, magicka and fatigue bars show while they aren't full. The weapon and spell boxes show while the weapon or spell is ready, and for a few seconds after it changes. Effect icons show for effects that will run out, such as potions, and for diseases and curses, but not for the effects of your race and birthsign, which never change. In combat everything shows, including the enemy's health. When it's quiet again, it all fades away. The minimap is gone, because the map screen is one button away.
+These show the bottom-left corner of the screen, where the HUD sits. The HUD hides itself until there is something worth knowing:
+
+- The minimap is gone. The map is one button away.
+- Health, magicka and fatigue bars fade away when they're full, unless you're in combat.
+- Effect icons leave out permanent effects, such as those of your race and birthsign.
+- The weapon and spell boxes only show when you ready or change them, or in combat.
 
 ### Inventory
 
-| Equipment, by body area | Comparing with what you wear |
+| Equipment, by body area | One area, compared with what you wear |
 | --- | --- |
-| ![The equipment overview, with every body area and what is worn there](ui-rework/screenshots/inventory-equipment.jpg) | ![A list of weapons, compared with the equipped one](ui-rework/screenshots/inventory-weapons.jpg) |
+| ![The equipment overview, with every body area and what is worn there](ui-rework/screenshots/inventory-equipment.jpg) | ![The chest area, with cuirasses, shirts and robes in their own groups](ui-rework/screenshots/inventory-chest.jpg) |
 
-The inventory opens on what you're wearing, one tile per body area. Choosing an area lists everything that fits it, with the stats that matter as columns. Numbers are green where they beat what you have equipped and red where they don't, and the details panel compares the two side by side. Other tabs list recent pickups, consumables grouped by effect, books, tools, and everything else, grouped by kind. The shoulder buttons switch tabs, and the triggers switch between the map, inventory, magic, stats and journal.
+The inventory opens on what you're wearing, one tile per body area. Choosing an area lists everything that fits it, grouped by slot: the chest area has cuirasses, shirts and robes, each under its own header. The stats that matter are columns. Numbers are green where they beat what you have equipped and red where they don't, and the details panel compares the two side by side. Other tabs list recent pickups, consumables grouped by effect, books, tools, and everything else, grouped by kind. The shoulder buttons switch tabs, and the triggers switch between the map, inventory, magic, stats and journal.
 
 ### Magic
 
-![The magic screen's Active tab, with the effects on the character and the spell that is ready](ui-rework/screenshots/magic.jpg)
+| What's affecting you | Every spell, by school |
+| --- | --- |
+| ![The magic screen's Active tab, with the effects on the character and the spell that is ready](ui-rework/screenshots/magic.jpg) | ![The Spells tab, with spells grouped by school and their effects written out](ui-rework/screenshots/magic-spells.jpg) |
 
-The Active tab shows what's affecting you, how long each effect has left and where it came from, next to the spell that's ready to cast and the ones you used recently. Switching back to a favourite spell takes one press. The other tabs list every spell, power, magic item and scroll, with their effects written out in full.
+The Active tab shows what's affecting you, how long each effect has left and where it came from, next to the spell that's ready to cast and the ones you used recently. Switching back to a favourite spell takes one press. The other tabs list every spell, power, magic item and scroll, with their effects written out in full. Spells are grouped by school, such as Alteration or Destruction, and Y jumps to the next school.
 
 ### Character
 
@@ -50,7 +55,7 @@ The journal is a list of quests rather than a book. Quests in progress come firs
 
 ![A conversation, with the topics on the right and the answer on the left](ui-rework/screenshots/dialogue.jpg)
 
-Conversations take a panel along the bottom of the screen, so you can still see who you're talking to. New topics come first, and the person's services, such as trading, training or persuasion, have their own tab.
+Conversations take a panel along the bottom of the screen. In first person, the camera turns to the face of the person you're talking to, so it sits in view above the panel. New topics come first, and the person's services, such as trading, training or persuasion, have their own tab.
 
 ![Bartering, with the merchant's weapons and a comparison with the equipped one](ui-rework/screenshots/barter.jpg)
 
