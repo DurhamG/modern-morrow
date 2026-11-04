@@ -134,8 +134,14 @@ namespace MWGui
 
     void ScrollWindow::setInventoryAllowed(bool allowed)
     {
+        const bool couldTake = mTakeButton->getVisible();
         mTakeButtonAllowed = allowed;
         mTakeButton->setVisible(mTakeButtonShow && mTakeButtonAllowed);
+
+        // A script can unlock the inventory while the text is open, as Morrowind's release papers do. Draw the panel
+        // again, so that its hints offer Take.
+        if (mPanel != nullptr && isVisible() && mTakeButton->getVisible() != couldTake)
+            showPanel();
     }
 
     void ScrollWindow::onCloseButtonClicked(MyGUI::Widget* /*sender*/)
