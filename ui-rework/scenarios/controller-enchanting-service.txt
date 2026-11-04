@@ -1,0 +1,28 @@
+# Buying an enchantment from Galbedir in the Balmora Mages Guild, in controller menus mode. The player picks the soul
+# gem as well as the item, and pays instead of risking a failure. An effect on an attribute asks which one first.
+launch --start "Balmora, Guild of Mages" --set "GUI.controller menus=true"
+console "command=player->addsoulgem dremora misc_soulgem_greater"
+console "command=player->additem exquisite_amulet_01 1"
+console "command=player->addspell \"hearth heal\""
+lua "code=local core=require('openmw.core'); local types=require('openmw.types'); local world=require('openmw.world'); for _, s in pairs(core.magic.spells.records) do local e = s.effects[1]; if s.type == core.magic.SPELL_TYPE.Spell and e and e.id == 'fortifyattribute' then types.Actor.spells(world.players[1]):add(s.id); print(s.id); break end end" context=global
+console "command=player->additem gold_001 20000"
+lua "code=for _, actor in ipairs(require('openmw.nearby').actors) do if actor.recordId == 'galbedir' then require('openmw.interfaces').UI.addMode('Enchanting', {target=actor}) end end" context=player
+wait frames=10
+shot start
+pad button=dpdown
+wait frames=3
+pad button=a
+wait frames=5
+shot soul-gems
+pad button=a
+wait frames=5
+shot soul-chosen
+pad button=dpleft
+wait frames=5
+shot effects
+pad button=a
+wait frames=5
+shot attributes
+pad button=a
+wait frames=5
+shot editor

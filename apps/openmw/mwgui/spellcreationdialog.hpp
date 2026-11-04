@@ -1,6 +1,7 @@
 #ifndef MWGUI_SPELLCREATION_H
 #define MWGUI_SPELLCREATION_H
 
+#include <functional>
 #include <memory>
 
 #include <components/esm3/loadmgef.hpp>
@@ -20,6 +21,7 @@ namespace MWGui
 
     class SelectSkillDialog;
     class SelectAttributeDialog;
+    class EffectCraftPanel;
 
     class EditEffectDialog : public WindowModal
     {
@@ -36,6 +38,13 @@ namespace MWGui
 
         void newEffect(const ESM::MagicEffect* effect);
         void editEffect(ESM::ENAMstruct effect);
+
+        /// In controller menus mode, a crafting screen can draw this dialog itself. The dialog then stays hidden and
+        /// hands its controller buttons to the screen.
+        void setControllerHandler(std::function<bool(const SDL_ControllerButtonEvent&)> handler)
+        {
+            mControllerHandler = std::move(handler);
+        }
         typedef MyGUI::delegates::MultiDelegate<ESM::ENAMstruct> EventHandle_Effect;
 
         EventHandle_Effect eventEffectAdded;
@@ -96,6 +105,9 @@ namespace MWGui
         void updateControllerFocus(int prevFocus, int newFocus);
         int mControllerFocus = 0;
         std::vector<MyGUI::TextBox*> mButtons;
+        std::function<bool(const SDL_ControllerButtonEvent&)> mControllerHandler;
+
+        friend class EffectCraftPanel;
     };
 
     class EffectEditorBase
@@ -158,6 +170,8 @@ namespace MWGui
         bool mRightColumn = false;
         std::vector<MyGUI::Button*> mAvailableButtons;
         std::vector<std::pair<Widgets::MWSpellEffectPtr, MyGUI::Button*>> mEffectButtons;
+
+        friend class EffectCraftPanel;
     };
 
     class SpellCreationDialog : public WindowBase, public ReferenceInterface, public EffectEditorBase

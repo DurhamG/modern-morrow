@@ -29,6 +29,7 @@
 #include "../mwmechanics/spellutil.hpp"
 
 #include "class.hpp"
+#include "controllerscreen.hpp"
 #include "textcolours.hpp"
 #include "tooltips.hpp"
 
@@ -111,6 +112,8 @@ namespace MWGui
     {
         WindowModal::onOpen();
         center();
+        if (mControllerHandler)
+            ControllerUi::hideWindow(mMainWidget);
     }
 
     bool EditEffectDialog::exit()
@@ -384,6 +387,9 @@ namespace MWGui
 
     bool EditEffectDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mControllerHandler)
+            return mControllerHandler(arg);
+
         int prevFocus = mControllerFocus;
         mControllerFocus = std::clamp(mControllerFocus, 0, static_cast<int>(mButtons.size()) - 1);
         MyGUI::TextBox* button = mButtons[mControllerFocus];

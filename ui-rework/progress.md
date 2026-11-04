@@ -152,6 +152,10 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
 - The user asked for the crafting screens to be designed and built without a review first, one at a time, recorded in [design/crafting.md](design/crafting.md).
   - Alchemy is a full screen. `AlchemyPanel` lists the ingredients with their known effects, groups the ones that share an effect with the potion, and shows the potion on the right. The alchemy window stays hidden and brews.
   - The `controller-alchemy` scenario adds ingredients, brews two potions and renames one.
+  - Enchanting is a full screen. `EffectCraftPanel` shows the enchantment on the right and a list to pick from on the left, and edits effects on the left. The enchanting window and its effect dialog stay hidden. The effect dialog hands its buttons to the panel through a handler.
+  - The `controller-enchanting` scenario enchants a ring with a soul gem. The `controller-enchanting-service` scenario buys an enchantment from Galbedir and adds an effect on an attribute.
 - Lessons learned:
   - `Alchemy::countPotionsToBrew` returns 0 until the potion has a name, so the panel gives it the window's name before showing the count.
-  - Lua's `I.UI.addMode('Alchemy')` opens alchemy without going through the inventory, for testing.
+  - Lua's `I.UI.addMode('Alchemy')` opens alchemy without going through the inventory, for testing. `addMode('Enchanting', {target = gem})` opens enchanting with a soul gem, and `{target = npc}` with an enchanter.
+  - The enchanting window can open before it is told who enchants, so the panel starts over when it is told.
+  - A global Lua script can teach the player a spell with `types.Actor.spells(player):add(id)`, which helps when a spell's ID isn't known.

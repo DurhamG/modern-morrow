@@ -11,17 +11,19 @@
 namespace MWGui
 {
 
+    class EffectCraftPanel;
     class ItemWidget;
 
     class EnchantingDialog : public WindowBase, public ReferenceInterface, public EffectEditorBase
     {
     public:
         EnchantingDialog();
-        virtual ~EnchantingDialog() = default;
+        ~EnchantingDialog() override;
 
         void onOpen() override;
+        void onClose() override;
 
-        void onFrame(float dt) override { checkReferenceAvailable(); }
+        void onFrame(float dt) override;
         void clear() override { resetReference(); }
 
         void setSoulGem(const MWWorld::Ptr& gem);
@@ -75,6 +77,10 @@ namespace MWGui
         ESM::EffectList mEffectList;
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+
+        // In controller menus mode, a full screen panel shows instead of this window, which stays hidden.
+        friend class EffectCraftPanel;
+        std::unique_ptr<EffectCraftPanel> mPanel;
     };
 
 }

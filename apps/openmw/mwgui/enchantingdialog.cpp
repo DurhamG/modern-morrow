@@ -23,6 +23,8 @@
 
 #include "../mwmechanics/actorutil.hpp"
 
+#include "controllerscreen.hpp"
+#include "effectcraftpanel.hpp"
 #include "itemselection.hpp"
 #include "itemwidget.hpp"
 
@@ -65,12 +67,39 @@ namespace MWGui
         mControllerButtons.mY = "#{OMWEngine:EnchantType}";
         mControllerButtons.mL1 = "#{Interface:Item}";
         mControllerButtons.mR1 = "#{Interface:Soul}";
+
+        if (Settings::gui().mControllerMenus)
+        {
+            mPanel = std::make_unique<EffectCraftPanel>(*this);
+            mAddEffectDialog.setControllerHandler(
+                [this](const SDL_ControllerButtonEvent& arg) { return mPanel->onEditorButton(arg); });
+        }
     }
+
+    EnchantingDialog::~EnchantingDialog() = default;
 
     void EnchantingDialog::onOpen()
     {
         center();
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mName);
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mPanel->show();
+        }
+    }
+
+    void EnchantingDialog::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+    }
+
+    void EnchantingDialog::onFrame(float dt)
+    {
+        checkReferenceAvailable();
+        if (mPanel != nullptr)
+            mPanel->onFrame(dt);
     }
 
     void EnchantingDialog::setSoulGem(const MWWorld::Ptr& gem)
@@ -181,6 +210,10 @@ namespace MWGui
         setItem(MWWorld::Ptr());
         startEditing();
         updateLabels();
+
+        // The window can open before it learns who enchants, so the panel starts over with what it knows now.
+        if (mPanel != nullptr && isVisible())
+            mPanel->show();
     }
 
     void EnchantingDialog::onReferenceUnavailable()
@@ -393,6 +426,9 @@ namespace MWGui
 
     bool EnchantingDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
             onCancelButtonClicked(mCancelButton);
         else if (arg.button == SDL_CONTROLLER_BUTTON_X)

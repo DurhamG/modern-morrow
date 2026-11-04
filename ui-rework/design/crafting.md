@@ -1,6 +1,6 @@
 # Crafting
 
-This covers the crafting screens in controller menus mode. The user asked for them to be designed and built without a review first, following the patterns of the other screens, and will give feedback after playing with them. They are being done one at a time. So far only alchemy is done.
+This covers the crafting screens in controller menus mode. The user asked for them to be designed and built without a review first, following the patterns of the other screens, and will give feedback after playing with them. They are being done one at a time. So far alchemy and enchanting are done.
 
 ## Alchemy
 
@@ -22,7 +22,30 @@ This covers the crafting screens in controller menus mode. The user asked for th
 - **Clicking the left stick renames the potion,** with the on-screen keyboard from character creation. Most players can keep the default name.
 - **The tools can't be swapped.** The best ones are always used, as the old window chooses them. Picking a worse tool on purpose is rare.
 
+## Enchanting
+
+### How enchanting works
+
+- The player enchants an item themselves by using a soul gem that holds a soul, or pays an enchanter to do it. Enchanting yourself can fail, which uses up the soul. Paying can't fail.
+- An enchantment needs an item, a soul gem with a soul, and one to eight effects. The effects come from the spells the player knows, as long as the effect allows enchanting.
+- Each effect has a range (self, touch or target), a magnitude from a minimum to a maximum, a duration and an area. Some effects work on one skill or attribute, such as Fortify Attribute.
+- How the enchantment casts depends on the item: once for a scroll, when it strikes or when used for a weapon, and when used or all the time for clothing and armour. Casting all the time needs a strong soul, and limits the effects to Self.
+- The item holds a limited amount of enchantment, and each effect uses some of it. The soul sets how much charge the item gets.
+
+### Decisions
+
+- **A full screen, with what is being made on the right and a list to pick from on the left.** The right side lists the item, the soul gem, the cast type, the effects, and a line to add an effect. The numbers are at the bottom: the enchantment used out of what the item holds, the cost to cast, the charge, and the price or the chance of success.
+- **A on a line on the right fills the list on the left** with what can go there: the items that can be enchanted, with how much they hold; the soul gems with souls, with the creature and its strength; or the effects the player knows, grouped by school, with the ranges each allows. Choosing one returns to the right side, on the next thing still missing. Left and right on the d-pad also move between the two sides.
+- **The highlight starts on the first thing still missing.** Enchanting with a soul gem starts on the item, because the gem is already chosen. An enchanter starts on the item too.
+- **An effect on a skill or an attribute asks which one first,** in the same list, in place of the old window's separate dialog.
+- **Effects are edited on the left side, in place of the list.** The lines are the range, the magnitude's minimum and maximum, the duration and the area, each with its value and a bar. Left and right change a value, faster the longer they are held. L1 and R1 change it by 10. Raising the minimum above the maximum raises the maximum too, as in the old window. A finishes, X deletes an effect that was already added, and B cancels. The numbers on the right follow every change, so the player sees the cost while they change the magnitude.
+- **The game's own help text explains each part.** The game already has a sentence for each line on the right and each setting of an effect. The screen shows the one for the highlighted line, so a player new to enchanting can learn it on the screen.
+- **The name comes from the item,** as in the old window. Clicking the left stick renames it with the on-screen keyboard.
+- **The chance of success shows only when the "show enchant chance" setting is on,** as in the old window. It is off by default.
+- **The enchanting window stays hidden and still makes the enchantment.** Its checks and messages are unchanged, such as for too many effects, a soul gem without a soul, or an item stolen from the enchanter. The effect dialog stays hidden too, and hands the screen its buttons while an effect is edited.
+- **The effect editor is built to be shared with spellmaking,** which edits effects the same way.
+
 ## Not done yet
 
-- Enchanting, spellmaking, recharging and repairing with your own tools still use the old windows.
+- Spellmaking, recharging and repairing with your own tools still use the old windows.
 - Mouse input. The screen only responds to a gamepad, like the other screens.

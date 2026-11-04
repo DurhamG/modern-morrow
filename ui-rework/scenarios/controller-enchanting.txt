@@ -1,0 +1,41 @@
+# Enchanting an item yourself with a soul gem in controller menus mode: choosing the item, adding and editing an
+# effect, then making the enchantment.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->addsoulgem \"golden saint\" misc_soulgem_grand"
+console "command=player->additem expensive_ring_01 1"
+console "command=player->addspell fireball"
+console "command=player->addspell \"hearth heal\""
+console "command=player->addspell shield"
+console "command=player->setenchant 60"
+lua "code=local types=require('openmw.types'); local gem=types.Actor.inventory(require('openmw.self')):find('misc_soulgem_grand'); require('openmw.interfaces').UI.addMode('Enchanting', {target=gem})" context=player
+wait frames=10
+shot start
+pad button=a
+wait frames=5
+shot items
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=a
+wait frames=5
+shot item-chosen
+pad button=a
+wait frames=5
+shot effects
+pad button=a
+wait frames=5
+shot editor
+pad button=dpdown
+wait frames=3
+pad button=dpright hold=90
+wait frames=5
+shot editor-changed
+pad button=a
+wait frames=5
+shot added
+pad button=x
+wait frames=10
+shot created
