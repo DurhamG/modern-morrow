@@ -161,7 +161,7 @@ namespace MWGui
                     screen.mSections.emplace_back(heading, lines);
             }
         }
-        screen.mHints = { { SDL_CONTROLLER_BUTTON_X, "#{sDone}" } };
+        screen.mHints = { { SDL_CONTROLLER_BUTTON_A, "#{sDone}" } };
         const MyGUI::IntCoord picture = screen.draw(mPanel, mPanelScroll);
         if (birth != nullptr)
         {
@@ -359,7 +359,7 @@ namespace MWGui
         {
             onBackClicked(mBackButton);
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
+        else if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             onOkClicked(mOkButton);
         }

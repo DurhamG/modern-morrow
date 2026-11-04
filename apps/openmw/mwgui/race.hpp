@@ -38,6 +38,7 @@ namespace MWGui
 
         void setNextButtonShow(bool shown);
         void onOpen() override;
+        void onFrame(float duration) override;
         void onClose() override;
 
         bool exit() override { return false; }

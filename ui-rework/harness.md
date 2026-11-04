@@ -54,7 +54,7 @@ Changing a header that many files include, such as `apps/openmw/mwbase/windowman
 
 ### Handing the game to the user
 
-The `pad` command connects a virtual gamepad, which stays connected. OpenMW reads sticks only from the first gamepad connected, so a real gamepad plugged in later seems not to work. Send `pad action=disconnect` before handing a running game to the user.
+The `pad` command connects a virtual gamepad, which stays connected. OpenMW reads sticks only from the first gamepad connected, so a real gamepad plugged in later seems not to work. Send `pad action=disconnect` before handing a running game to the user. It works the other way too. When a real controller is already connected, such as the Steam Controller under sdl2-compat, the game ignores the virtual pad's sticks, though its buttons still work. To test stick input, turn the real controller off first.
 
 ## Commands
 

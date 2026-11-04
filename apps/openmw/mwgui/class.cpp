@@ -317,7 +317,7 @@ namespace MWGui
             = MWBase::Environment::get().getESMStore()->get<ESM::Class>().search(mCurrentClassId);
         if (playerClass != nullptr)
             describeClass(*playerClass, screen);
-        screen.mHints = { { SDL_CONTROLLER_BUTTON_X, "#{sDone}" } };
+        screen.mHints = { { SDL_CONTROLLER_BUTTON_A, "#{sDone}" } };
         addClassImage(mPanel, screen.draw(mPanel, mPanelScroll), mCurrentClassId);
     }
 
@@ -456,7 +456,7 @@ namespace MWGui
         {
             onBackClicked(mBackButton);
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
+        else if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             onOkClicked(mOkButton);
         }

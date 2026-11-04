@@ -1,5 +1,7 @@
 #include "race.hpp"
 
+#include <cmath>
+
 #include <MyGUI_Gui.h>
 #include <MyGUI_ITexture.h>
 #include <MyGUI_ImageBox.h>
@@ -18,6 +20,7 @@
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwrender/characterpreview.hpp"
@@ -245,7 +248,7 @@ namespace MWGui
             MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 220, 30, label, sFontNormal, sBrightColour);
             hx += 30 + text->getTextSize().width + 22;
         };
-        hint(SDL_CONTROLLER_BUTTON_X, "#{sDone}");
+        hint(SDL_CONTROLLER_BUTTON_A, "#{sDone}");
         hint(SDL_CONTROLLER_BUTTON_RIGHTSTICK, "#{Interface:ChargenTurn}");
     }
 
@@ -621,7 +624,7 @@ namespace MWGui
         {
             onBackClicked(mBackButton);
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
+        else if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             onOkClicked(mOkButton);
         }
@@ -656,13 +659,38 @@ namespace MWGui
 
     bool RaceDialog::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
     {
-        if (arg.axis == SDL_CONTROLLER_AXIS_RIGHTX)
-        {
-            onPreviewScroll(nullptr, arg.value < 0 ? 1 : -1);
-            return true;
-        }
+        // onFrame turns the head from where the stick is. Each movement of the stick sends many events, so turning
+        // a step for each one spun the head round.
+        return arg.axis == SDL_CONTROLLER_AXIS_RIGHTX;
+    }
 
-        return false;
+    void RaceDialog::onFrame(float duration)
+    {
+        // How far the head turns per second with the stick pushed all the way, in radians.
+        constexpr float turnSpeed = osg::PIf;
+        constexpr float deadzone = 0.15f;
+        if (mPreview == nullptr)
+            return;
+
+        const float stick
+            = MWBase::Environment::get().getInputManager()->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTX);
+        const float magnitude = std::abs(stick);
+        if (magnitude < deadzone)
+            return;
+
+        // Squaring the deflection gives finer control near the centre of the stick.
+        const float scaled = (magnitude - deadzone) / (1.f - deadzone);
+        float angle = mCurrentAngle + std::copysign(scaled * scaled, stick) * turnSpeed * duration;
+        if (angle > osg::PIf)
+            angle -= 2 * osg::PIf;
+        else if (angle < -osg::PIf)
+            angle += 2 * osg::PIf;
+
+        // Keep the window's rotation slider in step, as the mouse wheel does.
+        const float range = static_cast<float>(mHeadRotate->getScrollRange() - 1);
+        mHeadRotate->setScrollPosition(static_cast<size_t>(std::lround((angle / (2 * osg::PIf) + 0.5f) * range)));
+        mPreview->setAngle(angle);
+        mCurrentAngle = angle;
     }
 
     const ESM::NPC& RaceDialog::getResult() const
