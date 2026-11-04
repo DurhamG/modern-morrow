@@ -66,7 +66,7 @@ GUI Settings
    :title: controller menus
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-success:`Launcher > Settings > Interface`
 
    Menus are now fully navigable with a controller using the DPad, triggers, and
