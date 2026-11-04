@@ -1,8 +1,11 @@
 name: Build and test
 
+# Branch pushes and pull requests build and test on Linux and Windows. Release tags are built by release.yml instead.
 on:
-- push
-- pull_request
+  push:
+    branches:
+      - '**'
+  pull_request:
 
 env:
   BUILD_TYPE: RelWithDebInfo
@@ -65,17 +68,6 @@ jobs:
     #   with:
     #     path: ./build_artifact.7z
     #     name: build_artifact.7z
-
-  MacOS:
-    strategy:
-      fail-fast: true
-      matrix:
-        args:
-          - image: macos-26
-          - image: macos-26-intel
-    uses: ./.github/workflows/macos.yml
-    with:
-      image: ${{ matrix.args.image }}
 
   Windows:
     strategy:
