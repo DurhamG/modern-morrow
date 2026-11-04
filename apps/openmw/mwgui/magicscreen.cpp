@@ -30,6 +30,7 @@
 #include "../mwworld/player.hpp"
 
 #include "confirmationdialog.hpp"
+#include "quickkeyassigner.hpp"
 #include "spellmodel.hpp"
 #include "tooltips.hpp"
 #include "widgets.hpp"
@@ -115,14 +116,21 @@ namespace MWGui
         mEffectsFocused = false;
         mEffectList = {};
         mRecentList = {};
+        mQuickKeys.cancel();
     }
 
     void MagicScreen::onOpen()
     {
         mHeldDirection.reset();
+        mQuickKeys.cancel();
         update();
         mShownState = currentState();
         redraw();
+    }
+
+    void MagicScreen::onClose()
+    {
+        mQuickKeys.cancel();
     }
 
     void MagicScreen::onFrame(float duration)
@@ -150,6 +158,16 @@ namespace MWGui
             mHeldDirection.reset();
             return;
         }
+
+        // While the player chooses a quick key, the d-pad picks the slot instead of moving the selection.
+        if (mQuickKeys.hasDpad())
+        {
+            mHeldDirection.reset();
+            if (mQuickKeys.update(duration))
+                redraw();
+            return;
+        }
+
         int dx = 0;
         int dy = 0;
         if (mHeldDirection.update(duration, dx, dy))
@@ -159,11 +177,20 @@ namespace MWGui
     bool MagicScreen::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (mQuickKeys.hasDpad())
+        {
+            if (mQuickKeys.onButton(arg.button))
+                redraw();
+            return true;
+        }
         switch (arg.button)
         {
             case SDL_CONTROLLER_BUTTON_A:
                 if (const int item = focusedCastable(); item >= 0)
                     ready(item);
+                break;
+            case SDL_CONTROLLER_BUTTON_LEFTSTICK:
+                startQuickKey();
                 break;
             case SDL_CONTROLLER_BUTTON_B:
                 winMgr->exitCurrentGuiMode();
@@ -504,19 +531,29 @@ namespace MWGui
         drawReadyCard(x + 12, top + 44, columnW - 24, sReadyCardHeight, readyCastable());
 
         const int recentTop = top + 44 + sReadyCardHeight + 12;
+        const int listTop = recentTop + 32;
+        if (mQuickKeys.isChoosing())
+        {
+            const int item = focusedCastable();
+            addText(mContent, x + 16, recentTop, columnW - 32, 30,
+                item >= 0 ? escaped(mCastables[item].mName) : std::string(), sFontLarge, sBrightColour);
+            const int hintsTop = ControllerUi::drawHints(mContent, x + 16, columnW - 32, bottom,
+                { { SDL_CONTROLLER_BUTTON_DPAD_UP, "#{Interface:QuickKeyChoose}" } });
+            mQuickKeys.draw(mContent, x + 16, listTop, columnW - 32, hintsTop - 12 - listTop);
+            return;
+        }
+
         addText(mContent, x + 16, recentTop, columnW - 32, 30, "#{Interface:MagicRecent}", sFontLarge, sBrightColour);
         std::vector<Row> rows;
         for (int item : recentCastables(true))
             rows.push_back(Row{ {}, item });
-        const int listTop = recentTop + 32;
-        const int listBottom = bottom - 52;
+        const int hintsTop = mEffectsFocused ? bottom : drawHints(x, top, columnW, bottom - top, focusedCastable());
+        const int listBottom = hintsTop - 12;
         if (rows.empty())
             addText(mContent, x + 16, listTop, columnW - 32, 30, "#{Interface:MagicNoRecentSpells}", sFontNormal,
                 sDimColour);
         else
             drawList(x + 4, listTop, columnW - 8, listBottom - listTop, rows, mRecentList, !mEffectsFocused);
-        if (!mEffectsFocused)
-            drawHints(x, top, bottom - top, focusedCastable());
     }
 
     void MagicScreen::drawEffects(int x, int y, int w, int h)
@@ -719,7 +756,13 @@ namespace MWGui
             marker = "#{Interface:MagicUsedToday}";
             markerColour = sDimColour;
         }
-        addText(mContent, x + w - numbersW - 8, y + 30, numbersW, 22, marker, sFontSmall, markerColour,
+        int markerRight = x + w - 8;
+        if (const int quickKey = dpadSlotOf(castable.mItem, castable.mId); quickKey > 0)
+        {
+            drawQuickKeyMarker(mContent, markerRight - 20, y + 31, 4, quickKey);
+            markerRight -= 20 + 10;
+        }
+        addText(mContent, markerRight - numbersW, y + 30, numbersW, 22, marker, sFontSmall, markerColour,
             MyGUI::Align::Right | MyGUI::Align::VCenter);
     }
 
@@ -773,6 +816,15 @@ namespace MWGui
         if (castable.mUsedToday)
             addTag("#{Interface:MagicUsedToday}", sDimColour);
 
+        if (mQuickKeys.isChoosing())
+        {
+            const int hintsTop = ControllerUi::drawHints(
+                mContent, x + 16, w - 32, y + h, { { SDL_CONTROLLER_BUTTON_DPAD_UP, "#{Interface:QuickKeyChoose}" } });
+            mQuickKeys.draw(mContent, x + 16, y + 104, w - 32, hintsTop - 12 - (y + 104));
+            return;
+        }
+
+        const int hintsTop = drawHints(x, y, w, h, item);
         int ry = y + 104;
         for (const auto& [label, value] : rows)
         {
@@ -794,7 +846,7 @@ namespace MWGui
             const std::vector<std::string> lines = wrapText(
                 mContent, localised(Widgets::describeSpellEffect(params)), w - 32 - 36, sFontNormal, 3);
             const int effectH = static_cast<int>(lines.size()) * 24;
-            if (ry + effectH > y + h - 56)
+            if (ry + effectH > hintsTop - 16)
                 break;
             addImage(mContent, x + 16, ry, 26, bigIcon(*store().get<ESM::MagicEffect>().find(params.mEffectID)));
             for (std::size_t line = 0; line < lines.size(); ++line)
@@ -802,40 +854,26 @@ namespace MWGui
                     escaped(lines[line]), sFontNormal, sNewColour);
             ry += std::max(effectH, 28) + 6;
         }
-
-        drawHints(x, y, h, item);
     }
 
-    void MagicScreen::drawHints(int x, int y, int h, int item)
+    int MagicScreen::drawHints(int x, int y, int w, int h, int item)
     {
         if (item < 0)
-            return;
+            return y + h;
         const Castable& castable = mCastables[item];
-        int hx = x + 16;
+        std::vector<Hint> hints;
         if (!castable.mReady)
-        {
-            addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_A);
-            MyGUI::TextBox* label = addText(
-                mContent, hx + 34, y + h - 44, 200, 34, "#{Interface:MagicActionReady}", sFontNormal, sBrightColour);
-            hx += 34 + label->getTextSize().width + 24;
-        }
+            hints.emplace_back(SDL_CONTROLLER_BUTTON_A, "#{Interface:MagicActionReady}");
         if (castable.mDeletable)
-        {
-            addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_X);
-            MyGUI::TextBox* label
-                = addText(mContent, hx + 34, y + h - 44, 160, 34, "#{sDelete}", sFontNormal, sBrightColour);
-            hx += 34 + label->getTextSize().width + 24;
-        }
+            hints.emplace_back(SDL_CONTROLLER_BUTTON_X, "#{sDelete}");
         if (mTab != Tab::Active)
         {
             const std::vector<Row> rows = buildRows();
             if (std::count_if(rows.begin(), rows.end(), [](const Row& row) { return row.mItem < 0; }) > 1)
-            {
-                addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_Y);
-                addText(mContent, hx + 34, y + h - 44, 200, 34, "#{Interface:MagicNextGroup}", sFontNormal,
-                    sBrightColour);
-            }
+                hints.emplace_back(SDL_CONTROLLER_BUTTON_Y, "#{Interface:MagicNextGroup}");
         }
+        hints.emplace_back(SDL_CONTROLLER_BUTTON_LEFTSTICK, "#{Interface:QuickKey}");
+        return ControllerUi::drawHints(mContent, x + 16, w - 32, y + h, hints);
     }
 
     // ---------------------------------------------------------------------------------------------------------------
@@ -942,6 +980,22 @@ namespace MWGui
         winMgr->updateSpellWindow();
         update();
         mShownState = currentState();
+        redraw();
+    }
+
+    void MagicScreen::startQuickKey()
+    {
+        const int item = focusedCastable();
+        if (item < 0)
+            return;
+        const Castable& castable = mCastables[item];
+        // Spells and powers go on a quick key by their ID. Magic items and scrolls go on as the item, so the quick
+        // key readies the item's enchantment.
+        if (castable.mItem.isEmpty())
+            mQuickKeys.start(QuickKeyAssigner::Target{ ESM::QuickKeys::Type::Magic, {}, castable.mId });
+        else
+            mQuickKeys.start(QuickKeyAssigner::Target{ ESM::QuickKeys::Type::MagicItem, castable.mItem, {} });
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         redraw();
     }
 

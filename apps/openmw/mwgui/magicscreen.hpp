@@ -10,6 +10,7 @@
 #include "../mwworld/ptr.hpp"
 
 #include "controllerscreen.hpp"
+#include "quickkeyassigner.hpp"
 
 namespace ESM
 {
@@ -28,6 +29,7 @@ namespace MWGui
         MagicScreen();
 
         void onOpen() override;
+        void onClose() override;
         void onFrame(float duration) override;
         void clear() override;
 
@@ -115,6 +117,7 @@ namespace MWGui
         ListState mRecentList;
 
         HeldDirection mHeldDirection;
+        QuickKeyAssigner mQuickKeys;
         ESM::RefId mSpellToDelete;
 
         void update();
@@ -132,12 +135,13 @@ namespace MWGui
         void drawList(int x, int y, int w, int h, const std::vector<Row>& rows, ListState& state, bool focused);
         void drawEntry(int x, int y, int w, int h, int item, bool focused);
         void drawDetails(int x, int y, int w, int h, int item);
-        void drawHints(int x, int y, int h, int item);
+        int drawHints(int x, int y, int w, int h, int item);
 
         void move(int dx, int dy);
         void changeTab(int delta);
         void nextGroup();
         void ready(int item);
+        void startQuickKey();
         void askDelete(int item);
         void onDeleteAccepted();
     };

@@ -1,0 +1,55 @@
+# Putting items and spells on d-pad quick keys from the inventory and magic screens, then using them in play, in
+# controller menus mode. A press of a direction uses one slot, and a hold uses another.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->additem p_restore_health_s 3"
+console "command=player->additem \"iron longsword\" 1"
+console "command=player->addspell fireball"
+console "command=player->addspell \"hearth heal\""
+console "command=player->setmagicka 200"
+pad button=b
+wait frames=10
+pad button=leftshoulder
+wait frames=5
+shot inventory
+pad button=leftstick
+wait frames=5
+shot inventory-choosing
+pad button=dpup
+wait frames=5
+shot inventory-assigned
+pad button=dpdown
+wait frames=5
+pad button=leftstick
+wait frames=5
+pad button=dpup hold=40
+wait frames=10
+shot inventory-assigned-hold
+pad axis=righttrigger value=1 hold=4
+wait frames=10
+pad button=rightshoulder
+wait frames=5
+shot magic-spells
+pad button=leftstick
+wait frames=5
+shot magic-choosing
+pad button=dpright
+wait frames=5
+shot magic-assigned
+pad button=b
+wait frames=15
+pad button=dpup
+wait frames=10
+shot used-press
+wait frames=150
+pad button=dpup hold=40
+wait frames=10
+shot used-hold
+wait frames=150
+pad button=dpright
+wait frames=10
+shot used-spell
+pad button=b
+wait frames=10
+pad axis=lefttrigger value=1 hold=4
+wait frames=10
+shot inventory-markers
