@@ -667,7 +667,7 @@ namespace MWGui
     void RaceDialog::onFrame(float duration)
     {
         // How far the head turns per second with the stick pushed all the way, in radians.
-        constexpr float turnSpeed = osg::PIf;
+        const float turnSpeed = osg::PIf;
         constexpr float deadzone = 0.15f;
         if (mPreview == nullptr)
             return;
