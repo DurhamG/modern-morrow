@@ -43,4 +43,4 @@ This is the design for the reworked loot window, agreed with the user. It shows 
 
 ### Not done yet
 
-- Barter and companion sharing, which use the same kind of window.
+- Mouse input. The panel only responds to a gamepad.

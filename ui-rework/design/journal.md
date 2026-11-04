@@ -51,4 +51,3 @@ Counted over Morrowind, Tribunal and Bloodmoon, about 22% of quests have no fact
 
 - Marking quests that changed since the player last looked.
 - Mouse input. The screen only responds to a gamepad.
-- The user hasn't reviewed this design yet.

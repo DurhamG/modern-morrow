@@ -40,5 +40,4 @@ This is the design for the reworked barter window, in controller menus mode. The
 
 ### Not done yet
 
-- Companion sharing, which still uses the old window.
 - The user hasn't reviewed this design yet.
