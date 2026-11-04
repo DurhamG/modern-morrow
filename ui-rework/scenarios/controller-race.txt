@@ -1,0 +1,14 @@
+# Choosing a race and a face in character creation, in controller menus mode.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console command=EnableRaceMenu
+wait frames=20
+shot race
+pad button=dpdown
+pad button=dpdown
+pad button=rightshoulder
+pad button=y
+wait frames=20
+shot race-changed
+pad axis=rightx value=1 hold=20
+wait frames=10
+shot race-turned

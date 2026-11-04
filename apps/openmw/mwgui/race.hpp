@@ -111,6 +111,11 @@ namespace MWGui
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
+
+        // In controller menus mode, a full screen panel shows the races and the head instead of this window.
+        MyGUI::Widget* mPanel = nullptr;
+        int mPanelScroll = 0;
+        void drawPanel();
     };
 }
 #endif

@@ -3,6 +3,7 @@
 #include <MyGUI_Gui.h>
 #include <MyGUI_ITexture.h>
 #include <MyGUI_ImageBox.h>
+#include <MyGUI_LayerManager.h>
 #include <MyGUI_ListBox.h>
 #include <MyGUI_ScrollBar.h>
 #include <MyGUI_UString.h>
@@ -12,6 +13,8 @@
 #include <components/debug/debuglog.hpp>
 #include <components/esm3/loadbody.hpp>
 #include <components/esm3/loadrace.hpp>
+#include <components/esm3/loadskil.hpp>
+#include <components/esm3/loadspel.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -21,6 +24,7 @@
 #include "../mwrender/renderingmanager.hpp"
 #include "../mwworld/esmstore.hpp"
 
+#include "controllerscreen.hpp"
 #include "tooltips.hpp"
 
 namespace
@@ -123,6 +127,128 @@ namespace MWGui
 
     RaceDialog::~RaceDialog() = default;
 
+    void RaceDialog::drawPanel()
+    {
+        using namespace ControllerUi;
+        if (mPanel == nullptr || !mPanel->getVisible())
+            return;
+        clearPanel(mPanel);
+        const MyGUI::IntSize size = mPanel->getSize();
+        addRect(mPanel, 0, 0, size.width, size.height, MyGUI::Colour::Black)->setNeedMouseFocus(true);
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+
+        addText(mPanel, sMargin, 20, size.width - 2 * sMargin, 40, "#{Interface:ChargenRaceTitle}", sFontTitle,
+            sBrightColour);
+        addRect(mPanel, sMargin, 66, size.width - 2 * sMargin, 1, sAccentColour, 0.2f);
+        const int top = 82;
+        const int bottom = size.height - 64;
+
+        // The races on the left.
+        constexpr int entryH = 44;
+        const int listW = 230;
+        const int count = static_cast<int>(mRaceList->getItemCount());
+        const int focus
+            = mRaceList->getIndexSelected() == MyGUI::ITEM_NONE ? 0 : static_cast<int>(mRaceList->getIndexSelected());
+        const int visible = std::max(1, (bottom - top) / entryH);
+        mPanelScroll = std::clamp(mPanelScroll, std::max(0, focus - visible + 1), focus);
+        addRect(mPanel, sMargin, top, listW, bottom - top, sPanelColour, 0.9f);
+        for (int i = mPanelScroll; i < count && i < mPanelScroll + visible; ++i)
+        {
+            const int ry = top + 6 + (i - mPanelScroll) * entryH;
+            const bool focused = i == focus;
+            if (focused)
+            {
+                addRect(mPanel, sMargin + 4, ry, listW - 8, entryH - 4, sAccentColour, 0.16f);
+                addRect(mPanel, sMargin + 4, ry, 3, entryH - 4, sAccentColour);
+            }
+            addText(mPanel, sMargin + 18, ry, listW - 30, entryH - 4, escaped(mRaceList->getItemNameAt(i).asUTF8()),
+                sFontNormal, focused ? sActiveColour : sBrightColour);
+        }
+
+        // The head, and how it looks, in the middle.
+        const int px = sMargin + listW + 20;
+        const int previewH = std::min(bottom - top - 120, 400);
+        const int previewW = previewH;
+        addRect(mPanel, px, top, previewW, previewH, MyGUI::Colour::Black);
+        if (mPreviewTexture != nullptr)
+        {
+            MyGUI::ImageBox* head = mPanel->createWidget<MyGUI::ImageBox>(
+                "ImageBox", MyGUI::IntCoord(px, top, previewW, previewH), MyGUI::Align::Default);
+            head->setRenderItemTexture(mPreviewTexture.get());
+            // The widget is Y-down, the RTT image is Y-up, so this UV is inverted
+            head->getSubWidgetMain()->_setUVSet(MyGUI::FloatRect(0.f, 1.f, 1.f, 0.f));
+            head->setNeedMouseFocus(false);
+        }
+        int ay = top + previewH + 12;
+        const auto appearance
+            = [&](SDL_GameControllerButton button, const std::string& label, const std::string& value) {
+                  addGlyph(mPanel, px, ay + 4, 22, button);
+                  addText(mPanel, px + 32, ay, 120, 30, label, sFontNormal, sTextColour);
+                  addText(mPanel, px + 32, ay, previewW - 32, 30, value, sFontNormal, sBrightColour,
+                      MyGUI::Align::Right | MyGUI::Align::VCenter);
+                  ay += 34;
+              };
+        appearance(SDL_CONTROLLER_BUTTON_Y, "#{Interface:ChargenSex}",
+            mGenderIndex == 0 ? "#{Interface:ChargenMale}" : "#{Interface:ChargenFemale}");
+        appearance(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, "#{Interface:ChargenFace}",
+            std::to_string(mFaceIndex + 1) + " / " + std::to_string(mAvailableHeads.size()));
+        appearance(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, "#{Interface:ChargenHair}",
+            std::to_string(mHairIndex + 1) + " / " + std::to_string(mAvailableHairs.size()));
+
+        // The race's description, skill bonuses and specials on the right.
+        const int dx = px + previewW + 24;
+        const int dw = size.width - sMargin - dx;
+        const ESM::Race* race = store.get<ESM::Race>().search(mCurrentRaceId);
+        if (race != nullptr && dw > 100)
+        {
+            int ty = top;
+            addText(mPanel, dx, ty, dw, 34, escaped(race->mName), sFontLarge, sBrightColour);
+            ty += 38;
+            for (const std::string& line : wrapText(mPanel, race->mDescription, dw, sFontSmall, 8))
+            {
+                addText(mPanel, dx, ty, dw, 22, escaped(line), sFontSmall, sTextColour);
+                ty += 22;
+            }
+            ty += 10;
+            addText(mPanel, dx, ty, dw, 24, "#{sBonusSkillTitle}", sFontSmall, sDimColour);
+            ty += 26;
+            for (const auto& bonus : race->mData.mBonus)
+            {
+                const ESM::Skill* skill = store.get<ESM::Skill>().search(bonus.mSkill);
+                if (skill == nullptr || ty + 24 > bottom)
+                    continue;
+                addText(mPanel, dx, ty, dw, 24, escaped(skill->mName), sFontNormal, sTextColour);
+                addText(mPanel, dx, ty, dw, 24, "+" + std::to_string(bonus.mBonus), sFontNormal, sBetterColour,
+                    MyGUI::Align::Right | MyGUI::Align::VCenter);
+                ty += 24;
+            }
+            ty += 10;
+            if (!race->mPowers.mList.empty() && ty + 26 < bottom)
+            {
+                addText(mPanel, dx, ty, dw, 24, "#{sRaceMenu7}", sFontSmall, sDimColour);
+                ty += 26;
+                for (const ESM::RefId& id : race->mPowers.mList)
+                    if (const ESM::Spell* spell = store.get<ESM::Spell>().search(id))
+                        if (ty + 24 <= bottom)
+                        {
+                            addText(mPanel, dx, ty, dw, 24, escaped(spell->mName), sFontNormal, sNewColour);
+                            ty += 24;
+                        }
+            }
+        }
+
+        // The button hints along the bottom.
+        int hx = sMargin;
+        const int hintY = size.height - 48;
+        const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
+            addGlyph(mPanel, hx, hintY + 4, 22, button);
+            MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 220, 30, label, sFontNormal, sBrightColour);
+            hx += 30 + text->getTextSize().width + 22;
+        };
+        hint(SDL_CONTROLLER_BUTTON_X, "#{sDone}");
+        hint(SDL_CONTROLLER_BUTTON_RIGHTSTICK, "#{Interface:ChargenTurn}");
+    }
+
     void RaceDialog::setNextButtonShow(bool shown)
     {
         MyGUI::Button* okButton;
@@ -191,6 +317,17 @@ namespace MWGui
         onHeadRotate(mHeadRotate, initialPos);
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mRaceList);
+
+        if (Settings::gui().mControllerMenus && mPanel == nullptr)
+            mPanel = ControllerUi::createPanelRoot("ControllerModal");
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mPanelScroll = 0;
+            mPanel->setVisible(true);
+            MyGUI::LayerManager::getInstance().upLayerItem(mPanel);
+            drawPanel();
+        }
     }
 
     void RaceDialog::setRaceId(const ESM::RefId& raceId)
@@ -214,6 +351,12 @@ namespace MWGui
     void RaceDialog::onClose()
     {
         WindowModal::onClose();
+        if (mPanel != nullptr)
+        {
+            // The panel shows the preview's texture, which goes away below.
+            mPanel->setVisible(false);
+            ControllerUi::clearPanel(mPanel);
+        }
 
         mPreviewImage->setRenderItemTexture(nullptr);
 
@@ -507,6 +650,7 @@ namespace MWGui
             winMgr->injectKeyPress(MyGUI::KeyCode::ArrowDown, 0, false);
         }
 
+        drawPanel();
         return true;
     }
 
