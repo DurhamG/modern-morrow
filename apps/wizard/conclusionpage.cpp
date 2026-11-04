@@ -30,23 +30,23 @@ void Wizard::ConclusionPage::initializePage()
         if (retailDisc)
         {
             textLabel->setText(
-                tr("<html><head/><body><p>The OpenMW Wizard successfully installed Morrowind on your "
+                tr("<html><head/><body><p>The Modern Morrow Wizard successfully installed Morrowind on your "
                    "computer.</p></body></html>"));
         }
         else
         {
             textLabel->setText(
-                tr("<html><head/><body><p>The OpenMW Wizard successfully modified your existing Morrowind "
+                tr("<html><head/><body><p>The Modern Morrow Wizard successfully modified your existing Morrowind "
                    "installation.</body></html>"));
         }
     }
     else
     {
-        textLabel->setText(
-            tr("<html><head/><body><p>The OpenMW Wizard failed to install Morrowind on your computer.</p>"
-               "<p>Please report any bugs you might have encountered to our "
-               "<a href=\"https://gitlab.com/OpenMW/openmw/issues\">bug tracker</a>.<br/>Make sure to include the "
-               "installation log.</p><br/></body></html>"));
+        textLabel->setText(tr(
+            "<html><head/><body><p>The Modern Morrow Wizard failed to install Morrowind on your computer.</p>"
+            "<p>Please report any bugs you might have encountered to our "
+            "<a href=\"https://github.com/DurhamG/modern-morrow/issues\">bug tracker</a>.<br/>Make sure to include the "
+            "installation log.</p><br/></body></html>"));
     }
 }
 

@@ -4,8 +4,8 @@
 <context>
     <name>ContentSelector</name>
     <message>
-        <source>Select language used by ESM/ESP content files to allow OpenMW to detect their encoding. </source>
-        <translation>Välj språk som används av ESM/ESP-innehållsfiler så att OpenMW kan hitta deras kodning. </translation>
+        <source>Select language used by ESM/ESP content files to allow Modern Morrow to detect their encoding. </source>
+        <translation>Välj språk som används av ESM/ESP-innehållsfiler så att Modern Morrow kan hitta deras kodning. </translation>
     </message>
 </context>
 <context>
@@ -30,8 +30,8 @@
         <translation>&lt;b&gt;Skapare:&lt;/b&gt; %1&lt;br/&gt;&lt;b&gt;Formatversion:&lt;/b&gt; %2&lt;br/&gt;&lt;b&gt;Ändrad:&lt;/b&gt; %3&lt;br/&gt;&lt;b&gt;Sökväg:&lt;/b&gt;&lt;br/&gt;%4&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Beskrivning:&lt;/b&gt;&lt;br/&gt;%5&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Beroenden: &lt;/b&gt;%6&lt;br/&gt;</translation>
     </message>
     <message>
-        <source>&lt;br/&gt;&lt;b&gt;This content file cannot be disabled because it is part of OpenMW.&lt;/b&gt;&lt;br/&gt;</source>
-        <translation>&lt;br/&gt;&lt;b&gt;Denna innehållsfil kan inte inaktiveras då den är en del av OpenMW.&lt;/b&gt;&lt;br/&gt;</translation>
+        <source>&lt;br/&gt;&lt;b&gt;This content file cannot be disabled because it is part of Modern Morrow.&lt;/b&gt;&lt;br/&gt;</source>
+        <translation>&lt;br/&gt;&lt;b&gt;Denna innehållsfil kan inte inaktiveras då den är en del av Modern Morrow.&lt;/b&gt;&lt;br/&gt;</translation>
     </message>
     <message>
         <source>&lt;br/&gt;&lt;b&gt;This content file cannot be disabled because it is enabled in a config file other than the user one.&lt;/b&gt;&lt;br/&gt;</source>
@@ -80,8 +80,8 @@ Argument:
 </translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not find %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;The application is not found.&lt;/p&gt;&lt;p&gt;Please make sure OpenMW is installed correctly and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Kunde inte hitta %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Applikationen hittas inte.&lt;/p&gt;&lt;p&gt;Se till att OpenMW är korrekt installerat och försök igen.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not find %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;The application is not found.&lt;/p&gt;&lt;p&gt;Please make sure Modern Morrow is installed correctly and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Kunde inte hitta %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Applikationen hittas inte.&lt;/p&gt;&lt;p&gt;Se till att Modern Morrow är korrekt installerat och försök igen.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not start %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;The application is not executable.&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>

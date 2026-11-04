@@ -31,8 +31,8 @@
         <translation>WizardPage</translation>
     </message>
     <message>
-        <source>Completing the OpenMW Wizard</source>
-        <translation>Завършване на съветника за OpenMW</translation>
+        <source>Completing the Modern Morrow Wizard</source>
+        <translation>Завършване на съветника за Modern Morrow</translation>
     </message>
     <message>
         <source>Placeholder</source>
@@ -50,8 +50,8 @@
         <translation>Избиране на съществуваща инсталация</translation>
     </message>
     <message>
-        <source>Select an existing installation for OpenMW to use or modify.</source>
-        <translation>Изберете съществуваща инсталация, която OpenMW да използва или промени.</translation>
+        <source>Select an existing installation for Modern Morrow to use or modify.</source>
+        <translation>Изберете съществуваща инсталация, която Modern Morrow да използва или промени.</translation>
     </message>
     <message>
         <source>Detected installations:</source>
@@ -77,8 +77,8 @@
         <translation>Импортиране на настройки от инсталацията на Morrowind.</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW трябва да вмъкне настройки от конфигурационния файл на Morrowind, за да функционира правилно.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Бележка:&lt;/span&gt; Възможно е да импортирате настройките по-късно, като стартирате съветника отново.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modern Morrow needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modern Morrow трябва да вмъкне настройки от конфигурационния файл на Morrowind, за да функционира правилно.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Бележка:&lt;/span&gt; Възможно е да импортирате настройките по-късно, като стартирате съветника отново.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Import Settings From Morrowind.ini</source>
@@ -94,11 +94,11 @@
     </message>
     <message>
         <source>Fonts shipped with the original engine are blurry with UI scaling and support only a small amount of characters,
-so OpenMW provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
-to default Morrowind fonts. Check this box if you still prefer original fonts over OpenMW ones or if you use custom bitmap fonts.</source>
+so Modern Morrow provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
+to default Morrowind fonts. Check this box if you still prefer original fonts over Modern Morrow ones or if you use custom bitmap fonts.</source>
         <translation>Шрифтовете, идващи с оригиналната игра, са размазани при мащабиране на интерфейса и поддържат малък брой символи,
-        затова OpenMW предоставя друг набор от шрифтове, за да избегне тези проблеми. Тези шрифтове използват технологията TrueType и приличат на
-        стандартните шрифтове на Morrowind. Отметнете това поле, ако предпочитате оригиналните шрифтове пред тези на OpenMW или ако използвате собствени растерни шрифтове.</translation>
+        затова Modern Morrow предоставя друг набор от шрифтове, за да избегне тези проблеми. Тези шрифтове използват технологията TrueType и приличат на
+        стандартните шрифтове на Morrowind. Отметнете това поле, ако предпочитате оригиналните шрифтове пред тези на Modern Morrow или ако използвате собствени растерни шрифтове.</translation>
     </message>
 </context>
 <context>
@@ -146,12 +146,12 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>WizardPage</translation>
     </message>
     <message>
-        <source>Welcome to the OpenMW Wizard</source>
-        <translation>Добре дошли в съветника за OpenMW</translation>
+        <source>Welcome to the Modern Morrow Wizard</source>
+        <translation>Добре дошли в съветника за Modern Morrow</translation>
     </message>
     <message>
-        <source>This Wizard will help you install Morrowind and its add-ons for OpenMW to use.</source>
-        <translation>Този съветник ще ви помогне да инсталирате Morrowind и неговите добавки, за да може да се използват от OpenMW.</translation>
+        <source>This Wizard will help you install Morrowind and its add-ons for Modern Morrow to use.</source>
+        <translation>Този съветник ще ви помогне да инсталирате Morrowind и неговите добавки, за да може да се използват от Modern Morrow.</translation>
     </message>
 </context>
 <context>
@@ -277,16 +277,16 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
 <context>
     <name>Wizard::ConclusionPage</name>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Съветникът успешно инсталира Morrowind на вашия компютър.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Съветникът успешно промени съществуващата инсталация на Morrowind.&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://gitlab.com/OpenMW/openmw/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Съветникът не успя да инсталира Morrowind на вашия компютър.&lt;/p&gt;&lt;p&gt;Моля, докладвайте всички грешки, които срещнахте в нашия &lt;a href=&quot;https://gitlab.com/OpenMW/openmw/issues&quot;&gt;тракер за грешки&lt;/a&gt;.&lt;br/&gt;Уверете се, че сте приложили инсталационния дневник.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://github.com/DurhamG/modern-morrow/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Съветникът не успя да инсталира Morrowind на вашия компютър.&lt;/p&gt;&lt;p&gt;Моля, докладвайте всички грешки, които срещнахте в нашия &lt;a href=&quot;https://github.com/DurhamG/modern-morrow/issues&quot;&gt;тракер за грешки&lt;/a&gt;.&lt;br/&gt;Уверете се, че сте приложили инсталационния дневник.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
 </context>
 <context>
@@ -452,8 +452,8 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
 <context>
     <name>Wizard::MainWizard</name>
     <message>
-        <source>OpenMW Wizard</source>
-        <translation>Съветник за OpenMW</translation>
+        <source>Modern Morrow Wizard</source>
+        <translation>Съветник за Modern Morrow</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not open %1 for writing&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
@@ -464,8 +464,8 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Не може да се отвори %1 за четене&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Моля, уверете се, че имате нужните права и опитайте отново.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Error opening OpenMW configuration file</source>
-        <translation>Грешка при отваряне на конфигурационния файл на OpenMW</translation>
+        <source>Error opening Modern Morrow configuration file</source>
+        <translation>Грешка при отваряне на конфигурационния файл на Modern Morrow</translation>
     </message>
     <message>
         <source>Quit Wizard</source>
@@ -476,16 +476,16 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Сигурни ли сте, че искате да излезете от съветника?</translation>
     </message>
     <message>
-        <source>Error creating OpenMW configuration directory</source>
-        <translation>Грешка при създаване на конфигурационната директория на OpenMW</translation>
+        <source>Error creating Modern Morrow configuration directory</source>
+        <translation>Грешка при създаване на конфигурационната директория на Modern Morrow</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not create %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Не може да се създаде %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Моля, уверете се, че имате нужните права и опитайте отново.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Error writing OpenMW configuration file</source>
-        <translation>Грешка при записване на конфигурационния файл на OpenMW</translation>
+        <source>Error writing Modern Morrow configuration file</source>
+        <translation>Грешка при записване на конфигурационния файл на Modern Morrow</translation>
     </message>
 </context>
 <context>

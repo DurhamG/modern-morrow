@@ -403,7 +403,7 @@ void Launcher::SettingsPage::populateLoadedConfigs()
                 toolTipText = tr(
                     "Global config directory used because local directory did not contain an openmw.cfg.\n"
                     "Logs and settings changed through the launcher and in-game will be saved here.\n"
-                    "This is typically a symptom of a broken OpenMW installation or bad package.");
+                    "This is typically a symptom of a broken Modern Morrow installation or bad package.");
             else
                 toolTipText = tr("Global config directory used because local directory did not contain an openmw.cfg.");
         }

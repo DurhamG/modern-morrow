@@ -75,7 +75,7 @@
             </size>
            </property>
            <property name="toolTip">
-            <string>Select language used by ESM/ESP content files to allow OpenMW to detect their encoding. </string>
+            <string>Select language used by ESM/ESP content files to allow Modern Morrow to detect their encoding. </string>
            </property>
           </widget>
          </item>

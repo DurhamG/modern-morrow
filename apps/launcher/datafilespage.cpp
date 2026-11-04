@@ -439,7 +439,7 @@ void Launcher::DataFilesPage::populateFileViews(const QString& contentModelName)
             if (currentDir.value == mDataLocal)
                 tooltip << tr("This is the data-local directory and cannot be disabled");
             else if (currentDir.value == resourcesVfs)
-                tooltip << tr("This directory is part of OpenMW and cannot be disabled");
+                tooltip << tr("This directory is part of Modern Morrow and cannot be disabled");
             else
                 tooltip << tr("This directory is enabled in an openmw.cfg other than the user one");
         }

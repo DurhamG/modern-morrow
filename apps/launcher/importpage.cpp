@@ -96,7 +96,7 @@ void Launcher::ImportPage::on_importerButton_clicked()
         {
             // File cannot be created
             QMessageBox msgBox;
-            msgBox.setWindowTitle(tr("Error writing OpenMW configuration file"));
+            msgBox.setWindowTitle(tr("Error writing Modern Morrow configuration file"));
             msgBox.setIcon(QMessageBox::Critical);
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.setText(

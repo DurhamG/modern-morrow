@@ -5,7 +5,7 @@
     <name>ComponentSelectionPage</name>
     <message>
         <source>WizardPage</source>
-        <translation>Assistant d&apos;installation d&apos;OpenMW</translation>
+        <translation>Assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>Select Components</source>
@@ -28,11 +28,11 @@
     <name>ConclusionPage</name>
     <message>
         <source>WizardPage</source>
-        <translation>Assistant d&apos;installation d&apos;OpenMW</translation>
+        <translation>Assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
-        <source>Completing the OpenMW Wizard</source>
-        <translation>Fin de l&apos;Assistant d&apos;installation d&apos;OpenMW</translation>
+        <source>Completing the Modern Morrow Wizard</source>
+        <translation>Fin de l&apos;Assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>Placeholder</source>
@@ -43,15 +43,15 @@
     <name>ExistingInstallationPage</name>
     <message>
         <source>WizardPage</source>
-        <translation>Assistant d&apos;installation d&apos;OpenMW</translation>
+        <translation>Assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>Select Existing Installation</source>
         <translation>Sélection d&apos;une installation existante</translation>
     </message>
     <message>
-        <source>Select an existing installation for OpenMW to use or modify.</source>
-        <translation>Sélectionnez une installation existante pour l&apos;utiliser ou la modifier avec OpenMW</translation>
+        <source>Select an existing installation for Modern Morrow to use or modify.</source>
+        <translation>Sélectionnez une installation existante pour l&apos;utiliser ou la modifier avec Modern Morrow</translation>
     </message>
     <message>
         <source>Detected installations:</source>
@@ -66,7 +66,7 @@
     <name>ImportPage</name>
     <message>
         <source>WizardPage</source>
-        <translation>Assistant d&apos;installation d&apos;OpenMW</translation>
+        <translation>Assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>Import Settings</source>
@@ -77,8 +77,8 @@
         <translation>Importe les paramètres depuis une installation de Morrowind.</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Afin de fonctionner correctement, OpenMW nécessite d&apos;importer les paramètres depuis le fichier de configuration de Morrowind.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note :&lt;/span&gt; Il est possible d&apos;importer les paramètres plus tard en relançant l&apos;Assistant d&apos;installation.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modern Morrow needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Afin de fonctionner correctement, Modern Morrow nécessite d&apos;importer les paramètres depuis le fichier de configuration de Morrowind.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note :&lt;/span&gt; Il est possible d&apos;importer les paramètres plus tard en relançant l&apos;Assistant d&apos;installation.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Import Settings From Morrowind.ini</source>
@@ -94,16 +94,16 @@
     </message>
     <message>
         <source>Fonts shipped with the original engine are blurry with UI scaling and support only a small amount of characters,
-so OpenMW provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
-to default Morrowind fonts. Check this box if you still prefer original fonts over OpenMW ones or if you use custom bitmap fonts.</source>
-        <translation>Les polices fournies avec le moteur de jeu original sont floues lorsque l&apos;interface utilisateur est agrandie. De plus, elles ne supportent qu&apos;un faible nombre de caractères. Afin d&apos;éviter ces désagréments, OpenMW propose son propre ensemble de polices. Ces polices sont encodées au format TrueType et sont fort similaires aux polices originales. Sélectionnez cette option si vous préférez utiliser les polices originales - à la place de celles fournies par OpenMW - ou si vous utilisez vos propres polices au format bitmap.</translation>
+so Modern Morrow provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
+to default Morrowind fonts. Check this box if you still prefer original fonts over Modern Morrow ones or if you use custom bitmap fonts.</source>
+        <translation>Les polices fournies avec le moteur de jeu original sont floues lorsque l&apos;interface utilisateur est agrandie. De plus, elles ne supportent qu&apos;un faible nombre de caractères. Afin d&apos;éviter ces désagréments, Modern Morrow propose son propre ensemble de polices. Ces polices sont encodées au format TrueType et sont fort similaires aux polices originales. Sélectionnez cette option si vous préférez utiliser les polices originales - à la place de celles fournies par Modern Morrow - ou si vous utilisez vos propres polices au format bitmap.</translation>
     </message>
 </context>
 <context>
     <name>InstallationPage</name>
     <message>
         <source>WizardPage</source>
-        <translation>Assistant d&apos;installation d&apos;OpenMW</translation>
+        <translation>Assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>Installing</source>
@@ -118,7 +118,7 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
     <name>InstallationTargetPage</name>
     <message>
         <source>WizardPage</source>
-        <translation>Assistant d&apos;installation d&apos;OpenMW</translation>
+        <translation>Assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>Select Installation Destination</source>
@@ -141,22 +141,22 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
     <name>IntroPage</name>
     <message>
         <source>WizardPage</source>
-        <translation>Assistant d&apos;installation d&apos;OpenMW</translation>
+        <translation>Assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
-        <source>Welcome to the OpenMW Wizard</source>
-        <translation>Bienvenue sur l&apos;assistant d&apos;installation d&apos;OpenMW</translation>
+        <source>Welcome to the Modern Morrow Wizard</source>
+        <translation>Bienvenue sur l&apos;assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
-        <source>This Wizard will help you install Morrowind and its add-ons for OpenMW to use.</source>
-        <translation>Cet assistant vous aidera à installer Morrowind et ses extensions afin que vous lanciez le jeu avec OpenMW.</translation>
+        <source>This Wizard will help you install Morrowind and its add-ons for Modern Morrow to use.</source>
+        <translation>Cet assistant vous aidera à installer Morrowind et ses extensions afin que vous lanciez le jeu avec Modern Morrow.</translation>
     </message>
 </context>
 <context>
     <name>LanguageSelectionPage</name>
     <message>
         <source>WizardPage</source>
-        <translation>Assistant d&apos;installation d&apos;OpenMW</translation>
+        <translation>Assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>Select Morrowind Language</source>
@@ -175,7 +175,7 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
     <name>MethodSelectionPage</name>
     <message>
         <source>WizardPage</source>
-        <translation>Assistant d&apos;installation d&apos;OpenMW</translation>
+        <translation>Assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>Select Installation Method</source>
@@ -275,16 +275,16 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
 <context>
     <name>Wizard::ConclusionPage</name>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L&apos;Assistant d&apos;installation d&apos;OpenMW a installé Morrowind sur votre ordinateur avec succès !&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L&apos;Assistant d&apos;installation d&apos;Modern Morrow a installé Morrowind sur votre ordinateur avec succès !&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L&apos;Assistant d&apos;installation d&apos;OpenMW a modifié votre installation de Morrowind avec succès !&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L&apos;Assistant d&apos;installation d&apos;Modern Morrow a modifié votre installation de Morrowind avec succès !&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://gitlab.com/OpenMW/openmw/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L&apos;assistant d&apos;installation d&apos;OpenMW a échoué l&apos;installation de Morrowind.&lt;/p&gt;&lt;p&gt;Veuillez signaler les bogues que vous avez pu rencontrer sur notre. &lt;a href=&quot;https://gitlab.com/OpenMW/openmw/issues&quot;&gt;bug tracker&lt;/a&gt; (en anglais).&lt;br/&gt;Assurez-vous d&apos;inclure le journal (log) d&apos;installation.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://github.com/DurhamG/modern-morrow/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L&apos;assistant d&apos;installation d&apos;Modern Morrow a échoué l&apos;installation de Morrowind.&lt;/p&gt;&lt;p&gt;Veuillez signaler les bogues que vous avez pu rencontrer sur notre. &lt;a href=&quot;https://github.com/DurhamG/modern-morrow/issues&quot;&gt;bug tracker&lt;/a&gt; (en anglais).&lt;br/&gt;Assurez-vous d&apos;inclure le journal (log) d&apos;installation.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
 </context>
 <context>
@@ -450,8 +450,8 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
 <context>
     <name>Wizard::MainWizard</name>
     <message>
-        <source>OpenMW Wizard</source>
-        <translation>Assistant d&apos;installation d&apos;OpenMW</translation>
+        <source>Modern Morrow Wizard</source>
+        <translation>Assistant d&apos;installation d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not open %1 for writing&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
@@ -462,7 +462,7 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Impossible d&apos;ouvrir %1 en lecture.&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Assurez-vous d&apos;avoir les bons droits d&apos;accès puis réessayez.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Error opening OpenMW configuration file</source>
+        <source>Error opening Modern Morrow configuration file</source>
         <translation>Erreur lors de l&apos;ouverture du fichier de configuration.</translation>
     </message>
     <message>
@@ -474,16 +474,16 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Êtes-vous sûr de vouloir quitter l&apos;Assistant d&apos;installation ?</translation>
     </message>
     <message>
-        <source>Error creating OpenMW configuration directory</source>
-        <translation>Erreur lors de la création du dossier de configuration d&apos;OpenMW</translation>
+        <source>Error creating Modern Morrow configuration directory</source>
+        <translation>Erreur lors de la création du dossier de configuration d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not create %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Impossible de créer %1.&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Assurez-vous d&apos;avoir les bons droits d&apos;accès puis réessayez.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Error writing OpenMW configuration file</source>
-        <translation>Erreur lors de l&apos;écriture dans le fichier de configuration d&apos;OpenMW.</translation>
+        <source>Error writing Modern Morrow configuration file</source>
+        <translation>Erreur lors de l&apos;écriture dans le fichier de configuration d&apos;Modern Morrow.</translation>
     </message>
 </context>
 <context>

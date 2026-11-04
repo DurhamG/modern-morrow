@@ -72,7 +72,7 @@ bool Process::ProcessInvoker::startProcess(const QString& name, const QStringLis
         msgBox.setText(
             tr("<html><head/><body><p><b>Could not find %1</b></p>"
                "<p>The application is not found.</p>"
-               "<p>Please make sure OpenMW is installed correctly and try again.</p></body></html>")
+               "<p>Please make sure Modern Morrow is installed correctly and try again.</p></body></html>")
                 .arg(info.fileName()));
         msgBox.exec();
         return false;

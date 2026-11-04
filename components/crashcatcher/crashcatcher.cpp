@@ -197,7 +197,7 @@ namespace
                 SDL_MESSAGEBOX_ERROR,
                 nullptr,
                 "Fatal Error",
-                "OpenMW has encountered a fatal error.\n"
+                "Modern Morrow has encountered a fatal error.\n"
                 "Allow debugger to connect to debuginfod server to generate a more detailed crash log?\n"
                 "It may take several minutes longer to generate the crash log.",
                 buttons.size(),
@@ -540,8 +540,8 @@ static void crash_catcher(int signum, siginfo_t* siginfo, void* /*context*/)
     // even faulty applications shouldn't be able to freeze the X server.
     usleep(100000);
 
-    const std::string message = "OpenMW has encountered a fatal error.\nCrash log saved to '" + std::string(logfile)
-        + "'.\n Please report this to https://gitlab.com/OpenMW/openmw/issues !";
+    const std::string message = "Modern Morrow has encountered a fatal error.\nCrash log saved to '"
+        + std::string(logfile) + "'.\n Please report this to https://github.com/DurhamG/modern-morrow/issues !";
     SDL_ShowSimpleMessageBox(0, "Fatal Error", message.c_str(), nullptr);
 
     exit(0);

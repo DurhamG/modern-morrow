@@ -4,8 +4,8 @@
 <context>
     <name>ContentSelector</name>
     <message>
-        <source>Select language used by ESM/ESP content files to allow OpenMW to detect their encoding. </source>
-        <translation>Изберете езика, който се използва от ESM/ESP файловете със съдържание, за да може OpenMW да открие тяхното кодиране. </translation>
+        <source>Select language used by ESM/ESP content files to allow Modern Morrow to detect their encoding. </source>
+        <translation>Изберете езика, който се използва от ESM/ESP файловете със съдържание, за да може Modern Morrow да открие тяхното кодиране. </translation>
     </message>
 </context>
 <context>
@@ -26,8 +26,8 @@
 <context>
     <name>ContentSelectorModel::EsmFile</name>
     <message>
-        <source>&lt;br/&gt;&lt;b&gt;This content file cannot be disabled because it is part of OpenMW.&lt;/b&gt;&lt;br/&gt;</source>
-        <translation>&lt;br/&gt;&lt;b&gt;Този файл със съдържание не може да бъде изключен, защото е част от OpenMW.&lt;/b&gt;&lt;br/&gt;</translation>
+        <source>&lt;br/&gt;&lt;b&gt;This content file cannot be disabled because it is part of Modern Morrow.&lt;/b&gt;&lt;br/&gt;</source>
+        <translation>&lt;br/&gt;&lt;b&gt;Този файл със съдържание не може да бъде изключен, защото е част от Modern Morrow.&lt;/b&gt;&lt;br/&gt;</translation>
     </message>
     <message>
         <source>&lt;br/&gt;&lt;b&gt;This content file cannot be disabled because it is enabled in a config file other than the user one.&lt;/b&gt;&lt;br/&gt;</source>
@@ -68,8 +68,8 @@
         <translation>Грешка при стартиране на изпълнимия файл</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not find %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;The application is not found.&lt;/p&gt;&lt;p&gt;Please make sure OpenMW is installed correctly and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Не може да се открие %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Приложението не е открито.&lt;/p&gt;&lt;p&gt;Моля, уверете се, че OpenMW е инсталиран правилно и опитайте отново.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not find %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;The application is not found.&lt;/p&gt;&lt;p&gt;Please make sure Modern Morrow is installed correctly and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Не може да се открие %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Приложението не е открито.&lt;/p&gt;&lt;p&gt;Моля, уверете се, че Modern Morrow е инсталиран правилно и опитайте отново.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not start %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;The application is not executable.&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>

@@ -31,7 +31,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Completing the OpenMW Wizard</source>
+        <source>Completing the Modern Morrow Wizard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -50,7 +50,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select an existing installation for OpenMW to use or modify.</source>
+        <source>Select an existing installation for Modern Morrow to use or modify.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -77,7 +77,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modern Morrow needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -94,8 +94,8 @@
     </message>
     <message>
         <source>Fonts shipped with the original engine are blurry with UI scaling and support only a small amount of characters,
-so OpenMW provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
-to default Morrowind fonts. Check this box if you still prefer original fonts over OpenMW ones or if you use custom bitmap fonts.</source>
+so Modern Morrow provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
+to default Morrowind fonts. Check this box if you still prefer original fonts over Modern Morrow ones or if you use custom bitmap fonts.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -144,11 +144,11 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Welcome to the OpenMW Wizard</source>
+        <source>Welcome to the Modern Morrow Wizard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This Wizard will help you install Morrowind and its add-ons for OpenMW to use.</source>
+        <source>This Wizard will help you install Morrowind and its add-ons for Modern Morrow to use.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -275,15 +275,15 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
 <context>
     <name>Wizard::ConclusionPage</name>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://gitlab.com/OpenMW/openmw/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://github.com/DurhamG/modern-morrow/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -450,7 +450,7 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
 <context>
     <name>Wizard::MainWizard</name>
     <message>
-        <source>OpenMW Wizard</source>
+        <source>Modern Morrow Wizard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -462,7 +462,7 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Error opening OpenMW configuration file</source>
+        <source>Error opening Modern Morrow configuration file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -474,7 +474,7 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Error creating OpenMW configuration directory</source>
+        <source>Error creating Modern Morrow configuration directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -482,7 +482,7 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Error writing OpenMW configuration file</source>
+        <source>Error writing Modern Morrow configuration file</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

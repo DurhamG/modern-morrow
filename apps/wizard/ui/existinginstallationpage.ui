@@ -17,7 +17,7 @@
    <string>Select Existing Installation</string>
   </property>
   <property name="subTitle">
-   <string>Select an existing installation for OpenMW to use or modify.</string>
+   <string>Select an existing installation for Modern Morrow to use or modify.</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

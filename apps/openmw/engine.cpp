@@ -580,7 +580,7 @@ void OMW::Engine::createWindow()
     {
         while (!mWindow)
         {
-            mWindow = SDL_CreateWindow("OpenMW", posX, posY, width, height, flags);
+            mWindow = SDL_CreateWindow("Modern Morrow", posX, posY, width, height, flags);
             if (!mWindow)
             {
                 // Try with a lower AA

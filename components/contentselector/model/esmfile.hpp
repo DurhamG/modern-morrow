@@ -72,7 +72,8 @@ namespace ContentSelectorModel
                                   .arg(mGameFiles.join(", ").toHtmlEscaped());
 
             if (mBuiltIn)
-                tooltip += tr("<br/><b>This content file cannot be disabled because it is part of OpenMW.</b><br/>");
+                tooltip
+                    += tr("<br/><b>This content file cannot be disabled because it is part of Modern Morrow.</b><br/>");
             else if (mFromAnotherConfigFile)
                 tooltip += tr(
                     "<br/><b>This content file cannot be disabled because it is enabled in a config file other than "

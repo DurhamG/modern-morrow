@@ -4,7 +4,7 @@
 <context>
     <name>ContentSelector</name>
     <message>
-        <source>Select language used by ESM/ESP content files to allow OpenMW to detect their encoding. </source>
+        <source>Select language used by ESM/ESP content files to allow Modern Morrow to detect their encoding. </source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -30,7 +30,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&lt;br/&gt;&lt;b&gt;This content file cannot be disabled because it is part of OpenMW.&lt;/b&gt;&lt;br/&gt;</source>
+        <source>&lt;br/&gt;&lt;b&gt;This content file cannot be disabled because it is part of Modern Morrow.&lt;/b&gt;&lt;br/&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -78,7 +78,7 @@ Arguments:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not find %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;The application is not found.&lt;/p&gt;&lt;p&gt;Please make sure OpenMW is installed correctly and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not find %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;The application is not found.&lt;/p&gt;&lt;p&gt;Please make sure Modern Morrow is installed correctly and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

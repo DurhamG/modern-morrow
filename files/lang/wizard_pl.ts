@@ -31,8 +31,8 @@
         <translation>Strona kreatora</translation>
     </message>
     <message>
-        <source>Completing the OpenMW Wizard</source>
-        <translation>Kończenie pracy kreatora OpenMW</translation>
+        <source>Completing the Modern Morrow Wizard</source>
+        <translation>Kończenie pracy kreatora Modern Morrow</translation>
     </message>
     <message>
         <source>Placeholder</source>
@@ -50,8 +50,8 @@
         <translation>Wybierz Istniejącą Instalację</translation>
     </message>
     <message>
-        <source>Select an existing installation for OpenMW to use or modify.</source>
-        <translation>Wybierz istniejącą instalację, którą OpenMW ma wykorzystać lub zmodyfikować.</translation>
+        <source>Select an existing installation for Modern Morrow to use or modify.</source>
+        <translation>Wybierz istniejącą instalację, którą Modern Morrow ma wykorzystać lub zmodyfikować.</translation>
     </message>
     <message>
         <source>Detected installations:</source>
@@ -77,8 +77,8 @@
         <translation>Importuj ustawienia z instalacji Morrowind.</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aby działać poprawnie, OpenMW musi zaimportować ustawienia z pliku konfiguracyjnego Morrowind.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Uwaga:&lt;/span&gt; Ustawienia można zaimportować później, uruchamiając ponownie ten kreator.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modern Morrow needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aby działać poprawnie, Modern Morrow musi zaimportować ustawienia z pliku konfiguracyjnego Morrowind.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Uwaga:&lt;/span&gt; Ustawienia można zaimportować później, uruchamiając ponownie ten kreator.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Import Settings From Morrowind.ini</source>
@@ -94,11 +94,11 @@
     </message>
     <message>
         <source>Fonts shipped with the original engine are blurry with UI scaling and support only a small amount of characters,
-so OpenMW provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
-to default Morrowind fonts. Check this box if you still prefer original fonts over OpenMW ones or if you use custom bitmap fonts.</source>
+so Modern Morrow provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
+to default Morrowind fonts. Check this box if you still prefer original fonts over Modern Morrow ones or if you use custom bitmap fonts.</source>
         <translation>Czcionki dostarczane wraz z oryginalnym silnikiem są rozmyte przy skalowaniu interfejsu użytkownika i obsługują tylko niewielką liczbę znaków,
-dlatego OpenMW udostępnia inny zestaw czcionek, aby uniknąć tych problemów. Czcionki te wykorzystują technologię TrueType i są dość podobne
-do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginalne czcionki od czcionek OpenMW lub jeśli używasz niestandardowych czcionek bitmapowych.</translation>
+dlatego Modern Morrow udostępnia inny zestaw czcionek, aby uniknąć tych problemów. Czcionki te wykorzystują technologię TrueType i są dość podobne
+do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginalne czcionki od czcionek Modern Morrow lub jeśli używasz niestandardowych czcionek bitmapowych.</translation>
     </message>
 </context>
 <context>
@@ -146,12 +146,12 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
         <translation>Strona kreatora</translation>
     </message>
     <message>
-        <source>Welcome to the OpenMW Wizard</source>
-        <translation>Witaj w kreatorze OpenMW</translation>
+        <source>Welcome to the Modern Morrow Wizard</source>
+        <translation>Witaj w kreatorze Modern Morrow</translation>
     </message>
     <message>
-        <source>This Wizard will help you install Morrowind and its add-ons for OpenMW to use.</source>
-        <translation>Ten kreator pomoże Ci zainstalować Morrowind i jego dodatki do OpenMW.</translation>
+        <source>This Wizard will help you install Morrowind and its add-ons for Modern Morrow to use.</source>
+        <translation>Ten kreator pomoże Ci zainstalować Morrowind i jego dodatki do Modern Morrow.</translation>
     </message>
 </context>
 <context>
@@ -277,16 +277,16 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
 <context>
     <name>Wizard::ConclusionPage</name>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Kreator OpenMW zainstalował pomyślnie Morrowind na twoim komputerze.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Kreator Modern Morrow zainstalował pomyślnie Morrowind na twoim komputerze.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Kreator OpenMW pomyślnie zmodyfikował twoją istniejącą instalację Morrowind.&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Kreator Modern Morrow pomyślnie zmodyfikował twoją istniejącą instalację Morrowind.&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://gitlab.com/OpenMW/openmw/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Kreator OpenMW nie zainstalował Morrowind na twoim komputerze.&lt;/p&gt;&lt;p&gt;Wszelkie napotkane błędy prosimy zgłaszać do naszego &lt;a href=&quot;https://gitlab.com/OpenMW/openmw/issues&quot;&gt;systemu śledzenia błędów&lt;/a&gt;.&lt;br/&gt;Upewnij się, aby dołączyć dziennik instalacji.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://github.com/DurhamG/modern-morrow/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Kreator Modern Morrow nie zainstalował Morrowind na twoim komputerze.&lt;/p&gt;&lt;p&gt;Wszelkie napotkane błędy prosimy zgłaszać do naszego &lt;a href=&quot;https://github.com/DurhamG/modern-morrow/issues&quot;&gt;systemu śledzenia błędów&lt;/a&gt;.&lt;br/&gt;Upewnij się, aby dołączyć dziennik instalacji.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
 </context>
 <context>
@@ -454,8 +454,8 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
 <context>
     <name>Wizard::MainWizard</name>
     <message>
-        <source>OpenMW Wizard</source>
-        <translation>Kreator OpenMW</translation>
+        <source>Modern Morrow Wizard</source>
+        <translation>Kreator Modern Morrow</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not open %1 for writing&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
@@ -466,8 +466,8 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Nie udało się otworzyć %1 do zapisu&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Upewnij się, że masz odpowiednie uprawnienia, a następnie spróbuj ponownie.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Error opening OpenMW configuration file</source>
-        <translation>Wystąpił błąd podczas otwierania pliku konfiguracyjnego OpenMW</translation>
+        <source>Error opening Modern Morrow configuration file</source>
+        <translation>Wystąpił błąd podczas otwierania pliku konfiguracyjnego Modern Morrow</translation>
     </message>
     <message>
         <source>Quit Wizard</source>
@@ -478,16 +478,16 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
         <translation>Czy na pewno chcesz opuścić kreator?</translation>
     </message>
     <message>
-        <source>Error creating OpenMW configuration directory</source>
-        <translation>Wystąpił błąd podczas tworzenia katalogu konfiguracyjnego OpenMW</translation>
+        <source>Error creating Modern Morrow configuration directory</source>
+        <translation>Wystąpił błąd podczas tworzenia katalogu konfiguracyjnego Modern Morrow</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not create %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Nie można utworzyć %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Upewnij się, że masz odpowiednie uprawnienia, a następnie spróbuj ponownie.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Error writing OpenMW configuration file</source>
-        <translation>Wystąpił błąd podczas zapisu pliku konfiguracyjnego OpenMW</translation>
+        <source>Error writing Modern Morrow configuration file</source>
+        <translation>Wystąpił błąd podczas zapisu pliku konfiguracyjnego Modern Morrow</translation>
     </message>
 </context>
 <context>

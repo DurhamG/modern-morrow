@@ -31,8 +31,8 @@
         <translation>WizardPage</translation>
     </message>
     <message>
-        <source>Completing the OpenMW Wizard</source>
-        <translation>Завершение работы Мастера установки OpenMW</translation>
+        <source>Completing the Modern Morrow Wizard</source>
+        <translation>Завершение работы Мастера установки Modern Morrow</translation>
     </message>
     <message>
         <source>Placeholder</source>
@@ -50,8 +50,8 @@
         <translation>Выбрать установленную копию игры</translation>
     </message>
     <message>
-        <source>Select an existing installation for OpenMW to use or modify.</source>
-        <translation>Выбрать установленную копию игры для использования или изменения через OpenMW.</translation>
+        <source>Select an existing installation for Modern Morrow to use or modify.</source>
+        <translation>Выбрать установленную копию игры для использования или изменения через Modern Morrow.</translation>
     </message>
     <message>
         <source>Detected installations:</source>
@@ -77,8 +77,8 @@
         <translation>Импортировать настройки из установленной копии Morrowind.</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Чтобы OpenMW мог работать правильно, ему нужно импортировать настройки из файла с настройками Morrowind.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Подсказка:&lt;/span&gt; Также можно импортировать настройки позже, запустив Мастер импорта заново.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modern Morrow needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Чтобы Modern Morrow мог работать правильно, ему нужно импортировать настройки из файла с настройками Morrowind.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Подсказка:&lt;/span&gt; Также можно импортировать настройки позже, запустив Мастер импорта заново.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Import Settings From Morrowind.ini</source>
@@ -94,11 +94,11 @@
     </message>
     <message>
         <source>Fonts shipped with the original engine are blurry with UI scaling and support only a small amount of characters,
-so OpenMW provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
-to default Morrowind fonts. Check this box if you still prefer original fonts over OpenMW ones or if you use custom bitmap fonts.</source>
+so Modern Morrow provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
+to default Morrowind fonts. Check this box if you still prefer original fonts over Modern Morrow ones or if you use custom bitmap fonts.</source>
         <translation>Шрифты, поставляемые с оригинальной игрой, становятся размытыми при масштабировании интерфейса и поддерживают ограниченное количество символов,
-поэтому в комплекте с OpenMW идет набор шрифтов, не имеющих этих проблем. Они используют технологию TrueType и весьма похожи на шрифты Morrowind.
-Включите эту опцию, если вы все равно хотите использовать оригинальные шрифты вместо шрифтов OpenMW, или если вы используете сторонние растровые шрифты.</translation>
+поэтому в комплекте с Modern Morrow идет набор шрифтов, не имеющих этих проблем. Они используют технологию TrueType и весьма похожи на шрифты Morrowind.
+Включите эту опцию, если вы все равно хотите использовать оригинальные шрифты вместо шрифтов Modern Morrow, или если вы используете сторонние растровые шрифты.</translation>
     </message>
 </context>
 <context>
@@ -146,12 +146,12 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>WizardPage</translation>
     </message>
     <message>
-        <source>Welcome to the OpenMW Wizard</source>
+        <source>Welcome to the Modern Morrow Wizard</source>
         <translation>Добро пожаловать в Мастер установки</translation>
     </message>
     <message>
-        <source>This Wizard will help you install Morrowind and its add-ons for OpenMW to use.</source>
-        <translation>Этот Мастер поможет вам установить Morrowind и его дополнения, чтобы OpenMW мог их использовать.</translation>
+        <source>This Wizard will help you install Morrowind and its add-ons for Modern Morrow to use.</source>
+        <translation>Этот Мастер поможет вам установить Morrowind и его дополнения, чтобы Modern Morrow мог их использовать.</translation>
     </message>
 </context>
 <context>
@@ -277,16 +277,16 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
 <context>
     <name>Wizard::ConclusionPage</name>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Мастер OpenMW успешно установил Morrowind на ваш компьютер.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Мастер Modern Morrow успешно установил Morrowind на ваш компьютер.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Мастер OpenMW успешно завершил изменение вашей установленной копии Morrowind.&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Мастер Modern Morrow успешно завершил изменение вашей установленной копии Morrowind.&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://gitlab.com/OpenMW/openmw/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Мастеру OpenMW не удалось установить Morrowind на ваш компьютер.&lt;/p&gt;&lt;p&gt;Пожалуйста, сообщите о встреченных вами ошибках на наш &lt;a href=&quot;https://gitlab.com/OpenMW/openmw/issues&quot;&gt;багтрекер&lt;/a&gt;.&lt;br/&gt;Не забудьте включить туда лог установки.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://github.com/DurhamG/modern-morrow/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Мастеру Modern Morrow не удалось установить Morrowind на ваш компьютер.&lt;/p&gt;&lt;p&gt;Пожалуйста, сообщите о встреченных вами ошибках на наш &lt;a href=&quot;https://github.com/DurhamG/modern-morrow/issues&quot;&gt;багтрекер&lt;/a&gt;.&lt;br/&gt;Не забудьте включить туда лог установки.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
 </context>
 <context>
@@ -452,8 +452,8 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
 <context>
     <name>Wizard::MainWizard</name>
     <message>
-        <source>OpenMW Wizard</source>
-        <translation>Мастер OpenMW</translation>
+        <source>Modern Morrow Wizard</source>
+        <translation>Мастер Modern Morrow</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not open %1 for writing&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
@@ -464,8 +464,8 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Не удалось открыть %1 для чтения&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Пожалуйста, проверьте права доступа и повторите попытку.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Error opening OpenMW configuration file</source>
-        <translation>Не удалось открыть файл с настройками OpenMW</translation>
+        <source>Error opening Modern Morrow configuration file</source>
+        <translation>Не удалось открыть файл с настройками Modern Morrow</translation>
     </message>
     <message>
         <source>Quit Wizard</source>
@@ -476,16 +476,16 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Вы уверены, что хотите завершить работу Мастера?</translation>
     </message>
     <message>
-        <source>Error creating OpenMW configuration directory</source>
-        <translation>Не удалось создать директорию для настроек OpenMW</translation>
+        <source>Error creating Modern Morrow configuration directory</source>
+        <translation>Не удалось создать директорию для настроек Modern Morrow</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not create %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Не удалось создать %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Пожалуйста, проверьте права доступа и повторите попытку.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Error writing OpenMW configuration file</source>
-        <translation>Не удалось записать данные в файл с настройками OpenMW</translation>
+        <source>Error writing Modern Morrow configuration file</source>
+        <translation>Не удалось записать данные в файл с настройками Modern Morrow</translation>
     </message>
 </context>
 <context>

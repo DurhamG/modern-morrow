@@ -283,11 +283,11 @@
     </message>
     <message>
         <source>Fonts shipped with the original engine are blurry with UI scaling and support only a small amount of characters,
-so OpenMW provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
-to default Morrowind fonts. Check this box if you still prefer original fonts over OpenMW ones or if you use custom bitmap fonts.</source>
+so Modern Morrow provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
+to default Morrowind fonts. Check this box if you still prefer original fonts over Modern Morrow ones or if you use custom bitmap fonts.</source>
         <translation>Шрифтовете, идващи с оригиналната игра, са размазани при мащабиране на интерфейса и поддържат малък брой символи,
-        затова OpenMW предоставя друг набор от шрифтове, за да избегне тези проблеми. Тези шрифтове използват технологията TrueType и приличат на
-        стандартните шрифтове на Morrowind. Отметнете това поле, ако все пак предпочитате оригиналните шрифтове пред тези на OpenMW или ако използвате собствени растерни шрифтове.</translation>
+        затова Modern Morrow предоставя друг набор от шрифтове, за да избегне тези проблеми. Тези шрифтове използват технологията TrueType и приличат на
+        стандартните шрифтове на Morrowind. Отметнете това поле, ако все пак предпочитате оригиналните шрифтове пред тези на Modern Morrow или ако използвате собствени растерни шрифтове.</translation>
     </message>
     <message>
         <source>Import Bitmap Fonts</source>
@@ -361,8 +361,8 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Това е локалната директория с данни и не може да бъде изключена</translation>
     </message>
     <message>
-        <source>This directory is part of OpenMW and cannot be disabled</source>
-        <translation>Тази директория е част от OpenMW и не може да бъде изключена</translation>
+        <source>This directory is part of Modern Morrow and cannot be disabled</source>
+        <translation>Тази директория е част от Modern Morrow и не може да бъде изключена</translation>
     </message>
     <message>
         <source>This directory is enabled in an openmw.cfg other than the user one</source>
@@ -443,8 +443,8 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
 <context>
     <name>Launcher::ImportPage</name>
     <message>
-        <source>Error writing OpenMW configuration file</source>
-        <translation>Грешка при записване на конфигурационния файл на OpenMW</translation>
+        <source>Error writing Modern Morrow configuration file</source>
+        <translation>Грешка при записване на конфигурационния файл на Modern Morrow</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not open or create %1 for writing &lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
@@ -470,15 +470,15 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Затвори</translation>
     </message>
     <message>
-        <source>Launch OpenMW</source>
-        <translation>Стартирай OpenMW</translation>
+        <source>Launch Modern Morrow</source>
+        <translation>Стартирай Modern Morrow</translation>
     </message>
     <message>
         <source>Help</source>
         <translation>Помощ</translation>
     </message>
     <message>
-        <source>Error creating OpenMW configuration directory: code %0</source>
+        <source>Error creating Modern Morrow configuration directory: code %0</source>
         <translation>Грешка при създаване на конфигурационната директория на OpenMW: код %0</translation>
     </message>
     <message>
@@ -490,8 +490,8 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Първо стартиране</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Welcome to OpenMW!&lt;/b&gt;&lt;/p&gt;&lt;p&gt;It is recommended to run the Installation Wizard.&lt;/p&gt;&lt;p&gt;The Wizard will let you select an existing Morrowind installation, or install Morrowind for OpenMW to use.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Добре дошли в OpenMW!&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Препоръчително е да стартирате инсталационния съветник.&lt;/p&gt;&lt;p&gt;Съветникът ще ви позволи да изберете съществуваща инсталация на Morrowind или да инсталирате Morrowind, който да се използва от OpenMW.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Welcome to Modern Morrow!&lt;/b&gt;&lt;/p&gt;&lt;p&gt;It is recommended to run the Installation Wizard.&lt;/p&gt;&lt;p&gt;The Wizard will let you select an existing Morrowind installation, or install Morrowind for Modern Morrow to use.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Добре дошли в Modern Morrow!&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Препоръчително е да стартирате инсталационния съветник.&lt;/p&gt;&lt;p&gt;Съветникът ще ви позволи да изберете съществуваща инсталация на Morrowind или да инсталирате Morrowind, който да се използва от Modern Morrow.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Run &amp;Installation Wizard</source>
@@ -502,20 +502,20 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Пропусни</translation>
     </message>
     <message>
-        <source>OpenMW %1 release</source>
-        <translation>OpenMW издание %1</translation>
+        <source>Modern Morrow, based on OpenMW %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>OpenMW development (%1)</source>
-        <translation>OpenMW разработка (%1)</translation>
+        <source>Modern Morrow development (%1)</source>
+        <translation>Modern Morrow разработка (%1)</translation>
     </message>
     <message>
         <source>Compiled on %1 %2</source>
         <translation>Компилирано на %1 %2</translation>
     </message>
     <message>
-        <source>Error opening OpenMW configuration file</source>
-        <translation>Грешка при отваряне на конфигурационния файл на OpenMW</translation>
+        <source>Error opening Modern Morrow configuration file</source>
+        <translation>Грешка при отваряне на конфигурационния файл на Modern Morrow</translation>
     </message>
     <message>
         <source>&lt;br&gt;&lt;b&gt;Could not open %0 for reading:&lt;/b&gt;&lt;br&gt;&lt;br&gt;%1&lt;br&gt;&lt;br&gt;Please make sure you have the right permissions and try again.&lt;br&gt;</source>
@@ -538,16 +538,16 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Стартирай &amp;съветника за инсталация...</translation>
     </message>
     <message>
-        <source>Error reading OpenMW configuration files</source>
-        <translation>Грешка при четене на конфигурационните файлове на OpenMW</translation>
+        <source>Error reading Modern Morrow configuration files</source>
+        <translation>Грешка при четене на конфигурационните файлове на Modern Morrow</translation>
     </message>
     <message>
-        <source>&lt;br&gt;The problem may be due to an incomplete installation of OpenMW.&lt;br&gt;Reinstalling OpenMW may resolve the problem.&lt;br&gt;</source>
-        <translation>&lt;br&gt;Проблемът може да се дължи на непълна инсталация на OpenMW.&lt;br&gt;Преинсталирането на OpenMW може да реши проблема.&lt;br&gt;</translation>
+        <source>&lt;br&gt;The problem may be due to an incomplete installation of Modern Morrow.&lt;br&gt;Reinstalling Modern Morrow may resolve the problem.&lt;br&gt;</source>
+        <translation>&lt;br&gt;Проблемът може да се дължи на непълна инсталация на Modern Morrow.&lt;br&gt;Преинсталирането на Modern Morrow може да реши проблема.&lt;br&gt;</translation>
     </message>
     <message>
-        <source>Error writing OpenMW configuration file</source>
-        <translation>Грешка при записване на конфигурационния файл на OpenMW</translation>
+        <source>Error writing Modern Morrow configuration file</source>
+        <translation>Грешка при записване на конфигурационния файл на Modern Morrow</translation>
     </message>
     <message>
         <source>&lt;br&gt;&lt;b&gt;Could not open or create %0 for writing&lt;/b&gt;&lt;br&gt;&lt;br&gt;Please make sure you have the right permissions and try again.&lt;br&gt;</source>
@@ -566,8 +566,8 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Няма избран файл на играта</translation>
     </message>
     <message>
-        <source>&lt;br&gt;&lt;b&gt;You do not have a game file selected.&lt;/b&gt;&lt;br&gt;&lt;br&gt;OpenMW will not start without a game file selected.&lt;br&gt;</source>
-        <translation>&lt;br&gt;&lt;b&gt;Не сте избрали файл на играта.&lt;/b&gt;&lt;br&gt;&lt;br&gt;OpenMW няма да стартира без избран файл на играта.&lt;br&gt;</translation>
+        <source>&lt;br&gt;&lt;b&gt;You do not have a game file selected.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Modern Morrow will not start without a game file selected.&lt;br&gt;</source>
+        <translation>&lt;br&gt;&lt;b&gt;Не сте избрали файл на играта.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Modern Morrow няма да стартира без избран файл на играта.&lt;br&gt;</translation>
     </message>
     <message>
         <source>Error writing Launcher configuration backup file</source>
@@ -613,10 +613,10 @@ Logs and settings changed through the launcher and in-game will be saved here.</
     <message>
         <source>Global config directory used because local directory did not contain an openmw.cfg.
 Logs and settings changed through the launcher and in-game will be saved here.
-This is typically a symptom of a broken OpenMW installation or bad package.</source>
+This is typically a symptom of a broken Modern Morrow installation or bad package.</source>
         <translation>Използва се глобалната конфигурационна директория, защото локалната директория не съдържа файла openmw.cfg.
 Дневниците и настройките, променени в стартиращата програма и играта, ще бъдат запазени тук.
-Това обикновено е симптом на повредена инсталация на OpenMW или дефектен пакет.</translation>
+Това обикновено е симптом на повредена инсталация на Modern Morrow или дефектен пакет.</translation>
     </message>
     <message>
         <source>Global config directory used because local directory did not contain an openmw.cfg.</source>
@@ -636,12 +636,12 @@ Logs and settings changed through the launcher and in-game will be saved here.</
 <context>
     <name>MainWindow</name>
     <message>
-        <source>OpenMW Launcher</source>
-        <translation>Стартираща програма на OpenMW</translation>
+        <source>Modern Morrow Launcher</source>
+        <translation>Стартираща програма на Modern Morrow</translation>
     </message>
     <message>
-        <source>OpenMW version</source>
-        <translation>Версия на OpenMW</translation>
+        <source>Modern Morrow version</source>
+        <translation>Версия на Modern Morrow</translation>
     </message>
     <message>
         <source>toolBar</source>
@@ -953,8 +953,8 @@ Logs and settings changed through the launcher and in-game will be saved here.</
         <translation>Прибиране на щита</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;In third person, the camera will sway along with the movement animations of the player. Enabling this option disables this swaying by having the player character move independently of its animation. This was the default behavior of OpenMW 0.48 and earlier.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;В трето лице камерата ще се люлее заедно с анимациите на движение. Включването на тази опция премахва люлеенето, като движението на героя става независимо от анимацията му. Това беше стандартното поведение в OpenMW 0.48 и по-старите версии.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;In third person, the camera will sway along with the movement animations of the player. Enabling this option disables this swaying by having the player character move independently of its animation. This was the default behavior of Modern Morrow 0.48 and earlier.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;В трето лице камерата ще се люлее заедно с анимациите на движение. Включването на тази опция премахва люлеенето, като движението на героя става независимо от анимацията му. Това беше стандартното поведение в Modern Morrow 0.48 и по-старите версии.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Player Movement Ignores Animation</source>
@@ -1347,8 +1347,8 @@ Logs and settings changed through the launcher and in-game will be saved here.</
         <translation>Тези настройки са предназначени за тестване на модификации и ще създадат проблеми при нормална игра.</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW will capture control of the cursor if this setting is true.&lt;/p&gt;&lt;p&gt;In “look mode”, OpenMW will center the cursor regardless of the value of this setting (since the cursor/crosshair is always centered in the OpenMW window). However, in GUI mode, this setting determines the behavior when the cursor is moved outside the OpenMW window. If true, the cursor movement stops at the edge of the window preventing access to other applications. If false, the cursor is allowed to move freely on the desktop.&lt;/p&gt;&lt;p&gt;This setting does not apply to the screen where escape has been pressed, where the cursor is never captured. Regardless of this setting “Alt-Tab” or some other operating system dependent key sequence can be used to allow the operating system to regain control of the mouse cursor. This setting interacts with the minimize on focus loss setting by affecting what counts as a focus loss. Specifically on a two-screen configuration it may be more convenient to access the second screen with setting disabled.&lt;/p&gt;&lt;p&gt;Note for developers: it’s desirable to have this setting disabled when running the game in a debugger, to prevent the mouse cursor from becoming unusable when the game pauses on a breakpoint.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW ще прихване курсора, ако тази опция е включена.&lt;/p&gt;&lt;p&gt;В режим на оглеждане, OpenMW центрира курсора независимо от тази настройка. Обаче в менютата, тази настройка определя поведението, когато курсорът излезе извън прозореца на играта. Когато е включена, движението спира на ръба на прозореца. Когато е изключена, курсорът може да се движи свободно по работния плот.&lt;/p&gt;&lt;p&gt;Тази настройка не важи за екрана, когато е натиснат клавиша Esc. Независимо от настройката, Alt-Tab връща контрола на мишката на операционната система. Това е удобно за конфигурации с два екрана.&lt;/p&gt;&lt;p&gt;За разработчици: желателно е да изключите тази опция при дебъгване.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modern Morrow will capture control of the cursor if this setting is true.&lt;/p&gt;&lt;p&gt;In “look mode”, Modern Morrow will center the cursor regardless of the value of this setting (since the cursor/crosshair is always centered in the Modern Morrow window). However, in GUI mode, this setting determines the behavior when the cursor is moved outside the Modern Morrow window. If true, the cursor movement stops at the edge of the window preventing access to other applications. If false, the cursor is allowed to move freely on the desktop.&lt;/p&gt;&lt;p&gt;This setting does not apply to the screen where escape has been pressed, where the cursor is never captured. Regardless of this setting “Alt-Tab” or some other operating system dependent key sequence can be used to allow the operating system to regain control of the mouse cursor. This setting interacts with the minimize on focus loss setting by affecting what counts as a focus loss. Specifically on a two-screen configuration it may be more convenient to access the second screen with setting disabled.&lt;/p&gt;&lt;p&gt;Note for developers: it’s desirable to have this setting disabled when running the game in a debugger, to prevent the mouse cursor from becoming unusable when the game pauses on a breakpoint.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modern Morrow ще прихване курсора, ако тази опция е включена.&lt;/p&gt;&lt;p&gt;В режим на оглеждане, Modern Morrow центрира курсора независимо от тази настройка. Обаче в менютата, тази настройка определя поведението, когато курсорът излезе извън прозореца на играта. Когато е включена, движението спира на ръба на прозореца. Когато е изключена, курсорът може да се движи свободно по работния плот.&lt;/p&gt;&lt;p&gt;Тази настройка не важи за екрана, когато е натиснат клавиша Esc. Независимо от настройката, Alt-Tab връща контрола на мишката на операционната система. Това е удобно за конфигурации с два екрана.&lt;/p&gt;&lt;p&gt;За разработчици: желателно е да изключите тази опция при дебъгване.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Grab Cursor</source>

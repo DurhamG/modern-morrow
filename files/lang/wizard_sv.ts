@@ -31,7 +31,7 @@
         <translation>WizardPage</translation>
     </message>
     <message>
-        <source>Completing the OpenMW Wizard</source>
+        <source>Completing the Modern Morrow Wizard</source>
         <translation>Färdigställer OpenMWs installationsguide</translation>
     </message>
     <message>
@@ -50,8 +50,8 @@
         <translation>Välj befintlig installation</translation>
     </message>
     <message>
-        <source>Select an existing installation for OpenMW to use or modify.</source>
-        <translation>Välj en befintlig installation som OpenMW kan använda eller modifiera.</translation>
+        <source>Select an existing installation for Modern Morrow to use or modify.</source>
+        <translation>Välj en befintlig installation som Modern Morrow kan använda eller modifiera.</translation>
     </message>
     <message>
         <source>Detected installations:</source>
@@ -77,8 +77,8 @@
         <translation>Importera inställningar från Morrowindinstallationen.</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW behöver importera inställningar från Morrowinds konfigurationsfil för att fungera korrekt.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Notera:&lt;/span&gt; Det är möjligt att importera inställningarna senare genom att köra denna guide igen.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modern Morrow needs to import settings from the Morrowind configuration file in order to function properly.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Note:&lt;/span&gt; It is possible to import settings later by re-running this Wizard.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modern Morrow behöver importera inställningar från Morrowinds konfigurationsfil för att fungera korrekt.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:bold;&quot;&gt;Notera:&lt;/span&gt; Det är möjligt att importera inställningarna senare genom att köra denna guide igen.&lt;/p&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Import Settings From Morrowind.ini</source>
@@ -94,10 +94,10 @@
     </message>
     <message>
         <source>Fonts shipped with the original engine are blurry with UI scaling and support only a small amount of characters,
-so OpenMW provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
-to default Morrowind fonts. Check this box if you still prefer original fonts over OpenMW ones or if you use custom bitmap fonts.</source>
+so Modern Morrow provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
+to default Morrowind fonts. Check this box if you still prefer original fonts over Modern Morrow ones or if you use custom bitmap fonts.</source>
         <translation>Fonter som kommer med ordinarie spelmotor är suddiga med gränssnittsuppskalning och stödjer bara ett litet antal tecken,
-så OpenMW tillhandahåller därför andra fonter för att undvika dessa problem. Dessa fonter använder TrueType-teknologi och är ganska lika
+så Modern Morrow tillhandahåller därför andra fonter för att undvika dessa problem. Dessa fonter använder TrueType-teknologi och är ganska lika
 de ordinarie fonterna i Morrowind. Bocka i denna ruta om du ändå föredrar ordinarie fonter istället för OpenMWs, alternativt om du använder egna bitmapfonter.</translation>
     </message>
 </context>
@@ -146,12 +146,12 @@ de ordinarie fonterna i Morrowind. Bocka i denna ruta om du ändå föredrar ord
         <translation>WizardPage</translation>
     </message>
     <message>
-        <source>Welcome to the OpenMW Wizard</source>
+        <source>Welcome to the Modern Morrow Wizard</source>
         <translation>Välkommen till OpenMWs installationsguide</translation>
     </message>
     <message>
-        <source>This Wizard will help you install Morrowind and its add-ons for OpenMW to use.</source>
-        <translation>Denna guide hjälper dig att installera Morrowind och expansionerna för OpenMW.</translation>
+        <source>This Wizard will help you install Morrowind and its add-ons for Modern Morrow to use.</source>
+        <translation>Denna guide hjälper dig att installera Morrowind och expansionerna för Modern Morrow.</translation>
     </message>
 </context>
 <context>
@@ -277,16 +277,16 @@ de ordinarie fonterna i Morrowind. Bocka i denna ruta om du ändå föredrar ord
 <context>
     <name>Wizard::ConclusionPage</name>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully installed Morrowind on your computer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMWs Installationsguide har installerat Morrowind på din dator.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard successfully modified your existing Morrowind installation.&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMWs installationsguide har justerat din befintliga Morrowindinstallation.&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The OpenMW Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://gitlab.com/OpenMW/openmw/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMWs installationsguide misslyckades med att installera Morrowind på din dator.&lt;/p&gt;&lt;p&gt;Vänligen rapportera eventuella buggar på vår &lt;a href=&quot;https://gitlab.com/OpenMW/openmw/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Se till att du inkluderar installationsloggen.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Modern Morrow Wizard failed to install Morrowind on your computer.&lt;/p&gt;&lt;p&gt;Please report any bugs you might have encountered to our &lt;a href=&quot;https://github.com/DurhamG/modern-morrow/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Make sure to include the installation log.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMWs installationsguide misslyckades med att installera Morrowind på din dator.&lt;/p&gt;&lt;p&gt;Vänligen rapportera eventuella buggar på vår &lt;a href=&quot;https://github.com/DurhamG/modern-morrow/issues&quot;&gt;bug tracker&lt;/a&gt;.&lt;br/&gt;Se till att du inkluderar installationsloggen.&lt;/p&gt;&lt;br/&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
 </context>
 <context>
@@ -452,8 +452,8 @@ de ordinarie fonterna i Morrowind. Bocka i denna ruta om du ändå föredrar ord
 <context>
     <name>Wizard::MainWizard</name>
     <message>
-        <source>OpenMW Wizard</source>
-        <translation>OpenMW installationsguide</translation>
+        <source>Modern Morrow Wizard</source>
+        <translation>Modern Morrow installationsguide</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not open %1 for writing&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
@@ -464,8 +464,8 @@ de ordinarie fonterna i Morrowind. Bocka i denna ruta om du ändå föredrar ord
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Kunde inte öppna %1 för läsning&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Se till att du har rätt behörigheter och försök igen.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Error opening OpenMW configuration file</source>
-        <translation>Fel när OpenMW-konfigurationsfil skulle öppnas</translation>
+        <source>Error opening Modern Morrow configuration file</source>
+        <translation>Fel när Modern Morrow-konfigurationsfil skulle öppnas</translation>
     </message>
     <message>
         <source>Quit Wizard</source>
@@ -476,16 +476,16 @@ de ordinarie fonterna i Morrowind. Bocka i denna ruta om du ändå föredrar ord
         <translation>Är du säker på att du vill avsluta guiden?</translation>
     </message>
     <message>
-        <source>Error creating OpenMW configuration directory</source>
-        <translation>Fel vid skapande av OpenMW-konfigurationskatalog</translation>
+        <source>Error creating Modern Morrow configuration directory</source>
+        <translation>Fel vid skapande av Modern Morrow-konfigurationskatalog</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Could not create %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please make sure you have the right permissions and try again.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Kunde inte skapa %1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Se till att du har rätt behörigheter och försök igen.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Error writing OpenMW configuration file</source>
-        <translation>Kunde inte skriva OpenMW-konfigurationsfil</translation>
+        <source>Error writing Modern Morrow configuration file</source>
+        <translation>Kunde inte skriva Modern Morrow-konfigurationsfil</translation>
     </message>
 </context>
 <context>

@@ -275,9 +275,9 @@
     </message>
     <message>
         <source>Fonts shipped with the original engine are blurry with UI scaling and support only a small amount of characters,
-so OpenMW provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
-to default Morrowind fonts. Check this box if you still prefer original fonts over OpenMW ones or if you use custom bitmap fonts.</source>
-        <translation>Les polices fournies avec le moteur de jeu original sont floues lorsque l&apos;interface utilisateur est agrandie. De plus, elles ne supportent qu&apos;un faible nombre de caractères. Afin d&apos;éviter ces désagréments, OpenMW propose son propre ensemble de polices. Ces polices sont encodées au format TrueType et ressemblent aux polices originales. Sélectionnez cette option si vous préférez utiliser les polices originales - à la place de celles fournies par OpenMW - ou si vous utilisez vos propres polices au format bitmap.</translation>
+so Modern Morrow provides another set of fonts to avoid these issues. These fonts use TrueType technology and are quite similar
+to default Morrowind fonts. Check this box if you still prefer original fonts over Modern Morrow ones or if you use custom bitmap fonts.</source>
+        <translation>Les polices fournies avec le moteur de jeu original sont floues lorsque l&apos;interface utilisateur est agrandie. De plus, elles ne supportent qu&apos;un faible nombre de caractères. Afin d&apos;éviter ces désagréments, Modern Morrow propose son propre ensemble de polices. Ces polices sont encodées au format TrueType et ressemblent aux polices originales. Sélectionnez cette option si vous préférez utiliser les polices originales - à la place de celles fournies par Modern Morrow - ou si vous utilisez vos propres polices au format bitmap.</translation>
     </message>
     <message>
         <source>Run &amp;Settings Importer</source>
@@ -379,8 +379,8 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Ceci est le dossier data-local, il ne peut être désactivé.</translation>
     </message>
     <message>
-        <source>This directory is part of OpenMW and cannot be disabled</source>
-        <translation>Ce dossier ne peut être désactivé, car il fait partie intégrante d&apos;OpenMW.</translation>
+        <source>This directory is part of Modern Morrow and cannot be disabled</source>
+        <translation>Ce dossier ne peut être désactivé, car il fait partie intégrante d&apos;Modern Morrow.</translation>
     </message>
     <message>
         <source>This directory is enabled in an openmw.cfg other than the user one</source>
@@ -441,7 +441,7 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
 <context>
     <name>Launcher::ImportPage</name>
     <message>
-        <source>Error writing OpenMW configuration file</source>
+        <source>Error writing Modern Morrow configuration file</source>
         <translation>Erreur lors de l&apos;écriture du fichier de configuration</translation>
     </message>
     <message>
@@ -468,16 +468,16 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Fermer</translation>
     </message>
     <message>
-        <source>Launch OpenMW</source>
-        <translation>Lancer OpenMW</translation>
+        <source>Launch Modern Morrow</source>
+        <translation>Lancer Modern Morrow</translation>
     </message>
     <message>
         <source>Help</source>
         <translation>Aide</translation>
     </message>
     <message>
-        <source>Error opening OpenMW configuration file</source>
-        <translation>Erreur lors de l&apos;ouverture du fichier de configuration d&apos;OpenMW</translation>
+        <source>Error opening Modern Morrow configuration file</source>
+        <translation>Erreur lors de l&apos;ouverture du fichier de configuration d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>First run</source>
@@ -492,12 +492,12 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Passer</translation>
     </message>
     <message>
-        <source>OpenMW %1 release</source>
-        <translation>OpenMW %1 release</translation>
+        <source>Modern Morrow, based on OpenMW %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>OpenMW development (%1)</source>
-        <translation>OpenMW development (%1)</translation>
+        <source>Modern Morrow development (%1)</source>
+        <translation>Modern Morrow development (%1)</translation>
     </message>
     <message>
         <source>Compiled on %1 %2</source>
@@ -512,12 +512,12 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Lancer l&apos;Assistant d&apos;installation</translation>
     </message>
     <message>
-        <source>Error reading OpenMW configuration files</source>
-        <translation>Erreur lors de la lecture du fichier de configuration d&apos;OpenMW</translation>
+        <source>Error reading Modern Morrow configuration files</source>
+        <translation>Erreur lors de la lecture du fichier de configuration d&apos;Modern Morrow</translation>
     </message>
     <message>
-        <source>Error writing OpenMW configuration file</source>
-        <translation>Erreur lors de l&apos;écriture dans le fichier de configuration d&apos;OpenMW</translation>
+        <source>Error writing Modern Morrow configuration file</source>
+        <translation>Erreur lors de l&apos;écriture dans le fichier de configuration d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>Error writing user settings file</source>
@@ -532,8 +532,8 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Aucun fichier de jeu sélectionné</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Welcome to OpenMW!&lt;/b&gt;&lt;/p&gt;&lt;p&gt;It is recommended to run the Installation Wizard.&lt;/p&gt;&lt;p&gt;The Wizard will let you select an existing Morrowind installation, or install Morrowind for OpenMW to use.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Bienvenue sur OpenMW !&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Il est recommandé de lancer l&apos;Assistant d&apos;installation .&lt;/p&gt;&lt;p&gt;L&apos;assistant vous permettra de sélectionner une installation de Morrowind existante, ou d&apos;installer Morrowind pour son utilisation dans OpenMW.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Welcome to Modern Morrow!&lt;/b&gt;&lt;/p&gt;&lt;p&gt;It is recommended to run the Installation Wizard.&lt;/p&gt;&lt;p&gt;The Wizard will let you select an existing Morrowind installation, or install Morrowind for Modern Morrow to use.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Bienvenue sur Modern Morrow !&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Il est recommandé de lancer l&apos;Assistant d&apos;installation .&lt;/p&gt;&lt;p&gt;L&apos;assistant vous permettra de sélectionner une installation de Morrowind existante, ou d&apos;installer Morrowind pour son utilisation dans Modern Morrow.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>&lt;br&gt;&lt;b&gt;Could not open %0 for reading:&lt;/b&gt;&lt;br&gt;&lt;br&gt;%1&lt;br&gt;&lt;br&gt;Please make sure you have the right permissions and try again.&lt;br&gt;</source>
@@ -548,20 +548,20 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>&lt;br&gt;&lt;b&gt;Impossible de trouver l&apos;emmplacement de Data Files&lt;/b&gt;&lt;br&gt;&lt;br&gt;Le dossier contenant les fichiers de données n&apos;a pas été trouvé.</translation>
     </message>
     <message>
-        <source>&lt;br&gt;The problem may be due to an incomplete installation of OpenMW.&lt;br&gt;Reinstalling OpenMW may resolve the problem.&lt;br&gt;</source>
-        <translation>&lt;br&gt;Ce problème peut survenir lors d&apos;une installation incomplète d&apos;OpenMW.&lt;br&gt;Réinstaller OpenMW pourrait résoudre le problème.&lt;br&gt;</translation>
+        <source>&lt;br&gt;The problem may be due to an incomplete installation of Modern Morrow.&lt;br&gt;Reinstalling Modern Morrow may resolve the problem.&lt;br&gt;</source>
+        <translation>&lt;br&gt;Ce problème peut survenir lors d&apos;une installation incomplète d&apos;Modern Morrow.&lt;br&gt;Réinstaller Modern Morrow pourrait résoudre le problème.&lt;br&gt;</translation>
     </message>
     <message>
         <source>&lt;br&gt;&lt;b&gt;Could not open or create %0 for writing&lt;/b&gt;&lt;br&gt;&lt;br&gt;Please make sure you have the right permissions and try again.&lt;br&gt;</source>
         <translation>&lt;br&gt;&lt;b&gt;Impossible d&apos;ouvrir ou de créer %0 en écriture :&lt;/b&gt;&lt;br&gt;&lt;br&gt;%1&lt;br&gt;&lt;br&gt;Assurez vous d&apos;avoir les bons droits d&apos;accès puis réessayez.&lt;br&gt;</translation>
     </message>
     <message>
-        <source>&lt;br&gt;&lt;b&gt;You do not have a game file selected.&lt;/b&gt;&lt;br&gt;&lt;br&gt;OpenMW will not start without a game file selected.&lt;br&gt;</source>
-        <translation>&lt;br&gt;&lt;b&gt;Vous n&apos;avez pas sélectionné de fichier de jeu.&lt;/b&gt;&lt;br&gt;&lt;br&gt;OpenMW ne peut démarrer sans qu&apos;un fichier de jeu soit sélectionné.&lt;br&gt;</translation>
+        <source>&lt;br&gt;&lt;b&gt;You do not have a game file selected.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Modern Morrow will not start without a game file selected.&lt;br&gt;</source>
+        <translation>&lt;br&gt;&lt;b&gt;Vous n&apos;avez pas sélectionné de fichier de jeu.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Modern Morrow ne peut démarrer sans qu&apos;un fichier de jeu soit sélectionné.&lt;br&gt;</translation>
     </message>
     <message>
-        <source>Error creating OpenMW configuration directory: code %0</source>
-        <translation>Erreur lors de la création du dossier de configuration d&apos;OpenMW : code %0</translation>
+        <source>Error creating Modern Morrow configuration directory: code %0</source>
+        <translation>Erreur lors de la création du dossier de configuration d&apos;Modern Morrow : code %0</translation>
     </message>
     <message>
         <source>&lt;br&gt;&lt;b&gt;Could not create directory %0&lt;/b&gt;&lt;br&gt;&lt;br&gt;%1&lt;br&gt;</source>
@@ -610,10 +610,10 @@ Logs and settings changed through the launcher and in-game will be saved here.</
     <message>
         <source>Global config directory used because local directory did not contain an openmw.cfg.
 Logs and settings changed through the launcher and in-game will be saved here.
-This is typically a symptom of a broken OpenMW installation or bad package.</source>
+This is typically a symptom of a broken Modern Morrow installation or bad package.</source>
         <translation>Le dossier global de configuration est utilisé car le dossier courant ne contient pas de fichier openmw.cfg.
 Les logs et préférences modifiées y seront sauvegardés.
-C&apos;est un syndrome typique d&apos;une installation corrompue d&apos;OpenMW ou d&apos;un mauvais paquet.</translation>
+C&apos;est un syndrome typique d&apos;une installation corrompue d&apos;Modern Morrow ou d&apos;un mauvais paquet.</translation>
     </message>
     <message>
         <source>Global config directory used because local directory did not contain an openmw.cfg.</source>
@@ -633,12 +633,12 @@ Les logs et préférences modifiées y seront sauvegardés.</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <source>OpenMW Launcher</source>
-        <translation>Lanceur d&apos;OpenMW</translation>
+        <source>Modern Morrow Launcher</source>
+        <translation>Lanceur d&apos;Modern Morrow</translation>
     </message>
     <message>
-        <source>OpenMW version</source>
-        <translation>Version d&apos;OpenMW</translation>
+        <source>Modern Morrow version</source>
+        <translation>Version d&apos;Modern Morrow</translation>
     </message>
     <message>
         <source>toolBar</source>
@@ -798,8 +798,8 @@ Les logs et préférences modifiées y seront sauvegardés.</translation>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Cette option permet d&apos;afficher les boucliers rengainés. Elle nécessite des modèles 3D fournis pas un mod.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;In third person, the camera will sway along with the movement animations of the player. Enabling this option disables this swaying by having the player character move independently of its animation. This was the default behavior of OpenMW 0.48 and earlier.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;En vue à la troisième personne, la caméra se balance avec mouvement d&apos;animation du joueur. Activer cette option désactive ce balancement de sorte que le personnage joueur se déplace indépendamment de son animation. Ce comportement était activé par défaut dans les versions d&apos;OpenMW 0.48 et antérieures.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;In third person, the camera will sway along with the movement animations of the player. Enabling this option disables this swaying by having the player character move independently of its animation. This was the default behavior of Modern Morrow 0.48 and earlier.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;En vue à la troisième personne, la caméra se balance avec mouvement d&apos;animation du joueur. Activer cette option désactive ce balancement de sorte que le personnage joueur se déplace indépendamment de son animation. Ce comportement était activé par défaut dans les versions d&apos;Modern Morrow 0.48 et antérieures.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Shaders</source>
@@ -1019,8 +1019,8 @@ Les logs et préférences modifiées y seront sauvegardés.</translation>
         <translation>Ces options sont destinées aux testeurs de contenus additionnels (mods). Ils poseront problème lors d&apos;une partie normale.</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW will capture control of the cursor if this setting is true.&lt;/p&gt;&lt;p&gt;In “look mode”, OpenMW will center the cursor regardless of the value of this setting (since the cursor/crosshair is always centered in the OpenMW window). However, in GUI mode, this setting determines the behavior when the cursor is moved outside the OpenMW window. If true, the cursor movement stops at the edge of the window preventing access to other applications. If false, the cursor is allowed to move freely on the desktop.&lt;/p&gt;&lt;p&gt;This setting does not apply to the screen where escape has been pressed, where the cursor is never captured. Regardless of this setting “Alt-Tab” or some other operating system dependent key sequence can be used to allow the operating system to regain control of the mouse cursor. This setting interacts with the minimize on focus loss setting by affecting what counts as a focus loss. Specifically on a two-screen configuration it may be more convenient to access the second screen with setting disabled.&lt;/p&gt;&lt;p&gt;Note for developers: it’s desirable to have this setting disabled when running the game in a debugger, to prevent the mouse cursor from becoming unusable when the game pauses on a breakpoint.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;body&gt;&lt;p&gt;Lorsque cette option est activée, OpenMW capture le curseur de la souris.&lt;/p&gt;&lt;p&gt;Lorsque le jeu est en mode &quot;Regard/Déplacement&quot;, OpenMW centre le curseur au milieu de l&apos;écran; sans tenir compte de cette option (le curseur/viseur est toujours au centre de la fenêtre d&apos;OpenMW).  Néanmoins, lorsqu&apos;un menu est ouvert, cette option permet de récupérer le contrôle de la souris. En effet, lorsque l&apos;option est active, le mouvement du curseur s&apos;arrête aux bords de la fenêtre et empêche d&apos;accéder à d&apos;autres applications. Tandis que, lorsque l&apos;option est désactivée, le curseur peut sortir librement de la fenêtre et accéder au bureau.&lt;/p&gt;&lt;p&gt;Cette option ne s&apos;applique pas à l&apos;écran lorsque la touche Échap a été enfoncée, dans ce cas, le curseur n&apos;est jamais capturé. Cette option n&apos;agit pas non plus sur &quot;Atl-Tab&quot; ou toute autre séquence de touches utilisée par le système d&apos;exploitation pour récupérer le contrôle du curseur de la souris. &lt;/p&gt;&lt;p&gt;Cette option interagit avec l&apos;option de minimisation de la fenêtre lors de la perte de focus en modifiant ce qui est considéré comme une perte de focus. Par exemple, avec une configuration à doubles écrans, il peut être plus agréable d&apos;accéder au second écran avec cette option désactivée.&lt;/p&gt;&lt;p&gt;Note aux développeurs : Il est préférable de désactiver cette option lorsque le jeu tourne dans un débogueur, ceci afin d&apos;empêcher le curseur de la souris de devenir inutilisable lorsque le jeu s&apos;arrête sur un breakpoint.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Modern Morrow will capture control of the cursor if this setting is true.&lt;/p&gt;&lt;p&gt;In “look mode”, Modern Morrow will center the cursor regardless of the value of this setting (since the cursor/crosshair is always centered in the Modern Morrow window). However, in GUI mode, this setting determines the behavior when the cursor is moved outside the Modern Morrow window. If true, the cursor movement stops at the edge of the window preventing access to other applications. If false, the cursor is allowed to move freely on the desktop.&lt;/p&gt;&lt;p&gt;This setting does not apply to the screen where escape has been pressed, where the cursor is never captured. Regardless of this setting “Alt-Tab” or some other operating system dependent key sequence can be used to allow the operating system to regain control of the mouse cursor. This setting interacts with the minimize on focus loss setting by affecting what counts as a focus loss. Specifically on a two-screen configuration it may be more convenient to access the second screen with setting disabled.&lt;/p&gt;&lt;p&gt;Note for developers: it’s desirable to have this setting disabled when running the game in a debugger, to prevent the mouse cursor from becoming unusable when the game pauses on a breakpoint.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;body&gt;&lt;p&gt;Lorsque cette option est activée, Modern Morrow capture le curseur de la souris.&lt;/p&gt;&lt;p&gt;Lorsque le jeu est en mode &quot;Regard/Déplacement&quot;, Modern Morrow centre le curseur au milieu de l&apos;écran; sans tenir compte de cette option (le curseur/viseur est toujours au centre de la fenêtre d&apos;Modern Morrow).  Néanmoins, lorsqu&apos;un menu est ouvert, cette option permet de récupérer le contrôle de la souris. En effet, lorsque l&apos;option est active, le mouvement du curseur s&apos;arrête aux bords de la fenêtre et empêche d&apos;accéder à d&apos;autres applications. Tandis que, lorsque l&apos;option est désactivée, le curseur peut sortir librement de la fenêtre et accéder au bureau.&lt;/p&gt;&lt;p&gt;Cette option ne s&apos;applique pas à l&apos;écran lorsque la touche Échap a été enfoncée, dans ce cas, le curseur n&apos;est jamais capturé. Cette option n&apos;agit pas non plus sur &quot;Atl-Tab&quot; ou toute autre séquence de touches utilisée par le système d&apos;exploitation pour récupérer le contrôle du curseur de la souris. &lt;/p&gt;&lt;p&gt;Cette option interagit avec l&apos;option de minimisation de la fenêtre lors de la perte de focus en modifiant ce qui est considéré comme une perte de focus. Par exemple, avec une configuration à doubles écrans, il peut être plus agréable d&apos;accéder au second écran avec cette option désactivée.&lt;/p&gt;&lt;p&gt;Note aux développeurs : Il est préférable de désactiver cette option lorsque le jeu tourne dans un débogueur, ceci afin d&apos;empêcher le curseur de la souris de devenir inutilisable lorsque le jeu s&apos;arrête sur un breakpoint.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Browse…</source>

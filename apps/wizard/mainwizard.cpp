@@ -39,7 +39,7 @@ Wizard::MainWizard::MainWizard(Files::ConfigurationManager&& cfgMgr, QWidget* pa
     setWizardStyle(QWizard::ClassicStyle);
 #endif
 
-    setWindowTitle(tr("OpenMW Wizard"));
+    setWindowTitle(tr("Modern Morrow Wizard"));
     setWindowIcon(QIcon(QStringLiteral(":/images/openmw-wizard.png")));
     setMinimumWidth(550);
 
@@ -56,7 +56,7 @@ Wizard::MainWizard::MainWizard(Files::ConfigurationManager&& cfgMgr, QWidget* pa
     const QString userPath(Files::pathToQString(mCfgMgr.getUserConfigPath()));
     if (!QDir(userPath).exists())
     {
-        const QString title = tr("Error creating OpenMW configuration directory");
+        const QString title = tr("Error creating Modern Morrow configuration directory");
         const QString message = tr(
             "<html><head/><body><p><b>Could not create %1</b></p>"
             "<p>Please make sure you have the right permissions and try again.</p></body></html>");
@@ -82,7 +82,7 @@ Wizard::MainWizard::~MainWizard() = default;
 
 void Wizard::MainWizard::setupGameSettings()
 {
-    const QString title = tr("Error opening OpenMW configuration file");
+    const QString title = tr("Error opening Modern Morrow configuration file");
     const QString message = tr(
         "<html><head/><body><p><b>Could not open %1 for reading</b></p>"
         "<p>Please make sure you have the right permissions and try again.</p></body></html>");
@@ -147,7 +147,7 @@ void Wizard::MainWizard::setupLauncherSettings()
     {
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
-            const QString title = tr("Error opening OpenMW configuration file");
+            const QString title = tr("Error opening Modern Morrow configuration file");
             const QString message = tr(
                 "<html><head/><body><p><b>Could not open %1 for reading</b></p>"
                 "<p>Please make sure you have the right permissions "
@@ -323,7 +323,7 @@ void Wizard::MainWizard::writeSettings()
     // Game settings
     QFile file(Files::getUserConfigPathQString(mCfgMgr));
 
-    const QString writeTitle = tr("Error writing OpenMW configuration file");
+    const QString writeTitle = tr("Error writing Modern Morrow configuration file");
     const QString writeMessage = tr(
         "<html><head/><body><p><b>Could not open %1 for writing</b></p>"
         "<p>Please make sure you have the right permissions "
