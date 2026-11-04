@@ -17,6 +17,7 @@
 
 namespace MWGui
 {
+    class AlchemyPanel;
     class ItemView;
     class ItemWidget;
     class InventoryItemModel;
@@ -26,8 +27,11 @@ namespace MWGui
     {
     public:
         AlchemyWindow();
+        ~AlchemyWindow() override;
 
         void onOpen() override;
+        void onClose() override;
+        void onFrame(float duration) override;
 
         void onResChange(int, int) override { center(); }
 
@@ -102,6 +106,10 @@ namespace MWGui
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         void filterListButtonHandler(const SDL_ControllerButtonEvent& arg);
+
+        // In controller menus mode, a full screen panel shows instead of this window, which stays hidden.
+        friend class AlchemyPanel;
+        std::unique_ptr<AlchemyPanel> mPanel;
     };
 }
 

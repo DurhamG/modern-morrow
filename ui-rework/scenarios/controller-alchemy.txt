@@ -1,0 +1,45 @@
+# Brewing potions in controller menus mode: choosing ingredients, then brewing two at once.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->additem apparatus_a_mortar_01 1"
+console "command=player->additem apparatus_a_alembic_01 1"
+console "command=player->additem apparatus_a_calcinator_01 1"
+console "command=player->additem ingred_saltrice_01 5"
+console "command=player->additem ingred_crab_meat_01 3"
+console "command=player->additem ingred_hackle-lo_leaf_01 4"
+console "command=player->additem ingred_marshmerrow_01 5"
+console "command=player->additem ingred_wickwheat_01 5"
+console "command=player->additem ingred_comberry_01 5"
+console "command=player->additem ingred_ash_yam_01 5"
+console "command=player->setalchemy 40"
+lua "code=require('openmw.interfaces').UI.addMode('Alchemy')" context=player
+wait frames=10
+shot start
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=a
+wait frames=5
+shot one-ingredient
+pad button=dpdown
+wait frames=5
+pad button=a
+wait frames=5
+shot two-ingredients
+pad button=rightshoulder
+wait frames=3
+shot count
+pad button=x
+wait frames=10
+shot brewed
+pad button=leftstick
+wait frames=5
+pad button=a
+wait frames=3
+shot rename
+pad button=start
+wait frames=5
+shot renamed
+pad button=b
+wait frames=10
+shot closed

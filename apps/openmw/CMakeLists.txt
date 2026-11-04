@@ -47,7 +47,7 @@ add_openmw_dir (mwgui
     postprocessorhud settings worlditemmodel itemtransfer inventorytabsoverlay controllerscreen inventoryscreen
     magicscreen statsscreen dialoguepanel pausemenu itemdetails lootpanel barterpanel questlog
     journalscreen servicepanel controllerdialog readingpanel companionpanel choicescreen quickkeyslots
-    quickkeyassigner
+    quickkeyassigner alchemypanel
     )
 
 add_openmw_dir (mwdialogue

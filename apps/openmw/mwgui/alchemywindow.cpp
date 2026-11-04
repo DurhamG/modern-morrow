@@ -26,6 +26,8 @@
 
 #include <MyGUI_Macros.h>
 
+#include "alchemypanel.hpp"
+#include "controllerscreen.hpp"
 #include "inventoryitemmodel.hpp"
 #include "itemview.hpp"
 #include "itemwidget.hpp"
@@ -102,7 +104,12 @@ namespace MWGui
         }
 
         center();
+
+        if (Settings::gui().mControllerMenus)
+            mPanel = std::make_unique<AlchemyPanel>(*this);
     }
+
+    AlchemyWindow::~AlchemyWindow() = default;
 
     void AlchemyWindow::onAccept(MyGUI::EditBox* sender)
     {
@@ -309,6 +316,24 @@ namespace MWGui
 
         if (Settings::gui().mControllerMenus)
             mItemView->setActiveControllerWindow(true);
+
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mPanel->show();
+        }
+    }
+
+    void AlchemyWindow::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+    }
+
+    void AlchemyWindow::onFrame(float duration)
+    {
+        if (mPanel != nullptr)
+            mPanel->onFrame(duration);
     }
 
     void AlchemyWindow::onIngredientSelected(MyGUI::Widget* sender)
@@ -575,6 +600,9 @@ namespace MWGui
 
     bool AlchemyWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
         bool isFilterListOpen
             = focus != nullptr && focus->getParent() != nullptr && focus->getParent()->getParent() == mFilterValue;

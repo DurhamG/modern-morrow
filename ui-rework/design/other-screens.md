@@ -35,7 +35,7 @@ Every one of them works the same way. In controller menus mode, the old window s
 
 ## Not done yet
 
-- **Crafting,** on purpose. Quick keys have their own design now, in [quick-keys.md](quick-keys.md).
+- **Crafting,** on purpose. Quick keys have their own design now, in [quick-keys.md](quick-keys.md), and crafting in [crafting.md](crafting.md).
 - **Creating a custom class** still uses the old form, with its specialization, attribute and skill pickers.
 - **The options' key bindings and scripts' pages** still show the old window, because they are built in code rather than in the layout.
 - **The persuasion dialog** in conversations still uses the old window.

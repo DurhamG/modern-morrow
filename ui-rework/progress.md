@@ -149,3 +149,9 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
 
 - Pushed the quick keys.
 - The short messages shown during play, such as a failed spell, were drawn in screen pixels, so they were tiny on a TV. In controller menus mode, `MessageBoxManager` now draws them on the `ControllerNotification` layer, which scales with the screen height, in the panel style. The `controller-messages` scenario shows a failed cast and three stacked messages.
+- The user asked for the crafting screens to be designed and built without a review first, one at a time, recorded in [design/crafting.md](design/crafting.md).
+  - Alchemy is a full screen. `AlchemyPanel` lists the ingredients with their known effects, groups the ones that share an effect with the potion, and shows the potion on the right. The alchemy window stays hidden and brews.
+  - The `controller-alchemy` scenario adds ingredients, brews two potions and renames one.
+- Lessons learned:
+  - `Alchemy::countPotionsToBrew` returns 0 until the potion has a name, so the panel gives it the window's name before showing the count.
+  - Lua's `I.UI.addMode('Alchemy')` opens alchemy without going through the inventory, for testing.
