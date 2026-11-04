@@ -1,0 +1,8 @@
+# Choosing how to make a class, then the first of the questions that work one out, in controller menus mode.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console command=EnableClassMenu
+wait frames=10
+shot class-choice
+pad button=a
+wait frames=10
+shot class-question

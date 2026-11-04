@@ -21,6 +21,7 @@
 #include <components/settings/values.hpp>
 #include <components/vfs/manager.hpp>
 
+#include "controllerscreen.hpp"
 #include "tooltips.hpp"
 
 namespace
@@ -395,6 +396,17 @@ namespace MWGui
 
         mDisableGamepadCursor = Settings::gui().mControllerMenus;
         mControllerButtons.mA = "#{Interface:Select}";
+        if (Settings::gui().mControllerMenus)
+            mDialog = std::make_unique<ControllerDialog>();
+    }
+
+    InfoBoxDialog::~InfoBoxDialog() = default;
+
+    void InfoBoxDialog::onClose()
+    {
+        if (mDialog != nullptr)
+            mDialog->hide();
+        WindowModal::onClose();
     }
 
     void InfoBoxDialog::setText(std::string_view str)
@@ -449,6 +461,17 @@ namespace MWGui
         layoutVertically(mMainWidget, 4 + 6);
 
         center();
+
+        if (mDialog != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            std::vector<std::string> answers;
+            for (const MyGUI::Button* button : mButtons)
+                answers.push_back(button->getCaption().asUTF8());
+            mControllerFocus = 0;
+            mDialog->show(mText->getCaption().asUTF8(), answers, 0,
+                mButtons.size() == 1 ? std::optional<std::size_t>(0) : mCancelButton);
+        }
     }
 
     void InfoBoxDialog::onButtonClicked(MyGUI::Widget* sender)
@@ -467,6 +490,14 @@ namespace MWGui
 
     bool InfoBoxDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mDialog != nullptr)
+        {
+            if (const std::optional<std::size_t> answer = mDialog->onControllerButtonEvent(arg))
+                if (*answer < mButtons.size())
+                    onButtonClicked(mButtons[*answer]);
+            return true;
+        }
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             if (mControllerFocus < mButtons.size())
@@ -518,6 +549,7 @@ namespace MWGui
             MWBase::Environment::get().getWindowManager()->getGameSettingString("sClassChoiceMenu3", {}));
         buttons.emplace_back(MWBase::Environment::get().getWindowManager()->getGameSettingString("sBack", {}));
         setButtons(buttons);
+        mCancelButton = Class_Back;
     }
 
     /* CreateClassDialog */

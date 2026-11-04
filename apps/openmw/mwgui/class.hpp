@@ -12,6 +12,10 @@
 #include <components/esm3/loadclas.hpp>
 
 #include "widgets.hpp"
+#include <memory>
+#include <optional>
+
+#include "controllerdialog.hpp"
 #include "windowbase.hpp"
 
 namespace MWGui
@@ -22,6 +26,7 @@ namespace MWGui
     {
     public:
         InfoBoxDialog();
+        ~InfoBoxDialog() override;
 
         typedef std::vector<std::string> ButtonList;
 
@@ -30,6 +35,7 @@ namespace MWGui
         void setButtons(ButtonList& buttons);
 
         void onOpen() override;
+        void onClose() override;
 
         bool exit() override { return false; }
 
@@ -45,7 +51,13 @@ namespace MWGui
         void onButtonClicked(MyGUI::Widget* sender);
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
 
+        // The button that B clicks, such as "Back". With a single button, B clicks that one.
+        std::optional<std::size_t> mCancelButton;
+
     private:
+        // In controller menus mode, the question shows in a dialog instead of this window.
+        std::unique_ptr<ControllerDialog> mDialog;
+
         void fitToText(MyGUI::TextBox* widget);
         void layoutVertically(MyGUI::Widget* widget, int margin);
         MyGUI::Widget* mTextBox;
