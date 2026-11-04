@@ -553,9 +553,7 @@ namespace MWGui
         std::vector<std::pair<SDL_GameControllerButton, std::string>> hints;
         if (inChoice())
             hints.emplace_back(SDL_CONTROLLER_BUTTON_A, "#{Interface:DialogueReply}");
-        else if (mWindow.mGoodbye)
-            hints.emplace_back(SDL_CONTROLLER_BUTTON_B, "#{Interface:DialogueLeave}");
-        else
+        else if (!mWindow.mGoodbye)
         {
             if (optionCount > 0)
                 hints.emplace_back(SDL_CONTROLLER_BUTTON_A,
@@ -565,7 +563,6 @@ namespace MWGui
                 groups += row.mHeader.empty() ? 0 : 1;
             if (groups > 1)
                 hints.emplace_back(SDL_CONTROLLER_BUTTON_Y, "#{Interface:MagicNextGroup}");
-            hints.emplace_back(SDL_CONTROLLER_BUTTON_B, "#{Interface:DialogueLeave}");
         }
         drawHints(hints);
     }

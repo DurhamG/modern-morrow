@@ -117,8 +117,7 @@ namespace MWGui
         // What the buttons do.
         int hx = x + 28;
         const int hy = y + panelH - 42;
-        for (const auto& [button, label] : { std::pair{ SDL_CONTROLLER_BUTTON_A, "#{Interface:PauseSelect}" },
-                 std::pair{ SDL_CONTROLLER_BUTTON_B, "#{Interface:PauseReturn}" } })
+        for (const auto& [button, label] : { std::pair{ SDL_CONTROLLER_BUTTON_A, "#{Interface:PauseSelect}" } })
         {
             addGlyph(mRoot, hx, hy + 1, 24, button);
             MyGUI::TextBox* text = addText(mRoot, hx + 32, hy - 3, 200, 30, label, sFontNormal, sBrightColour);

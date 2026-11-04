@@ -468,10 +468,7 @@ namespace MWGui
         const bool stealing = isStealing() || isPickpocketing();
         std::vector<std::pair<SDL_GameControllerButton, std::string>> hints;
         if (mYourItems)
-        {
             hints.emplace_back(SDL_CONTROLLER_BUTTON_A, "#{Interface:LootPutInAction}");
-            hints.emplace_back(SDL_CONTROLLER_BUTTON_B, "#{Interface:LootBack}");
-        }
         else
             hints.emplace_back(
                 SDL_CONTROLLER_BUTTON_A, stealing ? "#{Interface:LootSteal}" : "#{Interface:LootTake}");
