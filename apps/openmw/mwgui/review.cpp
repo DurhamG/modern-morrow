@@ -5,11 +5,13 @@
 #include <MyGUI_Button.h>
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
+#include <MyGUI_LayerManager.h>
 #include <MyGUI_ScrollView.h>
 #include <MyGUI_UString.h>
 
 #include <components/esm3/loadbsgn.hpp>
 #include <components/esm3/loadrace.hpp>
+#include <components/esm3/loadskil.hpp>
 #include <components/esm3/loadspel.hpp>
 #include <components/settings/values.hpp>
 
@@ -19,6 +21,7 @@
 #include "../mwmechanics/autocalcspell.hpp"
 #include "../mwworld/esmstore.hpp"
 
+#include "controllerscreen.hpp"
 #include "tooltips.hpp"
 
 namespace
@@ -135,6 +138,24 @@ namespace MWGui
     {
         WindowModal::onOpen();
         mUpdateSkillArea = true;
+
+        if (Settings::gui().mControllerMenus && mPanel == nullptr)
+            mPanel = ControllerUi::createPanelRoot("ControllerModal");
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mControllerFocus = 0;
+            mPanel->setVisible(true);
+            MyGUI::LayerManager::getInstance().upLayerItem(mPanel);
+            drawPanel();
+        }
+    }
+
+    void ReviewDialog::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->setVisible(false);
+        WindowModal::onClose();
     }
 
     void ReviewDialog::onFrame(float /*duration*/)
@@ -143,7 +164,146 @@ namespace MWGui
         {
             updateSkillArea();
             mUpdateSkillArea = false;
+            drawPanel();
         }
+    }
+
+    void ReviewDialog::drawPanel()
+    {
+        using namespace ControllerUi;
+        if (mPanel == nullptr || !mPanel->getVisible())
+            return;
+        clearPanel(mPanel);
+        const MyGUI::IntSize size = mPanel->getSize();
+        addRect(mPanel, 0, 0, size.width, size.height, MyGUI::Colour::Black)->setNeedMouseFocus(true);
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+
+        addText(mPanel, sMargin, 20, size.width - 2 * sMargin, 40, "#{Interface:ChargenReviewTitle}", sFontTitle,
+            sBrightColour);
+        addRect(mPanel, sMargin, 66, size.width - 2 * sMargin, 1, sAccentColour, 0.2f);
+        const int top = 82;
+        const int bottom = size.height - 64;
+
+        // The choices made so far on the left, which A goes back to.
+        constexpr int choiceH = 56;
+        constexpr int leftW = 300;
+        const std::array<std::pair<std::string, std::string>, 4> choices = { {
+            { "#{sName}", mNameWidget->getCaption().asUTF8() },
+            { "#{sRace}", mRaceWidget->getCaption().asUTF8() },
+            { "#{sClass}", mClassWidget->getCaption().asUTF8() },
+            { "#{sBirthSign}", mBirthSignWidget->getCaption().asUTF8() },
+        } };
+        int ty = top;
+        for (std::size_t i = 0; i < choices.size(); ++i)
+        {
+            const bool focused = i == mControllerFocus;
+            addRect(mPanel, sMargin, ty, leftW, choiceH - 6, sPanelColour, 0.9f);
+            if (focused)
+            {
+                addRect(mPanel, sMargin, ty, leftW, choiceH - 6, sAccentColour, 0.16f);
+                addRect(mPanel, sMargin, ty, 3, choiceH - 6, sAccentColour);
+            }
+            addText(mPanel, sMargin + 14, ty + 2, leftW - 28, 20, choices[i].first, sFontSmall, sDimColour);
+            addText(mPanel, sMargin + 14, ty + 20, leftW - 28, 28, escaped(choices[i].second), sFontNormal,
+                focused ? sActiveColour : sBrightColour);
+            ty += choiceH;
+        }
+
+        // Health, magicka and fatigue below them, in the HUD's colours.
+        ty += 10;
+        const std::array<std::pair<std::string, MyGUI::Colour>, 3> dynamics = { {
+            { "#{sHealth}", MyGUI::Colour(0.78f, 0.24f, 0.12f) },
+            { "#{sMagic}", MyGUI::Colour(0.21f, 0.33f, 0.68f) },
+            { "#{sFatigue}", MyGUI::Colour(0.f, 0.59f, 0.24f) },
+        } };
+        for (std::size_t i = 0; i < dynamics.size(); ++i)
+        {
+            const auto [current, full] = mDynamicValues[i];
+            addText(mPanel, sMargin, ty, leftW, 26, dynamics[i].first, sFontNormal, sTextColour);
+            addText(mPanel, sMargin, ty, leftW, 26, std::to_string(current) + " / " + std::to_string(full), sFontNormal,
+                sBrightColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
+            addRect(mPanel, sMargin, ty + 28, leftW, 8, MyGUI::Colour::Black, 0.6f);
+            if (full > 0)
+                addRect(mPanel, sMargin, ty + 28, leftW * std::clamp(current, 0, full) / full, 8, dynamics[i].second);
+            ty += 48;
+        }
+
+        // The attributes in the middle, with the race's and the sign's specials below them.
+        const int mx = sMargin + leftW + 32;
+        constexpr int middleW = 240;
+        ty = top;
+        addText(mPanel, mx, ty, middleW, 24, "#{Interface:StatsAttributes}", sFontSmall, sDimColour);
+        ty += 28;
+        for (const ESM::Attribute& attribute : store.get<ESM::Attribute>())
+        {
+            const auto found = mAttributeWidgets.find(attribute.mId);
+            if (found == mAttributeWidgets.end())
+                continue;
+            addText(mPanel, mx, ty, middleW, 26, escaped(attribute.mName), sFontNormal, sTextColour);
+            addText(mPanel, mx, ty, middleW, 26,
+                std::to_string(static_cast<int>(found->second->getAttributeValue().getModified())), sFontNormal,
+                sBrightColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
+            ty += 28;
+        }
+        std::vector<std::string> specials;
+        if (const ESM::Race* race = store.get<ESM::Race>().search(mRaceId))
+            for (const ESM::RefId& id : race->mPowers.mList)
+                if (const ESM::Spell* spell = store.get<ESM::Spell>().search(id))
+                    specials.push_back(spell->mName);
+        if (const ESM::BirthSign* sign = store.get<ESM::BirthSign>().search(mBirthSignId))
+            for (const ESM::RefId& id : sign->mPowers.mList)
+                if (const ESM::Spell* spell = store.get<ESM::Spell>().search(id))
+                    specials.push_back(spell->mName);
+        if (!specials.empty())
+        {
+            ty += 12;
+            addText(mPanel, mx, ty, middleW, 24, "#{Interface:ChargenSpecials}", sFontSmall, sDimColour);
+            ty += 28;
+            for (const std::string& name : specials)
+            {
+                if (ty + 26 > bottom)
+                    break;
+                addText(mPanel, mx, ty, middleW, 26, escaped(name), sFontNormal, sNewColour);
+                ty += 26;
+            }
+        }
+
+        // The skills on the right: major and minor in one column, misc in the other.
+        const int rx = mx + middleW + 40;
+        const int columnW = (size.width - sMargin - rx - 24) / 2;
+        const auto skillGroup = [&](int x, int& y, const std::string& heading, const std::vector<ESM::RefId>& skills) {
+            addText(mPanel, x, y, columnW, 24, heading, sFontSmall, sDimColour);
+            y += 26;
+            for (const ESM::RefId& id : skills)
+            {
+                const ESM::Skill* skill = store.get<ESM::Skill>().search(id);
+                if (skill == nullptr || y + 24 > bottom)
+                    continue;
+                const auto value = mSkillValues.find(id);
+                addText(mPanel, x, y, columnW, 24, escaped(skill->mName), sFontNormal, sTextColour);
+                if (value != mSkillValues.end())
+                    addText(mPanel, x, y, columnW, 24, std::to_string(static_cast<int>(value->second.getModified())),
+                        sFontNormal, sBrightColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
+                y += 24;
+            }
+            y += 12;
+        };
+        int sy = top;
+        skillGroup(rx, sy, "#{sSkillClassMajor}", mMajorSkills);
+        skillGroup(rx, sy, "#{sSkillClassMinor}", mMinorSkills);
+        sy = top;
+        skillGroup(rx + columnW + 24, sy, "#{sSkillClassMisc}", mMiscSkills);
+
+        // The button hints along the bottom.
+        int hx = sMargin;
+        const int hintY = size.height - 48;
+        const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
+            addGlyph(mPanel, hx, hintY + 4, 22, button);
+            MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 220, 30, label, sFontNormal, sBrightColour);
+            hx += 30 + text->getTextSize().width + 22;
+        };
+        hint(SDL_CONTROLLER_BUTTON_A, "#{Interface:ChargenChange}");
+        hint(SDL_CONTROLLER_BUTTON_X, "#{sDone}");
     }
 
     void ReviewDialog::setPlayerName(const std::string& name)
@@ -193,6 +353,7 @@ namespace MWGui
         int modified = static_cast<int>(value.getModified());
 
         mHealth->setValue(current, modified);
+        mDynamicValues[0] = { current, modified };
         std::string valStr = MyGUI::utility::toString(current) + " / " + MyGUI::utility::toString(modified);
         mHealth->setUserString("Caption_HealthDescription", "#{sHealthDesc}\n" + valStr);
     }
@@ -203,6 +364,7 @@ namespace MWGui
         int modified = static_cast<int>(value.getModified());
 
         mMagicka->setValue(current, modified);
+        mDynamicValues[1] = { current, modified };
         std::string valStr = MyGUI::utility::toString(current) + " / " + MyGUI::utility::toString(modified);
         mMagicka->setUserString("Caption_HealthDescription", "#{sMagDesc}\n" + valStr);
     }
@@ -213,6 +375,7 @@ namespace MWGui
         int modified = static_cast<int>(value.getModified());
 
         mFatigue->setValue(current, modified);
+        mDynamicValues[2] = { current, modified };
         std::string valStr = MyGUI::utility::toString(current) + " / " + MyGUI::utility::toString(modified);
         mFatigue->setUserString("Caption_HealthDescription", "#{sFatDesc}\n" + valStr);
     }
@@ -542,6 +705,22 @@ namespace MWGui
 
     bool ReviewDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+        {
+            // The panel lists the four choices made so far. Back and Done are B and X.
+            if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+            {
+                const int delta = arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP ? -1 : 1;
+                mControllerFocus = static_cast<size_t>(std::clamp(static_cast<int>(mControllerFocus) + delta, 0, 3));
+                MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+                drawPanel();
+                return true;
+            }
+            if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT || arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
+                return true;
+            mControllerFocus = std::min<size_t>(mControllerFocus, 3);
+        }
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             switch (mControllerFocus)

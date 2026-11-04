@@ -1,0 +1,8 @@
+# The review at the end of character creation, in controller menus mode.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console command=EnableStatReviewMenu
+wait frames=20
+pad button=dpdown
+pad button=dpdown
+wait frames=5
+shot review

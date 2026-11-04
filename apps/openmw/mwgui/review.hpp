@@ -1,6 +1,9 @@
 #ifndef MWGUI_REVIEW_H
 #define MWGUI_REVIEW_H
 
+#include <array>
+#include <utility>
+
 #include "widgets.hpp"
 #include "windowbase.hpp"
 #include <components/esm/refid.hpp>
@@ -43,6 +46,8 @@ namespace MWGui
         void setSkillValue(ESM::RefId id, const MWMechanics::SkillValue& value);
 
         void onOpen() override;
+
+        void onClose() override;
 
         void onFrame(float duration) override;
 
@@ -105,6 +110,12 @@ namespace MWGui
         // 0 = Name, 1 = Race, 2 = Class, 3 = BirthSign, 4 = Back, 5 = OK
         std::vector<MyGUI::Button*> mButtons;
         size_t mControllerFocus = 0;
+
+        // In controller menus mode, a full screen panel shows the character instead of this window. The health,
+        // magicka and fatigue are kept here as current and full values for it.
+        MyGUI::Widget* mPanel = nullptr;
+        std::array<std::pair<int, int>, 3> mDynamicValues{};
+        void drawPanel();
     };
 }
 #endif
