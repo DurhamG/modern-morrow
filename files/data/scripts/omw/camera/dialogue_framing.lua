@@ -23,7 +23,9 @@ local turnRate = 6
 local panelFaceLeft = 0.2
 
 -- The services that show a panel on the right side of the screen.
-local panelModes = { Barter = true, SpellBuying = true, Travel = true, Training = true, MerchantRepair = true }
+local panelModes = {
+    Barter = true, SpellBuying = true, Travel = true, Training = true, MerchantRepair = true, Companion = true,
+}
 
 local speaker = nil
 local besidePanel = false

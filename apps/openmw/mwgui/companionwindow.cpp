@@ -14,6 +14,8 @@
 #include "../mwworld/class.hpp"
 
 #include "companionitemmodel.hpp"
+#include "companionpanel.hpp"
+#include "controllerscreen.hpp"
 #include "countdialog.hpp"
 #include "draganddrop.hpp"
 #include "itemtransfer.hpp"
@@ -68,7 +70,12 @@ namespace MWGui
         mControllerButtons.mB = "#{Interface:Close}";
         mControllerButtons.mR3 = "#{Interface:Info}";
         mControllerButtons.mL2 = "#{Interface:Inventory}";
+
+        if (Settings::gui().mControllerMenus)
+            mPanel = std::make_unique<CompanionPanel>(*this);
     }
+
+    CompanionWindow::~CompanionWindow() = default;
 
     void CompanionWindow::onItemSelected(int index)
     {
@@ -154,6 +161,9 @@ namespace MWGui
         mItemView->resetScrollBars();
 
         setTitle(actor.getClass().getName(actor));
+
+        if (mPanel != nullptr)
+            mPanel->update();
     }
 
     void CompanionWindow::onFrame(float dt)
@@ -165,7 +175,12 @@ namespace MWGui
             updateEncumbranceBar();
             mItemView->update();
             mUpdateNextFrame = false;
+            if (mPanel != nullptr)
+                mPanel->update();
         }
+
+        if (mPanel != nullptr)
+            mPanel->onFrame(dt);
     }
 
     void CompanionWindow::updateEncumbranceBar()
@@ -237,15 +252,25 @@ namespace MWGui
     void CompanionWindow::onOpen()
     {
         mItemTransfer->addTarget(*mItemView);
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mPanel->show();
+        }
     }
 
     void CompanionWindow::onClose()
     {
         mItemTransfer->removeTarget(*mItemView);
+        if (mPanel != nullptr)
+            mPanel->hide();
     }
 
     bool CompanionWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             int index = mItemView->getControllerFocus();

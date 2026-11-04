@@ -46,7 +46,7 @@ add_openmw_dir (mwgui
     draganddrop timeadvancer jailscreen itemchargeview keyboardnavigation textcolours statswatcher
     postprocessorhud settings worlditemmodel itemtransfer inventorytabsoverlay controllerscreen inventoryscreen
     magicscreen statsscreen dialoguepanel pausemenu itemdetails lootpanel barterpanel questlog
-    journalscreen servicepanel controllerdialog readingpanel
+    journalscreen servicepanel controllerdialog readingpanel companionpanel
     )
 
 add_openmw_dir (mwdialogue

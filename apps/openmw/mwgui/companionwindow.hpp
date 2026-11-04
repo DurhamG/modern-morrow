@@ -4,6 +4,8 @@
 #include "referenceinterface.hpp"
 #include "windowbase.hpp"
 
+#include <memory>
+
 #include <components/misc/notnullptr.hpp>
 
 namespace MWGui
@@ -19,11 +21,13 @@ namespace MWGui
     class SortFilterItemModel;
     class CompanionItemModel;
     class ItemTransfer;
+    class CompanionPanel;
 
     class CompanionWindow : public WindowBase, public ReferenceInterface
     {
     public:
         explicit CompanionWindow(DragAndDrop& dragAndDrop, ItemTransfer& itemTransfer, MessageBoxManager* manager);
+        ~CompanionWindow() override;
 
         bool exit() override;
 
@@ -76,6 +80,11 @@ namespace MWGui
         void onOpen() override;
 
         void onClose() override;
+
+        // In controller menus mode, a panel on the right side of the screen shows the sharing instead of this window
+        // and the inventory window. It reads the companion's items from here.
+        friend class CompanionPanel;
+        std::unique_ptr<CompanionPanel> mPanel;
     };
 
 }

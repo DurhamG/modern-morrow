@@ -675,13 +675,13 @@ namespace MWGui
         if (!mMap)
             return; // UI not created yet
 
-        // In controller menus mode, conversations, looting, the merchant services, the level up, reading and the
-        // pause menu show over the world without the HUD.
+        // In controller menus mode, conversations, looting, the merchant services, sharing with a companion, the
+        // level up, reading and the pause menu show over the world without the HUD.
         const bool controllerOverlay = Settings::gui().mControllerMenus
             && (getMode() == GM_Dialogue || getMode() == GM_Container || getMode() == GM_Barter
                 || getMode() == GM_SpellBuying || getMode() == GM_Training || getMode() == GM_Travel
                 || getMode() == GM_MerchantRepair || getMode() == GM_Levelup || getMode() == GM_Book
-                || getMode() == GM_Scroll
+                || getMode() == GM_Scroll || getMode() == GM_Companion
                 || (getMode() == GM_MainMenu
                     && MWBase::Environment::get().getStateManager()->getState()
                         == MWBase::StateManager::State_Running));
@@ -741,10 +741,11 @@ namespace MWGui
             mStatsWindow->setVisible(false);
             mSpellWindow->setVisible(false);
             mHud->setDrowningBarVisible(false);
-            // In controller menus mode, the loot and barter panels show without the player's inventory window.
+            // In controller menus mode, the loot, barter and companion panels show without the player's inventory
+            // window.
             mInventoryWindow->setVisible(
-                ((getMode() == GM_Container || getMode() == GM_Barter) && !Settings::gui().mControllerMenus)
-                || getMode() == GM_Companion);
+                (getMode() == GM_Container || getMode() == GM_Barter || getMode() == GM_Companion)
+                && !Settings::gui().mControllerMenus);
             if (mInventoryScreen != nullptr)
                 mInventoryScreen->setVisible(false);
             if (mMagicScreen != nullptr)

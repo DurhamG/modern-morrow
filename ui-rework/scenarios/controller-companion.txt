@@ -1,0 +1,20 @@
+# Sharing items with a companion in controller menus mode. Caius Cosades stands in for a companion, so the panel
+# lists his items, then the player's own, and the player gives him one.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->additem \"iron longsword\" 1"
+console "command=player->additem p_restore_health_s 3"
+lua "code=local types = require('openmw.types') for _, actor in ipairs(require('openmw.nearby').actors) do if types.NPC.objectIsInstance(actor) and actor ~= require('openmw.self').object then require('openmw.interfaces').UI.addMode('Companion', { target = actor }) break end end"
+wait frames=20
+shot companion
+pad button=rightshoulder
+wait frames=5
+shot companion-yours
+pad button=a
+wait frames=5
+shot companion-given
+pad button=leftshoulder
+wait frames=5
+shot companion-theirs
+pad button=b
+wait frames=10
+shot closed
