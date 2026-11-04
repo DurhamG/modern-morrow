@@ -63,9 +63,15 @@ def default_user_cfg():
     env = os.environ.get("OMW_USER_CFG")
     if env:
         return Path(env)
+    # Modern Morrow's own config folder, or else OpenMW's, which a player who used OpenMW first already has.
     if sys.platform == "win32":
-        return Path.home() / "Documents" / "My Games" / "OpenMW" / "openmw.cfg"
-    return Path.home() / ".config" / "openmw" / "openmw.cfg"
+        folders = [Path.home() / "Documents" / "My Games" / name for name in ("Modern Morrow", "OpenMW")]
+    else:
+        folders = [Path.home() / ".config" / name for name in ("modern-morrow", "openmw")]
+    for folder in folders:
+        if (folder / "openmw.cfg").is_file():
+            return folder / "openmw.cfg"
+    return folders[-1] / "openmw.cfg"
 
 
 def openmw_binary(build_dir):

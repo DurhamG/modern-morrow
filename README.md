@@ -109,14 +109,16 @@ The rest of the game has controller screens in the same style too:
 Trying it
 ---------
 
-You need a copy of Morrowind. Build this fork the same way as OpenMW: see the [OpenMW build instructions](https://wiki.openmw.org/index.php?title=Development_Environment_Setup), or [CLAUDE.md](CLAUDE.md) for notes on building on Windows. Then turn on **Enable Controller Menus** in the launcher's settings, or set this in `settings.cfg`:
+You need a copy of Morrowind. Build this fork the same way as OpenMW: see the [OpenMW build instructions](https://wiki.openmw.org/index.php?title=Development_Environment_Setup), or [CLAUDE.md](CLAUDE.md) for notes on building on Windows.
+
+The new screens are on by default. They only respond to a gamepad for now, and mouse support is planned. To get OpenMW's normal interface back, turn off **Enable Controller Menus** in the launcher's settings, or set this in `settings.cfg`:
 
 ```ini
 [GUI]
-controller menus = true
+controller menus = false
 ```
 
-With the setting off, the game uses OpenMW's normal interface. With it on, the new screens only respond to a gamepad for now. Mouse support is planned.
+Modern Morrow keeps its settings and saves apart from OpenMW's: in `Documents/My Games/Modern Morrow` on Windows, and in `~/.config/modern-morrow` and `~/.local/share/modern-morrow` on Linux. To bring over an existing OpenMW setup and its saves, copy OpenMW's folders there. Saves made in Modern Morrow use a newer format, so released versions of OpenMW can't load them.
 
 How it's built
 --------------

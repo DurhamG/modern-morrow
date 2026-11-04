@@ -21,10 +21,12 @@ namespace Files
 
     namespace
     {
+        // Modern Morrow keeps its settings and saves in folders of its own, apart from OpenMW's, because its saves
+        // use a newer format that released OpenMW can't load.
 #if defined(_WIN32) || defined(__WINDOWS__)
-        constexpr auto sApplicationName = "OpenMW";
+        constexpr auto sApplicationName = "Modern Morrow";
 #else
-        constexpr auto sApplicationName = "openmw";
+        constexpr auto sApplicationName = "modern-morrow";
 #endif
 
         using GetPath = const std::filesystem::path& (Files::FixedPath<>::*)() const;
