@@ -16,9 +16,9 @@ All of these are at 1920x1080, from a real character early in the game.
 
 | Exploring | When it matters |
 | --- | --- |
-| ![The game with no HUD on screen while exploring](ui-rework/screenshots/hud-quiet.jpg) | ![The HUD with low health, the weapon and an active spell effect](ui-rework/screenshots/hud-busy.jpg) |
+| ![The bottom-left corner while exploring, with no HUD on screen](ui-rework/screenshots/hud-quiet.jpg) | ![The bottom-left corner with low health, the weapon and an active spell effect](ui-rework/screenshots/hud-busy.jpg) |
 
-The HUD hides itself until there is something worth knowing. Health, magicka and fatigue bars show while they aren't full. The weapon and spell boxes show while the weapon or spell is ready, and for a few seconds after it changes. Effect icons show for effects that will run out, such as potions, and for diseases and curses, but not for the effects of your race and birthsign, which never change. In combat everything shows, including the enemy's health. When it's quiet again, it all fades away. The minimap is gone, because the map screen is one button away.
+These two show the bottom-left corner of the screen, where the HUD sits. The HUD hides itself until there is something worth knowing. Health, magicka and fatigue bars show while they aren't full. The weapon and spell boxes show while the weapon or spell is ready, and for a few seconds after it changes. Effect icons show for effects that will run out, such as potions, and for diseases and curses, but not for the effects of your race and birthsign, which never change. In combat everything shows, including the enemy's health. When it's quiet again, it all fades away. The minimap is gone, because the map screen is one button away.
 
 ### Inventory
 
