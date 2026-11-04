@@ -1,0 +1,20 @@
+# Persuading Arrille in controller menus mode: the choices with his disposition and the player's gold, an attempt,
+# and the choices again after it.
+launch --start "Seyda Neen, Arrille's Tradehouse" --set "GUI.controller menus=true"
+console "command=player->additem gold_001 150"
+console "command=\"arrille\"->forcegreeting"
+wait frames=20
+pad button=rightshoulder
+wait frames=5
+pad button=a
+wait frames=10
+shot choices
+pad button=a
+wait frames=15
+shot admired
+pad button=a
+wait frames=10
+shot choices-again
+pad button=b
+wait frames=10
+shot closed

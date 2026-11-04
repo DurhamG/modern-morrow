@@ -22,6 +22,7 @@ namespace Gui
 namespace MWGui
 {
     class DialoguePanel;
+    class ControllerDialog;
     class DialogueWindow;
 
     class ResponseCallback : public MWBase::DialogueManager::ResponseCallback
@@ -39,14 +40,18 @@ namespace MWGui
         void addResponse(std::string_view title, std::string_view text) override;
 
         void updateTopics() const;
+
+        DialogueWindow* getWindow() const { return mWindow; }
     };
 
     class PersuasionDialog : public WindowModal
     {
     public:
         PersuasionDialog(std::unique_ptr<ResponseCallback> callback);
+        ~PersuasionDialog() override;
 
         void onOpen() override;
+        void onClose() override;
 
         MyGUI::Widget* getDefaultKeyFocus() override;
 
@@ -76,6 +81,11 @@ namespace MWGui
 
         void onCancel(MyGUI::Widget* sender);
         void onPersuade(MyGUI::Widget* sender);
+
+        // In controller menus mode, the choices show in a question dialog instead of this window, which stays
+        // hidden. Each answer stands for one of the buttons.
+        std::unique_ptr<ControllerDialog> mPanel;
+        std::vector<MyGUI::Button*> mPanelButtons;
     };
 
     struct Link
@@ -140,6 +150,9 @@ namespace MWGui
     {
     public:
         DialogueWindow();
+
+        /// The actor the player is talking to.
+        const MWWorld::Ptr& getActor() const { return mPtr; }
         ~DialogueWindow() override;
 
         void onTradeComplete();

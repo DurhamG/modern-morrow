@@ -157,6 +157,7 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   - Repairing with your own tools and recharging with a soul gem share `ToolPanel`, a full screen with the items that need it on the left and the tool on the right. The `controller-repair-tools` scenario repairs a sword, switches tools, and recharges an amulet.
   - The `controller-enchanting` scenario enchants a ring with a soul gem. The `controller-enchanting-service` scenario buys an enchantment from Galbedir and adds an effect on an attribute.
 - Built the custom class screen in character creation without a review first, as the user asked. `CreateClassPanel` shows the class on the left and the choices for the highlighted line on the right. The `controller-create-class` scenario names a class, picks a specialization and swaps a skill.
+- Persuasion now shows in the question dialog, with the person's disposition and the player's gold. The `controller-persuasion` scenario admires Arrille.
 - Lessons learned:
   - `Alchemy::countPotionsToBrew` returns 0 until the potion has a name, so the panel gives it the window's name before showing the count.
   - Lua's `I.UI.addMode('Alchemy')` opens alchemy without going through the inventory, for testing. `addMode('Enchanting', {target = gem})` opens enchanting with a soul gem, and `{target = npc}` with an enchanter.

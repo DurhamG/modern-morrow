@@ -32,6 +32,8 @@
 #include "../mwmechanics/npcstats.hpp"
 
 #include "bookpage.hpp"
+#include "controllerdialog.hpp"
+#include "controllerscreen.hpp"
 #include "dialoguepanel.hpp"
 #include "textcolours.hpp"
 
@@ -93,6 +95,18 @@ namespace MWGui
         mDisableGamepadCursor = Settings::gui().mControllerMenus;
         mControllerButtons.mA = "#{Interface:Select}";
         mControllerButtons.mB = "#{Interface:Cancel}";
+
+        if (Settings::gui().mControllerMenus)
+            mPanel = std::make_unique<ControllerDialog>();
+    }
+
+    PersuasionDialog::~PersuasionDialog() = default;
+
+    void PersuasionDialog::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+        WindowModal::onClose();
     }
 
     void PersuasionDialog::adjustAction(MyGUI::Widget* action, int& totalHeight)
@@ -168,6 +182,24 @@ namespace MWGui
         }
 
         WindowModal::onOpen();
+
+        if (mPanel != nullptr)
+        {
+            // The message says who is being persuaded, how they feel about the player, and how much gold the
+            // player has for bribes. The bribes the player can't afford are left out.
+            ControllerUi::hideWindow(mMainWidget);
+            mPanelButtons = mButtons;
+            std::vector<std::string> answers;
+            for (MyGUI::Button* button : mPanelButtons)
+                answers.push_back(button->getCaption().asUTF8());
+            std::string message;
+            if (const MWWorld::Ptr actor = mCallback->getWindow()->getActor(); !actor.isEmpty())
+                message = std::string(actor.getClass().getName(actor)) + ".  #{Interface:DialogueDisposition} "
+                    + std::to_string(MWBase::Environment::get().getMechanicsManager()->getDerivedDisposition(actor))
+                    + ".  ";
+            message += "#{Interface:BarterYourGold} " + std::to_string(playerGold) + ".";
+            mPanel->show(message, answers, 0, std::nullopt);
+        }
     }
 
     MyGUI::Widget* PersuasionDialog::getDefaultKeyFocus()
@@ -177,6 +209,18 @@ namespace MWGui
 
     bool PersuasionDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+        {
+            if (arg.button == SDL_CONTROLLER_BUTTON_B)
+                onCancel(mCancelButton);
+            else if (const std::optional<std::size_t> picked = mPanel->onControllerButtonEvent(arg))
+            {
+                MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+                onPersuade(mPanelButtons[*picked]);
+            }
+            return true;
+        }
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             onPersuade(mButtons[mControllerFocus]);

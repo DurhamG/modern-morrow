@@ -18,6 +18,7 @@ Every one of them works the same way. In controller menus mode, the old window s
 | --- | --- | --- |
 | Spells, training, travel, repair | A list of what the merchant offers with prices, and details beside it: a spell's effects, cost and chance, a skill's values and limits, the travel time, an item's condition. Entries the player can't pick say why in red. | A buy, B back |
 | Short messages, such as "You failed casting the spell" | Boxes in the panel style, in large text, stacked above the bottom of the screen. They scale with the screen and fade out at the end. | None |
+| Persuasion | The question dialog, with the person's name, their disposition and the player's gold, and the choices: admire, intimidate, taunt, and the bribes the player can afford. | Up and down, A tries |
 | Message boxes, confirmations, class questions | The message, then the answers as rows. Long answers wrap. | Up and down, A pick, B cancel where there is a cancel answer |
 | Rest and wait | The hours in large text, when the rest ends, and how long resting until healed takes. | Left and right change the hours, L1 one hour, R1 a day, A rest, X until healed, B cancel |
 | Level up | The class image and level text on the left, and the attributes as tiles with their bonuses. The highlighted attribute's description and the skills that raise it are below. | D-pad moves, A chooses, X finishes |
@@ -38,6 +39,5 @@ Every one of them works the same way. In controller menus mode, the old window s
 
 - **Crafting and quick keys** were left out at first, on purpose. They have their own designs now, in [crafting.md](crafting.md) and [quick-keys.md](quick-keys.md).
 - **The options' key bindings and scripts' pages** still show the old window, because they are built in code rather than in the layout.
-- **The persuasion dialog** in conversations still uses the old window.
 - **The loading panel and video skipping** couldn't be checked with the harness. The harness can't answer while loading runs or a video plays.
 - **Mouse input.** The panels only respond to a gamepad, like the other controller screens.
