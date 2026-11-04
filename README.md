@@ -106,6 +106,7 @@ Other improvements
 ------------------
 
 - **The Steam Controller works without Steam.** The release builds run the game on SDL3, the newest version of the library that reads controllers, through SDL's sdl2-compat layer. SDL3 recognizes newer controllers, such as the 2026 Steam Controller, without Steam Input. With OpenMW's SDL2, that controller only works when Steam starts the game.
+- **The game fills the screen.** It starts in windowed fullscreen at the screen's own resolution, such as a Steam Deck's 1280x800 or a TV's, instead of in an 800x600 window.
 - **The AppImage sets itself up.** Started with no options, the Linux AppImage runs the setup wizard the first time, then starts the game, and goes straight into the game after that. So a Steam shortcut to it needs no launch options.
 - **The tutorial talks about the controller.** On a controller, Morrowind's tutorial messages use the text the game was written with for the Xbox, such as "The LEFT THUMBSTICK moves you", instead of key names and mouse clicks.
 

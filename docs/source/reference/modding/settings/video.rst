@@ -27,7 +27,7 @@ Video Settings
    :title: window mode
    :type: int
    :range: 0, 1, 2
-   :default: 2
+   :default: 1
    :location: :bdg-success:`Launcher > Display` :bdg-info:`In Game > Options > Video`
 
    This setting determines the window mode.
