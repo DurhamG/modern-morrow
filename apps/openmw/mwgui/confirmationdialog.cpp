@@ -8,6 +8,8 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
 
+#include "controllerscreen.hpp"
+
 namespace MWGui
 {
     ConfirmationDialog::ConfirmationDialog()
@@ -25,7 +27,16 @@ namespace MWGui
             mDisableGamepadCursor = true;
             mControllerButtons.mA = "#{Interface:OK}";
             mControllerButtons.mB = "#{Interface:Cancel}";
+            mDialog = std::make_unique<ControllerDialog>();
         }
+    }
+
+    ConfirmationDialog::~ConfirmationDialog() = default;
+
+    void ConfirmationDialog::onClose()
+    {
+        if (mDialog != nullptr)
+            mDialog->hide();
     }
 
     void ConfirmationDialog::askForConfirmation(const std::string& message)
@@ -52,6 +63,12 @@ namespace MWGui
         }
 
         center();
+
+        if (mDialog != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mDialog->show(message, { mOkButton->getCaption().asUTF8(), mCancelButton->getCaption().asUTF8() }, 0, 1);
+        }
     }
 
     bool ConfirmationDialog::exit()
@@ -75,6 +92,18 @@ namespace MWGui
 
     bool ConfirmationDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mDialog != nullptr)
+        {
+            if (const std::optional<std::size_t> answer = mDialog->onControllerButtonEvent(arg))
+            {
+                if (*answer == 0)
+                    onOkButtonClicked(mOkButton);
+                else
+                    onCancelButtonClicked(mCancelButton);
+            }
+            return true;
+        }
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             if (mOkButtonFocus)

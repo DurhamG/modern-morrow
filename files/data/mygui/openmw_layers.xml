@@ -28,6 +28,11 @@
     <Layer name="Debug" overlapped="true" pick="true"/>
     <Layer name="Console" overlapped="true" pick="true"/>
     <Layer name="Modal" overlapped="true" pick="true"/>
+    <!-- Questions such as message boxes and confirmations in controller menus mode, over the screens that ask them.
+         Like the HUD, they keep a constant size relative to the screen height. -->
+    <Layer name="ControllerModal" type="ScalingLayer" pick="true">
+        <Property key="Height" value="720"/>
+    </Layer>
     <Layer name="Popup" overlapped="true" pick="true"/>
     <!-- For UI mock-ups that the automation harness loads. Like the HUD, it keeps a constant size relative to the
          screen height. -->

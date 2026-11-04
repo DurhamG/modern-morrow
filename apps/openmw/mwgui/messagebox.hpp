@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include "controllerdialog.hpp"
+
 #include "windowbase.hpp"
 
 namespace MyGUI
@@ -94,6 +96,7 @@ namespace MWGui
     public:
         InteractiveMessageBox(MessageBoxManager& parMessageBoxManager, const std::string& message,
             const std::vector<std::string>& buttons, bool immediate, size_t defaultFocus);
+        ~InteractiveMessageBox() override;
         void mousePressed(MyGUI::Widget* widget);
         int readPressedButton();
 
@@ -117,6 +120,9 @@ namespace MWGui
         size_t mDefaultFocus;
         bool mImmediate;
         size_t mControllerFocus = 0;
+
+        // In controller menus mode, the question shows in a dialog instead of this window.
+        std::unique_ptr<ControllerDialog> mDialog;
     };
 
 }

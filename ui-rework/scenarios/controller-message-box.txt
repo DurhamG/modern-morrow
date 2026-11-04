@@ -1,0 +1,21 @@
+# A script's message box with several answers, and the confirmation before quitting, in controller menus mode.
+launch --start "Seyda Neen" --set "GUI.controller menus=true"
+console "command=MessageBox \"A stranger offers to sell you a map of the Ashlands. What do you say?\" \"Buy it\" \"Ask for a lower price\" \"Refuse\""
+wait frames=10
+shot message-box
+pad button=dpdown
+wait frames=5
+shot message-box-moved
+pad button=a
+wait frames=10
+shot message-box-answered
+pad button=start
+wait frames=10
+pad button=dpdown
+pad button=dpdown
+pad button=a
+wait frames=10
+shot confirm-exit
+pad button=b
+wait frames=10
+shot confirm-cancelled

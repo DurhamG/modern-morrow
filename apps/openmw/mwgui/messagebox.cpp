@@ -14,6 +14,8 @@
 #include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
+#include "controllerscreen.hpp"
+
 namespace MWGui
 {
 
@@ -296,6 +298,12 @@ namespace MWGui
                 for (size_t i = 0; i < mButtons.size(); ++i)
                     mButtons[i]->setStateSelected(i == mControllerFocus);
             }
+
+            mDialog = std::make_unique<ControllerDialog>();
+            // A single answer, such as "OK", is also what B picks.
+            const std::optional<std::size_t> cancel
+                = buttons.size() == 1 ? std::optional<std::size_t>(0) : std::nullopt;
+            mDialog->show(message, buttons, mControllerFocus, cancel);
         }
 
         MyGUI::IntSize mainWidgetSize;
@@ -394,7 +402,11 @@ namespace MWGui
         }
 
         setVisible(true);
+        if (mDialog != nullptr)
+            ControllerUi::hideWindow(mMainWidget);
     }
+
+    InteractiveMessageBox::~InteractiveMessageBox() = default;
 
     MyGUI::Widget* InteractiveMessageBox::getDefaultKeyFocus()
     {
@@ -425,6 +437,8 @@ namespace MWGui
     void InteractiveMessageBox::buttonActivated(MyGUI::Widget* widget)
     {
         mMarkedToDelete = true;
+        if (mDialog != nullptr)
+            mDialog->hide();
         int index = 0;
         for (const MyGUI::Button* button : mButtons)
         {
@@ -451,6 +465,13 @@ namespace MWGui
 
     bool InteractiveMessageBox::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mDialog != nullptr)
+        {
+            if (const std::optional<std::size_t> answer = mDialog->onControllerButtonEvent(arg))
+                buttonActivated(mButtons[*answer]);
+            return true;
+        }
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             if (!mButtons.empty())
