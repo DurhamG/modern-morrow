@@ -107,6 +107,13 @@ namespace MWGui
 
     namespace ControllerUi
     {
+        void hideWindow(MyGUI::Widget* mainWidget)
+        {
+            mainWidget->setAlpha(0.f);
+            if (MyGUI::Widget* client = mainWidget->getClientWidget())
+                client->setVisible(false);
+        }
+
         std::string escaped(std::string_view text)
         {
             return MyGUI::TextIterator::toTagsString(MyGUI::UString(std::string(text))).asUTF8();

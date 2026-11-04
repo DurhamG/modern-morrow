@@ -1,7 +1,10 @@
 #ifndef MWGUI_TRAININGWINDOW_H
 #define MWGUI_TRAININGWINDOW_H
 
+#include <memory>
+
 #include "referenceinterface.hpp"
+#include "servicepanel.hpp"
 #include "timeadvancer.hpp"
 #include "waitdialog.hpp"
 #include "windowbase.hpp"
@@ -18,8 +21,10 @@ namespace MWGui
     {
     public:
         TrainingWindow();
+        ~TrainingWindow() override;
 
         void onOpen() override;
+        void onClose() override;
 
         bool exit() override;
 
@@ -56,6 +61,10 @@ namespace MWGui
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         size_t mControllerFocus = 0;
+
+        // In controller menus mode, a panel on the right side of the screen shows the service instead of this window.
+        std::unique_ptr<ServicePanel> mPanel;
+        std::vector<ServicePanel::Entry> controllerEntries();
     };
 
 }

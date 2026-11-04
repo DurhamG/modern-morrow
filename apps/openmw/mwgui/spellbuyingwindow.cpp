@@ -5,7 +5,11 @@
 #include <MyGUI_ScrollView.h>
 
 #include <components/esm3/loadgmst.hpp>
+#include <components/esm3/loadmgef.hpp>
 #include <components/esm3/loadrace.hpp>
+#include <components/esm3/loadskil.hpp>
+#include <components/misc/resourcehelpers.hpp>
+#include <components/resource/resourcesystem.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -21,6 +25,8 @@
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/spells.hpp"
 #include "../mwmechanics/spellutil.hpp"
+
+#include "widgets.hpp"
 
 namespace MWGui
 {
@@ -41,7 +47,76 @@ namespace MWGui
             mControllerButtons.mA = "#{Interface:Buy}";
             mControllerButtons.mB = "#{Interface:Cancel}";
             mControllerButtons.mR3 = "#{Interface:Info}";
+
+            mPanel = std::make_unique<ServicePanel>(ServicePanel::Service{ "#{Interface:ServiceSpells}",
+                "#{Interface:Buy}", "#{Interface:ServiceNoSpells}", [this] { return mPtr; },
+                [this] { return controllerEntries(); }, [this](MyGUI::Widget* button) { onSpellButtonClick(button); },
+                [this] { onCancelButtonClicked(mCancelButton); } });
         }
+    }
+
+    SpellBuyingWindow::~SpellBuyingWindow() = default;
+
+    void SpellBuyingWindow::onOpen()
+    {
+        if (mPanel == nullptr)
+            return;
+        ControllerUi::hideWindow(mMainWidget);
+        mPanel->show();
+    }
+
+    void SpellBuyingWindow::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+    }
+
+    void SpellBuyingWindow::onFrame(float dt)
+    {
+        checkReferenceAvailable();
+        if (mPanel != nullptr)
+            mPanel->onFrame(dt);
+    }
+
+    std::vector<ServicePanel::Entry> SpellBuyingWindow::controllerEntries()
+    {
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+        const MWWorld::Ptr player = MWMechanics::getPlayer();
+        const int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
+        std::vector<ServicePanel::Entry> entries;
+        // The buttons are in the order the window lists the spells.
+        for (std::size_t i = 0; i < mSpellsView->getChildCount(); ++i)
+        {
+            MyGUI::Widget* button = mSpellsView->getChildAt(i);
+            const auto it = mSpellsWidgetMap.find(button);
+            const ESM::Spell* spell
+                = it != mSpellsWidgetMap.end() ? store.get<ESM::Spell>().search(it->second) : nullptr;
+            if (spell == nullptr)
+                continue;
+            ServicePanel::Entry entry;
+            entry.mButton = button;
+            entry.mName = spell->mName;
+            entry.mPrice = *button->getUserData<int>();
+            if (entry.mPrice > playerGold)
+                entry.mUnavailable = "#{Interface:BarterNotEnoughGold}";
+            const ESM::Skill* school = store.get<ESM::Skill>().search(MWMechanics::getSpellSchool(spell, player));
+            const int cost = MWMechanics::calcSpellCost(*spell);
+            entry.mSubtitle = (school != nullptr ? school->mName + ", " : std::string()) + std::to_string(cost)
+                + " #{Interface:ServiceMagicka}";
+            entry.mFacts.emplace_back("#{Interface:ServiceMagickaCost}", std::to_string(cost));
+            entry.mFacts.emplace_back("#{Interface:ServiceChance}",
+                std::to_string(static_cast<int>(MWMechanics::getSpellSuccessChance(spell, player))) + "%");
+            for (const Widgets::SpellEffectParams& params : Widgets::MWEffectList::effectListFromESM(&spell->mEffects))
+                entry.mParagraphs.push_back(Widgets::describeSpellEffect(params));
+            if (!spell->mEffects.mList.empty())
+                if (const ESM::MagicEffect* effect
+                    = store.get<ESM::MagicEffect>().search(spell->mEffects.mList.front().mData.mEffectID))
+                    entry.mIcon = Misc::ResourceHelpers::correctBigIconPath(
+                        effect->mIcon.getNormalized(), *MWBase::Environment::get().getResourceSystem()->getVFS())
+                                      .value();
+            entries.push_back(std::move(entry));
+        }
+        return entries;
     }
 
     bool SpellBuyingWindow::sortSpells(const ESM::Spell* left, const ESM::Spell* right)
@@ -164,6 +239,9 @@ namespace MWGui
             MyGUI::IntSize(mSpellsView->getWidth(), std::max(mSpellsView->getHeight(), mCurrentY)));
         mSpellsView->setVisibleVScroll(true);
         mSpellsView->setViewOffset(MyGUI::IntPoint(0, startOffset));
+
+        if (mPanel != nullptr)
+            mPanel->update();
     }
 
     bool SpellBuyingWindow::playerHasSpell(const ESM::RefId& id)
@@ -230,6 +308,9 @@ namespace MWGui
 
     bool SpellBuyingWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
 
         if (arg.button == SDL_CONTROLLER_BUTTON_A)

@@ -43,7 +43,74 @@ namespace MWGui
             mDisableGamepadCursor = true;
             mControllerButtons.mA = "#{Interface:Travel}";
             mControllerButtons.mB = "#{Interface:Cancel}";
+
+            mPanel = std::make_unique<ServicePanel>(ServicePanel::Service{ "#{Interface:ServiceTravel}",
+                "#{Interface:Travel}", "#{Interface:ServiceNoDestinations}", [this] { return mPtr; },
+                [this] { return controllerEntries(); }, [this](MyGUI::Widget* button) { onTravelButtonClick(button); },
+                [this] { onCancelButtonClicked(mCancelButton); } });
         }
+    }
+
+    TravelWindow::~TravelWindow() = default;
+
+    void TravelWindow::onOpen()
+    {
+        if (mPanel == nullptr)
+            return;
+        ControllerUi::hideWindow(mMainWidget);
+        mPanel->show();
+    }
+
+    void TravelWindow::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+    }
+
+    void TravelWindow::onFrame(float dt)
+    {
+        if (mPanel != nullptr)
+            mPanel->onFrame(dt);
+    }
+
+    std::vector<ServicePanel::Entry> TravelWindow::controllerEntries()
+    {
+        const MWWorld::Ptr player = MWMechanics::getPlayer();
+        const int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
+        const float travelTimeMult = MWBase::Environment::get()
+                                         .getESMStore()
+                                         ->get<ESM::GameSetting>()
+                                         .find("fTravelTimeMult")
+                                         ->mValue.getFloat();
+        std::vector<ServicePanel::Entry> entries;
+        for (std::size_t i = 0; i < mDestinationsView->getChildCount(); ++i)
+        {
+            MyGUI::Widget* button = mDestinationsView->getChildAt(i);
+            const ESM::Position* pos = button->getUserData<ESM::Position>(false);
+            if (pos == nullptr)
+                continue;
+            ServicePanel::Entry entry;
+            entry.mButton = button;
+            entry.mName = ControllerUi::localised("#{sCell=" + std::string(button->getUserString("Destination")) + "}");
+            entry.mPrice = Misc::StringUtils::toNumeric<int>(button->getUserString("price"), 0);
+            if (entry.mPrice > playerGold)
+                entry.mUnavailable = "#{Interface:BarterNotEnoughGold}";
+            // Travel from outdoors takes time, as the window works it out. Guild guides teleport.
+            std::string time = "#{Interface:ServiceInstant}";
+            if (mPtr.getCell()->isExterior())
+            {
+                const ESM::Position playerPos = player.getRefData().getPosition();
+                const float distance
+                    = (osg::Vec2f(pos->pos[0], pos->pos[1]) - osg::Vec2f(playerPos.pos[0], playerPos.pos[1])).length();
+                const int hours = static_cast<int>(distance / travelTimeMult);
+                time = std::to_string(hours) + " "
+                    + (hours == 1 ? "#{Interface:ServiceHour}" : "#{Interface:ServiceHours}");
+            }
+            entry.mSubtitle = time;
+            entry.mFacts.emplace_back("#{Interface:ServiceTravelTime}", time);
+            entries.push_back(std::move(entry));
+        }
+        return entries;
     }
 
     void TravelWindow::addDestination(const ESM::RefId& name, const ESM::Position& pos, bool interior)
@@ -170,6 +237,9 @@ namespace MWGui
         mDestinationsView->setCanvasSize(
             MyGUI::IntSize(mDestinationsView->getWidth(), std::max(mDestinationsView->getHeight(), mCurrentY)));
         mDestinationsView->setVisibleVScroll(true);
+
+        if (mPanel != nullptr)
+            mPanel->update();
     }
 
     void TravelWindow::onTravelButtonClick(MyGUI::Widget* sender)
@@ -260,6 +330,9 @@ namespace MWGui
 
     bool TravelWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             if (mControllerFocus < mDestinationButtons.size())

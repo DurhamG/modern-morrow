@@ -1,9 +1,14 @@
 #ifndef MWGUI_SpellBuyingWINDOW_H
 #define MWGUI_SpellBuyingWINDOW_H
 
-#include "referenceinterface.hpp"
-#include "windowbase.hpp"
+#include <memory>
+
 #include <components/esm/refid.hpp>
+
+#include "referenceinterface.hpp"
+#include "servicepanel.hpp"
+#include "windowbase.hpp"
+
 namespace ESM
 {
     struct Spell;
@@ -21,11 +26,14 @@ namespace MWGui
     {
     public:
         SpellBuyingWindow();
+        ~SpellBuyingWindow() override;
 
         void setPtr(const MWWorld::Ptr& actor) override;
         void setPtr(const MWWorld::Ptr& actor, int startOffset);
 
-        void onFrame(float dt) override { checkReferenceAvailable(); }
+        void onOpen() override;
+        void onClose() override;
+        void onFrame(float dt) override;
         void clear() override { resetReference(); }
 
         void onResChange(int, int) override { center(); }
@@ -59,6 +67,10 @@ namespace MWGui
         static bool sortSpells(const ESM::Spell* left, const ESM::Spell* right);
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         size_t mControllerFocus = 0;
+
+        // In controller menus mode, a panel on the right side of the screen shows the service instead of this window.
+        std::unique_ptr<ServicePanel> mPanel;
+        std::vector<ServicePanel::Entry> controllerEntries();
     };
 }
 

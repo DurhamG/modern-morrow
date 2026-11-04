@@ -675,10 +675,12 @@ namespace MWGui
         if (!mMap)
             return; // UI not created yet
 
-        // In controller menus mode, conversations, looting, barter and the pause menu show over the world without the
-        // HUD.
+        // In controller menus mode, conversations, looting, the merchant services and the pause menu show over the
+        // world without the HUD.
         const bool controllerOverlay = Settings::gui().mControllerMenus
             && (getMode() == GM_Dialogue || getMode() == GM_Container || getMode() == GM_Barter
+                || getMode() == GM_SpellBuying || getMode() == GM_Training || getMode() == GM_Travel
+                || getMode() == GM_MerchantRepair
                 || (getMode() == GM_MainMenu
                     && MWBase::Environment::get().getStateManager()->getState()
                         == MWBase::StateManager::State_Running));

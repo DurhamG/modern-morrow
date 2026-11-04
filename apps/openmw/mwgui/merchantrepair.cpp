@@ -34,7 +34,54 @@ namespace MWGui
             mDisableGamepadCursor = true;
             mControllerButtons.mA = "#{Interface:Repair}";
             mControllerButtons.mB = "#{Interface:Cancel}";
+
+            mPanel = std::make_unique<ServicePanel>(ServicePanel::Service{ "#{Interface:ServiceRepair}",
+                "#{Interface:Repair}", "#{Interface:ServiceNothingToRepair}", [this] { return mActor; },
+                [this] { return controllerEntries(); }, [this](MyGUI::Widget* button) { onRepairButtonClick(button); },
+                [this] { onOkButtonClick(mOkButton); } });
         }
+    }
+
+    MerchantRepair::~MerchantRepair() = default;
+
+    void MerchantRepair::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+    }
+
+    void MerchantRepair::onFrame(float dt)
+    {
+        if (mPanel != nullptr)
+            mPanel->onFrame(dt);
+    }
+
+    std::vector<ServicePanel::Entry> MerchantRepair::controllerEntries()
+    {
+        const MWWorld::Ptr player = MWMechanics::getPlayer();
+        const int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
+        std::vector<ServicePanel::Entry> entries;
+        for (std::size_t i = 0; i < mList->getChildCount(); ++i)
+        {
+            MyGUI::Widget* button = mList->getChildAt(i);
+            const MWWorld::Ptr* item = button->getUserData<MWWorld::Ptr>(false);
+            if (item == nullptr)
+                continue;
+            const int condition = item->getClass().getItemHealth(*item);
+            const int maxCondition = item->getClass().getItemMaxHealth(*item);
+            ServicePanel::Entry entry;
+            entry.mButton = button;
+            entry.mItem = *item;
+            entry.mName = item->getClass().getName(*item);
+            entry.mPrice = MyGUI::utility::parseInt(button->getUserString("Price"));
+            if (entry.mPrice > playerGold)
+                entry.mUnavailable = "#{Interface:BarterNotEnoughGold}";
+            const std::string conditionText = std::to_string(condition) + " / " + std::to_string(maxCondition);
+            entry.mSubtitle = "#{sCondition} " + conditionText;
+            entry.mFacts.emplace_back("#{sCondition}", conditionText);
+            entries.push_back(std::move(entry));
+        }
+        return entries;
     }
 
     void MerchantRepair::setPtr(const MWWorld::Ptr& actor)
@@ -127,6 +174,9 @@ namespace MWGui
         mList->setVisibleVScroll(true);
 
         mGoldLabel->setCaptionWithReplacing("#{sGold}: " + MyGUI::utility::toString(playerGold));
+
+        if (mPanel != nullptr)
+            mPanel->update();
     }
 
     void MerchantRepair::onMouseWheel(MyGUI::Widget* /*sender*/, int rel)
@@ -142,6 +192,12 @@ namespace MWGui
         center();
         // Reset scrollbars
         mList->setViewOffset(MyGUI::IntPoint(0, 0));
+
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mPanel->show();
+        }
     }
 
     void MerchantRepair::onRepairButtonClick(MyGUI::Widget* sender)
@@ -176,6 +232,9 @@ namespace MWGui
 
     bool MerchantRepair::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             if (mControllerFocus < mButtons.size())

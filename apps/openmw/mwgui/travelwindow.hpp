@@ -1,7 +1,10 @@
 #ifndef MWGUI_TravelWINDOW_H
 #define MWGUI_TravelWINDOW_H
 
+#include <memory>
+
 #include "referenceinterface.hpp"
+#include "servicepanel.hpp"
 #include "windowbase.hpp"
 
 namespace MyGUI
@@ -16,6 +19,11 @@ namespace MWGui
     {
     public:
         TravelWindow();
+        ~TravelWindow() override;
+
+        void onOpen() override;
+        void onClose() override;
+        void onFrame(float dt) override;
 
         void setPtr(const MWWorld::Ptr& actor) override;
 
@@ -43,6 +51,10 @@ namespace MWGui
     private:
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         size_t mControllerFocus = 0;
+
+        // In controller menus mode, a panel on the right side of the screen shows the service instead of this window.
+        std::unique_ptr<ServicePanel> mPanel;
+        std::vector<ServicePanel::Entry> controllerEntries();
     };
 }
 

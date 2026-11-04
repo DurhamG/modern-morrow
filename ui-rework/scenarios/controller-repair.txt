@@ -1,0 +1,24 @@
+# Repairing worn weapons and armour with Wayn in the Balmora Fighters Guild, in controller menus mode.
+launch --start "Balmora, Guild of Fighters" --set "GUI.controller menus=true"
+console "command=player->additem gold_001 500"
+console "command=player->additem \"iron longsword\" 1"
+console "command=player->additem \"chitin war axe\" 1"
+console "command=player->additem netch_leather_cuirass 1"
+lua "context=global" "code=local types = require('openmw.types') for _, item in ipairs(types.Actor.inventory(require('openmw.world').players[1]):getAll()) do if types.Weapon.objectIsInstance(item) or types.Armor.objectIsInstance(item) then types.Item.itemData(item).condition = 20 end end"
+console "command=\"wayn\"->forcegreeting"
+wait frames=20
+pad button=rightshoulder
+wait frames=5
+shot services
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=a
+wait frames=20
+shot repair
+pad button=dpdown
+wait frames=5
+shot repair-moved
+pad button=a
+wait frames=10
+shot repaired

@@ -17,12 +17,16 @@ local M = {}
 local faceHeight = 0.28
 -- How fast the camera turns, as the fraction of the remaining turn made per second.
 local turnRate = 6
--- Where the face goes across the screen during barter, as a fraction of the screen width from the left. The barter
--- panel covers the screen from 40% of its width rightward, so this is the middle of the space beside it.
-local barterFaceLeft = 0.2
+-- Where the face goes across the screen during barter and the other services, as a fraction of the screen width from
+-- the left. Their panels cover the screen from 40% of its width rightward, so this is the middle of the space beside
+-- them.
+local panelFaceLeft = 0.2
+
+-- The services that show a panel on the right side of the screen.
+local panelModes = { Barter = true, SpellBuying = true, Travel = true, Training = true, MerchantRepair = true }
 
 local speaker = nil
-local bartering = false
+local besidePanel = false
 local yaw = 0
 local pitch = 0
 
@@ -39,11 +43,11 @@ local function faceTarget()
         return 0, 0
     end
     local targetYaw = math.atan2(toFace.x, toFace.y)
-    if bartering then
-        -- Looking to the right of the face puts it in the space left of the barter panel.
+    if besidePanel then
+        -- Looking to the right of the face puts it in the space left of the panel.
         local size = ui.screenSize()
         local halfWidth = math.atan(math.tan(camera.getFieldOfView() / 2) * size.x / size.y)
-        targetYaw = targetYaw + math.atan((1 - 2 * barterFaceLeft) * math.tan(halfWidth))
+        targetYaw = targetYaw + math.atan((1 - 2 * panelFaceLeft) * math.tan(halfWidth))
     end
     -- Looking further down than the face puts it above the middle of the screen.
     local belowFace = math.atan((1 - 2 * faceHeight) * math.tan(camera.getFieldOfView() / 2))
@@ -52,7 +56,7 @@ local function faceTarget()
 end
 
 function M.onUiModeChanged(data)
-    bartering = data.newMode == 'Barter'
+    besidePanel = panelModes[data.newMode] == true
     if data.newMode == 'Dialogue' and data.arg and input._isControllerMenusEnabled()
         and camera.getMode() == camera.MODE.FirstPerson then
         speaker = data.arg

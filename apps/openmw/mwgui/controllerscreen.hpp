@@ -85,6 +85,9 @@ namespace MWGui
         inline const MyGUI::Colour sPanelColour = MyGUI::Colour::parse("#15120c");
         inline const MyGUI::Colour sIconBackColour = MyGUI::Colour::parse("#1a1610");
 
+        /// Hides a window that a controller screen or panel shows instead, while the window keeps working.
+        void hideWindow(MyGUI::Widget* mainWidget);
+
         /// Escapes text, such as an item name, that can contain characters MyGUI reads as colour codes.
         std::string escaped(std::string_view text);
 

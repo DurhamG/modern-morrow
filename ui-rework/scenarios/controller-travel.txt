@@ -1,0 +1,18 @@
+# Travelling by silt strider from Seyda Neen with Darvame Hleran, in controller menus mode.
+launch --start "Seyda Neen" --set "GUI.controller menus=true"
+console "command=player->additem gold_001 500"
+console "command=\"darvame hleran\"->forcegreeting"
+wait frames=20
+pad button=rightshoulder
+wait frames=5
+shot services
+pad button=dpdown
+pad button=a
+wait frames=20
+shot travel
+pad button=dpdown
+wait frames=5
+shot travel-moved
+pad button=a
+wait frames=120
+shot arrived

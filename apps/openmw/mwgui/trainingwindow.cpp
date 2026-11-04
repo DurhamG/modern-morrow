@@ -18,6 +18,7 @@
 #include "../mwmechanics/npcstats.hpp"
 
 #include <components/esm3/loadclas.hpp>
+#include <components/esm3/loadskil.hpp>
 #include <components/settings/values.hpp>
 
 #include "tooltips.hpp"
@@ -42,8 +43,15 @@ namespace MWGui
             mDisableGamepadCursor = true;
             mControllerButtons.mA = "#{Interface:Buy}";
             mControllerButtons.mB = "#{Interface:Cancel}";
+
+            mPanel = std::make_unique<ServicePanel>(ServicePanel::Service{ "#{Interface:ServiceTraining}",
+                "#{Interface:ServiceTrain}", {}, [this] { return mPtr; }, [this] { return controllerEntries(); },
+                [this](MyGUI::Widget* button) { onTrainingSelected(button); },
+                [this] { onCancelButtonClicked(mCancelButton); } });
         }
     }
+
+    TrainingWindow::~TrainingWindow() = default;
 
     void TrainingWindow::onOpen()
     {
@@ -56,6 +64,62 @@ namespace MWGui
             mProgressBar.setVisible(false);
 
         center();
+
+        if (mPanel != nullptr && !mTimeAdvancer.isRunning())
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mPanel->show();
+        }
+    }
+
+    void TrainingWindow::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+    }
+
+    std::vector<ServicePanel::Entry> TrainingWindow::controllerEntries()
+    {
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+        const MWWorld::Ptr player = MWMechanics::getPlayer();
+        const int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
+        const MWMechanics::NpcStats& pcStats = player.getClass().getNpcStats(player);
+        const MWMechanics::NpcStats& trainerStats = mPtr.getClass().getNpcStats(mPtr);
+        std::vector<ServicePanel::Entry> entries;
+        for (std::size_t i = 0; i < mTrainingOptions->getChildCount(); ++i)
+        {
+            MyGUI::Widget* button = mTrainingOptions->getChildAt(i);
+            const ESM::Skill* const* skillData = button->getUserData<const ESM::Skill*>(false);
+            if (skillData == nullptr)
+                continue;
+            const ESM::Skill& skill = **skillData;
+            const int value = static_cast<int>(pcStats.getSkill(skill.mId).getBase());
+            const int trainerValue = static_cast<int>(getSkillForTraining(trainerStats, skill.mId));
+            const ESM::Attribute* attribute = store.get<ESM::Attribute>().search(skill.mData.mAttribute);
+            const int attributeValue = static_cast<int>(pcStats.getAttribute(skill.mData.mAttribute).getModified());
+
+            ServicePanel::Entry entry;
+            entry.mButton = button;
+            entry.mName = skill.mName;
+            entry.mIcon = std::string(skill.mIcon.getNormalized().value());
+            // This is the price the window charges.
+            entry.mPrice = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mPtr,
+                std::max(1, value * store.get<ESM::GameSetting>().find("iTrainingMod")->mValue.getInteger()), true);
+            entry.mSubtitle = std::to_string(value) + " -> " + std::to_string(value + 1);
+            entry.mFacts.emplace_back("#{Interface:ServiceYourSkill}", std::to_string(value));
+            entry.mFacts.emplace_back("#{Interface:ServiceTrainerSkill}", std::to_string(trainerValue));
+            if (attribute != nullptr)
+                entry.mFacts.emplace_back(attribute->mName, std::to_string(attributeValue));
+            entry.mParagraphs.push_back(skill.mDescription);
+            if (trainerValue <= value)
+                entry.mUnavailable = "#{Interface:ServiceTrainerNotBetter}";
+            else if (value >= attributeValue)
+                entry.mUnavailable = "#{Interface:ServiceAttributeTooLow}";
+            else if (entry.mPrice > playerGold)
+                entry.mUnavailable = "#{Interface:BarterNotEnoughGold}";
+            entries.push_back(std::move(entry));
+        }
+        return entries;
     }
 
     void TrainingWindow::setPtr(const MWWorld::Ptr& actor)
@@ -148,6 +212,9 @@ namespace MWGui
         }
 
         center();
+
+        if (mPanel != nullptr)
+            mPanel->update();
     }
 
     void TrainingWindow::onReferenceUnavailable()
@@ -238,6 +305,8 @@ namespace MWGui
     {
         checkReferenceAvailable();
         mTimeAdvancer.onFrame(dt);
+        if (mPanel != nullptr)
+            mPanel->onFrame(dt);
     }
 
     bool TrainingWindow::exit()
@@ -247,6 +316,9 @@ namespace MWGui
 
     bool TrainingWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             if (mControllerFocus < mTrainingButtons.size())

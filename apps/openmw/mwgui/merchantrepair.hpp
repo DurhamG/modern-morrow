@@ -1,7 +1,10 @@
 #ifndef OPENMW_MWGUI_MERCHANTREPAIR_H
 #define OPENMW_MWGUI_MERCHANTREPAIR_H
 
+#include <memory>
+
 #include "../mwworld/ptr.hpp"
+#include "servicepanel.hpp"
 #include "windowbase.hpp"
 
 namespace MWGui
@@ -11,8 +14,11 @@ namespace MWGui
     {
     public:
         MerchantRepair();
+        ~MerchantRepair() override;
 
         void onOpen() override;
+        void onClose() override;
+        void onFrame(float dt) override;
 
         void setPtr(const MWWorld::Ptr& actor) override;
 
@@ -28,6 +34,10 @@ namespace MWGui
         MWWorld::Ptr mActor;
 
         size_t mControllerFocus = 0;
+
+        // In controller menus mode, a panel on the right side of the screen shows the service instead of this window.
+        std::unique_ptr<ServicePanel> mPanel;
+        std::vector<ServicePanel::Entry> controllerEntries();
 
     protected:
         void onMouseWheel(MyGUI::Widget* sender, int rel);
