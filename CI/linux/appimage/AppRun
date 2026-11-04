@@ -1,7 +1,10 @@
 #!/bin/sh
-# Starts Modern Morrow from inside the AppImage. With no arguments it opens the launcher, which sets up the game's
-# data files the first time. "--game" starts the game itself, for a Steam shortcut in the Steam Deck's Game Mode,
-# and "--wizard" opens the setup wizard. Any other arguments go to the program that starts.
+# Starts Modern Morrow from inside the AppImage. With no arguments, it starts the game, after running the setup
+# wizard first if the game isn't set up yet. So one Steam shortcut, with no launch options, sets the game up the
+# first time and plays it after that.
+#
+# "--launcher" opens the launcher, for mods and settings. "--wizard" runs the setup wizard again. "--game" starts
+# the game straight away. Any other arguments go to the game.
 HERE="$(dirname "$(readlink -f "$0")")"
 
 # The programs use the system's OpenAL. On a system without one, they use the copy in the AppImage instead.
@@ -10,16 +13,43 @@ if ! /sbin/ldconfig -p 2>/dev/null | grep -q 'libopenal\.so\.1 (libc6,x86-64)'; 
     export LD_LIBRARY_PATH
 fi
 
+# The settings the wizard and the launcher write, in the same place the game reads them from.
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/modern-morrow/openmw.cfg"
+
+# Whether the settings name a setting, such as "data" for the game's data folder.
+has_setting() {
+    grep -qiE "^[[:space:]]*$1[[:space:]]*=" "$CONFIG" 2>/dev/null
+}
+
+# Whether the settings choose a game file, such as Morrowind.esm, which the game needs to start.
+has_game_file() {
+    grep -qiE '^[[:space:]]*content[[:space:]]*=.*\.(esm|omwgame)"?[[:space:]]*$' "$CONFIG" 2>/dev/null
+}
+
 case "$1" in
-    --game)
+    --launcher)
         shift
-        exec "$HERE/openmw" "$@"
+        exec "$HERE/openmw-launcher" "$@"
         ;;
     --wizard)
         shift
         exec "$HERE/openmw-wizard" "$@"
         ;;
-    *)
-        exec "$HERE/openmw-launcher" "$@"
+    --game)
+        shift
+        exec "$HERE/openmw" "$@"
         ;;
 esac
+
+if ! has_game_file; then
+    "$HERE/openmw-wizard"
+    if ! has_game_file; then
+        # The wizard found the data folder, but no game file was chosen, as when Morrowind's settings weren't
+        # imported. The launcher's data files page chooses them. Without a data folder, the wizard was cancelled.
+        if has_setting data; then
+            exec "$HERE/openmw-launcher"
+        fi
+        exit 1
+    fi
+fi
+exec "$HERE/openmw" "$@"

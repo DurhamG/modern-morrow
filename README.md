@@ -106,6 +106,7 @@ Other improvements
 ------------------
 
 - **The Steam Controller works without Steam.** The release builds run the game on SDL3, the newest version of the library that reads controllers, through SDL's sdl2-compat layer. SDL3 recognizes newer controllers, such as the 2026 Steam Controller, without Steam Input. With OpenMW's SDL2, that controller only works when Steam starts the game.
+- **The AppImage sets itself up.** Started with no options, the Linux AppImage runs the setup wizard the first time, then starts the game, and goes straight into the game after that. So a Steam shortcut to it needs no launch options.
 - **The tutorial talks about the controller.** On a controller, Morrowind's tutorial messages use the text the game was written with for the Xbox, such as "The LEFT THUMBSTICK moves you", instead of key names and mouse clicks.
 
 Trying it
@@ -131,12 +132,13 @@ The AppImage is a Linux program, so it runs directly on SteamOS, without Proton.
 2. **Switch to Desktop Mode.** Press the Steam button, choose Power, then Switch to Desktop.
 3. **Download the AppImage.** In a web browser, download the latest `ModernMorrow-...-Linux-x86_64.AppImage` from the [Releases page](https://github.com/DurhamG/modern-morrow/releases). If you want to keep it somewhere other than the Downloads folder, move it now, because the Steam shortcut will point at where it is.
 4. **Make it executable.** In the Dolphin file manager, right-click the AppImage, choose Properties, then Permissions, and tick **Is executable**.
-5. **Set up the game data.** Double-click the AppImage. The launcher opens and offers to run the Installation Wizard. In the wizard, choose to use an existing installation. The wizard finds Morrowind on the internal drive by itself. If Morrowind is on a microSD card, browse to the `steamapps/common/Morrowind` folder on the card instead.
-6. **Add it to Steam.** Open Steam, choose Games, then **Add a Non-Steam Game to My Library**. Choose Browse, set the file type to All Files so that the AppImage shows, and add it.
-7. **Start the game itself.** In your library, open the new shortcut's Properties, and set its launch options to `--game`. Without that, the shortcut opens the launcher, which needs a mouse. Leave the compatibility settings off, because the AppImage isn't a Windows program.
-8. **Play in Game Mode.** Return to Gaming Mode and start Modern Morrow from your library. The Steam Deck's controls and Steam Controllers reach the game as a gamepad.
+5. **Add it to Steam.** Open Steam, choose Games, then **Add a Non-Steam Game to My Library**. Choose Browse, set the file type to All Files so that the AppImage shows, and add it. It needs no launch options. Leave the compatibility settings off, because the AppImage isn't a Windows program.
+6. **Start it once to set up the game data.** Still in Desktop Mode, start Modern Morrow from your Steam library. The first time, the setup wizard opens. Choose to use an existing installation. The wizard finds Morrowind on the internal drive by itself. If Morrowind is on a microSD card, browse to the `steamapps/common/Morrowind` folder on the card instead. When the wizard finishes, the game starts.
+7. **Play in Game Mode.** Return to Gaming Mode and start Modern Morrow from your library. From now on, it goes straight into the game. The Steam Deck's controls and Steam Controllers reach the game as a gamepad.
 
-To run the setup wizard again later, set the launch options to `--wizard` for one launch. The settings and saves are in `~/.config/modern-morrow` and `~/.local/share/modern-morrow`.
+Start the AppImage from Steam rather than by double-clicking it in Dolphin. Dolphin refuses to start some AppImages, even when they're executable.
+
+To open the launcher for mods and settings, set the shortcut's launch options to `--launcher` for one start. `--wizard` runs the setup wizard again. The settings and saves are in `~/.config/modern-morrow` and `~/.local/share/modern-morrow`.
 
 How it's built
 --------------
