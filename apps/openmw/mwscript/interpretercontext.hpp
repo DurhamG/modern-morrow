@@ -49,6 +49,10 @@ namespace MWScript
 
         ESM::RefId getTarget() const override;
 
+        /// Whether scripts get the text that Morrowind wrote for the Xbox, which names controller buttons instead of
+        /// keys and the mouse. They do while the player uses a controller with the controller menus.
+        static bool usesControllerText();
+
         int getLocalShort(int index) const override;
 
         int getLocalLong(int index) const override;

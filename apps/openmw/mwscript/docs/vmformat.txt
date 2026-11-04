@@ -81,7 +81,7 @@ op 0x2000008: PlayLoopSound3D
 op 0x2000009: PlayLoopSound3DVP
 op 0x200000a: StopSound
 op 0x200000b: GetSoundPlaying
-op 0x200000c: XBox (always 0)
+op 0x200000c: XBox (1 while the player uses a controller with the controller menus, otherwise 0)
 op 0x200000d: OnActivate
 op 0x200000e: EnableBirthMenu
 op 0x200000f: EnableClassMenu

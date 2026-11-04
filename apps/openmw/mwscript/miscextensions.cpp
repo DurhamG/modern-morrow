@@ -298,7 +298,12 @@ namespace MWScript
         class OpXBox : public Interpreter::Opcode0
         {
         public:
-            void execute(Interpreter::Runtime& runtime) override { runtime.push(0); }
+            void execute(Interpreter::Runtime& runtime) override
+            {
+                // Morrowind's tutorial scripts check this to pick between their PC text and their Xbox text, which
+                // names the controller buttons.
+                runtime.push(InterpreterContext::usesControllerText() ? 1 : 0);
+            }
         };
 
         template <class R>

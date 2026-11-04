@@ -6,6 +6,7 @@
 #include <components/compiler/locals.hpp>
 #include <components/debug/debuglog.hpp>
 #include <components/esm/records.hpp>
+#include <components/settings/values.hpp>
 
 #include "../mwworld/esmstore.hpp"
 
@@ -26,6 +27,15 @@
 
 namespace MWScript
 {
+    namespace
+    {
+        void replaceText(std::string& text, std::string_view from, std::string_view to)
+        {
+            for (std::size_t pos = text.find(from); pos != std::string::npos; pos = text.find(from, pos + to.size()))
+                text.replace(pos, from.size(), to);
+        }
+    }
+
     const MWWorld::Ptr InterpreterContext::getReferenceImp(const ESM::RefId& id, bool activeOnly, bool doThrow) const
     {
         if (!id.empty())
@@ -142,6 +152,11 @@ namespace MWScript
         return ESM::RefId();
     }
 
+    bool InterpreterContext::usesControllerText()
+    {
+        return Settings::gui().mControllerMenus && MWBase::Environment::get().getInputManager()->joystickLastUsed();
+    }
+
     int InterpreterContext::getLocalShort(int index) const
     {
         if (!mLocals)
@@ -192,10 +207,19 @@ namespace MWScript
 
     void InterpreterContext::messageBox(std::string_view message, const std::vector<std::string>& buttons)
     {
+        std::string text(message);
+        if (usesControllerText())
+        {
+            // Two of Morrowind's Xbox messages name buttons that only the original Xbox controller had, for the
+            // journal and for resting. Name the buttons the player has for those actions instead.
+            replaceText(text, "the WHITE button", getActionBinding("#{sJournal}"));
+            replaceText(text, "Press BLACK ", "Press " + getActionBinding("#{sRestKey}") + " ");
+        }
+
         if (buttons.empty())
-            MWBase::Environment::get().getWindowManager()->messageBox(message);
+            MWBase::Environment::get().getWindowManager()->messageBox(text);
         else
-            MWBase::Environment::get().getWindowManager()->interactiveMessageBox(message, buttons);
+            MWBase::Environment::get().getWindowManager()->interactiveMessageBox(text, buttons);
     }
 
     void InterpreterContext::report(const std::string& message) {}

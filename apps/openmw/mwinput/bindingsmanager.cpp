@@ -574,7 +574,35 @@ namespace MWInput
             return SDLUtil::sdlControllerButtonToString(
                 mInputBinder->getJoystickButtonBinding(c, sFakeDeviceId, ICS::Control::INCREASE));
         else
+            return getMovementStickName(action);
+    }
+
+    std::string BindingsManager::getMovementStickName(int action)
+    {
+        // On a controller, one stick axis moves both ways, so the four movement actions have no binding of their
+        // own. Name the stick that moves the player instead.
+        int axisAction;
+        if (action == A_MoveForward || action == A_MoveBackward)
+            axisAction = A_MoveForwardBackward;
+        else if (action == A_MoveLeft || action == A_MoveRight)
+            axisAction = A_MoveLeftRight;
+        else
             return "#{Interface:None}";
+
+        if (mInputBinder->getChannel(axisAction)->getControlsCount() == 0)
+            return "#{Interface:None}";
+        ICS::Control* c = mInputBinder->getChannel(axisAction)->getAttachedControls().front().control;
+        switch (mInputBinder->getJoystickAxisBinding(c, sFakeDeviceId, ICS::Control::INCREASE))
+        {
+            case SDL_CONTROLLER_AXIS_LEFTX:
+            case SDL_CONTROLLER_AXIS_LEFTY:
+                return "Left Stick";
+            case SDL_CONTROLLER_AXIS_RIGHTX:
+            case SDL_CONTROLLER_AXIS_RIGHTY:
+                return "Right Stick";
+            default:
+                return "#{Interface:None}";
+        }
     }
 
     const std::initializer_list<int>& BindingsManager::getActionKeySorting()

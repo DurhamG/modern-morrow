@@ -73,6 +73,9 @@ namespace MWInput
     private:
         void setupSDLKeyMappings();
 
+        /// The name of the controller stick that does a movement action, or "None" for other actions.
+        std::string getMovementStickName(int action);
+
         std::unique_ptr<InputControlSystem> mInputBinder;
         std::unique_ptr<BindingsListener> mListener;
 
