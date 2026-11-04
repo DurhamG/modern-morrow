@@ -1,5 +1,6 @@
 #include "repair.hpp"
 
+#include <components/settings/values.hpp>
 #include <iomanip>
 
 #include <MyGUI_ScrollView.h>
@@ -14,11 +15,13 @@
 
 #include "../mwworld/class.hpp"
 
+#include "controllerscreen.hpp"
 #include "inventoryitemmodel.hpp"
 #include "itemchargeview.hpp"
 #include "itemselection.hpp"
 #include "itemwidget.hpp"
 #include "sortfilteritemmodel.hpp"
+#include "toolpanel.hpp"
 
 namespace MWGui
 {
@@ -43,6 +46,23 @@ namespace MWGui
         mControllerButtons.mA = "#{Interface:Repair}";
         mControllerButtons.mB = "#{Interface:Cancel}";
         mControllerButtons.mY = "#{OMWEngine:RepairTool}";
+
+        if (Settings::gui().mControllerMenus)
+            mPanel = std::make_unique<ToolPanel>(*this);
+    }
+
+    Repair::~Repair() = default;
+
+    void Repair::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+    }
+
+    void Repair::onFrame(float duration)
+    {
+        if (mPanel != nullptr)
+            mPanel->onFrame(duration);
     }
 
     void Repair::onOpen()
@@ -56,6 +76,12 @@ namespace MWGui
         mRepairBox->update();
         // Reset scrollbars
         mRepairBox->resetScrollbars();
+
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mPanel->show();
+        }
     }
 
     void Repair::setPtr(const MWWorld::Ptr& item)
@@ -72,6 +98,9 @@ namespace MWGui
         mToolIcon->setUserData(MWWorld::Ptr(item));
 
         updateRepairView();
+
+        if (mPanel != nullptr)
+            mPanel->update();
     }
 
     void Repair::updateRepairView()
@@ -156,6 +185,9 @@ namespace MWGui
 
     bool Repair::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if ((arg.button == SDL_CONTROLLER_BUTTON_A && !mToolBox->getVisible()) || arg.button == SDL_CONTROLLER_BUTTON_Y)
         {
             onSelectItem(mToolIcon);

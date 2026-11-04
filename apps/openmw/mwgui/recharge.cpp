@@ -5,6 +5,7 @@
 #include <components/widgets/box.hpp>
 
 #include <components/esm3/loadcrea.hpp>
+#include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -15,11 +16,13 @@
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/recharge.hpp"
 
+#include "controllerscreen.hpp"
 #include "inventoryitemmodel.hpp"
 #include "itemchargeview.hpp"
 #include "itemselection.hpp"
 #include "itemwidget.hpp"
 #include "sortfilteritemmodel.hpp"
+#include "toolpanel.hpp"
 
 namespace MWGui
 {
@@ -43,6 +46,23 @@ namespace MWGui
         mControllerButtons.mA = "#{OMWEngine:RechargeSelect}";
         mControllerButtons.mB = "#{Interface:Cancel}";
         mControllerButtons.mY = "#{Interface:Soul}";
+
+        if (Settings::gui().mControllerMenus)
+            mPanel = std::make_unique<ToolPanel>(*this);
+    }
+
+    Recharge::~Recharge() = default;
+
+    void Recharge::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+    }
+
+    void Recharge::onFrame(float duration)
+    {
+        if (mPanel != nullptr)
+            mPanel->onFrame(duration);
     }
 
     void Recharge::onOpen()
@@ -56,6 +76,12 @@ namespace MWGui
 
         // Reset scrollbars
         mBox->resetScrollbars();
+
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mPanel->show();
+        }
     }
 
     void Recharge::setPtr(const MWWorld::Ptr& item)
@@ -68,6 +94,9 @@ namespace MWGui
         mGemIcon->setUserData(MWWorld::Ptr(item));
 
         updateView();
+
+        if (mPanel != nullptr)
+            mPanel->update();
     }
 
     void Recharge::updateView()
@@ -142,6 +171,9 @@ namespace MWGui
 
     bool Recharge::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if ((arg.button == SDL_CONTROLLER_BUTTON_A && !mGemBox->getVisible()) || arg.button == SDL_CONTROLLER_BUTTON_Y)
         {
             onSelectItem(mGemIcon);

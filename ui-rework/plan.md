@@ -55,7 +55,8 @@ Done so far:
 - **Alchemy.** A full screen with the ingredients and their known effects on the left, grouped by whether they share an effect with the potion, and the potion on the right. See [design/crafting.md](design/crafting.md).
 - **Enchanting.** A full screen with the item, soul gem, cast type, effects and costs on the right, and a list on the left to pick each from. Effects are edited on the left while the costs follow along. See [design/crafting.md](design/crafting.md).
 - **Spellmaking.** The enchanting screen without the item, soul gem and cast type. A new spell is named after its first effect. See [design/crafting.md](design/crafting.md).
-- **Everything else except the rest of crafting.** The merchant services, questions and confirmations, rest and level up, books, saving and loading, the count dialog, companion sharing, loading and jail, character creation and the options all have controller panels in the same style. See [design/other-screens.md](design/other-screens.md). Not reviewed yet.
+- **Repairing and recharging.** One full screen with the items that need it and the tool in use. Y switches tools, and the next tool takes over when one runs out. See [design/crafting.md](design/crafting.md).
+- **Everything else.** The merchant services, questions and confirmations, rest and level up, books, saving and loading, the count dialog, companion sharing, loading and jail, character creation and the options all have controller panels in the same style. See [design/other-screens.md](design/other-screens.md). Not reviewed yet.
 
 ### Phase 3: make the changes clean enough to upstream
 

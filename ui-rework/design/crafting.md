@@ -1,6 +1,6 @@
 # Crafting
 
-This covers the crafting screens in controller menus mode. The user asked for them to be designed and built without a review first, following the patterns of the other screens, and will give feedback after playing with them. They are being done one at a time. So far alchemy, enchanting and spellmaking are done.
+This covers the crafting screens in controller menus mode. The user asked for them to be designed and built without a review first, following the patterns of the other screens, and will give feedback after playing with them. They were done one at a time: alchemy, enchanting, spellmaking, then repairing and recharging.
 
 ## Alchemy
 
@@ -59,7 +59,21 @@ This covers the crafting screens in controller menus mode. The user asked for th
 - **A new spell is named after its first effect,** such as "Fire Damage" or "Fortify Strength", so it can be bought without typing a name. Clicking the left stick renames it.
 - **The spellmaking window stays hidden and still makes the spell.** Its checks and messages are unchanged, such as for a spell without effects or not enough gold.
 
+## Repairing and recharging
+
+### How they work
+
+- The player repairs weapons and armour with their own repair tools, such as hammers and prongs, by using one from the inventory. Each use can fail, wears the tool down, and repairs more with a better tool. The Armorer skill, Strength and Luck decide whether it works.
+- The player recharges a magic item by using a soul gem with a soul and choosing to recharge. Each try uses up the gem. The Enchant skill, Intelligence and Luck decide whether it works and how much charge comes back.
+
+### Decisions
+
+- **One full screen for both.** The items that need it are on the left, worst first, each with its condition or charge as numbers and a bar. The tool is on the right, with what is left of it: a repair tool's uses and quality, or a soul gem's soul and its strength. Below it, a sentence says what decides whether a use works, and the highlighted item shows larger.
+- **A uses the tool on the highlighted item.** The game's own messages say whether it worked.
+- **Y switches to the next tool of the same kind,** in place of the old window's separate picker.
+- **When a tool runs out, the next one takes its place,** so the player can keep going without picking again.
+- **The repair and recharge windows stay hidden and still do the work.**
+
 ## Not done yet
 
-- Recharging and repairing with your own tools still use the old windows.
 - Mouse input. The screen only responds to a gamepad, like the other screens.

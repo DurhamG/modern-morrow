@@ -1,0 +1,32 @@
+# Repairing gear with your own repair tools, and recharging a magic item with a soul gem, in controller menus mode.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->additem hammer_repair 2"
+console "command=player->additem repair_prongs 1"
+console "command=player->additem \"iron longsword\" 1"
+console "command=player->additem iron_shield 1"
+console "command=player->setarmorer 70"
+console "command=player->addsoulgem \"golden saint\" misc_soulgem_grand"
+console "command=player->addsoulgem scamp misc_soulgem_common"
+lua "code=local types=require('openmw.types'); local world=require('openmw.world'); local player=world.players[1]; for _, item in ipairs(types.Actor.inventory(player):getAll()) do local data = types.Item.itemData(item); if item.recordId == 'iron longsword' then data.condition = 40 elseif item.recordId == 'iron_shield' then data.condition = 100 end end; for _, record in pairs(types.Clothing.records) do if record.enchant and record.enchant ~= '' then local ring = world.createObject(record.id); ring:moveInto(types.Actor.inventory(player)); print(record.id); break end end" context=global
+wait frames=5
+lua "code=local types=require('openmw.types'); local world=require('openmw.world'); for _, item in ipairs(types.Actor.inventory(world.players[1]):getAll(types.Clothing)) do local record = types.Clothing.record(item); if record.enchant and record.enchant ~= '' then types.Item.itemData(item).enchantmentCharge = 1 end end" context=global
+wait frames=5
+lua "code=local types=require('openmw.types'); local hammer=types.Actor.inventory(require('openmw.self')):find('hammer_repair'); require('openmw.interfaces').UI.addMode('Repair', {target=hammer})" context=player
+wait frames=10
+shot repair
+pad button=a
+wait frames=5
+pad button=a
+wait frames=5
+shot repaired
+pad button=y
+wait frames=5
+shot next-tool
+pad button=b
+wait frames=10
+lua "code=local types=require('openmw.types'); local gem=types.Actor.inventory(require('openmw.self')):find('misc_soulgem_common'); require('openmw.interfaces').UI.addMode('Recharge', {target=gem})" context=player
+wait frames=10
+shot recharge
+pad button=a
+wait frames=10
+shot recharged

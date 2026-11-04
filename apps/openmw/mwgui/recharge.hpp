@@ -12,6 +12,7 @@ namespace MWWorld
 
 namespace MWGui
 {
+    class ToolPanel;
 
     class ItemSelectionDialog;
     class ItemWidget;
@@ -21,8 +22,11 @@ namespace MWGui
     {
     public:
         Recharge();
+        ~Recharge() override;
 
         void onOpen() override;
+        void onClose() override;
+        void onFrame(float duration) override;
 
         void setPtr(const MWWorld::Ptr& gem) override;
 
@@ -53,6 +57,10 @@ namespace MWGui
         void onMouseWheel(MyGUI::Widget* sender, int rel);
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+
+        // In controller menus mode, a full screen panel shows instead of this window, which stays hidden.
+        friend class ToolPanel;
+        std::unique_ptr<ToolPanel> mPanel;
     };
 
 }
