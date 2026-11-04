@@ -133,3 +133,16 @@
   - Sleeping is illegal in towns, so the rest scenario moves to the wilderness with `coe -3 -8`.
 
 Next: the user reviews the other screens. Still left: quick keys, crafting, and creating a custom class.
+
+- Designed quick keys for controllers with the user, recorded in [design/quick-keys.md](design/quick-keys.md), and built them:
+  - `QuickKeysMenu` stays the model. It gained functions to read, assign and clear a slot, and to find the slot that holds an item or a spell.
+  - During play, `ActionManager` reads the d-pad every frame. A press of a direction uses slots 1 to 4, and a hold uses slots 5 to 8. `quickkeyslots.hpp` holds the mapping and the hold time.
+  - `QuickKeyAssigner` is the left stick's assigning mode, shared by the inventory and magic screens. It also draws the d-pad marker.
+  - The HUD shows the used quick key's icon and name for two seconds.
+  - `ControllerUi::drawHints` lays out button hints, and wraps them onto a second row when they don't fit.
+  - The `controller-quick-keys` scenario covers assigning from both screens, and using a press and a hold in play.
+- Lessons learned:
+  - The harness's `pad button=dpup hold=40` holds a button for 40 frames, which is long enough to test holds.
+  - Python on Windows writes CRLF line endings unless the file is opened with `newline=''`.
+
+Next: the user tries the quick keys. Still left: crafting, and creating a custom class.
