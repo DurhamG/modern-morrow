@@ -1,128 +1,117 @@
-OpenMW
-======
+OpenMW, reworked for controllers
+================================
 
-OpenMW is an open-source open-world RPG game engine that supports playing Morrowind by Bethesda Softworks. You need to own the game for OpenMW to play Morrowind.
+This is a fork of [OpenMW](https://gitlab.com/OpenMW/openmw), the open-source engine for Morrowind. It replaces the game's whole user interface with a modern one built for a controller, a TV and handhelds such as the Steam Deck. The game itself is unchanged: the same rules, quests and saves, with new screens on top.
 
-OpenMW also comes with OpenMW-CS, a replacement for Bethesda's Construction Set.
+Morrowind's menus were made for a mouse on a small monitor. They are grids of icons with the information hidden in tooltips, in small windows that overlap. This fork turns each of them into a full screen or panel in one consistent style: lists that say what each thing is, a details panel that compares it with what you have, large text that reads from the couch, and button hints for the controller in your hands.
 
-* Version: 0.53.0
-* License: GPLv3 (see [LICENSE](https://gitlab.com/OpenMW/openmw/-/raw/master/LICENSE) for more information)
-* Website: https://www.openmw.org
-* IRC: [#openmw on irc.libera.chat](https://web.libera.chat/#openmw)
-* Discord: [official server](https://discord.com/servers/openmw-260439894298460160)
-* Matrix #openmw-space:openmw.org
-* _Note_: IRC, Discord, and Matrix are bridged to each other.
+**This fork was vibe coded.** A person directed the work, played the game, and reviewed every screen in screenshots and in play. Claude, an AI model made by Anthropic, wrote nearly all of the code, the tests and the design notes. It is an experiment, and it has not been reviewed by the OpenMW developers. Expect rough edges.
 
-Font Licenses:
-* DejaVuLGCSansMono.ttf: custom (see [files/data/fonts/DejaVuFontLicense.txt](https://gitlab.com/OpenMW/openmw/-/raw/master/files/data/fonts/DejaVuFontLicense.txt) for more information)
-* DemonicLetters.ttf: SIL Open Font License (see [files/data/fonts/DemonicLettersFontLicense.txt](https://gitlab.com/OpenMW/openmw/-/raw/master/files/data/fonts/DemonicLettersFontLicense.txt) for more information)
-* MysticCards.ttf: SIL Open Font License (see [files/data/fonts/MysticCardsFontLicense.txt](https://gitlab.com/OpenMW/openmw/-/raw/master/files/data/fonts/MysticCardsFontLicense.txt) for more information)
+Screenshots
+-----------
 
-Current Status
---------------
+All of these are at 1920x1080, from a real character early in the game.
 
-The main quests in Morrowind, Tribunal and Bloodmoon are all completable. Some issues with side quests are to be expected (but rare). Check the [bug tracker](https://gitlab.com/OpenMW/openmw/-/issues/?milestone_title=openmw-1.0) for a list of issues we need to resolve before the "1.0" release. Even before the "1.0" release, however, OpenMW boasts some new [features](https://wiki.openmw.org/index.php?title=Features), such as improved graphics and user interfaces.
+### The HUD gets out of the way
 
-Pre-existing modifications created for the original Morrowind engine can be hit-and-miss. The OpenMW script compiler performs more thorough error-checking than Morrowind does, meaning that a mod created for Morrowind may not necessarily run in OpenMW. Some mods also rely on quirky behaviour or engine bugs in order to work. We are considering such compatibility issues on a case-by-case basis - in some cases adding a workaround to OpenMW may be feasible, in other cases fixing the mod will be the only option. If you know of any mods that work or don't work, feel free to add them to the [Mod status](https://wiki.openmw.org/index.php?title=Mod_status) wiki page.
+| Exploring | When it matters |
+| --- | --- |
+| ![The game with no HUD on screen while exploring](ui-rework/screenshots/hud-quiet.jpg) | ![The HUD with low health, the weapon and an active spell effect](ui-rework/screenshots/hud-busy.jpg) |
 
-Platform Support
-------------------
+The HUD hides itself until there is something worth knowing. Health, magicka and fatigue bars show while they aren't full. The weapon and spell boxes show while the weapon or spell is ready, and for a few seconds after it changes. Effect icons show for effects that will run out, such as potions, and for diseases and curses, but not for the effects of your race and birthsign, which never change. In combat everything shows, including the enemy's health. When it's quiet again, it all fades away. The minimap is gone, because the map screen is one button away.
 
-The officially supported platforms at this time are:
+### Inventory
 
-- Windows 10 or later
-- macOS 14.8 or later
-- Linux
+| Equipment, by body area | Comparing with what you wear |
+| --- | --- |
+| ![The equipment overview, with every body area and what is worn there](ui-rework/screenshots/inventory-equipment.jpg) | ![A list of weapons, compared with the equipped one](ui-rework/screenshots/inventory-weapons.jpg) |
 
-We do not support 32-bit platforms.
+The inventory opens on what you're wearing, one tile per body area. Choosing an area lists everything that fits it, with the stats that matter as columns. Numbers are green where they beat what you have equipped and red where they don't, and the details panel compares the two side by side. Other tabs list recent pickups, consumables grouped by effect, books, tools, and everything else, grouped by kind. The shoulder buttons switch tabs, and the triggers switch between the map, inventory, magic, stats and journal.
 
-We welcome efforts to add more supported platforms!
+### Magic
 
-Getting Started
----------------
+![The magic screen's Active tab, with the effects on the character and the spell that is ready](ui-rework/screenshots/magic.jpg)
 
-* [Installation instructions](https://openmw.readthedocs.io/en/latest/manuals/installation/index.html)
-* [Build from source](https://wiki.openmw.org/index.php?title=Development_Environment_Setup)
-* [Report a bug](https://gitlab.com/OpenMW/openmw/issues) - read the [guidelines](https://wiki.openmw.org/index.php?title=Bug_Reporting_Guidelines) before submitting your first bug!
-* [Known issues](https://gitlab.com/OpenMW/openmw/issues?label_name%5B%5D=Bug)
+The Active tab shows what's affecting you, how long each effect has left and where it came from, next to the spell that's ready to cast and the ones you used recently. Switching back to a favourite spell takes one press. The other tabs list every spell, power, magic item and scroll, with their effects written out in full.
 
-Contributing
+### Character
+
+![The stats screen, with race, class and birthsign, health bars and attribute tiles](ui-rework/screenshots/stats.jpg)
+
+Everything on the stats screen can be highlighted to read what it is and what it does. Each attribute tile shows the bonus it would get at the next level up.
+
+### Journal
+
+![The journal, with quests in progress and finished, and the details of one](ui-rework/screenshots/journal.jpg)
+
+The journal is a list of quests rather than a book. Quests in progress come first, then finished ones, sorted by when they last changed, or grouped by place or by faction. The details show who gave you the quest, where, and every entry, newest first.
+
+### Conversations and trading
+
+![A conversation, with the topics on the right and the answer on the left](ui-rework/screenshots/dialogue.jpg)
+
+Conversations take a panel along the bottom of the screen, so you can still see who you're talking to. New topics come first, and the person's services, such as trading, training or persuasion, have their own tab.
+
+![Bartering, with the merchant's weapons and a comparison with the equipped one](ui-rework/screenshots/barter.jpg)
+
+Trading uses the same panel style. Every item shows its price, items better than yours are marked, and the details compare them with what you have.
+
+### Looting
+
+![Looting a crate that belongs to a merchant, with every item marked as stealing](ui-rework/screenshots/loot.jpg)
+
+Containers open in a panel beside the world, grouped by kind, with upgrades marked. When the container belongs to someone, the panel says so, and every action is named for what it is: Steal, not Take.
+
+### Crafting
+
+![Alchemy, with the ingredients that share an effect with the potion grouped together](ui-rework/screenshots/alchemy.jpg)
+
+Alchemy lists your ingredients with the effects you know. Once the potion has an ingredient, the list puts the ones that share an effect with it first, so finding a match no longer means opening tooltips one by one.
+
+![Enchanting a sword, with the fire damage effect being edited and the cost updating](ui-rework/screenshots/enchanting.jpg)
+
+Enchanting and spellmaking show what you're making on the right and what you can pick on the left. Effects are edited in place, and the cost, charge and price update as you change the magnitude or the duration.
+
+### Everything else
+
+The rest of the game has controller screens in the same style too:
+
+- **Quick keys** are on the d-pad: tap a direction for one slot, or hold it for another. Assign them from the inventory or the magic screen, and the HUD briefly shows what you used.
+- **Merchant services**: buying spells, training, travel and repair.
+- **Rest and wait, and level up.**
+- **Books and scrolls**, as one scrolling page.
+- **Saving and loading.**
+- **Character creation**, with an on-screen keyboard for names, and a full screen for making a custom class.
+- **Persuasion**, with the person's disposition and your gold.
+- **Repairing and recharging** with your own tools.
+- **The options**, as rows a controller can change.
+- **Messages** such as "Your spell failed", in large text.
+
+Trying it
 ---------
 
-Not sure what to do with all your free time? OpenMW is always looking for new contributions. [See here for how to contribute.](./CONTRIBUTING.md)
+You need a copy of Morrowind. Build this fork the same way as OpenMW: see the [OpenMW build instructions](https://wiki.openmw.org/index.php?title=Development_Environment_Setup), or [CLAUDE.md](CLAUDE.md) for notes on building on Windows. Then turn on **Enable Controller Menus** in the launcher's settings, or set this in `settings.cfg`:
 
-The data path
--------------
+```ini
+[GUI]
+controller menus = true
+```
 
-The data path tells OpenMW where to find your Morrowind files. If you run the launcher, OpenMW should be able to pick up the location of these files on its own, if both Morrowind and OpenMW are installed properly (installing Morrowind under WINE is considered a proper install).
+With the setting off, the game uses OpenMW's normal interface. With it on, the new screens only respond to a gamepad for now. Mouse support is planned.
 
-Command line options
---------------------
+How it's built
+--------------
 
-    Syntax: openmw <options>
-    Allowed options:
-      --config arg                          additional config directories
-      --replace arg                         settings where the values from the
-                                            current source should replace those
-                                            from lower-priority sources instead of
-                                            being appended
-      --user-data arg                       set user data directory (used for
-                                            saves, screenshots, etc)
-      --resources arg (=resources)          set resources directory
-      --help                                print help message
-      --version                             print version information and quit
-      --data arg (=data)                    set data directories (later directories
-                                            have higher priority)
-      --data-local arg                      set local data directory (highest
-                                            priority)
-      --fallback-archive arg (=fallback-archive)
-                                            set fallback BSA archives (later
-                                            archives have higher priority)
-      --start arg                           set initial cell
-      --content arg                         content file(s): esm/esp, or
-                                            omwgame/omwaddon/omwscripts
-      --groundcover arg                     groundcover content file(s): esm/esp,
-                                            or omwgame/omwaddon
-      --no-sound [=arg(=1)] (=0)            disable all sounds
-      --script-all [=arg(=1)] (=0)          compile all scripts (excluding dialogue
-                                            scripts) at startup
-      --script-all-dialogue [=arg(=1)] (=0) compile all dialogue scripts at startup
-      --script-console [=arg(=1)] (=0)      enable console-only script
-                                            functionality
-      --script-run arg                      select a file containing a list of
-                                            console commands that is executed on
-                                            startup
-      --script-warn [=arg(=1)] (=1)         handling of warnings when compiling
-                                            scripts
-                                            0 - ignore warnings
-                                            1 - show warnings but consider script as
-                                            correctly compiled anyway
-                                            2 - treat warnings as errors
-      --load-savegame arg                   load a save game file on game startup
-                                            (specify an absolute filename or a
-                                            filename relative to the current
-                                            working directory)
-      --skip-menu [=arg(=1)] (=0)           skip main menu on game startup
-      --new-game [=arg(=1)] (=0)            run new game sequence (ignored if
-                                            skip-menu=0)
-      --encoding arg (=win1252)             Character encoding used in OpenMW game
-                                            messages:
+The new screens are drawn in code on top of OpenMW's own windows, which stay hidden and keep doing the work, so the game's rules and checks are unchanged. The design notes for each screen, and a log of the work, are in [ui-rework/](ui-rework/README.md). The project also includes a harness that drives the game with a virtual gamepad and takes screenshots, which is how most of the screens were tested.
 
-                                            win1250 - Central and Eastern European
-                                            such as Polish, Czech, Slovak,
-                                            Hungarian, Slovene, Bosnian, Croatian,
-                                            Serbian (Latin script), Romanian and
-                                            Albanian languages
+About OpenMW
+------------
 
-                                            win1251 - Cyrillic alphabet such as
-                                            Russian, Bulgarian, Serbian Cyrillic
-                                            and other languages
+OpenMW is an open-source open-world RPG game engine that supports playing Morrowind by Bethesda Softworks. Everything here builds on the work of the OpenMW team. To play Morrowind on the official engine, or to report bugs in it, go to [openmw.org](https://www.openmw.org) or the [OpenMW repository](https://gitlab.com/OpenMW/openmw). Please don't report bugs from this fork there.
 
-                                            win1252 - Western European (Latin)
-                                            alphabet, used by default
-      --fallback arg                        fallback values
-      --no-grab [=arg(=1)] (=0)             Don't grab mouse cursor
-      --export-fonts [=arg(=1)] (=0)        Export Morrowind .fnt fonts to PNG
-                                            image and XML file in current directory
-      --activate-dist arg (=-1)             activation distance override
-      --random-seed arg (=<impl defined>)   seed value for random number generator
+* License: GPLv3 (see [LICENSE](LICENSE) for more information)
+
+Font Licenses:
+* DejaVuLGCSansMono.ttf: custom (see [files/data/fonts/DejaVuFontLicense.txt](files/data/fonts/DejaVuFontLicense.txt) for more information)
+* DemonicLetters.ttf: SIL Open Font License (see [files/data/fonts/DemonicLettersFontLicense.txt](files/data/fonts/DemonicLettersFontLicense.txt) for more information)
+* MysticCards.ttf: SIL Open Font License (see [files/data/fonts/MysticCardsFontLicense.txt](files/data/fonts/MysticCardsFontLicense.txt) for more information)
