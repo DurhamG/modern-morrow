@@ -2173,6 +2173,16 @@ namespace MWGui
             MWBase::Environment::get().getSoundManager()->pauseSounds(
                 MWSound::VideoPlayback, ~MWSound::Type::Movie & MWSound::Type::Mask);
 
+        // A controller skips the video with A, B or Start. Only a new press counts, so a button still held from
+        // the menu that started the video doesn't skip it.
+        const auto skipButtonPressed = [] {
+            const MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
+            return input->isControllerButtonPressed(SDL_CONTROLLER_BUTTON_A)
+                || input->isControllerButtonPressed(SDL_CONTROLLER_BUTTON_B)
+                || input->isControllerButtonPressed(SDL_CONTROLLER_BUTTON_START);
+        };
+        bool skipButtonWasPressed = skipButtonPressed();
+
         Misc::FrameRateLimiter frameRateLimiter
             = Misc::makeFrameRateLimiter(MWBase::Environment::get().getFrameRateLimit());
         while (mVideoWidget->update() && !MWBase::Environment::get().getStateManager()->hasQuitRequest())
@@ -2182,6 +2192,11 @@ namespace MWGui
                       .count();
 
             MWBase::Environment::get().getInputManager()->update(dt, true, false);
+
+            const bool skipButtonIsPressed = skipButtonPressed();
+            if (allowSkipping && skipButtonIsPressed && !skipButtonWasPressed)
+                mVideoWidget->stop();
+            skipButtonWasPressed = skipButtonIsPressed;
 
             if (!mWindowVisible)
             {
