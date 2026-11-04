@@ -54,6 +54,7 @@ Done so far:
 - **Quick keys.** The d-pad uses them during play: a press of a direction for slots 1 to 4, and a hold for slots 5 to 8. Clicking the left stick on the inventory or magic screen assigns the highlighted item or spell, and a marker shows what is on each. See [design/quick-keys.md](design/quick-keys.md).
 - **Alchemy.** A full screen with the ingredients and their known effects on the left, grouped by whether they share an effect with the potion, and the potion on the right. See [design/crafting.md](design/crafting.md).
 - **Enchanting.** A full screen with the item, soul gem, cast type, effects and costs on the right, and a list on the left to pick each from. Effects are edited on the left while the costs follow along. See [design/crafting.md](design/crafting.md).
+- **Spellmaking.** The enchanting screen without the item, soul gem and cast type. A new spell is named after its first effect. See [design/crafting.md](design/crafting.md).
 - **Everything else except the rest of crafting.** The merchant services, questions and confirmations, rest and level up, books, saving and loading, the count dialog, companion sharing, loading and jail, character creation and the options all have controller panels in the same style. See [design/other-screens.md](design/other-screens.md). Not reviewed yet.
 
 ### Phase 3: make the changes clean enough to upstream

@@ -1,0 +1,35 @@
+# Making a spell with Estirdalin in the Balmora Mages Guild, in controller menus mode: adding an effect, editing it,
+# then buying the spell. The spell is named after its first effect.
+launch --start "Balmora, Guild of Mages" --set "GUI.controller menus=true"
+console "command=player->addspell fireball"
+console "command=player->addspell \"hearth heal\""
+console "command=player->addspell shield"
+console "command=player->additem gold_001 5000"
+lua "code=for _, actor in ipairs(require('openmw.nearby').actors) do if actor.recordId == 'estirdalin' then require('openmw.interfaces').UI.addMode('SpellCreation', {target=actor}) end end" context=player
+wait frames=10
+shot start
+pad button=a
+wait frames=5
+shot effects
+pad button=dpdown
+wait frames=3
+pad button=a
+wait frames=5
+shot editor
+pad button=dpdown
+wait frames=3
+pad button=dpright hold=60
+wait frames=5
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpright hold=30
+wait frames=5
+shot editor-changed
+pad button=a
+wait frames=5
+shot added
+pad button=x
+wait frames=10
+shot bought

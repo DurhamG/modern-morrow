@@ -30,6 +30,7 @@
 
 #include "class.hpp"
 #include "controllerscreen.hpp"
+#include "effectcraftpanel.hpp"
 #include "textcolours.hpp"
 #include "tooltips.hpp"
 
@@ -605,8 +606,14 @@ namespace MWGui
             mControllerButtons.mB = "#{Interface:Cancel}";
             mControllerButtons.mX = "#{Interface:Buy}";
             mControllerButtons.mR3 = "#{Interface:Info}";
+
+            mPanel = std::make_unique<EffectCraftPanel>(*this);
+            mAddEffectDialog.setControllerHandler(
+                [this](const SDL_ControllerButtonEvent& arg) { return mPanel->onEditorButton(arg); });
         }
     }
+
+    SpellCreationDialog::~SpellCreationDialog() = default;
 
     void SpellCreationDialog::setPtr(const MWWorld::Ptr& actor)
     {
@@ -621,6 +628,10 @@ namespace MWGui
         mPlayerGold->setCaptionWithReplacing(MyGUI::utility::toString(playerGold));
 
         startEditing();
+
+        // The window can open before it learns who makes the spell, so the panel starts over with what it knows now.
+        if (mPanel != nullptr && isVisible())
+            mPanel->show();
     }
 
     void SpellCreationDialog::onCancelButtonClicked(MyGUI::Widget* /*sender*/)
@@ -689,6 +700,24 @@ namespace MWGui
     {
         center();
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mPanel->show();
+        }
+    }
+
+    void SpellCreationDialog::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+    }
+
+    void SpellCreationDialog::onFrame(float dt)
+    {
+        checkReferenceAvailable();
+        if (mPanel != nullptr)
+            mPanel->onFrame(dt);
     }
 
     void SpellCreationDialog::onReferenceUnavailable()
@@ -742,6 +771,9 @@ namespace MWGui
 
     bool SpellCreationDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
             onCancelButtonClicked(mCancelButton);

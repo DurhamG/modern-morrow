@@ -178,11 +178,13 @@ namespace MWGui
     {
     public:
         SpellCreationDialog();
+        ~SpellCreationDialog() override;
 
         void onOpen() override;
+        void onClose() override;
         void clear() override { resetReference(); }
 
-        void onFrame(float dt) override { checkReferenceAvailable(); }
+        void onFrame(float dt) override;
 
         void setPtr(const MWWorld::Ptr& actor) override;
 
@@ -207,6 +209,10 @@ namespace MWGui
         MyGUI::TextBox* mPlayerGold;
 
         ESM::Spell mSpell;
+
+        // In controller menus mode, a full screen panel shows instead of this window, which stays hidden.
+        friend class EffectCraftPanel;
+        std::unique_ptr<EffectCraftPanel> mPanel;
     };
 
 }

@@ -1,6 +1,6 @@
 # Crafting
 
-This covers the crafting screens in controller menus mode. The user asked for them to be designed and built without a review first, following the patterns of the other screens, and will give feedback after playing with them. They are being done one at a time. So far alchemy and enchanting are done.
+This covers the crafting screens in controller menus mode. The user asked for them to be designed and built without a review first, following the patterns of the other screens, and will give feedback after playing with them. They are being done one at a time. So far alchemy, enchanting and spellmaking are done.
 
 ## Alchemy
 
@@ -43,9 +43,23 @@ This covers the crafting screens in controller menus mode. The user asked for th
 - **The name comes from the item,** as in the old window. Clicking the left stick renames it with the on-screen keyboard.
 - **The chance of success shows only when the "show enchant chance" setting is on,** as in the old window. It is off by default.
 - **The enchanting window stays hidden and still makes the enchantment.** Its checks and messages are unchanged, such as for too many effects, a soul gem without a soul, or an item stolen from the enchanter. The effect dialog stays hidden too, and hands the screen its buttons while an effect is edited.
-- **The effect editor is built to be shared with spellmaking,** which edits effects the same way.
+- **The effect editor is shared with spellmaking,** which edits effects the same way.
+
+## Spellmaking
+
+### How spellmaking works
+
+- A spellmaker NPC sells new spells made from effects the player already knows from their spells, as long as the effect allows spellmaking.
+- A spell has one to eight effects, set the same way as in enchanting. The window works out the magicka cost, the chance to cast it, and the price.
+- The old window needed the player to type a name before buying.
+
+### Decisions
+
+- **The same screen as enchanting, without the item, soul gem and cast type.** The right side lists the effects and a line to add one, with the magicka cost, the chance to cast and the price at the bottom. The left side lists the effects the player knows, grouped by school, and edits an effect in place of the list.
+- **A new spell is named after its first effect,** such as "Fire Damage" or "Fortify Strength", so it can be bought without typing a name. Clicking the left stick renames it.
+- **The spellmaking window stays hidden and still makes the spell.** Its checks and messages are unchanged, such as for a spell without effects or not enough gold.
 
 ## Not done yet
 
-- Spellmaking, recharging and repairing with your own tools still use the old windows.
+- Recharging and repairing with your own tools still use the old windows.
 - Mouse input. The screen only responds to a gamepad, like the other screens.

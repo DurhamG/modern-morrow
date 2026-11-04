@@ -23,6 +23,7 @@
 #include "../mwbase/windowmanager.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
+#include "../mwmechanics/magiceffects.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
@@ -31,6 +32,7 @@
 #include "enchantingdialog.hpp"
 #include "inventoryitemmodel.hpp"
 #include "sortfilteritemmodel.hpp"
+#include "spellcreationdialog.hpp"
 #include "textinput.hpp"
 #include "widgets.hpp"
 
@@ -145,7 +147,39 @@ namespace MWGui
 
     EffectCraftPanel::EffectCraftPanel(EnchantingDialog& window)
         : mWindow(window)
+        , mEditor(window)
+        , mEnchant(&window)
     {
+    }
+
+    EffectCraftPanel::EffectCraftPanel(SpellCreationDialog& window)
+        : mWindow(window)
+        , mEditor(window)
+        , mSpell(&window)
+    {
+    }
+
+    MWWorld::Ptr EffectCraftPanel::merchant() const
+    {
+        return mEnchant != nullptr ? mEnchant->mPtr : mSpell->mPtr;
+    }
+
+    MyGUI::EditBox* EffectCraftPanel::nameEdit() const
+    {
+        return mEnchant != nullptr ? mEnchant->mName : mSpell->mNameEdit;
+    }
+
+    void EffectCraftPanel::nameAfterFirstEffect()
+    {
+        // A new spell is named after its first effect, such as "Fortify Strength", so the player doesn't have to
+        // type a name. Enchantments are named after their item already.
+        if (mSpell == nullptr || !nameEdit()->getCaption().empty() || mEditor.mEffects.empty())
+            return;
+        const ESM::ENAMstruct& effect = mEditor.mEffects.front();
+        const ESM::MagicEffect* magicEffect = store().get<ESM::MagicEffect>().find(effect.mEffectID);
+        const std::string name = MWMechanics::getMagicEffectString(*magicEffect,
+            store().get<ESM::Attribute>().search(effect.mAttribute), store().get<ESM::Skill>().search(effect.mSkill));
+        nameEdit()->setCaption(MyGUI::UString(name));
     }
 
     EffectCraftPanel::~EffectCraftPanel()
@@ -183,20 +217,22 @@ namespace MWGui
     bool EffectCraftPanel::isSelfEnchanting() const
     {
         // The window has no enchanter only when the player enchants with their own soul gem.
-        return mWindow.mPtr.isEmpty() || mWindow.mPtr == MWMechanics::getPlayer();
+        return mEnchant != nullptr && (merchant().isEmpty() || merchant() == MWMechanics::getPlayer());
     }
 
     bool EffectCraftPanel::isEditing() const
     {
-        return mWindow.mAddEffectDialog.isVisible();
+        return mEditor.mAddEffectDialog.isVisible();
     }
 
     std::vector<EffectCraftPanel::Line> EffectCraftPanel::lines() const
     {
-        std::vector<Line> result = { { Line::Kind::Item }, { Line::Kind::SoulGem }, { Line::Kind::CastType } };
-        for (std::size_t i = 0; i < mWindow.mEffects.size(); ++i)
+        std::vector<Line> result;
+        if (mEnchant != nullptr)
+            result = { { Line::Kind::Item }, { Line::Kind::SoulGem }, { Line::Kind::CastType } };
+        for (std::size_t i = 0; i < mEditor.mEffects.size(); ++i)
             result.push_back({ Line::Kind::Effect, static_cast<int>(i) });
-        if (mWindow.mEffects.size() < sMaxEffects)
+        if (mEditor.mEffects.size() < sMaxEffects)
             result.push_back({ Line::Kind::AddEffect });
         return result;
     }
@@ -207,8 +243,8 @@ namespace MWGui
         const std::vector<Line> all = lines();
         for (std::size_t i = 0; i < all.size(); ++i)
         {
-            const bool missing = (all[i].mKind == Line::Kind::Item && mWindow.mEnchanting.itemEmpty())
-                || (all[i].mKind == Line::Kind::SoulGem && mWindow.mEnchanting.soulEmpty())
+            const bool missing = (all[i].mKind == Line::Kind::Item && mEnchant->mEnchanting.itemEmpty())
+                || (all[i].mKind == Line::Kind::SoulGem && mEnchant->mEnchanting.soulEmpty())
                 || all[i].mKind == Line::Kind::AddEffect;
             if (missing)
             {
@@ -221,7 +257,7 @@ namespace MWGui
 
     std::vector<EffectCraftPanel::Setting> EffectCraftPanel::settings() const
     {
-        const EditEffectDialog& dialog = mWindow.mAddEffectDialog;
+        const EditEffectDialog& dialog = mEditor.mAddEffectDialog;
         std::vector<Setting> result = { Setting::Range };
         if (dialog.mMagnitudeBox->getVisible())
         {
@@ -251,18 +287,18 @@ namespace MWGui
             {
                 // The effects the player knows from their spells, grouped by school.
                 std::map<std::string, std::vector<Entry>> groups;
-                for (const auto& [index, id] : mWindow.mButtonMapping)
+                for (const auto& [index, id] : mEditor.mButtonMapping)
                 {
                     const ESM::MagicEffect* effect = store().get<ESM::MagicEffect>().find(id);
                     Entry entry;
                     entry.mId = id;
                     entry.mIcon = effectIcon(*effect);
                     entry.mName = escaped(effect->mName);
-                    entry.mDetail = escaped(allowedRanges(*effect, mWindow.mConstantEffect));
+                    entry.mDetail = escaped(allowedRanges(*effect, mEditor.mConstantEffect));
                     const bool targetsOne
                         = effect->mData.mFlags & (ESM::MagicEffect::TargetSkill | ESM::MagicEffect::TargetAttribute);
                     entry.mAdded = !targetsOne
-                        && std::any_of(mWindow.mEffects.begin(), mWindow.mEffects.end(),
+                        && std::any_of(mEditor.mEffects.begin(), mEditor.mEffects.end(),
                             [&](const ESM::ENAMstruct& added) { return added.mEffectID == id; });
                     const ESM::Skill* school = store().get<ESM::Skill>().search(effect->mData.mSchool);
                     groups[school != nullptr ? school->mName : std::string()].push_back(std::move(entry));
@@ -287,7 +323,7 @@ namespace MWGui
                     entry.mName = escaped(item.getClass().getName(item));
                     entry.mDetail = "#{Interface:EnchantCapacity} "
                         + std::to_string(static_cast<int>(item.getClass().getEnchantmentPoints(item) * mult));
-                    entry.mAdded = item == mWindow.mEnchanting.getOldItem();
+                    entry.mAdded = item == mEnchant->mEnchanting.getOldItem();
                     mEntries.push_back(std::move(entry));
                 }
                 break;
@@ -303,7 +339,7 @@ namespace MWGui
                     if (soul != nullptr)
                         entry.mDetail = escaped(soul->mName) + ",  #{Interface:EnchantSoulStrength} "
                             + std::to_string(soul->mData.mSoul);
-                    entry.mAdded = gem == mWindow.mEnchanting.getGem();
+                    entry.mAdded = gem == mEnchant->mEnchanting.getGem();
                     mEntries.push_back(std::move(entry));
                 }
                 break;
@@ -366,8 +402,9 @@ namespace MWGui
 
         // The title, and the skill or the gold that decides what the player can make.
         const bool self = isSelfEnchanting();
-        addText(
-            mRoot, sMargin, 20, size.width - 2 * sMargin, 40, "#{Interface:EnchantTitle}", sFontTitle, sBrightColour);
+        addText(mRoot, sMargin, 20, size.width - 2 * sMargin, 40,
+            mSpell != nullptr ? "#{Interface:SpellmakingTitle}" : "#{Interface:EnchantTitle}", sFontTitle,
+            sBrightColour);
         std::string status;
         if (self)
         {
@@ -375,8 +412,8 @@ namespace MWGui
             status = "#{sSkillEnchant}  "
                 + std::to_string(static_cast<int>(player.getClass().getSkill(player, ESM::Skill::Enchant)));
         }
-        else
-            status = escaped(mWindow.mPtr.getClass().getName(mWindow.mPtr)) + "      #{Interface:BarterYourGold}  "
+        else if (!merchant().isEmpty())
+            status = escaped(merchant().getClass().getName(merchant())) + "      #{Interface:BarterYourGold}  "
                 + std::to_string(playerGold());
         addText(mRoot, sMargin, 20, size.width - 2 * sMargin, 40, status, sFontSmall, sDimColour,
             MyGUI::Align::Right | MyGUI::Align::VCenter);
@@ -496,7 +533,7 @@ namespace MWGui
 
     void EffectCraftPanel::drawEditor(int x, int y, int w, int h)
     {
-        const EditEffectDialog& dialog = mWindow.mAddEffectDialog;
+        const EditEffectDialog& dialog = mEditor.mAddEffectDialog;
         const ESM::ENAMstruct& effect = dialog.mEffect;
         addRect(mRoot, x, y, w, h, sPanelColour, 0.9f);
         addRect(mRoot, x, y, w, 1, sAccentColour, 0.3f);
@@ -600,14 +637,15 @@ namespace MWGui
 
     void EffectCraftPanel::drawSummary(int x, int y, int w, int h)
     {
-        MWMechanics::Enchanting& enchanting = mWindow.mEnchanting;
         addRect(mRoot, x, y, w, h, sPanelColour, 0.9f);
         addRect(mRoot, x, y, w, 1, sAccentColour, 0.3f);
 
-        // The new item's name.
-        const std::string name = mWindow.mName->getCaption().asUTF8();
-        addText(mRoot, x + 16, y + 10, w - 32, 34, name.empty() ? "#{Interface:EnchantNewItem}" : escaped(name),
-            sFontLarge, name.empty() ? sDimColour : sBrightColour);
+        // The name of the new item or spell.
+        const std::string name = nameEdit()->getCaption().asUTF8();
+        const std::string placeholder
+            = mSpell != nullptr ? "#{Interface:SpellmakingNewSpell}" : "#{Interface:EnchantNewItem}";
+        addText(mRoot, x + 16, y + 10, w - 32, 34, name.empty() ? placeholder : escaped(name), sFontLarge,
+            name.empty() ? sDimColour : sBrightColour);
 
         const std::vector<Line> all = lines();
         const bool rightFocused = !mListFocused && !isEditing();
@@ -644,11 +682,11 @@ namespace MWGui
                         sFontNormal, focused ? sActiveColour : sTextColour);
                 else
                 {
-                    const ESM::ENAMstruct& effect = mWindow.mEffects[line.mEffect];
+                    const ESM::ENAMstruct& effect = mEditor.mEffects[line.mEffect];
                     const ESM::MagicEffect* magicEffect = store().get<ESM::MagicEffect>().find(effect.mEffectID);
                     addImage(mRoot, x + 20, ry + 3, sEffectLineHeight - 6, effectIcon(*magicEffect));
                     addText(mRoot, x + 20 + sEffectLineHeight + 4, ry, w - 44 - sEffectLineHeight,
-                        sEffectLineHeight - 2, escaped(describeEffect(effect, mWindow.mConstantEffect)), sFontNormal,
+                        sEffectLineHeight - 2, escaped(describeEffect(effect, mEditor.mConstantEffect)), sFontNormal,
                         focused ? sActiveColour : sNewColour);
                 }
                 ry += sEffectLineHeight;
@@ -657,6 +695,7 @@ namespace MWGui
 
             const bool focused = highlight(i, sLineHeight);
             const MyGUI::Colour labelColour = focused ? sActiveColour : sTextColour;
+            MWMechanics::Enchanting& enchanting = mEnchant->mEnchanting;
             if (line.mKind == Line::Kind::Item || line.mKind == Line::Kind::SoulGem)
             {
                 const bool isItem = line.mKind == Line::Kind::Item;
@@ -701,7 +740,7 @@ namespace MWGui
                     hints.emplace_back(SDL_CONTROLLER_BUTTON_A, "#{Interface:EnchantChoose}");
                     break;
                 case Line::Kind::CastType:
-                    if (!enchanting.itemEmpty())
+                    if (!mEnchant->mEnchanting.itemEmpty())
                         hints.emplace_back(SDL_CONTROLLER_BUTTON_A, "#{Interface:EnchantChange}");
                     break;
                 case Line::Kind::Effect:
@@ -735,7 +774,7 @@ namespace MWGui
                     help = "#{Interface:EnchantCastTypeHelp}";
                     break;
                 default:
-                    help = "#{sEnchantmentHelp10}";
+                    help = mSpell != nullptr ? "#{sSpellmakingHelp6}" : "#{sEnchantmentHelp10}";
                     break;
             }
             const std::vector<std::string> lines = wrapText(mRoot, localised(help), w - 32, sFontSmall, 3);
@@ -750,26 +789,39 @@ namespace MWGui
         }
 
         // The numbers, in two columns.
-        const int points = static_cast<int>(enchanting.getEnchantPoints(false));
-        const int maxPoints = enchanting.getMaxEnchantValue();
         std::vector<std::pair<std::string, std::pair<std::string, MyGUI::Colour>>> facts;
-        facts.push_back({ "#{Interface:EnchantPoints}",
-            { std::to_string(points) + " / " + std::to_string(maxPoints),
-                points > maxPoints ? sWorseColour : sBrightColour } });
-        facts.push_back({ "#{sCastCost}", { std::to_string(enchanting.getEffectiveCastCost()), sBrightColour } });
-        facts.push_back({ "#{Interface:MagicCharge}", { std::to_string(enchanting.getGemCharge()), sBrightColour } });
-        if (isSelfEnchanting())
+        if (mSpell != nullptr)
         {
-            if (Settings::game().mShowEnchantChance)
-                facts.push_back({ "#{Interface:MagicChance}",
-                    { std::to_string(std::clamp(enchanting.getEnchantChance(), 0, 100)) + "%", sBrightColour } });
-        }
-        else
-        {
-            const int price = enchanting.getEnchantPrice();
+            // The spellmaking window works these out whenever the effects change.
+            const int price = MyGUI::utility::parseInt(mSpell->mPriceLabel->getCaption());
+            facts.push_back({ "#{sEnchantmentMenu4}", { mSpell->mMagickaCost->getCaption().asUTF8(), sBrightColour } });
+            facts.push_back(
+                { "#{sSpellmakingMenu1}", { mSpell->mSuccessChance->getCaption().asUTF8() + "%", sBrightColour } });
             facts.push_back({ "#{sBarterDialog7}",
                 { std::to_string(price) + " #{Interface:BarterGoldShort}",
                     price > playerGold() ? sWorseColour : sBrightColour } });
+        }
+        else
+        {
+            MWMechanics::Enchanting& enchanting = mEnchant->mEnchanting;
+            const int points = static_cast<int>(enchanting.getEnchantPoints(false));
+            const int maxPoints = enchanting.getMaxEnchantValue();
+            facts.push_back({ "#{Interface:EnchantPoints}",
+                { std::to_string(points) + " / " + std::to_string(maxPoints),
+                    points > maxPoints ? sWorseColour : sBrightColour } });
+            facts.push_back({ "#{sCastCost}", { std::to_string(enchanting.getEffectiveCastCost()), sBrightColour } });
+            facts.push_back(
+                { "#{Interface:MagicCharge}", { std::to_string(enchanting.getGemCharge()), sBrightColour } });
+            if (!isSelfEnchanting())
+            {
+                const int price = enchanting.getEnchantPrice();
+                facts.push_back({ "#{sBarterDialog7}",
+                    { std::to_string(price) + " #{Interface:BarterGoldShort}",
+                        price > playerGold() ? sWorseColour : sBrightColour } });
+            }
+            else if (Settings::game().mShowEnchantChance)
+                facts.push_back({ "#{Interface:MagicChance}",
+                    { std::to_string(std::clamp(enchanting.getEnchantChance(), 0, 100)) + "%", sBrightColour } });
         }
         const int rows = (static_cast<int>(facts.size()) + 1) / 2;
         by -= rows * 28;
@@ -790,7 +842,7 @@ namespace MWGui
         if (mRoot == nullptr || !mRoot->getVisible())
             return;
         const WindowBase* active = windowManager().getActiveControllerWindow();
-        if (active != &mWindow && active != &mWindow.mAddEffectDialog)
+        if (active != &mWindow && active != &mEditor.mAddEffectDialog)
         {
             mHeldDirection.reset();
             mAdjustTime = 0.f;
@@ -850,12 +902,18 @@ namespace MWGui
                     mListFocused = false;
                 else
                 {
-                    mWindow.onCancelButtonClicked(nullptr);
+                    if (mSpell != nullptr)
+                        mSpell->onCancelButtonClicked(nullptr);
+                    else
+                        mEnchant->onCancelButtonClicked(nullptr);
                     return true;
                 }
                 break;
             case SDL_CONTROLLER_BUTTON_X:
-                mWindow.onBuyButtonClicked(nullptr);
+                if (mSpell != nullptr)
+                    mSpell->onBuyButtonClicked(nullptr);
+                else
+                    mEnchant->onBuyButtonClicked(nullptr);
                 break;
             case SDL_CONTROLLER_BUTTON_LEFTSTICK:
                 rename();
@@ -870,7 +928,7 @@ namespace MWGui
 
     bool EffectCraftPanel::onEditorButton(const SDL_ControllerButtonEvent& arg)
     {
-        EditEffectDialog& dialog = mWindow.mAddEffectDialog;
+        EditEffectDialog& dialog = mEditor.mAddEffectDialog;
         switch (arg.button)
         {
             case SDL_CONTROLLER_BUTTON_A:
@@ -896,12 +954,13 @@ namespace MWGui
         }
         if (!isEditing())
         {
+            nameAfterFirstEffect();
             // Back on the right side, on the effect just added or edited.
             mListFocused = false;
             setPicker(Picker::Effects);
             const std::vector<Line> all = lines();
             for (std::size_t i = 0; i < all.size(); ++i)
-                if (all[i].mKind == Line::Kind::Effect && all[i].mEffect == mWindow.mSelectedEffect)
+                if (all[i].mKind == Line::Kind::Effect && all[i].mEffect == mEditor.mSelectedEffect)
                     mLineFocus = static_cast<int>(i);
             mLineFocus = std::clamp(mLineFocus, 0, static_cast<int>(all.size()) - 1);
         }
@@ -933,7 +992,7 @@ namespace MWGui
                 const ESM::RefId id = entry->mId;
                 const bool skill = mPicker == Picker::Skills;
                 setPicker(Picker::Effects);
-                EditEffectDialog& dialog = mWindow.mAddEffectDialog;
+                EditEffectDialog& dialog = mEditor.mAddEffectDialog;
                 dialog.newEffect(mPendingEffect);
                 if (skill)
                     dialog.setSkill(id);
@@ -964,14 +1023,14 @@ namespace MWGui
                 mListFocused = true;
                 break;
             case Line::Kind::CastType:
-                if (mWindow.mEnchanting.itemEmpty())
+                if (mEnchant->mEnchanting.itemEmpty())
                     return;
-                mWindow.onTypeButtonClicked(nullptr);
+                mEnchant->onTypeButtonClicked(nullptr);
                 break;
             case Line::Kind::Effect:
-                mWindow.mSelectedEffect = line.mEffect;
-                mWindow.mAddEffectDialog.editEffect(mWindow.mEffects[line.mEffect]);
-                mWindow.mAddEffectDialog.setVisible(true);
+                mEditor.mSelectedEffect = line.mEffect;
+                mEditor.mAddEffectDialog.editEffect(mEditor.mEffects[line.mEffect]);
+                mEditor.mAddEffectDialog.setVisible(true);
                 mSettingFocus = 0;
                 break;
             case Line::Kind::AddEffect:
@@ -985,13 +1044,13 @@ namespace MWGui
     void EffectCraftPanel::addEffect(const ESM::RefId& id)
     {
         // The same checks as the enchanting window makes when an effect is clicked.
-        if (mWindow.mEffects.size() >= sMaxEffects)
+        if (mEditor.mEffects.size() >= sMaxEffects)
         {
             windowManager().messageBox("#{sNotifyMessage28}");
             return;
         }
         const ESM::MagicEffect* effect = store().get<ESM::MagicEffect>().find(id);
-        const bool constant = mWindow.mConstantEffect;
+        const bool constant = mEditor.mConstantEffect;
         const bool allowSelf = (effect->mData.mFlags & ESM::MagicEffect::CastSelf) != 0 || constant;
         const bool allowTouch = (effect->mData.mFlags & ESM::MagicEffect::CastTouch) && !constant;
         const bool allowTarget = (effect->mData.mFlags & ESM::MagicEffect::CastTarget) && !constant;
@@ -1006,7 +1065,7 @@ namespace MWGui
             playSound("Menu Click");
             return;
         }
-        for (const ESM::ENAMstruct& added : mWindow.mEffects)
+        for (const ESM::ENAMstruct& added : mEditor.mEffects)
         {
             if (added.mEffectID == id)
             {
@@ -1014,7 +1073,7 @@ namespace MWGui
                 return;
             }
         }
-        mWindow.mAddEffectDialog.newEffect(effect);
+        mEditor.mAddEffectDialog.newEffect(effect);
         mSettingFocus = 0;
         playSound("Menu Click");
     }
@@ -1022,11 +1081,11 @@ namespace MWGui
     void EffectCraftPanel::pickItem(const MWWorld::Ptr& item)
     {
         // The same steps as the enchanting window takes when an item is picked.
-        mWindow.setItem(item);
+        mEnchant->setItem(item);
         windowManager().playSound(item.getClass().getDownSoundId(item));
-        mWindow.mEnchanting.nextCastStyle();
-        mWindow.updateLabels();
-        mWindow.updateEffectsView();
+        mEnchant->mEnchanting.nextCastStyle();
+        mEnchant->updateLabels();
+        mEditor.updateEffectsView();
         setPicker(Picker::Effects);
         mListFocused = false;
         focusNextLine();
@@ -1035,15 +1094,15 @@ namespace MWGui
     void EffectCraftPanel::pickSoulGem(const MWWorld::Ptr& gem)
     {
         // The same steps as the enchanting window takes when a soul gem is picked.
-        mWindow.mEnchanting.setSoulGem(gem);
-        if (mWindow.mEnchanting.getGemCharge() == 0)
+        mEnchant->mEnchanting.setSoulGem(gem);
+        if (mEnchant->mEnchanting.getGemCharge() == 0)
         {
             windowManager().messageBox("#{sNotifyMessage32}");
             return;
         }
-        mWindow.setSoulGem(gem);
+        mEnchant->setSoulGem(gem);
         windowManager().playSound(gem.getClass().getDownSoundId(gem));
-        mWindow.updateLabels();
+        mEnchant->updateLabels();
         setPicker(Picker::Effects);
         mListFocused = false;
         focusNextLine();
@@ -1051,7 +1110,7 @@ namespace MWGui
 
     void EffectCraftPanel::adjust(int delta)
     {
-        EditEffectDialog& dialog = mWindow.mAddEffectDialog;
+        EditEffectDialog& dialog = mEditor.mAddEffectDialog;
         const std::vector<Setting> all = settings();
         if (all.empty() || delta == 0)
             return;
@@ -1090,7 +1149,7 @@ namespace MWGui
     {
         mRenameDialog = std::make_unique<TextInputDialog>();
         mRenameDialog->setTextLabel(windowManager().getGameSettingString("sName", "Name"));
-        mRenameDialog->setTextInput(mWindow.mName->getCaption().asUTF8());
+        mRenameDialog->setTextInput(nameEdit()->getCaption().asUTF8());
         mRenameDialog->setNextButtonShow(false);
         mRenameDialog->eventDone += MyGUI::newDelegate(this, &EffectCraftPanel::onRenameDone);
         mRenameDialog->setVisible(true);
@@ -1100,7 +1159,7 @@ namespace MWGui
     {
         const std::string name = mRenameDialog->getTextInput();
         if (!name.empty())
-            mWindow.mName->setCaption(MyGUI::UString(name));
+            nameEdit()->setCaption(MyGUI::UString(name));
         windowManager().removeDialog(std::move(mRenameDialog));
         update();
     }

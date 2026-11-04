@@ -153,6 +153,7 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   - Alchemy is a full screen. `AlchemyPanel` lists the ingredients with their known effects, groups the ones that share an effect with the potion, and shows the potion on the right. The alchemy window stays hidden and brews.
   - The `controller-alchemy` scenario adds ingredients, brews two potions and renames one.
   - Enchanting is a full screen. `EffectCraftPanel` shows the enchantment on the right and a list to pick from on the left, and edits effects on the left. The enchanting window and its effect dialog stay hidden. The effect dialog hands its buttons to the panel through a handler.
+  - Spellmaking uses the same `EffectCraftPanel`, without the item, soul gem and cast type lines. A new spell is named after its first effect. The `controller-spellmaking` scenario makes a fire spell with Estirdalin and buys it.
   - The `controller-enchanting` scenario enchants a ring with a soul gem. The `controller-enchanting-service` scenario buys an enchantment from Galbedir and adds an effect on an attribute.
 - Lessons learned:
   - `Alchemy::countPotionsToBrew` returns 0 until the potion has a name, so the panel gives it the window's name before showing the count.

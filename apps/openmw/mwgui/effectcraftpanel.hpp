@@ -23,22 +23,30 @@ namespace ESM
     struct MagicEffect;
 }
 
+namespace MyGUI
+{
+    class EditBox;
+}
+
 namespace MWGui
 {
+    class EffectEditorBase;
     class EnchantingDialog;
+    class SpellCreationDialog;
     class TextInputDialog;
     class WindowBase;
 
-    /// Making an enchantment in controller menus mode, as a full screen. The right side holds what is being made:
-    /// the item, the soul gem, how the enchantment casts, its effects, and what it costs. The left side is a list to
-    /// pick from for the highlighted line on the right, such as the player's soul gems or the effects they know.
-    /// Choosing an effect, or an effect already added, edits it on the left: its range, magnitude, duration and
-    /// area, while the costs on the right follow along. The enchanting window stays hidden and still makes the
-    /// enchantment. See ui-rework/design/crafting.md.
+    /// Making an enchantment or a spell in controller menus mode, as a full screen. The right side holds what is
+    /// being made: for an enchantment the item, the soul gem and how it casts, then the effects, and what it costs.
+    /// The left side is a list to pick from for the highlighted line on the right, such as the player's soul gems or
+    /// the effects they know. Choosing an effect, or an effect already added, edits it on the left: its range,
+    /// magnitude, duration and area, while the costs on the right follow along. The enchanting or spellmaking window
+    /// stays hidden and still makes the enchantment or the spell. See ui-rework/design/crafting.md.
     class EffectCraftPanel
     {
     public:
         explicit EffectCraftPanel(EnchantingDialog& window);
+        explicit EffectCraftPanel(SpellCreationDialog& window);
         ~EffectCraftPanel();
 
         void show();
@@ -99,7 +107,11 @@ namespace MWGui
             Area,
         };
 
-        EnchantingDialog& mWindow;
+        WindowBase& mWindow;
+        EffectEditorBase& mEditor;
+        // The window the panel stands in for. One of the two is set.
+        EnchantingDialog* mEnchant = nullptr;
+        SpellCreationDialog* mSpell = nullptr;
         MyGUI::Widget* mRoot = nullptr;
 
         Picker mPicker = Picker::Effects;
@@ -118,6 +130,9 @@ namespace MWGui
         std::unique_ptr<TextInputDialog> mRenameDialog;
 
         bool isSelfEnchanting() const;
+        MWWorld::Ptr merchant() const;
+        MyGUI::EditBox* nameEdit() const;
+        void nameAfterFirstEffect();
         bool isEditing() const;
         std::vector<Line> lines() const;
         std::vector<Setting> settings() const;
