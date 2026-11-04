@@ -658,6 +658,19 @@ namespace MWGui
                         return 1;
                     return 2;
                 });
+        // Notes are books that teach a skill, other books, then letters and notes. The game calls loose papers
+        // scrolls, even when they hold no spell.
+        if (mTab == Tab::Notes)
+            return grouped({ "#{Interface:InventoryGroupSkillBooks}", "#{Interface:InventoryGroupBooks}",
+                               "#{Interface:InventoryGroupLetters}" },
+                [](const MWWorld::Ptr& ptr) {
+                    const ESM::Book& book = *ptr.get<ESM::Book>()->mBase;
+                    if (book.mData.mIsScroll)
+                        return 2;
+                    if (store().get<ESM::Skill>().search(book.mData.mSkillId) != nullptr)
+                        return 0;
+                    return 1;
+                });
 
         for (int item : items)
             rows.push_back(Row{ {}, item });
