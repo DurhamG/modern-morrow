@@ -1,9 +1,11 @@
 #ifndef MWGUI_WAIT_DIALOG_H
 #define MWGUI_WAIT_DIALOG_H
 
+#include <components/esm/refid.hpp>
+
+#include "controllerscreen.hpp"
 #include "timeadvancer.hpp"
 #include "windowbase.hpp"
-#include <components/esm/refid.hpp>
 
 namespace MWGui
 {
@@ -12,24 +14,34 @@ namespace MWGui
     {
     public:
         WaitDialogProgressBar();
+        ~WaitDialogProgressBar() override;
 
         void onOpen() override;
+        void onClose() override;
 
         void setProgress(int cur, int total);
 
     protected:
         MyGUI::ProgressBar* mProgressBar;
         MyGUI::TextBox* mProgressText;
+
+        // In controller menus mode, the progress shows in a panel in the style of the controller screens instead.
+        MyGUI::Widget* mPanel = nullptr;
+        int mCurrent = 0;
+        int mTotal = 0;
+        void drawPanel();
     };
 
     class WaitDialog : public WindowBase
     {
     public:
         WaitDialog();
+        ~WaitDialog() override;
 
         void setPtr(const MWWorld::Ptr& ptr) override;
 
         void onOpen() override;
+        void onClose() override;
 
         bool exit() override;
 
@@ -82,6 +94,12 @@ namespace MWGui
 
         void startWaiting(int hoursToWait);
         void stopWaiting();
+
+        // In controller menus mode, a panel in the middle of the screen shows the choice instead of this window.
+        MyGUI::Widget* mPanel = nullptr;
+        HeldDirection mHeldDirection;
+        void drawPanel();
+        void changeHours(int delta);
     };
 
 }

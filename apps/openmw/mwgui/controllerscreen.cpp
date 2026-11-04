@@ -8,10 +8,12 @@
 #include <MyGUI_ILayer.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_LanguageManager.h>
+#include <MyGUI_LayerManager.h>
 #include <MyGUI_TextIterator.h>
 
 #include <components/misc/resourcehelpers.hpp>
 #include <components/resource/resourcesystem.hpp>
+#include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
@@ -112,6 +114,46 @@ namespace MWGui
             mainWidget->setAlpha(0.f);
             if (MyGUI::Widget* client = mainWidget->getClientWidget())
                 client->setVisible(false);
+        }
+
+        MyGUI::Widget* createPanelRoot(const std::string& layer)
+        {
+            if (!Settings::gui().mControllerMenus)
+                return nullptr;
+            MyGUI::ILayer* found = MyGUI::LayerManager::getInstance().getByName(layer, false);
+            if (found == nullptr)
+                return nullptr;
+            MyGUI::Widget* root = MyGUI::Gui::getInstance().createWidget<MyGUI::Widget>(
+                "", MyGUI::IntCoord(MyGUI::IntPoint(), found->getSize()), MyGUI::Align::Default, layer);
+            root->setNeedMouseFocus(false);
+            root->setVisible(false);
+            return root;
+        }
+
+        void clearPanel(MyGUI::Widget* root)
+        {
+            root->setSize(root->getLayer()->getSize());
+            while (root->getChildCount() > 0)
+                MyGUI::Gui::getInstance().destroyWidget(root->getChildAt(0));
+        }
+
+        void drawProgressPanel(MyGUI::Widget* root, const std::string& label, float fraction, bool atBottom)
+        {
+            clearPanel(root);
+            const MyGUI::IntSize size = root->getSize();
+            constexpr int h = 96;
+            MyGUI::TextBox* text = addText(root, 0, 0, size.width, 30, label, sFontNormal, sBrightColour);
+            const int w = std::clamp(text->getTextSize().width + 48, 420, size.width - 2 * sMargin);
+            const int x = (size.width - w) / 2;
+            const int y = atBottom ? size.height - h - sMargin : (size.height - h) / 2;
+            MyGUI::Gui::getInstance().destroyWidget(text);
+            addRect(root, x, y, w, h, MyGUI::Colour::parse("#0d0b08"));
+            addRect(root, x, y, w, 1, sAccentColour, 0.6f);
+            addText(root, x + 24, y + 14, w - 48, 30, label, sFontNormal, sBrightColour);
+            addRect(root, x + 24, y + 58, w - 48, 10, MyGUI::Colour::Black, 0.6f);
+            const int filled = static_cast<int>((w - 48) * std::clamp(fraction, 0.f, 1.f));
+            if (filled > 0)
+                addRect(root, x + 24, y + 58, filled, 10, sAccentColour);
         }
 
         std::string escaped(std::string_view text)

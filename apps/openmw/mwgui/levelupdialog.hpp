@@ -12,8 +12,10 @@ namespace MWGui
     {
     public:
         LevelupDialog();
+        ~LevelupDialog() override;
 
         void onOpen() override;
+        void onClose() override;
 
         std::string_view getWindowIdForLua() const override { return "LevelUpDialog"; }
 
@@ -54,6 +56,12 @@ namespace MWGui
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         std::vector<MyGUI::Button*> mAttributeButtons;
         size_t mControllerFocus = 0;
+
+        // In controller menus mode, a full screen in the style of the stats screen shows the level up instead of this
+        // window.
+        MyGUI::Widget* mPanel = nullptr;
+        ESM::RefId mClassImageId;
+        void drawPanel();
     };
 
 }

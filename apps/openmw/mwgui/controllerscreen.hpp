@@ -88,6 +88,17 @@ namespace MWGui
         /// Hides a window that a controller screen or panel shows instead, while the window keeps working.
         void hideWindow(MyGUI::Widget* mainWidget);
 
+        /// Creates a hidden widget covering a layer, for drawing a panel on. Returns nullptr when the layer is
+        /// missing, or when controller menus mode is off.
+        MyGUI::Widget* createPanelRoot(const std::string& layer);
+
+        /// Clears a panel's widget and sizes it to its layer, for drawing the panel again.
+        void clearPanel(MyGUI::Widget* root);
+
+        /// Draws a label and a progress bar on a small panel of their own, such as while resting. The panel is in the
+        /// middle of the root, or near its bottom.
+        void drawProgressPanel(MyGUI::Widget* root, const std::string& label, float fraction, bool atBottom = false);
+
         /// Escapes text, such as an item name, that can contain characters MyGUI reads as colour codes.
         std::string escaped(std::string_view text);
 

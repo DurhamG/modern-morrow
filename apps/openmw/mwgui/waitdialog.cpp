@@ -1,6 +1,9 @@
 #include "waitdialog.hpp"
 
+#include <MyGUI_Gui.h>
+#include <MyGUI_ILayer.h>
 #include <MyGUI_InputManager.h>
+#include <MyGUI_LayerManager.h>
 #include <MyGUI_ProgressBar.h>
 #include <MyGUI_ScrollBar.h>
 
@@ -29,17 +32,51 @@
 
 namespace MWGui
 {
+    namespace
+    {
+        using namespace ControllerUi;
+
+        const MyGUI::Colour sPanelBackColour = MyGUI::Colour::parse("#0d0b08");
+
+        // A time of day, such as "6 pm".
+        std::string hourText(int hour)
+        {
+            const bool pm = hour >= 12;
+            hour %= 12;
+            if (hour == 0)
+                hour = 12;
+            return std::to_string(hour) + " " + (pm ? "#{Calendar:pm}" : "#{Calendar:am}");
+        }
+    }
 
     WaitDialogProgressBar::WaitDialogProgressBar()
         : WindowBase("openmw_wait_dialog_progressbar.layout")
     {
         getWidget(mProgressBar, "ProgressBar");
         getWidget(mProgressText, "ProgressText");
+        mPanel = createPanelRoot("ControllerMenus");
+    }
+
+    WaitDialogProgressBar::~WaitDialogProgressBar()
+    {
+        if (mPanel != nullptr)
+            MyGUI::Gui::getInstance().destroyWidget(mPanel);
     }
 
     void WaitDialogProgressBar::onOpen()
     {
         center();
+        if (mPanel == nullptr)
+            return;
+        hideWindow(mMainWidget);
+        mPanel->setVisible(true);
+        drawPanel();
+    }
+
+    void WaitDialogProgressBar::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->setVisible(false);
     }
 
     void WaitDialogProgressBar::setProgress(int cur, int total)
@@ -47,6 +84,16 @@ namespace MWGui
         mProgressBar->setProgressRange(total);
         mProgressBar->setProgressPosition(cur);
         mProgressText->setCaption(std::format("{}/{}", cur, total));
+        mCurrent = cur;
+        mTotal = total;
+        if (mPanel != nullptr && mPanel->getVisible())
+            drawPanel();
+    }
+
+    void WaitDialogProgressBar::drawPanel()
+    {
+        drawProgressPanel(mPanel, std::to_string(mCurrent) + " / " + std::to_string(mTotal) + " #{Interface:RestHours}",
+            mTotal > 0 ? static_cast<float>(mCurrent) / mTotal : 0.f);
     }
 
     // ---------------------------------------------------------------------------------------------------------
@@ -83,6 +130,104 @@ namespace MWGui
 
         mControllerButtons.mB = "#{Interface:Cancel}";
         mDisableGamepadCursor = Settings::gui().mControllerMenus;
+        mPanel = createPanelRoot("ControllerMenus");
+    }
+
+    WaitDialog::~WaitDialog()
+    {
+        if (mPanel != nullptr)
+            MyGUI::Gui::getInstance().destroyWidget(mPanel);
+    }
+
+    void WaitDialog::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->setVisible(false);
+    }
+
+    void WaitDialog::changeHours(int delta)
+    {
+        const int range = static_cast<int>(mHourSlider->getScrollRange());
+        const int position = std::clamp(static_cast<int>(mHourSlider->getScrollPosition()) + delta, 0, range - 1);
+        mHourSlider->setScrollPosition(position);
+        onHourSliderChangedPosition(mHourSlider, position);
+        drawPanel();
+    }
+
+    void WaitDialog::drawPanel()
+    {
+        if (mPanel == nullptr || !mPanel->getVisible())
+            return;
+        clearPanel(mPanel);
+        const MyGUI::IntSize size = mPanel->getSize();
+        constexpr int w = 560;
+        constexpr int h = 330;
+        const int x = (size.width - w) / 2;
+        const int y = (size.height - h) / 2;
+        addRect(mPanel, 0, 0, size.width, size.height, MyGUI::Colour::Black, 0.4f);
+        addRect(mPanel, x, y, w, h, sPanelBackColour);
+        addRect(mPanel, x, y, w, 1, sAccentColour, 0.6f);
+        const int innerX = x + 28;
+        const int innerW = w - 56;
+
+        // What kind of rest this is, and the time now.
+        addText(mPanel, innerX, y + 16, innerW, 36, mSleeping ? "#{sRest}" : "#{sWait}", sFontTitle, sBrightColour);
+        addText(mPanel, innerX, y + 16, innerW, 36, mDateTimeText->getCaption().asUTF8(), sFontSmall, sDimColour,
+            MyGUI::Align::Right | MyGUI::Align::VCenter);
+        int ty = y + 58;
+        if (!mSleeping)
+            for (const std::string& line :
+                wrapText(mPanel, localised(mRestText->getCaption().asUTF8()), innerW, sFontNormal, 2))
+            {
+                addText(mPanel, innerX, ty, innerW, 26, escaped(line), sFontNormal, sTextColour);
+                ty += 26;
+            }
+
+        // The hours, with arrows for the d-pad, and when the rest ends.
+        ty = y + 128;
+        const int range = static_cast<int>(mHourSlider->getScrollRange());
+        addGlyph(mPanel, innerX, ty + 10, 26, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+        addGlyph(mPanel, innerX + innerW - 26, ty + 10, 26, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+        addText(mPanel, innerX, ty, innerW, 46,
+            std::to_string(mManualHours) + " "
+                + (mManualHours == 1 ? "#{Interface:RestHour}" : "#{Interface:RestHours}"),
+            sFontTitle, sActiveColour, MyGUI::Align::Center);
+        ty += 54;
+        addRect(mPanel, innerX, ty, innerW, 8, MyGUI::Colour::Black, 0.6f);
+        if (range > 1)
+            addRect(mPanel, innerX, ty, innerW * mManualHours / range, 8, sAccentColour);
+        ty += 18;
+        const MWWorld::DateTimeManager& timeManager = *MWBase::Environment::get().getWorld()->getTimeManager();
+        const int endHour = static_cast<int>(timeManager.getTimeStamp().getHour()) + mManualHours;
+        std::string ends = "#{Interface:RestUntil} " + hourText(endHour % 24);
+        if (endHour >= 24)
+            ends += ", " + std::string(endHour >= 48 ? "#{Interface:RestInTwoDays}" : "#{Interface:RestTomorrow}");
+        addText(mPanel, innerX, ty, innerW, 26, ends, sFontNormal, sTextColour, MyGUI::Align::Center);
+
+        // Resting until healed, when the player is hurt and can sleep here.
+        ty += 36;
+        if (mUntilHealedButton->getVisible())
+        {
+            const int hours = MWBase::Environment::get().getMechanicsManager()->getHoursToRest();
+            addText(mPanel, innerX, ty, innerW, 26,
+                "#{Interface:RestHealedIn} " + std::to_string(hours) + " "
+                    + (hours == 1 ? "#{Interface:RestHour}" : "#{Interface:RestHours}"),
+                sFontSmall, sDimColour, MyGUI::Align::Center);
+        }
+
+        // The button hints along the bottom.
+        int hx = innerX;
+        const int hintY = y + h - 44;
+        const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
+            addGlyph(mPanel, hx, hintY + 4, 22, button);
+            MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 220, 30, label, sFontNormal, sBrightColour);
+            hx += 30 + text->getTextSize().width + 22;
+        };
+        hint(SDL_CONTROLLER_BUTTON_A, mSleeping ? "#{sRest}" : "#{sWait}");
+        if (mUntilHealedButton->getVisible())
+            hint(SDL_CONTROLLER_BUTTON_X, "#{sUntilHealed}");
+        hint(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, "#{Interface:RestOneHour}");
+        hint(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, "#{Interface:RestAllDay}");
     }
 
     void WaitDialog::setPtr(const MWWorld::Ptr& ptr)
@@ -172,6 +317,14 @@ namespace MWGui
         std::string dateTimeText = std::format("{} {} (#{{Calendar:day}} {}) {} {}", currentDate.mDay, month,
             timeManager.getTimeStamp().getDay(), hour, formattedHour);
         mDateTimeText->setCaptionWithReplacing(dateTimeText);
+
+        if (mPanel != nullptr)
+        {
+            hideWindow(mMainWidget);
+            mHeldDirection.reset();
+            mPanel->setVisible(true);
+            drawPanel();
+        }
     }
 
     void WaitDialog::onUntilHealedButtonClicked(MyGUI::Widget* /*sender*/)
@@ -195,6 +348,8 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->fadeScreenOut(0.2f);
         mFadeTimeRemaining = 0.4f;
         setVisible(false);
+        if (mPanel != nullptr)
+            mPanel->setVisible(false);
 
         mHours = hoursToWait;
 
@@ -310,11 +465,18 @@ namespace MWGui
             throw std::runtime_error("main widget must be a box");
         box->notifyChildrenSizeChanged();
         center();
+        drawPanel();
     }
 
     void WaitDialog::onFrame(float dt)
     {
         mTimeAdvancer.onFrame(dt);
+
+        // The d-pad and the left stick change the hours, repeating while held.
+        int dx = 0;
+        int dy = 0;
+        if (mPanel != nullptr && mPanel->getVisible() && mHeldDirection.update(dt, dx, dy) && dx != 0)
+            changeHours(dx);
 
         if (mFadeTimeRemaining <= 0)
             return;
@@ -358,6 +520,11 @@ namespace MWGui
             onUntilHealedButtonClicked(mUntilHealedButton);
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
+        else if (mPanel != nullptr
+            && (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT || arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
+        {
+            // The panel reads the d-pad every frame in onFrame, so it can repeat while held.
+        }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
             MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::ArrowDown, 0, false);
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
@@ -366,11 +533,13 @@ namespace MWGui
         {
             mHourSlider->setScrollPosition(0);
             onHourSliderChangedPosition(mHourSlider, mHourSlider->getScrollPosition());
+            drawPanel();
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
         {
             mHourSlider->setScrollPosition(mHourSlider->getScrollRange() - 1);
             onHourSliderChangedPosition(mHourSlider, mHourSlider->getScrollPosition());
+            drawPanel();
         }
 
         return true;

@@ -1,0 +1,33 @@
+# Resting and the level up that follows it, in controller menus mode. The player is hurt and has enough skill
+# increases for a level, so resting offers "until healed", and waking up opens the level up.
+launch --start "Seyda Neen" --set "GUI.controller menus=true"
+console "command=coe -3 -8"
+wait frames=30
+console "command=player->modcurrenthealth -30"
+lua "code=local types = require('openmw.types') local level = types.Actor.stats.level(require('openmw.self')) level.progress = 10 level.skillIncreasesForAttribute.strength = 6 level.skillIncreasesForAttribute.endurance = 9 level.skillIncreasesForAttribute.agility = 2"
+key key=T
+wait frames=10
+shot rest
+pad button=dpright
+pad button=dpright
+pad button=dpright
+wait frames=5
+shot rest-more-hours
+pad button=rightshoulder
+pad button=a
+wait frames=30
+shot resting
+wait frames=300
+shot level-up
+pad button=a
+pad button=dpright
+pad button=dpright
+pad button=dpright
+pad button=a
+pad button=dpdown
+pad button=a
+wait frames=5
+shot level-up-chosen
+pad button=x
+wait frames=20
+shot level-up-done
