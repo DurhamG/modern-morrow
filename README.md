@@ -1,11 +1,13 @@
-OpenMW, reworked for controllers
-================================
+Modern Morrow
+=============
 
-This is a fork of [OpenMW](https://gitlab.com/OpenMW/openmw). It replaces the game's whole user interface with a modern one built for a controller, a TV and handhelds such as the Steam Deck. The game itself is unchanged: the same rules, quests and saves, with new screens on top.
+*A controller-first interface for OpenMW.*
+
+Modern Morrow is a fork of [OpenMW](https://gitlab.com/OpenMW/openmw). It replaces the game's whole user interface with a modern one built for a controller, a TV and handhelds such as the Steam Deck. The game itself is unchanged: the same rules, quests and saves, with new screens on top.
 
 Morrowind's menus were made for a mouse on a small monitor. They are grids of icons with the information hidden in tooltips, in small windows that overlap. This fork turns each of them into a full screen or panel in one consistent style: lists that say what each thing is, a details panel that compares it with what you have, large text that reads from the couch, and button hints for the controller in your hands.
 
-**This fork was vibe coded.** A person directed the work, played the game, and reviewed every screen in screenshots and in play. Claude wrote nearly all of the code, the tests and the design notes. It is an experiment, and it has not been reviewed by the OpenMW developers. Expect rough edges.
+**Modern Morrow was vibe coded.** A person directed the work, played the game, and reviewed every screen in screenshots and in play. Claude wrote nearly all of the code, the tests and the design notes. It is an experiment, and it has not been reviewed by the OpenMW developers. Expect rough edges.
 
 Screenshots
 -----------
