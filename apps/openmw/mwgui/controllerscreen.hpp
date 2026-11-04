@@ -3,6 +3,7 @@
 
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <MyGUI_Colour.h>
@@ -130,6 +131,13 @@ namespace MWGui
         /// The text is measured in a hidden text box on the parent.
         std::vector<std::string> wrapText(
             MyGUI::Widget* parent, const std::string& text, int width, int fontHeight, std::size_t maxLines = 2);
+
+        /// A button hint: an SDL controller button, and what it does.
+        using Hint = std::pair<SDL_GameControllerButton, std::string>;
+
+        /// Draws button hints in rows along the bottom of an area, starting another row above when one is full.
+        /// Returns the top of the highest row, or the bottom when there are no hints.
+        int drawHints(MyGUI::Widget* parent, int x, int width, int bottom, const std::vector<Hint>& hints);
 
         /// Draws the screen's own tabs, switched with the shoulder buttons, and a status line at their right.
         void drawTabRow(MyGUI::Widget* parent, int width, const std::vector<std::string>& captions, int selected,

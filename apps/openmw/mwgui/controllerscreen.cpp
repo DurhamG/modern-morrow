@@ -258,6 +258,52 @@ namespace MWGui
             return lines;
         }
 
+        int drawHints(MyGUI::Widget* parent, int x, int width, int bottom, const std::vector<Hint>& hints)
+        {
+            constexpr int glyphSize = 26;
+            constexpr int labelX = glyphSize + 8;
+            constexpr int gap = 24;
+            constexpr int rowHeight = 40;
+
+            // Each hint's label is measured first, to know where the rows break.
+            struct Placed
+            {
+                SDL_GameControllerButton mButton;
+                MyGUI::TextBox* mLabel;
+                int mWidth;
+            };
+            std::vector<std::vector<Placed>> rows(1);
+            int rowWidth = 0;
+            for (const auto& [button, caption] : hints)
+            {
+                MyGUI::TextBox* label = addText(parent, 0, 0, width, 34, caption, sFontNormal, sBrightColour);
+                const int hintWidth = labelX + label->getTextSize().width;
+                if (!rows.back().empty() && rowWidth + gap + hintWidth > width)
+                {
+                    rows.emplace_back();
+                    rowWidth = 0;
+                }
+                rowWidth += (rows.back().empty() ? 0 : gap) + hintWidth;
+                rows.back().push_back(Placed{ button, label, hintWidth });
+            }
+            if (hints.empty())
+                return bottom;
+
+            const int top = bottom - rowHeight * static_cast<int>(rows.size());
+            for (std::size_t row = 0; row < rows.size(); ++row)
+            {
+                const int y = top + static_cast<int>(row) * rowHeight;
+                int hx = x;
+                for (const Placed& hint : rows[row])
+                {
+                    addGlyph(parent, hx, y, glyphSize, hint.mButton);
+                    hint.mLabel->setCoord(hx + labelX, y - 4, hint.mWidth - labelX + 8, 34);
+                    hx += hint.mWidth + gap;
+                }
+            }
+            return top;
+        }
+
         void drawTabRow(MyGUI::Widget* parent, int width, const std::vector<std::string>& captions, int selected,
             const std::string& status)
         {

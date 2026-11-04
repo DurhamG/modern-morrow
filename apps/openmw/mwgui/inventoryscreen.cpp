@@ -38,6 +38,7 @@
 #include "formatting.hpp"
 #include "inventoryitemmodel.hpp"
 #include "itemdetails.hpp"
+#include "quickkeyassigner.hpp"
 #include "worlditemmodel.hpp"
 
 namespace MWGui
@@ -311,6 +312,7 @@ namespace MWGui
         mAreaSort = {};
         mAreaList = {};
         mHighlighted = ESM::RefId();
+        mQuickKeys.cancel();
     }
 
     void InventoryScreen::onOpen()
@@ -318,6 +320,7 @@ namespace MWGui
         mModel = std::make_unique<InventoryItemModel>(player());
         mPendingRing = -1;
         mHeldDirection.reset();
+        mQuickKeys.cancel();
         updateItems();
         redraw();
     }
@@ -325,6 +328,7 @@ namespace MWGui
     void InventoryScreen::onClose()
     {
         setHighlighted(ESM::RefId());
+        mQuickKeys.cancel();
     }
 
     void InventoryScreen::onInventoryUpdate(const MWWorld::Ptr& ptr)
@@ -384,6 +388,15 @@ namespace MWGui
             return;
         }
 
+        // While the player chooses a quick key, the d-pad picks the slot instead of moving the selection.
+        if (mQuickKeys.hasDpad())
+        {
+            mHeldDirection.reset();
+            if (mQuickKeys.update(duration))
+                redraw();
+            return;
+        }
+
         // The d-pad and the left stick move the selection, repeating while held.
         int dx = 0;
         int dy = 0;
@@ -410,6 +423,12 @@ namespace MWGui
     bool InventoryScreen::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (mQuickKeys.hasDpad())
+        {
+            if (mQuickKeys.onButton(arg.button))
+                redraw();
+            return true;
+        }
         switch (arg.button)
         {
             case SDL_CONTROLLER_BUTTON_A:
@@ -420,6 +439,9 @@ namespace MWGui
                 break;
             case SDL_CONTROLLER_BUTTON_X:
                 dropFocused();
+                break;
+            case SDL_CONTROLLER_BUTTON_LEFTSTICK:
+                startQuickKey();
                 break;
             case SDL_CONTROLLER_BUTTON_Y:
                 cycleSort();
@@ -742,7 +764,7 @@ namespace MWGui
         ListState& state = mLists[static_cast<int>(mTab)];
         drawList(sMargin, top, listW, bottom - top, rows, state, true);
         const int item = focusedItem();
-        if (item >= 0 && mTab == Tab::Notes)
+        if (item >= 0 && mTab == Tab::Notes && !mQuickKeys.isChoosing())
             drawBook(size.width - sMargin - panelW, top, panelW, bottom - top, item);
         else if (item >= 0)
             drawDetails(size.width - sMargin - panelW, top, panelW, bottom - top, item, actionFor(item));
@@ -1050,14 +1072,20 @@ namespace MWGui
                 markers.emplace_back("#{Interface:InventoryStolen}", sWorseColour);
             if (isSkillBookUnread(item.mBase))
                 markers.emplace_back("#{Interface:InventoryUnread}", sNewColour);
+            const int quickKey = dpadSlotOf(item.mBase, {});
 
-            if (markers.empty())
+            if (markers.empty() && quickKey < 0)
                 addText(mContent, nameX, rowY, nameW, sRowHeight - 2, name, sFontNormal, nameColour);
             else
             {
                 // Markers sit under the name, so a long name and its markers never collide.
                 addText(mContent, nameX, rowY + 1, nameW, 24, name, sFontNormal, nameColour);
                 int mx = nameX;
+                if (quickKey > 0)
+                {
+                    drawQuickKeyMarker(mContent, mx, rowY + 21, 4, quickKey);
+                    mx += 20 + 10;
+                }
                 for (const auto& [label, colour] : markers)
                 {
                     MyGUI::TextBox* marker = addText(mContent, mx, rowY + 22, 120, 16, label, sFontSmall, colour);
@@ -1102,23 +1130,18 @@ namespace MWGui
         ItemDetails::drawHeader(mContent, x, y, w, stack);
     }
 
-    int InventoryScreen::drawButtonHints(int x, int y, int h, const std::string& action)
+    int InventoryScreen::drawButtonHints(int x, int y, int w, int h, int item, const std::string& action, bool scroll)
     {
-        int hx = x + 16;
+        std::vector<Hint> hints;
         if (!action.empty())
-        {
-            addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_A);
-            MyGUI::TextBox* label = addText(mContent, hx + 34, y + h - 44, 260, 34, action, sFontNormal, sBrightColour);
-            hx += 34 + label->getTextSize().width + 24;
-        }
+            hints.emplace_back(SDL_CONTROLLER_BUTTON_A, action);
         if (mTab != Tab::Equipment || mFocus == Focus::Items)
-        {
-            addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_X);
-            MyGUI::TextBox* label
-                = addText(mContent, hx + 34, y + h - 44, 120, 34, "#{Interface:Drop}", sFontNormal, sBrightColour);
-            hx += 34 + label->getTextSize().width + 24;
-        }
-        return hx;
+            hints.emplace_back(SDL_CONTROLLER_BUTTON_X, "#{Interface:Drop}");
+        if (canQuickKey(item))
+            hints.emplace_back(SDL_CONTROLLER_BUTTON_LEFTSTICK, "#{Interface:QuickKey}");
+        if (scroll)
+            hints.emplace_back(SDL_CONTROLLER_BUTTON_RIGHTSTICK, "#{Interface:InventoryScroll}");
+        return drawHints(mContent, x + 16, w - 32, y + h, hints);
     }
 
     void InventoryScreen::drawDetails(int x, int y, int w, int h, int item, const std::string& action)
@@ -1126,12 +1149,20 @@ namespace MWGui
         const MWWorld::Ptr& ptr = mItems[item].mBase;
         drawDetailsHeader(x, y, w, h, item);
 
+        // While the player chooses a quick key, the slots show in place of the stats.
+        if (mQuickKeys.isChoosing())
+        {
+            const int hintsTop = drawHints(
+                mContent, x + 16, w - 32, y + h, { { SDL_CONTROLLER_BUTTON_DPAD_UP, "#{Interface:QuickKeyChoose}" } });
+            mQuickKeys.draw(mContent, x + 16, y + 104, w - 32, hintsTop - 12 - (y + 104));
+            return;
+        }
+
+        const int hintsTop = drawButtonHints(x, y, w, h, item, action);
         std::vector<Compared> compared;
         if (const int compare = compareItem(item); compare >= 0)
             compared.push_back(Compared{ "#{Interface:InventoryEquipped}", mItems[compare].mBase });
-        drawStats(mContent, x, y + 104, w, y + h - 56, ptr, compared);
-
-        drawButtonHints(x, y, h, action);
+        drawStats(mContent, x, y + 104, w, hintsTop - 16, ptr, compared);
     }
 
     void InventoryScreen::drawBook(int x, int y, int w, int h, int item)
@@ -1169,8 +1200,9 @@ namespace MWGui
         }
 
         // A scroll bar along the page's right edge, when the text is longer than the page.
-        int hx = drawButtonHints(x, y, h, actionFor(item));
-        if (mBookPaper != nullptr && mBookScrollMax > 0)
+        const bool scrolls = mBookPaper != nullptr && mBookScrollMax > 0;
+        drawButtonHints(x, y, w, h, item, actionFor(item), scrolls);
+        if (scrolls)
         {
             mBookTrack = MyGUI::IntCoord(pageX + pageW - padding / 2 - barWidth / 2, pageY + padding, barWidth,
                 pageH - 2 * padding);
@@ -1179,10 +1211,6 @@ namespace MWGui
             const float visible = static_cast<float>(textArea->getHeight()) / mBookPaper->getHeight();
             mBookScrollThumb = addRect(mContent, mBookTrack.left, mBookTrack.top, mBookTrack.width,
                 std::max(16, static_cast<int>(mBookTrack.height * visible)), MyGUI::Colour::Black, 0.45f);
-
-            addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_RIGHTSTICK);
-            addText(mContent, hx + 34, y + h - 44, 160, 34, "#{Interface:InventoryScroll}", sFontNormal,
-                sBrightColour);
         }
         placeBookText();
     }
@@ -1378,6 +1406,26 @@ namespace MWGui
             return;
         int& index = sortIndex();
         index = (index + 1) % static_cast<int>(sortOrders(static_cast<int>(mTab), mArea).size());
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        redraw();
+    }
+
+    bool InventoryScreen::canQuickKey(int item) const
+    {
+        // Anything the player can use from the inventory can go on a quick key, as in the quick keys menu, except
+        // books and notes without an enchantment. Reading one from a quick key is of little use.
+        if (item < 0 || (mTab == Tab::Equipment && mFocus != Focus::Items) || actionFor(item).empty())
+            return false;
+        const MWWorld::Ptr& ptr = mItems[item].mBase;
+        return ptr.getType() != ESM::Book::sRecordId || !ptr.get<ESM::Book>()->mBase->mEnchant.empty();
+    }
+
+    void InventoryScreen::startQuickKey()
+    {
+        const int item = focusedItem();
+        if (!canQuickKey(item))
+            return;
+        mQuickKeys.start(QuickKeyAssigner::Target{ ESM::QuickKeys::Type::Item, mItems[item].mBase, {} });
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         redraw();
     }

@@ -10,8 +10,9 @@
 
 #include <components/esm/refid.hpp>
 
-#include "itemmodel.hpp"
 #include "controllerscreen.hpp"
+#include "itemmodel.hpp"
+#include "quickkeyassigner.hpp"
 
 namespace MyGUI
 {
@@ -98,6 +99,7 @@ namespace MWGui
         ESM::RefId mHighlighted;
 
         HeldDirection mHeldDirection;
+        QuickKeyAssigner mQuickKeys;
         int mPendingDropItem = -1;
 
         // The book shown in the Notes tab, and how far its text is scrolled.
@@ -122,7 +124,7 @@ namespace MWGui
         void drawArea(int width);
         void drawList(int x, int y, int w, int h, const std::vector<Row>& rows, ListState& state, bool focused);
         void drawDetailsHeader(int x, int y, int w, int h, int item);
-        int drawButtonHints(int x, int y, int h, const std::string& action);
+        int drawButtonHints(int x, int y, int w, int h, int item, const std::string& action, bool scroll = false);
         void drawDetails(int x, int y, int w, int h, int item, const std::string& action);
         void drawBook(int x, int y, int w, int h, int item);
         void placeBookText();
@@ -135,6 +137,8 @@ namespace MWGui
         void activate();
         void back();
         void dropFocused();
+        bool canQuickKey(int item) const;
+        void startQuickKey();
         void cycleSort();
 
         int& sortIndex();
