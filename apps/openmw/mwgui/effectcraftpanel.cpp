@@ -305,7 +305,7 @@ namespace MWGui
                 }
                 for (auto& [school, entries] : groups)
                 {
-                    mEntries.push_back(Entry{ escaped(school) });
+                    mEntries.push_back(Entry{ .mHeader = escaped(school) });
                     std::stable_sort(entries.begin(), entries.end(),
                         [](const Entry& a, const Entry& b) { return a.mName < b.mName; });
                     for (Entry& entry : entries)

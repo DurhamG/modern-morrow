@@ -391,13 +391,13 @@ namespace MWGui
             ranked.begin(), ranked.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
         if (!ranked.empty())
         {
-            rows.push_back(Row{ "#{Interface:DialogueNewTopics}" });
+            rows.push_back(Row{ .mHeader = "#{Interface:DialogueNewTopics}" });
             for (auto& [rank, row] : ranked)
                 rows.push_back(std::move(row));
         }
         if (!asked.empty())
         {
-            rows.push_back(Row{ "#{Interface:DialogueAskedTopics}" });
+            rows.push_back(Row{ .mHeader = "#{Interface:DialogueAskedTopics}" });
             for (Row& row : asked)
                 rows.push_back(std::move(row));
         }

@@ -153,7 +153,7 @@ namespace MWGui
                 // class say so, because picking one swaps the two.
                 for (int specialization = 0; specialization < 3; ++specialization)
                 {
-                    mChoices.push_back(Choice{ escaped(specializationName(specialization)) });
+                    mChoices.push_back(Choice{ .mHeader = escaped(specializationName(specialization)) });
                     for (const ESM::Skill& skill : store().get<ESM::Skill>())
                     {
                         if (skill.mData.mSpecialization != specialization)

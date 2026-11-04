@@ -200,7 +200,7 @@ namespace MWGui
                 return;
             std::stable_sort(group.begin(), group.end(), byName);
             if (grouped)
-                mRows.push_back(Row{ header });
+                mRows.push_back(Row{ .mHeader = header });
             for (Row& row : group)
                 mRows.push_back(std::move(row));
         };
