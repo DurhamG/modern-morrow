@@ -12,30 +12,42 @@ Screenshots
 
 ### The HUD gets out of the way
 
-| Exploring | When it matters |
-| --- | --- |
-| ![The bottom-left corner while exploring, with no HUD on screen](ui-rework/screenshots/hud-quiet.jpg) | ![The bottom-left corner with low health, the weapon and an active spell effect](ui-rework/screenshots/hud-busy.jpg) |
+**Exploring**
+
+![The bottom-left corner while exploring, with no HUD on screen](ui-rework/screenshots/hud-quiet.jpg)
+
+**When it matters**
+
+![The bottom-left corner with low health, the weapon and an active spell effect](ui-rework/screenshots/hud-busy.jpg)
 
 These show the bottom-left corner of the screen, where the HUD sits. The HUD hides itself until there is something worth knowing:
 
-- The minimap is gone. The map is one button away.
+- The minimap is gone.
 - Health, magicka and fatigue bars fade away when they're full, unless you're in combat.
 - Effect icons leave out permanent effects, such as those of your race and birthsign.
 - The weapon and spell boxes only show when you ready or change them, or in combat.
 
 ### Inventory
 
-| Equipment, by body area | One area, compared with what you wear |
-| --- | --- |
-| ![The equipment overview, with every body area and what is worn there](ui-rework/screenshots/inventory-equipment.jpg) | ![The chest area, with cuirasses, shirts and robes in their own groups](ui-rework/screenshots/inventory-chest.jpg) |
+**Equipment, by body area**
+
+![The equipment overview, with every body area and what is worn there](ui-rework/screenshots/inventory-equipment.jpg)
+
+**One area, compared with what you wear**
+
+![The chest area, with cuirasses, shirts and robes in their own groups](ui-rework/screenshots/inventory-chest.jpg)
 
 The inventory opens on what you're wearing, one tile per body area. Choosing an area lists everything that fits it, grouped by slot: the chest area has cuirasses, shirts and robes, each under its own header. The stats that matter are columns. Numbers are green where they beat what you have equipped and red where they don't, and the details panel compares the two side by side. Other tabs list recent pickups, consumables grouped by effect, books, tools, and everything else, grouped by kind. The shoulder buttons switch tabs, and the triggers switch between the map, inventory, magic, stats and journal.
 
 ### Magic
 
-| What's affecting you | Every spell, by school |
-| --- | --- |
-| ![The magic screen's Active tab, with the effects on the character and the spell that is ready](ui-rework/screenshots/magic.jpg) | ![The Spells tab, with spells grouped by school and their effects written out](ui-rework/screenshots/magic-spells.jpg) |
+**What's affecting you**
+
+![The magic screen's Active tab, with the effects on the character and the spell that is ready](ui-rework/screenshots/magic.jpg)
+
+**Every spell, by school**
+
+![The Spells tab, with spells grouped by school and their effects written out](ui-rework/screenshots/magic-spells.jpg)
 
 The Active tab shows what's affecting you, how long each effect has left and where it came from, next to the spell that's ready to cast and the ones you used recently. Switching back to a favourite spell takes one press. The other tabs list every spell, power, magic item and scroll, with their effects written out in full. Spells are grouped by school, such as Alteration or Destruction, and Y jumps to the next school.
 
