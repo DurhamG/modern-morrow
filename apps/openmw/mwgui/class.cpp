@@ -26,6 +26,7 @@
 
 #include "choicescreen.hpp"
 #include "controllerscreen.hpp"
+#include "createclasspanel.hpp"
 #include "tooltips.hpp"
 
 namespace
@@ -766,9 +767,35 @@ namespace MWGui
 
         setSpecialization(0);
         update();
+
+        if (Settings::gui().mControllerMenus)
+            mPanel = std::make_unique<CreateClassPanel>(*this);
     }
 
     CreateClassDialog::~CreateClassDialog() = default;
+
+    void CreateClassDialog::onOpen()
+    {
+        WindowModal::onOpen();
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mPanel->show();
+        }
+    }
+
+    void CreateClassDialog::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->hide();
+        WindowModal::onClose();
+    }
+
+    void CreateClassDialog::onFrame(float duration)
+    {
+        if (mPanel != nullptr)
+            mPanel->onFrame(duration);
+    }
 
     void CreateClassDialog::update()
     {
@@ -851,6 +878,9 @@ namespace MWGui
 
     bool CreateClassDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+            return mPanel->onControllerButtonEvent(arg);
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             if (mControllerFocus == 0)

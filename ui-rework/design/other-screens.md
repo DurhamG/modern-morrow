@@ -29,6 +29,7 @@ Every one of them works the same way. In controller menus mode, the old window s
 | Videos | Unchanged, except that a controller can skip them. | A, B or Start skips |
 | Name and other text | The text so far, and an on-screen keyboard. | D-pad moves, A types, B deletes, X space, Y shift, Start done |
 | Race | The races on the left, a large head in the middle, and the description, skill bonuses and specials on the right. | Up and down race, Y sex, R1 face, L1 hair, right stick turns, X done, B back |
+| Custom class | The class on the left, one line each: name, description, specialization, the two favorite attributes, and the five major and five minor skills. The right side lists the choices for the highlighted line, with the current one marked, skills grouped by specialization, and describes the highlighted choice. Picking a skill or attribute already on the class swaps the two. | Up and down, right or A to choose, A types the name and description, X done |
 | Class and birthsign | A list, a picture, and the details: specialization, attributes and skills, or the sign's spells. The class the questions work out shows as a list of one. | Up and down, X done, B back |
 | Review | The four choices, health, magicka and fatigue on the left, the attributes and specials in the middle, and every skill on the right. | Up and down, A change, X done, B back |
 | Options | A row for each setting on the tab, with inner tabs as headings. | Up and down, left and right change, A presses, L1 and R1 tabs, B close |
@@ -36,7 +37,6 @@ Every one of them works the same way. In controller menus mode, the old window s
 ## Not done yet
 
 - **Crafting and quick keys** were left out at first, on purpose. They have their own designs now, in [crafting.md](crafting.md) and [quick-keys.md](quick-keys.md).
-- **Creating a custom class** still uses the old form, with its specialization, attribute and skill pickers.
 - **The options' key bindings and scripts' pages** still show the old window, because they are built in code rather than in the layout.
 - **The persuasion dialog** in conversations still uses the old window.
 - **The loading panel and video skipping** couldn't be checked with the harness. The harness can't answer while loading runs or a video plays.

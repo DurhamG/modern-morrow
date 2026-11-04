@@ -314,11 +314,17 @@ namespace MWGui
         MyGUI::EditBox* mTextEdit;
     };
 
+    class CreateClassPanel;
+
     class CreateClassDialog : public WindowModal
     {
     public:
         CreateClassDialog();
         virtual ~CreateClassDialog();
+
+        void onOpen() override;
+        void onClose() override;
+        void onFrame(float duration) override;
 
         bool exit() override { return false; }
 
@@ -384,6 +390,10 @@ namespace MWGui
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         size_t mControllerFocus = 2;
+
+        // In controller menus mode, a full screen panel shows instead of this window, which stays hidden.
+        friend class CreateClassPanel;
+        std::unique_ptr<CreateClassPanel> mPanel;
     };
 }
 #endif
