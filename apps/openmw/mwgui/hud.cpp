@@ -1,6 +1,7 @@
 #include "hud.hpp"
 
 #include <MyGUI_Button.h>
+#include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_InputManager.h>
 #include <MyGUI_ProgressBar.h>
@@ -31,6 +32,7 @@
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/npcstats.hpp"
 
+#include "controllerscreen.hpp"
 #include "draganddrop.hpp"
 #include "inventorywindow.hpp"
 #include "itemwidget.hpp"
@@ -52,6 +54,9 @@ namespace MWGui
 
         // How long the cell name stays on screen after entering a cell.
         constexpr float sCellNameTime = 5.f;
+
+        // How long a quick key's name stays on screen after the player uses it.
+        constexpr float sQuickKeyTime = 2.f;
 
         // How often to check whether the player is in combat, in seconds.
         constexpr float sCombatCheckInterval = 0.5f;
@@ -343,9 +348,48 @@ namespace MWGui
         }
     }
 
+    void HUD::showQuickKey(const MWWorld::Ptr& item, const std::string& icon, const std::string& name)
+    {
+        using namespace ControllerUi;
+        if (mQuickKeyBox != nullptr)
+            MyGUI::Gui::getInstance().destroyWidget(mQuickKeyBox);
+
+        // The box sits just above the weapon and spell boxes, and fits the name.
+        constexpr int height = 40;
+        constexpr int iconSize = height - 8;
+        mQuickKeyBox = mMainWidget->createWidget<MyGUI::Widget>({},
+            MyGUI::IntCoord(mWeapBox->getLeft(), mWeapBox->getTop() - height - 8, 400, height),
+            MyGUI::Align::Left | MyGUI::Align::Bottom);
+        mQuickKeyBox->setNeedMouseFocus(false);
+        MyGUI::ImageBox* back = addRect(mQuickKeyBox, 0, 0, 400, height, sPanelColour, 0.8f);
+        if (!item.isEmpty())
+            addIcon(mQuickKeyBox, 4, 4, iconSize, item, false);
+        else
+            addImage(mQuickKeyBox, 4, 4, iconSize, icon);
+        MyGUI::TextBox* text
+            = addText(mQuickKeyBox, iconSize + 14, 0, 360, height, escaped(name), sFontNormal, sBrightColour);
+        const int width = iconSize + 14 + text->getTextSize().width + 12;
+        mQuickKeyBox->setSize(width, height);
+        back->setSize(width, height);
+        mQuickKeyTimer = sQuickKeyTime;
+    }
+
     void HUD::onFrame(float dt)
     {
         LocalMapBase::onFrame(dt);
+
+        if (mQuickKeyBox != nullptr)
+        {
+            // The box shows at once, and fades out at the end of its time.
+            mQuickKeyTimer -= dt;
+            if (mQuickKeyTimer <= 0)
+            {
+                MyGUI::Gui::getInstance().destroyWidget(mQuickKeyBox);
+                mQuickKeyBox = nullptr;
+            }
+            else
+                mQuickKeyBox->setAlpha(std::min(1.f, mQuickKeyTimer / sFadeTime));
+        }
 
         mCellNameTimer -= dt;
         if (mCellNameTimer < 0)
@@ -653,6 +697,11 @@ namespace MWGui
 
     void HUD::clear()
     {
+        if (mQuickKeyBox != nullptr)
+        {
+            MyGUI::Gui::getInstance().destroyWidget(mQuickKeyBox);
+            mQuickKeyBox = nullptr;
+        }
         mEnemyActor = {};
         mEnemyHealthTimer = -1;
 

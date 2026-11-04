@@ -55,6 +55,10 @@ namespace MWGui
 
         void setCellName(const std::string& cellName);
 
+        /// Shows a quick key's icon and name for a moment, after the player uses it. An item shows its own icon.
+        /// Otherwise, the icon is a texture, such as a spell effect's.
+        void showQuickKey(const MWWorld::Ptr& item, const std::string& icon, const std::string& name);
+
         bool getWorldMouseOver() { return mWorldMouseOver; }
 
         MyGUI::Widget* getEffectBox() { return mEffectBox; }
@@ -114,6 +118,8 @@ namespace MWGui
         bool mInCombat = false;
 
         float mCellNameTimer = 0.f;
+        MyGUI::Widget* mQuickKeyBox = nullptr;
+        float mQuickKeyTimer = 0.f;
         float mEnemyHealthTimer = -1;
         float mDrowningFlashTheta = 0.f;
 

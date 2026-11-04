@@ -28,6 +28,7 @@
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/spellutil.hpp"
 
+#include "hud.hpp"
 #include "itemselection.hpp"
 #include "itemwidget.hpp"
 #include "sortfilteritemmodel.hpp"
@@ -460,6 +461,14 @@ namespace MWGui
         {
             store.unequipSlot(MWWorld::InventoryStore::Slot_CarriedRight);
             MWBase::Environment::get().getWorld()->getPlayer().setDrawState(MWMechanics::DrawState::Weapon);
+        }
+
+        // In controller menus mode, the HUD shows which quick key was used. With the d-pad's holds, it is easy to
+        // forget what is on each one.
+        if (Settings::gui().mControllerMenus && key->type != ESM::QuickKeys::Type::Unassigned)
+        {
+            const Slot slot = getSlot(index);
+            MWBase::Environment::get().getWindowManager()->getHud()->showQuickKey(slot.mItem, slot.mIcon, slot.mName);
         }
 
         // Updates the state of equipped/not equipped (skin) in spellwindow
