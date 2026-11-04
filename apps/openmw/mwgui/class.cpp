@@ -2,6 +2,7 @@
 
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
+#include <MyGUI_LayerManager.h>
 #include <MyGUI_ListBox.h>
 #include <MyGUI_ScrollView.h>
 #include <MyGUI_UString.h>
@@ -15,12 +16,15 @@
 #include "../mwworld/esmstore.hpp"
 
 #include <components/debug/debuglog.hpp>
+#include <components/esm/attr.hpp>
 #include <components/esm3/loadnpc.hpp>
+#include <components/esm3/loadskil.hpp>
 #include <components/misc/resourcehelpers.hpp>
 #include <components/resource/resourcesystem.hpp>
 #include <components/settings/values.hpp>
 #include <components/vfs/manager.hpp>
 
+#include "choicescreen.hpp"
 #include "controllerscreen.hpp"
 #include "tooltips.hpp"
 
@@ -38,6 +42,56 @@ namespace MWGui
 {
 
     /* GenerateClassResultDialog */
+
+    namespace
+    {
+        // A class's specialization, favoured attributes, skills and description, for a choice screen.
+        void describeClass(const ESM::Class& playerClass, ChoiceScreen& screen)
+        {
+            const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+            MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+            screen.mName = playerClass.mName;
+            const int specialization = playerClass.mData.mSpecialization;
+            screen.mSubtitle
+                = std::string(winMgr->getGameSettingString(ESM::Class::sGmstSpecializationIds[specialization],
+                    ESM::Class::sGmstSpecializationIds[specialization]));
+            screen.mDescription = playerClass.mDescription;
+            std::vector<std::string> attributes;
+            for (const ESM::RefId& id : playerClass.mData.mAttribute)
+                if (const ESM::Attribute* attribute = store.get<ESM::Attribute>().search(id))
+                    attributes.push_back(attribute->mName);
+            const auto skillNames = [&](const auto& skills) {
+                std::vector<std::string> names;
+                for (const ESM::RefId& id : skills)
+                    if (const ESM::Skill* skill = store.get<ESM::Skill>().search(id))
+                        names.push_back(skill->mName);
+                return names;
+            };
+            screen.mSections.emplace_back("#{sChooseClassMenu2}", attributes);
+            screen.mSections.emplace_back("#{sChooseClassMenu3}", skillNames(playerClass.mData.mMajorSkills));
+            screen.mSections.emplace_back("#{sChooseClassMenu4}", skillNames(playerClass.mData.mMinorSkills));
+        }
+
+        // Shows the class's picture where the choice screen leaves room for it.
+        void addClassImage(MyGUI::Widget* root, const MyGUI::IntCoord& coord, const ESM::RefId& classId)
+        {
+            MyGUI::ImageBox* image = root->createWidget<MyGUI::ImageBox>("ImageBox", coord, MyGUI::Align::Default);
+            image->setNeedMouseFocus(false);
+            setClassImage(image, classId);
+        }
+
+        MyGUI::Widget* showPanelRoot(MyGUI::Widget*& panel, MyGUI::Widget* mainWidget)
+        {
+            if (Settings::gui().mControllerMenus && panel == nullptr)
+                panel = ControllerUi::createPanelRoot("ControllerModal");
+            if (panel == nullptr)
+                return nullptr;
+            ControllerUi::hideWindow(mainWidget);
+            panel->setVisible(true);
+            MyGUI::LayerManager::getInstance().upLayerItem(panel);
+            return panel;
+        }
+    }
 
     GenerateClassResultDialog::GenerateClassResultDialog()
         : WindowModal("openmw_chargen_generate_class_result.layout")
@@ -79,8 +133,49 @@ namespace MWGui
         center();
     }
 
+    void GenerateClassResultDialog::onOpen()
+    {
+        WindowModal::onOpen();
+        if (showPanelRoot(mPanel, mMainWidget) != nullptr)
+            drawPanel();
+    }
+
+    void GenerateClassResultDialog::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->setVisible(false);
+        WindowModal::onClose();
+    }
+
+    void GenerateClassResultDialog::drawPanel()
+    {
+        if (mPanel == nullptr || !mPanel->getVisible())
+            return;
+        const ESM::Class* playerClass
+            = MWBase::Environment::get().getESMStore()->get<ESM::Class>().search(mCurrentClassId);
+        if (playerClass == nullptr)
+            return;
+        // The questions' answer is a list of one, so the screen looks like the class list.
+        ChoiceScreen screen;
+        screen.mTitle = "#{sMessageQuestionAnswer1}";
+        screen.mChoices = { playerClass->mName };
+        describeClass(*playerClass, screen);
+        screen.mHints = { { SDL_CONTROLLER_BUTTON_A, "#{sMessageQuestionAnswer2}" },
+            { SDL_CONTROLLER_BUTTON_B, "#{sMessageQuestionAnswer3}" } };
+        addClassImage(mPanel, screen.draw(mPanel, mPanelScroll), mCurrentClassId);
+    }
+
     bool GenerateClassResultDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mPanel != nullptr)
+        {
+            if (arg.button == SDL_CONTROLLER_BUTTON_A || arg.button == SDL_CONTROLLER_BUTTON_X)
+                onOkClicked(mOkButton);
+            else if (arg.button == SDL_CONTROLLER_BUTTON_B)
+                onBackClicked(mBackButton);
+            return true;
+        }
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             if (mOkButtonFocus)
@@ -195,6 +290,34 @@ namespace MWGui
 
         if (!classId.empty())
             setClassId(classId);
+
+        if (showPanelRoot(mPanel, mMainWidget) != nullptr)
+            drawPanel();
+    }
+
+    void PickClassDialog::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->setVisible(false);
+        WindowModal::onClose();
+    }
+
+    void PickClassDialog::drawPanel()
+    {
+        if (mPanel == nullptr || !mPanel->getVisible())
+            return;
+        ChoiceScreen screen;
+        screen.mTitle = "#{Interface:ChargenClassTitle}";
+        for (std::size_t i = 0; i < mClassList->getItemCount(); ++i)
+            screen.mChoices.push_back(mClassList->getItemNameAt(i).asUTF8());
+        screen.mFocus
+            = mClassList->getIndexSelected() == MyGUI::ITEM_NONE ? 0 : static_cast<int>(mClassList->getIndexSelected());
+        const ESM::Class* playerClass
+            = MWBase::Environment::get().getESMStore()->get<ESM::Class>().search(mCurrentClassId);
+        if (playerClass != nullptr)
+            describeClass(*playerClass, screen);
+        screen.mHints = { { SDL_CONTROLLER_BUTTON_X, "#{sDone}" } };
+        addClassImage(mPanel, screen.draw(mPanel, mPanelScroll), mCurrentClassId);
     }
 
     void PickClassDialog::setClassId(const ESM::RefId& classId)
@@ -349,6 +472,7 @@ namespace MWGui
             winMgr->injectKeyPress(MyGUI::KeyCode::ArrowDown, 0, false);
         }
 
+        drawPanel();
         return true;
     }
 

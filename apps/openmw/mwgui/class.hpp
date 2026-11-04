@@ -110,6 +110,10 @@ namespace MWGui
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         bool mOkButtonFocus = true;
 
+    public:
+        void onOpen() override;
+        void onClose() override;
+
     private:
         MyGUI::ImageBox* mClassImage;
         MyGUI::TextBox* mClassName;
@@ -117,6 +121,11 @@ namespace MWGui
         MyGUI::Button* mOkButton;
 
         ESM::RefId mCurrentClassId;
+
+        // In controller menus mode, a full screen panel shows the choice instead of this window.
+        MyGUI::Widget* mPanel = nullptr;
+        int mPanelScroll = 0;
+        void drawPanel();
     };
 
     class PickClassDialog : public WindowModal
@@ -152,9 +161,17 @@ namespace MWGui
         void onOkClicked(MyGUI::Widget* sender);
         void onBackClicked(MyGUI::Widget* sender);
 
+    public:
+        void onClose() override;
+
     private:
         void updateClasses();
         void updateStats();
+
+        // In controller menus mode, a full screen panel shows the choice instead of this window.
+        MyGUI::Widget* mPanel = nullptr;
+        int mPanelScroll = 0;
+        void drawPanel();
 
         MyGUI::ImageBox* mClassImage;
         MyGUI::ListBox* mClassList;

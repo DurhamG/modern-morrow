@@ -2,6 +2,7 @@
 
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
+#include <MyGUI_LayerManager.h>
 #include <MyGUI_ListBox.h>
 #include <MyGUI_ScrollView.h>
 #include <MyGUI_UString.h>
@@ -19,6 +20,8 @@
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/player.hpp"
 
+#include "choicescreen.hpp"
+#include "controllerscreen.hpp"
 #include "widgets.hpp"
 
 namespace
@@ -103,6 +106,70 @@ namespace MWGui
 
         if (!signId.empty())
             setBirthId(signId);
+
+        if (Settings::gui().mControllerMenus && mPanel == nullptr)
+            mPanel = ControllerUi::createPanelRoot("ControllerModal");
+        if (mPanel != nullptr)
+        {
+            ControllerUi::hideWindow(mMainWidget);
+            mPanel->setVisible(true);
+            MyGUI::LayerManager::getInstance().upLayerItem(mPanel);
+            drawPanel();
+        }
+    }
+
+    void BirthDialog::onClose()
+    {
+        if (mPanel != nullptr)
+            mPanel->setVisible(false);
+        WindowModal::onClose();
+    }
+
+    void BirthDialog::drawPanel()
+    {
+        if (mPanel == nullptr || !mPanel->getVisible())
+            return;
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+        ChoiceScreen screen;
+        screen.mTitle = "#{Interface:ChargenBirthTitle}";
+        for (std::size_t i = 0; i < mBirthList->getItemCount(); ++i)
+            screen.mChoices.push_back(mBirthList->getItemNameAt(i).asUTF8());
+        screen.mFocus
+            = mBirthList->getIndexSelected() == MyGUI::ITEM_NONE ? 0 : static_cast<int>(mBirthList->getIndexSelected());
+        const ESM::BirthSign* birth = store.get<ESM::BirthSign>().search(mCurrentBirthId);
+        if (birth != nullptr)
+        {
+            screen.mName = birth->mName;
+            screen.mDescription = birth->mDescription;
+            // The sign's spells by kind, each with its effects.
+            for (const auto& [type, heading] : { std::pair(ESM::Spell::ST_Ability, "#{sBirthsignmenu1}"),
+                     std::pair(ESM::Spell::ST_Power, "#{sPowers}"),
+                     std::pair(ESM::Spell::ST_Spell, "#{sBirthsignmenu2}") })
+            {
+                std::vector<std::string> lines;
+                for (const ESM::RefId& id : birth->mPowers.mList)
+                {
+                    const ESM::Spell* spell = store.get<ESM::Spell>().search(id);
+                    if (spell == nullptr || spell->mData.mType != type)
+                        continue;
+                    lines.push_back(ControllerUi::escaped(spell->mName));
+                    for (const Widgets::SpellEffectParams& params :
+                        Widgets::MWEffectList::effectListFromESM(&spell->mEffects))
+                        lines.push_back("    " + ControllerUi::localised(Widgets::describeSpellEffect(params)));
+                }
+                if (!lines.empty())
+                    screen.mSections.emplace_back(heading, lines);
+            }
+        }
+        screen.mHints = { { SDL_CONTROLLER_BUTTON_X, "#{sDone}" } };
+        const MyGUI::IntCoord picture = screen.draw(mPanel, mPanelScroll);
+        if (birth != nullptr)
+        {
+            MyGUI::ImageBox* image = mPanel->createWidget<MyGUI::ImageBox>("ImageBox", picture, MyGUI::Align::Default);
+            image->setNeedMouseFocus(false);
+            image->setImageTexture(Misc::ResourceHelpers::correctTexturePath(
+                birth->mTexture.getNormalized(), *MWBase::Environment::get().getResourceSystem()->getVFS()));
+        }
     }
 
     void BirthDialog::setBirthId(const ESM::RefId& birthId)
@@ -309,6 +376,7 @@ namespace MWGui
             winMgr->injectKeyPress(MyGUI::KeyCode::ArrowDown, 0, false);
         }
 
+        drawPanel();
         return true;
     }
 }

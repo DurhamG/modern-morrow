@@ -22,6 +22,7 @@ namespace MWGui
 
         void setNextButtonShow(bool shown);
         void onOpen() override;
+        void onClose() override;
 
         bool exit() override { return false; }
 
@@ -59,6 +60,11 @@ namespace MWGui
         ESM::RefId mCurrentBirthId;
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+
+        // In controller menus mode, a full screen panel shows the choice instead of this window.
+        MyGUI::Widget* mPanel = nullptr;
+        int mPanelScroll = 0;
+        void drawPanel();
     };
 }
 #endif
