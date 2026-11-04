@@ -1745,6 +1745,12 @@ namespace MWGui
     {
         return mInventoryWindow;
     }
+
+    MWGui::QuickKeysMenu* WindowManager::getQuickKeysMenu()
+    {
+        return mQuickKeysMenu;
+    }
+
     MWGui::CountDialog* WindowManager::getCountDialog()
     {
         return mCountDialog;

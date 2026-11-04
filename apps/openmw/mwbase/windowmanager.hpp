@@ -72,6 +72,7 @@ namespace MWGui
     class ScrollWindow;
     class BookWindow;
     class InventoryWindow;
+    class QuickKeysMenu;
     class ContainerWindow;
     class DialogueWindow;
     class WindowModal;
@@ -157,6 +158,7 @@ namespace MWBase
 
         /// \todo investigate, if we really need to expose every single lousy UI element to the outside world
         virtual MWGui::InventoryWindow* getInventoryWindow() = 0;
+        virtual MWGui::QuickKeysMenu* getQuickKeysMenu() = 0;
         virtual MWGui::CountDialog* getCountDialog() = 0;
         virtual MWGui::ConfirmationDialog* getConfirmationDialog() = 0;
         virtual MWGui::TradeWindow* getTradeWindow() = 0;

@@ -187,6 +187,7 @@ namespace MWGui
 
         /// \todo investigate, if we really need to expose every single lousy UI element to the outside world
         MWGui::InventoryWindow* getInventoryWindow() override;
+        MWGui::QuickKeysMenu* getQuickKeysMenu() override;
         MWGui::CountDialog* getCountDialog() override;
         MWGui::ConfirmationDialog* getConfirmationDialog() override;
         MWGui::TradeWindow* getTradeWindow() override;

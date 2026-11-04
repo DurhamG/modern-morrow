@@ -7,6 +7,7 @@
 #include <MyGUI_RenderManager.h>
 
 #include <components/esm3/esmwriter.hpp>
+#include <components/esm3/loadgmst.hpp>
 #include <components/esm3/loadmgef.hpp>
 #include <components/esm3/quickkeys.hpp>
 #include <components/misc/resourcehelpers.hpp>
@@ -463,6 +464,99 @@ namespace MWGui
 
         // Updates the state of equipped/not equipped (skin) in spellwindow
         MWBase::Environment::get().getWindowManager()->updateSpellWindow();
+    }
+
+    QuickKeysMenu::Slot QuickKeysMenu::getSlot(int index)
+    {
+        assert(index >= 1 && index <= 10);
+        validate(index - 1);
+        const keyData& key = mKey[index - 1];
+        Slot slot;
+        slot.mType = key.type;
+        slot.mId = key.id;
+        slot.mName = key.name;
+        switch (key.type)
+        {
+            case ESM::QuickKeys::Type::Unassigned:
+                break;
+            case ESM::QuickKeys::Type::HandToHand:
+                slot.mIcon = "icons\\k\\stealth_handtohand.dds";
+                slot.mName = MWBase::Environment::get()
+                                 .getESMStore()
+                                 ->get<ESM::GameSetting>()
+                                 .find("sSkillHandtohand")
+                                 ->mValue.getString();
+                break;
+            case ESM::QuickKeys::Type::Item:
+            case ESM::QuickKeys::Type::MagicItem:
+                if (const MWWorld::Ptr* item = key.button->getUserData<MWWorld::Ptr>(false))
+                    slot.mItem = *item;
+                break;
+            case ESM::QuickKeys::Type::Magic:
+            {
+                const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+                const ESM::Spell* spell = store.get<ESM::Spell>().search(key.id);
+                if (spell != nullptr && !spell->mEffects.mList.empty())
+                {
+                    const ESM::MagicEffect* effect
+                        = store.get<ESM::MagicEffect>().find(spell->mEffects.mList.front().mData.mEffectID);
+                    slot.mIcon = std::string(Misc::ResourceHelpers::correctBigIconPath(
+                        effect->mIcon.getNormalized(), *MWBase::Environment::get().getResourceSystem()->getVFS())
+                            .value());
+                }
+                break;
+            }
+        }
+        return slot;
+    }
+
+    void QuickKeysMenu::assignSlot(
+        int index, ESM::QuickKeys::Type type, const MWWorld::Ptr& item, const ESM::RefId& spell)
+    {
+        assert(index >= 1 && index <= 9);
+        const int previous = type == ESM::QuickKeys::Type::Magic ? findSpellSlot(spell) : findItemSlot(item);
+        if (previous > 0)
+            unassignSlot(previous);
+        mSelected = &mKey[index - 1];
+        if (type == ESM::QuickKeys::Type::Magic)
+            onAssignMagic(spell);
+        else if (type == ESM::QuickKeys::Type::MagicItem)
+            onAssignMagicItem(item);
+        else
+            assignItem(item);
+        mSelected = nullptr;
+    }
+
+    void QuickKeysMenu::unassignSlot(int index)
+    {
+        assert(index >= 1 && index <= 9);
+        if (mActivated == &mKey[index - 1])
+            mActivated = nullptr;
+        unassign(&mKey[index - 1]);
+    }
+
+    int QuickKeysMenu::findItemSlot(const MWWorld::Ptr& item)
+    {
+        if (item.isEmpty())
+            return -1;
+        for (int i = 0; i < 9; ++i)
+        {
+            if (mKey[i].type != ESM::QuickKeys::Type::Item && mKey[i].type != ESM::QuickKeys::Type::MagicItem)
+                continue;
+            validate(i);
+            const MWWorld::Ptr* assigned = mKey[i].button->getUserData<MWWorld::Ptr>(false);
+            if (assigned != nullptr && *assigned == item)
+                return i + 1;
+        }
+        return -1;
+    }
+
+    int QuickKeysMenu::findSpellSlot(const ESM::RefId& spell)
+    {
+        for (int i = 0; i < 9; ++i)
+            if (mKey[i].type == ESM::QuickKeys::Type::Magic && mKey[i].id == spell)
+                return i + 1;
+        return -1;
     }
 
     bool QuickKeysMenu::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
