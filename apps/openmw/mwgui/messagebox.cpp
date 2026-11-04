@@ -2,9 +2,12 @@
 
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
+#include <MyGUI_ImageBox.h>
 #include <MyGUI_LanguageManager.h>
 #include <MyGUI_RenderManager.h>
 #include <MyGUI_UString.h>
+
+#include <algorithm>
 
 #include <components/debug/debuglog.hpp>
 #include <components/misc/strings/algorithm.hpp>
@@ -46,6 +49,7 @@ namespace MWGui
 
         mMessageBoxes.clear();
         mStaticMessageBox = nullptr;
+        mPanelChanged = true;
 
         mLastButtonPressed = -1;
     }
@@ -72,9 +76,24 @@ namespace MWGui
             if ((*it)->mCurrentTime >= (*it)->mMaxTime && it->get() != mStaticMessageBox)
             {
                 it = mMessageBoxes.erase(it);
+                mPanelChanged = true;
             }
             else
                 ++it;
+        }
+
+        if (Settings::gui().mControllerMenus)
+        {
+            if (mPanelChanged)
+                drawPanel();
+            // Each message fades out at the end of its time.
+            constexpr float fadeTime = 0.4f;
+            for (std::size_t i = 0; i < mPanelBoxes.size() && i < mMessageBoxes.size(); ++i)
+            {
+                const MessageBox& box = *mMessageBoxes[i];
+                const float timeLeft = box.mMaxTime - box.mCurrentTime;
+                mPanelBoxes[i]->setAlpha(&box == mStaticMessageBox ? 1.f : std::clamp(timeLeft / fadeTime, 0.f, 1.f));
+            }
         }
 
         float height = 0;
@@ -114,6 +133,7 @@ namespace MWGui
         {
             mMessageBoxes.erase(mMessageBoxes.begin());
         }
+        mPanelChanged = true;
 
         int height = 0;
         for (const auto& messageBox : mMessageBoxes)
@@ -157,6 +177,7 @@ namespace MWGui
             if (it->get() == msgbox)
             {
                 mMessageBoxes.erase(it);
+                mPanelChanged = true;
                 return true;
             }
         }
@@ -181,6 +202,60 @@ namespace MWGui
         mVisible = value;
         for (const auto& messageBox : mMessageBoxes)
             messageBox->setVisible(value);
+        mPanelChanged = true;
+    }
+
+    void MessageBoxManager::drawPanel()
+    {
+        using namespace ControllerUi;
+        mPanelChanged = false;
+        if (mPanel == nullptr)
+            mPanel = createPanelRoot("ControllerNotification");
+        if (mPanel == nullptr)
+            return;
+        clearPanel(mPanel);
+        mPanelBoxes.clear();
+        mPanel->setVisible(mVisible && !mMessageBoxes.empty());
+
+        // The messages stack up from just above the bottom of the screen, centred, with the oldest at the bottom as
+        // the normal message boxes do.
+        constexpr int maxWidth = 640;
+        constexpr int padding = 14;
+        constexpr int lineHeight = 30;
+        constexpr int bottomMargin = 120;
+        constexpr int gap = 8;
+        const MyGUI::IntSize size = mPanel->getSize();
+        int bottom = size.height - bottomMargin;
+        for (const auto& messageBox : mMessageBoxes)
+        {
+            const std::vector<std::string> lines
+                = wrapText(mPanel, localised(messageBox->getMessage()), maxWidth - 2 * padding, sFontLarge, 4);
+            const int boxHeight = static_cast<int>(lines.size()) * lineHeight + 2 * padding - 6;
+            MyGUI::Widget* box = mPanel->createWidget<MyGUI::Widget>(
+                "", MyGUI::IntCoord(0, bottom - boxHeight, maxWidth, boxHeight), MyGUI::Align::Default);
+            box->setNeedMouseFocus(false);
+            MyGUI::ImageBox* back = addRect(box, 0, 0, maxWidth, boxHeight, sPanelColour, 0.88f);
+            MyGUI::ImageBox* edge = addRect(box, 0, 0, maxWidth, 1, sAccentColour, 0.4f);
+            std::vector<MyGUI::TextBox*> texts;
+            int textWidth = 0;
+            for (std::size_t line = 0; line < lines.size(); ++line)
+            {
+                texts.push_back(addText(box, padding, padding - 3 + static_cast<int>(line) * lineHeight,
+                    maxWidth - 2 * padding, lineHeight, escaped(lines[line]), sFontLarge, sBrightColour,
+                    MyGUI::Align::HCenter | MyGUI::Align::VCenter));
+                textWidth = std::max(textWidth, texts.back()->getTextSize().width);
+            }
+
+            // The box fits the text's widest line.
+            const int boxWidth = std::min(maxWidth, textWidth + 2 * padding);
+            box->setCoord((size.width - boxWidth) / 2, bottom - boxHeight, boxWidth, boxHeight);
+            back->setSize(boxWidth, boxHeight);
+            edge->setSize(boxWidth, 1);
+            for (MyGUI::TextBox* text : texts)
+                text->setSize(boxWidth - 2 * padding, lineHeight);
+            mPanelBoxes.push_back(box);
+            bottom -= boxHeight + gap;
+        }
     }
 
     MessageBox::MessageBox(MessageBoxManager& parMessageBoxManager, std::string_view message)
@@ -197,6 +272,10 @@ namespace MWGui
         getWidget(mMessageWidget, "message");
 
         mMessageWidget->setCaptionWithReplacing(mMessage);
+
+        // In controller menus mode, the manager draws the message on its own panel instead.
+        if (Settings::gui().mControllerMenus)
+            mMainWidget->setVisible(false);
     }
 
     void MessageBox::update(int height)
@@ -216,7 +295,7 @@ namespace MWGui
 
     void MessageBox::setVisible(bool value)
     {
-        mMainWidget->setVisible(value);
+        mMainWidget->setVisible(value && !Settings::gui().mControllerMenus);
     }
 
     InteractiveMessageBox::InteractiveMessageBox(MessageBoxManager& parMessageBoxManager, const std::string& message,

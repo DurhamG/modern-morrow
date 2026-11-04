@@ -146,3 +146,6 @@ Next: the user reviews the other screens. Still left: quick keys, crafting, and 
   - Python on Windows writes CRLF line endings unless the file is opened with `newline=''`.
 
 Next: the user tries the quick keys. Still left: crafting, and creating a custom class.
+
+- Pushed the quick keys.
+- The short messages shown during play, such as a failed spell, were drawn in screen pixels, so they were tiny on a TV. In controller menus mode, `MessageBoxManager` now draws them on the `ControllerNotification` layer, which scales with the screen height, in the panel style. The `controller-messages` scenario shows a failed cast and three stacked messages.

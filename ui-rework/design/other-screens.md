@@ -17,6 +17,7 @@ Every one of them works the same way. In controller menus mode, the old window s
 | Screen | What it looks like now | Buttons |
 | --- | --- | --- |
 | Spells, training, travel, repair | A list of what the merchant offers with prices, and details beside it: a spell's effects, cost and chance, a skill's values and limits, the travel time, an item's condition. Entries the player can't pick say why in red. | A buy, B back |
+| Short messages, such as "You failed casting the spell" | Boxes in the panel style, in large text, stacked above the bottom of the screen. They scale with the screen and fade out at the end. | None |
 | Message boxes, confirmations, class questions | The message, then the answers as rows. Long answers wrap. | Up and down, A pick, B cancel where there is a cancel answer |
 | Rest and wait | The hours in large text, when the rest ends, and how long resting until healed takes. | Left and right change the hours, L1 one hour, R1 a day, A rest, X until healed, B cancel |
 | Level up | The class image and level text on the left, and the attributes as tiles with their bonuses. The highlighted attribute's description and the skills that raise it are below. | D-pad moves, A chooses, X finishes |

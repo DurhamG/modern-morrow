@@ -1,0 +1,18 @@
+# The short messages shown during play, such as a failed spell, in controller menus mode. Up to three stack up.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->addspell fireball"
+console "command=player->setmagicka 200"
+console "command=player->setdestruction 0"
+console "command=player->setwillpower 0"
+console "command=player->setluck 0"
+lua "code=require('openmw.types').Actor.setSelectedSpell(require('openmw.self'), 'fireball')" context=player
+wait frames=10
+pad button=y
+wait frames=40
+pad axis=righttrigger value=1 hold=10
+wait frames=60
+shot spell-failed
+console "command=messagebox \"You have no room to carry that. The item has been left where it was, so pick it up again once you have space.\""
+console "command=messagebox \"Iron Longsword added to your inventory.\""
+wait frames=5
+shot three-messages

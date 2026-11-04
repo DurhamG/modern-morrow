@@ -63,12 +63,20 @@ namespace MWGui
         const std::vector<std::unique_ptr<MessageBox>>& getActiveMessageBoxes() const;
 
     private:
+        void drawPanel();
+
         std::vector<std::unique_ptr<MessageBox>> mMessageBoxes;
         std::unique_ptr<InteractiveMessageBox> mInterMessageBoxe;
         MessageBox* mStaticMessageBox;
         float mMessageBoxSpeed;
         int mLastButtonPressed;
         bool mVisible = true;
+
+        // In controller menus mode, the messages are drawn together on a panel that scales with the screen, in place
+        // of their own small boxes. Each message has a box on the panel, in the order of mMessageBoxes.
+        MyGUI::Widget* mPanel = nullptr;
+        std::vector<MyGUI::Widget*> mPanelBoxes;
+        bool mPanelChanged = false;
     };
 
     class MessageBox : public Layout

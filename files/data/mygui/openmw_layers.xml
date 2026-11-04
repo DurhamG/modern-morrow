@@ -45,6 +45,11 @@
         <Property key="Height" value="720"/>
     </Layer>
     <Layer name="Notification" overlapped="false" pick="false"/>
+    <!-- Messages such as "Your spell failed" in controller menus mode. Like the HUD, they keep a constant size
+         relative to the screen height. -->
+    <Layer name="ControllerNotification" type="ScalingLayer" pick="false">
+        <Property key="Height" value="720"/>
+    </Layer>
     <Layer name="Video" overlapped="false" pick="true"/>
     <Layer name="InputBlocker" overlapped="false" pick="true"/>
     <Layer name="Pointer" overlapped="false" pick="false"/>
