@@ -15,11 +15,13 @@ on:
         default: RelWithDebInfo
         type: string
       package:
+        description: Build the installer and the zip instead of running the tests
         default: false
         type: boolean
-      release:
-        default: false
-        type: boolean
+      label:
+        description: The label in the package file names, such as the release tag. Empty uses the version.
+        default: ""
+        type: string
 
 jobs:
   Windows:
@@ -114,6 +116,7 @@ jobs:
         -D OPENMW_LTO_BUILD=ON
         ${{ inputs.package && '-D "VCREDIST64=$env:VCToolsRedistDir/vc_redist.x64.exe"' || '' }}
         -D CMAKE_EXPORT_COMPILE_COMMANDS=ON
+        -D CUSTOM_CPACK_LABEL="${{ inputs.label }}"
 
     - name: Build OpenMW
       run: cmake --build ${{ github.workspace }}/build
@@ -163,7 +166,7 @@ jobs:
     - name: Package OpenMW
       if: ${{ inputs.package }}
       run: |
-        cpack --config "${{ github.workspace }}/build/CPackConfig.cmake" -B "${{ github.workspace }}/install"
+        cpack -G "NSIS;ZIP" --config "${{ github.workspace }}/build/CPackConfig.cmake" -B "${{ github.workspace }}/install"
         rm -r -Force "${{ github.workspace }}/install/_CPack_Packages"
 
     - name: Remove extra pdb files
@@ -251,11 +254,3 @@ jobs:
     - name: Run esm refid benchmark
       if: ${{ ! inputs.package }}
       run: build/openmw_esm_refid_benchmark.exe
-
-    - name: Create prerelease
-      if: ${{ inputs.release }}
-      uses: softprops/action-gh-release@v2
-      with:
-        files: ${{ github.workspace }}/install/*.exe
-        prerelease: true
-        draft: true

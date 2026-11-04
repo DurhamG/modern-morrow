@@ -1,0 +1,25 @@
+#!/bin/sh
+# Starts Modern Morrow from inside the AppImage. With no arguments it opens the launcher, which sets up the game's
+# data files the first time. "--game" starts the game itself, for a Steam shortcut in the Steam Deck's Game Mode,
+# and "--wizard" opens the setup wizard. Any other arguments go to the program that starts.
+HERE="$(dirname "$(readlink -f "$0")")"
+
+# The programs use the system's OpenAL. On a system without one, they use the copy in the AppImage instead.
+if ! /sbin/ldconfig -p 2>/dev/null | grep -q 'libopenal\.so\.1 (libc6,x86-64)'; then
+    LD_LIBRARY_PATH="$HERE/lib/openal-fallback${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    export LD_LIBRARY_PATH
+fi
+
+case "$1" in
+    --game)
+        shift
+        exec "$HERE/openmw" "$@"
+        ;;
+    --wizard)
+        shift
+        exec "$HERE/openmw-wizard" "$@"
+        ;;
+    *)
+        exec "$HERE/openmw-launcher" "$@"
+        ;;
+esac

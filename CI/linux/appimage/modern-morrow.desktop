@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Modern Morrow
+Comment=A controller-first interface for OpenMW
+Exec=AppRun
+Icon=modern-morrow
+Categories=Game;RolePlaying;
+Terminal=false

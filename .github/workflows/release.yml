@@ -1,9 +1,17 @@
 name: Release
 
+# Pushing a tag such as v0.1.0 builds the Windows installer, the Windows zip and the Linux AppImage, and puts them in
+# a draft release for the tag, to check and publish by hand. Starting the workflow by hand from the Actions tab builds
+# the same files without making a release, and leaves them on the run's page.
+
 on:
   push:
-      tags:
-        - openmw-**
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   Windows:
@@ -12,16 +20,39 @@ jobs:
       image: "2022"
       build-type: Release
       package: true
-      release: true
+      label: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
     secrets: inherit
-  MacOS:
-    strategy:
-      fail-fast: true
-      matrix:
-        args:
-          - image: macos-26
-          - image: macos-26-intel
-    uses: ./.github/workflows/macos.yml
+
+  Linux:
+    uses: ./.github/workflows/linux.yml
     with:
-      image: ${{ matrix.args.image }}
-      build-type: Release
+      label: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+
+  # One job makes the release, so the builds, which run side by side, don't each make a draft of their own.
+  Publish:
+    if: ${{ github.ref_type == 'tag' }}
+    needs: [Windows, Linux]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Fetch the Windows files
+      uses: actions/download-artifact@v5
+      with:
+        name: openmw-windows-2022-${{ github.sha }}
+        path: windows
+
+    - name: Fetch the AppImage
+      uses: actions/download-artifact@v5
+      with:
+        name: modern-morrow-linux-appimage
+        path: linux
+
+    - name: Make a draft release
+      uses: softprops/action-gh-release@v2
+      with:
+        draft: true
+        prerelease: true
+        files: |
+          windows/*.exe
+          windows/*.zip
+          linux/*.AppImage

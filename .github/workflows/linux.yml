@@ -1,0 +1,40 @@
+name: Reusable Linux workflow
+
+# Builds the portable Linux package and the AppImage with CI/linux/build_release.sh, on AlmaLinux 9 like OpenMW's
+# GitLab pipeline. The same script runs locally in the same container, which the script's comments show how to do.
+
+on:
+  workflow_call:
+    inputs:
+      label:
+        description: The label in the package file names, such as the release tag. Empty uses the version.
+        default: ""
+        type: string
+
+jobs:
+  Linux:
+    name: Linux package and AppImage
+    runs-on: ubuntu-latest
+    container: almalinux:9
+
+    steps:
+    # Checking out needs git, which the container doesn't have yet.
+    - name: Install git
+      run: dnf install -y git
+
+    - uses: actions/checkout@v6
+
+    - name: Build
+      run: CI/linux/build_release.sh "${{ inputs.label }}"
+
+    - name: Store the package
+      uses: actions/upload-artifact@v6
+      with:
+        name: modern-morrow-linux-package
+        path: build/ModernMorrow*.tar.xz
+
+    - name: Store the AppImage
+      uses: actions/upload-artifact@v6
+      with:
+        name: modern-morrow-linux-appimage
+        path: build/ModernMorrow*.AppImage
