@@ -42,6 +42,9 @@ namespace MWInput
 
         bool isLeftOrRightButton(int action, bool joystick) const;
 
+        /// Whether the player bound the controller button to an action.
+        bool isControllerButtonBound(int button) const;
+
         bool actionIsActive(int id) const;
         float getActionValue(int id) const; // returns value in range [0, 1]
 
