@@ -840,6 +840,13 @@ testing.localEventHandlers.restForTestStopped = function(finished)
     restFinished = finished
 end
 
+testing.registerLocalTestStep('character creation on self', function()
+    -- The player's own scripts may create the character. Character creation is over, so that is what stops them.
+    local ok, err = pcall(types.Player.setCharGenName, self, 'Lua Hero')
+    testing.expectEqual(ok, false, 'The name should not change after character creation')
+    testing.expectNotEqual(tostring(err):find('Character creation is finished'), nil, tostring(err))
+end)
+
 return {
     engineHandlers = {
         onFrame = testing.updateLocal,

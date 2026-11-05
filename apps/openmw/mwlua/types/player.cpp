@@ -17,6 +17,7 @@
 #include <components/settings/values.hpp>
 
 #include "../birthsignbindings.hpp"
+#include "../chargenbindings.hpp"
 #include "../conversationbindings.hpp"
 #include "../luamanagerimp.hpp"
 #include "../magicbindings.hpp"
@@ -1633,5 +1634,6 @@ namespace MWLua
         };
 
         addConversationBindings(player, context);
+        addCharGenBindings(player, context);
     }
 }

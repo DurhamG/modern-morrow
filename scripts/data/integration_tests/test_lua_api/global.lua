@@ -1077,6 +1077,69 @@ testing.globalEventHandlers.restForTest = function(hours)
     end))
 end
 
+testing.registerGlobalTest('character creation', function()
+    local player = initPlayer()
+    testing.expectEqual(pcall(types.Player.setCharGenName, player, 'Too late'), false,
+        'Character creation should be over in a new game that skips it')
+
+    -- The game's own scripts end character creation again soon, so each step starts it right before the change.
+    local globals = world.mwscript.getGlobalVariables(player)
+    globals.chargenstate = 1
+    testing.expectEqual(pcall(types.Player.setCharGenName, player, ''), false, 'The name should not be empty')
+    testing.expectEqual(pcall(types.Player.setCharGenRace, player, { race = 'omw_unplayable_race' }), false,
+        'The race should be playable')
+    testing.expectEqual(pcall(types.Player.setCharGenBirthSign, player, 'omw_no_such_sign'), false,
+        'The birth sign should exist')
+    types.Player.setCharGenName(player, 'Lua Hero')
+    types.Player.setCharGenRace(player, { race = 'omw_chargen_race', isMale = false })
+    types.Player.setCharGenClass(player, 'omw_chargen_class')
+    coroutine.yield()
+    local record = types.NPC.record(player)
+    testing.expectEqual(record.name, 'Lua Hero')
+    testing.expectEqual(record.race, 'omw_chargen_race')
+    testing.expectEqual(record.isMale, false)
+    testing.expectEqual(record.class, 'omw_chargen_class')
+    testing.expect(types.Actor.spells(player)['omw_chargen_power'] ~= nil, 'The player should get the race power')
+    testing.expectEqual(#types.Player.getCharGenHeads('omw_chargen_race', false), 0, 'The example suite has no heads')
+
+    local madeUp = {
+        name = 'Lua class',
+        specialization = 'magic',
+        attributes = { 'strength', 'intelligence' },
+        majorSkills = { 'longblade', 'destruction', 'alteration', 'mediumarmor', 'block' },
+        minorSkills = { 'athletics', 'restoration', 'mysticism', 'enchant', 'heavyarmor' },
+    }
+    globals.chargenstate = 1
+    types.Player.setCharGenClass(player, madeUp)
+    coroutine.yield()
+    local madeUpId = types.NPC.record(player).class
+    testing.expectEqual(types.NPC.classes.record(madeUpId).name, 'Lua class')
+    madeUp.name = 'Changed class'
+    globals.chargenstate = 1
+    types.Player.setCharGenClass(player, madeUp)
+    coroutine.yield()
+    testing.expectEqual(types.NPC.record(player).class, madeUpId, 'A new made-up class should replace the old one')
+    testing.expectEqual(types.NPC.classes.record(madeUpId).name, 'Changed class')
+    madeUp.minorSkills[1] = 'longblade'
+    globals.chargenstate = 1
+    testing.expectEqual(pcall(types.Player.setCharGenClass, player, madeUp), false,
+        'A made-up class should not repeat a skill')
+    globals.chargenstate = -1
+
+    local questions = types.Player.getCharGenClassQuestions()
+    testing.expectEqual(#questions, 10)
+    testing.expectEqual(questions[1].question, 'How do you fight?')
+    testing.expectEqual(questions[1].answers.combat, 'With a sword')
+    testing.expectEqual(questions[1].answers.magic, 'With a spell')
+    testing.expectEqual(questions[1].answers.stealth, 'From the shadows')
+    testing.expectEqual(types.Player.getCharGenClassForAnswers({ combat = 6, magic = 1, stealth = 3 }):lower(),
+        'crusader')
+    testing.expectEqual(pcall(types.Player.getCharGenClassForAnswers, { combat = 9 }), false,
+        'The answers should add up to the number of questions')
+
+    testing.runLocalTest(player, 'character creation on self')
+end)
+
 testing.registerGlobalTest('UTF-8 characters', function()
     testing.expectEqual(utf8.codepoint("😀"), 0x1F600)
 

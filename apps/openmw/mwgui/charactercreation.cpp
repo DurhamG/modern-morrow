@@ -125,7 +125,6 @@ namespace MWGui
     void CharacterCreation::clear()
     {
         mCreationStage = CSE_NotStarted;
-        mPlayerName.clear();
         mPlayerRaceId = ESM::RefId();
         mPlayerBirthSignId = ESM::RefId();
         mPlayerClass = ESM::Class();
@@ -195,7 +194,11 @@ namespace MWGui
             {
                 case GM_Name:
                 {
-                    mNameDialog->setTextInput(mPlayerName);
+                    // Show the name that the player has now, which a Lua mod may have chosen
+                    std::string name;
+                    if (mCreationStage >= CSE_NameChosen)
+                        name = MWMechanics::getPlayer().get<ESM::NPC>()->mBase->mName;
+                    mNameDialog->setTextInput(name);
                     mNameDialog->setNextButtonShow(mCreationStage >= CSE_NameChosen);
                     mNameDialog->center();
                     break;
@@ -386,8 +389,7 @@ namespace MWGui
 
     void CharacterCreation::onNameDialogDone(WindowBase* parWindow)
     {
-        mPlayerName = mNameDialog->getTextInput();
-        MWBase::Environment::get().getMechanicsManager()->setPlayerName(mPlayerName);
+        MWBase::Environment::get().getMechanicsManager()->setPlayerName(mNameDialog->getTextInput());
 
         handleDialogDone(CSE_NameChosen, GM_Race);
     }

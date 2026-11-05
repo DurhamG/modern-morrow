@@ -73,7 +73,6 @@ namespace MWGui
         ReviewDialog* mReviewDialog;
 
         // Player data
-        std::string mPlayerName;
         ESM::RefId mPlayerRaceId;
         ESM::RefId mPlayerBirthSignId;
         ESM::Class mPlayerClass;

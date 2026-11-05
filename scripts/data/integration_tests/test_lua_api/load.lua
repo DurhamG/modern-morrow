@@ -59,6 +59,23 @@ return {
                 type = content.apparatuses.TYPE.MortarPestle,
                 quality = 1,
             }
+            -- Races and a class for the character creation tests
+            content.spells.records.omw_chargen_power = { name = 'Chargen power', type = content.spells.TYPE.Power }
+            content.races.records.omw_chargen_race = {
+                template = content.races.records.defaultrace,
+                name = 'Chargen race',
+                isPlayable = true,
+                spells = { 'omw_chargen_power' },
+            }
+            content.races.records.omw_unplayable_race = {
+                template = content.races.records.defaultrace,
+                isPlayable = false,
+            }
+            content.classes.records.omw_chargen_class = {
+                template = content.classes.records.defaultclass,
+                name = 'Chargen class',
+                isPlayable = true,
+            }
         end
     }
 }

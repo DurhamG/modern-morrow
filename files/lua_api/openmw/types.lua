@@ -1563,6 +1563,97 @@
 -- @usage types.Player.levelUp(player, { 'strength', 'endurance', 'agility' })
 
 ---
+-- Give the player a name during character creation, as the name window does. The change happens at the end of the
+-- frame. The `setCharGen` functions work only until character creation is finished (see @{#PLAYER.isCharGenFinished}),
+-- and only in the player's own scripts and in global scripts. The engine's character creation windows start from the
+-- choices that these functions make, so a mod can replace some of the steps and leave the others to the engine. The
+-- window for creating a class is an exception: it keeps what the player last entered in it.
+-- @function [parent=#PLAYER] setCharGenName
+-- @param openmw.core#GameObject player
+-- @param #string name The player's name, which can't be empty
+
+---
+-- Choose the player's race, gender, head and hair during character creation, as the race window does. Like the window,
+-- this rebuilds the player's attributes, skills and spells: the race sets the attributes and the skill bonuses, and adds
+-- its powers. The change happens at the end of the frame.
+-- @function [parent=#PLAYER] setCharGenRace
+-- @param openmw.core#GameObject player
+-- @param #table options A table with these fields:
+--
+--   * `race` - the record or the ID of a playable race
+--   * `isMale` - (optional) the player's gender. Without it, the player keeps their gender.
+--   * `head` - (optional) the ID of a head from @{#PLAYER.getCharGenHeads}. Without it, the player gets the first head
+--     that the race offers, as in the race window.
+--   * `hair` - (optional) the ID of a hair from @{#PLAYER.getCharGenHairs}. Without it, the player gets the first hair
+--     that the race offers.
+-- @usage types.Player.setCharGenRace(self, { race = 'dark elf', isMale = false })
+
+---
+-- Give the player a class during character creation. Like the class windows, this rebuilds the player's attributes,
+-- skills and spells: the class raises its favorite attributes and its major, minor and specialized skills. The change
+-- happens at the end of the frame.
+--
+-- A table makes up a new class, as the window for creating a class does. It has the fields of a class record: `name`,
+-- `description` (optional), `specialization`, `attributes` (the two favorite attributes), `majorSkills` and
+-- `minorSkills` (five skills each). The class needs a name, two different favorite attributes and ten different skills.
+-- If the player already has a made-up class, the new one takes its place.
+-- @function [parent=#PLAYER] setCharGenClass
+-- @param openmw.core#GameObject player
+-- @param #any class The record or the ID of a playable class, or a table that describes a new class
+-- @usage types.Player.setCharGenClass(self, 'warrior')
+-- @usage types.Player.setCharGenClass(self, {
+--     name = 'Spellblade',
+--     specialization = 'magic',
+--     attributes = { 'strength', 'intelligence' },
+--     majorSkills = { 'longblade', 'destruction', 'alteration', 'mediumarmor', 'block' },
+--     minorSkills = { 'athletics', 'restoration', 'mysticism', 'enchant', 'heavyarmor' },
+-- })
+
+---
+-- Give the player a birth sign during character creation, as the birth sign window does. Like the window, this
+-- rebuilds the player's attributes, skills and spells, and adds the birth sign's spells and powers. The change happens
+-- at the end of the frame. Unlike @{#PLAYER.setBirthSign}, it only works until character creation is finished.
+-- @function [parent=#PLAYER] setCharGenBirthSign
+-- @param openmw.core#GameObject player
+-- @param #any birthSign The record or the ID of a birth sign
+
+---
+-- The heads that the player can choose for a race and a gender in character creation, as the race window offers them.
+-- These are the race's playable skin body parts for heads of that gender, except the ones for the first person view.
+-- @function [parent=#PLAYER] getCharGenHeads
+-- @param #any race The record or the ID of a race
+-- @param #boolean isMale
+-- @return #list<#string> The IDs of the body parts
+
+---
+-- The hairs that the player can choose for a race and a gender in character creation. See @{#PLAYER.getCharGenHeads}.
+-- @function [parent=#PLAYER] getCharGenHairs
+-- @param #any race The record or the ID of a race
+-- @param #boolean isMale
+-- @return #list<#string> The IDs of the body parts
+
+---
+-- The questions that character creation can ask to find a class for the player, in the order it asks them. Each
+-- answer stands for a specialization. @{#PLAYER.getCharGenClassForAnswers} turns the answers into a class. The engine's
+-- window shows the three answers of a question in a random order.
+-- @function [parent=#PLAYER] getCharGenClassQuestions
+-- @return #list<#PLAYERClassQuestion>
+
+---
+-- @type PLAYERClassQuestion
+-- @field #string question The text of the question
+-- @field #table answers The text of each answer, by specialization: `combat`, `magic` and `stealth`
+-- @field #string sound The voice that reads out the question, for `openmw.ambient.say`
+
+---
+-- The class that the answers to the class questions lead to, as character creation finds it.
+-- @function [parent=#PLAYER] getCharGenClassForAnswers
+-- @param #table answers How many answers the player chose for each specialization: `combat`, `magic` and
+-- `stealth`. They must add up to the number of questions.
+-- @return #string The ID of the class
+-- @usage local classId = types.Player.getCharGenClassForAnswers({ combat = 6, magic = 1, stealth = 3 })
+
+---
 -- Whether the player can rest or wait where they are now. The built-in rest menu checks the same conditions when it opens.
 -- The player can neither rest nor wait while underwater or with an enemy nearby. They can't wait in the air either, unless they use a bed.
 -- When waiting is allowed, the player can sleep, and so heal, only where the cell allows it or in a bed. Anywhere else they can only wait.
@@ -2202,7 +2293,8 @@
 -- @return #string The player's birth sign
 
 ---
--- Can be used only in global scripts. Note that this does not update the player's spells.
+-- Can be used only in global scripts. Note that this does not update the player's spells. To give the player a birth
+-- sign with its spells and powers during character creation, use @{#PLAYER.setCharGenBirthSign}.
 -- @function [parent=#PLAYER] setBirthSign
 -- @param openmw.core#GameObject player
 -- @param #any recordOrId Record or string ID of the birth sign to assign
