@@ -38,6 +38,32 @@
 -- @function [parent=#ui] getCursorVisible
 -- @return #boolean
 
+---
+-- Fade the screen back in from black, as the engine does after the player travels, trains or rests.
+-- Fades run one after another: this one starts when the fades that are already running end, like the `FadeIn` mwscript function. A fade with no duration and no delay happens at once.
+-- The change happens at the end of the frame.
+-- @function [parent=#ui] fadeScreenIn
+-- @param #number duration Seconds the fade takes. 0 shows the screen at once.
+-- @param #number delay Seconds to wait before the fade starts (optional, 0 by default).
+
+---
+-- Fade the screen out to black, as the engine does before the player travels, trains or rests.
+-- Fades run one after another, like the `FadeOut` mwscript function. The change happens at the end of the frame.
+-- @function [parent=#ui] fadeScreenOut
+-- @param #number duration Seconds the fade takes. 0 makes the screen black at once.
+-- @param #number delay Seconds to wait before the fade starts (optional, 0 by default).
+-- @usage -- What the training window does
+-- ui.fadeScreenOut(0.2)
+-- ui.fadeScreenIn(0.2, 0.2)
+
+---
+-- Fade the screen to a level of black, like the `FadeTo` mwscript function.
+-- Fades run one after another. The change happens at the end of the frame.
+-- @function [parent=#ui] fadeScreenTo
+-- @param #number percent How black the screen gets, from 0 (fully visible) to 100 (black).
+-- @param #number duration Seconds the fade takes.
+-- @param #number delay Seconds to wait before the fade starts (optional, 0 by default).
+
 --- Override the engine cursor. Pass `nil` to restore the cursor back to engine-controlled.
 -- @function [parent=#ui] setCursor
 -- @param #CursorResource cursor

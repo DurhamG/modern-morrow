@@ -130,6 +130,34 @@ namespace MWLua
                 [visible] { MWBase::Environment::get().getWindowManager()->setCursorVisible(visible); });
         };
         api["getCursorVisible"] = [windowManager]() { return windowManager->getCursorVisible(); };
+        // Fades queue after the fades that are already running, like the FadeIn, FadeOut and FadeTo mwscript functions.
+        const auto verifyFade = [](float duration, float delay) {
+            if (!(duration >= 0.f) || !(delay >= 0.f))
+                throw std::runtime_error("The duration and the delay of a fade can't be negative");
+        };
+        api["fadeScreenIn"]
+            = [luaManager = context.mLuaManager, verifyFade](float duration, sol::optional<float> delay) {
+                  verifyFade(duration, delay.value_or(0.f));
+                  luaManager->addAction([duration, delay = delay.value_or(0.f)] {
+                      MWBase::Environment::get().getWindowManager()->fadeScreenIn(duration, false, delay);
+                  });
+              };
+        api["fadeScreenOut"]
+            = [luaManager = context.mLuaManager, verifyFade](float duration, sol::optional<float> delay) {
+                  verifyFade(duration, delay.value_or(0.f));
+                  luaManager->addAction([duration, delay = delay.value_or(0.f)] {
+                      MWBase::Environment::get().getWindowManager()->fadeScreenOut(duration, false, delay);
+                  });
+              };
+        api["fadeScreenTo"]
+            = [luaManager = context.mLuaManager, verifyFade](int percent, float duration, sol::optional<float> delay) {
+                  verifyFade(duration, delay.value_or(0.f));
+                  if (percent < 0 || percent > 100)
+                      throw std::runtime_error("The percentage must be between 0 and 100");
+                  luaManager->addAction([percent, duration, delay = delay.value_or(0.f)] {
+                      MWBase::Environment::get().getWindowManager()->fadeScreenTo(percent, duration, false, delay);
+                  });
+              };
         api["_setHudVisibility"] = [luaManager = context.mLuaManager](bool state) {
             luaManager->addAction([state] { MWBase::Environment::get().getWindowManager()->setHudVisibility(state); });
         };
