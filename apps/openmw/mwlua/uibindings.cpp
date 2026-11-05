@@ -134,6 +134,20 @@ namespace MWLua
             luaManager->addAction([state] { MWBase::Environment::get().getWindowManager()->setHudVisibility(state); });
         };
         api["_isHudVisible"] = []() -> bool { return MWBase::Environment::get().getWindowManager()->isHudVisible(); };
+        api["_getAllHudElements"] = [windowManager](sol::this_state thisState) {
+            sol::table res(thisState, sol::create);
+            for (std::string_view name : windowManager->getAllHudElementIds())
+                res[name] = name;
+            return res;
+        };
+        api["_setHudElementVisibility"] = [windowManager, luaManager = context.mLuaManager](
+                                              std::string element, bool visible) {
+            luaManager->addAction(
+                [=, element = std::move(element)] { windowManager->setHudElementDisabledByLua(element, !visible); },
+                "Set HUD element visibility");
+        };
+        api["_isHudElementVisible"]
+            = [windowManager](std::string_view element) { return windowManager->isHudElementVisible(element); };
         api["_getDefaultFontSize"] = []() -> int { return Settings::gui().mFontSize; };
         api["showMessage"]
             = [luaManager = context.mLuaManager](std::string_view message, const sol::optional<sol::table>& options) {

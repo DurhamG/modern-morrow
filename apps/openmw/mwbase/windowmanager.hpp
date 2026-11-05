@@ -434,6 +434,9 @@ namespace MWBase
         virtual bool isWindowVisible(std::string_view windowId) const = 0;
         virtual std::vector<std::string_view> getAllWindowIds() const = 0;
         virtual std::vector<std::string_view> getAllowedWindowIds(MWGui::GuiMode mode) const = 0;
+        virtual void setHudElementDisabledByLua(std::string_view elementId, bool disabled) = 0;
+        virtual bool isHudElementVisible(std::string_view elementId) const = 0;
+        virtual std::vector<std::string_view> getAllHudElementIds() const = 0;
     };
 }
 

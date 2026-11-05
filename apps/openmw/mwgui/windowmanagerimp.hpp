@@ -422,6 +422,9 @@ namespace MWGui
         bool isWindowVisible(std::string_view windowId) const override;
         std::vector<std::string_view> getAllWindowIds() const override;
         std::vector<std::string_view> getAllowedWindowIds(GuiMode mode) const override;
+        void setHudElementDisabledByLua(std::string_view elementId, bool disabled) override;
+        bool isHudElementVisible(std::string_view elementId) const override;
+        std::vector<std::string_view> getAllHudElementIds() const override;
 
     private:
         unsigned int mOldUpdateMask;

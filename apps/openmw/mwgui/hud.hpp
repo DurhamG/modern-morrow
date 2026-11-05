@@ -2,6 +2,9 @@
 #define OPENMW_GAME_MWGUI_HUD_H
 
 #include <memory>
+#include <set>
+#include <string_view>
+#include <vector>
 
 #include "mapwindow.hpp"
 #include "spellicons.hpp"
@@ -21,6 +24,21 @@ namespace MWGui
     class HUD : public WindowBase, public LocalMapBase, public StatsListener
     {
     public:
+        /// The parts of the HUD that Lua can hide one by one
+        enum class Element
+        {
+            DynamicStats,
+            EnemyHealth,
+            Weapon,
+            Spell,
+            WeaponSpellName,
+            Sneak,
+            ActiveEffects,
+            Minimap,
+            CellName,
+            DrowningBar,
+        };
+
         HUD(CustomMarkerCollection& customMarkers, DragAndDrop* dragAndDrop, MWRender::LocalMap* localMapRender);
         virtual ~HUD();
         void setValue(std::string_view id, const MWMechanics::DynamicStat<float>& value) override;
@@ -66,6 +84,12 @@ namespace MWGui
 
         void dropDraggedItem(float mouseX, float mouseY);
 
+        static std::vector<std::string_view> getElementIdsForLua();
+
+        /// While an element is disabled by Lua, it stays hidden when the engine would show it.
+        void setElementDisabledByLua(std::string_view elementId, bool disabled);
+        bool isElementVisible(std::string_view elementId) const;
+
     private:
         MyGUI::ProgressBar *mHealth = nullptr, *mMagicka = nullptr, *mStamina = nullptr, *mEnemyHealth = nullptr,
                            *mDrowning = nullptr;
@@ -99,9 +123,17 @@ namespace MWGui
         float mEnemyHealthTimer = -1;
         float mDrowningFlashTheta = 0.f;
 
-        bool mMapVisible = true;
+        // Whether the engine shows these elements. Lua can still hide them.
+        bool mHmsVisible = true;
         bool mWeaponVisible = true;
         bool mSpellVisible = true;
+        bool mSneakVisible = false;
+        bool mEffectVisible = true;
+        bool mMapVisible = true;
+        bool mDrowningBarVisible = false;
+
+        std::set<Element> mElementsDisabledByLua;
+
         bool mWorldMouseOver = false;
         bool mIsDrowning = false;
 
@@ -118,6 +150,10 @@ namespace MWGui
         void doorMarkerCreated(MyGUI::Widget* marker) override;
 
         void updateEnemyHealthBar();
+        void setEnemyHealthVisible(bool visible);
+
+        bool isDisabledByLua(Element element) const { return mElementsDisabledByLua.contains(element); }
+        void updateElementVisibility(Element element);
 
         void updatePositions();
     };

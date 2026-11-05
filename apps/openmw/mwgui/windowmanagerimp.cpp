@@ -2783,6 +2783,21 @@ namespace MWGui
         return res;
     }
 
+    void WindowManager::setHudElementDisabledByLua(std::string_view elementId, bool disabled)
+    {
+        mHud->setElementDisabledByLua(elementId, disabled);
+    }
+
+    bool WindowManager::isHudElementVisible(std::string_view elementId) const
+    {
+        return mHud->isElementVisible(elementId);
+    }
+
+    std::vector<std::string_view> WindowManager::getAllHudElementIds() const
+    {
+        return HUD::getElementIdsForLua();
+    }
+
     int WindowManager::getControllerMenuHeight()
     {
         int height = MyGUI::RenderManager::getInstance().getViewSize().height;

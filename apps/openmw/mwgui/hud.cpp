@@ -1,5 +1,9 @@
 #include "hud.hpp"
 
+#include <stdexcept>
+#include <string>
+#include <utility>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_InputManager.h>
@@ -33,6 +37,32 @@
 
 namespace MWGui
 {
+    namespace
+    {
+        constexpr std::pair<std::string_view, HUD::Element> sElementIds[] = {
+            { "DynamicStats", HUD::Element::DynamicStats },
+            { "EnemyHealth", HUD::Element::EnemyHealth },
+            { "Weapon", HUD::Element::Weapon },
+            { "Spell", HUD::Element::Spell },
+            { "WeaponSpellName", HUD::Element::WeaponSpellName },
+            { "Sneak", HUD::Element::Sneak },
+            { "ActiveEffects", HUD::Element::ActiveEffects },
+            { "Minimap", HUD::Element::Minimap },
+            { "CellName", HUD::Element::CellName },
+            { "DrowningBar", HUD::Element::DrowningBar },
+        };
+
+        HUD::Element findElement(std::string_view elementId)
+        {
+            for (const auto& [id, element] : sElementIds)
+            {
+                if (id == elementId)
+                    return element;
+            }
+            throw std::logic_error("Invalid HUD element: " + std::string(elementId));
+        }
+    }
+
     HUD::HUD(CustomMarkerCollection& customMarkers, DragAndDrop* dragAndDrop, MWRender::LocalMap* localMapRender)
         : WindowBase("openmw_hud.layout")
         , LocalMapBase(customMarkers, localMapRender, Settings::map().mLocalMapHudFogOfWar)
@@ -161,7 +191,8 @@ namespace MWGui
 
     void HUD::setDrowningBarVisible(bool visible)
     {
-        mDrowningBar->setVisible(visible);
+        mDrowningBarVisible = visible;
+        mDrowningBar->setVisible(visible && !isDisabledByLua(Element::DrowningBar));
     }
 
     void HUD::dropDraggedItem(float mouseX, float mouseY)
@@ -290,7 +321,7 @@ namespace MWGui
             mCellName = cellName;
 
             mCellNameBox->setCaptionWithReplacing("#{sCell=" + mCellName + "}");
-            mCellNameBox->setVisible(mMapVisible);
+            mCellNameBox->setVisible(mMapVisible && !isDisabledByLua(Element::CellName));
         }
     }
 
@@ -306,11 +337,8 @@ namespace MWGui
             mWeaponSpellBox->setVisible(false);
 
         mEnemyHealthTimer -= dt;
-        if (mEnemyHealth->getVisible() && mEnemyHealthTimer < 0)
-        {
-            mEnemyHealth->setVisible(false);
-            mWeaponSpellBox->setPosition(mWeaponSpellBox->getPosition() + MyGUI::IntPoint(0, 20));
-        }
+        if (mEnemyHealthTimer < 0)
+            setEnemyHealthVisible(false);
 
         mSpellIcons->updateWidgets(mEffectBox, true);
 
@@ -343,7 +371,7 @@ namespace MWGui
             mWeaponSpellTimer = 5.0f;
             mSpellName = spellName;
             mWeaponSpellBox->setCaption(mSpellName);
-            mWeaponSpellBox->setVisible(true);
+            mWeaponSpellBox->setVisible(!isDisabledByLua(Element::WeaponSpellName));
         }
 
         mSpellStatus->setProgressRange(100);
@@ -374,7 +402,7 @@ namespace MWGui
             mWeaponSpellTimer = 5.0f;
             mSpellName = itemName;
             mWeaponSpellBox->setCaption(mSpellName);
-            mWeaponSpellBox->setVisible(true);
+            mWeaponSpellBox->setVisible(!isDisabledByLua(Element::WeaponSpellName));
         }
 
         mSpellStatus->setProgressRange(100);
@@ -394,7 +422,7 @@ namespace MWGui
             mWeaponSpellTimer = 5.0f;
             mWeaponName = itemName;
             mWeaponSpellBox->setCaption(mWeaponName);
-            mWeaponSpellBox->setVisible(true);
+            mWeaponSpellBox->setVisible(!isDisabledByLua(Element::WeaponSpellName));
         }
 
         mWeapBox->clearUserStrings();
@@ -415,7 +443,7 @@ namespace MWGui
             mWeaponSpellTimer = 5.0f;
             mSpellName = spellName;
             mWeaponSpellBox->setCaptionWithReplacing(mSpellName);
-            mWeaponSpellBox->setVisible(true);
+            mWeaponSpellBox->setVisible(!isDisabledByLua(Element::WeaponSpellName));
         }
 
         mSpellStatus->setProgressRange(100);
@@ -433,7 +461,7 @@ namespace MWGui
             mWeaponSpellTimer = 5.0f;
             mWeaponName = itemName;
             mWeaponSpellBox->setCaptionWithReplacing(mWeaponName);
-            mWeaponSpellBox->setVisible(true);
+            mWeaponSpellBox->setVisible(!isDisabledByLua(Element::WeaponSpellName));
         }
 
         mWeapStatus->setProgressRange(100);
@@ -490,6 +518,8 @@ namespace MWGui
 
     void HUD::setHmsVisible(bool visible)
     {
+        mHmsVisible = visible;
+        visible = visible && !isDisabledByLua(Element::DynamicStats);
         mHealth->setVisible(visible);
         mMagicka->setVisible(visible);
         mStamina->setVisible(visible);
@@ -498,31 +528,36 @@ namespace MWGui
 
     void HUD::setWeapVisible(bool visible)
     {
-        mWeapBox->setVisible(visible);
+        mWeaponVisible = visible;
+        mWeapBox->setVisible(visible && !isDisabledByLua(Element::Weapon));
         updatePositions();
     }
 
     void HUD::setSpellVisible(bool visible)
     {
-        mSpellBox->setVisible(visible);
+        mSpellVisible = visible;
+        mSpellBox->setVisible(visible && !isDisabledByLua(Element::Spell));
         updatePositions();
     }
 
     void HUD::setSneakVisible(bool visible)
     {
-        mSneakBox->setVisible(visible);
+        mSneakVisible = visible;
+        mSneakBox->setVisible(visible && !isDisabledByLua(Element::Sneak));
         updatePositions();
     }
 
     void HUD::setEffectVisible(bool visible)
     {
-        mEffectBox->setVisible(visible);
+        mEffectVisible = visible;
+        mEffectBox->setVisible(visible && !isDisabledByLua(Element::ActiveEffects));
         updatePositions();
     }
 
     void HUD::setMinimapVisible(bool visible)
     {
-        mMinimapBox->setVisible(visible);
+        mMapVisible = visible;
+        mMinimapBox->setVisible(visible && !isDisabledByLua(Element::Minimap));
         updatePositions();
     }
 
@@ -541,8 +576,6 @@ namespace MWGui
         if (!mSpellBox->getVisible())
             sneakDx += mSneakBoxBaseLeft - mSpellBoxBaseLeft;
 
-        mWeaponVisible = mWeapBox->getVisible();
-        mSpellVisible = mSpellBox->getVisible();
         if (!mWeaponVisible && !mSpellVisible)
             mWeaponSpellBox->setVisible(false);
 
@@ -557,7 +590,6 @@ namespace MWGui
         if (!mMinimapBox->getVisible())
             effectsDx = mEffectBoxBaseRight - mMinimapBoxBaseRight;
 
-        mMapVisible = mMinimapBox->getVisible();
         if (!mMapVisible)
             mCellNameBox->setVisible(false);
 
@@ -593,10 +625,18 @@ namespace MWGui
                                 ->get<ESM::GameSetting>()
                                 .find("fNPCHealthBarTime")
                                 ->mValue.getFloat();
-        if (!mEnemyHealth->getVisible())
-            mWeaponSpellBox->setPosition(mWeaponSpellBox->getPosition() - MyGUI::IntPoint(0, 20));
-        mEnemyHealth->setVisible(true);
+        setEnemyHealthVisible(true);
         updateEnemyHealthBar();
+    }
+
+    void HUD::setEnemyHealthVisible(bool visible)
+    {
+        visible = visible && !isDisabledByLua(Element::EnemyHealth);
+        if (mEnemyHealth->getVisible() == visible)
+            return;
+        mEnemyHealth->setVisible(visible);
+        // The weapon or spell name moves up to make room for the enemy's health bar
+        mWeaponSpellBox->setPosition(mWeaponSpellBox->getPosition() + MyGUI::IntPoint(0, visible ? -20 : 20));
     }
 
     void HUD::clear()
@@ -623,6 +663,106 @@ namespace MWGui
         mSpellBox->setUserData(MyGUI::Any::Null);
 
         mActiveCell = nullptr;
+
+        for (Element element : std::exchange(mElementsDisabledByLua, {}))
+            updateElementVisibility(element);
+    }
+
+    std::vector<std::string_view> HUD::getElementIdsForLua()
+    {
+        std::vector<std::string_view> ids;
+        for (const auto& [id, element] : sElementIds)
+            ids.push_back(id);
+        return ids;
+    }
+
+    void HUD::setElementDisabledByLua(std::string_view elementId, bool disabled)
+    {
+        const Element element = findElement(elementId);
+        if (disabled)
+            mElementsDisabledByLua.insert(element);
+        else
+            mElementsDisabledByLua.erase(element);
+        updateElementVisibility(element);
+    }
+
+    bool HUD::isElementVisible(std::string_view elementId) const
+    {
+        const MyGUI::Widget* widget = nullptr;
+        switch (findElement(elementId))
+        {
+            case Element::DynamicStats:
+                widget = mHealth;
+                break;
+            case Element::EnemyHealth:
+                widget = mEnemyHealth;
+                break;
+            case Element::Weapon:
+                widget = mWeapBox;
+                break;
+            case Element::Spell:
+                widget = mSpellBox;
+                break;
+            case Element::WeaponSpellName:
+                widget = mWeaponSpellBox;
+                break;
+            case Element::Sneak:
+                widget = mSneakBox;
+                break;
+            case Element::ActiveEffects:
+                widget = mEffectBox;
+                break;
+            case Element::Minimap:
+                widget = mMinimapBox;
+                break;
+            case Element::CellName:
+                widget = mCellNameBox;
+                break;
+            case Element::DrowningBar:
+                widget = mDrowningBar;
+                break;
+        }
+        return widget->getInheritedVisible();
+    }
+
+    void HUD::updateElementVisibility(Element element)
+    {
+        switch (element)
+        {
+            case Element::DynamicStats:
+                setHmsVisible(mHmsVisible);
+                break;
+            case Element::EnemyHealth:
+                setEnemyHealthVisible(mEnemyHealthTimer >= 0);
+                if (mEnemyActor.isSet() && mEnemyHealth->getVisible())
+                    updateEnemyHealthBar();
+                break;
+            case Element::Weapon:
+                setWeapVisible(mWeaponVisible);
+                break;
+            case Element::Spell:
+                setSpellVisible(mSpellVisible);
+                break;
+            case Element::WeaponSpellName:
+                mWeaponSpellBox->setVisible(
+                    !isDisabledByLua(element) && mWeaponSpellTimer > 0 && (mWeaponVisible || mSpellVisible));
+                break;
+            case Element::Sneak:
+                setSneakVisible(mSneakVisible);
+                break;
+            case Element::ActiveEffects:
+                setEffectVisible(mEffectVisible);
+                break;
+            case Element::Minimap:
+                setMinimapVisible(mMapVisible);
+                break;
+            case Element::CellName:
+                mCellNameBox->setVisible(!isDisabledByLua(element) && mCellNameTimer > 0 && mMapVisible);
+                break;
+            case Element::DrowningBar:
+                setDrowningBarVisible(mDrowningBarVisible);
+                break;
+        }
     }
 
     void HUD::customMarkerCreated(MyGUI::Widget* marker)
