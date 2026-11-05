@@ -48,6 +48,7 @@
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/npcstats.hpp"
+#include "../mwmechanics/services.hpp"
 
 #include "filter.hpp"
 #include "keywordsearch.hpp"
@@ -722,6 +723,61 @@ namespace MWDialogue
             return true;
         }
         return false;
+    }
+
+    bool DialogueManager::requestService(MWMechanics::DialogueService service)
+    {
+        if (mIsInChoice || mGoodbye || mActor.isEmpty())
+            return false;
+        const std::vector<MWMechanics::DialogueService> services = MWMechanics::getDialogueServices(mActor);
+        if (std::find(services.begin(), services.end(), service) == services.end())
+            return false;
+
+        ServiceType type;
+        MWGui::GuiMode mode;
+        switch (service)
+        {
+            case MWMechanics::DialogueService::Barter:
+                type = ServiceType::Barter;
+                mode = MWGui::GM_Barter;
+                break;
+            case MWMechanics::DialogueService::Spells:
+                type = ServiceType::Spells;
+                mode = MWGui::GM_SpellBuying;
+                break;
+            case MWMechanics::DialogueService::Travel:
+                type = ServiceType::Travel;
+                mode = MWGui::GM_Travel;
+                break;
+            case MWMechanics::DialogueService::Spellmaking:
+                type = ServiceType::Spellmaking;
+                mode = MWGui::GM_SpellCreation;
+                break;
+            case MWMechanics::DialogueService::Enchanting:
+                type = ServiceType::Enchanting;
+                mode = MWGui::GM_Enchanting;
+                break;
+            case MWMechanics::DialogueService::Training:
+                type = ServiceType::Training;
+                mode = MWGui::GM_Training;
+                break;
+            case MWMechanics::DialogueService::Repair:
+                type = ServiceType::Repair;
+                mode = MWGui::GM_MerchantRepair;
+                break;
+            case MWMechanics::DialogueService::CompanionShare:
+                // Companions don't refuse to share
+                MWBase::Environment::get().getWindowManager()->pushGuiMode(MWGui::GM_Companion, mActor);
+                return true;
+            default:
+                return false;
+        }
+
+        // First the refusals for any service, then the ones for this service
+        if (checkServiceRefused(ServiceType::Any) || checkServiceRefused(type))
+            return false;
+        MWBase::Environment::get().getWindowManager()->pushGuiMode(mode, mActor);
+        return true;
     }
 
     bool DialogueManager::say(const MWWorld::Ptr& actor, const ESM::RefId& topic)

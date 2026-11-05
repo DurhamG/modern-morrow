@@ -29,6 +29,11 @@ namespace MWDialogue
     class KeywordSearch;
 }
 
+namespace MWMechanics
+{
+    enum class DialogueService;
+}
+
 namespace MWWorld
 {
     class Ptr;
@@ -127,18 +132,6 @@ namespace MWBase
             Exhausted = 2
         };
 
-        enum ServiceType
-        {
-            Any = -1,
-            Barter = 1,
-            Repair = 2,
-            Spells = 3,
-            Training = 4,
-            Travel = 5,
-            Spellmaking = 6,
-            Enchanting = 7
-        };
-
         /// The topics that the player can ask about, sorted by name. They are worked out again after each step of the
         /// conversation.
         virtual const std::vector<AvailableTopic>& getAvailableTopics() const = 0;
@@ -146,7 +139,11 @@ namespace MWBase
         /// Finds the available topics in a text, to show them as links
         virtual const MWDialogue::KeywordSearch& getAvailableTopicSearch() const = 0;
 
-        virtual bool checkServiceRefused(ServiceType service = ServiceType::Any) = 0;
+        /// Asks the actor for @a service, one of the services in MWMechanics::getDialogueServices. The actor can refuse
+        /// with a line from the "Service Refusal" topic. Otherwise the service's window opens. Returns whether it
+        /// opened. Does nothing and returns false if the actor doesn't offer the service, or while the player must
+        /// answer a choice or say goodbye. Persuasion has no window of its own here, see persuade.
+        virtual bool requestService(MWMechanics::DialogueService service) = 0;
 
         /// Whether the player can try to persuade the actor in the way @a type, a
         /// MWBase::MechanicsManager::PersuasionType. Only NPCs can be persuaded, and a bribe needs the gold. The player

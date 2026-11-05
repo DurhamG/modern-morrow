@@ -28,6 +28,19 @@ namespace MWDialogue
 {
     class DialogueManager : public MWBase::DialogueManager
     {
+        /// The services that the conditions of the "Service Refusal" topic tell apart, as the value of the choice
+        enum ServiceType
+        {
+            Any = -1,
+            Barter = 1,
+            Repair = 2,
+            Spells = 3,
+            Training = 4,
+            Travel = 5,
+            Spellmaking = 6,
+            Enchanting = 7
+        };
+
         struct ActorKnownTopicInfo
         {
             int mFlags;
@@ -87,6 +100,8 @@ namespace MWDialogue
 
         void updateOriginalDisposition();
 
+        bool checkServiceRefused(ServiceType service);
+
         /// Replaces the temporary changes to the actor's disposition with the permanent ones
         void makeDispositionChangesPermanent();
 
@@ -126,7 +141,7 @@ namespace MWDialogue
 
         void goodbye() override;
 
-        bool checkServiceRefused(ServiceType service = ServiceType::Any) override;
+        bool requestService(MWMechanics::DialogueService service) override;
 
         bool say(const MWWorld::Ptr& actor, const ESM::RefId& topic) override;
 
