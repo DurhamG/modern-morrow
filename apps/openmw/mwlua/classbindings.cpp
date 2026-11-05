@@ -3,6 +3,9 @@
 #include <components/esm3/loadclas.hpp>
 #include <components/lua/luastate.hpp>
 
+#include "../mwbase/environment.hpp"
+#include "../mwworld/esmstore.hpp"
+
 #include "idcollectionbindings.hpp"
 #include "recordstore.hpp"
 #include "types/usertypeutil.hpp"
@@ -143,6 +146,9 @@ namespace MWLua
             Types::addProperty(record, "name", &ESM::Class::mName);
             Types::addProperty(record, "description", &ESM::Class::mDescription);
             Types::addProperty(record, "isPlayable", &ESM::Class::mData, &ESM::Class::CLDTstruct::mIsPlayable);
+            record["isCustom"] = sol::readonly_property([](const T& rec) -> bool {
+                return MWBase::Environment::get().getESMStore()->get<ESM::Class>().isDynamic(rec.mId);
+            });
             if constexpr (Types::RecordType<T>::isMutable)
             {
                 addClassStatArrayType(lua);

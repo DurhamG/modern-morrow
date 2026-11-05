@@ -1409,6 +1409,7 @@
 -- @field #list<#string> minorSkills A read-only list containing the minor skills of the class.
 -- @field #string description Class description
 -- @field #boolean isPlayable True if the player can play as this class
+-- @field #boolean isCustom True if the class was made during the game, such as the player's own class from character creation or a class from @{openmw_world#(world).createRecord}, rather than loaded from the content files. The list of classes in character creation leaves these out.
 -- @field #string specialization Class specialization. Either combat, magic, or stealth.
 
 ---

@@ -1554,6 +1554,9 @@ testing.registerGlobalTest('character creation', function()
     coroutine.yield()
     local madeUpId = types.NPC.record(player).class
     testing.expectEqual(types.NPC.classes.record(madeUpId).name, 'Lua class')
+    testing.expectEqual(types.NPC.classes.record(madeUpId).isCustom, true, 'A made-up class should be custom')
+    testing.expectEqual(types.NPC.classes.record('omw_chargen_class').isCustom, false,
+        'A class from the content files should not be custom')
     madeUp.name = 'Changed class'
     globals.chargenstate = 1
     types.Player.setCharGenClass(player, madeUp)
