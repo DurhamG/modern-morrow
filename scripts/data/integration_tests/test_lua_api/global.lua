@@ -1261,6 +1261,35 @@ testing.registerGlobalTest('picking up items', function()
     inventory:find(weapon.id):remove()
 end)
 
+testing.registerGlobalTest('disposing of a corpse', function()
+    local player = initPlayer()
+    local creature = world.createObject(types.Creature.record('landracer').id)
+    creature:addScript('idle.lua')
+    creature:teleport(player.cell, player.position + util.vector3(0, 300, 0))
+    coroutine.yield()
+    testing.expectEqual(pcall(types.Actor.disposeCorpse, creature), false,
+        'The player should not dispose of a living actor')
+    testing.expectEqual(pcall(types.Actor.disposeCorpse, player), false, 'The player should not dispose of themselves')
+
+    creature:sendEvent('TestKill')
+    for _ = 1, 10 do
+        coroutine.yield()
+        if types.Actor.isDead(creature) then
+            break
+        end
+    end
+    testing.expectEqual(types.Actor.isDead(creature), true, 'The creature should die')
+    types.Actor.disposeCorpse(creature)
+    for _ = 1, 10 do
+        coroutine.yield()
+        if creature.count == 0 then
+            break
+        end
+    end
+    testing.expectEqual(creature.count, 0, 'The corpse should leave the world')
+    testing.expectEqual(types.Actor.isDeathFinished(creature), true, 'The death should count as finished')
+end)
+
 testing.registerGlobalTest('dropping items', function()
     local player = initPlayer()
     local weapon = world.createRecord(types.Weapon.createRecordDraft({

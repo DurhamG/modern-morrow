@@ -142,6 +142,15 @@
 -- @return #boolean
 
 ---
+-- Remove a dead actor's corpse from the world, the way the Dispose of Corpse button of the container window does (only in global scripts).
+-- If the death animation is still playing, the death is counted first, the actor's mwscript runs, and the actor's summoned creatures vanish, as they would when the animation ends.
+-- The button takes all the items out of the corpse before it disposes of it. This doesn't: what the corpse still carries goes with it. Use @{#PLAYER.takeItem} first to keep the items.
+-- The actor must be dead and must not be the player. The corpses of persistent actors, such as some quest characters, stay, so this throws an error for them.
+-- The corpse leaves the world at the end of the frame.
+-- @function [parent=#Actor] disposeCorpse
+-- @param openmw.core#GameObject actor
+
+---
 -- Agent bounds to be used for pathfinding functions.
 -- @function [parent=#Actor] getPathfindingAgentBounds
 -- @param openmw.core#GameObject actor

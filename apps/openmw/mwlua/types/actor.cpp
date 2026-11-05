@@ -425,6 +425,24 @@ namespace MWLua
             return target.getClass().getCreatureStats(target).isDeathAnimationFinished();
         };
 
+        actor["disposeCorpse"] = [context](const GObject& object) {
+            const MWWorld::Ptr ptr = object.ptr();
+            if (!ptr.getClass().isActor() || ptr == MWMechanics::getPlayer())
+                throw std::runtime_error("Actor expected");
+            if (!ptr.getClass().getCreatureStats(ptr).isDead())
+                throw std::runtime_error("Only the corpses of dead actors can be disposed of");
+            if (ptr.getClass().isPersistent(ptr))
+                throw std::runtime_error("The corpses of persistent actors can't be disposed of");
+            context.mLuaManager->addAction(
+                [object] {
+                    const MWWorld::Ptr corpse = object.ptr();
+                    // An earlier action may have removed the corpse already.
+                    if (corpse.getCellRef().getCount() > 0 && corpse.isInCell())
+                        MWMechanics::disposeCorpse(corpse);
+                },
+                "DisposeCorpseAction");
+        };
+
         actor["getEncumbrance"] = [](const Object& object) -> float {
             const MWWorld::Ptr ptr = object.ptr();
             return ptr.getClass().getEncumbrance(ptr);
