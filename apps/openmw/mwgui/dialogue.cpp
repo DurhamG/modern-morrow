@@ -545,12 +545,12 @@ namespace MWGui
         mDeleteLater.clear();
     }
 
-    void DialogueWindow::onClose()
+    void DialogueWindow::setVisible(bool visible)
     {
-        if (MWBase::Environment::get().getWindowManager()->containsMode(GM_Dialogue))
-            return;
-        // Reset history
-        mHistoryContents.clear();
+        WindowBase::setVisible(visible);
+        // The conversation is over once the dialogue mode is gone. This also runs while Lua hides the window.
+        if (!visible && !MWBase::Environment::get().getWindowManager()->containsMode(GM_Dialogue))
+            mHistoryContents.clear();
     }
 
     bool DialogueWindow::setKeywords(const std::list<std::string>& keyWords)

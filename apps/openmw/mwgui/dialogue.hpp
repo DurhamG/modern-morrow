@@ -160,7 +160,7 @@ namespace MWGui
 
         void updateTopics();
 
-        void onClose() override;
+        void setVisible(bool visible) override;
 
         std::string_view getWindowIdForLua() const override { return "Dialogue"; }
 
