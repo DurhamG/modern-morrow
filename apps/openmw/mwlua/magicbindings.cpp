@@ -196,6 +196,15 @@ namespace MWLua
         }
     }
 
+    static const ESM::Enchantment* toEnchantment(const sol::object& enchantmentOrId)
+    {
+        if (enchantmentOrId.is<ESM::Enchantment>())
+            return enchantmentOrId.as<const ESM::Enchantment*>();
+        auto& store = MWBase::Environment::get().getWorld()->getStore();
+        auto refId = ESM::RefId::deserializeText(LuaUtil::cast<std::string_view>(enchantmentOrId));
+        return store.get<ESM::Enchantment>().find(refId);
+    }
+
     sol::table initCoreMagicBindings(const Context& context)
     {
         sol::state_view state = context.sol();
@@ -247,6 +256,12 @@ namespace MWLua
         sol::table enchantments(state, sol::create);
         addRecordFunctionBinding<ESM::Enchantment>(enchantments, context);
         enchantments["createRecordDraft"] = tableToEnchantment;
+        enchantments["getEffectiveCastCost"] = [](const sol::object& enchantmentOrId, const Object& actor) -> int {
+            const MWWorld::Ptr& ptr = actor.ptr();
+            if (!ptr.getClass().isActor())
+                throw std::runtime_error("Actor expected");
+            return MWMechanics::getEffectiveEnchantmentCastCost(*toEnchantment(enchantmentOrId), ptr);
+        };
         magicApi["enchantments"] = LuaUtil::makeReadOnly(enchantments);
 
         // MagicEffect store

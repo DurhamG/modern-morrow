@@ -228,6 +228,21 @@ testing.registerGlobalTest('spell success chance', function()
     testing.runLocalTest(player, 'spell success chance on self', { spell = spell.id, power = power.id })
 end)
 
+testing.registerGlobalTest('enchantment cast cost', function()
+    local player = initPlayer()
+    local effect = findCostlyEffect()
+    local enchantment = world.createRecord(core.magic.enchantments.createRecordDraft({
+        type = core.magic.ENCHANTMENT_TYPE.CastOnUse,
+        cost = 50,
+        charge = 100,
+        isAutocalc = false,
+        effects = {
+            { id = effect.id, range = core.magic.RANGE.Self, magnitudeMin = 10, magnitudeMax = 10, duration = 10 },
+        },
+    }))
+    testing.runLocalTest(player, 'enchantment cast cost on self', enchantment.id)
+end)
+
 testing.registerGlobalTest('UTF-8 characters', function()
     testing.expectEqual(utf8.codepoint("😀"), 0x1F600)
 

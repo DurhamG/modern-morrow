@@ -480,6 +480,18 @@ testing.registerLocalTestStep('spell success chance on self', function(ids)
     testing.expectEqual(spells:getSuccessChance(ids.power), 100, 'An unused power should always succeed')
 end)
 
+testing.registerLocalTestStep('enchantment cast cost on self', function(enchantmentId)
+    local enchant = types.NPC.stats.skills.enchant(self)
+    enchant.base = 10
+    coroutine.yield()
+    testing.expectEqual(core.magic.enchantments.getEffectiveCastCost(enchantmentId, self), 50,
+        'At Enchant 10 the cast cost should be the base cost')
+    enchant.base = 60
+    coroutine.yield()
+    testing.expectEqual(core.magic.enchantments.getEffectiveCastCost(enchantmentId, self), 25,
+        'Each point of Enchant above 10 should lower the cost by one percent')
+end)
+
 return {
     engineHandlers = {
         onFrame = testing.updateLocal,

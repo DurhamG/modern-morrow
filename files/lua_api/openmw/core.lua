@@ -742,6 +742,16 @@
 -- @param #Enchantment enchantment A Lua table with the fields of an Enchantment, with an optional field `template` that accepts an @{#Enchantment} as a base.
 -- @return #Enchantment A strongly typed Enchantment record.
 
+---
+-- The charge that the actor uses to cast the enchantment from an item.
+-- For an enchantment with @{#Enchantment.isAutocalc} set, the engine computes the base cost from the enchantment's effects.
+-- The actor's Enchant skill then lowers or raises it by one percent per point above or below 10, down to a minimum of 1.
+-- @function [parent=#Enchantments] getEffectiveCastCost
+-- @param #any enchantmentOrId An @{#Enchantment} or string record ID.
+-- @param #GameObject actor The actor who casts it.
+-- @return #number
+-- @usage local cost = core.magic.enchantments.getEffectiveCastCost(record.enchant, self)
+
 --- A read-only list of all @{#Enchantment} records in the world database, may be indexed by recordId.
 -- Implements [iterables#List](iterables.html#List) and [iterables#Map](iterables.html#map-iterable) of #Enchantment.
 -- @field [parent=#Enchantments] #list<#Enchantment> records
