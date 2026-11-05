@@ -36,6 +36,7 @@
 #include "apps/openmw/mwmechanics/recharge.hpp"
 #include "apps/openmw/mwmechanics/repair.hpp"
 #include "apps/openmw/mwmechanics/services.hpp"
+#include "apps/openmw/mwmechanics/spellmaking.hpp"
 #include "apps/openmw/mwmechanics/spellutil.hpp"
 #include "apps/openmw/mwworld/class.hpp"
 #include "apps/openmw/mwworld/containerstore.hpp"
@@ -437,6 +438,31 @@ namespace MWLua
         };
     }
 
+    // Throws an error for effects that the spellmaking or enchanting window wouldn't let the player choose.
+    static void verifyCustomEffects(const ESM::EffectList& effects, MWMechanics::CustomMagic type, bool isConstant)
+    {
+        switch (MWMechanics::getCustomEffectProblem(MWMechanics::getPlayer(), effects, type, isConstant))
+        {
+            case MWMechanics::CustomEffectProblem::None:
+                return;
+            case MWMechanics::CustomEffectProblem::TooManyEffects:
+                throw std::runtime_error(
+                    "There can be at most " + std::to_string(MWMechanics::sMaxCustomEffects) + " effects");
+            case MWMechanics::CustomEffectProblem::UnknownEffect:
+                throw std::runtime_error(type == MWMechanics::CustomMagic::Spell
+                        ? "The player doesn't know an effect, or it doesn't allow spellmaking"
+                        : "The player doesn't know an effect, or it doesn't allow enchanting");
+            case MWMechanics::CustomEffectProblem::RepeatedEffect:
+                throw std::runtime_error("An effect is there twice");
+            case MWMechanics::CustomEffectProblem::RangeNotAllowed:
+                throw std::runtime_error("An effect has a range that it doesn't allow");
+            case MWMechanics::CustomEffectProblem::InvalidParameters:
+                throw std::runtime_error(
+                    "An effect lacks its skill or attribute, its magnitude, duration or area is out of bounds, or an "
+                    "effect on self has an area");
+        }
+    }
+
     // What a script picked for enchanting, as it describes it in a Lua table. The items are kept as Lua objects,
     // so that a queued action can find them again.
     struct EnchantingSetup
@@ -608,6 +634,93 @@ namespace MWLua
                           reportOutcome(context, callback, enchanting->create());
                       },
                       "EnchantItemAction");
+              };
+    }
+
+    // What a script picked for spellmaking, as it describes it in a Lua table. The merchant is kept as a Lua object,
+    // so that a queued action can find them again.
+    struct SpellmakingSetup
+    {
+        std::optional<Object> mMerchant;
+        ESM::Spell mSpell;
+    };
+
+    static SpellmakingSetup toSpellmakingSetup(const sol::table& table)
+    {
+        SpellmakingSetup setup;
+        setup.mMerchant = getField<Object>(table, "merchant");
+        if (!setup.mMerchant)
+            throw std::runtime_error("Spellmaking needs a merchant");
+        verifyActor(setup.mMerchant->ptr().getClass());
+        ESM::EffectList effects;
+        if (const std::optional<sol::table> list = getField<sol::table>(table, "effects"))
+            effects = tableToEffectList(*list);
+        verifyCustomEffects(effects, MWMechanics::CustomMagic::Spell, false);
+        setup.mSpell = MWMechanics::makeCustomSpell(getField<std::string>(table, "name").value_or(""), effects);
+        return setup;
+    }
+
+    static sol::table toMagicEffectList(sol::this_state thisState, MWMechanics::CustomMagic type)
+    {
+        sol::table result(thisState, sol::create);
+        for (const ESM::MagicEffect* effect : MWMechanics::getCustomMagicEffects(MWMechanics::getPlayer(), type))
+            result.add(effect);
+        return result;
+    }
+
+    static void addSpellmakingBindings(sol::table& playerBindings, const Context& context)
+    {
+        playerBindings["getSpellmakingEffects"] = [](sol::this_state thisState, const Object& player) -> sol::table {
+            verifyPlayer(player);
+            return toMagicEffectList(thisState, MWMechanics::CustomMagic::Spell);
+        };
+        playerBindings["getSpellmakingInfo"]
+            = [](sol::this_state thisState, const Object& player, const sol::table& table) -> sol::table {
+            verifyPlayer(player);
+            const SpellmakingSetup setup = toSpellmakingSetup(table);
+            sol::table result(thisState, sol::create);
+            result["cost"] = setup.mSpell.mData.mCost;
+            result["price"] = 0;
+            result["chance"] = 0;
+            // The spellmaking window shows no price or chance without effects.
+            if (!setup.mSpell.mEffects.mList.empty())
+            {
+                const float chance = MWMechanics::calcSpellBaseSuccessChance(&setup.mSpell, player.ptr(), nullptr);
+                result["price"] = MWMechanics::getCustomSpellPrice(setup.mMerchant->ptr(), setup.mSpell.mEffects);
+                result["chance"] = std::clamp(static_cast<int>(chance), 0, 100);
+            }
+            return result;
+        };
+        playerBindings["makeSpell"]
+            = [context](const Object& player, const sol::table& table, sol::optional<sol::table> callback) {
+                  verifyBuyer(player);
+                  const SpellmakingSetup setup = toSpellmakingSetup(table);
+                  switch (MWMechanics::getSpellmakingProblem(setup.mMerchant->ptr(), setup.mSpell))
+                  {
+                      case MWMechanics::SpellmakingProblem::None:
+                          break;
+                      case MWMechanics::SpellmakingProblem::NoEffects:
+                      case MWMechanics::SpellmakingProblem::NoCost:
+                          throw std::runtime_error("The spell needs at least one effect");
+                      case MWMechanics::SpellmakingProblem::NoName:
+                          throw std::runtime_error("The spell needs a name");
+                      case MWMechanics::SpellmakingProblem::NotEnoughGold:
+                          throw std::runtime_error("The player doesn't have enough gold");
+                  }
+                  context.mLuaManager->addAction(
+                      [context, setup, callback = toCallback(callback)] {
+                          const MWWorld::Ptr merchant = setup.mMerchant->ptr();
+                          // An earlier action may have spent the gold.
+                          if (MWMechanics::getSpellmakingProblem(merchant, setup.mSpell)
+                              != MWMechanics::SpellmakingProblem::None)
+                          {
+                              reportOutcome(context, callback, sol::lua_nil);
+                              return;
+                          }
+                          const ESM::Spell* spell = MWMechanics::buyCustomSpell(merchant, setup.mSpell);
+                          reportOutcome(context, callback, spell->mId.serializeText());
+                      },
+                      "MakeSpellAction");
               };
     }
 
@@ -1465,6 +1578,7 @@ namespace MWLua
         addToolBindings(player, context);
         addEnchantingBindings(player, context);
         addAlchemyBindings(player, context);
+        addSpellmakingBindings(player, context);
         addBarterBindings(player, context);
         addLevelUpBindings(player, context);
 

@@ -713,6 +713,76 @@ testing.registerGlobalTest('alchemy', function()
     inventory:find('OMW_Test_Mortar'):remove()
 end)
 
+testing.registerGlobalTest('spellmaking', function()
+    local player = initPlayer()
+    removeGold(player)
+    local merchant = world.createObject(types.NPC.record(player).id)
+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    local known = createTestSpell({ type = core.magic.SPELL_TYPE.Spell })
+    local effect = findCostlyEffect()
+    local spells = types.Actor.spells(player)
+    coroutine.yield()
+
+    local params = {
+        id = effect.id,
+        range = core.magic.RANGE.Target,
+        magnitudeMin = 1,
+        magnitudeMax = 10,
+        duration = 5,
+    }
+    local setup = { merchant = merchant, name = 'Custom spell', effects = { params } }
+    testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, setup), false,
+        'The player should not use an effect from a spell they do not know')
+
+    spells:add(known)
+    coroutine.yield()
+    local listed = false
+    for _, listedEffect in ipairs(types.Player.getSpellmakingEffects(player)) do
+        listed = listed or listedEffect.id == effect.id
+    end
+    testing.expect(listed, 'The player should be able to use the effects of the spells they know')
+    local info = types.Player.getSpellmakingInfo(player, setup)
+    testing.expectGreaterThan(info.cost, 0, 'The spell should cost magicka')
+    testing.expectGreaterThan(info.price, 0, 'The merchant should ask for gold')
+    testing.expectGreaterOrEqual(info.chance, 0, 'The chance should be at least 0')
+    testing.expectLessOrEqual(info.chance, 100, 'The chance should be at most 100')
+
+    local tooStrong = { id = effect.id, range = core.magic.RANGE.Target, magnitudeMin = 1, magnitudeMax = 101 }
+    local strong = { merchant = merchant, effects = { tooStrong } }
+    testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, strong), false,
+        'The magnitude should be at most 100')
+    local twice = { merchant = merchant, effects = { params, params } }
+    testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, twice), false,
+        'An effect should not be there twice')
+    local onSelf = { id = effect.id, range = core.magic.RANGE.Self, magnitudeMin = 1, magnitudeMax = 10, duration = 5 }
+    testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, { merchant = merchant, effects = { onSelf } }),
+        true, 'An effect on self should be allowed')
+    onSelf.area = 5
+    testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, { merchant = merchant, effects = { onSelf } }),
+        false, 'An effect on self should have no area')
+    testing.expectEqual(pcall(types.Player.makeSpell, player, setup), false,
+        'The player should not make a spell without enough gold')
+
+    world.createObject('gold_001', info.price):moveInto(player)
+    coroutine.yield()
+    local merchantGold = types.Actor.getBarterGold(merchant)
+    local spellId = waitForOutcome(function(callback)
+        types.Player.makeSpell(player, setup, callback)
+    end)
+    testing.expect(spellId ~= nil, 'The callback should receive the new spell')
+    local spell = core.magic.spells.records[spellId]
+    testing.expectEqual(spell.name, 'Custom spell', 'The spell should have its name')
+    testing.expectEqual(spell.cost, info.cost, 'The spell should cost what the info said')
+    testing.expect(spells[spellId] ~= nil, 'The player should know the new spell')
+    testing.expectEqual(types.Actor.inventory(player):countOf('gold_001'), 0, 'The player should pay for the spell')
+    testing.expectEqual(types.Actor.getBarterGold(merchant), merchantGold + info.price,
+        'The merchant should get the gold')
+
+    spells:remove(spellId)
+    spells:remove(known)
+    merchant:remove()
+end)
+
 testing.registerGlobalTest('stolen items', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({

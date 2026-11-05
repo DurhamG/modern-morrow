@@ -1688,6 +1688,58 @@
 -- @param openmw.async#Callback callback A function that receives `true` if the item was enchanted and `false` otherwise, including when nothing happened (optional).
 
 ---
+-- What the player picked for a spell of their own, like the choices in the spellmaking window.
+-- It is a plain table, like an @{#EnchantingSetup}. Each function that takes it works everything out again from the table.
+-- @type SpellmakingSetup
+-- @field openmw.core#GameObject merchant The NPC who makes the spell for gold.
+-- @field #list<#any> effects The effects of the spell, as @{openmw.core#MagicEffectWithParams} or tables with the same fields, like the effects of @{openmw.core#Spells.createRecordDraft} (optional).
+-- @field #string name The name of the spell (optional).
+
+---
+-- What the spellmaking window shows for a @{#SpellmakingSetup}.
+-- @type SpellmakingInfo
+-- @field #number cost The magicka cost of the spell. Each effect costs at least 1, from its magnitude, duration and area, and the effect's base cost. Each effect with the target range raises the cost of the effects before it, and its own, by half.
+-- @field #number price The gold that the merchant asks: the cost times the `fSpellMakingValueMult` game setting, adjusted by the merchant's offer the same way as @{#Actor.getBuyingPrice}. It is 0 without effects.
+-- @field #number chance The chance, from 0 to 100, that the player casts the spell, from the spell's cost, their skill in the spell's school, Willpower and Luck. Unlike @{#ActorSpells.getSuccessChance}, it leaves out fatigue. It is 0 without effects.
+
+---
+-- The magic effects that the player can put into a spell of their own. These are the effects of the spells that the player knows, if the effect allows spellmaking. Abilities, powers and other kinds of spell don't count.
+-- @function [parent=#PLAYER] getSpellmakingEffects
+-- @param openmw.core#GameObject player
+-- @return #list<openmw.core#MagicEffect>
+
+---
+-- Work out what the spellmaking window would show for a spell.
+-- This throws an error without a merchant, or when the effects break a rule of the spellmaking window:
+--
+--   * each effect must be one of @{#PLAYER.getSpellmakingEffects};
+--   * the spell can have at most 8 effects;
+--   * only effects that change a skill or an attribute can be there more than once, and they need the skill or the attribute;
+--   * the range must be one that the effect allows;
+--   * the magnitude must be from 1 to 100, unless the effect has no magnitude;
+--   * the duration must be from 1 to 1440, unless the effect has no duration;
+--   * the area must be from 0 to 50, and 0 for an effect on self.
+-- @function [parent=#PLAYER] getSpellmakingInfo
+-- @param openmw.core#GameObject player
+-- @param #SpellmakingSetup setup
+-- @return #SpellmakingInfo
+
+---
+-- Buy a spell of the player's own from a merchant, the way the spellmaking window does it (only in global scripts).
+-- The player pays the price in @{#SpellmakingInfo}, and the gold goes to the merchant's barter gold. Then the engine creates a new spell record, and the player learns it.
+-- This throws an error like @{#PLAYER.getSpellmakingInfo}, and when the spellmaking window would refuse: without effects or a name, or when the player can't pay.
+-- This doesn't check whether the merchant offers spellmaking as a service. The spell is made at the end of the frame. If an earlier change in the frame spent the gold, nothing happens. It shows no message and plays no sound.
+-- @function [parent=#PLAYER] makeSpell
+-- @param openmw.core#GameObject player
+-- @param #SpellmakingSetup setup
+-- @param openmw.async#Callback callback A function that receives the record ID of the new spell, or `nil` when nothing happened (optional).
+-- @usage types.Player.makeSpell(player, {
+--     merchant = merchant,
+--     name = 'Fire bolt',
+--     effects = { { id = 'firedamage', range = core.magic.RANGE.Target, magnitudeMin = 5, magnitudeMax = 10, duration = 1 } },
+-- })
+
+---
 -- What the player picked for brewing potions, like the choices in the alchemy window.
 -- Like an @{#EnchantingSetup}, it is a plain table that a script keeps and changes, and each function works everything out again from it.
 -- The ingredients and the apparatus must be in the player's inventory.

@@ -48,6 +48,28 @@ namespace MWMechanics
     /// The effect must allow the range, and a constant effect works on self only.
     bool isCustomEffectRangeAllowed(const ESM::MagicEffect& effect, int range, bool isConstant);
 
+    /// A rule for effects that the spellmaking and enchanting windows don't let the player break.
+    enum class CustomEffectProblem
+    {
+        None,
+        /// There are more than sMaxCustomEffects effects.
+        TooManyEffects,
+        /// An effect isn't one of getCustomMagicEffects.
+        UnknownEffect,
+        /// An effect that doesn't change a skill or an attribute is there twice.
+        RepeatedEffect,
+        /// An effect has a range that isCustomEffectRangeAllowed refuses.
+        RangeNotAllowed,
+        /// An effect lacks the skill or the attribute that it changes, or its magnitude, duration or area is out of
+        /// bounds. An effect on self has no area.
+        InvalidParameters,
+    };
+
+    /// The first rule that @a effects break, for a spell or an enchantment that @a actor makes.
+    /// @param isConstant Whether the effects are for a constant effect enchantment.
+    CustomEffectProblem getCustomEffectProblem(
+        const MWWorld::Ptr& actor, const ESM::EffectList& effects, CustomMagic type, bool isConstant);
+
     /// The magicka cost of a spell that the player makes with @a effects.
     int getCustomSpellCost(const ESM::EffectList& effects);
 

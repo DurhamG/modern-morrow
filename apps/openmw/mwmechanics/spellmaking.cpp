@@ -2,8 +2,10 @@
 
 #include <algorithm>
 
+#include <components/esm/attr.hpp>
 #include <components/esm3/loadgmst.hpp>
 #include <components/esm3/loadmgef.hpp>
+#include <components/esm3/loadskil.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
@@ -81,6 +83,59 @@ namespace MWMechanics
             default:
                 return false;
         }
+    }
+
+    CustomEffectProblem getCustomEffectProblem(
+        const MWWorld::Ptr& actor, const ESM::EffectList& effects, CustomMagic type, bool isConstant)
+    {
+        if (effects.mList.size() > sMaxCustomEffects)
+            return CustomEffectProblem::TooManyEffects;
+
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+        const std::vector<const ESM::MagicEffect*> knownEffects = getCustomMagicEffects(actor, type);
+        for (auto it = effects.mList.begin(); it != effects.mList.end(); ++it)
+        {
+            const ESM::ENAMstruct& params = it->mData;
+            const ESM::MagicEffect* effect = store.get<ESM::MagicEffect>().search(params.mEffectID);
+            if (effect == nullptr || std::find(knownEffects.begin(), knownEffects.end(), effect) == knownEffects.end())
+                return CustomEffectProblem::UnknownEffect;
+
+            const int flags = effect->mData.mFlags;
+            if (flags & ESM::MagicEffect::TargetSkill)
+            {
+                if (!store.get<ESM::Skill>().search(params.mSkill))
+                    return CustomEffectProblem::InvalidParameters;
+            }
+            else if (flags & ESM::MagicEffect::TargetAttribute)
+            {
+                if (!store.get<ESM::Attribute>().search(params.mAttribute))
+                    return CustomEffectProblem::InvalidParameters;
+            }
+            else
+            {
+                const auto isSameEffect
+                    = [&](const ESM::IndexedENAMstruct& other) { return other.mData.mEffectID == params.mEffectID; };
+                if (std::any_of(effects.mList.begin(), it, isSameEffect))
+                    return CustomEffectProblem::RepeatedEffect;
+            }
+
+            if (!isCustomEffectRangeAllowed(*effect, params.mRange, isConstant))
+                return CustomEffectProblem::RangeNotAllowed;
+
+            if (!(flags & ESM::MagicEffect::NoMagnitude)
+                && (params.mMagnMin < 1 || params.mMagnMax < params.mMagnMin || params.mMagnMax > sMaxCustomMagnitude))
+                return CustomEffectProblem::InvalidParameters;
+            if (!(flags & ESM::MagicEffect::NoDuration) && !isConstant
+                && (params.mDuration < 1 || params.mDuration > sMaxCustomDuration))
+                return CustomEffectProblem::InvalidParameters;
+            if (params.mArea < 0 || params.mArea > sMaxCustomArea)
+                return CustomEffectProblem::InvalidParameters;
+            // The effect editor hides the area of an effect on self, and sets it to 0.
+            if (params.mRange == ESM::RT_Self && params.mArea != 0)
+                return CustomEffectProblem::InvalidParameters;
+        }
+
+        return CustomEffectProblem::None;
     }
 
     int getCustomSpellCost(const ESM::EffectList& effects)
