@@ -145,6 +145,8 @@ namespace MWBase
                 MouseWheel,
             } mType;
             std::variant<SDL_Keysym, int, SDLUtil::TouchEvent, WheelChange> mValue;
+            // Whether the GUI input was captured when the event happened. Filled in by inputEvent.
+            bool mGuiInputCaptured = false;
         };
         virtual void inputEvent(const InputEvent& event) = 0;
 

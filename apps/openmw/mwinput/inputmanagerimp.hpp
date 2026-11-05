@@ -1,6 +1,7 @@
 #ifndef MWINPUT_MWINPUTMANAGERIMP_H
 #define MWINPUT_MWINPUTMANAGERIMP_H
 
+#include <atomic>
 #include <functional>
 #include <memory>
 
@@ -110,8 +111,13 @@ namespace MWInput
 
         bool controlsDisabled() override { return mControlsDisabled; }
 
+        void setGuiInputCaptured(bool captured) override { mGuiInputCaptured = captured; }
+        bool isGuiInputCaptured() const override;
+
     private:
         bool mControlsDisabled;
+        // Lua scripts may set this from the worker thread while the main thread reads it.
+        std::atomic<bool> mGuiInputCaptured = false;
 
         void saveBindings() override;
 

@@ -2,6 +2,7 @@
 #define MWINPUT_MWCONTROLLERMANAGER_H
 
 #include <array>
+#include <bitset>
 #include <filesystem>
 #include <string>
 
@@ -70,6 +71,9 @@ namespace MWInput
         bool mGamepadMousePressed;
         bool mLeftTriggerGuiPressed;
         bool mRightTriggerGuiPressed;
+        // The buttons whose press the engine handled because the GUI input wasn't captured. Their releases reach the
+        // engine too, even if the capture began in between.
+        std::bitset<SDL_CONTROLLER_BUTTON_MAX> mButtonsPressedUncaptured;
     };
 }
 #endif

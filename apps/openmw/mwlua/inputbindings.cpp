@@ -251,6 +251,12 @@ namespace MWLua
             input->setGamepadGuiCursorEnabled(v);
             MWBase::Environment::get().getWindowManager()->setCursorActive(v);
         };
+        api["setGuiInputCaptured"] = [input](bool captured) { input->setGuiInputCaptured(captured); };
+        api["isGuiInputCaptured"] = [input, luaManager = context.mLuaManager]() -> bool {
+            if (const std::optional<bool> captured = luaManager->getGuiInputCapturedForEvent())
+                return *captured;
+            return input->isGuiInputCaptured();
+        };
         api["getMouseMoveX"] = [input]() { return input->getMouseMoveX(); };
         api["getMouseMoveY"] = [input]() { return input->getMouseMoveY(); };
         api["getAxisValue"] = [input](int axis) {

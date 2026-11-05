@@ -161,6 +161,27 @@ testing.registerLocalTest('player diagonal walking',
         testing.expectEqualWithDelta(direction.y, -0.707, 0.1, 'Walk diagonally, Y coord')
     end)
 
+testing.registerLocalTest('GUI input capture applies only in menus', function()
+    input.setGuiInputCaptured(true)
+    testing.expectEqual(input.isGuiInputCaptured(), false, 'The capture should have no effect outside menus')
+
+    I.UI.setPauseOnMode(I.UI.MODE.Interface, false)
+    I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
+    while I.UI.getMode() ~= I.UI.MODE.Interface do
+        coroutine.yield()
+    end
+    testing.expectEqual(input.isGuiInputCaptured(), true, 'The capture should apply while a menu is open')
+
+    input.setGuiInputCaptured(false)
+    testing.expectEqual(input.isGuiInputCaptured(), false, 'Clearing the capture should end it at once')
+
+    I.UI.setMode()
+    while I.UI.getMode() ~= nil do
+        coroutine.yield()
+    end
+    I.UI.setPauseOnMode(I.UI.MODE.Interface, true)
+end)
+
 testing.registerLocalTest('findPath',
     function()
         local src = util.vector3(4096, 4096, 1745)

@@ -86,7 +86,8 @@ namespace MWInput
 
     void ControllerManager::update(float dt)
     {
-        if (mGuiCursorEnabled && !(mJoystickLastUsed && !mGamepadGuiCursorEnabled))
+        if (mGuiCursorEnabled && !(mJoystickLastUsed && !mGamepadGuiCursorEnabled)
+            && !MWBase::Environment::get().getInputManager()->isGuiInputCaptured())
         {
             float xAxis = mBindingsManager->getActionValue(A_MoveLeftRight) * 2.0f - 1.0f;
             float yAxis = mBindingsManager->getActionValue(A_MoveForwardBackward) * 2.0f - 1.0f;
@@ -134,6 +135,12 @@ namespace MWInput
             { MWBase::LuaManager::InputEvent::ControllerPressed, arg.button });
 
         mJoystickLastUsed = true;
+        const bool captured = MWBase::Environment::get().getInputManager()->isGuiInputCaptured();
+        if (arg.button < SDL_CONTROLLER_BUTTON_MAX)
+            mButtonsPressedUncaptured[arg.button] = !captured;
+        if (captured)
+            return;
+
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
             if (gamepadToGuiControl(arg))
@@ -188,6 +195,19 @@ namespace MWInput
             return;
 
         mJoystickLastUsed = true;
+        bool pressedUncaptured = false;
+        if (arg.button < SDL_CONTROLLER_BUTTON_MAX)
+        {
+            pressedUncaptured = mButtonsPressedUncaptured[arg.button];
+            mButtonsPressedUncaptured[arg.button] = false;
+        }
+        if (MWBase::Environment::get().getInputManager()->isGuiInputCaptured() && !pressedUncaptured)
+        {
+            // The press went only to Lua. The bindings still get the release, so that no action stays held down.
+            mBindingsManager->controllerButtonReleased(deviceID, arg);
+            return;
+        }
+
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
             if (mGamepadGuiCursorEnabled && (!Settings::gui().mControllerMenus || mGamepadMousePressed))
@@ -229,7 +249,8 @@ namespace MWInput
         mJoystickLastUsed = true;
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
-            if (gamepadToGuiControl(arg))
+            // Lua reads the axes itself. The bindings still see them, so that their values stay current.
+            if (!MWBase::Environment::get().getInputManager()->isGuiInputCaptured() && gamepadToGuiControl(arg))
                 return;
         }
         else if (mBindingsManager->actionIsActive(A_TogglePOV)

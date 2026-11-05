@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <map>
+#include <optional>
 #include <set>
 
 #include <components/lua/inputactions.hpp>
@@ -191,6 +192,8 @@ namespace MWLua
         LuaUi::ResourceManager* uiResourceManager() { return &mUiResourceManager; }
 
         bool isProcessingInputEvents() const { return mProcessingInputEvents; }
+        // While scripts handle an input event: whether the GUI input was captured when that event happened.
+        std::optional<bool> getGuiInputCapturedForEvent() const { return mGuiInputCapturedForEvent; }
 
         void reportStats(unsigned int frameNumber, Misc::FrameStats& stats) const;
         std::string formatResourceUsageStats() const override;
@@ -213,6 +216,7 @@ namespace MWLua
         bool mInitialized = false;
         bool mGlobalScriptsStarted = false;
         bool mProcessingInputEvents = false;
+        std::optional<bool> mGuiInputCapturedForEvent;
         bool mApplyingDelayedActions = false;
         bool mNewGameStarted = false;
         bool mReloadAllScriptsRequested = false;

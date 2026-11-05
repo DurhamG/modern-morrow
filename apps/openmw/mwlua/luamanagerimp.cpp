@@ -27,6 +27,7 @@
 #include <components/lua_ui/registerscriptsettings.hpp>
 #include <components/lua_ui/util.hpp>
 
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
@@ -367,13 +368,20 @@ namespace MWLua
             BoolScopeGuard processingGuard(mProcessingInputEvents);
 
             for (const auto& event : mMenuInputEvents)
+            {
+                mGuiInputCapturedForEvent = event.mGuiInputCaptured;
                 mMenuScripts.processInputEvent(event);
+            }
             mMenuInputEvents.clear();
             if (playerScripts && !windowManager->containsMode(MWGui::GM_MainMenu))
             {
                 for (const auto& event : mInputEvents)
+                {
+                    mGuiInputCapturedForEvent = event.mGuiInputCaptured;
                     playerScripts->processInputEvent(event);
+                }
             }
+            mGuiInputCapturedForEvent.reset();
             mInputEvents.clear();
             mLuaEvents.callMenuEventHandlers();
             float frameDuration = MWBase::Environment::get().getWorld()->getTimeManager()->isPaused()
@@ -787,12 +795,16 @@ namespace MWLua
 
     void LuaManager::inputEvent(const InputEvent& event)
     {
+        // Scripts see the events later in the frame. By then a script may have captured the GUI input, so remember
+        // whether the engine still handled this event itself.
+        InputEvent queued = event;
+        queued.mGuiInputCaptured = MWBase::Environment::get().getInputManager()->isGuiInputCaptured();
         if (!MyGUI::InputManager::getInstance().isModalAny()
             && !MWBase::Environment::get().getWindowManager()->isConsoleMode())
         {
-            mInputEvents.push_back(event);
+            mInputEvents.push_back(queued);
         }
-        mMenuInputEvents.push_back(event);
+        mMenuInputEvents.push_back(queued);
     }
 
     MWBase::LuaManager::ActorControls* LuaManager::getActorControls(const MWWorld::Ptr& ptr) const

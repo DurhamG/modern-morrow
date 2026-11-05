@@ -38,6 +38,24 @@
 -- @return #boolean
 
 ---
+-- Let a Lua menu take the controller while a menu is open.
+-- While captured, the engine sends controller button presses only to Lua scripts (`onControllerButtonPress`).
+-- It doesn't use them to navigate or close its own windows, and doesn't run the actions bound to them.
+-- For example, B no longer closes the menu, the d-pad no longer moves the focus in built-in windows, and the triggers no longer switch between them.
+-- Releases and stick movements still reach the bindings, so that no action stays held down. Read the sticks with @{#(input).getAxisValue}.
+-- It has no effect outside menus. It also has no effect while the console or a modal window of the engine, such as a message box, is open, because player scripts get no input events then. These windows keep their input.
+-- It stays set until a script clears it, or until a game is loaded or started.
+-- @function [parent=#input] setGuiInputCaptured
+-- @param #boolean captured
+
+---
+-- Whether the menu input is captured by Lua right now. False outside menus, and while the console or a modal window of the engine is open. See @{#(input).setGuiInputCaptured}.
+-- While a script handles an input event, such as in `onControllerButtonPress`, it tells whether the input was captured when the event happened instead.
+-- A press that arrived before the capture was used by the engine, for example to close a built-in window, so a Lua menu should ignore it.
+-- @function [parent=#input] isGuiInputCaptured
+-- @return #boolean
+
+---
 -- (DEPRECATED, use getBooleanActionValue) Input bindings can be changed in-game using Options/Controls menu.
 -- @function [parent=#input] isActionPressed
 -- @param #number actionId One of @{openmw.input#ACTION}

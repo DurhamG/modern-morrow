@@ -1,5 +1,7 @@
 #include "inputmanagerimp.hpp"
 
+#include <MyGUI_InputManager.h>
+
 #include <components/esm3/esmreader.hpp>
 #include <components/esm3/esmwriter.hpp>
 #include <components/sdlutil/sdlinputwrapper.hpp>
@@ -48,6 +50,16 @@ namespace MWInput
     {
         // Enable all controls
         mControlSwitch->clear();
+        mGuiInputCaptured = false;
+    }
+
+    bool InputManager::isGuiInputCaptured() const
+    {
+        // The console and the engine's modal windows, such as a message box, keep the input. Player scripts get no
+        // input events while they are open.
+        const MWBase::WindowManager* windowManager = MWBase::Environment::get().getWindowManager();
+        return mGuiInputCaptured && windowManager->isGuiMode() && !windowManager->isConsoleMode()
+            && !MyGUI::InputManager::getInstance().isModalAny();
     }
 
     InputManager::~InputManager() {}
