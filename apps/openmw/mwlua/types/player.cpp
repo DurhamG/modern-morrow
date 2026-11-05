@@ -1457,6 +1457,18 @@ namespace MWLua
             [](const MWDialogue::StampedJournalEntry& journalEntry) { return journalEntry.mMonth + 1; });
         journalEntryBindingsClass["dayOfMonth"] = sol::readonly_property(
             [](const MWDialogue::StampedJournalEntry& journalEntry) { return journalEntry.mDayOfMonth; });
+        journalEntryBindingsClass["actorRecordId"] = sol::readonly_property(
+            [](const MWDialogue::StampedJournalEntry& journalEntry) -> sol::optional<std::string> {
+                if (journalEntry.mActor.empty())
+                    return sol::nullopt;
+                return journalEntry.mActor.serializeText();
+            });
+        journalEntryBindingsClass["cellId"] = sol::readonly_property(
+            [](const MWDialogue::StampedJournalEntry& journalEntry) -> sol::optional<std::string> {
+                if (journalEntry.mCell.empty())
+                    return sol::nullopt;
+                return journalEntry.mCell.serializeText();
+            });
     }
 
     void addJournalEntryBindings(sol::table& playerBindings, sol::state_view lua, const MWBase::Journal* journal)

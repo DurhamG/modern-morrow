@@ -2357,6 +2357,8 @@
 -- @field #number day Number of the day this journal entry was written at.
 -- @field #number month Number of the month this journal entry was written at.
 -- @field #number dayOfMonth Number of the day in the month this journal entry was written at.
+-- @field #string actorRecordId The record ID of the actor that added this entry, such as the NPC whose dialogue line or script added it, or whom @{#PLAYERQuest.addJournalEntry} named. Nil if no actor added it, such as an item's script, and for entries from saves made before OpenMW recorded it.
+-- @field #string cellId The ID of the cell that the player was in when this entry was added, as the `id` of @{openmw_core#Cell} gives it. Nil for entries from saves made before OpenMW recorded it.
 
 ---
 -- Identifier for this journal entry line. Is unique only within the @{#PlayerJournalTextEntry} it belongs to.
