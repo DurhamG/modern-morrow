@@ -1,13 +1,1 @@
-<div class="file"><div class="path">apps/openmw/mwgui/windowmanagerimp.cpp</div><pre>
-<span class="hunk">@@ -918,7 +918,10 @@ namespace MWGui</span>
-<span class="ctx"> </span>
-<span class="ctx">             // If the active window is no longer visible, find the next visible window.</span>
-<span class="ctx">             if (!state.mWindows[activeIndex]-&gt;isVisible())</span>
-<span class="add">+            {</span>
-<span class="ctx">                 cycleActiveControllerWindow(true);</span>
-<span class="add">+                activeIndex = std::clamp&lt;size_t&gt;(mActiveControllerWindows[mode], 0, state.mWindows.size() - 1);</span>
-<span class="add">+            }</span>
-<span class="ctx"> </span>
-<span class="ctx">             return state.mWindows[activeIndex];</span>
-<span class="ctx">         }</span>
-</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/windowmanagerimp.cpp</div><pre><span class="hunk">@@ -918,7 +918,10 @@ namespace MWGui</span><span class="ctx"> </span><span class="ctx">             // If the active window is no longer visible, find the next visible window.</span><span class="ctx">             if (!state.mWindows[activeIndex]-&gt;isVisible())</span><span class="add">+            {</span><span class="ctx">                 cycleActiveControllerWindow(true);</span><span class="add">+                activeIndex = std::clamp&lt;size_t&gt;(mActiveControllerWindows[mode], 0, state.mWindows.size() - 1);</span><span class="add">+            }</span><span class="ctx"> </span><span class="ctx">             return state.mWindows[activeIndex];</span><span class="ctx">         }</span></pre></div>
