@@ -7,6 +7,7 @@
 
 #include <osg/Vec2f>
 
+#include <components/esm/util.hpp>
 #include <components/esm3/loadarmo.hpp>
 #include <components/esm3/loadcell.hpp>
 #include <components/esm3/loadcrea.hpp>
@@ -24,6 +25,7 @@
 #include "../mwbase/world.hpp"
 
 #include "../mwworld/actionteleport.hpp"
+#include "../mwworld/cell.hpp"
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
@@ -242,6 +244,21 @@ namespace MWMechanics
         if (merchant.getType() == ESM::Creature::sRecordId)
             return merchant.get<ESM::Creature>()->mBase->getTransport();
         return none;
+    }
+
+    std::string getTravelDestinationName(const ESM::Transport::Dest& destination)
+    {
+        if (!destination.mCellName.empty())
+            return destination.mCellName;
+        const ESM::ExteriorCellLocation location
+            = ESM::positionToExteriorCellLocation(destination.mPos.pos[0], destination.mPos.pos[1]);
+        // An exterior cell that no content file names has no record yet. It gets an empty one when the game loads it.
+        ESM::Cell empty = {};
+        empty.mData.mX = location.mX;
+        empty.mData.mY = location.mY;
+        const ESM::Cell* cell
+            = MWBase::Environment::get().getESMStore()->get<ESM::Cell>().search(location.mX, location.mY);
+        return std::string(MWBase::Environment::get().getWorld()->getCellName(MWWorld::Cell(cell ? *cell : empty)));
     }
 
     int getTravelPrice(const MWWorld::Ptr& merchant, const ESM::Transport::Dest& destination)

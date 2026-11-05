@@ -1,6 +1,7 @@
 #ifndef OPENMW_MECHANICS_SERVICES_H
 #define OPENMW_MECHANICS_SERVICES_H
 
+#include <string>
 #include <vector>
 
 #include <components/esm/refid.hpp>
@@ -69,6 +70,10 @@ namespace MWMechanics
 
     /// The places @a merchant can take the player to.
     const std::vector<ESM::Transport::Dest>& getTravelDestinations(const MWWorld::Ptr& merchant);
+
+    /// The name of the cell that @a destination leads to, as the game shows it. A destination in an exterior cell
+    /// carries no cell name, so the exterior cell's own name or its region's name is used.
+    std::string getTravelDestinationName(const ESM::Transport::Dest& destination);
 
     /// The gold @a merchant asks to take the player and their followers to @a destination.
     int getTravelPrice(const MWWorld::Ptr& merchant, const ESM::Transport::Dest& destination);
