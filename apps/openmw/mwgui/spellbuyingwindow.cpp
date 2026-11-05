@@ -4,13 +4,11 @@
 #include <MyGUI_Gui.h>
 #include <MyGUI_ScrollView.h>
 
-#include <components/esm3/loadgmst.hpp>
 #include <components/esm3/loadrace.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
-#include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
 #include "../mwworld/class.hpp"
@@ -19,8 +17,8 @@
 
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
+#include "../mwmechanics/services.hpp"
 #include "../mwmechanics/spells.hpp"
-#include "../mwmechanics/spellutil.hpp"
 
 namespace MWGui
 {
@@ -51,12 +49,7 @@ namespace MWGui
 
     void SpellBuyingWindow::addSpell(const ESM::Spell& spell)
     {
-        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
-
-        int price = std::max(1,
-            static_cast<int>(MWMechanics::calcSpellCost(spell)
-                * store.get<ESM::GameSetting>().find("fSpellValueMult")->mValue.getFloat()));
-        price = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mPtr, price, true);
+        const int price = MWMechanics::getSpellPrice(mPtr, spell);
 
         MWWorld::Ptr player = MWMechanics::getPlayer();
         int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);

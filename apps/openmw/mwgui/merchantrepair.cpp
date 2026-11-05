@@ -8,11 +8,11 @@
 #include <MyGUI_ScrollView.h>
 
 #include "../mwbase/environment.hpp"
-#include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
+#include "../mwmechanics/services.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
@@ -66,21 +66,7 @@ namespace MWGui
                 if (maxDurability <= durability || maxDurability == 0)
                     continue;
 
-                int basePrice = iter->getClass().getValue(*iter);
-                float fRepairMult = MWBase::Environment::get()
-                                        .getESMStore()
-                                        ->get<ESM::GameSetting>()
-                                        .find("fRepairMult")
-                                        ->mValue.getFloat();
-
-                float p = static_cast<float>(std::max(1, basePrice));
-                float r = static_cast<float>(std::max(1, static_cast<int>(maxDurability / p)));
-
-                int x = static_cast<int>((maxDurability - durability) / r);
-                x = static_cast<int>(fRepairMult * x);
-                x = std::max(1, x);
-
-                int price = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mActor, x, true);
+                const int price = MWMechanics::getRepairPrice(mActor, *iter);
 
                 std::string name{ iter->getClass().getName(*iter) };
                 name += "  - " + MyGUI::utility::toString(price)

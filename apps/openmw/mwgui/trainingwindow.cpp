@@ -16,6 +16,7 @@
 
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/npcstats.hpp"
+#include "../mwmechanics/services.hpp"
 
 #include <components/esm3/loadclas.hpp>
 #include <components/settings/values.hpp>
@@ -70,7 +71,6 @@ namespace MWGui
         mPlayerGold->setCaptionWithReplacing("#{sGold}: " + MyGUI::utility::toString(playerGold));
 
         const auto& store = MWBase::Environment::get().getESMStore();
-        const MWWorld::Store<ESM::GameSetting>& gmst = store->get<ESM::GameSetting>();
         const MWWorld::Store<ESM::Skill>& skillStore = store->get<ESM::Skill>();
 
         // NPC can train you in their best 3 skills
@@ -107,18 +107,13 @@ namespace MWGui
         MyGUI::EnumeratorWidgetPtr widgets = mTrainingOptions->getEnumerator();
         MyGUI::Gui::getInstance().destroyWidgets(widgets);
 
-        MWMechanics::NpcStats& pcStats = player.getClass().getNpcStats(player);
-
         const int lineHeight = Settings::gui().mFontSize + 2;
 
         mTrainingButtons.clear();
         for (size_t i = 0; i < skills.size(); ++i)
         {
             const ESM::Skill* skill = skills[i].first;
-            int price = static_cast<int>(
-                pcStats.getSkill(skill->mId).getBase() * gmst.find("iTrainingMod")->mValue.getInteger());
-            price = std::max(1, price);
-            price = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mPtr, price, true);
+            const int price = MWMechanics::getTrainingPrice(mPtr, skill->mId);
 
             MyGUI::Button* button = mTrainingOptions->createWidget<MyGUI::Button>(price <= playerGold
                     ? "SandTextButton"
@@ -167,12 +162,7 @@ namespace MWGui
         MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
         MWMechanics::NpcStats& pcStats = player.getClass().getNpcStats(player);
 
-        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
-
-        int price = static_cast<int>(pcStats.getSkill(skill->mId).getBase()
-            * store.get<ESM::GameSetting>().find("iTrainingMod")->mValue.getInteger());
-        price = std::max(1, price);
-        price = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mPtr, price, true);
+        const int price = MWMechanics::getTrainingPrice(mPtr, skill->mId);
 
         if (price > player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId))
             return;
