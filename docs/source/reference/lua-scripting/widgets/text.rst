@@ -58,6 +58,10 @@ Properties
   * - text
     - string ('')
     - The text to display.
+  * - font
+    - string (the default font)
+    - | The name of the font. The engine loads ``DefaultFont``, ``ScrollFont``
+      | (the Daedric letters of books and scrolls) and ``MonoFont``.
   * - textSize
     - number (10)
     - The size of the text.

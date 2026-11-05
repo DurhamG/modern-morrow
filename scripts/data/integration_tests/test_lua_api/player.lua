@@ -383,6 +383,11 @@ testing.registerLocalTest('measure text', function()
 
     local ok = pcall(ui.measureText, 'Hi', { wordWrap = true })
     testing.expectEqual(ok, false, 'Wrapping without a width should be an error')
+
+    testing.expectGreaterThan(ui.measureText('Hi', { textSize = 16, font = 'ScrollFont' }).x, 0,
+        'Text in another font should have a width')
+    testing.expectEqual(pcall(ui.measureText, 'Hi', { font = 'NoSuchFont' }), false,
+        'An unknown font should be an error')
 end)
 
 testing.registerLocalTest('Dialogue outside a conversation', function()

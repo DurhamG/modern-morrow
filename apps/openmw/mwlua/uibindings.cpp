@@ -489,7 +489,10 @@ namespace MWLua
                 measure.mMultiline = options->get_or("multiline", measure.mMultiline);
                 measure.mWordWrap = options->get_or("wordWrap", measure.mWordWrap);
                 measure.mWidth = options->get_or("width", measure.mWidth);
+                measure.mFont = options->get_or("font", measure.mFont);
             }
+            if (!measure.mFont.empty())
+                LuaUi::verifyFontName(measure.mFont);
             if (measure.mWordWrap && measure.mWidth <= 0)
                 throw std::runtime_error("ui.measureText needs a positive width to wrap the text");
             const MyGUI::IntSize size = LuaUi::measureText(text, measure);

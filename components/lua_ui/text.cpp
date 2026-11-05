@@ -1,8 +1,11 @@
 #include "text.hpp"
 
 #include <algorithm>
+#include <stdexcept>
 
 #include <MyGUI_Gui.h>
+#include <MyGUI_IFont.h>
+#include <MyGUI_ResourceManager.h>
 
 #include "alignment.hpp"
 
@@ -16,6 +19,7 @@ namespace LuaUi
     void LuaText::initialize()
     {
         changeWidgetSkin("LuaText");
+        mSkinFont = getFontName();
         setEditStatic(true);
         setVisibleHScroll(false);
         setVisibleVScroll(false);
@@ -28,6 +32,10 @@ namespace LuaUi
         mAutoSized = propertyValue("autoSize", true);
 
         setCaption(propertyValue("text", std::string()));
+        // Setting the font resets the text size, so the font comes first.
+        const std::string font = propertyValue("font", mSkinFont);
+        verifyFontName(font);
+        setFontName(font);
         setFontHeight(propertyValue("textSize", 10));
         setTextColour(propertyValue("textColor", MyGUI::Colour(0, 0, 0, 1)));
         setEditMultiLine(propertyValue("multiline", false));
@@ -53,7 +61,7 @@ namespace LuaUi
     const std::vector<std::string_view>& LuaText::allUsedProperties() const
     {
         static std::vector<std::string_view> usedProps = std::invoke([this] {
-            std::vector<std::string_view> props = { "text", "textSize", "textColor", "wordWrap", "textAlignH",
+            std::vector<std::string_view> props = { "text", "font", "textSize", "textColor", "wordWrap", "textAlignH",
                 "textAlignV", "multiline", "readOnly", "autoSize", "textShadow", "textShadowColor" };
             auto baseProps = WidgetExtension::allUsedProperties();
             props.insert(props.end(), baseProps.begin(), baseProps.end());
@@ -82,6 +90,14 @@ namespace LuaUi
         return WidgetExtension::getContentSize();
     }
 
+    void verifyFontName(const std::string& name)
+    {
+        // FontManager::getByName would give the default font for an unknown name.
+        MyGUI::IResource* resource = MyGUI::ResourceManager::getInstance().getByName(name, false);
+        if (resource == nullptr || resource->castType<MyGUI::IFont>(false) == nullptr)
+            throw std::runtime_error("Unknown font: " + name);
+    }
+
     MyGUI::IntSize measureText(std::string_view text, const TextMeasureOptions& options)
     {
         // A probe with the Text widget's skin, so that it uses the same font and text layout.
@@ -93,6 +109,8 @@ namespace LuaUi
         probe->setEditStatic(true);
         probe->setEditMultiLine(options.mMultiline || options.mWordWrap);
         probe->setEditWordWrap(options.mWordWrap);
+        if (!options.mFont.empty())
+            probe->setFontName(options.mFont);
         probe->setFontHeight(options.mTextSize);
         probe->setCaption(MyGUI::UString(text));
         const MyGUI::IntSize size = probe->getTextSize();

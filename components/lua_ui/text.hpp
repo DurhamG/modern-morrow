@@ -1,6 +1,7 @@
 #ifndef OPENMW_LUAUI_TEXT
 #define OPENMW_LUAUI_TEXT
 
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -24,6 +25,8 @@ namespace LuaUi
 
     private:
         bool mAutoSized;
+        // The font of the widget's skin, which the Text widget uses unless a script names another one.
+        std::string mSkinFont;
 
     protected:
         MyGUI::IntSize calculateSize() const override;
@@ -38,7 +41,12 @@ namespace LuaUi
         bool mWordWrap = false;
         // The width to wrap the text at. Only used with mWordWrap.
         int mWidth = 0;
+        // The name of the font. Empty for the Text widget's usual font.
+        std::string mFont;
     };
+
+    // Throws an error unless the engine loaded a font with this name.
+    void verifyFontName(const std::string& name);
 
     // The size that a Text widget with these properties gives the text. Uses MyGUI widgets, so it must be called
     // from the main thread.

@@ -165,6 +165,7 @@
 --   * `multiline` - as the `Text` widget's `multiline` property. False by default.
 --   * `wordWrap` - as the `Text` widget's `wordWrap` property. False by default. Needs `width`.
 --   * `width` - the width to wrap the text at.
+--   * `font` - the font, as the `Text` widget's `font` property. The widget's usual font by default.
 -- @return openmw.util#Vector2 The width and height of the text.
 -- @usage local size = ui.measureText('Fireball', { textSize = 18 })
 -- @usage -- The height of a paragraph wrapped at 400 units
