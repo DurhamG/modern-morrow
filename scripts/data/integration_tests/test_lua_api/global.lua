@@ -243,6 +243,36 @@ testing.registerGlobalTest('enchantment cast cost', function()
     testing.runLocalTest(player, 'enchantment cast cost on self', enchantment.id)
 end)
 
+testing.registerGlobalTest('barter prices', function()
+    local player = initPlayer()
+    local merchant = world.createObject('landracer')
+    merchant:addScript('idle.lua')
+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    local record = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        value = 100,
+        health = 40,
+    }))
+    local item = world.createObject(record.id, 1)
+    local value = types.Weapon.record(item).value
+    testing.expectGreaterThan(value, 1, 'The test needs an item that is worth something')
+
+    testing.expectEqual(types.Actor.getBuyingPrice(merchant, item), value,
+        'A creature should sell an item at its value')
+    testing.expectEqual(types.Actor.getSellingPrice(merchant, item, 3), 3 * value,
+        'A creature should buy items at their value')
+
+    local health = types.Weapon.record(item).health
+    local condition = math.floor(health / 2)
+    types.Item.itemData(item).condition = condition
+    coroutine.yield()
+    testing.expectEqualWithDelta(types.Actor.getBuyingPrice(merchant, item), value * condition / health, 1,
+        'A worn item should be worth less')
+
+    item:remove()
+    merchant:remove()
+end)
+
 testing.registerGlobalTest('UTF-8 characters', function()
     testing.expectEqual(utf8.codepoint("😀"), 0x1F600)
 

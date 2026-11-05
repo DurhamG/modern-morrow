@@ -12,6 +12,7 @@
 #include "apps/openmw/mwbase/windowmanager.hpp"
 #include "apps/openmw/mwbase/world.hpp"
 #include "apps/openmw/mwmechanics/actorutil.hpp"
+#include "apps/openmw/mwmechanics/barter.hpp"
 #include "apps/openmw/mwmechanics/creaturestats.hpp"
 #include "apps/openmw/mwmechanics/drawstate.hpp"
 #include "apps/openmw/mwworld/class.hpp"
@@ -440,6 +441,27 @@ namespace MWLua
                     ptr.getClass().getCreatureStats(ptr).setGoldPool(gold);
                 },
                 "SetBarterGoldAction");
+        };
+
+        const auto getBarterPrice
+            = [](const Object& merchant, const Object& item, sol::optional<int> count, bool playerBuys) -> int {
+            const MWWorld::Ptr merchantPtr = merchant.ptr();
+            if (!merchantPtr.getClass().isActor())
+                throw std::runtime_error("Actor expected");
+            const MWWorld::Ptr itemPtr = item.ptr();
+            if (!itemPtr.getClass().isItem(itemPtr))
+                throw std::runtime_error("Item expected");
+            if (count.value_or(1) < 1)
+                throw std::runtime_error("The count must be at least 1");
+            return MWMechanics::getBarterPrice(merchantPtr, itemPtr, count.value_or(1), playerBuys);
+        };
+        actor["getBuyingPrice"]
+            = [getBarterPrice](const Object& merchant, const Object& item, sol::optional<int> count) -> int {
+            return getBarterPrice(merchant, item, count, true);
+        };
+        actor["getSellingPrice"]
+            = [getBarterPrice](const Object& merchant, const Object& item, sol::optional<int> count) -> int {
+            return getBarterPrice(merchant, item, count, false);
         };
 
         actor["_onHit"] = [context](const SelfObject& self, const sol::table& options) {

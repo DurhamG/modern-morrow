@@ -36,6 +36,26 @@
 -- @param #number amount
 
 ---
+-- The gold the player pays to buy items from a merchant, before haggling.
+-- This is the price that the barter window offers. It depends on the item's value and condition, the player's and the merchant's Mercantile, Personality, Luck and fatigue, and the merchant's disposition.
+-- Creature merchants always trade at the item's value.
+-- @function [parent=#Actor] getBuyingPrice
+-- @param openmw.core#GameObject merchant The actor who sells the item.
+-- @param openmw.core#GameObject item
+-- @param #number count (optional, 1 by default) How many of the item the player buys, at least 1.
+-- @return #number
+-- @usage local price = types.Actor.getBuyingPrice(merchant, item, item.count)
+
+---
+-- The gold a merchant pays the player for items, before haggling.
+-- This is the price that the barter window offers. It depends on the same things as @{#Actor.getBuyingPrice}.
+-- @function [parent=#Actor] getSellingPrice
+-- @param openmw.core#GameObject merchant The actor who buys the item.
+-- @param openmw.core#GameObject item
+-- @param #number count (optional, 1 by default) How many of the item the player sells, at least 1.
+-- @return #number
+
+---
 -- Check if the given actor is dead (health reached 0, so death process started).
 -- @function [parent=#Actor] isDead
 -- @param openmw.core#GameObject actor
