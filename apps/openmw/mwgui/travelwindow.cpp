@@ -5,7 +5,6 @@
 #include <MyGUI_ScrollView.h>
 
 #include <components/debug/debuglog.hpp>
-#include <components/esm/util.hpp>
 #include <components/misc/strings/conversion.hpp>
 #include <components/settings/values.hpp>
 
@@ -87,21 +86,13 @@ namespace MWGui
 
         for (const ESM::Transport::Dest& dest : MWMechanics::getTravelDestinations(mPtr))
         {
-            std::string_view cellname = dest.mCellName;
-            const ESM::ExteriorCellLocation cellIndex
-                = ESM::positionToExteriorCellLocation(dest.mPos.pos[0], dest.mPos.pos[1]);
-            const MWWorld::WorldModel& worldModel = *MWBase::Environment::get().getWorldModel();
-            if (cellname.empty())
+            if (!dest.mCellName.empty()
+                && MWBase::Environment::get().getWorldModel()->findCell(dest.mCellName, false) == nullptr)
             {
-                MWWorld::CellStore& cell = worldModel.getExterior(cellIndex);
-                cellname = MWBase::Environment::get().getWorld()->getCellName(&cell);
-            }
-            else if (worldModel.findCell(cellname, false) == nullptr)
-            {
-                Log(Debug::Error) << "Failed to add travel destination: unknown cell (" << cellname << ")";
+                Log(Debug::Error) << "Failed to add travel destination: unknown cell (" << dest.mCellName << ")";
                 continue;
             }
-            addDestination(ESM::RefId::stringRefId(cellname), dest);
+            addDestination(ESM::RefId::stringRefId(MWMechanics::getTravelDestinationName(dest)), dest);
         }
 
         updateLabels();
