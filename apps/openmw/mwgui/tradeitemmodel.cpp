@@ -3,9 +3,10 @@
 #include <components/misc/strings/algorithm.hpp>
 #include <components/settings/values.hpp>
 
+#include "../mwmechanics/barter.hpp"
+
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
-#include "../mwworld/inventorystore.hpp"
 
 namespace MWGui
 {
@@ -169,10 +170,6 @@ namespace MWGui
     {
         mSourceModel->update();
 
-        int services = 0;
-        if (!mMerchant.isEmpty())
-            services = mMerchant.getClass().getServices(mMerchant);
-
         mItems.clear();
         // add regular items
         for (size_t i = 0; i < mSourceModel->getItemCount(); ++i)
@@ -187,20 +184,8 @@ namespace MWGui
                 if (!base.getClass().showsInInventory(base))
                     return;
 
-                if (!base.getClass().canSell(base, services))
+                if (!MWMechanics::canBarterItem(mMerchant, base))
                     continue;
-
-                // Bound items may not be bought
-                if (item.mFlags & ItemStack::Flag_Bound)
-                    continue;
-
-                // don't show equipped items
-                if (mMerchant.getClass().hasInventoryStore(mMerchant))
-                {
-                    MWWorld::InventoryStore& store = mMerchant.getClass().getInventoryStore(mMerchant);
-                    if (store.isEquipped(base))
-                        continue;
-                }
             }
 
             // don't show items that we borrowed to someone else

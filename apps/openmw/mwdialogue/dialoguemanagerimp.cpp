@@ -580,8 +580,11 @@ namespace MWDialogue
         executeTopic(ESM::RefId::stringRefId(text + (success ? " Success" : " Fail")), callback);
     }
 
-    void DialogueManager::applyBarterDispositionChange(int delta)
+    void DialogueManager::applyBarterDispositionChange(const MWWorld::Ptr& merchant, int delta)
     {
+        // The change lasts until the conversation ends, so there is none outside a conversation with the merchant.
+        if (merchant != mActor || !MWBase::Environment::get().getWindowManager()->containsMode(MWGui::GM_Dialogue))
+            return;
         if (!mActor.isEmpty() && mActor.getClass().isNpc())
         {
             updateOriginalDisposition();

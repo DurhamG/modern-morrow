@@ -6,11 +6,9 @@
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_InputManager.h>
 
-#include <components/misc/rng.hpp>
 #include <components/misc/strings/format.hpp>
 #include <components/widgets/numericeditbox.hpp>
 
-#include "../mwbase/dialoguemanager.hpp"
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
@@ -32,80 +30,6 @@
 #include "sortfilteritemmodel.hpp"
 #include "tooltips.hpp"
 #include "tradeitemmodel.hpp"
-
-namespace
-{
-
-    bool haggle(const MWWorld::Ptr& player, const MWWorld::Ptr& merchant, int playerOffer, int merchantOffer)
-    {
-        // accept if merchant offer is better than player offer
-        if (playerOffer <= merchantOffer)
-        {
-            return true;
-        }
-
-        // reject if npc is a creature
-        if (merchant.getType() != ESM::NPC::sRecordId)
-        {
-            return false;
-        }
-
-        const MWWorld::Store<ESM::GameSetting>& gmst
-            = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
-
-        // Is the player buying?
-        bool buying = (merchantOffer < 0);
-        int a = std::abs(merchantOffer);
-        int b = std::abs(playerOffer);
-        int d = (buying) ? int(100 * (a - b) / a) : int(100 * (b - a) / b);
-
-        int clampedDisposition = MWBase::Environment::get().getMechanicsManager()->getDerivedDisposition(merchant);
-
-        const MWMechanics::CreatureStats& merchantStats = merchant.getClass().getCreatureStats(merchant);
-        const MWMechanics::CreatureStats& playerStats = player.getClass().getCreatureStats(player);
-
-        float a1 = static_cast<float>(player.getClass().getSkill(player, ESM::Skill::Mercantile));
-        float b1 = 0.1f * playerStats.getAttribute(ESM::Attribute::Luck).getModified();
-        float c1 = 0.2f * playerStats.getAttribute(ESM::Attribute::Personality).getModified();
-        float d1 = static_cast<float>(merchant.getClass().getSkill(merchant, ESM::Skill::Mercantile));
-        float e1 = 0.1f * merchantStats.getAttribute(ESM::Attribute::Luck).getModified();
-        float f1 = 0.2f * merchantStats.getAttribute(ESM::Attribute::Personality).getModified();
-
-        float dispositionTerm = gmst.find("fDispositionMod")->mValue.getFloat() * (clampedDisposition - 50);
-        float pcTerm = (dispositionTerm + a1 + b1 + c1) * playerStats.getFatigueTerm();
-        float npcTerm = (d1 + e1 + f1) * merchantStats.getFatigueTerm();
-        float x = gmst.find("fBargainOfferMulti")->mValue.getFloat() * d
-            + gmst.find("fBargainOfferBase")->mValue.getFloat() + int(pcTerm - npcTerm);
-
-        auto& prng = MWBase::Environment::get().getWorld()->getPrng();
-        int roll = Misc::Rng::rollDice(100, prng) + 1;
-
-        // reject if roll fails
-        // (or if player tries to buy things and get money)
-        if (roll > x || (merchantOffer < 0 && 0 < playerOffer))
-        {
-            return false;
-        }
-
-        // apply skill gain on successful barter
-        float skillGain = 0.f;
-        int finalPrice = std::abs(playerOffer);
-        int initialMerchantOffer = std::abs(merchantOffer);
-
-        if (!buying && (finalPrice > initialMerchantOffer))
-        {
-            skillGain = std::floor(100.f * (finalPrice - initialMerchantOffer) / finalPrice);
-        }
-        else if (buying && (finalPrice < initialMerchantOffer))
-        {
-            skillGain = std::floor(100.f * (initialMerchantOffer - finalPrice) / initialMerchantOffer);
-        }
-        player.getClass().skillUsageSucceeded(
-            player, ESM::Skill::Mercantile, ESM::Skill::Mercantile_Success, skillGain);
-
-        return true;
-    }
-}
 
 namespace MWGui
 {
@@ -355,20 +279,6 @@ namespace MWGui
         updateOffer();
     }
 
-    void TradeWindow::addOrRemoveGold(int amount, const MWWorld::Ptr& actor)
-    {
-        MWWorld::ContainerStore& store = actor.getClass().getContainerStore(actor);
-
-        if (amount > 0)
-        {
-            store.add(MWWorld::ContainerStore::sGoldId, amount);
-        }
-        else
-        {
-            store.remove(MWWorld::ContainerStore::sGoldId, -amount);
-        }
-    }
-
     void TradeWindow::onOfferSubmitted(MyGUI::Widget* /*sender*/, size_t offerAmount)
     {
         mCurrentBalance = static_cast<int>(offerAmount) * (mCurrentBalance < 0 ? -1 : 1);
@@ -397,24 +307,19 @@ namespace MWGui
             return;
         }
 
+        switch (MWMechanics::getBarterProblem(mPtr, mCurrentBalance))
+        {
+            case MWMechanics::BarterProblem::None:
+                break;
+            case MWMechanics::BarterProblem::PlayerLacksGold:
+                MWBase::Environment::get().getWindowManager()->messageBox("#{sBarterDialog1}");
+                return;
+            case MWMechanics::BarterProblem::MerchantLacksGold:
+                MWBase::Environment::get().getWindowManager()->messageBox("#{sBarterDialog2}");
+                return;
+        }
+
         MWWorld::Ptr player = MWMechanics::getPlayer();
-        int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
-
-        // check if the player can afford this
-        if (mCurrentBalance < 0 && playerGold < std::abs(mCurrentBalance))
-        {
-            // user notification
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sBarterDialog1}");
-            return;
-        }
-
-        // check if the merchant can afford this
-        if (mCurrentBalance > 0 && getMerchantGold() < mCurrentBalance)
-        {
-            // user notification
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sBarterDialog2}");
-            return;
-        }
 
         // check if the player is attempting to sell back an item stolen from this actor
         for (const ItemStack& itemStack : merchantBought)
@@ -435,19 +340,8 @@ namespace MWGui
             }
         }
 
-        bool offerAccepted = haggle(player, mPtr, mCurrentBalance, mCurrentMerchantOffer);
-
-        // apply disposition change if merchant is NPC
-        if (mPtr.getClass().isNpc())
-        {
-            int dispositionDelta = offerAccepted ? gmst.find("iBarterSuccessDisposition")->mValue.getInteger()
-                                                 : gmst.find("iBarterFailDisposition")->mValue.getInteger();
-
-            MWBase::Environment::get().getDialogueManager()->applyBarterDispositionChange(dispositionDelta);
-        }
-
         // display message on haggle failure
-        if (!offerAccepted)
+        if (!MWMechanics::haggle(mPtr, mCurrentBalance, mCurrentMerchantOffer))
         {
             MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage9}");
             return;
@@ -457,13 +351,7 @@ namespace MWGui
         mTradeModel->transferItems();
         playerItemModel->transferItems();
 
-        // transfer the gold
-        if (mCurrentBalance != 0)
-        {
-            addOrRemoveGold(mCurrentBalance, player);
-            mPtr.getClass().getCreatureStats(mPtr).setGoldPool(
-                mPtr.getClass().getCreatureStats(mPtr).getGoldPool() - mCurrentBalance);
-        }
+        MWMechanics::payBarterBalance(mPtr, mCurrentBalance);
 
         eventTradeDone();
 

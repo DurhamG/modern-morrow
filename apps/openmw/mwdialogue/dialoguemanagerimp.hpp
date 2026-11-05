@@ -115,7 +115,7 @@ namespace MWDialogue
         void persuade(int type, ResponseCallback* callback) override;
 
         /// @note Controlled by an option, gets discarded when dialogue ends by default
-        void applyBarterDispositionChange(int delta) override;
+        void applyBarterDispositionChange(const MWWorld::Ptr& merchant, int delta) override;
 
         size_t countSavedGameRecords() const override;
 

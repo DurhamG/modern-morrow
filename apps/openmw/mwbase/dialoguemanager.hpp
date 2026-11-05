@@ -99,8 +99,10 @@ namespace MWBase
 
         virtual void persuade(int type, ResponseCallback* callback) = 0;
 
+        /// Changes the disposition of @a merchant after the player haggled with them. Does nothing unless the player
+        /// is talking to @a merchant.
         /// @note Controlled by an option, gets discarded when dialogue ends by default
-        virtual void applyBarterDispositionChange(int delta) = 0;
+        virtual void applyBarterDispositionChange(const MWWorld::Ptr& merchant, int delta) = 0;
 
         virtual size_t countSavedGameRecords() const = 0;
 
