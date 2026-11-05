@@ -594,6 +594,9 @@ namespace MWGui
             if (!id.empty())
                 mLuaIdToWindow.emplace(id, window.get());
         }
+        // The progress bar of the rest belongs to the wait dialog, so it isn't one of mWindows.
+        WindowBase* restProgressBar = mWaitDialog->getProgressBar();
+        mLuaIdToWindow.emplace(restProgressBar->getWindowIdForLua(), restProgressBar);
     }
 
     void WindowManager::setNewGame(bool newgame)
@@ -2111,10 +2114,9 @@ namespace MWGui
         mPlayerBounty = -1;
 
         for (const auto& window : mWindows)
-        {
             window->clear();
+        for (const auto& [id, window] : mLuaIdToWindow)
             window->setDisabledByLua(false);
-        }
 
         if (mLocalMapRender)
             mLocalMapRender->clear();

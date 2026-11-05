@@ -32,8 +32,9 @@
 namespace MWGui
 {
 
-    WaitDialogProgressBar::WaitDialogProgressBar()
+    WaitDialogProgressBar::WaitDialogProgressBar(std::string_view luaId)
         : WindowBase("openmw_wait_dialog_progressbar.layout")
+        , mLuaId(luaId)
     {
         getWidget(mProgressBar, "ProgressBar");
         getWidget(mProgressText, "ProgressText");
@@ -60,7 +61,7 @@ namespace MWGui
         , mManualHours(1)
         , mFadeTimeRemaining(0)
         , mInterruptAt(-1)
-        , mProgressBar()
+        , mProgressBar("WaitDialogProgressBar")
     {
         getWidget(mDateTimeText, "DateTimeText");
         getWidget(mRestText, "RestText");

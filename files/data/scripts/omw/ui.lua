@@ -306,6 +306,10 @@ return {
         -- The engine's review window sends the player back to a step and expects the step to return to the review. A
         -- replacement of a step that opened from the review, which the `oldMode` of the `UiModeChanged` event shows,
         -- should open `ChargenClassReview` again when the player is done.
+        --
+        -- The `Rest` mode has two windows: `WaitDialog`, where the player picks the hours, and `WaitDialogProgressBar`,
+        -- which the engine shows instead while the hours pass. The interface shows the replacements of both when the
+        -- rest menu opens.
         -- @function [parent=#UI] registerWindow
         -- @param #string windowName
         -- @param #function showFn Callback that will be called when the window should become visible.

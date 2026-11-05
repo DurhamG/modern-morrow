@@ -13,15 +13,19 @@ namespace MWGui
     class WaitDialogProgressBar : public WindowBase
     {
     public:
-        WaitDialogProgressBar();
+        /// @param luaId The name that Lua scripts know the window by, or empty if they can't replace it.
+        explicit WaitDialogProgressBar(std::string_view luaId = {});
 
         void onOpen() override;
 
         void setProgress(int cur, int total);
 
+        std::string_view getWindowIdForLua() const override { return mLuaId; }
+
     protected:
         MyGUI::ProgressBar* mProgressBar;
         MyGUI::TextBox* mProgressText;
+        std::string_view mLuaId;
     };
 
     class WaitDialog : public WindowBase

@@ -899,6 +899,12 @@ local restFinished = nil
 testing.registerLocalTestStep('rest in rest menu on self', function(hours)
     -- The test steps stop while the rest menu pauses the game, so this asks for the rest in the same frame as it
     -- opens the menu. The global script gets the event in the next frame, when the menu is open.
+    local restWindows = {}
+    for _, window in pairs(I.UI.getWindowsForMode('Rest')) do
+        restWindows[window] = true
+    end
+    testing.expect(restWindows.WaitDialog and restWindows.WaitDialogProgressBar,
+        'The rest menu should have the wait dialog and the progress bar')
     restFinished = nil
     I.UI.addMode('Rest')
     core.sendGlobalEvent('restForTest', hours)
