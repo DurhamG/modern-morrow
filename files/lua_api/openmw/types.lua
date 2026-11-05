@@ -1645,7 +1645,7 @@
 -- @type EnchantingSetup
 -- @field openmw.core#GameObject item The item to enchant: a weapon, a piece of armor or clothing, or a scroll, that isn't enchanted already (optional).
 -- @field openmw.core#GameObject soulGem A soul gem with a soul in it (optional).
--- @field #list<#any> effects The effects of the enchantment, as @{openmw.core#MagicEffectWithParams} or tables with the same fields, like the effects of @{openmw.core#Enchantments.createRecordDraft} (optional).
+-- @field #list<#any> effects The effects of the enchantment, as @{openmw.core#MagicEffectWithParams} or tables with the same fields, like the effects of @{openmw.core#Enchantments.createRecordDraft} (optional). They follow the same rules as the effects of a @{#SpellmakingSetup}, except that each must be one of @{#PLAYER.getEnchantingEffects}. A constant effect works on self only, and has no duration.
 -- @field #number type The cast type, an @{openmw.core#EnchantmentType}. It must be one of the types that @{#PLAYER.getEnchantingInfo} lists. Optional: the first of those types by default, as in the enchanting window.
 -- @field openmw.core#GameObject enchanter The NPC who enchants the item for gold (optional). Without one, the player enchants the item themself.
 -- @field #string name The name of the enchanted item (optional, the item's name by default).
@@ -1663,8 +1663,14 @@
 -- @field #list<#number> types The cast types that the item can take, in the order that the enchanting window steps through them. A constant effect needs a soul of at least the `iSoulAmountForConstantEffect` game setting. Empty without an item.
 
 ---
+-- The magic effects that the player can put into an enchantment. These are the effects of the spells that the player knows, if the effect allows enchanting. Abilities, powers and other kinds of spell don't count.
+-- @function [parent=#PLAYER] getEnchantingEffects
+-- @param openmw.core#GameObject player
+-- @return #list<openmw.core#MagicEffect>
+
+---
 -- Work out the numbers that the enchanting window would show for an enchantment.
--- This throws an error if the setup names an item that can't be enchanted or isn't in the player's inventory, a soul gem without a soul, or a cast type that the item can't take.
+-- This throws an error if the setup names an item that can't be enchanted or isn't in the player's inventory, a soul gem without a soul, or a cast type that the item can't take. It also throws an error for effects that break a rule of the enchanting window, as listed for @{#EnchantingSetup}.
 -- @function [parent=#PLAYER] getEnchantingInfo
 -- @param openmw.core#GameObject player
 -- @param #EnchantingSetup setup
@@ -1680,7 +1686,7 @@
 -- Enchant an item, the way the enchanting window does it (only in global scripts).
 -- The soul gem is used up, except for Azura's Star, which comes back empty. If the player enchants the item themself, they succeed with the chance in @{#EnchantingInfo}, and their Enchant skill progresses when they do. If an enchanter does it, the player pays the price, and the gold goes to the enchanter's barter gold. When enchanting works, the item is replaced by an enchanted copy with the new name. A stack of thrown weapons or ammunition is enchanted together, as far as the soul's strength goes.
 -- If the player stole the item or the soul gem from the enchanter, the enchanter takes it back instead, and nothing else happens.
--- This throws an error when the enchanting window would refuse: without effects, a name, a soul gem or an item, when the effects need more points than the item holds, or when the player can't pay. Unlike the window, it doesn't check which effects the player knows, or their ranges. It shows no message and plays no sound.
+-- This throws an error like @{#PLAYER.getEnchantingInfo}, and when the enchanting window would refuse: without effects, a name, a soul gem or an item, when the effects need more points than the item holds, or when the player can't pay. It shows no message and plays no sound.
 -- This doesn't check whether the enchanter offers enchanting as a service. The enchanting happens at the end of the frame. If an earlier change in the frame used up the item or the soul gem, emptied the soul gem, or spent the gold, nothing happens.
 -- @function [parent=#PLAYER] enchantItem
 -- @param openmw.core#GameObject player

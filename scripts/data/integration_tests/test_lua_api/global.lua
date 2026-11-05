@@ -593,6 +593,7 @@ testing.registerGlobalTest('enchanting', function()
     types.Item.itemData(gem).soul = soul.id
     local enchanter = world.createObject(types.NPC.record(player).id)
     enchanter:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    local known = createTestSpell({ type = core.magic.SPELL_TYPE.Spell })
     coroutine.yield()
 
     local setup = {
@@ -608,6 +609,15 @@ testing.registerGlobalTest('enchanting', function()
             },
         },
     }
+    testing.expectEqual(pcall(types.Player.getEnchantingInfo, player, setup), false,
+        'The player should not use an effect from a spell they do not know')
+    types.Actor.spells(player):add(known)
+    coroutine.yield()
+    local listed = false
+    for _, effect in ipairs(types.Player.getEnchantingEffects(player)) do
+        listed = listed or effect.id == findCostlyEffect().id
+    end
+    testing.expect(listed, 'The player should be able to use the effects of the spells they know')
     local info = types.Player.getEnchantingInfo(player, setup)
     testing.expectEqual(info.type, core.magic.ENCHANTMENT_TYPE.CastOnStrike,
         'A dagger should cast when it strikes, unless the player picks another type')
@@ -653,6 +663,7 @@ testing.registerGlobalTest('enchanting', function()
     testing.expect(result ~= nil, 'The player should get the enchanted dagger')
     testing.expect(types.Weapon.record(result).enchant ~= nil, 'The new dagger should be enchanted')
 
+    types.Actor.spells(player):remove(known)
     result:remove()
     enchanter:remove()
 end)

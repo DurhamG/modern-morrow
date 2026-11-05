@@ -463,6 +463,14 @@ namespace MWLua
         }
     }
 
+    static sol::table toMagicEffectList(sol::this_state thisState, MWMechanics::CustomMagic type)
+    {
+        sol::table result(thisState, sol::create);
+        for (const ESM::MagicEffect* effect : MWMechanics::getCustomMagicEffects(MWMechanics::getPlayer(), type))
+            result.add(effect);
+        return result;
+    }
+
     // What a script picked for enchanting, as it describes it in a Lua table. The items are kept as Lua objects,
     // so that a queued action can find them again.
     struct EnchantingSetup
@@ -548,6 +556,13 @@ namespace MWLua
         return enchanting;
     }
 
+    // Throws an error for effects that the enchanting window wouldn't let the player choose for the cast type.
+    static void verifyEnchantingEffects(const EnchantingSetup& setup, const MWMechanics::Enchanting& enchanting)
+    {
+        verifyCustomEffects(setup.mEffects, MWMechanics::CustomMagic::Enchantment,
+            enchanting.getCastStyle() == ESM::Enchantment::ConstantEffect);
+    }
+
     static void verifyCanEnchant(const MWMechanics::Enchanting& enchanting)
     {
         switch (enchanting.getProblem())
@@ -587,11 +602,16 @@ namespace MWLua
 
     static void addEnchantingBindings(sol::table& playerBindings, const Context& context)
     {
+        playerBindings["getEnchantingEffects"] = [](sol::this_state thisState, const Object& player) -> sol::table {
+            verifyPlayer(player);
+            return toMagicEffectList(thisState, MWMechanics::CustomMagic::Enchantment);
+        };
         playerBindings["getEnchantingInfo"]
             = [](sol::this_state thisState, const Object& player, const sol::table& table) -> sol::table {
             verifyPlayer(player);
             const EnchantingSetup setup = toEnchantingSetup(table);
             const MWMechanics::Enchanting enchanting = makeEnchanting(setup);
+            verifyEnchantingEffects(setup, enchanting);
             const bool selfEnchanting = !setup.mEnchanter.has_value();
             sol::table result(thisState, sol::create);
             result["points"] = static_cast<int>(enchanting.getEnchantPoints(false));
@@ -612,7 +632,9 @@ namespace MWLua
             = [context](const Object& player, const sol::table& table, sol::optional<sol::table> callback) {
                   verifyCrafter(player);
                   const EnchantingSetup setup = toEnchantingSetup(table);
-                  verifyCanEnchant(makeEnchanting(setup));
+                  const MWMechanics::Enchanting checked = makeEnchanting(setup);
+                  verifyEnchantingEffects(setup, checked);
+                  verifyCanEnchant(checked);
                   context.mLuaManager->addAction(
                       [context, setup, callback = toCallback(callback)] {
                           // An earlier action may have spent the gold, or used up the item or the soul gem.
@@ -658,14 +680,6 @@ namespace MWLua
         verifyCustomEffects(effects, MWMechanics::CustomMagic::Spell, false);
         setup.mSpell = MWMechanics::makeCustomSpell(getField<std::string>(table, "name").value_or(""), effects);
         return setup;
-    }
-
-    static sol::table toMagicEffectList(sol::this_state thisState, MWMechanics::CustomMagic type)
-    {
-        sol::table result(thisState, sol::create);
-        for (const ESM::MagicEffect* effect : MWMechanics::getCustomMagicEffects(MWMechanics::getPlayer(), type))
-            result.add(effect);
-        return result;
     }
 
     static void addSpellmakingBindings(sol::table& playerBindings, const Context& context)
