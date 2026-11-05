@@ -443,27 +443,7 @@ namespace MWGui
 
     void CharacterCreation::selectCreatedClass()
     {
-        ESM::Class createdClass;
-        createdClass.mName = mCreateClassDialog->getName();
-        createdClass.mDescription = mCreateClassDialog->getDescription();
-        createdClass.mData.mSpecialization = mCreateClassDialog->getSpecializationId();
-        createdClass.mData.mIsPlayable = true;
-        createdClass.mRecordFlags = 0;
-
-        std::vector<ESM::RefId> attributes = mCreateClassDialog->getFavoriteAttributes();
-        assert(attributes.size() >= createdClass.mData.mAttribute.size());
-        for (size_t i = 0; i < createdClass.mData.mAttribute.size(); ++i)
-            createdClass.mData.mAttribute[i] = attributes[i];
-
-        std::vector<ESM::RefId> majorSkills = mCreateClassDialog->getMajorSkills();
-        std::vector<ESM::RefId> minorSkills = mCreateClassDialog->getMinorSkills();
-        assert(majorSkills.size() >= createdClass.mData.mMajorSkills.size());
-        assert(minorSkills.size() >= createdClass.mData.mMinorSkills.size());
-        for (size_t i = 0; i < createdClass.mData.mMajorSkills.size(); ++i)
-            createdClass.mData.mMajorSkills[i] = majorSkills[i];
-        for (size_t i = 0; i < createdClass.mData.mMinorSkills.size(); ++i)
-            createdClass.mData.mMinorSkills[i] = minorSkills[i];
-
+        ESM::Class createdClass = mCreateClassDialog->getCreatedClass();
         MWBase::Environment::get().getMechanicsManager()->setPlayerClass(createdClass);
         mPlayerClass = std::move(createdClass);
     }

@@ -311,6 +311,9 @@ namespace MWGui
         std::vector<ESM::RefId> getMajorSkills() const;
         std::vector<ESM::RefId> getMinorSkills() const;
 
+        /// The class that the player made up in this window
+        ESM::Class getCreatedClass() const;
+
         void setNextButtonShow(bool shown);
 
         // Events

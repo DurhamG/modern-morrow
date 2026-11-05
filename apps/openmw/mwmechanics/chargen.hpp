@@ -9,6 +9,11 @@
 #include <components/esm3/loadbody.hpp>
 #include <components/vfs/pathutil.hpp>
 
+namespace ESM
+{
+    struct Class;
+}
+
 namespace MWMechanics
 {
     /// One of the questions that character creation asks to find a class for the player.
@@ -35,6 +40,10 @@ namespace MWMechanics
     /// The heads or the hairs that the player may choose for a race and a gender in character creation. These are the
     /// playable skin body parts of that race and gender, except the ones for the first person view.
     std::vector<ESM::RefId> getChargenBodyParts(ESM::BodyPart::MeshPart part, const ESM::RefId& race, bool isMale);
+
+    /// Why character creation can't give the player @a value as a class that they made up, or an empty string if it
+    /// can. Such a class needs a name, a specialization, two different favorite attributes, and ten different skills.
+    std::string_view getCustomClassProblem(const ESM::Class& value);
 }
 
 #endif

@@ -1,8 +1,11 @@
 #include "chargen.hpp"
 
+#include <algorithm>
 #include <format>
 
+#include <components/esm/attr.hpp>
 #include <components/esm3/loadclas.hpp>
+#include <components/esm3/loadskil.hpp>
 #include <components/fallback/fallback.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -144,5 +147,35 @@ namespace MWMechanics
                 result.push_back(bodypart.mId);
         }
         return result;
+    }
+
+    std::string_view getCustomClassProblem(const ESM::Class& value)
+    {
+        if (value.mName.empty())
+            return "The class has no name";
+        if (value.mData.mSpecialization < ESM::Class::Combat || value.mData.mSpecialization > ESM::Class::Stealth)
+            return "The class has no valid specialization";
+
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+        for (const ESM::RefId& attribute : value.mData.mAttribute)
+        {
+            if (store.get<ESM::Attribute>().search(attribute) == nullptr)
+                return "A favorite attribute of the class doesn't exist";
+        }
+        if (value.mData.mAttribute[0] == value.mData.mAttribute[1])
+            return "The favorite attributes of the class must be two different attributes";
+
+        std::vector<ESM::RefId> skills(value.mData.mMajorSkills.begin(), value.mData.mMajorSkills.end());
+        skills.insert(skills.end(), value.mData.mMinorSkills.begin(), value.mData.mMinorSkills.end());
+        for (const ESM::RefId& skill : skills)
+        {
+            if (store.get<ESM::Skill>().search(skill) == nullptr)
+                return "A major or minor skill of the class doesn't exist";
+        }
+        std::sort(skills.begin(), skills.end());
+        if (std::adjacent_find(skills.begin(), skills.end()) != skills.end())
+            return "The major and minor skills of the class must all be different skills";
+
+        return {};
     }
 }

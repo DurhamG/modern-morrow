@@ -1,5 +1,7 @@
 #include "class.hpp"
 
+#include <cassert>
+
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_ListBox.h>
@@ -11,6 +13,7 @@
 #include "../mwbase/world.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
+#include "../mwmechanics/chargen.hpp"
 
 #include "../mwworld/esmstore.hpp"
 
@@ -682,6 +685,32 @@ namespace MWGui
         return v;
     }
 
+    ESM::Class CreateClassDialog::getCreatedClass() const
+    {
+        ESM::Class createdClass;
+        createdClass.mName = getName();
+        createdClass.mDescription = getDescription();
+        createdClass.mData.mSpecialization = getSpecializationId();
+        createdClass.mData.mIsPlayable = true;
+        createdClass.mRecordFlags = 0;
+
+        std::vector<ESM::RefId> attributes = getFavoriteAttributes();
+        assert(attributes.size() >= createdClass.mData.mAttribute.size());
+        for (size_t i = 0; i < createdClass.mData.mAttribute.size(); ++i)
+            createdClass.mData.mAttribute[i] = attributes[i];
+
+        std::vector<ESM::RefId> majorSkills = getMajorSkills();
+        std::vector<ESM::RefId> minorSkills = getMinorSkills();
+        assert(majorSkills.size() >= createdClass.mData.mMajorSkills.size());
+        assert(minorSkills.size() >= createdClass.mData.mMinorSkills.size());
+        for (size_t i = 0; i < createdClass.mData.mMajorSkills.size(); ++i)
+            createdClass.mData.mMajorSkills[i] = majorSkills[i];
+        for (size_t i = 0; i < createdClass.mData.mMinorSkills.size(); ++i)
+            createdClass.mData.mMinorSkills[i] = minorSkills[i];
+
+        return createdClass;
+    }
+
     void CreateClassDialog::setNextButtonShow(bool shown)
     {
         MyGUI::Button* okButton;
@@ -848,7 +877,7 @@ namespace MWGui
 
     void CreateClassDialog::onOkClicked(MyGUI::Widget* /*sender*/)
     {
-        if (getName().size() <= 0)
+        if (!MWMechanics::getCustomClassProblem(getCreatedClass()).empty())
             return;
         eventDone(this);
     }
