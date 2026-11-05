@@ -1,6 +1,7 @@
 ﻿local testing = require('testing_util')
 local matchers = require('matchers')
 local menu = require('openmw.menu')
+local input = require('openmw.input')
 
 testing.setSetupGlobalTest(function()
     menu.newGame({bypass = true})
@@ -82,6 +83,13 @@ testing.registerMenuTest('load while teleporting', function()
     coroutine.yield()
 
     menu.deleteGame(' - 1', 'load_while_teleporting.omwsave')
+end)
+
+testing.registerMenuTest('controller button bindings', function()
+    testing.expectEqual(input.isControllerButtonBound(input.CONTROLLER_BUTTON.A), true,
+        'A should be bound to Activate by default')
+    testing.expectEqual(input.isControllerButtonBound(input.CONTROLLER_BUTTON.DPadUp), false,
+        'The d-pad should not be bound to anything by default')
 end)
 
 return {

@@ -41,6 +41,7 @@ namespace MWInput
         void setJoystickDeadZone(float deadZone);
 
         bool isLeftOrRightButton(int action, bool joystick) const;
+        bool isControllerButtonBound(int button) const;
 
         bool actionIsActive(int id) const;
         float getActionValue(int id) const; // returns value in range [0, 1]

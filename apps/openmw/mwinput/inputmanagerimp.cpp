@@ -202,6 +202,11 @@ namespace MWInput
         return mControllerManager->isButtonPressed(button);
     }
 
+    bool InputManager::isControllerButtonBound(SDL_GameControllerButton button) const
+    {
+        return mBindingsManager->isControllerButtonBound(button);
+    }
+
     float InputManager::getControllerAxisValue(SDL_GameControllerAxis axis) const
     {
         return mControllerManager->getAxisValue(axis);

@@ -240,6 +240,9 @@ namespace MWLua
         api["isControllerButtonPressed"] = [input](int button) {
             return input->isControllerButtonPressed(static_cast<SDL_GameControllerButton>(button));
         };
+        api["isControllerButtonBound"] = [input](int button) {
+            return input->isControllerButtonBound(static_cast<SDL_GameControllerButton>(button));
+        };
         api["isMouseButtonPressed"]
             = [](int button) -> bool { return SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON(button); };
         api["_isGamepadCursorActive"] = [input]() -> bool { return input->isGamepadGuiCursorEnabled(); };

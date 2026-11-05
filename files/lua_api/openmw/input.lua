@@ -56,6 +56,19 @@
 -- @return #boolean
 
 ---
+-- Whether a controller button is bound to one of the engine's actions (see @{openmw.input#ACTION}).
+-- The player can change these bindings in the Controls tab of the options menu.
+-- Actions and triggers registered by Lua scripts don't count.
+-- Menus use some buttons directly, without these bindings, for example to move the focus or to close a window. So this can be false for a button that does something in menus.
+-- A script can use this to give a button its own meaning only while the player hasn't bound it to anything else.
+-- @function [parent=#input] isControllerButtonBound
+-- @param #number buttonId Button index (see @{openmw.input#CONTROLLER_BUTTON})
+-- @return #boolean
+-- @usage if not input.isControllerButtonBound(input.CONTROLLER_BUTTON.DPadUp) then
+--     -- use the d-pad for quick keys
+-- end
+
+---
 -- Is `Shift` key pressed.
 -- @function [parent=#input] isShiftPressed
 -- @return #boolean

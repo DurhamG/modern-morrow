@@ -218,6 +218,11 @@ namespace MWInput
         return false;
     }
 
+    bool BindingsManager::isControllerButtonBound(int button) const
+    {
+        return mInputBinder->isJoystickButtonBound(sFakeDeviceId, static_cast<unsigned int>(button));
+    }
+
     void BindingsManager::setPlayerControlsEnabled(bool enabled)
     {
         int playerChannels[] = { A_AutoMove, A_AlwaysRun, A_ToggleWeapon, A_ToggleSpell, A_Rest, A_QuickKey1,

@@ -76,6 +76,7 @@ namespace MWBase
 
         virtual float getActionValue(int action) const = 0; // returns value in range [0, 1]
         virtual bool isControllerButtonPressed(SDL_GameControllerButton button) const = 0;
+        virtual bool isControllerButtonBound(SDL_GameControllerButton button) const = 0;
         virtual float getControllerAxisValue(SDL_GameControllerAxis axis) const = 0; // returns value in range [-1, 1]
         virtual int getMouseMoveX() const = 0;
         virtual int getMouseMoveY() const = 0;
