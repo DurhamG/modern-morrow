@@ -472,6 +472,15 @@ namespace MWLua
             = [getBarterPrice](const Object& merchant, const Object& item, sol::optional<int> count) -> int {
             return getBarterPrice(merchant, item, count, false);
         };
+        actor["canBarterItem"] = [](const Object& merchant, const Object& item) -> bool {
+            const MWWorld::Ptr merchantPtr = merchant.ptr();
+            if (!merchantPtr.getClass().isActor())
+                throw std::runtime_error("Actor expected");
+            const MWWorld::Ptr itemPtr = item.ptr();
+            if (!itemPtr.getClass().isItem(itemPtr))
+                throw std::runtime_error("Item expected");
+            return MWMechanics::canBarterItem(merchantPtr, itemPtr);
+        };
         actor["getRepairPrice"] = [](const Object& merchant, const Object& item) -> int {
             const MWWorld::Ptr merchantPtr = merchant.ptr();
             if (!merchantPtr.getClass().isActor())

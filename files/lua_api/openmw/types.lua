@@ -56,6 +56,14 @@
 -- @return #number
 
 ---
+-- Whether a merchant buys the item from the player, or sells it to them. The barter window lists only these items.
+-- Merchants trade the kinds of item that their services offer, such as weapons or ingredients. They don't trade gold, bound items, or the items that they wear.
+-- @function [parent=#Actor] canBarterItem
+-- @param openmw.core#GameObject merchant
+-- @param openmw.core#GameObject item
+-- @return #boolean
+
+---
 -- The gold a merchant asks to teach the player a spell.
 -- This is the price that the spell buying window shows. It is the spell's cost times the `fSpellValueMult` game setting, adjusted by the merchant's offer the same way as @{#Actor.getBuyingPrice}.
 -- @function [parent=#Actor] getSpellPrice
@@ -1732,6 +1740,49 @@
 -- @param #AlchemySetup setup
 -- @param openmw.async#Callback callback A function that receives the number of potions that worked, which is 0 when nothing happened (optional).
 -- @usage types.Player.brewPotion(player, { ingredients = { root, petal }, count = 5 })
+
+---
+-- What the player offers a merchant, like the items and the gold in the barter window.
+-- It is a plain table, like an @{#EnchantingSetup}. Each function that takes it works everything out again from the table.
+-- @type BarterSetup
+-- @field #list<#BarterItem> buy The items that the player buys. They must be in the merchant's inventory (optional).
+-- @field #list<#BarterItem> sell The items that the player sells. They must be in the player's inventory (optional).
+-- @field #number gold The gold that the player asks for, or pays when it is negative (optional, @{#PLAYER.getBarterOffer} by default).
+
+---
+-- @type BarterItem
+-- @field openmw.core#GameObject item An item that @{#Actor.canBarterItem} allows.
+-- @field #number count How many of the item change hands (optional, the whole stack by default).
+
+---
+-- The gold that a merchant offers for a trade, before haggling, as the barter window adds it up.
+-- It is the sum of @{#Actor.getSellingPrice} for the items that the player sells, minus the sum of @{#Actor.getBuyingPrice} for the items that the player buys. It is negative when the player pays.
+-- This throws an error if the setup lists an item that isn't where it should be, that the merchant doesn't trade, or more of an item than there is.
+-- @function [parent=#PLAYER] getBarterOffer
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject merchant
+-- @param #BarterSetup setup
+-- @return #number
+
+---
+-- Make an offer to a merchant, the way the offer button of the barter window does it (only in global scripts).
+-- If the player asks for no more than @{#PLAYER.getBarterOffer}, the merchant accepts. Otherwise an NPC merchant accepts if the player beats a roll, with their Mercantile skill, Personality, Luck and fatigue against the merchant's, and with the merchant's disposition. A creature refuses. A merchant also refuses when the player asks for gold and buys items at the same time.
+-- When an NPC merchant accepts, the player's Mercantile skill progresses, more so the better the deal. Whether they accept or refuse, the merchant's disposition goes up or down by the `iBarterSuccessDisposition` or `iBarterFailDisposition` game setting, while the player is talking to them. This is how the barter window works, since it opens from a conversation. Outside a conversation with the merchant, their disposition doesn't change.
+-- When the merchant accepts, the items change hands, and the gold moves between the player's inventory and the merchant's barter gold. Items that a merchant restocks don't run out, so the merchant keeps them.
+-- If the player sells an item that they stole from the merchant, the merchant takes it back instead, and nothing else happens.
+-- This throws an error when the barter window would refuse the offer: without items, or when the player or the merchant can't pay. The offer is made at the end of the frame. If an earlier change in the frame moved the items or spent the gold, nothing happens. It shows no message and plays no sound.
+-- Unlike the barter window, this doesn't trade items in the containers that the merchant owns, or items that lie in the world.
+-- @function [parent=#PLAYER] barter
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject merchant
+-- @param #BarterSetup setup
+-- @param openmw.async#Callback callback A function that receives `true` if the merchant accepted the offer and `false` otherwise, including when nothing happened (optional).
+-- @usage types.Player.barter(player, merchant, {
+--     buy = { { item = dagger, count = 1 } },
+--     gold = -40,
+-- }, async:callback(function(accepted)
+--     print(accepted and 'Sold!' or 'No deal')
+-- end))
 
 ---
 -- Travel with a merchant to one of their travel destinations, the way the travel window does it (only in global scripts).

@@ -14,6 +14,7 @@
 #include <components/esm3/loadrepa.hpp>
 #include <components/esm3/loadskil.hpp>
 #include <components/lua/util.hpp>
+#include <components/settings/values.hpp>
 
 #include "../birthsignbindings.hpp"
 #include "../luamanagerimp.hpp"
@@ -27,6 +28,7 @@
 #include "apps/openmw/mwbase/world.hpp"
 #include "apps/openmw/mwmechanics/actorutil.hpp"
 #include "apps/openmw/mwmechanics/alchemy.hpp"
+#include "apps/openmw/mwmechanics/barter.hpp"
 #include "apps/openmw/mwmechanics/enchanting.hpp"
 #include "apps/openmw/mwmechanics/magiceffects.hpp"
 #include "apps/openmw/mwmechanics/npcstats.hpp"
@@ -39,6 +41,7 @@
 #include "apps/openmw/mwworld/containerstore.hpp"
 #include "apps/openmw/mwworld/esmstore.hpp"
 #include "apps/openmw/mwworld/globals.hpp"
+#include "apps/openmw/mwworld/manualref.hpp"
 #include "apps/openmw/mwworld/player.hpp"
 
 namespace MWLua
@@ -762,6 +765,159 @@ namespace MWLua
               };
     }
 
+    // Items that the player buys or sells, and how many of each. The items are kept as Lua objects, so that a queued
+    // action can find them again.
+    using BarterItems = std::vector<std::pair<Object, int>>;
+
+    // What a script offers a merchant, as it describes it in a Lua table.
+    struct BarterSetup
+    {
+        BarterItems mBought;
+        BarterItems mSold;
+        std::optional<int> mGold;
+    };
+
+    static BarterItems toBarterItems(const sol::table& table, const MWWorld::Ptr& owner, const MWWorld::Ptr& merchant)
+    {
+        BarterItems result;
+        for (size_t i = 1; i <= table.size(); ++i)
+        {
+            const sol::table entry = LuaUtil::cast<sol::table>(table[i]);
+            const Object item = LuaUtil::cast<Object>(entry.get<sol::object>("item"));
+            const MWWorld::Ptr itemPtr = item.ptr();
+            verifyIsIn(itemPtr, owner);
+            if (!MWMechanics::canBarterItem(merchant, itemPtr))
+                throw std::runtime_error("The merchant doesn't trade " + itemPtr.toString());
+            for (const auto& [listed, count] : result)
+            {
+                if (listed.ptr() == itemPtr)
+                    throw std::runtime_error(itemPtr.toString() + " is listed twice");
+            }
+            result.emplace_back(item, getCountToTake(itemPtr, entry.get<sol::optional<int>>("count")));
+        }
+        return result;
+    }
+
+    static BarterSetup toBarterSetup(const sol::table& table, const MWWorld::Ptr& merchant)
+    {
+        BarterSetup setup;
+        if (const std::optional<sol::table> bought = getField<sol::table>(table, "buy"))
+            setup.mBought = toBarterItems(*bought, merchant, merchant);
+        if (const std::optional<sol::table> sold = getField<sol::table>(table, "sell"))
+            setup.mSold = toBarterItems(*sold, MWMechanics::getPlayer(), merchant);
+        setup.mGold = getField<int>(table, "gold");
+        return setup;
+    }
+
+    // The gold that the merchant offers the player, as the trade window adds it up. It is negative when the player
+    // pays.
+    static int getMerchantOffer(const MWWorld::Ptr& merchant, const BarterSetup& setup)
+    {
+        int offer = 0;
+        for (const auto& [item, count] : setup.mBought)
+            offer -= MWMechanics::getBarterPrice(merchant, item.ptr(), count, true);
+        for (const auto& [item, count] : setup.mSold)
+            offer += MWMechanics::getBarterPrice(merchant, item.ptr(), count, false);
+        return offer;
+    }
+
+    // Whether the items are still where they were when the script made the offer, after the actions before it ran.
+    static bool areBarterItemsLeft(const BarterItems& items, const MWWorld::Ptr& owner)
+    {
+        for (const auto& [item, count] : items)
+        {
+            if (getCountLeft(item.ptr(), owner, count) < count)
+                return false;
+        }
+        return true;
+    }
+
+    // Moves items to another inventory, the way the trade window moves them. A merchant never runs out of items
+    // that restock, so the merchant keeps those.
+    static void moveBarterItem(const MWWorld::Ptr& item, int count, const MWWorld::Ptr& to, bool equipReplacement)
+    {
+        const bool allowAutoEquip = !Settings::game().mPreventMerchantEquipping;
+        MWWorld::ContainerStore& store = to.getClass().getContainerStore(to);
+        const bool restocks = item.getCellRef().getCount(false) < 0;
+        if (!restocks)
+            item.getContainerStore()->remove(item, count, equipReplacement);
+        // When the whole stack moves, it can keep its RefNum.
+        if (!restocks && item.getCellRef().getCount() == 0)
+        {
+            store.add(item, count, allowAutoEquip);
+            return;
+        }
+        MWWorld::ManualRef copy(*MWBase::Environment::get().getESMStore(), item, count);
+        store.add(copy.getPtr(), count, allowAutoEquip);
+    }
+
+    static void addBarterBindings(sol::table& playerBindings, const Context& context)
+    {
+        playerBindings["getBarterOffer"]
+            = [](const Object& player, const Object& merchant, const sol::table& table) -> int {
+            verifyPlayer(player);
+            const MWWorld::Ptr merchantPtr = merchant.ptr();
+            verifyActor(merchantPtr.getClass());
+            return getMerchantOffer(merchantPtr, toBarterSetup(table, merchantPtr));
+        };
+        playerBindings["barter"] = [context](const Object& player, const Object& merchant, const sol::table& table,
+                                       sol::optional<sol::table> callback) {
+            verifyPlayer(player);
+            if (!player.isGObject())
+                throw std::runtime_error("Only global scripts can barter");
+            const MWWorld::Ptr merchantPtr = merchant.ptr();
+            verifyActor(merchantPtr.getClass());
+            const BarterSetup setup = toBarterSetup(table, merchantPtr);
+            if (setup.mBought.empty() && setup.mSold.empty())
+                throw std::runtime_error("The offer must buy or sell at least one item");
+            const int gold = setup.mGold.value_or(getMerchantOffer(merchantPtr, setup));
+            switch (MWMechanics::getBarterProblem(merchantPtr, gold))
+            {
+                case MWMechanics::BarterProblem::None:
+                    break;
+                case MWMechanics::BarterProblem::PlayerLacksGold:
+                    throw std::runtime_error("The player doesn't have enough gold");
+                case MWMechanics::BarterProblem::MerchantLacksGold:
+                    throw std::runtime_error("The merchant doesn't have enough gold");
+            }
+            context.mLuaManager->addAction(
+                [context, merchant = Object(merchantPtr), setup, gold, callback = toCallback(callback)] {
+                    const MWWorld::Ptr trader = merchant.ptr();
+                    const MWWorld::Ptr buyer = MWMechanics::getPlayer();
+                    // An earlier action may have moved the items or spent the gold.
+                    if (!areBarterItemsLeft(setup.mBought, trader) || !areBarterItemsLeft(setup.mSold, buyer)
+                        || MWMechanics::getBarterProblem(trader, gold) != MWMechanics::BarterProblem::None)
+                    {
+                        reportOutcome(context, callback, false);
+                        return;
+                    }
+                    MWBase::MechanicsManager* mechanics = MWBase::Environment::get().getMechanicsManager();
+                    for (const auto& [item, count] : setup.mSold)
+                    {
+                        const MWWorld::Ptr sold = item.ptr();
+                        if (mechanics->isItemStolenFrom(sold.getCellRef().getRefId(), trader))
+                        {
+                            mechanics->confiscateStolenItemToOwner(buyer, sold, trader, count);
+                            reportOutcome(context, callback, false);
+                            return;
+                        }
+                    }
+                    if (!MWMechanics::haggle(trader, gold, getMerchantOffer(trader, setup)))
+                    {
+                        reportOutcome(context, callback, false);
+                        return;
+                    }
+                    for (const auto& [item, count] : setup.mSold)
+                        moveBarterItem(item.ptr(), count, trader, true);
+                    for (const auto& [item, count] : setup.mBought)
+                        moveBarterItem(item.ptr(), count, buyer, false);
+                    MWMechanics::payBarterBalance(trader, gold);
+                    reportOutcome(context, callback, true);
+                },
+                "BarterAction");
+        };
+    }
+
     static std::vector<ESM::RefId> toLevelUpAttributes(const MWMechanics::NpcStats& stats, const sol::table& table)
     {
         std::vector<ESM::RefId> result;
@@ -1309,6 +1465,7 @@ namespace MWLua
         addToolBindings(player, context);
         addEnchantingBindings(player, context);
         addAlchemyBindings(player, context);
+        addBarterBindings(player, context);
         addLevelUpBindings(player, context);
 
         player["birthSigns"] = initBirthSignRecordBindings(context);

@@ -748,6 +748,70 @@ testing.registerGlobalTest('stolen items', function()
     stolen:remove()
 end)
 
+testing.registerGlobalTest('bartering', function()
+    local player = initPlayer()
+    removeGold(player)
+    local merchant = world.createObject(world.createRecord(types.Creature.createRecordDraft({
+        template = types.Creature.record('landracer'),
+        servicesOffered = { Weapon = true },
+    })).id)
+    merchant:addScript('idle.lua')
+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    local bought = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        name = 'Dagger for sale',
+        value = 100,
+    }))
+    local sold = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        name = 'Dagger to sell',
+        value = 50,
+    }))
+    world.createObject(bought.id, 2):moveInto(merchant)
+    world.createObject(sold.id, 1):moveInto(player)
+    world.createObject('gold_001', 300):moveInto(player)
+    types.Actor.setBarterGold(merchant, 500)
+    coroutine.yield()
+    local merchantInventory = types.Actor.inventory(merchant)
+    local playerInventory = types.Actor.inventory(player)
+    local forSale = merchantInventory:find(bought.id)
+    local toSell = playerInventory:find(sold.id)
+    testing.expectEqual(types.Actor.canBarterItem(merchant, forSale), true, 'A weapon merchant should trade weapons')
+    testing.expectEqual(types.Actor.canBarterItem(merchant, playerInventory:find('gold_001')), false,
+        'A merchant should not trade gold')
+
+    local setup = { buy = { { item = forSale, count = 1 } }, sell = { { item = toSell } } }
+    local offer = types.Player.getBarterOffer(player, merchant, setup)
+    local price = types.Actor.getSellingPrice(merchant, toSell) - types.Actor.getBuyingPrice(merchant, forSale)
+    testing.expectEqual(offer, price, 'The offer should add up the prices')
+    testing.expectEqual(pcall(types.Player.barter, player, merchant, {}), false,
+        'The player should not make an offer without items')
+    local tooMuch = { buy = setup.buy, sell = setup.sell, gold = -1000 }
+    testing.expectEqual(pcall(types.Player.barter, player, merchant, tooMuch), false,
+        'The player should not offer more gold than they have')
+
+    local accepted = waitForOutcome(function(callback)
+        types.Player.barter(player, merchant, { buy = setup.buy, sell = setup.sell, gold = offer + 10 }, callback)
+    end)
+    testing.expectEqual(accepted, false, 'A creature should refuse to haggle')
+    testing.expectEqual(playerInventory:countOf(bought.id), 0, 'The player should not get items when refused')
+
+    accepted = waitForOutcome(function(callback)
+        types.Player.barter(player, merchant, setup, callback)
+    end)
+    testing.expectEqual(accepted, true, 'A creature should accept its own offer')
+    testing.expectEqual(playerInventory:countOf(bought.id), 1, 'The player should get the item they bought')
+    testing.expectEqual(merchantInventory:countOf(bought.id), 1, 'The merchant should keep the rest of the stack')
+    testing.expectEqual(merchantInventory:countOf(sold.id), 1, 'The merchant should get the item the player sold')
+    testing.expectEqual(playerInventory:countOf(sold.id), 0, 'The player should lose the item they sold')
+    testing.expectEqual(playerInventory:countOf('gold_001'), 300 + offer, 'The player should pay the difference')
+    testing.expectEqual(types.Actor.getBarterGold(merchant), 500 - offer, 'The merchant should get the gold')
+
+    playerInventory:find(bought.id):remove()
+    removeGold(player)
+    merchant:remove()
+end)
+
 testing.registerGlobalTest('taking items from containers', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({
