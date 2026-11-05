@@ -9,6 +9,7 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
+#include "../mwbase/windowmanager.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
@@ -184,6 +185,8 @@ namespace MWMechanics
 
     const ESM::Spell* buyCustomSpell(const MWWorld::Ptr& merchant, const ESM::Spell& spell)
     {
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Mysticism Hit"));
+
         const int price = getCustomSpellPrice(merchant, spell.mEffects);
         const MWWorld::Ptr player = getPlayer();
 

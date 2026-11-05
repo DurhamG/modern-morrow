@@ -711,11 +711,8 @@ namespace MWLua
                               reportOutcome(context, callback, false);
                               return;
                           }
-                          const MWWorld::Ptr stolen = enchanting->getStolenItem();
-                          if (!stolen.isEmpty())
+                          if (enchanting->confiscateStolenItem())
                           {
-                              MWBase::Environment::get().getMechanicsManager()->confiscateStolenItemToOwner(
-                                  MWMechanics::getPlayer(), stolen, setup.mEnchanter->ptr(), 1);
                               reportOutcome(context, callback, false);
                               return;
                           }

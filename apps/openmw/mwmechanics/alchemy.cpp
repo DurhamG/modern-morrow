@@ -16,6 +16,7 @@
 #include <components/esm3/loadskil.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
 #include "../mwworld/class.hpp"
@@ -543,6 +544,39 @@ MWMechanics::Alchemy::Result MWMechanics::Alchemy::getReadyStatus() const
 }
 
 MWMechanics::Alchemy::Result MWMechanics::Alchemy::create(const std::string& name, int& count)
+{
+    const Result result = brew(name, count);
+    MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+
+    switch (result)
+    {
+        case Result_NoName:
+            winMgr->messageBox("#{sNotifyMessage37}");
+            break;
+        case Result_NoMortarAndPestle:
+            winMgr->messageBox("#{sNotifyMessage45}");
+            break;
+        case Result_LessThanTwoIngredients:
+            winMgr->messageBox("#{sNotifyMessage6a}");
+            break;
+        case Result_Success:
+            winMgr->playSound(ESM::RefId::stringRefId("potion success"));
+            if (count == 1)
+                winMgr->messageBox("#{sPotionSuccess}");
+            else
+                winMgr->messageBox("#{sPotionSuccess} " + mPotionName + " (" + std::to_string(count) + ")");
+            break;
+        case Result_NoEffects:
+        case Result_RandomFailure:
+            winMgr->messageBox("#{sNotifyMessage8}");
+            winMgr->playSound(ESM::RefId::stringRefId("potion fail"));
+            break;
+    }
+
+    return result;
+}
+
+MWMechanics::Alchemy::Result MWMechanics::Alchemy::brew(const std::string& name, int& count)
 {
     setPotionName(name);
     Result readyStatus = getReadyStatus();

@@ -66,7 +66,13 @@ namespace MWMechanics
         /// The item or the soul gem, if any, that the player stole from the enchanter. The enchanter takes it back
         /// rather than enchant with it. This is always empty when the player enchants an item themself.
         MWWorld::Ptr getStolenItem() const;
-        bool create(); // Return true if created, false if failed.
+        /// Lets the enchanter take back the item or the soul gem that the player stole from them, with the message
+        /// that the enchanting window shows.
+        /// @return Whether there was such an item.
+        bool confiscateStolenItem() const;
+        /// Enchants the item, with the sound and the message that the enchanting window plays and shows.
+        /// @return Whether the item was enchanted.
+        bool create();
         /// The cast types that the item can be enchanted with, as ESM::Enchantment::Type values, in the order that
         /// the enchanting window steps through them. A constant effect needs a soul of at least the
         /// iSoulAmountForConstantEffect game setting. This is empty when there is no item.

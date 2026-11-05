@@ -127,34 +127,7 @@ namespace MWGui
 
     void AlchemyWindow::createPotions(int count)
     {
-        MWMechanics::Alchemy::Result result = mAlchemy->create(mNameEdit->getCaption(), count);
-        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
-
-        switch (result)
-        {
-            case MWMechanics::Alchemy::Result_NoName:
-                winMgr->messageBox("#{sNotifyMessage37}");
-                break;
-            case MWMechanics::Alchemy::Result_NoMortarAndPestle:
-                winMgr->messageBox("#{sNotifyMessage45}");
-                break;
-            case MWMechanics::Alchemy::Result_LessThanTwoIngredients:
-                winMgr->messageBox("#{sNotifyMessage6a}");
-                break;
-            case MWMechanics::Alchemy::Result_Success:
-                winMgr->playSound(ESM::RefId::stringRefId("potion success"));
-                if (count == 1)
-                    winMgr->messageBox("#{sPotionSuccess}");
-                else
-                    winMgr->messageBox(
-                        "#{sPotionSuccess} " + mNameEdit->getCaption().asUTF8() + " (" + std::to_string(count) + ")");
-                break;
-            case MWMechanics::Alchemy::Result_NoEffects:
-            case MWMechanics::Alchemy::Result_RandomFailure:
-                winMgr->messageBox("#{sNotifyMessage8}");
-                winMgr->playSound(ESM::RefId::stringRefId("potion fail"));
-                break;
-        }
+        mAlchemy->create(mNameEdit->getCaption(), count);
 
         // remove ingredient slots that have been fully used up
         for (size_t i = 0; i < mIngredients.size(); ++i)

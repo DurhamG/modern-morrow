@@ -1905,8 +1905,9 @@
 ---
 -- Enchant an item, the way the enchanting window does it (only in global scripts).
 -- The soul gem is used up, except for Azura's Star, which comes back empty. If the player enchants the item themself, they succeed with the chance in @{#EnchantingInfo}, and their Enchant skill progresses when they do. If an enchanter does it, the player pays the price, and the gold goes to the enchanter's barter gold. When enchanting works, the item is replaced by an enchanted copy with the new name. A stack of thrown weapons or ammunition is enchanted together, as far as the soul's strength goes.
--- If the player stole the item or the soul gem from the enchanter, the enchanter takes it back instead, and nothing else happens.
--- This throws an error like @{#PLAYER.getEnchantingInfo}, and when the enchanting window would refuse: without effects, a name, a soul gem or an item, when the effects need more points than the item holds, or when the player can't pay. It shows no message and plays no sound.
+-- If the player stole the item or the soul gem from the enchanter, the enchanter takes it back instead, and nothing else happens. The enchanting window also ends the conversation then.
+-- The engine plays the sound and shows the message that the enchanting window would.
+-- This throws an error like @{#PLAYER.getEnchantingInfo}, and when the enchanting window would refuse: without effects, a name, a soul gem or an item, when the effects need more points than the item holds, or when the player can't pay.
 -- This doesn't check whether the enchanter offers enchanting as a service. The enchanting happens at the end of the frame. If an earlier change in the frame used up the item or the soul gem, emptied the soul gem, or spent the gold, nothing happens.
 -- @function [parent=#PLAYER] enchantItem
 -- @param openmw.core#GameObject player
@@ -1954,7 +1955,8 @@
 -- Buy a spell of the player's own from a merchant, the way the spellmaking window does it (only in global scripts).
 -- The player pays the price in @{#SpellmakingInfo}, and the gold goes to the merchant's barter gold. Then the engine creates a new spell record, and the player learns it.
 -- This throws an error like @{#PLAYER.getSpellmakingInfo}, and when the spellmaking window would refuse: without effects or a name, or when the player can't pay.
--- This doesn't check whether the merchant offers spellmaking as a service. The spell is made at the end of the frame. If an earlier change in the frame spent the gold, nothing happens. It shows no message and plays no sound.
+-- The engine plays the sound that the spellmaking window would.
+-- This doesn't check whether the merchant offers spellmaking as a service. The spell is made at the end of the frame. If an earlier change in the frame spent the gold, nothing happens.
 -- @function [parent=#PLAYER] makeSpell
 -- @param openmw.core#GameObject player
 -- @param #SpellmakingSetup setup
@@ -2011,7 +2013,8 @@
 -- Brew potions, the way the alchemy window does it (only in global scripts).
 -- Each potion uses up one of each ingredient, whether it works or not. A potion works if the player's Alchemy skill, Intelligence and Luck beat a roll. Its strength comes from those and the apparatus. The player's Alchemy skill progresses for each potion that works.
 -- If the ingredients share no effects, brewing fails and uses them up, as in the alchemy window.
--- This throws an error without a mortar and pestle, two ingredients or a name. It shows no message and plays no sound.
+-- The engine plays the sound and shows the message that the alchemy window would.
+-- This throws an error without a mortar and pestle, two ingredients or a name.
 -- Brewing happens at the end of the frame, and makes at most as many potions as the ingredients allow. If an earlier change in the frame used up the ingredients or the apparatus, nothing happens.
 -- @function [parent=#PLAYER] brewPotion
 -- @param openmw.core#GameObject player

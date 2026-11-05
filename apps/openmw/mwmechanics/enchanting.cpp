@@ -6,9 +6,11 @@
 #include <components/esm3/loadbook.hpp>
 #include <components/esm3/loadclot.hpp>
 #include <components/esm3/loadcrea.hpp>
+#include <components/esm3/loadgmst.hpp>
 #include <components/esm3/loadmgef.hpp>
 #include <components/esm3/loadweap.hpp>
 #include <components/misc/rng.hpp>
+#include <components/misc/strings/format.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwworld/class.hpp"
@@ -17,6 +19,7 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
+#include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
 #include "actorutil.hpp"
@@ -111,6 +114,25 @@ namespace MWMechanics
         return {};
     }
 
+    bool Enchanting::confiscateStolenItem() const
+    {
+        const MWWorld::Ptr stolen = getStolenItem();
+        if (stolen.isEmpty())
+            return false;
+
+        const std::string& message = MWBase::Environment::get()
+                                         .getESMStore()
+                                         ->get<ESM::GameSetting>()
+                                         .find("sNotifyMessage49")
+                                         ->mValue.getString();
+        MWBase::Environment::get().getWindowManager()->messageBox(
+            Misc::StringUtils::format(message, stolen.getClass().getName(stolen)));
+
+        MWBase::Environment::get().getMechanicsManager()->confiscateStolenItemToOwner(
+            getPlayer(), stolen, mEnchanter, 1);
+        return true;
+    }
+
     bool Enchanting::create()
     {
         const MWWorld::Ptr& player = getPlayer();
@@ -132,7 +154,11 @@ namespace MWMechanics
         {
             auto& prng = MWBase::Environment::get().getWorld()->getPrng();
             if (getEnchantChance() <= (Misc::Rng::roll0to99(prng)))
+            {
+                MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("enchant fail"));
+                MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage34}");
                 return false;
+            }
 
             mEnchanter.getClass().skillUsageSucceeded(
                 mEnchanter, ESM::Skill::Enchant, ESM::Skill::Enchant_CreateMagicItem);
@@ -163,6 +189,8 @@ namespace MWMechanics
         store.remove(mOldItemPtr, count);
         store.add(newItemId, count);
 
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("enchant success"));
+        MWBase::Environment::get().getWindowManager()->messageBox("#{sEnchantmentMenu12}");
         return true;
     }
 

@@ -72,6 +72,9 @@ namespace MWMechanics
         ///< Try to create a potion from the ingredients, place it in the inventory of the alchemist and
         /// adjust the skills of the alchemist accordingly.
 
+        Result brew(const std::string& name, int& count);
+        ///< Create, without sounds or messages.
+
         float getAlchemyFactor() const;
 
         int countIngredients() const;
@@ -137,8 +140,10 @@ namespace MWMechanics
 
         Result create(const std::string& name, int& count);
         ///< Try to create potions from the ingredients, place them in the inventory of the alchemist and
-        /// adjust the skills of the alchemist accordingly.
+        /// adjust the skills of the alchemist accordingly. Plays the sound and shows the message that the alchemy
+        /// window plays and shows for the result.
         /// \param name must not be an empty string, or Result_NoName is returned
+        /// \param count The number of potions to try. On success, it becomes the number of potions that worked.
 
         static std::vector<std::string> effectsDescription(const MWWorld::ConstPtr& ptr, const float alchemySKill);
     };

@@ -7,19 +7,14 @@
 #include <MyGUI_ScrollView.h>
 #include <MyGUI_UString.h>
 
-#include <components/misc/strings/format.hpp>
 #include <components/settings/values.hpp>
 #include <components/widgets/list.hpp>
 
-#include <components/esm3/loadgmst.hpp>
-
 #include "../mwbase/environment.hpp"
-#include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
-#include "../mwworld/esmstore.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
 
@@ -332,35 +327,17 @@ namespace MWGui
         }
 
         // check if the player is attempting to use a soulstone or item that was stolen from this actor
-        const MWWorld::Ptr stolen = mEnchanting.getStolenItem();
-        if (!stolen.isEmpty())
+        if (mEnchanting.confiscateStolenItem())
         {
-            std::string msg = MWBase::Environment::get()
-                                  .getESMStore()
-                                  ->get<ESM::GameSetting>()
-                                  .find("sNotifyMessage49")
-                                  ->mValue.getString();
-            msg = Misc::StringUtils::format(msg, stolen.getClass().getName(stolen));
-            windowManager->messageBox(msg);
-
-            MWBase::Environment::get().getMechanicsManager()->confiscateStolenItemToOwner(
-                MWMechanics::getPlayer(), stolen, mPtr, 1);
-
             windowManager->removeGuiMode(GM_Enchanting);
             windowManager->exitCurrentGuiMode();
             return;
         }
 
         if (mEnchanting.create())
-        {
-            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("enchant success"));
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sEnchantmentMenu12}");
             MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Enchanting);
-        }
         else
         {
-            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("enchant fail"));
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage34}");
             if (!mEnchanting.getGem().isEmpty() && !mEnchanting.getGem().getCellRef().getCount())
             {
                 setSoulGem(MWWorld::Ptr());

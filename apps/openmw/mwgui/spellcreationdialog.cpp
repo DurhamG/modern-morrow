@@ -646,8 +646,6 @@ namespace MWGui
                 return;
         }
 
-        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Mysticism Hit"));
-
         MWMechanics::buyCustomSpell(mPtr, mSpell);
 
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_SpellCreation);

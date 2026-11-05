@@ -93,7 +93,8 @@ namespace MWMechanics
     /// checks.
     SpellmakingProblem getSpellmakingProblem(const MWWorld::Ptr& merchant, const ESM::Spell& spell);
 
-    /// Makes the player pay @a merchant, adds @a spell to the game and teaches it to the player.
+    /// Makes the player pay @a merchant, adds @a spell to the game and teaches it to the player, with the sound that
+    /// the spellmaking window plays.
     /// @return The new spell record.
     const ESM::Spell* buyCustomSpell(const MWWorld::Ptr& merchant, const ESM::Spell& spell);
 }
