@@ -1328,6 +1328,37 @@ testing.registerGlobalTest('player approaches and attacks a creature', function(
     testing.runLocalTest(player, 'player approaches and attacks a creature')
 end)
 
+testing.registerGlobalTest('equipment slots', function()
+    local SLOT = types.Actor.EQUIPMENT_SLOT
+    local function slotsOf(recordId)
+        return types.Item.getEquipmentSlots(world.createObject(recordId, 1))
+    end
+
+    local dagger = slotsOf('basic_dagger1h')
+    testing.expectEqual(#dagger, 1, 'A dagger should go in one slot')
+    testing.expectEqual(dagger[1], SLOT.CarriedRight, 'A dagger should go in the right hand')
+
+    local arrow = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        type = types.Weapon.TYPE.Arrow,
+    }))
+    local arrowSlots = slotsOf(arrow.id)
+    testing.expectEqual(#arrowSlots, 1, 'An arrow should go in one slot')
+    testing.expectEqual(arrowSlots[1], SLOT.Ammunition, 'An arrow should go in the ammunition slot')
+
+    local ring = world.createRecord(types.Clothing.createRecordDraft({
+        name = 'Test ring',
+        type = types.Clothing.TYPE.Ring,
+    }))
+    local ringSlots = slotsOf(ring.id)
+    testing.expectEqual(#ringSlots, 2, 'A ring should go in either ring slot')
+    testing.expectEqual(ringSlots[1], SLOT.LeftRing, 'A ring should go on the left hand first')
+    testing.expectEqual(ringSlots[2], SLOT.RightRing, 'A ring should go on the right hand next')
+
+    local potion = world.createRecord(types.Potion.createRecordDraft({ name = 'Test potion' }))
+    testing.expectEqual(#slotsOf(potion.id), 0, 'A potion should not go in any slot')
+end)
+
 testing.registerGlobalTest('equipped weapon damages a stationary target', function()
     local player = initPlayer()
     local target = world.createObject('landracer')

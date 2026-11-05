@@ -939,6 +939,19 @@
 -- @return #number
 
 ---
+-- The equipment slots that this item can go in, as the engine lists them. See @{#Actor.EQUIPMENT_SLOT}.
+-- The list is empty for items that can't be equipped, such as potions, and for lights that can't be carried.
+-- A ring lists both ring slots. When an actor equips an item, the engine puts it in the first of its slots that is free.
+-- When all of them are taken, it moves each equipped item along by one slot and puts the new item in the last one.
+-- @function [parent=#Item] getEquipmentSlots
+-- @param openmw.core#GameObject item
+-- @return #list<#number>
+-- @usage -- What the player wears where the item would go
+-- for _, slot in ipairs(types.Item.getEquipmentSlots(item)) do
+--     local equipped = types.Actor.getEquipment(self, slot)
+-- end
+
+---
 -- Who the player has stolen this item from. An empty list means the item isn't stolen.
 -- The engine counts stolen items by record, not by object: once the player steals one item, every item with the same record id counts as stolen.
 -- Guards confiscate stolen items, and a merchant refuses to buy items that were stolen from them.

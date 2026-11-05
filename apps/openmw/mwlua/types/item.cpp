@@ -52,6 +52,16 @@ namespace MWLua
             return result;
         };
 
+        item["getEquipmentSlots"] = [](sol::this_state thisState, const Object& object) {
+            const MWWorld::Ptr& ptr = object.ptr();
+            if (!ptr.getClass().isItem(ptr))
+                throw std::runtime_error("Item expected");
+            sol::table result(thisState, sol::create);
+            for (int slot : ptr.getClass().getEquipmentSlots(ptr).first)
+                result.add(slot);
+            return result;
+        };
+
         addItemDataBindings(item, context);
         item["levelledItems"] = addLevelledItemBindings(context);
     }
