@@ -53,8 +53,6 @@ namespace MWGui
 
         void onReferenceUnavailable() override;
 
-        bool playerHasSpell(const ESM::RefId& id);
-
     private:
         static bool sortSpells(const ESM::Spell* left, const ESM::Spell* right);
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;

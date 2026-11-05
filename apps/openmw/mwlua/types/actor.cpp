@@ -469,11 +469,7 @@ namespace MWLua
             if (!merchantPtr.getClass().isActor())
                 throw std::runtime_error("Actor expected");
             const MWWorld::Ptr itemPtr = item.ptr();
-            // The merchant repair window lists only weapons and armor that have lost some condition.
-            const int repairable = MWWorld::ContainerStore::Type_Weapon | MWWorld::ContainerStore::Type_Armor;
-            if (!(MWWorld::ContainerStore::getType(itemPtr) & repairable) || !itemPtr.getClass().hasItemHealth(itemPtr)
-                || itemPtr.getClass().getItemMaxHealth(itemPtr) == 0
-                || itemPtr.getClass().getItemHealth(itemPtr) >= itemPtr.getClass().getItemMaxHealth(itemPtr))
+            if (!MWMechanics::canMerchantRepair(itemPtr))
                 throw std::runtime_error("The item must be a weapon or a piece of armor that has lost some condition");
             return MWMechanics::getRepairPrice(merchantPtr, itemPtr);
         };

@@ -5,8 +5,6 @@
 #include <MyGUI_TextIterator.h>
 
 #include "../mwbase/environment.hpp"
-#include "../mwbase/luamanager.hpp"
-#include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
@@ -147,20 +145,12 @@ namespace MWGui
                 return;
         }
 
-        // increase skill
-        MWBase::Environment::get().getLuaManager()->skillLevelUp(player, skill->mId, "trainer");
-
-        // remove gold
-        player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, price);
-
-        // add gold to NPC trading gold pool
-        MWMechanics::NpcStats& npcStats = mPtr.getClass().getNpcStats(mPtr);
-        npcStats.setGoldPool(npcStats.getGoldPool() + price);
+        MWMechanics::trainSkill(mPtr, skill->mId);
 
         setVisible(false);
         mProgressBar.setVisible(true);
-        mProgressBar.setProgress(0, 2);
-        mTimeAdvancer.run(2);
+        mProgressBar.setProgress(0, MWMechanics::sTrainingHours);
+        mTimeAdvancer.run(MWMechanics::sTrainingHours);
 
         MWBase::Environment::get().getWindowManager()->fadeScreenOut(0.2f);
         MWBase::Environment::get().getWindowManager()->fadeScreenIn(0.2f, false, 0.2f);
@@ -175,9 +165,7 @@ namespace MWGui
     {
         mProgressBar.setVisible(false);
 
-        // advance time
-        MWBase::Environment::get().getMechanicsManager()->rest(2, false);
-        MWBase::Environment::get().getWorld()->advanceTime(2);
+        MWMechanics::passTrainingTime();
 
         // go back to game mode
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Training);

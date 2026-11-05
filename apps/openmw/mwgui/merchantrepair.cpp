@@ -59,13 +59,8 @@ namespace MWGui
 
         for (MWWorld::ContainerStoreIterator iter(store.begin(categories)); iter != store.end(); ++iter)
         {
-            if (iter->getClass().hasItemHealth(*iter))
+            if (MWMechanics::canMerchantRepair(*iter))
             {
-                int maxDurability = iter->getClass().getItemMaxHealth(*iter);
-                int durability = iter->getClass().getItemHealth(*iter);
-                if (maxDurability <= durability || maxDurability == 0)
-                    continue;
-
                 const int price = MWMechanics::getRepairPrice(mActor, *iter);
 
                 std::string name{ iter->getClass().getName(*iter) };
@@ -138,19 +133,9 @@ namespace MWGui
         if (price > player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId))
             return;
 
-        // repair
-        MWWorld::Ptr item = *sender->getUserData<MWWorld::Ptr>();
-        item.getCellRef().setCharge(item.getClass().getItemMaxHealth(item));
-
-        player.getClass().getContainerStore(player).restack(item);
+        MWMechanics::repairItem(mActor, *sender->getUserData<MWWorld::Ptr>());
 
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Repair"));
-
-        player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, price);
-
-        // add gold to NPC trading gold pool
-        MWMechanics::CreatureStats& actorStats = mActor.getClass().getCreatureStats(mActor);
-        actorStats.setGoldPool(actorStats.getGoldPool() + price);
 
         setPtr(mActor);
     }

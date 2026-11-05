@@ -108,21 +108,8 @@ namespace MWGui
 
         for (const ESM::Spell* spell : merchantSpells)
         {
-            if (spell->mData.mType != ESM::Spell::ST_Spell)
-                continue; // don't try to sell diseases, curses or powers
-
-            if (actor.getClass().isNpc())
-            {
-                const ESM::Race* race = MWBase::Environment::get().getESMStore()->get<ESM::Race>().find(
-                    actor.get<ESM::NPC>()->mBase->mRace);
-                if (race->mPowers.exists(spell->mId))
-                    continue;
-            }
-
-            if (playerHasSpell(spell->mId))
-                continue;
-
-            spellsToSort.push_back(spell);
+            if (MWMechanics::isSpellForSale(actor, *spell))
+                spellsToSort.push_back(spell);
         }
 
         std::stable_sort(spellsToSort.begin(), spellsToSort.end(), sortSpells);
@@ -159,12 +146,6 @@ namespace MWGui
         mSpellsView->setViewOffset(MyGUI::IntPoint(0, startOffset));
     }
 
-    bool SpellBuyingWindow::playerHasSpell(const ESM::RefId& id)
-    {
-        MWWorld::Ptr player = MWMechanics::getPlayer();
-        return player.getClass().getCreatureStats(player).getSpells().hasSpell(id);
-    }
-
     void SpellBuyingWindow::onSpellButtonClick(MyGUI::Widget* sender)
     {
         int price = *sender->getUserData<int>();
@@ -173,17 +154,10 @@ namespace MWGui
         if (price > player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId))
             return;
 
-        MWMechanics::CreatureStats& stats = player.getClass().getCreatureStats(player);
-        MWMechanics::Spells& spells = stats.getSpells();
         auto spell = mSpellsWidgetMap.find(sender);
         assert(spell != mSpellsWidgetMap.end());
 
-        spells.add(spell->second);
-        player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, price);
-
-        // add gold to NPC trading gold pool
-        MWMechanics::CreatureStats& npcStats = mPtr.getClass().getCreatureStats(mPtr);
-        npcStats.setGoldPool(npcStats.getGoldPool() + price);
+        MWMechanics::buySpell(mPtr, *MWBase::Environment::get().getESMStore()->get<ESM::Spell>().find(spell->second));
 
         setPtr(mPtr, mSpellsView->getViewOffset().top);
 

@@ -42,6 +42,29 @@ namespace MWMechanics
 
     /// The gold @a merchant asks to restore @a item to full condition.
     int getRepairPrice(const MWWorld::Ptr& merchant, const MWWorld::Ptr& item);
+
+    /// Whether @a merchant offers to teach the player @a spell. Merchants teach the spells they know, except
+    /// the ones the player knows already, their race's powers, and anything that isn't a spell, such as a disease.
+    bool isSpellForSale(const MWWorld::Ptr& merchant, const ESM::Spell& spell);
+
+    /// Whether a merchant can repair @a item: a weapon or a piece of armor that has lost some of its condition.
+    bool canMerchantRepair(const MWWorld::Ptr& item);
+
+    /// The hours that pass while a trainer raises one of the player's skills.
+    static constexpr int sTrainingHours = 2;
+
+    /// Raises the player's @a skill by one point and makes the player pay @a trainer for it.
+    /// This does not pass the time that training takes. passTrainingTime does that.
+    void trainSkill(const MWWorld::Ptr& trainer, ESM::RefId skill);
+
+    /// Passes the sTrainingHours that training takes. The player and other actors wait, but don't sleep.
+    void passTrainingTime();
+
+    /// Teaches the player @a spell and makes the player pay @a merchant for it.
+    void buySpell(const MWWorld::Ptr& merchant, const ESM::Spell& spell);
+
+    /// Restores @a item, which the player carries, to full condition and makes the player pay @a merchant for it.
+    void repairItem(const MWWorld::Ptr& merchant, const MWWorld::Ptr& item);
 }
 
 #endif

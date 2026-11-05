@@ -2,19 +2,28 @@
 
 #include <algorithm>
 
+#include <components/esm3/loadarmo.hpp>
 #include <components/esm3/loadgmst.hpp>
+#include <components/esm3/loadnpc.hpp>
+#include <components/esm3/loadrace.hpp>
 #include <components/esm3/loadskil.hpp>
+#include <components/esm3/loadspel.hpp>
+#include <components/esm3/loadweap.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
+#include "../mwbase/world.hpp"
 
 #include "../mwworld/class.hpp"
+#include "../mwworld/containerstore.hpp"
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/ptr.hpp"
 
 #include "actorutil.hpp"
 #include "npcstats.hpp"
+#include "spells.hpp"
 #include "spellutil.hpp"
 
 namespace MWMechanics
@@ -24,6 +33,16 @@ namespace MWMechanics
         const MWWorld::Store<ESM::GameSetting>& getGameSettings()
         {
             return MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
+        }
+
+        void payMerchant(const MWWorld::Ptr& merchant, int price)
+        {
+            const MWWorld::Ptr player = getPlayer();
+            player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, price);
+
+            // add gold to NPC trading gold pool
+            CreatureStats& merchantStats = merchant.getClass().getCreatureStats(merchant);
+            merchantStats.setGoldPool(merchantStats.getGoldPool() + price);
         }
 
         // Retrieve the base skill value if the setting 'training skills based on base skill' is set;
@@ -123,5 +142,73 @@ namespace MWMechanics
         x = std::max(1, x);
 
         return MWBase::Environment::get().getMechanicsManager()->getBarterOffer(merchant, x, true);
+    }
+
+    bool isSpellForSale(const MWWorld::Ptr& merchant, const ESM::Spell& spell)
+    {
+        if (spell.mData.mType != ESM::Spell::ST_Spell)
+            return false; // don't try to sell diseases, curses or powers
+
+        if (!merchant.getClass().getCreatureStats(merchant).getSpells().hasSpell(&spell))
+            return false;
+
+        if (merchant.getClass().isNpc())
+        {
+            const ESM::Race* race = MWBase::Environment::get().getESMStore()->get<ESM::Race>().find(
+                merchant.get<ESM::NPC>()->mBase->mRace);
+            if (race->mPowers.exists(spell.mId))
+                return false;
+        }
+
+        const MWWorld::Ptr player = getPlayer();
+        return !player.getClass().getCreatureStats(player).getSpells().hasSpell(spell.mId);
+    }
+
+    bool canMerchantRepair(const MWWorld::Ptr& item)
+    {
+        if (item.getType() != ESM::Weapon::sRecordId && item.getType() != ESM::Armor::sRecordId)
+            return false;
+        if (!item.getClass().hasItemHealth(item))
+            return false;
+        const int maxDurability = item.getClass().getItemMaxHealth(item);
+        return maxDurability != 0 && item.getClass().getItemHealth(item) < maxDurability;
+    }
+
+    void trainSkill(const MWWorld::Ptr& trainer, ESM::RefId skill)
+    {
+        const int price = getTrainingPrice(trainer, skill);
+
+        // increase skill
+        MWBase::Environment::get().getLuaManager()->skillLevelUp(getPlayer(), skill, "trainer");
+
+        payMerchant(trainer, price);
+    }
+
+    void passTrainingTime()
+    {
+        MWBase::Environment::get().getMechanicsManager()->rest(sTrainingHours, false);
+        MWBase::Environment::get().getWorld()->advanceTime(sTrainingHours);
+    }
+
+    void buySpell(const MWWorld::Ptr& merchant, const ESM::Spell& spell)
+    {
+        const int price = getSpellPrice(merchant, spell);
+
+        const MWWorld::Ptr player = getPlayer();
+        player.getClass().getCreatureStats(player).getSpells().add(&spell);
+
+        payMerchant(merchant, price);
+    }
+
+    void repairItem(const MWWorld::Ptr& merchant, const MWWorld::Ptr& item)
+    {
+        const int price = getRepairPrice(merchant, item);
+
+        item.getCellRef().setCharge(item.getClass().getItemMaxHealth(item));
+
+        const MWWorld::Ptr player = getPlayer();
+        player.getClass().getContainerStore(player).restack(item);
+
+        payMerchant(merchant, price);
     }
 }
