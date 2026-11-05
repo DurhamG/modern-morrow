@@ -25,6 +25,27 @@ testing.registerGlobalTest('crash in lua coroutine when accessing type (#8757)',
     co()
 end)
 
+testing.registerGlobalTest('cells where content files place objects', function()
+    local player = initPlayer()
+    local placed = nil
+    for _, object in ipairs(player.cell:getAll()) do
+        if object.contentFile then
+            placed = object
+            break
+        end
+    end
+    testing.expect(placed ~= nil, 'The test cell should have objects from the content files')
+    local found = false
+    for _, cell in ipairs(core.contentFiles.getPlacedCells(placed.recordId)) do
+        if cell.id == player.cell.id then
+            found = true
+        end
+    end
+    testing.expect(found, 'The cell of an object from the content files should be listed')
+    testing.expectEqual(#core.contentFiles.getPlacedCells('omw_record_nobody_placed'), 0,
+        'A record that nobody placed should have no cells')
+end)
+
 testing.registerGlobalTest('timers', function()
     testing.expectAlmostEqual(core.getGameTimeScale(), 30, 'incorrect getGameTimeScale() result')
     testing.expectAlmostEqual(core.getSimulationTimeScale(), 1, 'incorrect getSimulationTimeScale result')

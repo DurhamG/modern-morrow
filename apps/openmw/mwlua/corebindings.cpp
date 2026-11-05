@@ -15,6 +15,7 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/statemanager.hpp"
 #include "../mwbase/world.hpp"
+#include "../mwworld/cell.hpp"
 #include "../mwworld/datetimemanager.hpp"
 #include "../mwworld/esmstore.hpp"
 
@@ -51,6 +52,19 @@ namespace MWLua
                 if (Misc::StringUtils::ciEqual(contentList[i], contentFile))
                     return true;
             return false;
+        };
+        res["getPlacedCells"] = [](sol::this_state thisState, std::string_view recordId) -> sol::table {
+            const MWBase::World& world = *MWBase::Environment::get().getWorld();
+            sol::table result(thisState, sol::create);
+            for (const ESM::Cell* cell :
+                MWBase::Environment::get().getESMStore()->getRefCells(ESM::RefId::deserializeText(recordId)))
+            {
+                sol::table entry(thisState, sol::create);
+                entry["id"] = cell->mId.serializeText();
+                entry["name"] = std::string(world.getCellName(MWWorld::Cell(*cell)));
+                result.add(LuaUtil::makeReadOnly(entry));
+            }
+            return result;
         };
         return LuaUtil::makeReadOnly(res);
     }

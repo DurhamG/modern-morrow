@@ -137,6 +137,22 @@
 -- @return #boolean
 
 ---
+-- The cells where the content files place objects with a record id, such as an NPC's cells.
+-- Exterior cells come first. The list covers the content files only: objects that a save game or a script placed or moved don't count.
+-- @function [parent=#ContentFiles] getPlacedCells
+-- @param #string recordId
+-- @return #list<#PlacedCell>
+-- @usage for _, cell in ipairs(core.contentFiles.getPlacedCells('fargoth')) do
+--     print(cell.name)
+-- end
+
+---
+-- A cell that @{#ContentFiles.getPlacedCells} lists.
+-- @type PlacedCell
+-- @field #string id The cell's id, which @{openmw_world#(world).getCellById} accepts.
+-- @field #string name The cell's name, as the game shows it. An exterior cell without a name has its region's name.
+
+---
 -- Construct FormId string from content file name and the index in the file.
 -- In ESM3 games (e.g. Morrowind) FormIds are used to reference game objects.
 -- In ESM4 games (e.g. Skyrim) FormIds are used both for game objects and as record ids.
