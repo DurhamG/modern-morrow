@@ -780,6 +780,11 @@ testing.registerGlobalTest('enchanting', function()
     testing.expectGreaterOrEqual(info.maxPoints, info.points, 'The effect should fit in the dagger')
     testing.expectEqual(info.charge, 400, 'The charge should be the strength of the soul')
     testing.expectEqual(info.price, 0, 'Enchanting an item yourself should cost nothing')
+    testing.expectEqual(info.problem, nil, 'Nothing should stop the player from enchanting the dagger')
+    testing.expectEqual(types.Player.getEnchantingInfo(player, { item = item, soulGem = gem }).problem, 'noEffects',
+        'Enchanting should need an effect')
+    testing.expectEqual(types.Player.getEnchantingInfo(player, { item = item, effects = setup.effects }).problem,
+        'noSoulGem', 'Enchanting should need a soul gem')
     testing.expectEqual(pcall(types.Player.getEnchantingInfo, player,
         { item = item, type = core.magic.ENCHANTMENT_TYPE.CastOnce }), false,
         'A dagger should not be enchanted to cast once')
@@ -789,6 +794,7 @@ testing.registerGlobalTest('enchanting', function()
     info = types.Player.getEnchantingInfo(player, setup)
     testing.expectEqual(info.chance, 100, 'An enchanter should never fail')
     testing.expectGreaterThan(info.price, 0, 'An enchanter should ask for gold')
+    testing.expectEqual(info.problem, 'notEnoughGold', 'The player should not have the gold for the enchanter')
     testing.expectEqual(pcall(types.Player.enchantItem, player, setup), false,
         'The player should not pay an enchanter without enough gold')
 
@@ -848,6 +854,11 @@ testing.registerGlobalTest('alchemy', function()
     testing.expectEqual(info.effects[1].isKnown, true, 'A player with 100 Alchemy should know the effect')
     testing.expectEqual(info.maxCount, 2, 'The scarcest ingredient should limit the number of potions')
     testing.expectGreaterOrEqual(#info.apparatus, 1, 'The player should brew with the mortar they carry')
+    testing.expectEqual(info.problem, nil, 'Nothing should stop the player from brewing the potion')
+    testing.expectEqual(types.Player.getAlchemyInfo(player, { ingredients = { ingredients[1] } }).problem,
+        'lessThanTwoIngredients', 'Brewing should need two ingredients')
+    testing.expectEqual(types.Player.getAlchemyInfo(player, { ingredients = ingredients, name = '' }).problem, 'noName',
+        'The potion should need a name')
     local twice = { ingredients = { ingredients[1], ingredients[1] } }
     testing.expectEqual(pcall(types.Player.getAlchemyInfo, player, twice), false,
         'The same kind of ingredient should not go in twice')
@@ -907,6 +918,11 @@ testing.registerGlobalTest('spellmaking', function()
     testing.expectGreaterThan(info.price, 0, 'The merchant should ask for gold')
     testing.expectGreaterOrEqual(info.chance, 0, 'The chance should be at least 0')
     testing.expectLessOrEqual(info.chance, 100, 'The chance should be at most 100')
+    testing.expectEqual(info.problem, 'notEnoughGold', 'The player should not have the gold for the spell')
+    testing.expectEqual(types.Player.getSpellmakingInfo(player, { merchant = merchant, effects = { params } }).problem,
+        'noName', 'The spell should need a name')
+    testing.expectEqual(types.Player.getSpellmakingInfo(player, { merchant = merchant, name = 'Empty' }).problem,
+        'noEffects', 'The spell should need an effect')
 
     local tooStrong = { id = effect.id, range = core.magic.RANGE.Target, magnitudeMin = 1, magnitudeMax = 101 }
     local strong = { merchant = merchant, effects = { tooStrong } }
@@ -926,6 +942,8 @@ testing.registerGlobalTest('spellmaking', function()
 
     world.createObject('gold_001', info.price):moveInto(player)
     coroutine.yield()
+    testing.expectEqual(types.Player.getSpellmakingInfo(player, setup).problem, nil,
+        'Nothing should stop the player from buying the spell')
     local merchantGold = types.Actor.getBarterGold(merchant)
     local spellId = waitForOutcome(function(callback)
         types.Player.makeSpell(player, setup, callback)

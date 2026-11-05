@@ -1881,6 +1881,7 @@
 -- @field #number price The gold that the enchanter asks, adjusted by the enchanter's offer the same way as @{#Actor.getBuyingPrice}. It is 0 without an enchanter.
 -- @field #number type The cast type that enchanting would use, an @{openmw.core#EnchantmentType}.
 -- @field #list<#number> types The cast types that the item can take, in the order that the enchanting window steps through them. A constant effect needs a soul of at least the `iSoulAmountForConstantEffect` game setting. Empty without an item.
+-- @field #string problem Why the enchanting window would refuse to enchant, or nil if it wouldn't. The window checks in this order, and names the first problem that it finds: `'noEffects'`, `'noName'` (the new name is empty), `'noSoulGem'`, `'noItem'`, `'tooManyPoints'` (the effects need more than `maxPoints`) and `'notEnoughGold'` (the player can't pay the price).
 
 ---
 -- The magic effects that the player can put into an enchantment. These are the effects of the spells that the player knows, if the effect allows enchanting. Abilities, powers and other kinds of spell don't count.
@@ -1907,7 +1908,7 @@
 -- The soul gem is used up, except for Azura's Star, which comes back empty. If the player enchants the item themself, they succeed with the chance in @{#EnchantingInfo}, and their Enchant skill progresses when they do. If an enchanter does it, the player pays the price, and the gold goes to the enchanter's barter gold. When enchanting works, the item is replaced by an enchanted copy with the new name. A stack of thrown weapons or ammunition is enchanted together, as far as the soul's strength goes.
 -- If the player stole the item or the soul gem from the enchanter, the enchanter takes it back instead, and nothing else happens. The enchanting window also ends the conversation then.
 -- The engine plays the sound and shows the message that the enchanting window would.
--- This throws an error like @{#PLAYER.getEnchantingInfo}, and when the enchanting window would refuse: without effects, a name, a soul gem or an item, when the effects need more points than the item holds, or when the player can't pay.
+-- This throws an error like @{#PLAYER.getEnchantingInfo}, and when the enchanting window would refuse, which the `problem` of @{#EnchantingInfo} tells.
 -- This doesn't check whether the enchanter offers enchanting as a service. The enchanting happens at the end of the frame. If an earlier change in the frame used up the item or the soul gem, emptied the soul gem, or spent the gold, nothing happens.
 -- @function [parent=#PLAYER] enchantItem
 -- @param openmw.core#GameObject player
@@ -1928,6 +1929,7 @@
 -- @field #number cost The magicka cost of the spell. Each effect costs at least 1, from its magnitude, duration and area, and the effect's base cost. Each effect with the target range raises the cost of the effects before it, and its own, by half.
 -- @field #number price The gold that the merchant asks: the cost times the `fSpellMakingValueMult` game setting, adjusted by the merchant's offer the same way as @{#Actor.getBuyingPrice}. It is 0 without effects.
 -- @field #number chance The chance, from 0 to 100, that the player casts the spell, from the spell's cost, their skill in the spell's school, Willpower and Luck. Unlike @{#ActorSpells.getSuccessChance}, it leaves out fatigue. It is 0 without effects.
+-- @field #string problem Why the spellmaking window would refuse to make the spell, or nil if it wouldn't. The window checks in this order, and names the first problem that it finds: `'noEffects'`, `'noName'`, `'noCost'` (the spell costs no magicka) and `'notEnoughGold'` (the player can't pay the price).
 
 ---
 -- The magic effects that the player can put into a spell of their own. These are the effects of the spells that the player knows, if the effect allows spellmaking. Abilities, powers and other kinds of spell don't count.
@@ -1954,7 +1956,7 @@
 ---
 -- Buy a spell of the player's own from a merchant, the way the spellmaking window does it (only in global scripts).
 -- The player pays the price in @{#SpellmakingInfo}, and the gold goes to the merchant's barter gold. Then the engine creates a new spell record, and the player learns it.
--- This throws an error like @{#PLAYER.getSpellmakingInfo}, and when the spellmaking window would refuse: without effects or a name, or when the player can't pay.
+-- This throws an error like @{#PLAYER.getSpellmakingInfo}, and when the spellmaking window would refuse, which the `problem` of @{#SpellmakingInfo} tells.
 -- The engine plays the sound that the spellmaking window would.
 -- This doesn't check whether the merchant offers spellmaking as a service. The spell is made at the end of the frame. If an earlier change in the frame spent the gold, nothing happens.
 -- @function [parent=#PLAYER] makeSpell
@@ -1992,6 +1994,7 @@
 -- @field #list<openmw.core#GameObject> apparatus The apparatus that brewing would use.
 -- @field #number maxCount The most potions that the ingredients make, one of each ingredient per potion. It is 0 when the potion can't be brewed, such as without a mortar and pestle, two ingredients, a name or shared effects.
 -- @field #string suggestedName The name that the alchemy window suggests: the name of the first effect.
+-- @field #string problem Why the potion can't be brewed, or nil if it can. The alchemy window checks in this order, and names the first problem that it finds: `'noMortarAndPestle'`, `'lessThanTwoIngredients'`, `'noName'` and `'noEffects'` (the ingredients share no effect). It refuses to brew for the first three. With `'noEffects'`, brewing fails and uses up the ingredients.
 
 ---
 -- The effects of an ingredient that the player knows, from their Alchemy skill and the `fWortChanceValue` game setting.
@@ -2014,7 +2017,7 @@
 -- Each potion uses up one of each ingredient, whether it works or not. A potion works if the player's Alchemy skill, Intelligence and Luck beat a roll. Its strength comes from those and the apparatus. The player's Alchemy skill progresses for each potion that works.
 -- If the ingredients share no effects, brewing fails and uses them up, as in the alchemy window.
 -- The engine plays the sound and shows the message that the alchemy window would.
--- This throws an error without a mortar and pestle, two ingredients or a name.
+-- This throws an error when the alchemy window would refuse to brew, which the `problem` of @{#AlchemyInfo} tells.
 -- Brewing happens at the end of the frame, and makes at most as many potions as the ingredients allow. If an earlier change in the frame used up the ingredients or the apparatus, nothing happens.
 -- @function [parent=#PLAYER] brewPotion
 -- @param openmw.core#GameObject player

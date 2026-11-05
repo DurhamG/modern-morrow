@@ -629,6 +629,75 @@ namespace MWLua
             enchanting.getCastStyle() == ESM::Enchantment::ConstantEffect);
     }
 
+    // The names that Lua scripts see for the problems that stop the player from crafting, or nothing for no problem.
+    static std::string_view getProblemName(MWMechanics::Enchanting::Problem problem)
+    {
+        switch (problem)
+        {
+            case MWMechanics::Enchanting::Problem::None:
+                return {};
+            case MWMechanics::Enchanting::Problem::NoEffects:
+                return "noEffects";
+            case MWMechanics::Enchanting::Problem::NoName:
+                return "noName";
+            case MWMechanics::Enchanting::Problem::NoSoulGem:
+                return "noSoulGem";
+            case MWMechanics::Enchanting::Problem::NoItem:
+                return "noItem";
+            case MWMechanics::Enchanting::Problem::TooManyPoints:
+                return "tooManyPoints";
+            case MWMechanics::Enchanting::Problem::NotEnoughGold:
+                return "notEnoughGold";
+        }
+        return {};
+    }
+
+    static std::string_view getProblemName(MWMechanics::SpellmakingProblem problem)
+    {
+        switch (problem)
+        {
+            case MWMechanics::SpellmakingProblem::None:
+                return {};
+            case MWMechanics::SpellmakingProblem::NoEffects:
+                return "noEffects";
+            case MWMechanics::SpellmakingProblem::NoName:
+                return "noName";
+            case MWMechanics::SpellmakingProblem::NoCost:
+                return "noCost";
+            case MWMechanics::SpellmakingProblem::NotEnoughGold:
+                return "notEnoughGold";
+        }
+        return {};
+    }
+
+    static std::string_view getProblemName(MWMechanics::Alchemy::Result status)
+    {
+        switch (status)
+        {
+            case MWMechanics::Alchemy::Result_Success:
+            case MWMechanics::Alchemy::Result_RandomFailure:
+                return {};
+            case MWMechanics::Alchemy::Result_NoMortarAndPestle:
+                return "noMortarAndPestle";
+            case MWMechanics::Alchemy::Result_LessThanTwoIngredients:
+                return "lessThanTwoIngredients";
+            case MWMechanics::Alchemy::Result_NoName:
+                return "noName";
+            case MWMechanics::Alchemy::Result_NoEffects:
+                return "noEffects";
+        }
+        return {};
+    }
+
+    // Sets the problem field of an EnchantingInfo, a SpellmakingInfo or an AlchemyInfo.
+    template <class Problem>
+    static void setProblem(sol::table& info, Problem problem)
+    {
+        const std::string_view name = getProblemName(problem);
+        if (!name.empty())
+            info["problem"] = name;
+    }
+
     static void verifyCanEnchant(const MWMechanics::Enchanting& enchanting)
     {
         switch (enchanting.getProblem())
@@ -692,6 +761,7 @@ namespace MWLua
             for (int castStyle : enchanting.getCastStyles())
                 types.add(castStyle);
             result["types"] = types;
+            setProblem(result, enchanting.getProblem());
             return result;
         };
         playerBindings["enchantItem"]
@@ -766,6 +836,7 @@ namespace MWLua
                 result["price"] = MWMechanics::getCustomSpellPrice(setup.mMerchant->ptr(), setup.mSpell.mEffects);
                 result["chance"] = std::clamp(static_cast<int>(chance), 0, 100);
             }
+            setProblem(result, MWMechanics::getSpellmakingProblem(setup.mMerchant->ptr(), setup.mSpell));
             return result;
         };
         playerBindings["makeSpell"]
@@ -917,6 +988,7 @@ namespace MWLua
             result["apparatus"] = apparatus;
             result["maxCount"] = alchemy.countPotionsToBrew();
             result["suggestedName"] = alchemy.suggestPotionName();
+            setProblem(result, alchemy.getReadyStatus());
             return result;
         };
         playerBindings["brewPotion"]
