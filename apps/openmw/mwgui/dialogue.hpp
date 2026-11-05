@@ -3,6 +3,7 @@
 
 #include <list>
 #include <memory>
+#include <vector>
 
 #include "referenceinterface.hpp"
 #include "windowbase.hpp"
@@ -17,6 +18,11 @@ namespace Gui
 {
     class AutoSizedTextBox;
     class MWList;
+}
+
+namespace MWMechanics
+{
+    enum class DialogueService;
 }
 
 namespace MWGui
@@ -121,8 +127,6 @@ namespace MWGui
 
     protected:
         void updateTopicsPane();
-        bool isCompanion(const MWWorld::Ptr& actor);
-        bool isCompanion();
 
         void onSelectListItem(const std::string& topic, int id);
         void onByeClicked(MyGUI::Widget* sender);
@@ -146,7 +150,7 @@ namespace MWGui
         void deleteLater();
         void redrawTopicsList();
 
-        bool mIsCompanion;
+        std::vector<MWMechanics::DialogueService> mServices;
         std::list<std::string> mKeywords;
 
         size_t mTranscriptSize = 0;

@@ -8,7 +8,6 @@
 #include <MyGUI_Window.h>
 
 #include <components/debug/debuglog.hpp>
-#include <components/esm3/loadcrea.hpp>
 #include <components/settings/values.hpp>
 #include <components/translation/translation.hpp>
 #include <components/widgets/box.hpp>
@@ -30,6 +29,7 @@
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/npcstats.hpp"
+#include "../mwmechanics/services.hpp"
 
 #include "bookpage.hpp"
 #include "textcolours.hpp"
@@ -290,9 +290,35 @@ namespace MWGui
     // Morrowind uses 3 px invisible borders for padding topics
     static constexpr int sVerticalPadding = 3;
 
+    // The game setting that names a service in the list of topics
+    static std::string_view getServiceSetting(MWMechanics::DialogueService service)
+    {
+        switch (service)
+        {
+            case MWMechanics::DialogueService::Persuasion:
+                return "sPersuasion";
+            case MWMechanics::DialogueService::Barter:
+                return "sBarter";
+            case MWMechanics::DialogueService::Spells:
+                return "sSpells";
+            case MWMechanics::DialogueService::Travel:
+                return "sTravel";
+            case MWMechanics::DialogueService::Spellmaking:
+                return "sSpellmakingMenuTitle";
+            case MWMechanics::DialogueService::Enchanting:
+                return "sEnchanting";
+            case MWMechanics::DialogueService::Training:
+                return "sServiceTrainingTitle";
+            case MWMechanics::DialogueService::Repair:
+                return "sRepair";
+            case MWMechanics::DialogueService::CompanionShare:
+                return "sCompanionShare";
+        }
+        return {};
+    }
+
     DialogueWindow::DialogueWindow()
         : WindowBase("openmw_dialogue_window.layout")
-        , mIsCompanion(false)
         , mGoodbye(false)
         , mPersuasionDialog(*this)
     {
@@ -460,7 +486,7 @@ namespace MWGui
             // If this is a companion, we must show the companion window directly (used by BM_bear_be_unique).
             MWBase::Environment::get().getWindowManager()->removeGuiMode(MWGui::GM_Dialogue);
             mPtr = MWWorld::Ptr();
-            if (isCompanion(actor))
+            if (MWMechanics::isCompanion(actor))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(MWGui::GM_Companion, actor);
             return;
         }
@@ -521,9 +547,10 @@ namespace MWGui
 
     bool DialogueWindow::setKeywords(const std::list<std::string>& keyWords)
     {
-        if (mKeywords == keyWords && isCompanion() == mIsCompanion)
+        std::vector<MWMechanics::DialogueService> services = MWMechanics::getDialogueServices(mPtr);
+        if (mKeywords == keyWords && mServices == services)
             return false;
-        mIsCompanion = isCompanion();
+        mServices = std::move(services);
         mKeywords = keyWords;
         updateTopicsPane();
         return true;
@@ -548,41 +575,11 @@ namespace MWGui
             mDeleteLater.push_back(std::move(linkPair.second));
         mTopicLinks.clear();
 
-        int services = mPtr.getClass().getServices(mPtr);
-
-        bool travel = (mPtr.getType() == ESM::NPC::sRecordId && !mPtr.get<ESM::NPC>()->mBase->getTransport().empty())
-            || (mPtr.getType() == ESM::Creature::sRecordId
-                && !mPtr.get<ESM::Creature>()->mBase->getTransport().empty());
-
         const MWWorld::Store<ESM::GameSetting>& gmst
             = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
 
-        if (mPtr.getType() == ESM::NPC::sRecordId)
-            mTopicsList->addItem(gmst.find("sPersuasion")->mValue.getString());
-
-        if (services & ESM::NPC::AllItems)
-            mTopicsList->addItem(gmst.find("sBarter")->mValue.getString());
-
-        if (services & ESM::NPC::Spells)
-            mTopicsList->addItem(gmst.find("sSpells")->mValue.getString());
-
-        if (travel)
-            mTopicsList->addItem(gmst.find("sTravel")->mValue.getString());
-
-        if (services & ESM::NPC::Spellmaking)
-            mTopicsList->addItem(gmst.find("sSpellmakingMenuTitle")->mValue.getString());
-
-        if (services & ESM::NPC::Enchanting)
-            mTopicsList->addItem(gmst.find("sEnchanting")->mValue.getString());
-
-        if (services & ESM::NPC::Training)
-            mTopicsList->addItem(gmst.find("sServiceTrainingTitle")->mValue.getString());
-
-        if (services & ESM::NPC::Repair)
-            mTopicsList->addItem(gmst.find("sRepair")->mValue.getString());
-
-        if (isCompanion())
-            mTopicsList->addItem(gmst.find("sCompanionShare")->mValue.getString());
+        for (MWMechanics::DialogueService service : mServices)
+            mTopicsList->addItem(gmst.find(getServiceSetting(service))->mValue.getString());
 
         if (mTopicsList->getItemCount() > 0)
             mTopicsList->addSeparator();
@@ -845,20 +842,6 @@ namespace MWGui
             if (mTranscriptSize != MWBase::Environment::get().getDialogueManager()->getTranscript().size())
                 updateHistory();
         }
-    }
-
-    bool DialogueWindow::isCompanion()
-    {
-        return isCompanion(mPtr);
-    }
-
-    bool DialogueWindow::isCompanion(const MWWorld::Ptr& actor)
-    {
-        if (actor.isEmpty())
-            return false;
-
-        return !actor.getClass().getScript(actor).empty()
-            && actor.getRefData().getLocals().getIntVar(actor.getClass().getScript(actor), "companion");
     }
 
     void DialogueWindow::setControllerFocus(size_t index, bool focused)

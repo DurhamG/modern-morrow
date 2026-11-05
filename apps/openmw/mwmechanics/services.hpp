@@ -82,6 +82,27 @@ namespace MWMechanics
     /// @param price The price from getTravelPrice. The caller works it out before anything can change it, such as the
     /// end of the conversation, which takes back the disposition that the player gained by persuasion.
     void travel(const MWWorld::Ptr& merchant, const ESM::Transport::Dest& destination, int price);
+
+    /// What the player can ask an actor for in a conversation, besides topics.
+    enum class DialogueService
+    {
+        Persuasion,
+        Barter,
+        Spells,
+        Travel,
+        Spellmaking,
+        Enchanting,
+        Training,
+        Repair,
+        CompanionShare,
+    };
+
+    /// The services that @a actor offers in a conversation, in the order the Dialogue window lists them.
+    std::vector<DialogueService> getDialogueServices(const MWWorld::Ptr& actor);
+
+    /// Whether @a actor is the player's companion, who shares their inventory with the player. A mod makes an actor a
+    /// companion with the local variable "companion" in the actor's script.
+    bool isCompanion(const MWWorld::Ptr& actor);
 }
 
 #endif

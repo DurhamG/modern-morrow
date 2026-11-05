@@ -318,4 +318,35 @@ namespace MWMechanics
         MWWorld::ActionTeleport action(cellId, pos, true);
         action.execute(getPlayer());
     }
+
+    std::vector<DialogueService> getDialogueServices(const MWWorld::Ptr& actor)
+    {
+        std::vector<DialogueService> services;
+        const int flags = actor.getClass().getServices(actor);
+        if (actor.getClass().isNpc())
+            services.push_back(DialogueService::Persuasion);
+        if (flags & ESM::NPC::AllItems)
+            services.push_back(DialogueService::Barter);
+        if (flags & ESM::NPC::Spells)
+            services.push_back(DialogueService::Spells);
+        if (!getTravelDestinations(actor).empty())
+            services.push_back(DialogueService::Travel);
+        if (flags & ESM::NPC::Spellmaking)
+            services.push_back(DialogueService::Spellmaking);
+        if (flags & ESM::NPC::Enchanting)
+            services.push_back(DialogueService::Enchanting);
+        if (flags & ESM::NPC::Training)
+            services.push_back(DialogueService::Training);
+        if (flags & ESM::NPC::Repair)
+            services.push_back(DialogueService::Repair);
+        if (isCompanion(actor))
+            services.push_back(DialogueService::CompanionShare);
+        return services;
+    }
+
+    bool isCompanion(const MWWorld::Ptr& actor)
+    {
+        const ESM::RefId& script = actor.getClass().getScript(actor);
+        return !script.empty() && actor.getRefData().getLocals().getIntVar(script, "companion");
+    }
 }
