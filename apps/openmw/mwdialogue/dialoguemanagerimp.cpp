@@ -79,6 +79,7 @@ namespace MWDialogue
         mPermanentDispositionChange = 0;
         mKeywordSearch.clear();
         mKeywordSearchInitialized = false;
+        mTranscript.clear();
     }
 
     void DialogueManager::addTopic(const ESM::RefId& topic)
@@ -139,7 +140,7 @@ namespace MWDialogue
         }
     }
 
-    bool DialogueManager::startDialogue(const MWWorld::Ptr& actor, ResponseCallback* callback)
+    bool DialogueManager::startDialogue(const MWWorld::Ptr& actor)
     {
         updateGlobals();
 
@@ -181,9 +182,7 @@ namespace MWDialogue
                         // TODO play sound
                     }
 
-                    MWScript::InterpreterContext interpreterContext(&mActor.getRefData().getLocals(), mActor);
-                    callback->addResponse({}, Interpreter::fixDefinesDialog(info->mResponse, interpreterContext));
-                    MWBase::Environment::get().getLuaManager()->onDialogueResponse(mActor, *info, dialogue);
+                    addResponse({}, *info, dialogue);
                     executeScript(info->mResultScript, mActor);
                     mLastTopic = dialogue.mId;
 
@@ -194,6 +193,41 @@ namespace MWDialogue
             }
         }
         return false;
+    }
+
+    void DialogueManager::endDialogue()
+    {
+        mTranscript.clear();
+    }
+
+    const std::vector<MWBase::DialogueManager::TranscriptEntry>& DialogueManager::getTranscript() const
+    {
+        return mTranscript;
+    }
+
+    void DialogueManager::addMessage(std::string_view text)
+    {
+        TranscriptEntry& entry = mTranscript.emplace_back();
+        entry.mText = text;
+        entry.mIsMessage = true;
+    }
+
+    void DialogueManager::tradeCompleted()
+    {
+        const MWWorld::Store<ESM::GameSetting>& gmsts
+            = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
+        mTranscript.emplace_back().mText = gmsts.find("sBarterDialog5")->mValue.getString();
+    }
+
+    void DialogueManager::addResponse(std::string_view title, const ESM::DialInfo& info, const ESM::Dialogue& dialogue)
+    {
+        MWScript::InterpreterContext interpreterContext(&mActor.getRefData().getLocals(), mActor);
+        TranscriptEntry& entry = mTranscript.emplace_back();
+        entry.mTitle = title;
+        entry.mText = Interpreter::fixDefinesDialog(info.mResponse, interpreterContext);
+        entry.mDialogue = &dialogue;
+        entry.mInfo = &info;
+        MWBase::Environment::get().getLuaManager()->onDialogueResponse(mActor, info, dialogue);
     }
 
     std::optional<Interpreter::Program> DialogueManager::compile(const std::string& cmd, const MWWorld::Ptr& actor)
@@ -281,7 +315,7 @@ namespace MWDialogue
         return false;
     }
 
-    void DialogueManager::executeTopic(const ESM::RefId& topic, ResponseCallback* callback)
+    void DialogueManager::executeTopic(const ESM::RefId& topic)
     {
         Filter filter(mActor, mChoice, mTalkedTo);
 
@@ -311,9 +345,7 @@ namespace MWDialogue
             else
                 title = dialogue.mStringId;
 
-            MWScript::InterpreterContext interpreterContext(&mActor.getRefData().getLocals(), mActor);
-            callback->addResponse(title, Interpreter::fixDefinesDialog(info->mResponse, interpreterContext));
-            MWBase::Environment::get().getLuaManager()->onDialogueResponse(mActor, *info, *responseTopic);
+            addResponse(title, *info, *responseTopic);
 
             if (dialogue.mType == ESM::Dialogue::Topic)
             {
@@ -421,14 +453,14 @@ namespace MWDialogue
         return 0;
     }
 
-    void DialogueManager::keywordSelected(std::string_view keyword, ResponseCallback* callback)
+    void DialogueManager::keywordSelected(std::string_view keyword)
     {
         if (!mIsInChoice)
         {
             const ESM::Dialogue* dialogue = searchDialogue(ESM::RefId::stringRefId(keyword));
             if (dialogue && dialogue->mType == ESM::Dialogue::Topic)
             {
-                executeTopic(dialogue->mId, callback);
+                executeTopic(dialogue->mId);
             }
         }
     }
@@ -461,7 +493,7 @@ namespace MWDialogue
         mCurrentDisposition = 0;
     }
 
-    void DialogueManager::questionAnswered(int answer, ResponseCallback* callback)
+    void DialogueManager::questionAnswered(int answer)
     {
         mChoice = answer;
 
@@ -475,16 +507,13 @@ namespace MWDialogue
                 const auto [responseTopic, info] = filter.search(*dialogue, true);
                 if (info)
                 {
-                    const std::string& text = info->mResponse;
-                    addTopicsFromText(text);
+                    addTopicsFromText(info->mResponse);
 
                     mChoice = -1;
                     mIsInChoice = false;
                     mChoices.clear();
 
-                    MWScript::InterpreterContext interpreterContext(&mActor.getRefData().getLocals(), mActor);
-                    callback->addResponse({}, Interpreter::fixDefinesDialog(text, interpreterContext));
-                    MWBase::Environment::get().getLuaManager()->onDialogueResponse(mActor, *info, *responseTopic);
+                    addResponse({}, *info, *responseTopic);
 
                     if (dialogue->mType == ESM::Dialogue::Topic)
                     {
@@ -530,7 +559,7 @@ namespace MWDialogue
         mGoodbye = true;
     }
 
-    void DialogueManager::persuade(int type, ResponseCallback* callback)
+    void DialogueManager::persuade(int type)
     {
         bool success;
         int temp, perm;
@@ -577,7 +606,7 @@ namespace MWDialogue
             text = "Bribe";
         }
 
-        executeTopic(ESM::RefId::stringRefId(text + (success ? " Success" : " Fail")), callback);
+        executeTopic(ESM::RefId::stringRefId(text + (success ? " Success" : " Fail")));
     }
 
     void DialogueManager::applyBarterDispositionChange(const MWWorld::Ptr& merchant, int delta)
@@ -595,7 +624,7 @@ namespace MWDialogue
         }
     }
 
-    bool DialogueManager::checkServiceRefused(ResponseCallback* callback, ServiceType service)
+    bool DialogueManager::checkServiceRefused(ServiceType service)
     {
         Filter filter(mActor, service, mTalkedTo);
 
@@ -613,11 +642,7 @@ namespace MWDialogue
             const MWWorld::Store<ESM::GameSetting>& gmsts
                 = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
 
-            MWScript::InterpreterContext interpreterContext(&mActor.getRefData().getLocals(), mActor);
-
-            callback->addResponse(gmsts.find("sServiceRefusal")->mValue.getString(),
-                Interpreter::fixDefinesDialog(info->mResponse, interpreterContext));
-            MWBase::Environment::get().getLuaManager()->onDialogueResponse(mActor, *info, dialogue);
+            addResponse(gmsts.find("sServiceRefusal")->mValue.getString(), *info, dialogue);
 
             executeScript(info->mResultScript, mActor);
             return true;

@@ -1,10 +1,8 @@
 #include "dialogue.hpp"
 
 #include <MyGUI_Button.h>
-#include <MyGUI_LanguageManager.h>
 #include <MyGUI_ProgressBar.h>
 #include <MyGUI_ScrollBar.h>
-#include <MyGUI_UString.h>
 #include <MyGUI_Window.h>
 
 #include <components/debug/debuglog.hpp>
@@ -36,19 +34,9 @@
 
 namespace MWGui
 {
-    void ResponseCallback::addResponse(std::string_view title, std::string_view text)
-    {
-        mWindow->addResponse(title, text, mNeedMargin);
-    }
-
-    void ResponseCallback::updateTopics() const
-    {
-        mWindow->updateTopics();
-    }
-
-    PersuasionDialog::PersuasionDialog(std::unique_ptr<ResponseCallback> callback)
+    PersuasionDialog::PersuasionDialog(DialogueWindow& dialogueWindow)
         : WindowModal("openmw_persuasion_dialog.layout")
-        , mCallback(std::move(callback))
+        , mDialogueWindow(dialogueWindow)
         , mInitialGoldLabelWidth(0)
         , mInitialMainWidgetWidth(0)
     {
@@ -123,8 +111,8 @@ namespace MWGui
         else /*if (sender == mBribe1000Button)*/
             type = MWBase::MechanicsManager::PT_Bribe1000;
 
-        MWBase::Environment::get().getDialogueManager()->persuade(type, mCallback.get());
-        mCallback->updateTopics();
+        MWBase::Environment::get().getDialogueManager()->persuade(type);
+        mDialogueWindow.updateTopics();
 
         setVisible(false);
     }
@@ -201,15 +189,10 @@ namespace MWGui
 
     // --------------------------------------------------------------------------------------------------
 
-    Response::Response(std::string_view text, std::string_view title, bool needMargin)
-        : mTitle(title)
-        , mNeedMargin(needMargin)
-    {
-        mText = text;
-    }
-
-    void Response::write(std::shared_ptr<BookTypesetter> typesetter, const MWDialogue::KeywordSearch& keywordSearch,
-        std::unordered_map<std::string, std::unique_ptr<Link>>& topicLinks) const
+    static void writeResponse(const std::shared_ptr<BookTypesetter>& typesetter,
+        const MWBase::DialogueManager::TranscriptEntry& response, bool needMargin,
+        const MWDialogue::KeywordSearch& keywordSearch,
+        std::unordered_map<std::string, std::unique_ptr<Link>>& topicLinks)
     {
         using namespace MWDialogue;
 
@@ -217,12 +200,12 @@ namespace MWGui
         const Translation::Storage& translationStorage = windowManager.getTranslationDataStorage();
         const TextColours& colors = windowManager.getTextColours();
 
-        typesetter->sectionBreak(mNeedMargin ? 9 : 0);
+        typesetter->sectionBreak(needMargin ? 9 : 0);
 
-        if (!mTitle.empty())
+        if (!response.mTitle.empty())
         {
             BookTypesetter::Style* title = typesetter->createStyle({}, colors.header, false);
-            typesetter->write(title, mTitle);
+            typesetter->write(title, response.mTitle);
             typesetter->sectionBreak();
         }
 
@@ -233,15 +216,16 @@ namespace MWGui
             Link* mTopic;
         };
 
-        std::vector<KeywordSearch::Match> matches = keywordSearch.parseHyperText(mText, translationStorage);
+        const std::string& responseText = response.mText;
+        std::vector<KeywordSearch::Match> matches = keywordSearch.parseHyperText(responseText, translationStorage);
         std::vector<Token> tokens;
         tokens.reserve(matches.size());
         std::string text;
-        text.reserve(mText.size());
+        text.reserve(responseText.size());
 
         // Generate the displayed text and a more convenient token list.
         // The matches we got provide positions in the original text and must be recalculated.
-        KeywordSearch::Point pos = mText.begin();
+        KeywordSearch::Point pos = responseText.begin();
         for (const KeywordSearch::Match& token : matches)
         {
             const std::string_view displayName(token.getDisplayName());
@@ -253,7 +237,7 @@ namespace MWGui
             if (value != topicLinks.end())
                 tokens.emplace_back(text.size() - displayName.size(), text.size(), value->second.get());
         }
-        text.append(pos, mText.end());
+        text.append(pos, responseText.end());
 
         typesetter->addContent(text);
 
@@ -276,18 +260,12 @@ namespace MWGui
             typesetter->write(textStyle, i, text.size());
     }
 
-    Message::Message(std::string_view text)
-    {
-        mText = text;
-    }
-
-    void Message::write(std::shared_ptr<BookTypesetter> typesetter, const MWDialogue::KeywordSearch&,
-        std::unordered_map<std::string, std::unique_ptr<Link>>&) const
+    static void writeMessage(const std::shared_ptr<BookTypesetter>& typesetter, std::string_view text)
     {
         const MyGUI::Colour& textColour = MWBase::Environment::get().getWindowManager()->getTextColours().notify;
         BookTypesetter::Style* title = typesetter->createStyle({}, textColour, false);
         typesetter->sectionBreak(9);
-        typesetter->write(title, mText);
+        typesetter->write(title, text);
     }
 
     // --------------------------------------------------------------------------------------------------
@@ -319,9 +297,7 @@ namespace MWGui
         : WindowBase("openmw_dialogue_window.layout")
         , mIsCompanion(false)
         , mGoodbye(false)
-        , mPersuasionDialog(std::make_unique<ResponseCallback>(this))
-        , mCallback(std::make_unique<ResponseCallback>(this))
-        , mGreetingCallback(std::make_unique<ResponseCallback>(this, false))
+        , mPersuasionDialog(*this)
     {
         // Centre dialog
         center();
@@ -359,8 +335,7 @@ namespace MWGui
 
     void DialogueWindow::onTradeComplete()
     {
-        MyGUI::UString message = MyGUI::LanguageManager::getInstance().replaceTags("#{sBarterDialog5}");
-        addResponse({}, message);
+        MWBase::Environment::get().getDialogueManager()->tradeCompleted();
     }
 
     bool DialogueWindow::exit()
@@ -440,28 +415,23 @@ namespace MWGui
             mPersuasionDialog.setVisible(true);
         else if (topic == sCompanionShare)
             MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Companion, mPtr);
-        else if (!dialogueManager->checkServiceRefused(mCallback.get()))
+        else if (!dialogueManager->checkServiceRefused())
         {
-            if (topic == sBarter
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Barter))
+            if (topic == sBarter && !dialogueManager->checkServiceRefused(MWBase::DialogueManager::Barter))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Barter, mPtr);
-            else if (topic == sSpells
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Spells))
+            else if (topic == sSpells && !dialogueManager->checkServiceRefused(MWBase::DialogueManager::Spells))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_SpellBuying, mPtr);
-            else if (topic == sTravel
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Travel))
+            else if (topic == sTravel && !dialogueManager->checkServiceRefused(MWBase::DialogueManager::Travel))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Travel, mPtr);
             else if (topic == sSpellMakingMenuTitle
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Spellmaking))
+                && !dialogueManager->checkServiceRefused(MWBase::DialogueManager::Spellmaking))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_SpellCreation, mPtr);
-            else if (topic == sEnchanting
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Enchanting))
+            else if (topic == sEnchanting && !dialogueManager->checkServiceRefused(MWBase::DialogueManager::Enchanting))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Enchanting, mPtr);
             else if (topic == sServiceTrainingTitle
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Training))
+                && !dialogueManager->checkServiceRefused(MWBase::DialogueManager::Training))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Training, mPtr);
-            else if (topic == sRepair
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Repair))
+            else if (topic == sRepair && !dialogueManager->checkServiceRefused(MWBase::DialogueManager::Repair))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_MerchantRepair, mPtr);
         }
         else
@@ -492,7 +462,7 @@ namespace MWGui
         mGoodbye = false;
         mTopicsList->setEnabled(true);
 
-        if (!MWBase::Environment::get().getDialogueManager()->startDialogue(actor, mGreetingCallback.get()))
+        if (!MWBase::Environment::get().getDialogueManager()->startDialogue(actor))
         {
             // No greetings found. The dialogue window should not be shown.
             // If this is a companion, we must show the companion window directly (used by BM_bear_be_unique).
@@ -550,7 +520,10 @@ namespace MWGui
         WindowBase::setVisible(visible);
         // The conversation is over once the dialogue mode is gone. This also runs while Lua hides the window.
         if (!visible && !MWBase::Environment::get().getWindowManager()->containsMode(GM_Dialogue))
-            mHistoryContents.clear();
+        {
+            MWBase::Environment::get().getDialogueManager()->endDialogue();
+            mTranscriptSize = 0;
+        }
     }
 
     bool DialogueWindow::setKeywords(const std::list<std::string>& keyWords)
@@ -662,8 +635,15 @@ namespace MWGui
         std::shared_ptr<BookTypesetter> typesetter
             = BookTypesetter::create(mHistory->getWidth(), std::numeric_limits<int>::max());
 
-        for (const auto& text : mHistoryContents)
-            text->write(typesetter, mKeywordSearch, mTopicLinks);
+        const auto& transcript = MWBase::Environment::get().getDialogueManager()->getTranscript();
+        for (size_t i = 0; i < transcript.size(); ++i)
+        {
+            if (transcript[i].mIsMessage)
+                writeMessage(typesetter, transcript[i].mText);
+            else
+                writeResponse(typesetter, transcript[i], i > 0, mKeywordSearch, mTopicLinks);
+        }
+        mTranscriptSize = transcript.size();
 
         BookTypesetter::Style* body = typesetter->createStyle({}, MyGUI::Colour::White, false);
 
@@ -747,7 +727,7 @@ namespace MWGui
         if (mGoodbye)
             return;
 
-        MWBase::Environment::get().getDialogueManager()->keywordSelected(topicId, mCallback.get());
+        MWBase::Environment::get().getDialogueManager()->keywordSelected(topicId);
         updateTopics();
     }
 
@@ -758,7 +738,7 @@ namespace MWGui
             onGoodbyeActivated();
             return;
         }
-        MWBase::Environment::get().getDialogueManager()->questionAnswered(id, mCallback.get());
+        MWBase::Environment::get().getDialogueManager()->questionAnswered(id);
         updateTopics();
     }
 
@@ -772,18 +752,6 @@ namespace MWGui
     void DialogueWindow::onScrollbarMoved(MyGUI::ScrollBar* sender, size_t pos)
     {
         mHistory->setPosition(0, static_cast<int>(pos) * -1);
-    }
-
-    void DialogueWindow::addResponse(std::string_view title, std::string_view text, bool needMargin)
-    {
-        mHistoryContents.push_back(std::make_unique<Response>(text, title, needMargin));
-        updateHistory();
-    }
-
-    void DialogueWindow::addMessageBox(std::string_view text)
-    {
-        mHistoryContents.push_back(std::make_unique<Message>(text));
-        updateHistory();
     }
 
     void DialogueWindow::updateDisposition()
@@ -832,8 +800,9 @@ namespace MWGui
         updateDisposition();
         deleteLater();
 
-        if (mChoices != MWBase::Environment::get().getDialogueManager()->getChoices()
-            || mGoodbye != MWBase::Environment::get().getDialogueManager()->isGoodbye())
+        const MWBase::DialogueManager* dialogueManager = MWBase::Environment::get().getDialogueManager();
+        if (mTranscriptSize != dialogueManager->getTranscript().size() || mChoices != dialogueManager->getChoices()
+            || mGoodbye != dialogueManager->isGoodbye())
             updateHistory();
     }
 
@@ -877,7 +846,11 @@ namespace MWGui
     {
         // Topic formatting needs to be updated regardless of whether the topic list has changed
         if (!setKeywords(MWBase::Environment::get().getDialogueManager()->getAvailableTopics()))
+        {
             updateTopicFormat();
+            if (mTranscriptSize != MWBase::Environment::get().getDialogueManager()->getTranscript().size())
+                updateHistory();
+        }
     }
 
     bool DialogueWindow::isCompanion()

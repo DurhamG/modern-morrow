@@ -23,27 +23,10 @@ namespace MWGui
 {
     class DialogueWindow;
 
-    class ResponseCallback : public MWBase::DialogueManager::ResponseCallback
-    {
-        DialogueWindow* mWindow;
-        bool mNeedMargin;
-
-    public:
-        ResponseCallback(DialogueWindow* win, bool needMargin = true)
-            : mWindow(win)
-            , mNeedMargin(needMargin)
-        {
-        }
-
-        void addResponse(std::string_view title, std::string_view text) override;
-
-        void updateTopics() const;
-    };
-
     class PersuasionDialog : public WindowModal
     {
     public:
-        PersuasionDialog(std::unique_ptr<ResponseCallback> callback);
+        PersuasionDialog(DialogueWindow& dialogueWindow);
 
         void onOpen() override;
 
@@ -53,7 +36,7 @@ namespace MWGui
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
 
     private:
-        std::unique_ptr<ResponseCallback> mCallback;
+        DialogueWindow& mDialogueWindow;
 
         int mInitialGoldLabelWidth;
         int mInitialMainWidgetWidth;
@@ -111,30 +94,6 @@ namespace MWGui
         void activated() override;
     };
 
-    struct DialogueText
-    {
-        virtual ~DialogueText() = default;
-        virtual void write(std::shared_ptr<BookTypesetter> typesetter, const MWDialogue::KeywordSearch& keywordSearch,
-            std::unordered_map<std::string, std::unique_ptr<Link>>& topicLinks) const = 0;
-        std::string mText;
-    };
-
-    struct Response : DialogueText
-    {
-        Response(std::string_view text, std::string_view title = {}, bool needMargin = true);
-        void write(std::shared_ptr<BookTypesetter> typesetter, const MWDialogue::KeywordSearch& keywordSearch,
-            std::unordered_map<std::string, std::unique_ptr<Link>>& topicLinks) const override;
-        std::string mTitle;
-        bool mNeedMargin;
-    };
-
-    struct Message : DialogueText
-    {
-        Message(std::string_view text);
-        void write(std::shared_ptr<BookTypesetter> typesetter, const MWDialogue::KeywordSearch& keywordSearch,
-            std::unordered_map<std::string, std::unique_ptr<Link>>& topicLinks) const override;
-    };
-
     class DialogueWindow : public WindowBase, public ReferenceInterface
     {
     public:
@@ -150,10 +109,6 @@ namespace MWGui
 
         /// @return true if stale keywords were updated successfully
         bool setKeywords(const std::list<std::string>& keyWord);
-
-        void addResponse(std::string_view title, std::string_view text, bool needMargin = true);
-
-        void addMessageBox(std::string_view text);
 
         void onFrame(float dt) override;
         void clear() override { resetReference(); }
@@ -194,7 +149,7 @@ namespace MWGui
         bool mIsCompanion;
         std::list<std::string> mKeywords;
 
-        std::vector<std::unique_ptr<DialogueText>> mHistoryContents;
+        size_t mTranscriptSize = 0;
         std::vector<std::pair<std::string, int>> mChoices;
         std::vector<BookTypesetter::Style*> mChoiceStyles;
         bool mGoodbye;
@@ -216,9 +171,6 @@ namespace MWGui
         PersuasionDialog mPersuasionDialog;
 
         MyGUI::IntSize mCurrentWindowSize;
-
-        std::unique_ptr<ResponseCallback> mCallback;
-        std::unique_ptr<ResponseCallback> mGreetingCallback;
 
         void setControllerFocus(size_t index, bool focused);
         size_t mControllerFocus = 0;

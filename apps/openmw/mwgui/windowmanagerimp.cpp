@@ -58,6 +58,7 @@
 
 #include <components/settings/values.hpp>
 
+#include "../mwbase/dialoguemanager.hpp"
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
 #include "../mwbase/luamanager.hpp"
@@ -834,7 +835,7 @@ namespace MWGui
         if (getMode() == GM_Dialogue && showInDialogueMode != MWGui::ShowInDialogueMode_Never)
         {
             MyGUI::UString text = MyGUI::LanguageManager::getInstance().replaceTags(MyGUI::UString(message));
-            mDialogueWindow->addMessageBox(text);
+            MWBase::Environment::get().getDialogueManager()->addMessage(text.asUTF8());
         }
         else if (showInDialogueMode != MWGui::ShowInDialogueMode_Only)
         {

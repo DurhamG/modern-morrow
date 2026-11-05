@@ -19,6 +19,8 @@ namespace ESM
     class ESMReader;
     class ESMWriter;
     class RefId;
+    struct DialInfo;
+    struct Dialogue;
 }
 
 namespace MWWorld
@@ -38,11 +40,18 @@ namespace MWBase
         ///< not implemented
 
     public:
-        class ResponseCallback
+        /// A line of the current conversation, in the order the dialogue window shows them
+        struct TranscriptEntry
         {
-        public:
-            virtual ~ResponseCallback() = default;
-            virtual void addResponse(std::string_view title, std::string_view text) = 0;
+            /// The header above a response, such as the name of the topic. Empty for greetings and answers.
+            std::string mTitle;
+            /// The text with its variables, such as %PCName, filled in. Topic link markers (@...#) are kept.
+            std::string mText;
+            /// The dialogue record and the info that a response came from, if any
+            const ESM::Dialogue* mDialogue = nullptr;
+            const ESM::DialInfo* mInfo = nullptr;
+            /// A message that the game showed during the conversation, such as a journal update
+            bool mIsMessage = false;
         };
 
         DialogueManager() {}
@@ -53,7 +62,18 @@ namespace MWBase
 
         virtual bool isInChoice() const = 0;
 
-        virtual bool startDialogue(const MWWorld::Ptr& actor, ResponseCallback* callback) = 0;
+        virtual bool startDialogue(const MWWorld::Ptr& actor) = 0;
+
+        /// Forgets the transcript once the conversation is over
+        virtual void endDialogue() = 0;
+
+        virtual const std::vector<TranscriptEntry>& getTranscript() const = 0;
+
+        /// Adds a message that the game shows during the conversation to the transcript
+        virtual void addMessage(std::string_view text) = 0;
+
+        /// Adds the actor's reply to a finished trade to the transcript
+        virtual void tradeCompleted() = 0;
 
         virtual void executeScript(const std::string& script, const MWWorld::Ptr& actor) = 0;
 
@@ -70,9 +90,9 @@ namespace MWBase
 
         virtual bool say(const MWWorld::Ptr& actor, const ESM::RefId& topic) = 0;
 
-        virtual void keywordSelected(std::string_view keyword, ResponseCallback* callback) = 0;
+        virtual void keywordSelected(std::string_view keyword) = 0;
         virtual void goodbyeSelected() = 0;
-        virtual void questionAnswered(int answer, ResponseCallback* callback) = 0;
+        virtual void questionAnswered(int answer) = 0;
 
         enum TopicType
         {
@@ -95,9 +115,9 @@ namespace MWBase
         virtual std::list<std::string> getAvailableTopics() = 0;
         virtual int getTopicFlag(const ESM::RefId&) const = 0;
 
-        virtual bool checkServiceRefused(ResponseCallback* callback, ServiceType service = ServiceType::Any) = 0;
+        virtual bool checkServiceRefused(ServiceType service = ServiceType::Any) = 0;
 
-        virtual void persuade(int type, ResponseCallback* callback) = 0;
+        virtual void persuade(int type) = 0;
 
         /// Changes the disposition of @a merchant after the player haggled with them. Does nothing unless the player
         /// is talking to @a merchant.

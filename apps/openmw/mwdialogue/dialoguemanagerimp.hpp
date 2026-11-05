@@ -59,6 +59,8 @@ namespace MWDialogue
 
         std::vector<std::pair<std::string, int>> mChoices;
 
+        std::vector<TranscriptEntry> mTranscript;
+
         int mOriginalDisposition;
         int mCurrentDisposition;
         int mPermanentDispositionChange;
@@ -72,7 +74,9 @@ namespace MWDialogue
 
         std::optional<Interpreter::Program> compile(const std::string& cmd, const MWWorld::Ptr& actor);
 
-        void executeTopic(const ESM::RefId& topic, ResponseCallback* callback);
+        void addResponse(std::string_view title, const ESM::DialInfo& info, const ESM::Dialogue& dialogue);
+
+        void executeTopic(const ESM::RefId& topic);
 
         const ESM::Dialogue* searchDialogue(const ESM::RefId& id);
 
@@ -85,7 +89,15 @@ namespace MWDialogue
 
         bool isInChoice() const override;
 
-        bool startDialogue(const MWWorld::Ptr& actor, ResponseCallback* callback) override;
+        bool startDialogue(const MWWorld::Ptr& actor) override;
+
+        void endDialogue() override;
+
+        const std::vector<TranscriptEntry>& getTranscript() const override;
+
+        void addMessage(std::string_view text) override;
+
+        void tradeCompleted() override;
 
         void executeScript(const std::string& script, const MWWorld::Ptr& actor) override;
 
@@ -103,16 +115,16 @@ namespace MWDialogue
 
         void goodbye() override;
 
-        bool checkServiceRefused(ResponseCallback* callback, ServiceType service = ServiceType::Any) override;
+        bool checkServiceRefused(ServiceType service = ServiceType::Any) override;
 
         bool say(const MWWorld::Ptr& actor, const ESM::RefId& topic) override;
 
         // calbacks for the GUI
-        void keywordSelected(std::string_view keyword, ResponseCallback* callback) override;
+        void keywordSelected(std::string_view keyword) override;
         void goodbyeSelected() override;
-        void questionAnswered(int answer, ResponseCallback* callback) override;
+        void questionAnswered(int answer) override;
 
-        void persuade(int type, ResponseCallback* callback) override;
+        void persuade(int type) override;
 
         /// @note Controlled by an option, gets discarded when dialogue ends by default
         void applyBarterDispositionChange(const MWWorld::Ptr& merchant, int delta) override;
