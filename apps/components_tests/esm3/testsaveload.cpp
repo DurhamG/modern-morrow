@@ -4,6 +4,7 @@
 #include <components/esm3/effectlist.hpp>
 #include <components/esm3/esmreader.hpp>
 #include <components/esm3/esmwriter.hpp>
+#include <components/esm3/journalentry.hpp>
 #include <components/esm3/loadbook.hpp>
 #include <components/esm3/loadclas.hpp>
 #include <components/esm3/loadcont.hpp>
@@ -339,6 +340,42 @@ namespace ESM
             EXPECT_THAT(record.mMarkedPosition.rot, ElementsAreArray(result.mMarkedPosition.rot));
             EXPECT_EQ(record.mCurrentCrimeId, result.mCurrentCrimeId);
             EXPECT_EQ(record.mPaidCrimeId, result.mPaidCrimeId);
+        }
+
+        TEST_P(Esm3SaveLoadRecordTest, journalEntryShouldNotChange)
+        {
+            // Journal entries are not saved to vanilla ESM format.
+            if (GetParam() == CurrentContentFormatVersion)
+                return;
+            JournalEntry record{};
+            record.mType = JournalEntry::Type_Journal;
+            record.mTopic = generateRandomRefId();
+            record.mInfo = generateRandomRefId();
+            record.mText = generateRandomString(42);
+            record.mDay = 3;
+            record.mMonth = 7;
+            record.mDayOfMonth = 16;
+            record.mActor = generateRandomRefId();
+            record.mCell = generateRandomRefId();
+            JournalEntry result;
+            saveAndLoadRecord(record, GetParam(), result);
+            EXPECT_EQ(record.mTopic, result.mTopic);
+            EXPECT_EQ(record.mInfo, result.mInfo);
+            EXPECT_EQ(record.mText, result.mText);
+            EXPECT_EQ(record.mDay, result.mDay);
+            EXPECT_EQ(record.mMonth, result.mMonth);
+            EXPECT_EQ(record.mDayOfMonth, result.mDayOfMonth);
+            // Saves from before the actor and cell were recorded have neither.
+            if (GetParam() > MaxNoJournalSourceFormatVersion)
+            {
+                EXPECT_EQ(record.mActor, result.mActor);
+                EXPECT_EQ(record.mCell, result.mCell);
+            }
+            else
+            {
+                EXPECT_TRUE(result.mActor.empty());
+                EXPECT_TRUE(result.mCell.empty());
+            }
         }
 
         TEST_P(Esm3SaveLoadRecordTest, cellRefShouldNotChange)

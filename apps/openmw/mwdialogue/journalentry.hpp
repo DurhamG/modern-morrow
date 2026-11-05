@@ -62,6 +62,10 @@ namespace MWDialogue
         int mDay;
         int mMonth;
         int mDayOfMonth;
+        // The actor that added the entry, such as the NPC whose dialogue line ran the Journal command, and the cell
+        // that the player was in. Either may be empty, and entries from older saves have neither.
+        ESM::RefId mActor;
+        ESM::RefId mCell;
 
         StampedJournalEntry();
 

@@ -9,6 +9,8 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 
+#include "../mwworld/cellstore.hpp"
+#include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/globals.hpp"
 
@@ -119,6 +121,8 @@ namespace MWDialogue
         , mDay(record.mDay)
         , mMonth(record.mMonth)
         , mDayOfMonth(record.mDayOfMonth)
+        , mActor(record.mActor)
+        , mCell(record.mCell)
     {
     }
 
@@ -128,6 +132,8 @@ namespace MWDialogue
         entry.mDay = mDay;
         entry.mMonth = mMonth;
         entry.mDayOfMonth = mDayOfMonth;
+        entry.mActor = mActor;
+        entry.mCell = mCell;
     }
 
     StampedJournalEntry StampedJournalEntry::makeFromQuest(
@@ -137,6 +143,15 @@ namespace MWDialogue
         const int month = MWBase::Environment::get().getWorld()->getGlobalInt(MWWorld::Globals::sMonth);
         const int dayOfMonth = MWBase::Environment::get().getWorld()->getGlobalInt(MWWorld::Globals::sDay);
 
-        return StampedJournalEntry(topic, idFromIndex(topic, index), day, month, dayOfMonth, actor);
+        StampedJournalEntry entry(topic, idFromIndex(topic, index), day, month, dayOfMonth, actor);
+
+        // Scripts run the Journal command on whatever object they belong to, or on the player when they have none.
+        // Only another actor counts as someone the player heard it from.
+        const MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
+        if (!actor.isEmpty() && actor != player && actor.getClass().isActor())
+            entry.mActor = actor.getCellRef().getRefId();
+        if (player.isInCell())
+            entry.mCell = player.getCell()->getCell()->getId();
+        return entry;
     }
 }

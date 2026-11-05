@@ -31,6 +31,10 @@ namespace ESM
         int32_t mDay; // time stamp
         int32_t mMonth;
         int32_t mDayOfMonth;
+        // For quest entries: the record ID of the actor that added the entry, if any, and the cell that the player
+        // was in. Both are empty for entries from older saves.
+        ESM::RefId mActor;
+        ESM::RefId mCell;
 
         void load(ESMReader& esm);
         void save(ESMWriter& esm) const;
