@@ -1,6 +1,8 @@
 #ifndef MWGUI_TravelWINDOW_H
 #define MWGUI_TravelWINDOW_H
 
+#include <components/esm3/transport.hpp>
+
 #include "referenceinterface.hpp"
 #include "windowbase.hpp"
 
@@ -32,7 +34,7 @@ namespace MWGui
         void onCancelButtonClicked(MyGUI::Widget* sender);
         void onTravelButtonClick(MyGUI::Widget* sender);
         void onMouseWheel(MyGUI::Widget* sender, int rel);
-        void addDestination(const ESM::RefId& name, const ESM::Position& pos, bool interior);
+        void addDestination(const ESM::RefId& name, const ESM::Transport::Dest& destination);
         void clearDestinations();
         int mCurrentY;
 
