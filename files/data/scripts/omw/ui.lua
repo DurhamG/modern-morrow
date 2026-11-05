@@ -8,6 +8,7 @@ local input = require('openmw.input')
 
 local MODE = ui._getAllUiModes()
 local WINDOW = ui._getAllWindowIds()
+local HUD_ELEMENT = ui._getAllHudElements()
 
 local replacedWindows = {}
 local hiddenWindows = {}
@@ -220,6 +221,13 @@ local function onUiModeChangedEvent(data)
     end
 end
 
+local function setHudElementVisibility(element, visible)
+    if not HUD_ELEMENT[element] then
+        error('HUD element "' .. tostring(element) .. '" not found.')
+    end
+    ui._setHudElementVisibility(element, visible)
+end
+
 local function isWindowVisible(windowName)
     if replacedWindows[windowName] then
         return replacedWindows[windowName].visible
@@ -236,7 +244,7 @@ return {
     interface = {
         --- Interface version
         -- @field [parent=#UI] #number version
-        version = 5,
+        version = 6,
 
         --- All available UI modes.
         -- Use `view(I.UI.MODE)` in `luap` console mode to see the list.
@@ -247,6 +255,21 @@ return {
         -- Use `view(I.UI.WINDOW)` in `luap` console mode to see the list.
         -- @field [parent=#UI] #table WINDOW
         WINDOW = util.makeStrictReadOnly(WINDOW),
+
+        --- All HUD elements that @{#UI.setHudElementVisibility} can hide.
+        --
+        --   * `DynamicStats` - the health, magicka and fatigue bars
+        --   * `EnemyHealth` - the health bar of the last actor the player hit
+        --   * `Weapon` - the icon and condition bar of the equipped weapon
+        --   * `Spell` - the icon of the selected spell or enchanted item, and its bar
+        --   * `WeaponSpellName` - the name that appears for a few seconds when the weapon or the spell changes
+        --   * `Sneak` - the sneak indicator
+        --   * `ActiveEffects` - the icons of the spell effects on the player
+        --   * `Minimap` - the local map with the compass
+        --   * `CellName` - the cell name that appears for a few seconds when the player enters a cell
+        --   * `DrowningBar` - the breath meter that appears under water
+        -- @field [parent=#UI] #table HUD_ELEMENT
+        HUD_ELEMENT = util.makeStrictReadOnly(HUD_ELEMENT),
 
         --- Register new implementation for the window with given name; overrides previous implementation.
         -- Adding new windows is not supported yet. At the moment it is only possible to override built-in windows.
@@ -317,6 +340,29 @@ return {
         isHudVisible = function() return ui._isHudVisible() end,
 
         ---
+        -- Hide one element of the HUD, or let the engine show it again. Use it to replace an element with a mod's own,
+        -- for example to draw the health bars in another style. The other elements of the HUD stay as they are.
+        --
+        -- While an element is hidden this way, the engine keeps it hidden, even at times when it would show it. With
+        -- `visible` true, the engine shows and hides the element by its own rules again. For example, it hides the
+        -- minimap while the map window is pinned, and shows the sneak indicator while the player sneaks unseen. The
+        -- elements beside a hidden one move into its place, as they do when the player pins a window.
+        --
+        -- All elements go back to the engine when a game is started or loaded.
+        -- @function [parent=#UI] setHudElementVisibility
+        -- @param #string element One of @{#UI.HUD_ELEMENT}
+        -- @param #boolean visible False to hide the element, true to let the engine show it
+        -- @usage I.UI.setHudElementVisibility(I.UI.HUD_ELEMENT.DynamicStats, false)
+        setHudElementVisibility = setHudElementVisibility,
+
+        ---
+        -- Returns whether the given HUD element is on the screen now.
+        -- @function [parent=#UI] isHudElementVisible
+        -- @param #string element One of @{#UI.HUD_ELEMENT}
+        -- @return #boolean
+        isHudElementVisible = function(element) return ui._isHudElementVisible(element) end,
+
+        ---
         -- Returns if the given window is visible or not
         -- @function [parent=#UI] isWindowVisible
         -- @param #string windowName
@@ -364,11 +410,6 @@ return {
         --     -- Show the message, and call answer(i) when the player picks buttons[i].
         -- end)
         registerInteractiveMessageHandler = registerInteractiveMessageHandler,
-
-        -- TODO
-        -- registerHudElement = function(name, showFn, hideFn) end,
-        -- showHudElement = function(name, bool) end,
-        -- hudElements,  -- map from element name to its visibility
     },
     engineHandlers = {
         _onUiModeChanged = onUiModeChanged,

@@ -163,6 +163,34 @@ testing.registerLocalTest('player diagonal walking',
         testing.expectEqualWithDelta(direction.y, -0.707, 0.1, 'Walk diagonally, Y coord')
     end)
 
+testing.registerLocalTest('Lua hides a HUD element', function()
+    local minimap = I.UI.HUD_ELEMENT.Minimap
+    local weapon = I.UI.HUD_ELEMENT.Weapon
+    testing.expectEqual(I.UI.isHudElementVisible(minimap), true, 'The minimap should be visible at first')
+
+    I.UI.setHudElementVisibility(minimap, false)
+    coroutine.yield()
+    testing.expectEqual(I.UI.isHudElementVisible(minimap), false, 'Lua should hide the minimap')
+    testing.expectEqual(I.UI.isHudElementVisible(weapon), true, 'The other elements should stay visible')
+
+    -- Opening and closing a menu makes the engine show the minimap again, unless Lua hid it.
+    I.UI.setPauseOnMode(I.UI.MODE.Interface, false)
+    I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
+    while I.UI.getMode() ~= I.UI.MODE.Interface do
+        coroutine.yield()
+    end
+    I.UI.setMode()
+    while I.UI.getMode() ~= nil do
+        coroutine.yield()
+    end
+    I.UI.setPauseOnMode(I.UI.MODE.Interface, true)
+    testing.expectEqual(I.UI.isHudElementVisible(minimap), false, 'The engine should not show the minimap again')
+
+    I.UI.setHudElementVisibility(minimap, true)
+    coroutine.yield()
+    testing.expectEqual(I.UI.isHudElementVisible(minimap), true, 'The engine should show the minimap again')
+end)
+
 testing.registerLocalTest('GUI input capture applies only in menus', function()
     input.setGuiInputCaptured(true)
     testing.expectEqual(input.isGuiInputCaptured(), false, 'The capture should have no effect outside menus')
