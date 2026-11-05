@@ -60,6 +60,14 @@
 -- @field #number timePlayed Gameplay time for this saved game. Note: available even with [time played](../modding/settings/saves.html#timeplayed) turned off
 -- @field #number creationTime Time at which the game was saved, as a timestamp in seconds. Can be passed as the second argument to `os.data`.
 -- @field #list<#string> contentFiles
+-- @field #number playerHealth The player's health when the game was saved. It is 0 in saves made by old versions of OpenMW.
+-- @field #number playerMaxHealth The player's maximum health when the game was saved. It is 0 in saves made by old versions of OpenMW.
+-- @field #string cellName The name of the cell the player was in, translated the same way as @{openmw.core#Cell.displayName}. For an exterior cell without a name, it is the name of the region.
+-- @field #number day The number of days passed in the game, from the `DaysPassed` game variable. It is 0 in saves made by old versions of OpenMW.
+-- @field #number dayOfMonth The in-game day of the month.
+-- @field #number month The in-game month, from 1 to 12.
+-- @field #number year The in-game year.
+-- @field #number gameHour The in-game hour, from 0 to 24, with a fractional part for the minutes.
 
 ---
 -- All the saves for the given directory

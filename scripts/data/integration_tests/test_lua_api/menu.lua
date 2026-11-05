@@ -7,6 +7,24 @@ testing.setSetupGlobalTest(function()
     coroutine.yield()
 end)
 
+local function isOfType(expectedType)
+    return function(actual)
+        if type(actual) ~= expectedType then
+            return string.format('expected a %s, got %s', expectedType, tostring(actual))
+        end
+        return ''
+    end
+end
+
+local function isNumberBetween(min, max)
+    return function(actual)
+        if type(actual) ~= 'number' or actual < min or actual > max then
+            return string.format('expected a number from %s to %s, got %s', min, max, tostring(actual))
+        end
+        return ''
+    end
+end
+
 testing.registerMenuTest('save and load', function()
     menu.newGame()
     coroutine.yield()
@@ -28,6 +46,14 @@ testing.registerMenuTest('save and load', function()
             'test_lua_api.omwscripts',
         },
         creationTime = matchers.isAny(),
+        playerHealth = isNumberBetween(1, math.huge),
+        playerMaxHealth = isNumberBetween(1, math.huge),
+        cellName = isOfType('string'),
+        day = isNumberBetween(0, math.huge),
+        dayOfMonth = isNumberBetween(1, 31),
+        month = isNumberBetween(1, 12),
+        year = isOfType('number'),
+        gameHour = isNumberBetween(0, 24),
     }
     local expectedAllSaves = {}
     expectedAllSaves[' - 1'] = directorySaves

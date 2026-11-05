@@ -2,9 +2,11 @@
 
 #include <components/lua/util.hpp>
 #include <components/misc/strings/lower.hpp>
+#include <components/translation/translation.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/statemanager.hpp"
+#include "../mwbase/windowmanager.hpp"
 #include "../mwstate/character.hpp"
 
 #include "context.hpp"
@@ -99,6 +101,8 @@ namespace MWLua
 
         auto getSaves = [](sol::state_view currentState, const MWState::Character& character) {
             sol::table saves(currentState, sol::create);
+            const Translation::Storage& translations
+                = MWBase::Environment::get().getWindowManager()->getTranslationDataStorage();
             for (const MWState::Slot& slot : character)
             {
                 sol::table slotInfo(currentState, sol::create);
@@ -106,6 +110,14 @@ namespace MWLua
                 slotInfo["playerName"] = slot.mProfile.mPlayerName;
                 slotInfo["playerLevel"] = slot.mProfile.mPlayerLevel;
                 slotInfo["timePlayed"] = slot.mProfile.mTimePlayed;
+                slotInfo["playerHealth"] = slot.mProfile.mCurrentHealth;
+                slotInfo["playerMaxHealth"] = slot.mProfile.mMaximumHealth;
+                slotInfo["cellName"] = translations.translateCellName(slot.mProfile.mPlayerCellName);
+                slotInfo["day"] = slot.mProfile.mCurrentDay;
+                slotInfo["dayOfMonth"] = slot.mProfile.mInGameTime.mDay;
+                slotInfo["month"] = slot.mProfile.mInGameTime.mMonth + 1;
+                slotInfo["year"] = slot.mProfile.mInGameTime.mYear;
+                slotInfo["gameHour"] = slot.mProfile.mInGameTime.mGameHour;
                 sol::table contentFiles(currentState, sol::create);
                 for (size_t i = 0; i < slot.mProfile.mContentFiles.size(); ++i)
                     contentFiles[LuaUtil::toLuaIndex(i)] = Misc::StringUtils::lowerCase(slot.mProfile.mContentFiles[i]);
