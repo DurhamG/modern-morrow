@@ -308,6 +308,14 @@ testing.registerLocalTest('measure text', function()
     testing.expectEqual(ok, false, 'Wrapping without a width should be an error')
 end)
 
+testing.registerLocalTest('Dialogue outside a conversation', function()
+    testing.expectEqual(types.Player.getDialogueActor(self), nil, 'The player should not be talking to anyone')
+    testing.expectThat(types.Player.getDialogueTopics(self), matchers.equalTo({}), 'There should be no topics')
+    testing.expectThat(types.Player.getDialogueTranscript(self), matchers.equalTo({}), 'There should be no lines')
+    testing.expectThat(types.Player.getDialogueChoices(self), matchers.equalTo({}), 'There should be no choices')
+    testing.expectEqual(types.Player.mustSayGoodbye(self), false, 'Nothing should ask the player to leave')
+end)
+
 testing.registerLocalTest('findPath',
     function()
         local src = util.vector3(4096, 4096, 1745)

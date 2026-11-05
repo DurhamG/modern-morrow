@@ -50,6 +50,7 @@ namespace MWDialogue
         Compiler::StreamErrorHandler mErrorHandler;
 
         MWWorld::Ptr mActor;
+        bool mInDialogue = false;
         bool mTalkedTo;
 
         int mChoice;
@@ -96,6 +97,8 @@ namespace MWDialogue
         bool startDialogue(const MWWorld::Ptr& actor) override;
 
         void endDialogue() override;
+
+        MWWorld::Ptr getActor() const override;
 
         const std::vector<TranscriptEntry>& getTranscript() const override;
 

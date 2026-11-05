@@ -1900,6 +1900,67 @@
 -- for _, player in ipairs(world.players) do player.type.addTopic(player, "Some Unrelated Work") end
 
 ---
+-- The actor the player is talking to, or nil outside a conversation.
+-- A conversation starts when the dialogue mode opens with an actor who has a greeting for the player, such as with `I.UI.setMode('Dialogue', { target = actor })`. It ends when the dialogue mode closes.
+-- The conversation functions also work while a Lua mod replaces the Dialogue window.
+-- @function [parent=#PLAYER] getDialogueActor
+-- @param openmw.core#GameObject player
+-- @return openmw.core#GameObject
+
+---
+-- The topics that the player can ask about in the current conversation, sorted by name, as the Dialogue window lists them.
+-- These are the topics that the player knows and that the actor has an answer to.
+-- The engine works the list out again after the greeting, a topic, an answer to a choice, a persuasion attempt and a refused service.
+-- Empty outside a conversation.
+-- @function [parent=#PLAYER] getDialogueTopics
+-- @param openmw.core#GameObject player
+-- @return #list<#PLAYERDialogueTopic>
+-- @usage for _, topic in ipairs(types.Player.getDialogueTopics(self)) do print(topic.name) end
+
+---
+-- @type PLAYERDialogueTopic
+-- @field #string id The record ID of the topic, as in `core.dialogue.topic.records`.
+-- @field #string name The name of the topic.
+-- @field #boolean specific The actor's answer is one that only this actor gives, and the player hasn't heard it yet. The Dialogue window shows such topics in their own colour.
+-- @field #boolean exhausted The player has heard the actor's answer, and it names no topic that the player doesn't know yet. The Dialogue window shows such topics in their own colour.
+
+---
+-- The lines of the current conversation, from the greeting on, in the order the Dialogue window shows them.
+-- Empty outside a conversation.
+-- @function [parent=#PLAYER] getDialogueTranscript
+-- @param openmw.core#GameObject player
+-- @return #list<#PLAYERDialogueLine>
+-- @usage for _, line in ipairs(types.Player.getDialogueTranscript(self)) do print(line.title, line.text) end
+
+---
+-- @type PLAYERDialogueLine
+-- @field #string text The text. Variables such as `%PCName` are filled in. Links to topics are still marked as `@topic#`.
+-- @field #string title The header above the line, such as the name of the topic the player asked about. Nil for greetings, answers to choices and messages.
+-- @field #boolean isMessage True for a message that the game showed during the conversation, such as "Your journal has been updated".
+-- @field #string type The type of the dialogue record the line came from, as in the `DialogueResponse` event, such as `'greeting'` or `'topic'`. Nil for messages and for the merchant's reply to a finished trade.
+-- @field #string recordId The ID of the dialogue record the line came from. When an actor refuses to answer because they don't like the player enough, this is the `Info Refusal` topic. Nil when `type` is nil.
+-- @field #string infoId The ID of the info in that record. Nil when `type` is nil.
+
+---
+-- The answers that the player must choose from, after a dialogue script asked a question with `Choice`.
+-- Empty when there is no question to answer.
+-- @function [parent=#PLAYER] getDialogueChoices
+-- @param openmw.core#GameObject player
+-- @return #list<#PLAYERDialogueChoice>
+
+---
+-- @type PLAYERDialogueChoice
+-- @field #string text The text of the answer.
+-- @field #number answer The number that the script gave this answer.
+
+---
+-- Whether a dialogue script ended the conversation with `Goodbye`.
+-- The player can then only leave, and the Dialogue window shows a Goodbye link in place of the topics.
+-- @function [parent=#PLAYER] mustSayGoodbye
+-- @param openmw.core#GameObject player
+-- @return #boolean
+
+---
 -- Returns @{#PlayerJournal}, which contains the read-only access to journal text data accumulated by the player.
 -- Not the same as @{openmw_core#Dialogue.journal} which holds raw game records: with placeholders for dynamic variables and no player-specific info.
 -- @function [parent=#PLAYER] journal

@@ -73,6 +73,7 @@ namespace MWDialogue
     void DialogueManager::clear()
     {
         mKnownTopics.clear();
+        mInDialogue = false;
         mTalkedTo = false;
         mOriginalDisposition = 0;
         mCurrentDisposition = 0;
@@ -177,6 +178,7 @@ namespace MWDialogue
                 // Search a response (we do not accept a fallback to "Info refusal" here)
                 if (const ESM::DialInfo* info = filter.search(dialogue, false).second)
                 {
+                    mInDialogue = true;
                     creatureStats.talkedToPlayer();
 
                     if (!info->mSound.empty())
@@ -200,9 +202,17 @@ namespace MWDialogue
 
     void DialogueManager::endDialogue()
     {
+        mInDialogue = false;
         mTranscript.clear();
         mAvailableTopics.clear();
         mAvailableTopicSearch.clear();
+    }
+
+    MWWorld::Ptr DialogueManager::getActor() const
+    {
+        if (!mInDialogue)
+            return {};
+        return mActor;
     }
 
     const std::vector<MWBase::DialogueManager::TranscriptEntry>& DialogueManager::getTranscript() const

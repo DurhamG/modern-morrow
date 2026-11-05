@@ -17,6 +17,7 @@
 #include <components/settings/values.hpp>
 
 #include "../birthsignbindings.hpp"
+#include "../conversationbindings.hpp"
 #include "../luamanagerimp.hpp"
 #include "../magicbindings.hpp"
 #include "../magictypebindings.hpp"
@@ -1630,5 +1631,7 @@ namespace MWLua
                 throw std::runtime_error("Only global scripts can change birth signs");
             MWBase::Environment::get().getWorld()->getPlayer().setBirthSign(toBirthSignId(recordOrId));
         };
+
+        addConversationBindings(player, context);
     }
 }

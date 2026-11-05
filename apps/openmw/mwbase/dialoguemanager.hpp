@@ -82,6 +82,9 @@ namespace MWBase
         /// Forgets the transcript once the conversation is over
         virtual void endDialogue() = 0;
 
+        /// The actor the player is talking to. Empty outside a conversation.
+        virtual MWWorld::Ptr getActor() const = 0;
+
         virtual const std::vector<TranscriptEntry>& getTranscript() const = 0;
 
         /// Adds a message that the game shows during the conversation to the transcript
