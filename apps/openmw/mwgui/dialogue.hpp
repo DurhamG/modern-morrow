@@ -10,7 +10,6 @@
 #include "bookpage.hpp"
 
 #include "../mwbase/dialoguemanager.hpp"
-#include "../mwdialogue/keywordsearch.hpp"
 
 #include <MyGUI_Delegate.h>
 
@@ -159,8 +158,6 @@ namespace MWGui
         std::unordered_map<std::string, std::unique_ptr<Link>> mTopicLinks;
 
         std::vector<std::unique_ptr<Link>> mDeleteLater;
-
-        MWDialogue::KeywordSearch mKeywordSearch;
 
         BookPage* mHistory;
         Gui::MWList* mTopicsList;

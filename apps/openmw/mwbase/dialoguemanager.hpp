@@ -23,6 +23,11 @@ namespace ESM
     struct Dialogue;
 }
 
+namespace MWDialogue
+{
+    class KeywordSearch;
+}
+
 namespace MWWorld
 {
     class Ptr;
@@ -131,6 +136,9 @@ namespace MWBase
         /// The topics that the player can ask about, sorted by name. They are worked out again after each step of the
         /// conversation.
         virtual const std::vector<AvailableTopic>& getAvailableTopics() const = 0;
+
+        /// Finds the available topics in a text, to show them as links
+        virtual const MWDialogue::KeywordSearch& getAvailableTopicSearch() const = 0;
 
         virtual bool checkServiceRefused(ServiceType service = ServiceType::Any) = 0;
 

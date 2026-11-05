@@ -39,11 +39,30 @@ namespace MWDialogue
             std::string_view getDisplayName() const;
         };
 
+        struct Link
+        {
+            /// Where the link starts and ends in the display text, in bytes
+            std::size_t mBegin;
+            std::size_t mEnd;
+            std::string mTopicId;
+        };
+
+        /// Text as the dialogue window shows it, and the topics that parts of it link to
+        struct DisplayText
+        {
+            std::string mText;
+            std::vector<Link> mLinks;
+        };
+
         void seed(std::string_view keyword, std::string_view value);
         void clear();
         void highlightKeywords(Point beg, Point end, std::vector<Match>& out) const;
         std::vector<KeywordSearch::Match> parseHyperText(
             const std::string& text, const Translation::Storage& storage) const;
+
+        /// Replaces each explicit link (@...#) by the name it shows, and lists the explicit links and the seeded
+        /// keywords that the text contains
+        DisplayText getDisplayText(const std::string& text, const Translation::Storage& storage) const;
     };
 
 }

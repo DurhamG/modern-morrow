@@ -370,3 +370,62 @@ TEST_F(KeywordSearchTest, parse_hypertext_mark_file_overrides_keyword)
     EXPECT_EQ(matches[1].getDisplayName(), "assassinated");
     EXPECT_EQ(matches[1].mTopicId, "убит");
 }
+
+TEST_F(KeywordSearchTest, display_text_without_links)
+{
+    MWDialogue::KeywordSearch search;
+    Translation::Storage storage;
+    search.seed("guild", "mages guild");
+
+    const auto displayText = search.getDisplayText("Nothing to see here.", storage);
+
+    EXPECT_EQ(displayText.mText, "Nothing to see here.");
+    EXPECT_TRUE(displayText.mLinks.empty());
+}
+
+TEST_F(KeywordSearchTest, display_text_removes_link_markers)
+{
+    MWDialogue::KeywordSearch search;
+    Translation::Storage storage;
+
+    const auto displayText = search.getDisplayText("Go to @Balmora# now.", storage);
+
+    EXPECT_EQ(displayText.mText, "Go to Balmora now.");
+    ASSERT_EQ(displayText.mLinks.size(), 1);
+    EXPECT_EQ(displayText.mLinks[0].mBegin, 6);
+    EXPECT_EQ(displayText.mLinks[0].mEnd, 13);
+    EXPECT_EQ(displayText.mLinks[0].mTopicId, "balmora");
+}
+
+TEST_F(KeywordSearchTest, display_text_moves_keywords_after_removed_markers)
+{
+    MWDialogue::KeywordSearch search;
+    Translation::Storage storage;
+    search.seed("guild", "mages guild");
+
+    const auto displayText = search.getDisplayText("To @join# the guild, talk to the head.", storage);
+
+    EXPECT_EQ(displayText.mText, "To join the guild, talk to the head.");
+    ASSERT_EQ(displayText.mLinks.size(), 2);
+    EXPECT_EQ(displayText.mText.substr(displayText.mLinks[0].mBegin, 4), "join");
+    EXPECT_EQ(displayText.mLinks[0].mEnd, displayText.mLinks[0].mBegin + 4);
+    EXPECT_EQ(displayText.mLinks[0].mTopicId, "join");
+    EXPECT_EQ(displayText.mLinks[1].mBegin, 12);
+    EXPECT_EQ(displayText.mLinks[1].mEnd, 17);
+    EXPECT_EQ(displayText.mLinks[1].mTopicId, "mages guild");
+}
+
+TEST_F(KeywordSearchTest, display_text_hides_pseudo_asterisks)
+{
+    MWDialogue::KeywordSearch search;
+    Translation::Storage storage;
+    storage.addPhraseForm("Guild*", "Mages Guild");
+
+    const auto displayText = search.getDisplayText("Join the @Guild\x7F#.", storage);
+
+    EXPECT_EQ(displayText.mText, "Join the Guild.");
+    ASSERT_EQ(displayText.mLinks.size(), 1);
+    EXPECT_EQ(displayText.mLinks[0].mBegin, 9);
+    EXPECT_EQ(displayText.mLinks[0].mEnd, 14);
+    EXPECT_EQ(displayText.mLinks[0].mTopicId, "mages guild");
+}

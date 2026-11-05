@@ -81,6 +81,7 @@ namespace MWDialogue
         mKeywordSearchInitialized = false;
         mTranscript.clear();
         mAvailableTopics.clear();
+        mAvailableTopicSearch.clear();
     }
 
     void DialogueManager::addTopic(const ESM::RefId& topic)
@@ -201,6 +202,7 @@ namespace MWDialogue
     {
         mTranscript.clear();
         mAvailableTopics.clear();
+        mAvailableTopicSearch.clear();
     }
 
     const std::vector<MWBase::DialogueManager::TranscriptEntry>& DialogueManager::getTranscript() const
@@ -448,11 +450,21 @@ namespace MWDialogue
             [](const AvailableTopic& left, const AvailableTopic& right) {
                 return Misc::StringUtils::ciLess(left.mName, right.mName);
             });
+
+        mAvailableTopicSearch.clear();
+        for (const AvailableTopic& topic : mAvailableTopics)
+            mAvailableTopicSearch.seed(
+                mTranslationDataStorage.topicKeyword(topic.mName), Misc::StringUtils::lowerCase(topic.mName));
     }
 
     const std::vector<MWBase::DialogueManager::AvailableTopic>& DialogueManager::getAvailableTopics() const
     {
         return mAvailableTopics;
+    }
+
+    const MWDialogue::KeywordSearch& DialogueManager::getAvailableTopicSearch() const
+    {
+        return mAvailableTopicSearch;
     }
 
     bool DialogueManager::keywordSelected(std::string_view keyword)

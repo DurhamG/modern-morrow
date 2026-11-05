@@ -182,6 +182,27 @@ namespace MWDialogue
         return matches;
     }
 
+    KeywordSearch::DisplayText KeywordSearch::getDisplayText(
+        const std::string& text, const Translation::Storage& storage) const
+    {
+        DisplayText result;
+        result.mText.reserve(text.size());
+
+        // The matches give positions in the original text, which change when the link markers are removed
+        Point pos = text.begin();
+        for (const Match& match : parseHyperText(text, storage))
+        {
+            result.mText.append(pos, match.mBeg);
+            const std::size_t begin = result.mText.size();
+            result.mText.append(match.getDisplayName());
+            result.mLinks.push_back({ begin, result.mText.size(), match.mTopicId });
+            pos = match.mEnd;
+        }
+        result.mText.append(pos, text.end());
+
+        return result;
+    }
+
     std::string_view KeywordSearch::Match::getDisplayName() const
     {
         if (mExplicit)

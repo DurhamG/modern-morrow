@@ -193,11 +193,11 @@ namespace MWGui
 
     static void writeResponse(const std::shared_ptr<BookTypesetter>& typesetter,
         const MWBase::DialogueManager::TranscriptEntry& response, bool needMargin,
-        const MWDialogue::KeywordSearch& keywordSearch,
         std::unordered_map<std::string, std::unique_ptr<Link>>& topicLinks)
     {
         using namespace MWDialogue;
 
+        const KeywordSearch& keywordSearch = MWBase::Environment::get().getDialogueManager()->getAvailableTopicSearch();
         MWBase::WindowManager& windowManager = *MWBase::Environment::get().getWindowManager();
         const Translation::Storage& translationStorage = windowManager.getTranslationDataStorage();
         const TextColours& colors = windowManager.getTextColours();
@@ -218,28 +218,16 @@ namespace MWGui
             Link* mTopic;
         };
 
-        const std::string& responseText = response.mText;
-        std::vector<KeywordSearch::Match> matches = keywordSearch.parseHyperText(responseText, translationStorage);
+        const KeywordSearch::DisplayText displayText = keywordSearch.getDisplayText(response.mText, translationStorage);
+        const std::string& text = displayText.mText;
         std::vector<Token> tokens;
-        tokens.reserve(matches.size());
-        std::string text;
-        text.reserve(responseText.size());
-
-        // Generate the displayed text and a more convenient token list.
-        // The matches we got provide positions in the original text and must be recalculated.
-        KeywordSearch::Point pos = responseText.begin();
-        for (const KeywordSearch::Match& token : matches)
+        tokens.reserve(displayText.mLinks.size());
+        for (const KeywordSearch::Link& link : displayText.mLinks)
         {
-            const std::string_view displayName(token.getDisplayName());
-            text.append(pos, token.mBeg);
-            text.append(displayName);
-            pos = token.mEnd;
-
-            auto value = topicLinks.find(token.mTopicId);
+            auto value = topicLinks.find(link.mTopicId);
             if (value != topicLinks.end())
-                tokens.emplace_back(text.size() - displayName.size(), text.size(), value->second.get());
+                tokens.emplace_back(link.mBegin, link.mEnd, value->second.get());
         }
-        text.append(pos, responseText.end());
 
         typesetter->addContent(text);
 
@@ -551,7 +539,6 @@ namespace MWGui
         for (auto& linkPair : mTopicLinks)
             mDeleteLater.push_back(std::move(linkPair.second));
         mTopicLinks.clear();
-        mKeywordSearch.clear();
 
         int services = mPtr.getClass().getServices(mPtr);
 
@@ -592,16 +579,12 @@ namespace MWGui
         if (mTopicsList->getItemCount() > 0)
             mTopicsList->addSeparator();
 
-        MWBase::WindowManager& windowManager = *MWBase::Environment::get().getWindowManager();
-        const Translation::Storage& translationStorage = windowManager.getTranslationDataStorage();
-
         for (const auto& keyword : mKeywords)
         {
             std::string topicId = Misc::StringUtils::lowerCase(keyword);
             mTopicsList->addItem(keyword, sVerticalPadding);
 
             auto t = std::make_unique<Topic>(keyword);
-            mKeywordSearch.seed(translationStorage.topicKeyword(keyword), topicId);
             t->eventTopicActivated += MyGUI::newDelegate(this, &DialogueWindow::onTopicActivated);
             mTopicLinks[topicId] = std::move(t);
 
@@ -638,7 +621,7 @@ namespace MWGui
             if (transcript[i].mIsMessage)
                 writeMessage(typesetter, transcript[i].mText);
             else
-                writeResponse(typesetter, transcript[i], i > 0, mKeywordSearch, mTopicLinks);
+                writeResponse(typesetter, transcript[i], i > 0, mTopicLinks);
         }
         mTranscriptSize = transcript.size();
 

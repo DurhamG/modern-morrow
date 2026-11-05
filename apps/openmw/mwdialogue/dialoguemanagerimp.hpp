@@ -62,6 +62,7 @@ namespace MWDialogue
         std::vector<TranscriptEntry> mTranscript;
 
         std::vector<AvailableTopic> mAvailableTopics;
+        MWDialogue::KeywordSearch mAvailableTopicSearch;
 
         int mOriginalDisposition;
         int mCurrentDisposition;
@@ -105,6 +106,8 @@ namespace MWDialogue
         void executeScript(const std::string& script, const MWWorld::Ptr& actor) override;
 
         const std::vector<AvailableTopic>& getAvailableTopics() const override;
+
+        const MWDialogue::KeywordSearch& getAvailableTopicSearch() const override;
 
         bool inJournal(const ESM::RefId& topicId, const ESM::RefId& infoId) const override;
 
