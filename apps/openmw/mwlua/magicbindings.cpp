@@ -268,6 +268,19 @@ namespace MWLua
         // MagicEffect store
         sol::table magicEffects(state, sol::create);
         addRecordFunctionBinding<ESM::MagicEffect>(magicEffects, context);
+        magicEffects["getDescription"]
+            = [](const sol::object& effectParams, const sol::optional<sol::table>& options) -> std::string {
+            bool isConstant = false;
+            bool noTarget = false;
+            bool noMagnitude = false;
+            if (options)
+            {
+                isConstant = options->get_or("isConstant", false);
+                noTarget = options->get_or("noTarget", false);
+                noMagnitude = options->get_or("noMagnitude", false);
+            }
+            return MWMechanics::describeSpellEffect(toEffectParams(effectParams), isConstant, noTarget, noMagnitude);
+        };
         magicApi["effects"] = LuaUtil::makeReadOnly(magicEffects);
         const auto* magicEffectStore = &MWBase::Environment::get().getWorld()->getStore().get<ESM::MagicEffect>();
 

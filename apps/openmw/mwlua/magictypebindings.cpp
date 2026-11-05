@@ -483,6 +483,11 @@ namespace MWLua
         return out;
     }
 
+    ESM::ENAMstruct toEffectParams(const sol::object& value)
+    {
+        return tableToEnamStruct(value).mData;
+    }
+
     void addMagicEffectType(sol::state_view& lua)
     {
         addMagicEffectType<ESM::MagicEffect>(lua, "ESM3_MagicEffect");

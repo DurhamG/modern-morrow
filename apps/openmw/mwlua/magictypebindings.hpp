@@ -6,6 +6,7 @@
 namespace ESM
 {
     struct EffectList;
+    struct ENAMstruct;
     struct Enchantment;
     struct MagicEffect;
     struct Potion;
@@ -26,6 +27,8 @@ namespace MWLua
     void addMutablePotionType(sol::state_view& lua);
 
     ESM::EffectList tableToEffectList(const sol::table&);
+    // Reads the parameters of one effect from a MagicEffectWithParams or from a Lua table with the same fields.
+    ESM::ENAMstruct toEffectParams(const sol::object&);
 
     void addMagicEffectType(sol::state_view&);
     void addMutableMagicEffectType(sol::state_view& lua);

@@ -732,6 +732,22 @@
 -- local mgef = core.magic.effects.records[core.magic.EFFECT_TYPE.Reflect]
 -- print('Reflect Icon: '..tostring(mgef.icon))
 
+---
+-- The line of text that spell tooltips show for an effect, such as "Fortify Strength 10 pts for 30 secs on Self".
+-- The text uses the game settings for its words, and the units that suit the effect, such as points, percent or feet.
+-- It leaves out what the effect doesn't have, such as the magnitude of Water Walking or the duration of an effect that is applied once.
+-- @function [parent=#Effects] getDescription
+-- @param #any effect A @{#MagicEffectWithParams}, or a Lua table with the same fields.
+-- @param #table options (optional) A table of flags that leave out parts of the text, as the engine does for some kinds of magic:
+--
+--   * `isConstant` - leave out the duration, the area and the range, as for a constant effect enchantment or an ability;
+--   * `noTarget` - leave out the range, as for a potion;
+--   * `noMagnitude` - leave out the magnitude, as for an ingredient.
+-- @return #string
+-- @usage local text = core.magic.effects.getDescription(core.magic.spells.records['fireball'].effects[1])
+-- @usage local text = core.magic.effects.getDescription(enchantment.effects[1],
+--     { isConstant = enchantment.type == core.magic.ENCHANTMENT_TYPE.ConstantEffect })
+
 --- @{#Enchantments}: Enchantments
 -- @field [parent=#Magic] #Enchantments enchantments
 

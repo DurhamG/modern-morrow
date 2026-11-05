@@ -218,6 +218,36 @@ testing.registerGlobalTest('spell cost', function()
         'An autocalc spell should cost what its effects cost, not its cost field')
 end)
 
+testing.registerGlobalTest('effect description', function()
+    local function gmst(name)
+        return core.getGMST(name) or ''
+    end
+    local spell = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 5, isAutocalc = false })
+    local effect = spell.effects[1]
+    local name = effect.effect.name
+    testing.expectEqual(core.magic.effects.getDescription(effect),
+        name .. ' 10 ' .. gmst('spoints') .. ' ' .. gmst('sfor') .. ' 10 ' .. gmst('sseconds') .. ' '
+            .. gmst('sonword') .. ' ' .. gmst('sRangeSelf'),
+        'The description should give the magnitude, the duration and the range')
+    testing.expectEqual(core.magic.effects.getDescription(effect, { isConstant = true }),
+        name .. ' 10 ' .. gmst('spoints'), 'A constant effect should have no duration or range')
+    testing.expectEqual(core.magic.effects.getDescription(effect, { isConstant = true, noMagnitude = true }), name,
+        'An effect without magnitude should only have a name')
+
+    local area = core.magic.effects.getDescription({
+        id = effect.id,
+        range = core.magic.RANGE.Target,
+        area = 15,
+        magnitudeMin = 1,
+        magnitudeMax = 5,
+        duration = 1,
+    }, { noTarget = true })
+    testing.expectEqual(area,
+        name .. ' 1 ' .. gmst('sTo') .. ' 5 ' .. gmst('spoints') .. ' ' .. gmst('sfor') .. ' 1 ' .. gmst('ssecond')
+            .. ' ' .. gmst('sin') .. ' 15 ' .. gmst('sfootarea'),
+        'getDescription should accept a table, and give a range of magnitudes and the area')
+end)
+
 testing.registerGlobalTest('spell success chance', function()
     local player = initPlayer()
     local spell = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 5, isAutocalc = false })
