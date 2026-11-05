@@ -1,6 +1,8 @@
 #ifndef OPENMW_MECHANICS_SERVICES_H
 #define OPENMW_MECHANICS_SERVICES_H
 
+#include <vector>
+
 #include <components/esm/refid.hpp>
 
 namespace ESM
@@ -15,6 +17,23 @@ namespace MWWorld
 
 namespace MWMechanics
 {
+    /// The skills @a trainer teaches: their three best skills, best first.
+    std::vector<ESM::RefId> getTrainingSkills(const MWWorld::Ptr& trainer);
+
+    /// The reason a trainer can't raise one of the player's skills.
+    enum class TrainingRefusal
+    {
+        None,
+        /// The player's skill is already as high as the trainer's.
+        TrainerSkillTooLow,
+        /// The player's skill is already as high as the attribute that governs it.
+        AttributeTooLow,
+    };
+
+    /// Whether @a trainer can raise the player's @a skill by one point, and if not, why.
+    /// This does not check whether the player can pay for it.
+    TrainingRefusal getTrainingRefusal(const MWWorld::Ptr& trainer, ESM::RefId skill);
+
     /// The gold @a trainer asks to raise the player's @a skill by one point.
     int getTrainingPrice(const MWWorld::Ptr& trainer, ESM::RefId skill);
 

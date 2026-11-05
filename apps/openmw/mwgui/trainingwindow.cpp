@@ -70,39 +70,8 @@ namespace MWGui
 
         mPlayerGold->setCaptionWithReplacing("#{sGold}: " + MyGUI::utility::toString(playerGold));
 
-        const auto& store = MWBase::Environment::get().getESMStore();
-        const MWWorld::Store<ESM::Skill>& skillStore = store->get<ESM::Skill>();
-
-        // NPC can train you in their best 3 skills
-        constexpr size_t maxSkills = 3;
-        std::vector<std::pair<const ESM::Skill*, float>> skills;
-        skills.reserve(maxSkills);
-
-        const auto sortByValue
-            = [](const std::pair<const ESM::Skill*, float>& lhs, const std::pair<const ESM::Skill*, float>& rhs) {
-                  return lhs.second > rhs.second;
-              };
-        // Maintain a sorted vector of max maxSkills elements, ordering skills by value and content file order
-        const MWMechanics::NpcStats& actorStats = actor.getClass().getNpcStats(actor);
-        for (const ESM::Skill& skill : skillStore)
-        {
-            float value = getSkillForTraining(actorStats, skill.mId);
-            if (skills.size() < maxSkills)
-            {
-                skills.emplace_back(&skill, value);
-                std::stable_sort(skills.begin(), skills.end(), sortByValue);
-            }
-            else
-            {
-                auto& lowest = skills[maxSkills - 1];
-                if (lowest.second < value)
-                {
-                    lowest.first = &skill;
-                    lowest.second = value;
-                    std::stable_sort(skills.begin(), skills.end(), sortByValue);
-                }
-            }
-        }
+        const MWWorld::Store<ESM::Skill>& skillStore = MWBase::Environment::get().getESMStore()->get<ESM::Skill>();
+        const std::vector<ESM::RefId> skills = MWMechanics::getTrainingSkills(actor);
 
         MyGUI::EnumeratorWidgetPtr widgets = mTrainingOptions->getEnumerator();
         MyGUI::Gui::getInstance().destroyWidgets(widgets);
@@ -112,7 +81,7 @@ namespace MWGui
         mTrainingButtons.clear();
         for (size_t i = 0; i < skills.size(); ++i)
         {
-            const ESM::Skill* skill = skills[i].first;
+            const ESM::Skill* skill = skillStore.find(skills[i]);
             const int price = MWMechanics::getTrainingPrice(mPtr, skill->mId);
 
             MyGUI::Button* button = mTrainingOptions->createWidget<MyGUI::Button>(price <= playerGold
@@ -121,7 +90,7 @@ namespace MWGui
                 MyGUI::IntCoord(4, static_cast<int>(3 + i * lineHeight), mTrainingOptions->getWidth() - 10, lineHeight),
                 MyGUI::Align::Default);
 
-            button->setUserData(skills[i].first);
+            button->setUserData(skill);
             button->eventMouseButtonClick += MyGUI::newDelegate(this, &TrainingWindow::onTrainingSelected);
 
             button->setCaptionWithReplacing(
@@ -160,25 +129,22 @@ namespace MWGui
         const ESM::Skill* skill = *sender->getUserData<const ESM::Skill*>();
 
         MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
-        MWMechanics::NpcStats& pcStats = player.getClass().getNpcStats(player);
 
         const int price = MWMechanics::getTrainingPrice(mPtr, skill->mId);
 
         if (price > player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId))
             return;
 
-        if (getSkillForTraining(mPtr.getClass().getNpcStats(mPtr), skill->mId)
-            <= pcStats.getSkill(skill->mId).getBase())
+        switch (MWMechanics::getTrainingRefusal(mPtr, skill->mId))
         {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sServiceTrainingWords}");
-            return;
-        }
-
-        // You can not train a skill above its governing attribute
-        if (pcStats.getSkill(skill->mId).getBase() >= pcStats.getAttribute(skill->mData.mAttribute).getModified())
-        {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage17}");
-            return;
+            case MWMechanics::TrainingRefusal::None:
+                break;
+            case MWMechanics::TrainingRefusal::TrainerSkillTooLow:
+                MWBase::Environment::get().getWindowManager()->messageBox("#{sServiceTrainingWords}");
+                return;
+            case MWMechanics::TrainingRefusal::AttributeTooLow:
+                MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage17}");
+                return;
         }
 
         // increase skill
@@ -216,13 +182,6 @@ namespace MWGui
         // go back to game mode
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Training);
         MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
-    }
-
-    float TrainingWindow::getSkillForTraining(const MWMechanics::NpcStats& stats, ESM::RefId id) const
-    {
-        if (Settings::game().mTrainersTrainingSkillsBasedOnBaseSkill)
-            return stats.getSkill(id).getBase();
-        return stats.getSkill(id).getModified();
     }
 
     void TrainingWindow::onFrame(float dt)
