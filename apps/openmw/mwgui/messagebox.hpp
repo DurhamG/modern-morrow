@@ -1,9 +1,11 @@
 #ifndef MWGUI_MESSAGE_BOX_H
 #define MWGUI_MESSAGE_BOX_H
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "windowbase.hpp"
@@ -31,8 +33,11 @@ namespace MWGui
         /// @param luaCanAnswer Whether the player's Lua scripts may show and answer this box, if they answer
         /// interactive message boxes. A caller that waits for the answer in a loop that doesn't run Lua must pass
         /// false.
+        /// @param onButtonPressed Called with the index of the pressed button, unless another interactive message box
+        /// replaces this one first.
         bool createInteractiveMessageBox(std::string_view message, const std::vector<std::string>& buttons,
-            bool immediate = false, int defaultFocus = -1, bool luaCanAnswer = true);
+            bool immediate = false, int defaultFocus = -1, bool luaCanAnswer = true,
+            std::function<void(int)> onButtonPressed = {});
         bool isInteractiveMessageBox() const;
 
         /// While set, the manager doesn't show the interactive message boxes that Lua can answer. It sends each one
@@ -69,6 +74,8 @@ namespace MWGui
         {
             eventButtonPressed(button);
             eventButtonPressed.clear();
+            if (std::function<void(int)> callback = std::exchange(mButtonPressedCallback, nullptr))
+                callback(button);
         }
 
         void setVisible(bool value);
@@ -90,6 +97,7 @@ namespace MWGui
         std::vector<std::unique_ptr<MessageBox>> mMessageBoxes;
         std::unique_ptr<InteractiveMessageBox> mInterMessageBoxe;
         std::optional<LuaInteractiveMessage> mLuaInteractiveMessage;
+        std::function<void(int)> mButtonPressedCallback;
         int mLastLuaInteractiveMessageId = 0;
         bool mLuaAnswersInteractiveMessages = false;
         MessageBox* mStaticMessageBox;

@@ -1,4 +1,5 @@
 local ui = require('openmw.ui')
+local async = require('openmw.async')
 local util = require('openmw.util')
 local self = require('openmw.self')
 local core = require('openmw.core')
@@ -79,6 +80,17 @@ local function onInteractiveMessage(id, message, buttons)
         updateInputCapture()
     end
     interactiveMessageHandler(message, buttons, answer)
+end
+
+local function showInteractiveMessage(message, options)
+    local engineOptions = {}
+    if options then
+        engineOptions.buttons = options.buttons
+        if options.callback then
+            engineOptions.callback = async:callback(options.callback)
+        end
+    end
+    ui._showInteractiveMessage(message, engineOptions)
 end
 
 local function updateHidden(mode, options)
@@ -312,11 +324,21 @@ return {
         isWindowVisible = isWindowVisible,
 
         ---
-        -- Shows a message as an interactive message box pausing the game, with a single button with the localized text OK.
+        -- Shows a message as an interactive message box pausing the game, with buttons that the player must choose
+        -- from.
         -- @function [parent=#UI] showInteractiveMessage
         -- @param #string message Message to display
-        -- @param #table options Options (none yet)
-        showInteractiveMessage = ui._showInteractiveMessage,
+        -- @param #table options (optional) A table with these optional fields:
+        --
+        --   * `buttons` - a list of button labels. Without it, the message has a single button with the localized
+        --     text OK.
+        --   * `callback` - a function that is called with the 1-based index of the button that the player chose.
+        --     It isn't called if another interactive message replaces this one before the player answers.
+        -- @usage I.UI.showInteractiveMessage('Rest here?', {
+        --     buttons = { 'Yes', 'No' },
+        --     callback = function(button) print('The player chose button ' .. button) end,
+        -- })
+        showInteractiveMessage = showInteractiveMessage,
 
         ---
         -- Show and answer the interactive message boxes, the messages with buttons that the player must answer,

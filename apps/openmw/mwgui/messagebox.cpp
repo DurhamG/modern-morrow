@@ -55,6 +55,7 @@ namespace MWGui
             mInterMessageBoxe.reset();
         }
         mLuaInteractiveMessage.reset();
+        mButtonPressedCallback = nullptr;
     }
 
     void MessageBoxManager::setLastButtonPressed(int index)
@@ -136,7 +137,8 @@ namespace MWGui
     }
 
     bool MessageBoxManager::createInteractiveMessageBox(std::string_view message,
-        const std::vector<std::string>& buttons, bool immediate, int defaultFocus, bool luaCanAnswer)
+        const std::vector<std::string>& buttons, bool immediate, int defaultFocus, bool luaCanAnswer,
+        std::function<void(int)> onButtonPressed)
     {
         if (isInteractiveMessageBox())
         {
@@ -167,6 +169,7 @@ namespace MWGui
             mLuaInteractiveMessage.reset();
         }
         mLastButtonPressed = -1;
+        mButtonPressedCallback = std::move(onButtonPressed);
 
         return true;
     }

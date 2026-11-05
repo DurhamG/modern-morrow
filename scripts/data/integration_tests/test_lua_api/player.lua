@@ -210,6 +210,26 @@ testing.registerLocalTest('Lua answers an interactive message', function()
     testing.expectEqual(input.isGuiInputCaptured(), false, 'The answer should release the menu input')
 end)
 
+testing.registerLocalTest('Interactive message with buttons and a callback', function()
+    local askedButtons = nil
+    local chosen = nil
+    I.UI.registerInteractiveMessageHandler(function(message, buttons, answer)
+        askedButtons = buttons
+        answer(2)
+    end)
+    I.UI.showInteractiveMessage('Test question', {
+        buttons = { 'First', 'Second' },
+        callback = function(button) chosen = button end,
+    })
+    while chosen == nil do
+        coroutine.yield()
+    end
+    I.UI.registerInteractiveMessageHandler(nil)
+
+    testing.expectThat(askedButtons, matchers.equalTo({ 'First', 'Second' }))
+    testing.expectEqual(chosen, 2, 'The callback should get the button that the handler chose')
+end)
+
 testing.registerLocalTest('UI layer with a fixed height', function()
     ui.layers.insertAfter('HUD', 'TestFixedHeightLayer', { height = 720 })
     coroutine.yield()

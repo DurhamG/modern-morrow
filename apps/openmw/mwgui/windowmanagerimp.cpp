@@ -785,12 +785,13 @@ namespace MWGui
         popGuiMode();
     }
 
-    void WindowManager::interactiveMessageBox(
-        std::string_view message, const std::vector<std::string>& buttons, bool block, int defaultFocus)
+    void WindowManager::interactiveMessageBox(std::string_view message, const std::vector<std::string>& buttons,
+        bool block, int defaultFocus, std::function<void(int)> onButtonPressed)
     {
         // The loop below that waits for a blocking box's answer doesn't run Lua, so Lua can't answer that box.
         const bool luaCanAnswer = !block;
-        mMessageBoxManager->createInteractiveMessageBox(message, buttons, block, defaultFocus, luaCanAnswer);
+        mMessageBoxManager->createInteractiveMessageBox(
+            message, buttons, block, defaultFocus, luaCanAnswer, std::move(onButtonPressed));
         updateVisible();
 
         if (block)

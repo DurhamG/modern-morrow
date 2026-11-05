@@ -260,8 +260,10 @@ namespace MWBase
             = 0;
         virtual void staticMessageBox(std::string_view message) = 0;
         virtual void removeStaticMessageBox() = 0;
+        /// @param onButtonPressed Called with the index of the pressed button, unless another interactive message box
+        /// replaces this one first.
         virtual void interactiveMessageBox(std::string_view message, const std::vector<std::string>& buttons = {},
-            bool block = false, int defaultFocus = -1)
+            bool block = false, int defaultFocus = -1, std::function<void(int)> onButtonPressed = {})
             = 0;
 
         /// returns the index of the pressed button or -1 if no button was pressed

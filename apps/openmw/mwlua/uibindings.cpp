@@ -1,5 +1,7 @@
 #include "uibindings.hpp"
 
+#include <cstdint>
+#include <functional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -150,14 +152,34 @@ namespace MWLua
                   luaManager->addUIMessage(message, mode);
               };
 
-        api["_showInteractiveMessage"]
-            = [windowManager, luaManager = context.mLuaManager](std::string_view message, sol::optional<sol::table>) {
-                  luaManager->addAction(
-                      [windowManager, message = std::string(message)] {
-                          windowManager->interactiveMessageBox(message, { "#{Interface:OK}" });
-                      },
-                      "Show interactive message");
-              };
+        api["_showInteractiveMessage"] = [windowManager, luaManager = context.mLuaManager](
+                                             std::string_view message, const sol::optional<sol::table>& options) {
+            std::vector<std::string> buttons;
+            std::function<void(int)> onButtonPressed;
+            if (options.has_value())
+            {
+                if (sol::optional<sol::table> buttonList = options->get<sol::optional<sol::table>>("buttons"))
+                {
+                    for (std::size_t i = 0; i < buttonList->size(); ++i)
+                        buttons.emplace_back(
+                            LuaUtil::cast<std::string_view>(buttonList->get<sol::object>(LuaUtil::toLuaIndex(i))));
+                }
+                if (sol::optional<sol::table> callback = options->get<sol::optional<sol::table>>("callback"))
+                {
+                    std::function<void(std::int64_t)> luaCallback
+                        = luaManager->wrapLuaCallback<std::int64_t>(LuaUtil::Callback::fromLua(*callback));
+                    onButtonPressed = [luaCallback](int button) { luaCallback(LuaUtil::toLuaIndex(button)); };
+                }
+            }
+            if (buttons.empty())
+                buttons.emplace_back("#{Interface:OK}");
+            luaManager->addAction(
+                [windowManager, message = std::string(message), buttons = std::move(buttons),
+                    onButtonPressed = std::move(onButtonPressed)] {
+                    windowManager->interactiveMessageBox(message, buttons, false, -1, onButtonPressed);
+                },
+                "Show interactive message");
+        };
         if (!menu)
         {
             api["_setLuaAnswersInteractiveMessages"] = [windowManager, luaManager = context.mLuaManager](bool answers) {
