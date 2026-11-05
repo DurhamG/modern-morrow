@@ -150,9 +150,14 @@ namespace MWLua
                   luaManager->addUIMessage(message, mode);
               };
 
-        api["_showInteractiveMessage"] = [windowManager](std::string_view message, sol::optional<sol::table>) {
-            windowManager->interactiveMessageBox(message, { "#{Interface:OK}" });
-        };
+        api["_showInteractiveMessage"]
+            = [windowManager, luaManager = context.mLuaManager](std::string_view message, sol::optional<sol::table>) {
+                  luaManager->addAction(
+                      [windowManager, message = std::string(message)] {
+                          windowManager->interactiveMessageBox(message, { "#{Interface:OK}" });
+                      },
+                      "Show interactive message");
+              };
         api["CONSOLE_COLOR"] = LuaUtil::makeStrictReadOnly(LuaUtil::tableFromPairs<std::string, Misc::Color>(lua,
             {
                 { "Default", Misc::Color::fromHex(MWBase::WindowManager::sConsoleColor_Default.substr(1)) },
