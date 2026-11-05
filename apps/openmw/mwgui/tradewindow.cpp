@@ -22,6 +22,7 @@
 #include "../mwworld/esmstore.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
+#include "../mwmechanics/barter.hpp"
 #include "../mwmechanics/creaturestats.hpp"
 
 #include "containeritemmodel.hpp"
@@ -34,16 +35,6 @@
 
 namespace
 {
-
-    int getEffectiveValue(MWWorld::Ptr item, int count)
-    {
-        float price = static_cast<float>(item.getClass().getValue(item));
-        if (item.getClass().hasItemHealth(item))
-        {
-            price *= item.getClass().getItemNormalizedHealth(item);
-        }
-        return static_cast<int>(price * count);
-    }
 
     bool haggle(const MWWorld::Ptr& player, const MWWorld::Ptr& merchant, int playerOffer, int merchantOffer)
     {
@@ -612,31 +603,15 @@ namespace MWGui
 
         int merchantOffer = 0;
 
-        // The offered price must be capped at 75% of the base price to avoid exploits
-        // connected to buying and selling the same item.
-        // This value has been determined by researching the limitations of the vanilla formula
-        // and may not be sufficient if getBarterOffer behavior has been changed.
         const std::vector<ItemStack>& playerBorrowed = playerTradeModel->getItemsBorrowedToUs();
         for (const ItemStack& itemStack : playerBorrowed)
-        {
-            const int basePrice = getEffectiveValue(itemStack.mBase, static_cast<int>(itemStack.mCount));
-            const int cap
-                = static_cast<int>(std::max(1.f, 0.75f * basePrice)); // Minimum buying price -- 75% of the base
-            const int buyingPrice
-                = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mPtr, basePrice, true);
-            merchantOffer -= std::max(cap, buyingPrice);
-        }
+            merchantOffer
+                -= MWMechanics::getBarterPrice(mPtr, itemStack.mBase, static_cast<int>(itemStack.mCount), true);
 
         const std::vector<ItemStack>& merchantBorrowed = mTradeModel->getItemsBorrowedToUs();
         for (const ItemStack& itemStack : merchantBorrowed)
-        {
-            const int basePrice = getEffectiveValue(itemStack.mBase, static_cast<int>(itemStack.mCount));
-            const int cap
-                = static_cast<int>(std::max(1.f, 0.75f * basePrice)); // Maximum selling price -- 75% of the base
-            const int sellingPrice
-                = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mPtr, basePrice, false);
-            merchantOffer += mPtr.getClass().isNpc() ? std::min(cap, sellingPrice) : sellingPrice;
-        }
+            merchantOffer
+                += MWMechanics::getBarterPrice(mPtr, itemStack.mBase, static_cast<int>(itemStack.mCount), false);
 
         int diff = merchantOffer - mCurrentMerchantOffer;
         mCurrentMerchantOffer = merchantOffer;
