@@ -1517,6 +1517,22 @@
 -- end
 
 ---
+-- Drop items from the player's inventory into the world, the way the inventory does it (only in global scripts).
+-- The items land where the crosshair points, if there is a flat surface there within reach, and at the player's feet otherwise. This is where the inventory drops an item with a controller.
+-- Dropping an item breaks the player's invisibility, clears the item's owner and sets `OnPCDrop` in the item's mwscript. Dropping a whole equipped stack unequips it. Dropping part of an equipped stack, such as some of the equipped arrows, leaves the rest equipped.
+-- Bound items can't be dropped. This doesn't play a sound: the inventory plays @{#Item.getDownSound}.
+-- Global scripts see the dropped item in their `onPlaced` handler when it lands where the crosshair points, and in `onDropped` when it lands at the player's feet.
+-- The change happens at the end of the frame. If an earlier change in the frame took some of the items, this drops the ones that are left.
+-- @function [parent=#PLAYER] dropItem
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject item An item in the player's inventory.
+-- @param #number count The number of items to drop from the stack (optional, all of them by default).
+-- @usage -- In a global script, for a player script that sends this event
+-- eventHandlers = {
+--     DropItem = function(data) types.Player.dropItem(data.player, data.item, data.count) end,
+-- }
+
+---
 -- The chance, from 0 to 100, that an NPC doesn't notice the player stealing items from their pockets.
 -- It takes the Agility, Luck, Sneak skill and fatigue of both the player and the NPC into account, as well as the value of the items. The NPC doesn't notice the player when a roll from 0 to 99 is no higher than a limit. The limit is at least the player's Sneak skill divided by the `iPickMinChance` game setting, and at most the `iPickMaxChance` game setting. The chance is one more than the limit.
 -- Without an item, this is the chance that the NPC doesn't notice the player when they stop picking the pockets.

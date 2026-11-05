@@ -1033,6 +1033,56 @@ testing.registerGlobalTest('taking items from containers', function()
     chest:remove()
 end)
 
+testing.registerGlobalTest('dropping items', function()
+    local player = initPlayer()
+    local weapon = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        name = 'Dropped dagger',
+    }))
+    world.createObject(weapon.id, 3):moveInto(player)
+    coroutine.yield()
+    local inventory = types.Actor.inventory(player)
+    local item = inventory:find(weapon.id)
+    testing.expectEqual(pcall(types.Player.dropItem, player, item, 4), false,
+        'The player should not drop more items than the stack has')
+
+    local function droppedCount()
+        local count = 0
+        for _, object in ipairs(player.cell:getAll(types.Weapon)) do
+            if object.recordId == weapon.id then
+                count = count + object.count
+            end
+        end
+        return count
+    end
+
+    types.Player.dropItem(player, item, 1)
+    for _ = 1, 10 do
+        coroutine.yield()
+        if droppedCount() > 0 then
+            break
+        end
+    end
+    testing.expectEqual(inventory:countOf(weapon.id), 2, 'The player should keep the rest of the stack')
+    testing.expectEqual(droppedCount(), 1, 'One dagger should be in the world')
+
+    types.Player.dropItem(player, inventory:find(weapon.id))
+    for _ = 1, 10 do
+        coroutine.yield()
+        if droppedCount() > 1 then
+            break
+        end
+    end
+    testing.expectEqual(inventory:countOf(weapon.id), 0, 'The player should drop the whole stack')
+    testing.expectEqual(droppedCount(), 3, 'Every dagger should be in the world')
+    for _, object in ipairs(player.cell:getAll(types.Weapon)) do
+        if object.recordId == weapon.id then
+            testing.expectEqual(object.owner.recordId, nil, 'A dropped item should have no owner')
+            object:remove()
+        end
+    end
+end)
+
 testing.registerGlobalTest('pickpocketing', function()
     local player = initPlayer()
     removeGold(player)

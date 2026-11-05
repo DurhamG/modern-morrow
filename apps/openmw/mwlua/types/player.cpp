@@ -47,6 +47,7 @@
 #include "apps/openmw/mwworld/containerstore.hpp"
 #include "apps/openmw/mwworld/esmstore.hpp"
 #include "apps/openmw/mwworld/globals.hpp"
+#include "apps/openmw/mwworld/inventorystore.hpp"
 #include "apps/openmw/mwworld/manualref.hpp"
 #include "apps/openmw/mwworld/player.hpp"
 
@@ -225,6 +226,24 @@ namespace MWLua
         container->remove(item, count, false);
     }
 
+    // Moves items from the player's inventory into the world, the same way as the inventory does with a controller:
+    // they land where the crosshair points, or at the player's feet.
+    static void dropFromPlayer(const MWWorld::Ptr& item, int count)
+    {
+        const MWWorld::Ptr player = MWMechanics::getPlayer();
+        MWBase::World& world = *MWBase::Environment::get().getWorld();
+        player.getClass().getInventoryStore(player).remove(item, count, true);
+        if (item.getCellRef().getCount() == 0)
+        {
+            // The whole stack moves into the world. It keeps its count while it moves, like in moveInto.
+            item.getCellRef().setCount(count);
+            world.dropObjectFromPlayer(item, 0.5f, 0.5f, count, false);
+            item.getCellRef().setCount(0);
+        }
+        else
+            world.dropObjectFromPlayer(item, 0.5f, 0.5f, count, true);
+    }
+
     static std::optional<LuaUtil::Callback> toCallback(const sol::optional<sol::table>& callback)
     {
         if (!callback)
@@ -272,6 +291,30 @@ namespace MWLua
                       },
                       "TakeItemAction");
               };
+        playerBindings["dropItem"] = [context](const Object& player, const Object& item, sol::optional<int> count) {
+            verifyPlayer(player);
+            if (!player.isGObject())
+                throw std::runtime_error("Only global scripts can drop items");
+            const MWWorld::Ptr playerPtr = player.ptr();
+            const MWWorld::Ptr itemPtr = item.ptr();
+            verifyIsIn(itemPtr, playerPtr);
+            if (MWBase::Environment::get().getMechanicsManager()->isBoundItem(itemPtr))
+                throw std::runtime_error("Bound items can't be dropped");
+            const int available = itemPtr.getCellRef().getCount();
+            const int countToDrop = count.value_or(available);
+            if (countToDrop <= 0 || countToDrop > available)
+                throw std::runtime_error(
+                    "Can't drop " + std::to_string(countToDrop) + " of " + std::to_string(available) + " items");
+            context.mLuaManager->addAction(
+                [item = Object(itemPtr), countToDrop] {
+                    const MWWorld::Ptr dropped = item.ptr();
+                    const int countLeft = getCountLeft(dropped, MWMechanics::getPlayer(), countToDrop);
+                    if (countLeft <= 0)
+                        return;
+                    dropFromPlayer(dropped, countLeft);
+                },
+                "DropItemAction");
+        };
 
         playerBindings["getPickpocketChance"] = [](const Object& player, const Object& victim,
                                                     sol::optional<Object> item, sol::optional<int> count) -> int {
