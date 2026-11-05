@@ -279,7 +279,7 @@ return {
     interface = {
         --- Interface version
         -- @field [parent=#UI] #number version
-        version = 8,
+        version = 9,
 
         --- All available UI modes.
         -- Use `view(I.UI.MODE)` in `luap` console mode to see the list.
@@ -420,6 +420,17 @@ return {
         -- @param #string element One of @{#UI.HUD_ELEMENT}
         -- @return #boolean
         isHudElementVisible = function(element) return ui._isHudElementVisible(element) end,
+
+        ---
+        -- Returns the actor whose health the engine's enemy health bar shows, while the engine shows the bar.
+        -- The engine shows it for the `fNPCHealthBarTime` game setting's seconds after the player hits an actor, or
+        -- casts a spell on them that changes their health, and fades it out over the last `fNPCHealthBarFade` seconds.
+        -- Hiding the `EnemyHealth` element with @{#UI.setHudElementVisibility} doesn't change what this returns, so
+        -- a mod can draw its own bar in its place.
+        -- @function [parent=#UI] getHudEnemy
+        -- @return openmw.core#GameObject, #number The actor and the seconds until the engine hides the bar, or nil
+        -- while the engine doesn't show the bar.
+        getHudEnemy = function() return ui._getHudEnemy() end,
 
         ---
         -- Returns if the given window is visible or not

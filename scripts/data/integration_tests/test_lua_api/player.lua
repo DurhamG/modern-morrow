@@ -613,6 +613,9 @@ testing.registerLocalTestStep('player approaches and attacks a creature',
 
             if targetActor ~= nil and types.Actor.stats.dynamic.health(targetActor).current < previousHealth then
                 print('Dealt ' .. (previousHealth - types.Actor.stats.dynamic.health(targetActor).current) .. ' damage to ' .. tostring(targetActor))
+                local enemy, secondsLeft = I.UI.getHudEnemy()
+                testing.expectEqual(enemy, targetActor, 'The enemy health bar should show the creature that the player hit')
+                testing.expectGreaterThan(secondsLeft, 0, 'The engine should show the bar for a while')
                 break
             end
 

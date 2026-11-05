@@ -79,6 +79,9 @@ namespace MWGui
         MyGUI::Widget* getEffectBox() { return mEffectBox; }
 
         void setEnemy(const MWWorld::Ptr& enemy);
+        /// The actor whose health the enemy health bar shows, while the engine shows the bar, even if Lua hid it.
+        /// @param secondsLeft Receives the time until the engine hides the bar.
+        MWWorld::Ptr getEnemy(float& secondsLeft) const;
 
         void clear() override;
 

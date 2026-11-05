@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -176,6 +177,13 @@ namespace MWLua
         };
         api["_isHudElementVisible"]
             = [windowManager](std::string_view element) { return windowManager->isHudElementVisible(element); };
+        api["_getHudEnemy"] = [windowManager]() -> std::tuple<sol::optional<LObject>, float> {
+            float secondsLeft = 0;
+            const MWWorld::Ptr enemy = windowManager->getHudEnemy(secondsLeft);
+            if (enemy.isEmpty())
+                return { sol::nullopt, 0.f };
+            return { LObject(enemy), secondsLeft };
+        };
         api["_getDefaultFontSize"] = []() -> int { return Settings::gui().mFontSize; };
         api["showMessage"]
             = [luaManager = context.mLuaManager](std::string_view message, const sol::optional<sol::table>& options) {

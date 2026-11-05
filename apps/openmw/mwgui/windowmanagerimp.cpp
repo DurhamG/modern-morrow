@@ -2828,6 +2828,11 @@ namespace MWGui
         return mHud->isElementVisible(elementId);
     }
 
+    MWWorld::Ptr WindowManager::getHudEnemy(float& secondsLeft) const
+    {
+        return mHud->getEnemy(secondsLeft);
+    }
+
     std::vector<std::string_view> WindowManager::getAllHudElementIds() const
     {
         return HUD::getElementIdsForLua();

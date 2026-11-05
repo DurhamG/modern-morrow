@@ -629,6 +629,15 @@ namespace MWGui
         updateEnemyHealthBar();
     }
 
+    MWWorld::Ptr HUD::getEnemy(float& secondsLeft) const
+    {
+        secondsLeft = 0;
+        if (!mEnemyActor.isSet() || mEnemyHealthTimer < 0)
+            return {};
+        secondsLeft = mEnemyHealthTimer;
+        return MWBase::Environment::get().getWorldModel()->getPtr(mEnemyActor);
+    }
+
     void HUD::setEnemyHealthVisible(bool visible)
     {
         visible = visible && !isDisabledByLua(Element::EnemyHealth);
