@@ -1,6 +1,8 @@
 #ifndef OPENMW_MECHANICS_BARTER_H
 #define OPENMW_MECHANICS_BARTER_H
 
+#include <vector>
+
 namespace MWWorld
 {
     class Ptr;
@@ -11,6 +13,15 @@ namespace MWMechanics
     /// The value of @a count of @a item in a trade, before the merchant's offer.
     /// Items that wear down are worth less as their condition drops.
     int getEffectiveItemValue(const MWWorld::Ptr& item, int count);
+
+    /// Finds the goods that @a merchant offers in a trade. They are the merchant's own inventory, the containers in
+    /// the active cells that the merchant owns, and the items lying in the active cells that the merchant owns.
+    /// Containers that can't hold anything don't count, as in the original game.
+    /// @param containers Gets the merchant first, so that the player buys from the merchant's own inventory before the
+    /// containers, and then the containers.
+    /// @param worldItems Gets the items lying in the world.
+    void getBarterSources(
+        const MWWorld::Ptr& merchant, std::vector<MWWorld::Ptr>& containers, std::vector<MWWorld::Ptr>& worldItems);
 
     /// The gold that changes hands when the player trades @a count of @a item with @a merchant, before haggling.
     /// @param playerBuys true when the player buys the item from the merchant, false when the player sells it.

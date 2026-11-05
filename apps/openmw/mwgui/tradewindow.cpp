@@ -121,12 +121,8 @@ namespace MWGui
         mCurrentMerchantOffer = 0;
 
         std::vector<MWWorld::Ptr> itemSources;
-        // Important: actor goes first, so purchased items come out of the actor's pocket first
-        itemSources.push_back(actor);
-        MWBase::Environment::get().getWorld()->getContainersOwnedBy(actor, itemSources);
-
         std::vector<MWWorld::Ptr> worldItems;
-        MWBase::Environment::get().getWorld()->getItemsOwnedBy(actor, worldItems);
+        MWMechanics::getBarterSources(actor, itemSources, worldItems);
 
         auto tradeModel
             = std::make_unique<TradeItemModel>(std::make_unique<ContainerItemModel>(itemSources, worldItems), mPtr);

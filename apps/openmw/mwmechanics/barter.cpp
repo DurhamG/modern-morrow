@@ -96,6 +96,15 @@ namespace
 
 namespace MWMechanics
 {
+    void getBarterSources(
+        const MWWorld::Ptr& merchant, std::vector<MWWorld::Ptr>& containers, std::vector<MWWorld::Ptr>& worldItems)
+    {
+        MWBase::World& world = *MWBase::Environment::get().getWorld();
+        containers.push_back(merchant);
+        world.getContainersOwnedBy(merchant, containers);
+        world.getItemsOwnedBy(merchant, worldItems);
+    }
+
     int getEffectiveItemValue(const MWWorld::Ptr& item, int count)
     {
         float price = static_cast<float>(item.getClass().getValue(item));
