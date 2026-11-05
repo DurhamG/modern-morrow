@@ -31,6 +31,14 @@ namespace MWLua
     using Equipment = std::map<int, EquipmentItem>;
     static constexpr int sAnySlot = -1;
 
+    const ESM::Transport::Dest& getTravelDestination(const MWWorld::Ptr& merchant, int64_t index)
+    {
+        const std::vector<ESM::Transport::Dest>& destinations = MWMechanics::getTravelDestinations(merchant);
+        if (index < 1 || index > static_cast<int64_t>(destinations.size()))
+            throw std::runtime_error("The merchant has no travel destination " + std::to_string(index));
+        return destinations[LuaUtil::fromLuaIndex(index)];
+    }
+
     static std::pair<MWWorld::ContainerStoreIterator, bool> findInInventory(
         MWWorld::ContainerStore& store, const EquipmentItem& item, int slot, bool isInventoryStore)
     {
@@ -472,6 +480,18 @@ namespace MWLua
             if (!MWMechanics::canMerchantRepair(itemPtr))
                 throw std::runtime_error("The item must be a weapon or a piece of armor that has lost some condition");
             return MWMechanics::getRepairPrice(merchantPtr, itemPtr);
+        };
+        actor["getTravelPrice"] = [](const Object& merchant, int64_t destination) -> int {
+            const MWWorld::Ptr ptr = merchant.ptr();
+            if (!ptr.getClass().isActor())
+                throw std::runtime_error("Actor expected");
+            return MWMechanics::getTravelPrice(ptr, getTravelDestination(ptr, destination));
+        };
+        actor["getTravelHours"] = [](const Object& merchant, int64_t destination) -> int {
+            const MWWorld::Ptr ptr = merchant.ptr();
+            if (!ptr.getClass().isActor())
+                throw std::runtime_error("Actor expected");
+            return MWMechanics::getTravelHours(ptr, getTravelDestination(ptr, destination));
         };
 
         actor["_onHit"] = [context](const SelfObject& self, const sol::table& options) {

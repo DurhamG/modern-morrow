@@ -559,6 +559,26 @@ namespace MWLua
                 },
                 "BuyRepairAction");
         };
+        player["buyTravel"] = [context](const Object& buyer, const Object& merchant, int64_t destination) {
+            verifyBuyer(buyer);
+            const MWWorld::Ptr merchantPtr = merchant.ptr();
+            verifyActor(merchantPtr.getClass());
+            const ESM::Transport::Dest& dest = getTravelDestination(merchantPtr, destination);
+            if (!canPay(MWMechanics::getTravelPrice(merchantPtr, dest)))
+                throw std::runtime_error("The player doesn't have enough gold");
+            // The trip moves the player, so it must wait until the other queued actions are done.
+            context.mLuaManager->addTeleportPlayerAction([merchant = Object(merchantPtr), dest] {
+                const MWWorld::Ptr ptr = merchant.ptr();
+                const int price = MWMechanics::getTravelPrice(ptr, dest);
+                // An earlier action may have spent the gold.
+                if (!canPay(price))
+                {
+                    Log(Debug::Warning) << "The player didn't travel: The player doesn't have enough gold";
+                    return;
+                }
+                MWMechanics::travel(ptr, dest, price);
+            });
+        };
 
         player["isCharGenFinished"] = [](const Object&) -> bool {
             return MWBase::Environment::get().getWorld()->getGlobalFloat(MWWorld::Globals::sCharGenState) == -1;
