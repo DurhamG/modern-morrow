@@ -64,6 +64,18 @@
 -- @return #boolean
 
 ---
+-- The goods that a merchant sells, as the barter window lists them.
+-- They come from the merchant's inventory, from the containers that the merchant owns in the active cells, and from the items that the merchant owns that lie in the active cells. Containers that can't hold anything don't count. Only the items that @{#Actor.canBarterItem} allows are listed.
+-- The list has the merchant's own items first. Items of the same kind from different places are separate entries, while the barter window shows them as one stack.
+-- A container that nobody has opened yet holds only the items that its record names directly. It gets its levelled items when it is resolved, which the engine does while the barter mode is open, or a global script does with `inventory:resolve()`.
+-- @function [parent=#Actor] getBarterItems
+-- @param openmw.core#GameObject merchant
+-- @return #list<openmw.core#GameObject>
+-- @usage for _, item in ipairs(types.Actor.getBarterItems(merchant)) do
+--     print(item.recordId, item.count, types.Actor.getBuyingPrice(merchant, item))
+-- end
+
+---
 -- The gold a merchant asks to teach the player a spell.
 -- This is the price that the spell buying window shows. It is the spell's cost times the `fSpellValueMult` game setting, adjusted by the merchant's offer the same way as @{#Actor.getBuyingPrice}.
 -- @function [parent=#Actor] getSpellPrice
@@ -1979,7 +1991,7 @@
 -- What the player offers a merchant, like the items and the gold in the barter window.
 -- It is a plain table, like an @{#EnchantingSetup}. Each function that takes it works everything out again from the table.
 -- @type BarterSetup
--- @field #list<#BarterItem> buy The items that the player buys. They must be in the merchant's inventory (optional).
+-- @field #list<#BarterItem> buy The items that the player buys. They must be among @{#Actor.getBarterItems} (optional).
 -- @field #list<#BarterItem> sell The items that the player sells. They must be in the player's inventory (optional).
 -- @field #number gold The gold that the player asks for, or pays when it is negative (optional, @{#PLAYER.getBarterOffer} by default).
 
@@ -2002,10 +2014,9 @@
 -- Make an offer to a merchant, the way the offer button of the barter window does it (only in global scripts).
 -- If the player asks for no more than @{#PLAYER.getBarterOffer}, the merchant accepts. Otherwise an NPC merchant accepts if the player beats a roll, with their Mercantile skill, Personality, Luck and fatigue against the merchant's, and with the merchant's disposition. A creature refuses. A merchant also refuses when the player asks for gold and buys items at the same time.
 -- When an NPC merchant accepts, the player's Mercantile skill progresses, more so the better the deal. Whether they accept or refuse, the merchant's disposition goes up or down by the `iBarterSuccessDisposition` or `iBarterFailDisposition` game setting, while the player is talking to them. This is how the barter window works, since it opens from a conversation. Outside a conversation with the merchant, their disposition doesn't change.
--- When the merchant accepts, the items change hands, and the gold moves between the player's inventory and the merchant's barter gold. Items that a merchant restocks don't run out, so the merchant keeps them.
+-- When the merchant accepts, the items change hands, and the gold moves between the player's inventory and the merchant's barter gold. The player's items go into the merchant's inventory. Items that a merchant restocks don't run out, so the merchant keeps them.
 -- If the player sells an item that they stole from the merchant, the merchant takes it back instead, and nothing else happens.
 -- This throws an error when the barter window would refuse the offer: without items, or when the player or the merchant can't pay. The offer is made at the end of the frame. If an earlier change in the frame moved the items or spent the gold, nothing happens. It shows no message and plays no sound.
--- Unlike the barter window, this doesn't trade items in the containers that the merchant owns, or items that lie in the world.
 -- @function [parent=#PLAYER] barter
 -- @param openmw.core#GameObject player
 -- @param openmw.core#GameObject merchant

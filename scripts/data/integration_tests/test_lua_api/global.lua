@@ -1066,6 +1066,75 @@ testing.registerGlobalTest('bartering', function()
     merchant:remove()
 end)
 
+testing.registerGlobalTest('bartering with the goods a merchant owns', function()
+    local player = initPlayer()
+    removeGold(player)
+    -- Only NPCs can own things.
+    local merchant = world.createObject(world.createRecord(types.NPC.createRecordDraft({
+        template = types.NPC.record(player),
+        isAutocalc = false,
+        servicesOffered = { Weapon = true, Misc = true },
+    })).id)
+    merchant:addScript('idle.lua')
+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    local function createWeapon(name)
+        return world.createRecord(types.Weapon.createRecordDraft({
+            template = types.Weapon.record('basic_dagger1h'),
+            name = name,
+            value = 10,
+        })).id
+    end
+    local stored = createWeapon("Dagger in the merchant's chest")
+    local displayed = createWeapon("Dagger on the merchant's table")
+    -- An NPC would wear a weapon, and merchants don't sell what they wear.
+    local carried = world.createRecord(types.Miscellaneous.createRecordDraft({ name = 'Trinket', value = 5 })).id
+    world.createObject(carried, 1):moveInto(merchant)
+    local chest = world.createObject(world.createRecord(types.Container.createRecordDraft({
+        name = "Merchant's chest",
+        weight = 100,
+    })).id)
+    chest:teleport(player.cell, player.position + util.vector3(200, 500, 0))
+    world.createObject(stored, 3):moveInto(chest)
+    local onTable = world.createObject(displayed, 2)
+    onTable:teleport(player.cell, player.position + util.vector3(-200, 500, 0))
+    world.createObject('gold_001', 100):moveInto(player)
+    coroutine.yield()
+    chest.owner.recordId = merchant.recordId
+    onTable.owner.recordId = merchant.recordId
+    coroutine.yield()
+    coroutine.yield()
+
+    local goods = {}
+    for _, item in ipairs(types.Actor.getBarterItems(merchant)) do
+        goods[item.recordId] = item
+    end
+    testing.expect(goods[carried] ~= nil, 'The merchant should sell what they carry')
+    testing.expect(goods[stored] ~= nil, 'The merchant should sell what is in their chest')
+    testing.expect(goods[displayed] ~= nil, 'The merchant should sell their items that lie in the world')
+    testing.expectEqual(goods['gold_001'], nil, 'The merchant should not sell gold')
+
+    local setup = { buy = { { item = goods[stored], count = 2 }, { item = goods[displayed] } } }
+    local accepted = waitForOutcome(function(callback)
+        types.Player.barter(player, merchant, setup, callback)
+    end)
+    testing.expectEqual(accepted, true, 'A merchant should accept their own offer')
+    local playerInventory = types.Actor.inventory(player)
+    testing.expectEqual(playerInventory:countOf(stored), 2, 'The player should get the items from the chest')
+    testing.expectEqual(types.Container.inventory(chest):countOf(stored), 1, 'The chest should keep the rest')
+    testing.expectEqual(playerInventory:countOf(displayed), 2, 'The player should get the items from the table')
+    testing.expectEqual(onTable.count, 0, 'The items should leave the table')
+
+    chest.owner.recordId = nil
+    testing.expectEqual(pcall(types.Player.getBarterOffer, player, merchant, setup), false,
+        'Items in a chest that the merchant no longer owns should not be for sale')
+
+    playerInventory:find(stored):remove()
+    playerInventory:find(displayed):remove()
+    removeGold(player)
+    chest:remove()
+    merchant:remove()
+end)
+
 testing.registerGlobalTest('items added to an inventory', function()
     local player = initPlayer()
     local weapon = world.createRecord(types.Weapon.createRecordDraft({

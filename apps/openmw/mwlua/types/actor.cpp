@@ -482,6 +482,35 @@ namespace MWLua
                 throw std::runtime_error("Item expected");
             return MWMechanics::canBarterItem(merchantPtr, itemPtr);
         };
+        actor["getBarterItems"] = [](sol::this_state thisState, const Object& merchant) -> sol::table {
+            const MWWorld::Ptr merchantPtr = merchant.ptr();
+            if (!merchantPtr.getClass().isActor())
+                throw std::runtime_error("Actor expected");
+            std::vector<MWWorld::Ptr> containers;
+            std::vector<MWWorld::Ptr> worldItems;
+            MWMechanics::getBarterSources(merchantPtr, containers, worldItems);
+            sol::table result(thisState, sol::create);
+            const auto addItem = [&](const MWWorld::Ptr& item) {
+                if (!MWMechanics::canBarterItem(merchantPtr, item))
+                    return;
+                if (merchant.isGObject())
+                    result.add(GObject(item));
+                else
+                    result.add(LObject(item));
+            };
+            for (const MWWorld::Ptr& container : containers)
+            {
+                MWWorld::ContainerStore& store = container.getClass().getContainerStore(container);
+                for (MWWorld::ContainerStoreIterator it = store.begin(); it != store.end(); ++it)
+                    addItem(*it);
+            }
+            for (const MWWorld::Ptr& item : worldItems)
+            {
+                if (item.getCellRef().getCount() > 0)
+                    addItem(item);
+            }
+            return result;
+        };
         actor["getRepairPrice"] = [](const Object& merchant, const Object& item) -> int {
             const MWWorld::Ptr merchantPtr = merchant.ptr();
             if (!merchantPtr.getClass().isActor())

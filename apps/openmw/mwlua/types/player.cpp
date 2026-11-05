@@ -952,7 +952,37 @@ namespace MWLua
         std::optional<int> mGold;
     };
 
-    static BarterItems toBarterItems(const sol::table& table, const MWWorld::Ptr& owner, const MWWorld::Ptr& merchant)
+    // The places that a merchant sells from, as the trade window finds them.
+    struct BarterStock
+    {
+        std::vector<MWWorld::Ptr> mContainers;
+        std::vector<MWWorld::Ptr> mWorldItems;
+
+        explicit BarterStock(const MWWorld::Ptr& merchant)
+        {
+            MWMechanics::getBarterSources(merchant, mContainers, mWorldItems);
+        }
+
+        // The number of items that the merchant can still sell, out of the @a count that the script asked for.
+        int getCountInStock(const MWWorld::Ptr& item, int count) const
+        {
+            if (const MWWorld::ContainerStore* store = item.getContainerStore())
+            {
+                const bool inStock
+                    = std::any_of(mContainers.begin(), mContainers.end(), [&](const MWWorld::Ptr& container) {
+                          return store == &container.getClass().getContainerStore(container);
+                      });
+                return inStock ? std::min(count, item.getCellRef().getCount()) : 0;
+            }
+            if (std::find(mWorldItems.begin(), mWorldItems.end(), item) == mWorldItems.end())
+                return 0;
+            return std::min(count, item.getCellRef().getCount());
+        }
+    };
+
+    // Reads the items of a table that buys from the merchant's goods, when @a stock is set, or sells from the player's
+    // inventory.
+    static BarterItems toBarterItems(const sol::table& table, const MWWorld::Ptr& merchant, const BarterStock* stock)
     {
         BarterItems result;
         for (size_t i = 1; i <= table.size(); ++i)
@@ -960,7 +990,10 @@ namespace MWLua
             const sol::table entry = LuaUtil::cast<sol::table>(table[i]);
             const Object item = LuaUtil::cast<Object>(entry.get<sol::object>("item"));
             const MWWorld::Ptr itemPtr = item.ptr();
-            verifyIsIn(itemPtr, owner);
+            if (!stock)
+                verifyIsIn(itemPtr, MWMechanics::getPlayer());
+            else if (stock->getCountInStock(itemPtr, 1) <= 0)
+                throw std::runtime_error(itemPtr.toString() + " is not among the merchant's goods");
             if (!MWMechanics::canBarterItem(merchant, itemPtr))
                 throw std::runtime_error("The merchant doesn't trade " + itemPtr.toString());
             for (const auto& [listed, count] : result)
@@ -977,9 +1010,12 @@ namespace MWLua
     {
         BarterSetup setup;
         if (const std::optional<sol::table> bought = getField<sol::table>(table, "buy"))
-            setup.mBought = toBarterItems(*bought, merchant, merchant);
+        {
+            const BarterStock stock(merchant);
+            setup.mBought = toBarterItems(*bought, merchant, &stock);
+        }
         if (const std::optional<sol::table> sold = getField<sol::table>(table, "sell"))
-            setup.mSold = toBarterItems(*sold, MWMechanics::getPlayer(), merchant);
+            setup.mSold = toBarterItems(*sold, merchant, nullptr);
         setup.mGold = getField<int>(table, "gold");
         return setup;
     }
@@ -1007,12 +1043,34 @@ namespace MWLua
         return true;
     }
 
+    static bool areBarterItemsLeft(const BarterItems& items, const BarterStock& stock)
+    {
+        for (const auto& [item, count] : items)
+        {
+            if (stock.getCountInStock(item.ptr(), count) < count)
+                return false;
+        }
+        return true;
+    }
+
     // Moves items to another inventory, the way the trade window moves them. A merchant never runs out of items
     // that restock, so the merchant keeps those.
     static void moveBarterItem(const MWWorld::Ptr& item, int count, const MWWorld::Ptr& to, bool equipReplacement)
     {
         const bool allowAutoEquip = !Settings::game().mPreventMerchantEquipping;
         MWWorld::ContainerStore& store = to.getClass().getContainerStore(to);
+        if (!item.getContainerStore())
+        {
+            // The item lies in the world.
+            MWWorld::ManualRef copy(*MWBase::Environment::get().getESMStore(), item, count);
+            store.add(copy.getPtr(), count, allowAutoEquip);
+            const int countLeft = item.getCellRef().getCount() - count;
+            if (countLeft <= 0)
+                MWBase::Environment::get().getWorld()->deleteObject(item);
+            else
+                item.getCellRef().setCount(countLeft);
+            return;
+        }
         const bool restocks = item.getCellRef().getCount(false) < 0;
         if (!restocks)
             item.getContainerStore()->remove(item, count, equipReplacement);
@@ -1060,7 +1118,8 @@ namespace MWLua
                     const MWWorld::Ptr trader = merchant.ptr();
                     const MWWorld::Ptr buyer = MWMechanics::getPlayer();
                     // An earlier action may have moved the items or spent the gold.
-                    if (!areBarterItemsLeft(setup.mBought, trader) || !areBarterItemsLeft(setup.mSold, buyer)
+                    if (!areBarterItemsLeft(setup.mBought, BarterStock(trader))
+                        || !areBarterItemsLeft(setup.mSold, buyer)
                         || MWMechanics::getBarterProblem(trader, gold) != MWMechanics::BarterProblem::None)
                     {
                         reportOutcome(context, callback, false);
