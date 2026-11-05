@@ -14,6 +14,7 @@
 #include "../birthsignbindings.hpp"
 #include "../luamanagerimp.hpp"
 #include "../magicbindings.hpp"
+#include "../magictypebindings.hpp"
 
 #include "apps/openmw/mwbase/dialoguemanager.hpp"
 #include "apps/openmw/mwbase/inputmanager.hpp"
@@ -21,6 +22,7 @@
 #include "apps/openmw/mwbase/mechanicsmanager.hpp"
 #include "apps/openmw/mwbase/world.hpp"
 #include "apps/openmw/mwmechanics/actorutil.hpp"
+#include "apps/openmw/mwmechanics/enchanting.hpp"
 #include "apps/openmw/mwmechanics/npcstats.hpp"
 #include "apps/openmw/mwmechanics/pickpocket.hpp"
 #include "apps/openmw/mwmechanics/recharge.hpp"
@@ -423,6 +425,180 @@ namespace MWLua
                 },
                 "RechargeItemAction");
         };
+    }
+
+    // What a script picked for enchanting, as it describes it in a Lua table. The items are kept as Lua objects,
+    // so that a queued action can find them again.
+    struct EnchantingSetup
+    {
+        std::optional<Object> mEnchanter;
+        std::optional<Object> mItem;
+        std::optional<Object> mSoulGem;
+        ESM::EffectList mEffects;
+        std::optional<std::string> mName;
+        std::optional<int> mType;
+    };
+
+    template <class T>
+    static std::optional<T> getField(const sol::table& table, std::string_view key)
+    {
+        if (sol::optional<T> value = table.get<sol::optional<T>>(key))
+            return *value;
+        return std::nullopt;
+    }
+
+    static EnchantingSetup toEnchantingSetup(const sol::table& table)
+    {
+        EnchantingSetup setup;
+        setup.mEnchanter = getField<Object>(table, "enchanter");
+        setup.mItem = getField<Object>(table, "item");
+        setup.mSoulGem = getField<Object>(table, "soulGem");
+        if (const std::optional<sol::table> effects = getField<sol::table>(table, "effects"))
+            setup.mEffects = tableToEffectList(*effects);
+        setup.mName = getField<std::string>(table, "name");
+        setup.mType = getField<int>(table, "type");
+        return setup;
+    }
+
+    // Sets up the engine's enchanting the way the enchanting window would for the same choices.
+    static MWMechanics::Enchanting makeEnchanting(const EnchantingSetup& setup)
+    {
+        const MWWorld::Ptr player = MWMechanics::getPlayer();
+        MWMechanics::Enchanting enchanting;
+        if (setup.mEnchanter)
+        {
+            const MWWorld::Ptr enchanter = setup.mEnchanter->ptr();
+            verifyActor(enchanter.getClass());
+            enchanting.setSelfEnchanting(false);
+            enchanting.setEnchanter(enchanter);
+        }
+        else
+        {
+            enchanting.setSelfEnchanting(true);
+            enchanting.setEnchanter(player);
+        }
+
+        if (setup.mItem)
+        {
+            const MWWorld::Ptr item = setup.mItem->ptr();
+            verifyIsIn(item, player);
+            if (!MWMechanics::Enchanting::canEnchant(item))
+                throw std::runtime_error("The item can't be enchanted");
+            enchanting.setOldItem(item);
+            enchanting.setNewItemName(setup.mName.value_or(std::string(item.getClass().getName(item))));
+        }
+        else if (setup.mName)
+            enchanting.setNewItemName(*setup.mName);
+
+        if (setup.mSoulGem)
+        {
+            const MWWorld::Ptr gem = setup.mSoulGem->ptr();
+            verifyIsIn(gem, player);
+            verifyFilledSoulGem(gem);
+            enchanting.setSoulGem(gem);
+        }
+
+        enchanting.setEffect(setup.mEffects);
+
+        const std::vector<int> castStyles = enchanting.getCastStyles();
+        if (setup.mType)
+        {
+            if (std::find(castStyles.begin(), castStyles.end(), *setup.mType) == castStyles.end())
+                throw std::runtime_error("The item can't be enchanted with cast type " + std::to_string(*setup.mType));
+            enchanting.setCastStyle(*setup.mType);
+        }
+        else if (!castStyles.empty())
+            enchanting.setCastStyle(castStyles.front());
+        return enchanting;
+    }
+
+    static void verifyCanEnchant(const MWMechanics::Enchanting& enchanting)
+    {
+        switch (enchanting.getProblem())
+        {
+            case MWMechanics::Enchanting::Problem::None:
+                return;
+            case MWMechanics::Enchanting::Problem::NoEffects:
+                throw std::runtime_error("The enchantment needs at least one effect");
+            case MWMechanics::Enchanting::Problem::NoName:
+                throw std::runtime_error("The enchanted item needs a name");
+            case MWMechanics::Enchanting::Problem::NoSoulGem:
+                throw std::runtime_error("Enchanting needs a soul gem");
+            case MWMechanics::Enchanting::Problem::NoItem:
+                throw std::runtime_error("Enchanting needs an item");
+            case MWMechanics::Enchanting::Problem::TooManyPoints:
+                throw std::runtime_error("The effects need more enchantment points than the item has");
+            case MWMechanics::Enchanting::Problem::NotEnoughGold:
+                throw std::runtime_error("The player doesn't have enough gold");
+        }
+    }
+
+    // Sets up an engine object, such as MWMechanics::Enchanting, again in a queued action. Setting it up throws an
+    // error when an earlier action used up an item that it needs. The queued action can't give that error to the
+    // script, so this returns nothing instead.
+    template <class Function>
+    static auto setUpAgain(const Function& setUp) -> std::optional<decltype(setUp())>
+    {
+        try
+        {
+            return setUp();
+        }
+        catch (const std::runtime_error&)
+        {
+            return std::nullopt;
+        }
+    }
+
+    static void addEnchantingBindings(sol::table& playerBindings, const Context& context)
+    {
+        playerBindings["getEnchantingInfo"]
+            = [](sol::this_state thisState, const Object& player, const sol::table& table) -> sol::table {
+            verifyPlayer(player);
+            const EnchantingSetup setup = toEnchantingSetup(table);
+            const MWMechanics::Enchanting enchanting = makeEnchanting(setup);
+            const bool selfEnchanting = !setup.mEnchanter.has_value();
+            sol::table result(thisState, sol::create);
+            result["points"] = static_cast<int>(enchanting.getEnchantPoints(false));
+            result["maxPoints"] = enchanting.getMaxEnchantValue();
+            result["charge"] = enchanting.getGemCharge();
+            result["castCost"] = enchanting.getEffectiveCastCost();
+            // An enchanter never fails. Only the player's own attempts roll against the chance.
+            result["chance"] = selfEnchanting ? std::clamp(enchanting.getEnchantChance(), 0, 100) : 100;
+            result["price"] = selfEnchanting ? 0 : enchanting.getEnchantPrice();
+            result["type"] = enchanting.getCastStyle();
+            sol::table types(thisState, sol::create);
+            for (int castStyle : enchanting.getCastStyles())
+                types.add(castStyle);
+            result["types"] = types;
+            return result;
+        };
+        playerBindings["enchantItem"]
+            = [context](const Object& player, const sol::table& table, sol::optional<sol::table> callback) {
+                  verifyCrafter(player);
+                  const EnchantingSetup setup = toEnchantingSetup(table);
+                  verifyCanEnchant(makeEnchanting(setup));
+                  context.mLuaManager->addAction(
+                      [context, setup, callback = toCallback(callback)] {
+                          // An earlier action may have spent the gold, or used up the item or the soul gem.
+                          std::optional<MWMechanics::Enchanting> enchanting
+                              = setUpAgain([&] { return makeEnchanting(setup); });
+                          if (!enchanting || enchanting->getProblem() != MWMechanics::Enchanting::Problem::None)
+                          {
+                              reportOutcome(context, callback, false);
+                              return;
+                          }
+                          const MWWorld::Ptr stolen = enchanting->getStolenItem();
+                          if (!stolen.isEmpty())
+                          {
+                              MWBase::Environment::get().getMechanicsManager()->confiscateStolenItemToOwner(
+                                  MWMechanics::getPlayer(), stolen, setup.mEnchanter->ptr(), 1);
+                              reportOutcome(context, callback, false);
+                              return;
+                          }
+                          reportOutcome(context, callback, enchanting->create());
+                      },
+                      "EnchantItemAction");
+              };
     }
 
     void addJournalClassBindings(sol::state_view& lua, const MWBase::Journal* journal)
@@ -899,6 +1075,7 @@ namespace MWLua
         };
         addTakingBindings(player, context);
         addToolBindings(player, context);
+        addEnchantingBindings(player, context);
 
         player["birthSigns"] = initBirthSignRecordBindings(context);
         player["getBirthSign"] = [](const Object& object) -> std::string {

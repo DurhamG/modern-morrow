@@ -1606,6 +1606,55 @@
 -- @param openmw.async#Callback callback A function that receives `true` if the item regained some charge and `false` otherwise, including when nothing happened (optional).
 
 ---
+-- What the player picked for enchanting an item, like the choices in the enchanting window.
+-- It is a plain table that a script keeps and changes as the player picks. Each function that takes it works everything out again from the table, so nothing needs to be started or ended.
+-- The item and the soul gem must be in the player's inventory.
+-- @type EnchantingSetup
+-- @field openmw.core#GameObject item The item to enchant: a weapon, a piece of armor or clothing, or a scroll, that isn't enchanted already (optional).
+-- @field openmw.core#GameObject soulGem A soul gem with a soul in it (optional).
+-- @field #list<#any> effects The effects of the enchantment, as @{openmw.core#MagicEffectWithParams} or tables with the same fields, like the effects of @{openmw.core#Enchantments.createRecordDraft} (optional).
+-- @field #number type The cast type, an @{openmw.core#EnchantmentType}. It must be one of the types that @{#PLAYER.getEnchantingInfo} lists. Optional: the first of those types by default, as in the enchanting window.
+-- @field openmw.core#GameObject enchanter The NPC who enchants the item for gold (optional). Without one, the player enchants the item themself.
+-- @field #string name The name of the enchanted item (optional, the item's name by default).
+
+---
+-- The numbers that the enchanting window shows for an @{#EnchantingSetup}.
+-- @type EnchantingInfo
+-- @field #number points The enchantment points that the effects need. Each effect costs more when it comes after other effects, and a constant effect costs more than the others.
+-- @field #number maxPoints The enchantment points that the item can hold, from its enchantment capacity and the `fEnchantmentMult` game setting. The effects must not need more than this.
+-- @field #number charge The strength of the soul in the soul gem, which becomes the item's charge.
+-- @field #number castCost The charge that one use of the enchantment costs, after the player's Enchant skill lowers it. A constant effect costs nothing.
+-- @field #number chance The chance, from 0 to 100, that the player enchants the item themself, from their Enchant skill, Intelligence, Luck and fatigue, and from the enchantment points. An enchanter never fails, so this is 100 with an enchanter.
+-- @field #number price The gold that the enchanter asks, adjusted by the enchanter's offer the same way as @{#Actor.getBuyingPrice}. It is 0 without an enchanter.
+-- @field #number type The cast type that enchanting would use, an @{openmw.core#EnchantmentType}.
+-- @field #list<#number> types The cast types that the item can take, in the order that the enchanting window steps through them. A constant effect needs a soul of at least the `iSoulAmountForConstantEffect` game setting. Empty without an item.
+
+---
+-- Work out the numbers that the enchanting window would show for an enchantment.
+-- This throws an error if the setup names an item that can't be enchanted or isn't in the player's inventory, a soul gem without a soul, or a cast type that the item can't take.
+-- @function [parent=#PLAYER] getEnchantingInfo
+-- @param openmw.core#GameObject player
+-- @param #EnchantingSetup setup
+-- @return #EnchantingInfo
+-- @usage local info = types.Player.getEnchantingInfo(player, {
+--     item = dagger,
+--     soulGem = gem,
+--     effects = { { id = 'firedamage', range = core.magic.RANGE.Touch, magnitudeMin = 1, magnitudeMax = 10, duration = 1 } },
+-- })
+-- print(info.points .. ' / ' .. info.maxPoints)
+
+---
+-- Enchant an item, the way the enchanting window does it (only in global scripts).
+-- The soul gem is used up, except for Azura's Star, which comes back empty. If the player enchants the item themself, they succeed with the chance in @{#EnchantingInfo}, and their Enchant skill progresses when they do. If an enchanter does it, the player pays the price, and the gold goes to the enchanter's barter gold. When enchanting works, the item is replaced by an enchanted copy with the new name. A stack of thrown weapons or ammunition is enchanted together, as far as the soul's strength goes.
+-- If the player stole the item or the soul gem from the enchanter, the enchanter takes it back instead, and nothing else happens.
+-- This throws an error when the enchanting window would refuse: without effects, a name, a soul gem or an item, when the effects need more points than the item holds, or when the player can't pay. Unlike the window, it doesn't check which effects the player knows, or their ranges. It shows no message and plays no sound.
+-- This doesn't check whether the enchanter offers enchanting as a service. The enchanting happens at the end of the frame. If an earlier change in the frame used up the item or the soul gem, emptied the soul gem, or spent the gold, nothing happens.
+-- @function [parent=#PLAYER] enchantItem
+-- @param openmw.core#GameObject player
+-- @param #EnchantingSetup setup
+-- @param openmw.async#Callback callback A function that receives `true` if the item was enchanted and `false` otherwise, including when nothing happened (optional).
+
+---
 -- Travel with a merchant to one of their travel destinations, the way the travel window does it (only in global scripts).
 -- The player pays @{#Actor.getTravelPrice}, and the gold goes to the merchant's barter gold. Then @{#Actor.getTravelHours} pass, while the player and other actors sleep. Last, the player and their followers move to the destination, and `GetPCTraveling` reports the trip to mwscripts for a frame.
 -- The player must have enough gold. Otherwise this throws an error.

@@ -73,6 +73,8 @@ namespace MWMechanics
         std::vector<int> getCastStyles() const;
         void nextCastStyle(); // Set enchant type to next possible type (for mOldItemPtr object)
         int getCastStyle() const;
+        /// Set the cast type to one of getCastStyles.
+        void setCastStyle(int castStyle) { mCastStyle = castStyle; }
         float getEnchantPoints(bool precise = true) const;
         int getEffectiveCastCost()
             const; // Effective cost taking player Enchant skill into account, used for preview purposes in the UI

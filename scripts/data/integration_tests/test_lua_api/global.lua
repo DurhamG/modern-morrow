@@ -572,6 +572,91 @@ testing.registerGlobalTest('repairing and recharging', function()
     tool:remove()
 end)
 
+testing.registerGlobalTest('enchanting', function()
+    local player = initPlayer()
+    removeGold(player)
+    local inventory = types.Actor.inventory(player)
+    local soul = world.createRecord(types.Creature.createRecordDraft({
+        template = types.Creature.record('landracer'),
+        soulValue = 400,
+    }))
+    local record = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        name = 'Plain dagger',
+        enchantCapacity = 100,
+    }))
+    world.createObject(record.id, 1):moveInto(player)
+    world.createObject('OMW_Test_SoulGem', 1):moveInto(player)
+    coroutine.yield()
+    local item = inventory:find(record.id)
+    local gem = inventory:find('OMW_Test_SoulGem')
+    types.Item.itemData(gem).soul = soul.id
+    local enchanter = world.createObject(types.NPC.record(player).id)
+    enchanter:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    coroutine.yield()
+
+    local setup = {
+        item = item,
+        soulGem = gem,
+        effects = {
+            {
+                id = findCostlyEffect().id,
+                range = core.magic.RANGE.Touch,
+                magnitudeMin = 1,
+                magnitudeMax = 5,
+                duration = 1,
+            },
+        },
+    }
+    local info = types.Player.getEnchantingInfo(player, setup)
+    testing.expectEqual(info.type, core.magic.ENCHANTMENT_TYPE.CastOnStrike,
+        'A dagger should cast when it strikes, unless the player picks another type')
+    local canCastOnUse = false
+    for _, castType in ipairs(info.types) do
+        canCastOnUse = canCastOnUse or castType == core.magic.ENCHANTMENT_TYPE.CastOnUse
+    end
+    testing.expect(canCastOnUse, 'A dagger should be able to cast when it is used')
+    testing.expectGreaterThan(info.points, 0, 'The effect should need enchantment points')
+    testing.expectGreaterOrEqual(info.maxPoints, info.points, 'The effect should fit in the dagger')
+    testing.expectEqual(info.charge, 400, 'The charge should be the strength of the soul')
+    testing.expectEqual(info.price, 0, 'Enchanting an item yourself should cost nothing')
+    testing.expectEqual(pcall(types.Player.getEnchantingInfo, player,
+        { item = item, type = core.magic.ENCHANTMENT_TYPE.CastOnce }), false,
+        'A dagger should not be enchanted to cast once')
+
+    setup.enchanter = enchanter
+    setup.name = 'Enchanted dagger'
+    info = types.Player.getEnchantingInfo(player, setup)
+    testing.expectEqual(info.chance, 100, 'An enchanter should never fail')
+    testing.expectGreaterThan(info.price, 0, 'An enchanter should ask for gold')
+    testing.expectEqual(pcall(types.Player.enchantItem, player, setup), false,
+        'The player should not pay an enchanter without enough gold')
+
+    world.createObject('gold_001', info.price):moveInto(player)
+    coroutine.yield()
+    local enchanterGold = types.Actor.getBarterGold(enchanter)
+    local enchanted = waitForOutcome(function(callback)
+        types.Player.enchantItem(player, setup, callback)
+    end)
+    testing.expectEqual(enchanted, true, 'An enchanter should enchant the item')
+    testing.expectEqual(inventory:countOf(record.id), 0, 'The plain dagger should be gone')
+    testing.expectEqual(inventory:countOf('OMW_Test_SoulGem'), 0, 'Enchanting should use up the soul gem')
+    testing.expectEqual(inventory:countOf('gold_001'), 0, 'The player should pay the enchanter')
+    testing.expectEqual(types.Actor.getBarterGold(enchanter), enchanterGold + info.price,
+        'The enchanter should get the gold')
+    local result = nil
+    for _, weapon in ipairs(inventory:getAll(types.Weapon)) do
+        if types.Weapon.record(weapon).name == 'Enchanted dagger' then
+            result = weapon
+        end
+    end
+    testing.expect(result ~= nil, 'The player should get the enchanted dagger')
+    testing.expect(types.Weapon.record(result).enchant ~= nil, 'The new dagger should be enchanted')
+
+    result:remove()
+    enchanter:remove()
+end)
+
 testing.registerGlobalTest('stolen items', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({
