@@ -2000,6 +2000,17 @@
 -- for _, player in ipairs(world.players) do player.type.addTopic(player, "Some Unrelated Work") end
 
 ---
+-- Whether the player has already learned from a skill book.
+-- The first time the player reads a book that teaches a skill, the engine raises that skill and remembers the book. Reading it again teaches nothing.
+-- The engine remembers books by record id, so every copy of the book counts as read.
+-- For a book that teaches no skill, this is always false.
+-- @function [parent=#PLAYER] hasReadSkillBook
+-- @param openmw.core#GameObject player
+-- @param #any bookOrId A book object or a book record id
+-- @return #boolean
+-- @usage local unread = types.Book.record(book).skill ~= nil and not types.Player.hasReadSkillBook(self, book)
+
+---
 -- The actor the player is talking to, or nil outside a conversation.
 -- A conversation starts when the dialogue mode opens with an actor who has a greeting for the player, such as with `I.UI.setMode('Dialogue', { target = actor })`. It ends when the dialogue mode closes.
 -- The conversation functions also work while a Lua mod replaces the Dialogue window.

@@ -771,6 +771,36 @@ testing.registerLocalTestStep('restore skill on self', function(skillId)
     coroutine.yield()
 end)
 
+-- Reading a skill book in a test raises nothing, so that the tests don't change the player's skills.
+local blockBookSkillGain = false
+I.SkillProgression.addSkillLevelUpHandler(function(_, source)
+    if blockBookSkillGain and source == I.SkillProgression.SKILL_INCREASE_SOURCES.Book then
+        return false
+    end
+end)
+
+testing.registerLocalTestStep('read a book on self', function(book)
+    blockBookSkillGain = true
+    I.UI.setPauseOnMode(I.UI.MODE.Book, false)
+    core.sendGlobalEvent('UseItem', { object = book, actor = self })
+    for _ = 1, 10 do
+        coroutine.yield()
+        if I.UI.getMode() == I.UI.MODE.Book then
+            break
+        end
+    end
+    testing.expectEqual(I.UI.getMode(), I.UI.MODE.Book, 'Using the book should open it')
+    I.UI.removeMode(I.UI.MODE.Book)
+    for _ = 1, 10 do
+        coroutine.yield()
+        if I.UI.getMode() == nil then
+            break
+        end
+    end
+    I.UI.setPauseOnMode(I.UI.MODE.Book, true)
+    blockBookSkillGain = false
+end)
+
 local statsBeforeLevelUp = nil
 
 testing.registerLocalTestStep('prepare level up on self', function()

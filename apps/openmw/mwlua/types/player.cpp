@@ -5,6 +5,7 @@
 
 #include <components/esm/attr.hpp>
 #include <components/esm3/loadappa.hpp>
+#include <components/esm3/loadbook.hpp>
 #include <components/esm3/loadbsgn.hpp>
 #include <components/esm3/loadcrea.hpp>
 #include <components/esm3/loadfact.hpp>
@@ -1450,6 +1451,18 @@ namespace MWLua
                 throw std::runtime_error("Failed to add topic \"" + std::string(topicId) + "\": record is not a topic");
 
             MWBase::Environment::get().getDialogueManager()->addTopic(topic);
+        };
+        player["hasReadSkillBook"] = [](const Object& object, const sol::object& bookOrId) -> bool {
+            verifyPlayer(object);
+            ESM::RefId bookId;
+            if (bookOrId.is<Object>())
+                bookId = LuaUtil::cast<Object>(bookOrId).ptr().getCellRef().getRefId();
+            else
+                bookId = ESM::RefId::deserializeText(LuaUtil::cast<std::string_view>(bookOrId));
+            if (!MWBase::Environment::get().getESMStore()->get<ESM::Book>().search(bookId))
+                throw std::runtime_error("Book expected");
+            const MWWorld::Ptr ptr = object.ptr();
+            return ptr.getClass().getNpcStats(ptr).hasBeenUsed(bookId);
         };
         player["sendMenuEvent"] = [context](const Object& object, std::string eventName, const sol::object& eventData) {
             verifyPlayer(object);

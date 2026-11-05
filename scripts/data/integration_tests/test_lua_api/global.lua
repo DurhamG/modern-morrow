@@ -431,6 +431,27 @@ testing.registerGlobalTest('buying training', function()
     trainer:remove()
 end)
 
+testing.registerGlobalTest('skill books', function()
+    local player = initPlayer()
+    local record = world.createRecord(types.Book.createRecordDraft({
+        name = 'Test skill book',
+        skill = 'acrobatics',
+        text = 'A test book.',
+    }))
+    world.createObject(record.id, 1):moveInto(player)
+    coroutine.yield()
+    local book = types.Actor.inventory(player):find(record.id)
+    testing.expectEqual(types.Player.hasReadSkillBook(player, book), false, 'The player should not have read the book')
+    testing.expectEqual(pcall(types.Player.hasReadSkillBook, player, 'basic_dagger1h'), false,
+        'A weapon should not count as a book')
+
+    testing.runLocalTest(player, 'read a book on self', book)
+    testing.expectEqual(types.Player.hasReadSkillBook(player, book), true, 'The player should have read the book')
+    testing.expectEqual(types.Player.hasReadSkillBook(player, record.id), true,
+        'The book should count as read by its record id')
+    book:remove()
+end)
+
 testing.registerGlobalTest('buying spells and repairs', function()
     local player = initPlayer()
     removeGold(player)
