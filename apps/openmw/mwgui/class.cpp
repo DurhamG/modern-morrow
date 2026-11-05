@@ -416,6 +416,7 @@ namespace MWGui
             MyGUI::Gui::getInstance().destroyWidget(button);
         }
         this->mButtons.clear();
+        mControllerFocus = 0;
 
         // TODO: The buttons should be generated from a template in the layout file, ie. cloning an existing widget
         MyGUI::Button* button;
@@ -590,6 +591,16 @@ namespace MWGui
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
         }
+
+        clear();
+    }
+
+    void CreateClassDialog::clear()
+    {
+        onDialogCancel();
+
+        mEditName->setCaption({});
+        mDescription.clear();
 
         // Set default skills, attributes
 

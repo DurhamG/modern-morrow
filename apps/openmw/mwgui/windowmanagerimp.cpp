@@ -83,8 +83,10 @@
 
 #include "alchemywindow.hpp"
 #include "backgroundimage.hpp"
+#include "birth.hpp"
 #include "bookpage.hpp"
 #include "bookwindow.hpp"
+#include "class.hpp"
 #include "companionwindow.hpp"
 #include "confirmationdialog.hpp"
 #include "console.hpp"
@@ -114,9 +116,11 @@
 #include "merchantrepair.hpp"
 #include "postprocessorhud.hpp"
 #include "quickkeysmenu.hpp"
+#include "race.hpp"
 #include "recharge.hpp"
 #include "repair.hpp"
 #include "resourceskin.hpp"
+#include "review.hpp"
 #include "screenfader.hpp"
 #include "scrollwindow.hpp"
 #include "settingswindow.hpp"
@@ -124,6 +128,7 @@
 #include "spellview.hpp"
 #include "spellwindow.hpp"
 #include "statswindow.hpp"
+#include "textinput.hpp"
 #include "tradewindow.hpp"
 #include "trainingwindow.hpp"
 #include "travelwindow.hpp"
@@ -535,7 +540,44 @@ namespace MWGui
 
         mHud->setVisible(true);
 
-        mCharGen = std::make_unique<CharacterCreation>();
+        auto nameDialog = std::make_unique<TextInputDialog>();
+        auto raceDialog = std::make_unique<RaceDialog>();
+        auto classChoiceDialog = std::make_unique<ClassChoiceDialog>();
+        auto classQuestionDialog = std::make_unique<InfoBoxDialog>();
+        auto classResultDialog = std::make_unique<GenerateClassResultDialog>();
+        auto pickClassDialog = std::make_unique<PickClassDialog>();
+        auto createClassDialog = std::make_unique<CreateClassDialog>();
+        auto birthSignDialog = std::make_unique<BirthDialog>();
+        auto reviewDialog = std::make_unique<ReviewDialog>();
+        mGuiModeStates[GM_Name] = GuiModeState(nameDialog.get());
+        mGuiModeStates[GM_Race] = GuiModeState(raceDialog.get());
+        mGuiModeStates[GM_Class] = GuiModeState(classChoiceDialog.get());
+        // The class questions and their result take turns in one mode, so character creation shows the result itself
+        mGuiModeStates[GM_ClassGenerate] = GuiModeState(classQuestionDialog.get());
+        mGuiModeStates[GM_ClassPick] = GuiModeState(pickClassDialog.get());
+        mGuiModeStates[GM_ClassCreate] = GuiModeState(createClassDialog.get());
+        mGuiModeStates[GM_Birth] = GuiModeState(birthSignDialog.get());
+        mGuiModeStates[GM_Review] = GuiModeState(reviewDialog.get());
+        mCharGen = std::make_unique<CharacterCreation>(CharacterCreation::Windows{
+            .mName = nameDialog.get(),
+            .mRace = raceDialog.get(),
+            .mClassChoice = classChoiceDialog.get(),
+            .mClassQuestion = classQuestionDialog.get(),
+            .mClassResult = classResultDialog.get(),
+            .mPickClass = pickClassDialog.get(),
+            .mCreateClass = createClassDialog.get(),
+            .mBirthSign = birthSignDialog.get(),
+            .mReview = reviewDialog.get(),
+        });
+        mWindows.push_back(std::move(nameDialog));
+        mWindows.push_back(std::move(raceDialog));
+        mWindows.push_back(std::move(classChoiceDialog));
+        mWindows.push_back(std::move(classQuestionDialog));
+        mWindows.push_back(std::move(classResultDialog));
+        mWindows.push_back(std::move(pickClassDialog));
+        mWindows.push_back(std::move(createClassDialog));
+        mWindows.push_back(std::move(birthSignDialog));
+        mWindows.push_back(std::move(reviewDialog));
 
         updatePinnedWindows();
 
@@ -560,9 +602,7 @@ namespace MWGui
         {
             disallowAll();
 
-            mStatsWatcher->removeListener(mCharGen.get());
-            mCharGen = std::make_unique<CharacterCreation>();
-            mStatsWatcher->addListener(mCharGen.get());
+            mCharGen->clear();
         }
         else
             allow(GW_ALL);
@@ -727,23 +767,6 @@ namespace MWGui
         }
 
         updateControllerButtonsOverlay();
-
-        switch (mode)
-        {
-            // FIXME: refactor chargen windows to use modes properly (or not use them at all)
-            case GM_Name:
-            case GM_Race:
-            case GM_Class:
-            case GM_ClassPick:
-            case GM_ClassCreate:
-            case GM_Birth:
-            case GM_ClassGenerate:
-            case GM_Review:
-                mCharGen->spawnDialog(mode);
-                break;
-            default:
-                break;
-        }
     }
 
     void WindowManager::setDrowningTimeLeft(float time, float maxTime)
@@ -1129,9 +1152,6 @@ namespace MWGui
 
         mPostProcessorHud->onFrame(frameDuration);
 
-        if (mCharGen)
-            mCharGen->onFrame(frameDuration);
-
         updateActivatedQuickKey();
 
         mStatsWatcher->update();
@@ -1453,6 +1473,8 @@ namespace MWGui
             }
             mGuiModes.push_back(mode);
 
+            if (mCharGen)
+                mCharGen->prepareDialog(mode);
             mGuiModeStates[mode].update(true);
         }
         if (force)

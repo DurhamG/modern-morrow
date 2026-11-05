@@ -293,6 +293,8 @@ namespace MWGui
 
         bool exit() override { return false; }
 
+        void clear() override;
+
         std::string getName() const;
         std::string getDescription() const;
         ESM::Class::Specialization getSpecializationId() const;

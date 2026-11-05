@@ -4,7 +4,6 @@
 #include <components/esm3/loadclas.hpp>
 
 #include <map>
-#include <memory>
 #include <vector>
 
 #include "mode.hpp"
@@ -29,18 +28,33 @@ namespace MWGui
     class CharacterCreation : public StatsListener
     {
     public:
-        CharacterCreation();
+        // The windows of the character creation steps. The window manager owns them.
+        struct Windows
+        {
+            TextInputDialog* mName;
+            RaceDialog* mRace;
+            ClassChoiceDialog* mClassChoice;
+            InfoBoxDialog* mClassQuestion;
+            GenerateClassResultDialog* mClassResult;
+            PickClassDialog* mPickClass;
+            CreateClassDialog* mCreateClass;
+            BirthDialog* mBirthSign;
+            ReviewDialog* mReview;
+        };
+
+        explicit CharacterCreation(const Windows& windows);
         virtual ~CharacterCreation();
 
-        // Show a dialog
-        void spawnDialog(const GuiMode id);
+        // Forget the choices made for the last character
+        void clear();
+
+        // Fill in the window of a step before the window manager shows it
+        void prepareDialog(GuiMode id);
 
         void setAttribute(ESM::RefId id, const MWMechanics::AttributeValue& value) override;
         void setValue(std::string_view id, const MWMechanics::DynamicStat<float>& value) override;
         void setValue(ESM::RefId id, const MWMechanics::SkillValue& value) override;
         void configureSkills(std::span<const ESM::RefId> major, std::span<const ESM::RefId> minor) override;
-
-        void onFrame(float duration);
 
     private:
         std::vector<ESM::RefId> mPlayerMajorSkills, mPlayerMinorSkills;
@@ -48,15 +62,15 @@ namespace MWGui
         std::map<ESM::RefId, MWMechanics::SkillValue> mPlayerSkillValues;
 
         // Dialogs
-        std::unique_ptr<TextInputDialog> mNameDialog;
-        std::unique_ptr<RaceDialog> mRaceDialog;
-        std::unique_ptr<ClassChoiceDialog> mClassChoiceDialog;
-        std::unique_ptr<InfoBoxDialog> mGenerateClassQuestionDialog;
-        std::unique_ptr<GenerateClassResultDialog> mGenerateClassResultDialog;
-        std::unique_ptr<PickClassDialog> mPickClassDialog;
-        std::unique_ptr<CreateClassDialog> mCreateClassDialog;
-        std::unique_ptr<BirthDialog> mBirthSignDialog;
-        std::unique_ptr<ReviewDialog> mReviewDialog;
+        TextInputDialog* mNameDialog;
+        RaceDialog* mRaceDialog;
+        ClassChoiceDialog* mClassChoiceDialog;
+        InfoBoxDialog* mGenerateClassQuestionDialog;
+        GenerateClassResultDialog* mGenerateClassResultDialog;
+        PickClassDialog* mPickClassDialog;
+        CreateClassDialog* mCreateClassDialog;
+        BirthDialog* mBirthSignDialog;
+        ReviewDialog* mReviewDialog;
 
         // Player data
         std::string mPlayerName;
@@ -87,6 +101,7 @@ namespace MWGui
         void onCreateClassDialogDone(WindowBase* parWindow);
         void onCreateClassDialogBack();
         void showClassQuestionDialog();
+        void setClassQuestion();
         void onClassQuestionChosen(int index);
         void onGenerateClassBack();
         void onGenerateClassDone(WindowBase* parWindow);
