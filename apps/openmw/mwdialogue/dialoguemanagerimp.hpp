@@ -87,6 +87,9 @@ namespace MWDialogue
 
         void updateOriginalDisposition();
 
+        /// Replaces the temporary changes to the actor's disposition with the permanent ones
+        void makeDispositionChangesPermanent();
+
     public:
         DialogueManager(const Compiler::Extensions& extensions, Translation::Storage& translationDataStorage);
 

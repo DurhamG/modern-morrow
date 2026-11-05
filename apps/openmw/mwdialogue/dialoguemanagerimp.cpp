@@ -202,6 +202,10 @@ namespace MWDialogue
 
     void DialogueManager::endDialogue()
     {
+        // A conversation can end without goodbye. For example, a guard can send the player to jail, or a Lua script can
+        // close the dialogue mode while the player must answer a choice.
+        if (mInDialogue)
+            makeDispositionChangesPermanent();
         mInDialogue = false;
         mTranscript.clear();
         mAvailableTopics.clear();
@@ -505,6 +509,12 @@ namespace MWDialogue
         if (mIsInChoice && !mGoodbye)
             return false;
 
+        makeDispositionChangesPermanent();
+        return true;
+    }
+
+    void DialogueManager::makeDispositionChangesPermanent()
+    {
         // Apply disposition change to NPC's base disposition if we **think** we need to change something
         if ((mPermanentDispositionChange || mOriginalDisposition != mCurrentDisposition) && mActor.getClass().isNpc())
         {
@@ -524,7 +534,6 @@ namespace MWDialogue
         mPermanentDispositionChange = 0;
         mOriginalDisposition = 0;
         mCurrentDisposition = 0;
-        return true;
     }
 
     bool DialogueManager::questionAnswered(int answer)

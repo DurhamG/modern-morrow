@@ -79,7 +79,8 @@ namespace MWBase
 
         virtual bool startDialogue(const MWWorld::Ptr& actor) = 0;
 
-        /// Forgets the transcript once the conversation is over
+        /// Ends the conversation once the dialogue mode is gone. If goodbyeSelected hasn't run, the changes to the
+        /// actor's disposition from persuasion become permanent here. Forgets the transcript.
         virtual void endDialogue() = 0;
 
         /// The actor the player is talking to. Empty outside a conversation.
@@ -111,8 +112,9 @@ namespace MWBase
         /// Asks the actor about one of the available topics. Does nothing and returns false if the topic isn't
         /// available, or while the player must answer a choice or say goodbye.
         virtual bool keywordSelected(std::string_view keyword) = 0;
-        /// Ends the conversation from the dialogue manager's side. Does nothing and returns false while the player must
-        /// answer a choice, unless a script has ended the conversation with Goodbye.
+        /// Ends the conversation from the dialogue manager's side, and makes the changes to the actor's disposition
+        /// from persuasion permanent. Does nothing and returns false while the player must answer a choice, unless a
+        /// script has ended the conversation with Goodbye.
         virtual bool goodbyeSelected() = 0;
         /// Answers the current choice. Does nothing and returns false if the player isn't in a choice or the answer
         /// isn't one of the choices.
