@@ -1203,6 +1203,43 @@ testing.registerGlobalTest('taking items from containers', function()
     chest:remove()
 end)
 
+testing.registerGlobalTest('picking up items', function()
+    local player = initPlayer()
+    local owner = world.createRecord(types.NPC.createRecordDraft({
+        template = types.NPC.record(player),
+        name = 'Item owner',
+    }))
+    local weapon = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        name = 'Dagger on the floor',
+    }))
+    local item = world.createObject(weapon.id, 2)
+    item:teleport(player.cell, player.position + util.vector3(0, 100, 0))
+    coroutine.yield()
+    item.owner.recordId = owner.id
+    testing.expectEqual(types.Player.isAllowedToUse(player, item), false,
+        'The player should not be allowed to take an owned item')
+    testing.expectEqual(pcall(types.Player.pickUpItem, player, world.createObject('basic_dagger1h')), false,
+        'The player should not pick up an item that is in no cell')
+
+    types.Player.pickUpItem(player, item)
+    local inventory = types.Actor.inventory(player)
+    for _ = 1, 10 do
+        coroutine.yield()
+        if inventory:countOf(weapon.id) > 0 then
+            break
+        end
+    end
+    testing.expectEqual(inventory:countOf(weapon.id), 2, 'The player should pick up the whole stack')
+    for _, object in ipairs(player.cell:getAll(types.Weapon)) do
+        testing.expect(object.recordId ~= weapon.id or object.count == 0, 'The item should leave the world')
+    end
+    local owners = types.Item.getStolenFrom(inventory:find(weapon.id))
+    testing.expectEqual(#owners, 1, 'Picking up an owned item should be theft')
+    testing.expectEqual(owners[1].recordId, owner.id, 'The item should be stolen from its owner')
+    inventory:find(weapon.id):remove()
+end)
+
 testing.registerGlobalTest('dropping items', function()
     local player = initPlayer()
     local weapon = world.createRecord(types.Weapon.createRecordDraft({

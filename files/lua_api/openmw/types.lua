@@ -1557,6 +1557,16 @@
 -- end
 
 ---
+-- Pick up an item that lies in the world, the way activating it does, or the Take button of the book and scroll windows (only in global scripts).
+-- The whole stack moves into the player's inventory, and leaves the world. When @{#PLAYER.isAllowedToUse} is false for the item, taking it is theft: the item is recorded as stolen, and the crime is reported to anyone who sees it.
+-- Unlike activation, this doesn't run the item's activation handlers or its mwscript's `OnActivate`, and it plays no sound.
+-- The change happens at the end of the frame. If an earlier change in the frame took or moved the item, nothing happens.
+-- @function [parent=#PLAYER] pickUpItem
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject item An enabled item in a cell.
+-- @usage types.Player.pickUpItem(player, book)
+
+---
 -- Drop items from the player's inventory into the world, the way the inventory does it (only in global scripts).
 -- The items land where the crosshair points, if there is a flat surface there within reach, and at the player's feet otherwise. This is where the inventory drops an item with a controller.
 -- Dropping an item breaks the player's invisibility, clears the item's owner and sets `OnPCDrop` in the item's mwscript. Dropping a whole equipped stack unequips it. Dropping part of an equipped stack, such as some of the equipped arrows, leaves the rest equipped.

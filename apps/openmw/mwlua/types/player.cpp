@@ -43,6 +43,7 @@
 #include "apps/openmw/mwmechanics/services.hpp"
 #include "apps/openmw/mwmechanics/spellmaking.hpp"
 #include "apps/openmw/mwmechanics/spellutil.hpp"
+#include "apps/openmw/mwworld/actiontake.hpp"
 #include "apps/openmw/mwworld/class.hpp"
 #include "apps/openmw/mwworld/containerstore.hpp"
 #include "apps/openmw/mwworld/esmstore.hpp"
@@ -291,6 +292,23 @@ namespace MWLua
                       },
                       "TakeItemAction");
               };
+        playerBindings["pickUpItem"] = [context](const Object& player, const Object& item) {
+            verifyTaker(player);
+            const MWWorld::Ptr itemPtr = item.ptr();
+            if (!itemPtr.getClass().isItem(itemPtr))
+                throw std::runtime_error("Item expected");
+            if (!itemPtr.isInCell() || itemPtr.getCellRef().getCount() <= 0 || !itemPtr.getRefData().isEnabled())
+                throw std::runtime_error("The item must lie in the world");
+            context.mLuaManager->addAction(
+                [item = Object(itemPtr)] {
+                    const MWWorld::Ptr taken = item.ptr();
+                    // An earlier action may have taken the item or moved it.
+                    if (!taken.isInCell() || taken.getCellRef().getCount() <= 0)
+                        return;
+                    MWWorld::takeFromWorld(MWMechanics::getPlayer(), taken);
+                },
+                "PickUpItemAction");
+        };
         playerBindings["dropItem"] = [context](const Object& player, const Object& item, sol::optional<int> count) {
             verifyPlayer(player);
             if (!player.isGObject())
