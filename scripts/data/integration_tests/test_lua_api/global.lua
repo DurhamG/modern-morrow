@@ -192,6 +192,25 @@ testing.registerGlobalTest('record creation', function()
     end
 end)
 
+testing.registerGlobalTest('weapon skill', function()
+    local skills = {
+        [types.Weapon.TYPE.ShortBladeOneHand] = 'shortblade',
+        [types.Weapon.TYPE.LongBladeTwoHand] = 'longblade',
+        [types.Weapon.TYPE.BluntTwoWide] = 'bluntweapon',
+        [types.Weapon.TYPE.AxeOneHand] = 'axe',
+        [types.Weapon.TYPE.SpearTwoWide] = 'spear',
+        [types.Weapon.TYPE.MarksmanCrossbow] = 'marksman',
+        [types.Weapon.TYPE.Arrow] = 'marksman',
+    }
+    for weaponType, skill in pairs(skills) do
+        local draft = types.Weapon.createRecordDraft({
+            template = types.Weapon.record('basic_dagger1h'),
+            type = weaponType,
+        })
+        testing.expectEqual(draft.skill, skill, 'Wrong skill for weapon type ' .. weaponType)
+    end
+end)
+
 local function findCostlyEffect()
     -- load.lua gives this effect a cost, because the example suite's effects cost nothing.
     local effect = core.magic.effects.records[core.magic.EFFECT_TYPE.FireDamage]

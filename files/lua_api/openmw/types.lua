@@ -2886,6 +2886,7 @@
 -- @field #number weight
 -- @field #number value
 -- @field #number type See @{#Weapon.TYPE}
+-- @field #string skill The skill that the engine uses for attacks with this weapon, which follows from its type, such as `longblade` for a two-handed long blade. See @{openmw.core#SKILL}
 -- @field #number health
 -- @field #number speed
 -- @field #number reach

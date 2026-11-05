@@ -10,6 +10,7 @@
 #include <components/resource/resourcesystem.hpp>
 
 #include "apps/openmw/mwbase/environment.hpp"
+#include "apps/openmw/mwmechanics/weapontype.hpp"
 
 namespace sol
 {
@@ -147,6 +148,8 @@ namespace MWLua
         record["value"] = sol::readonly_property([](const ESM::Weapon& rec) -> int { return rec.mData.mValue; });
         record["type"] = sol::readonly_property(
             [](const ESM::Weapon& rec) -> int { return ESM::Weapon::refIdToIndex(rec.mData.mType); });
+        record["skill"] = sol::readonly_property(
+            [](const ESM::Weapon& rec) -> ESM::RefId { return MWMechanics::getWeaponType(rec.mData.mType)->mSkill; });
         record["health"] = sol::readonly_property([](const ESM::Weapon& rec) -> int { return rec.mData.mHealth; });
         record["speed"] = sol::readonly_property([](const ESM::Weapon& rec) -> float { return rec.mData.mSpeed; });
         record["reach"] = sol::readonly_property([](const ESM::Weapon& rec) -> float { return rec.mData.mReach; });
