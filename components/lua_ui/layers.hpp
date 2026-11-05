@@ -32,6 +32,8 @@ namespace LuaUi
         struct Options
         {
             bool mInteractive;
+            // A positive height gives the layer that fixed virtual height. Its width follows the screen's aspect ratio.
+            int mHeight = 0;
         };
 
         static size_t count() { return MyGUI::LayerManager::getInstance().getLayerCount(); }

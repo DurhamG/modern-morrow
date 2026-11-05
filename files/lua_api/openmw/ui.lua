@@ -207,6 +207,8 @@
 -- @list <#Layer>
 -- @usage
 -- ui.layers.insertAfter('HUD', 'NewLayer', { interactive = true })
+-- -- A layer that is always 720 units tall, and as wide as the screen's aspect ratio allows
+-- ui.layers.insertAfter('HUD', 'TvLayer', { height = 720 })
 -- local fourthLayer = ui.layers[4]
 -- local windowsIndex = ui.layers.indexOf('Windows')
 -- for i, layer in ipairs(ui.layers) do
@@ -224,14 +226,20 @@
 -- @function [parent=#Layers] insertAfter
 -- @param #string afterName Name of the layer after which the new layer will be inserted
 -- @param #string name Name of the new layer
--- @param #table options Table with a boolean `interactive` field (default is true). Layers with interactive = false will ignore all mouse interactions.
+-- @param #table options Table with these optional fields:
+--
+--   * `interactive` - a boolean, true by default. Layers with interactive = false will ignore all mouse interactions.
+--   * `height` - a positive whole number. If set, the layer gets a fixed virtual height, and its width follows the screen's aspect ratio. Its contents are then scaled with the screen, so they keep the same size relative to the screen height at any resolution. Without it, the layer's size is the screen size in UI pixels.
 
 ---
 -- Creates a layer and inserts it before another layer (shifts indexes of some other layers).
 -- @function [parent=#Layers] insertBefore
 -- @param #string beforeName Name of the layer before which the new layer will be inserted
 -- @param #string name Name of the new layer
--- @param #table options Table with a boolean `interactive` field (default is true). Layers with interactive = false will ignore all mouse interactions.
+-- @param #table options Table with these optional fields:
+--
+--   * `interactive` - a boolean, true by default. Layers with interactive = false will ignore all mouse interactions.
+--   * `height` - a positive whole number. If set, the layer gets a fixed virtual height, and its width follows the screen's aspect ratio. Its contents are then scaled with the screen, so they keep the same size relative to the screen height at any resolution. Without it, the layer's size is the screen size in UI pixels.
 
 ---
 -- Content. An array-like container, which allows to reference elements by their name.
@@ -341,15 +349,15 @@
 ---
 -- Mouse event, passed as an argument to relevant UI events
 -- @type MouseEvent
--- @field openmw.util#Vector2 position Absolute position of the mouse cursor
--- @field openmw.util#Vector2 offset Position of the mouse cursor relative to the widget
+-- @field openmw.util#Vector2 position Position of the mouse cursor from the top left corner of the widget's layer, in the layer's units. On most layers these are UI pixels. On a layer with a fixed `height` they are the units of that layer, as are the sizes and positions of its widgets.
+-- @field openmw.util#Vector2 offset Position of the mouse cursor relative to the widget, in the same units as `position`
 -- @field #number button Mouse button which triggered the event.
 --   Matches the arguments of @{openmw_input#input.isMouseButtonPressed} (`nil` for none, 1 for left, 3 for right).
 
 ---
 -- Mouse wheel event, passed as an argument to mouseWheel UI events
 -- @type MouseWheelEvent
--- @field openmw.util#Vector2 position Absolute position of the mouse cursor
+-- @field openmw.util#Vector2 position Position of the mouse cursor from the top left corner of the widget's layer, in the layer's units, as in @{#MouseEvent}
 -- @field openmw.util#Vector2 delta The wheel delta on the X and Y axis. The values are usually -1, 0 or 1, but may be different for high-precision wheels such as fraction values.
 
 ---

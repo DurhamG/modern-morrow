@@ -8,6 +8,7 @@ local nearby = require('openmw.nearby')
 local camera = require('openmw.camera')
 local matchers = require('matchers')
 local I = require('openmw.interfaces')
+local ui = require('openmw.ui')
 
 types.Player.setControlSwitch(self, types.Player.CONTROL_SWITCH.Controls, false)
 types.Player.setControlSwitch(self, types.Player.CONTROL_SWITCH.Fighting, false)
@@ -180,6 +181,18 @@ testing.registerLocalTest('GUI input capture applies only in menus', function()
         coroutine.yield()
     end
     I.UI.setPauseOnMode(I.UI.MODE.Interface, true)
+end)
+
+testing.registerLocalTest('UI layer with a fixed height', function()
+    ui.layers.insertAfter('HUD', 'TestFixedHeightLayer', { height = 720 })
+    coroutine.yield()
+    local layer = ui.layers[ui.layers.indexOf('TestFixedHeightLayer')]
+    testing.expectEqual(layer.size.y, 720, 'The layer should have the height it was given')
+    local screen = ui.screenSize()
+    testing.expectEqualWithDelta(layer.size.x, 720 * screen.x / screen.y, 1,
+        "The layer's width should follow the screen's aspect ratio")
+    testing.expectEqual(pcall(ui.layers.insertAfter, 'HUD', 'TestInvalidHeightLayer', { height = 0 }), false,
+        'A height that is not positive should be an error')
 end)
 
 testing.registerLocalTest('findPath',

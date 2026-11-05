@@ -158,8 +158,15 @@ namespace MWInput
 
         if (mGuiCursorEnabled)
         {
-            if (MyGUI::Widget* widget = MyGUI::InputManager::getInstance().getMouseFocusWidget())
-                LuaUi::dispatchMouseWheel(widget, mGuiCursorX, mGuiCursorY, arg.preciseX, arg.preciseY);
+            MyGUI::InputManager& guiInput = MyGUI::InputManager::getInstance();
+            if (MyGUI::Widget* widget = guiInput.getMouseFocusWidget())
+            {
+                // Like MyGUI's mouse events, give the position in the coordinates of the widget's layer. They differ
+                // from UI pixels on a scaling layer.
+                const MyGUI::IntPoint position = guiInput.getMousePositionByLayer();
+                LuaUi::dispatchMouseWheel(widget, static_cast<float>(position.left), static_cast<float>(position.top),
+                    arg.preciseX, arg.preciseY);
+            }
         }
     }
 

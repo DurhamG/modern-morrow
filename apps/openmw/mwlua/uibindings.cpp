@@ -20,6 +20,7 @@
 #include <components/vfs/manager.hpp>
 
 #include <cmath>
+#include <limits>
 #include <numbers>
 
 #include "context.hpp"
@@ -86,6 +87,18 @@ namespace MWLua
                 res[name] = mode;
             return res;
         }();
+
+        // The height option of a new layer. 0 if the options give none, which makes a layer of the screen's size.
+        int getLayerHeight(const sol::object& options)
+        {
+            const sol::object height = LuaUtil::getFieldOrNil(options, "height");
+            if (height == sol::nil)
+                return 0;
+            const double value = LuaUtil::cast<double>(height);
+            if (!(value >= 1 && value <= std::numeric_limits<int>::max()) || value != std::floor(value))
+                throw std::runtime_error("The layer height must be a positive whole number");
+            return static_cast<int>(value);
+        }
     }
 
     sol::table registerUiApi(const Context& context)
@@ -249,6 +262,7 @@ namespace MWLua
         layersTable["insertAfter"] = [context](std::string afterName, std::string name, const sol::object& opt) {
             LuaUi::Layer::Options options;
             options.mInteractive = LuaUtil::getValueOrDefault(LuaUtil::getFieldOrNil(opt, "interactive"), true);
+            options.mHeight = getLayerHeight(opt);
             context.mLuaManager->addAction(
                 [afterName = std::move(afterName), name = std::move(name), options]() {
                     size_t index = LuaUi::Layer::indexOf(afterName);
@@ -261,6 +275,7 @@ namespace MWLua
         layersTable["insertBefore"] = [context](std::string beforeName, std::string name, const sol::object& opt) {
             LuaUi::Layer::Options options;
             options.mInteractive = LuaUtil::getValueOrDefault(LuaUtil::getFieldOrNil(opt, "interactive"), true);
+            options.mHeight = getLayerHeight(opt);
             context.mLuaManager->addAction(
                 [beforeName = std::move(beforeName), name = std::move(name), options]() {
                     size_t index = LuaUi::Layer::indexOf(beforeName);
