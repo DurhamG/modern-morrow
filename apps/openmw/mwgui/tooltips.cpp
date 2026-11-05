@@ -731,15 +731,15 @@ namespace MWGui
             }
         }
 
-        std::vector<std::pair<ESM::RefId, int>> itemOwners
+        const std::vector<MWBase::MechanicsManager::StolenItemOwner> itemOwners
             = MWBase::Environment::get().getMechanicsManager()->getStolenItemOwners(cellref.getRefId());
 
-        for (std::pair<ESM::RefId, int>& owner : itemOwners)
+        for (const MWBase::MechanicsManager::StolenItemOwner& owner : itemOwners)
         {
-            if (owner.second == std::numeric_limits<int>::max())
-                ret += std::format("\nStolen from {}", owner.first.toDebugString()); // for legacy (ESS) savegames
+            if (owner.mCount == std::numeric_limits<int>::max())
+                ret += std::format("\nStolen from {}", owner.mId.toDebugString()); // for legacy (ESS) savegames
             else
-                ret += std::format("\nStolen {} from {}", owner.second, owner.first.toDebugString());
+                ret += std::format("\nStolen {} from {}", owner.mCount, owner.mId.toDebugString());
         }
 
         ret += getMiscString(cellref.getGlobalVariable(), "Global");

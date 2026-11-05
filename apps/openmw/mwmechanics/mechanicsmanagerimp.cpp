@@ -964,9 +964,9 @@ namespace MWMechanics
         }
     }
 
-    std::vector<std::pair<ESM::RefId, int>> MechanicsManager::getStolenItemOwners(const ESM::RefId& itemid)
+    std::vector<MechanicsManager::StolenItemOwner> MechanicsManager::getStolenItemOwners(const ESM::RefId& itemid)
     {
-        std::vector<std::pair<ESM::RefId, int>> result;
+        std::vector<StolenItemOwner> result;
         StolenItemsMap::const_iterator it = mStolenItems.find(itemid);
         if (it == mStolenItems.end())
             return result;
@@ -974,7 +974,7 @@ namespace MWMechanics
         {
             const OwnerMap& owners = it->second;
             for (OwnerMap::const_iterator ownerIt = owners.begin(); ownerIt != owners.end(); ++ownerIt)
-                result.emplace_back(ownerIt->first.first, ownerIt->second);
+                result.push_back({ ownerIt->first.first, ownerIt->first.second, ownerIt->second });
             return result;
         }
     }

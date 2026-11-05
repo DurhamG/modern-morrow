@@ -279,9 +279,15 @@ namespace MWBase
 
         virtual void confiscateStolenItems(const MWWorld::Ptr& player, const MWWorld::Ptr& targetContainer) = 0;
 
-        /// List the owners that the player has stolen this item from (the owner can be an NPC or a faction).
-        /// <Owner, item count>
-        virtual std::vector<std::pair<ESM::RefId, int>> getStolenItemOwners(const ESM::RefId& itemid) = 0;
+        struct StolenItemOwner
+        {
+            ESM::RefId mId;
+            bool mIsFaction;
+            int mCount; ///< The number of items with this id that the player has stolen from this owner
+        };
+
+        /// List the owners that the player has stolen this item from (the owner can be an actor or a faction).
+        virtual std::vector<StolenItemOwner> getStolenItemOwners(const ESM::RefId& itemid) = 0;
 
         /// Has the player stolen this item from the given owner?
         virtual bool isItemStolenFrom(const ESM::RefId& itemid, const MWWorld::Ptr& ptr) = 0;

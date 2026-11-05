@@ -210,9 +210,8 @@ namespace MWMechanics
 
         void confiscateStolenItems(const MWWorld::Ptr& player, const MWWorld::Ptr& targetContainer) override;
 
-        /// List the owners that the player has stolen this item from (the owner can be an NPC or a faction).
-        /// <Owner, item count>
-        std::vector<std::pair<ESM::RefId, int>> getStolenItemOwners(const ESM::RefId& itemid) override;
+        /// List the owners that the player has stolen this item from (the owner can be an actor or a faction).
+        std::vector<StolenItemOwner> getStolenItemOwners(const ESM::RefId& itemid) override;
 
         /// Has the player stolen this item from the given owner?
         bool isItemStolenFrom(const ESM::RefId& itemid, const MWWorld::Ptr& ptr) override;
