@@ -275,6 +275,9 @@ namespace MWBase
         virtual void setLuaAnswersInteractiveMessages(bool answers) = 0;
         /// Presses a button in the interactive message box that was sent to Lua with the given id.
         virtual void answerInteractiveMessage(int id, int button) = 0;
+        /// While set, messages without buttons go to the player's Lua scripts instead of being shown. Messages that
+        /// go into the transcript of a conversation, and static messages, are shown as before.
+        virtual void setLuaShowsMessages(bool shows) = 0;
 
         virtual void updateConsoleObjectPtr(const MWWorld::Ptr& currentPtr, const MWWorld::Ptr& newPtr) = 0;
 

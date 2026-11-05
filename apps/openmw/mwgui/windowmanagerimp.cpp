@@ -869,7 +869,13 @@ namespace MWGui
         }
         else if (showInDialogueMode != MWGui::ShowInDialogueMode_Only)
         {
-            mMessageBoxManager->createMessageBox(message);
+            if (mLuaShowsMessages)
+            {
+                MyGUI::UString text = MyGUI::LanguageManager::getInstance().replaceTags(MyGUI::UString(message));
+                MWBase::Environment::get().getLuaManager()->messageRequested(text.asUTF8());
+            }
+            else
+                mMessageBoxManager->createMessageBox(message);
         }
     }
 

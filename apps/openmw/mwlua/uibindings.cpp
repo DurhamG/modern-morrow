@@ -229,6 +229,10 @@ namespace MWLua
                     [windowManager, answers] { windowManager->setLuaAnswersInteractiveMessages(answers); },
                     "Set whether Lua answers interactive messages");
             };
+            api["_setLuaShowsMessages"] = [windowManager, luaManager = context.mLuaManager](bool shows) {
+                luaManager->addAction([windowManager, shows] { windowManager->setLuaShowsMessages(shows); },
+                    "Set whether Lua shows messages");
+            };
             api["_answerInteractiveMessage"] = [windowManager, luaManager = context.mLuaManager](int id, int button) {
                 luaManager->addAction(
                     [windowManager, id, button] { windowManager->answerInteractiveMessage(id, button); },

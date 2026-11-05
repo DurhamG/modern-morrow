@@ -26,7 +26,7 @@ namespace MWLua
             , mInputProcessor(this)
         {
             registerEngineHandlers({ &mConsoleCommandHandlers, &mOnFrameHandlers, &mQuestUpdate,
-                &mViewportResizedHandlers, &mUiModeChanged, &mInteractiveMessageRequested });
+                &mViewportResizedHandlers, &mUiModeChanged, &mInteractiveMessageRequested, &mMessageRequested });
         }
 
         void processInputEvent(const MWBase::LuaManager::InputEvent& event)
@@ -63,6 +63,8 @@ namespace MWLua
             callEngineHandlers(mInteractiveMessageRequested, id, message, buttonTable);
         }
 
+        void messageRequested(std::string_view message) { callEngineHandlers(mMessageRequested, message); }
+
     private:
         friend class MWLua::InputProcessor<PlayerScripts>;
         InputProcessor<PlayerScripts> mInputProcessor;
@@ -72,6 +74,7 @@ namespace MWLua
         EngineHandlerList mViewportResizedHandlers{ "onViewportResized" };
         EngineHandlerList mUiModeChanged{ "_onUiModeChanged" };
         EngineHandlerList mInteractiveMessageRequested{ "_onInteractiveMessage" };
+        EngineHandlerList mMessageRequested{ "_onMessage" };
     };
 
 }

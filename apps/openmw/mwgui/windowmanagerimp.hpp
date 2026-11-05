@@ -282,6 +282,7 @@ namespace MWGui
 
         void setLuaAnswersInteractiveMessages(bool answers) override;
         void answerInteractiveMessage(int id, int button) override;
+        void setLuaShowsMessages(bool shows) override { mLuaShowsMessages = shows; }
 
         void update(float duration);
 
@@ -503,6 +504,7 @@ namespace MWGui
         MyGUI::Widget* mInputBlocker;
 
         bool mHudEnabled;
+        bool mLuaShowsMessages = false;
         bool mCursorVisible;
         bool mCursorActive;
         bool mCursorInteractionEnabled;

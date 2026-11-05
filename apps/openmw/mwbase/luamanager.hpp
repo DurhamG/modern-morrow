@@ -116,6 +116,9 @@ namespace MWBase
         // Sends an interactive message box to the player's scripts, which answer it with
         // `WindowManager::answerInteractiveMessage`. The texts have no #{...} tags left.
         virtual void interactiveMessageRequested(int id, std::string message, std::vector<std::string> buttons) = 0;
+        // Sends a message without buttons to the player's scripts, which show it instead of the engine. The text has
+        // no #{...} tags left.
+        virtual void messageRequested(std::string message) = 0;
         virtual void viewportResized(int width, int height) = 0;
         virtual void savePermanentStorage(const std::filesystem::path& userConfigPath) = 0;
         virtual void applyMagicEffects(ESM::RefId id, const MWWorld::Ptr& caster, ESM::RefNum item,

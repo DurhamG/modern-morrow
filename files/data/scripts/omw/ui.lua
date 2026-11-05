@@ -20,6 +20,7 @@ local inputCapturedByInterface = false
 
 local interactiveMessageHandler = nil
 local waitingMessageId = nil
+local messageHandler = nil
 
 local modePause = {}
 for _, mode in pairs(MODE) do
@@ -94,6 +95,20 @@ local function onInteractiveMessage(id, message, buttons)
         updateInputCapture()
     end
     interactiveMessageHandler(message, buttons, answer)
+end
+
+local function registerMessageHandler(handler)
+    messageHandler = handler
+    ui._setLuaShowsMessages(handler ~= nil)
+end
+
+local function onMessage(message)
+    if messageHandler then
+        messageHandler(message)
+    else
+        -- The handler was removed after the engine sent the message, so the engine shows it now.
+        ui.showMessage(message)
+    end
 end
 
 local function showInteractiveMessage(message, options)
@@ -264,7 +279,7 @@ return {
     interface = {
         --- Interface version
         -- @field [parent=#UI] #number version
-        version = 7,
+        version = 8,
 
         --- All available UI modes.
         -- Use `view(I.UI.MODE)` in `luap` console mode to see the list.
@@ -454,10 +469,29 @@ return {
         --     -- Show the message, and call answer(i) when the player picks buttons[i].
         -- end)
         registerInteractiveMessageHandler = registerInteractiveMessageHandler,
+
+        ---
+        -- Show the messages without buttons instead of the engine, such as "Your crime has been reported" or the
+        -- messages of `ui.showMessage`. Use it to draw these messages in the style of a mod's own HUD.
+        --
+        -- While a handler is registered, the engine doesn't show these messages, and calls the handler with each of
+        -- them instead, at the start of the next frame. It still shows a few others itself: while the `Dialogue` mode
+        -- is open, it adds messages to the conversation's transcript, and it shows the messages that stay on screen
+        -- until the engine removes them, such as the one while the game saves. Messages with buttons go to
+        -- @{#UI.registerInteractiveMessageHandler}. `ui.showMessage` reaches the handler too, so the handler shouldn't
+        -- call it. Registering a new handler replaces the previous one.
+        -- @function [parent=#UI] registerMessageHandler
+        -- @param #function handler A function `handler(message)`, or nil to let the engine show the messages again.
+        -- `message` is the text of the message, with the game settings that it names filled in.
+        -- @usage I.UI.registerMessageHandler(function(message)
+        --     -- Show the message in the mod's own style.
+        -- end)
+        registerMessageHandler = registerMessageHandler,
     },
     engineHandlers = {
         _onUiModeChanged = onUiModeChanged,
         _onInteractiveMessage = onInteractiveMessage,
+        _onMessage = onMessage,
     },
     eventHandlers = {
         UiModeChanged = onUiModeChangedEvent,

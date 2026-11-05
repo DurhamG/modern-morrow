@@ -328,6 +328,25 @@ testing.registerLocalTest('Lua answers an interactive message', function()
     testing.expectEqual(input.isGuiInputCaptured(), false, 'The answer should release the menu input')
 end)
 
+testing.registerLocalTest('Lua shows plain messages', function()
+    local shown = {}
+    I.UI.registerMessageHandler(function(message)
+        shown[#shown + 1] = message
+    end)
+    -- The handler takes over in the next frame.
+    coroutine.yield()
+    ui.showMessage('Test plain message')
+    for _ = 1, 10 do
+        coroutine.yield()
+        if #shown > 0 then
+            break
+        end
+    end
+    I.UI.registerMessageHandler(nil)
+
+    testing.expectThat(shown, matchers.equalTo({ 'Test plain message' }), 'The handler should get the message')
+end)
+
 testing.registerLocalTest('Interactive message with buttons and a callback', function()
     local askedButtons = nil
     local chosen = nil

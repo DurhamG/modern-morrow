@@ -423,6 +423,13 @@ namespace MWLua
                     mInteractiveMessageRequest->mMessage, mInteractiveMessageRequest->mButtons);
             mInteractiveMessageRequest = std::nullopt;
         }
+
+        if (playerScripts)
+        {
+            for (const std::string& message : mMessageRequests)
+                playerScripts->messageRequested(message);
+        }
+        mMessageRequests.clear();
     }
 
     void LuaManager::applyDelayedActions()
@@ -458,6 +465,8 @@ namespace MWLua
         mDelayedUiModeChangedArg = std::nullopt;
         mInteractiveMessageRequest = std::nullopt;
         MWBase::Environment::get().getWindowManager()->setLuaAnswersInteractiveMessages(false);
+        mMessageRequests.clear();
+        MWBase::Environment::get().getWindowManager()->setLuaShowsMessages(false);
         if (!mPlayer.isEmpty())
         {
             mPlayer.getCellRef().unsetRefNum();
@@ -980,6 +989,7 @@ namespace MWLua
         LuaUi::clearSettings();
         MWBase::Environment::get().getWindowManager()->setConsoleMode("");
         MWBase::Environment::get().getWindowManager()->setLuaAnswersInteractiveMessages(false);
+        MWBase::Environment::get().getWindowManager()->setLuaShowsMessages(false);
         MWBase::Environment::get().getL10nManager()->dropCache();
         for (const std::string& name : mUiResourceManager.cursorNames())
             MWBase::Environment::get().getWindowManager()->removeLuaCursor(name);

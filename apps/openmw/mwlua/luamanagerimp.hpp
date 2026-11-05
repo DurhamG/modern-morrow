@@ -131,6 +131,7 @@ namespace MWLua
         void questUpdated(const ESM::RefId& questId, int stage) override;
         void uiModeChanged(const MWWorld::Ptr& arg) override;
         void interactiveMessageRequested(int id, std::string message, std::vector<std::string> buttons) override;
+        void messageRequested(std::string message) override { mMessageRequests.push_back(std::move(message)); }
         void viewportResized(int width, int height) override;
         void actorDied(const MWWorld::Ptr& actor) override;
         void onDialogueResponse(
@@ -296,6 +297,7 @@ namespace MWLua
         };
         // A new request replaces an earlier one, so only the latest one is sent to the scripts.
         std::optional<InteractiveMessageRequest> mInteractiveMessageRequest;
+        std::vector<std::string> mMessageRequests;
 
         LuaUtil::LuaStorage mGlobalStorage;
         LuaUtil::LuaStorage mPlayerStorage;
