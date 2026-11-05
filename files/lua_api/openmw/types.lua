@@ -869,6 +869,14 @@
 -- @return #boolean
 
 ---
+-- The value of one of this item, as the engine counts it.
+-- It is usually the record's value, but a soul gem with a soul in it is worth more, and a stack of gold is worth 1 per coin.
+-- It doesn't take the item's condition into account. @{#Actor.getBuyingPrice} and @{#Actor.getSellingPrice} do.
+-- @function [parent=#Item] getValue
+-- @param openmw.core#GameObject item
+-- @return #number
+
+---
 -- Set of properties that differentiates one item from another of the same record type; can be used by any script, but only global and self scripts can change values.
 -- @function [parent=#Item] itemData
 -- @param openmw.core#GameObject item

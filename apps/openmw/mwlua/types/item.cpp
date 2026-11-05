@@ -27,6 +27,13 @@ namespace MWLua
 
         item["isCarriable"] = [](const Object& object) -> bool { return object.ptr().getClass().isItem(object.ptr()); };
 
+        item["getValue"] = [](const Object& object) -> int {
+            const MWWorld::Ptr& ptr = object.ptr();
+            if (!ptr.getClass().isItem(ptr))
+                throw std::runtime_error("Item expected");
+            return ptr.getClass().getValue(ptr);
+        };
+
         addItemDataBindings(item, context);
         item["levelledItems"] = addLevelledItemBindings(context);
     }

@@ -256,6 +256,7 @@ testing.registerGlobalTest('barter prices', function()
     local item = world.createObject(record.id, 1)
     local value = types.Weapon.record(item).value
     testing.expectGreaterThan(value, 1, 'The test needs an item that is worth something')
+    testing.expectEqual(types.Item.getValue(item), value, 'A weapon should be worth its record value')
 
     testing.expectEqual(types.Actor.getBuyingPrice(merchant, item), value,
         'A creature should sell an item at its value')
