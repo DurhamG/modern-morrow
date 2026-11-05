@@ -1,5 +1,7 @@
 #include "pickpocket.hpp"
 
+#include <algorithm>
+
 #include <components/misc/rng.hpp>
 
 #include "../mwworld/class.hpp"
@@ -21,7 +23,7 @@ namespace MWMechanics
     {
     }
 
-    float Pickpocket::getChanceModifier(const MWWorld::Ptr& ptr, float add)
+    float Pickpocket::getChanceModifier(const MWWorld::Ptr& ptr, float add) const
     {
         NpcStats& stats = ptr.getClass().getNpcStats(ptr);
         float agility = stats.getAttribute(ESM::Attribute::Agility).getModified();
@@ -30,7 +32,18 @@ namespace MWMechanics
         return (add + 0.2f * agility + 0.1f * luck + sneak) * stats.getFatigueTerm();
     }
 
-    bool Pickpocket::getDetected(float valueTerm)
+    float Pickpocket::getValueTerm(const MWWorld::Ptr& item, int count) const
+    {
+        float stackValue = static_cast<float>(item.getClass().getValue(item) * count);
+        float fPickPocketMod = MWBase::Environment::get()
+                                   .getESMStore()
+                                   ->get<ESM::GameSetting>()
+                                   .find("fPickPocketMod")
+                                   ->mValue.getFloat();
+        return 10 * fPickPocketMod * stackValue;
+    }
+
+    int Pickpocket::getHighestUnnoticedRoll(float valueTerm) const
     {
         float x = getChanceModifier(mThief);
         float y = getChanceModifier(mVictim, valueTerm);
@@ -49,17 +62,26 @@ namespace MWMechanics
                                  .find("iPickMaxChance")
                                  ->mValue.getInteger();
 
-        auto& prng = MWBase::Environment::get().getWorld()->getPrng();
-        int roll = Misc::Rng::roll0to99(prng);
         if (t < pcSneak / iPickMinChance)
-        {
-            return (roll > int(pcSneak / iPickMinChance));
-        }
-        else
-        {
-            t = std::min(float(iPickMaxChance), t);
-            return (roll > int(t));
-        }
+            return int(pcSneak / iPickMinChance);
+        return int(std::min(float(iPickMaxChance), t));
+    }
+
+    bool Pickpocket::getDetected(float valueTerm) const
+    {
+        const int highestUnnoticedRoll = getHighestUnnoticedRoll(valueTerm);
+        auto& prng = MWBase::Environment::get().getWorld()->getPrng();
+        return Misc::Rng::roll0to99(prng) > highestUnnoticedRoll;
+    }
+
+    int Pickpocket::getChance(const MWWorld::Ptr& item, int count) const
+    {
+        return std::clamp(getHighestUnnoticedRoll(getValueTerm(item, count)) + 1, 0, 100);
+    }
+
+    int Pickpocket::getFinishChance() const
+    {
+        return std::clamp(getHighestUnnoticedRoll(0.f) + 1, 0, 100);
     }
 
     bool Pickpocket::canSteal(const MWWorld::Ptr& item) const
@@ -75,20 +97,12 @@ namespace MWMechanics
         return Misc::Rng::roll0to99(MWBase::Environment::get().getWorld()->getPrng()) <= sneak;
     }
 
-    bool Pickpocket::pick(const MWWorld::Ptr& item, int count)
+    bool Pickpocket::pick(const MWWorld::Ptr& item, int count) const
     {
-        float stackValue = static_cast<float>(item.getClass().getValue(item) * count);
-        float fPickPocketMod = MWBase::Environment::get()
-                                   .getESMStore()
-                                   ->get<ESM::GameSetting>()
-                                   .find("fPickPocketMod")
-                                   ->mValue.getFloat();
-        float valueTerm = 10 * fPickPocketMod * stackValue;
-
-        return getDetected(valueTerm);
+        return getDetected(getValueTerm(item, count));
     }
 
-    bool Pickpocket::finish()
+    bool Pickpocket::finish() const
     {
         return getDetected(0.f);
     }

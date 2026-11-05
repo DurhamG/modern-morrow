@@ -1,6 +1,7 @@
 #include "types.hpp"
 
 #include <algorithm>
+#include <optional>
 
 #include <components/esm3/loadbsgn.hpp>
 #include <components/esm3/loadfact.hpp>
@@ -16,7 +17,9 @@
 #include "apps/openmw/mwbase/journal.hpp"
 #include "apps/openmw/mwbase/mechanicsmanager.hpp"
 #include "apps/openmw/mwbase/world.hpp"
+#include "apps/openmw/mwmechanics/actorutil.hpp"
 #include "apps/openmw/mwmechanics/npcstats.hpp"
+#include "apps/openmw/mwmechanics/pickpocket.hpp"
 #include "apps/openmw/mwmechanics/services.hpp"
 #include "apps/openmw/mwworld/class.hpp"
 #include "apps/openmw/mwworld/containerstore.hpp"
@@ -149,6 +152,193 @@ namespace MWLua
     {
         const MWWorld::Ptr ptr = MWBase::Environment::get().getWorld()->getPlayerPtr();
         return price <= ptr.getClass().getContainerStore(ptr).count(MWWorld::ContainerStore::sGoldId);
+    }
+
+    // Taking an item changes its container as well as the player, so only global scripts can do it.
+    static void verifyTaker(const Object& player)
+    {
+        verifyPlayer(player);
+        if (!player.isGObject())
+            throw std::runtime_error("Only global scripts can take items");
+    }
+
+    static void verifyVictim(const MWWorld::Ptr& victim)
+    {
+        if (!victim.getClass().isNpc() || victim.getClass().getCreatureStats(victim).isDead())
+            throw std::runtime_error("The victim must be a living NPC");
+    }
+
+    static void verifyIsIn(const MWWorld::Ptr& item, const MWWorld::Ptr& container)
+    {
+        if (item.getContainerStore() != &container.getClass().getContainerStore(container))
+            throw std::runtime_error("The item must be in " + container.toString());
+    }
+
+    // The number of items to take from a stack: all of them, unless the script asks for fewer.
+    static int getCountToTake(const MWWorld::Ptr& item, const sol::optional<int>& count)
+    {
+        const int available = item.getCellRef().getCount();
+        const int result = count.value_or(available);
+        if (result <= 0 || result > available)
+            throw std::runtime_error(
+                "Can't take " + std::to_string(result) + " of " + std::to_string(available) + " items");
+        return result;
+    }
+
+    // The number of items that a queued action can still take, after the actions before it ran.
+    static int getCountLeft(const MWWorld::Ptr& item, const MWWorld::Ptr& container, int count)
+    {
+        if (item.getContainerStore() != &container.getClass().getContainerStore(container))
+            return 0;
+        return std::min(count, item.getCellRef().getCount());
+    }
+
+    // Moves items from their container into the player's inventory, the same way as moveInto.
+    static void moveToPlayer(const MWWorld::Ptr& item, int count)
+    {
+        const MWWorld::Ptr player = MWMechanics::getPlayer();
+        MWWorld::ContainerStore* container = item.getContainerStore();
+        player.getClass().getContainerStore(player).add(item, count, false);
+        container->remove(item, count, false);
+    }
+
+    static std::optional<LuaUtil::Callback> toCallback(const sol::optional<sol::table>& callback)
+    {
+        if (!callback)
+            return std::nullopt;
+        return LuaUtil::Callback::fromLua(*callback);
+    }
+
+    // Gives the outcome of a queued action to the script's callback, if it passed one.
+    template <class T>
+    static void reportOutcome(const Context& context, const std::optional<LuaUtil::Callback>& callback, T outcome)
+    {
+        if (callback)
+            context.mLuaManager->queueCallback(
+                *callback, sol::main_object(context.mLua->unsafeState(), sol::in_place, outcome));
+    }
+
+    static void addTakingBindings(sol::table& playerBindings, const Context& context)
+    {
+        playerBindings["isAllowedToUse"] = [](const Object& player, const Object& object) -> bool {
+            verifyPlayer(player);
+            MWWorld::Ptr victim;
+            return MWBase::Environment::get().getMechanicsManager()->isAllowedToUse(player.ptr(), object.ptr(), victim);
+        };
+        playerBindings["takeItem"]
+            = [context](const Object& player, const Object& container, const Object& item, sol::optional<int> count) {
+                  verifyTaker(player);
+                  const MWWorld::Ptr containerPtr = container.ptr();
+                  const MWWorld::Ptr itemPtr = item.ptr();
+                  if (containerPtr == player.ptr())
+                      throw std::runtime_error("The item must not be in the player's inventory");
+                  verifyIsIn(itemPtr, containerPtr);
+                  if (MWBase::Environment::get().getMechanicsManager()->isBoundItem(itemPtr))
+                      throw std::runtime_error("Bound items can't be taken");
+                  const int countToTake = getCountToTake(itemPtr, count);
+                  context.mLuaManager->addAction(
+                      [container = Object(containerPtr), item = Object(itemPtr), countToTake] {
+                          const MWWorld::Ptr from = container.ptr();
+                          const MWWorld::Ptr taken = item.ptr();
+                          const int countLeft = getCountLeft(taken, from, countToTake);
+                          if (countLeft <= 0)
+                              return;
+                          MWBase::Environment::get().getMechanicsManager()->itemTaken(
+                              MWMechanics::getPlayer(), taken, from, countLeft);
+                          moveToPlayer(taken, countLeft);
+                      },
+                      "TakeItemAction");
+              };
+
+        playerBindings["getPickpocketChance"] = [](const Object& player, const Object& victim,
+                                                    sol::optional<Object> item, sol::optional<int> count) -> int {
+            verifyPlayer(player);
+            const MWWorld::Ptr victimPtr = victim.ptr();
+            verifyNpc(victimPtr.getClass());
+            const MWMechanics::Pickpocket pickpocket(player.ptr(), victimPtr);
+            if (!item)
+                return pickpocket.getFinishChance();
+            const MWWorld::Ptr itemPtr = item->ptr();
+            return pickpocket.getChance(itemPtr, getCountToTake(itemPtr, count));
+        };
+        playerBindings["getPickpocketItems"]
+            = [](sol::this_state thisState, const Object& player, const Object& victim) -> sol::table {
+            verifyPlayer(player);
+            const MWWorld::Ptr victimPtr = victim.ptr();
+            verifyVictim(victimPtr);
+            const MWMechanics::Pickpocket pickpocket(player.ptr(), victimPtr);
+            const bool knockedDown = victimPtr.getClass().getCreatureStats(victimPtr).getKnockedDown();
+            sol::table result(thisState, sol::create);
+            MWWorld::ContainerStore& store = victimPtr.getClass().getContainerStore(victimPtr);
+            for (MWWorld::ContainerStoreIterator it = store.begin(); it != store.end(); ++it)
+            {
+                if (!it->getClass().showsInInventory(*it) || !pickpocket.canSteal(*it))
+                    continue;
+                if (!knockedDown && !pickpocket.noticesItem())
+                    continue;
+                if (victim.isGObject())
+                    result.add(GObject(*it));
+                else
+                    result.add(LObject(*it));
+            }
+            return result;
+        };
+        playerBindings["pickpocket"] = [context](const Object& player, const Object& victim, const Object& item,
+                                           sol::optional<int> count, sol::optional<sol::table> callback) {
+            verifyTaker(player);
+            const MWWorld::Ptr victimPtr = victim.ptr();
+            verifyVictim(victimPtr);
+            const MWWorld::Ptr itemPtr = item.ptr();
+            verifyIsIn(itemPtr, victimPtr);
+            if (!MWMechanics::Pickpocket(player.ptr(), victimPtr).canSteal(itemPtr))
+                throw std::runtime_error("Equipped items and bound items can't be stolen");
+            const int countToTake = getCountToTake(itemPtr, count);
+            context.mLuaManager->addAction(
+                [context, victim = Object(victimPtr), item = Object(itemPtr), countToTake,
+                    callback = toCallback(callback)] {
+                    const MWWorld::Ptr from = victim.ptr();
+                    const MWWorld::Ptr stolen = item.ptr();
+                    const int countLeft = getCountLeft(stolen, from, countToTake);
+                    // An earlier action may have taken the items. Then nothing is stolen, and nobody can notice.
+                    if (countLeft <= 0)
+                    {
+                        reportOutcome(context, callback, sol::lua_nil);
+                        return;
+                    }
+                    const MWWorld::Ptr thief = MWMechanics::getPlayer();
+                    bool detected = false;
+                    if (from.getClass().getCreatureStats(from).getKnockedDown())
+                        MWBase::Environment::get().getMechanicsManager()->itemTaken(thief, stolen, from, countLeft);
+                    else
+                    {
+                        const MWMechanics::Pickpocket pickpocket(thief, from);
+                        detected = pickpocket.pick(stolen, countLeft);
+                        if (detected)
+                            pickpocket.commitCrime();
+                        else
+                            pickpocket.recordTheft(stolen, countLeft);
+                    }
+                    if (!detected)
+                        moveToPlayer(stolen, countLeft);
+                    reportOutcome(context, callback, detected);
+                },
+                "PickpocketAction");
+        };
+        playerBindings["finishPickpocketing"]
+            = [context](const Object& player, const Object& victim, sol::optional<sol::table> callback) {
+                  verifyTaker(player);
+                  const MWWorld::Ptr victimPtr = victim.ptr();
+                  verifyVictim(victimPtr);
+                  context.mLuaManager->addAction(
+                      [context, victim = Object(victimPtr), callback = toCallback(callback)] {
+                          const MWMechanics::Pickpocket pickpocket(MWMechanics::getPlayer(), victim.ptr());
+                          const bool detected = pickpocket.finish();
+                          if (detected)
+                              pickpocket.commitCrime();
+                          reportOutcome(context, callback, detected);
+                      },
+                      "FinishPickpocketingAction");
+              };
     }
 
     void addJournalClassBindings(sol::state_view& lua, const MWBase::Journal* journal)
@@ -623,6 +813,7 @@ namespace MWLua
             return MWBase::Environment::get().getMechanicsManager()->commitCrime(o.ptr(), victimObj,
                 static_cast<MWBase::MechanicsManager::OffenseType>(type), factionId, arg, victimAware);
         };
+        addTakingBindings(player, context);
 
         player["birthSigns"] = initBirthSignRecordBindings(context);
         player["getBirthSign"] = [](const Object& object) -> std::string {

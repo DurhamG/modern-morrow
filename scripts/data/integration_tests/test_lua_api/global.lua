@@ -486,6 +486,21 @@ testing.registerGlobalTest('travel', function()
     merchant:remove()
 end)
 
+-- Waits for the outcome that an action gives its callback.
+local function waitForOutcome(start)
+    local result = nil
+    start(async:callback(function(outcome)
+        result = outcome
+    end))
+    for _ = 1, 10 do
+        coroutine.yield()
+        if result ~= nil then
+            break
+        end
+    end
+    return result
+end
+
 testing.registerGlobalTest('stolen items', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({
@@ -519,6 +534,98 @@ testing.registerGlobalTest('stolen items', function()
     testing.expectEqual(owners[1].factionId, nil, 'The owner should not be a faction')
     testing.expectEqual(owners[1].count, 1, 'The player should have stolen one item')
     stolen:remove()
+end)
+
+testing.registerGlobalTest('taking items from containers', function()
+    local player = initPlayer()
+    local owner = world.createRecord(types.NPC.createRecordDraft({
+        template = types.NPC.record(player),
+        name = 'Chest owner',
+    }))
+    local weapon = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        name = 'Dagger in a chest',
+    }))
+    local chest = world.createObject(world.createRecord(types.Container.createRecordDraft({
+        name = 'Test chest',
+        weight = 100,
+    })).id)
+    world.createObject(weapon.id, 2):moveInto(chest)
+    coroutine.yield()
+    chest.owner.recordId = owner.id
+    testing.expectEqual(types.Player.isAllowedToUse(player, chest), false,
+        'The player should not be allowed to take from an owned chest')
+
+    local item = types.Container.inventory(chest):find(weapon.id)
+    testing.expectEqual(pcall(types.Player.takeItem, player, chest, item, 3), false,
+        'The player should not take more items than the chest holds')
+    types.Player.takeItem(player, chest, item, 1)
+    local taken = nil
+    for _ = 1, 10 do
+        coroutine.yield()
+        taken = types.Actor.inventory(player):find(weapon.id)
+        if taken then
+            break
+        end
+    end
+    testing.expect(taken ~= nil, 'The player should get the item')
+    testing.expectEqual(types.Actor.inventory(player):countOf(weapon.id), 1, 'The player should take one item')
+    testing.expectEqual(types.Container.inventory(chest):countOf(weapon.id), 1, 'One item should stay in the chest')
+    local owners = types.Item.getStolenFrom(taken)
+    testing.expectEqual(#owners, 1, 'Taking from an owned chest should be theft')
+    testing.expectEqual(owners[1].recordId, owner.id, 'The item should be stolen from the owner of the chest')
+
+    chest.owner.recordId = nil
+    testing.expectEqual(types.Player.isAllowedToUse(player, chest), true,
+        'The player should be allowed to take from a chest nobody owns')
+    taken:remove()
+    chest:remove()
+end)
+
+testing.registerGlobalTest('pickpocketing', function()
+    local player = initPlayer()
+    removeGold(player)
+    local victim = world.createObject(types.NPC.record(player).id)
+    victim:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    world.createObject('gold_001', 10):moveInto(victim)
+    coroutine.yield()
+    local gold = types.Actor.inventory(victim):find('gold_001')
+    local victimGold = gold.count
+
+    local chance = types.Player.getPickpocketChance(player, victim, gold)
+    testing.expectGreaterOrEqual(chance, 0, 'The chance should be at least 0')
+    testing.expectLessOrEqual(chance, 100, 'The chance should be at most 100')
+    testing.expectGreaterOrEqual(types.Player.getPickpocketChance(player, victim), chance,
+        'Stopping should be no riskier than stealing')
+
+    testing.runLocalTest(player, 'set skill on self', { skill = 'sneak', value = 100 })
+    local noticed = false
+    for _, item in ipairs(types.Player.getPickpocketItems(player, victim)) do
+        noticed = noticed or item == gold
+    end
+    testing.expect(noticed, 'A player with 100 Sneak should notice every item')
+
+    local detected = waitForOutcome(function(callback)
+        types.Player.pickpocket(player, victim, gold, 4, callback)
+    end)
+    testing.expect(detected ~= nil, 'The callback should receive whether the victim noticed the player')
+    local stolen = detected and 0 or 4
+    testing.expectEqual(types.Actor.inventory(player):countOf('gold_001'), stolen,
+        'The player should get the gold only if the victim did not notice')
+    testing.expectEqual(types.Actor.inventory(victim):countOf('gold_001'), victimGold - stolen,
+        'The victim should lose the gold only if they did not notice')
+
+    if not detected then
+        detected = waitForOutcome(function(callback)
+            types.Player.finishPickpocketing(player, victim, callback)
+        end)
+        testing.expect(detected ~= nil, 'The callback should receive whether the victim noticed the player')
+    end
+
+    testing.runLocalTest(player, 'restore skill on self', 'sneak')
+    victim:remove()
+    removeGold(player)
+    types.Player.setCrimeLevel(player, 0)
 end)
 
 testing.registerGlobalTest('rest status', function()

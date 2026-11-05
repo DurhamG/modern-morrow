@@ -1446,6 +1446,75 @@
 -- @field [parent=#PLAYER] #OFFENSE_TYPE_IDS OFFENSE_TYPE
 
 ---
+-- Whether the player can use an object, or take items out of it, without committing a crime.
+-- This is false for an object that a living NPC owns, or that a faction owns when the player's rank in it is too low, unless the object's global variable allows its use. It is also false for a living NPC whose pockets the player would pick, because the player is sneaking or the NPC is knocked down.
+-- The container window uses this to show whether taking an item is theft.
+-- @function [parent=#PLAYER] isAllowedToUse
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject object
+-- @return #boolean
+
+---
+-- Take items out of a container or an actor's inventory, the way the container window does it (only in global scripts).
+-- The items move into the player's inventory. When @{#PLAYER.isAllowedToUse} is false, taking them is theft: the items are recorded as stolen, and the crime is reported to anyone who sees it. Taking items from a corpse is never theft.
+-- Taking items from a living NPC who isn't knocked down isn't theft either, while the player isn't sneaking. The container window opens such an inventory only for a companion.
+-- Bound items can't be taken. This doesn't check whether the container is locked or trapped, and it doesn't pick an NPC's pockets: use @{#PLAYER.pickpocket} for that.
+-- The change happens at the end of the frame. If an earlier change in the frame took some of the items, this takes the ones that are left.
+-- @function [parent=#PLAYER] takeItem
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject container A container or an actor.
+-- @param openmw.core#GameObject item An item in the container's inventory.
+-- @param #number count The number of items to take from the stack (optional, all of them by default).
+-- @usage for _, item in ipairs(types.Container.inventory(chest):getAll()) do
+--     types.Player.takeItem(player, chest, item)
+-- end
+
+---
+-- The chance, from 0 to 100, that an NPC doesn't notice the player stealing items from their pockets.
+-- It takes the Agility, Luck, Sneak skill and fatigue of both the player and the NPC into account, as well as the value of the items. The NPC doesn't notice the player when a roll from 0 to 99 is no higher than a limit. The limit is at least the player's Sneak skill divided by the `iPickMinChance` game setting, and at most the `iPickMaxChance` game setting. The chance is one more than the limit.
+-- Without an item, this is the chance that the NPC doesn't notice the player when they stop picking the pockets.
+-- @function [parent=#PLAYER] getPickpocketChance
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject victim An NPC.
+-- @param openmw.core#GameObject item An item in the NPC's inventory (optional).
+-- @param #number count The number of items in the stack to steal (optional, all of them by default).
+-- @return #number
+
+---
+-- The items in an NPC's inventory that the player notices while picking their pockets.
+-- Each call rolls anew against the player's Sneak skill for each item, so call it once when pickpocketing starts, as the container window does. The player notices every item of an NPC who is knocked down. Equipped items and bound items can't be stolen, so they are never in the list.
+-- @function [parent=#PLAYER] getPickpocketItems
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject victim A living NPC.
+-- @return #list<openmw.core#GameObject>
+
+---
+-- Try to steal items from a living NPC's pockets, the way the container window does it (only in global scripts).
+-- The engine rolls against @{#PLAYER.getPickpocketChance}. If the NPC doesn't notice, the items move into the player's inventory and are recorded as stolen, and the player's Sneak skill progresses. If the NPC notices, the items stay where they are, and the crime is reported with the NPC as its victim. The container window stops pickpocketing then.
+-- An NPC who is knocked down can't notice the player. Their items are taken the way @{#PLAYER.takeItem} takes them, without a roll.
+-- Equipped items and bound items can't be stolen. The attempt happens at the end of the frame.
+-- @function [parent=#PLAYER] pickpocket
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject victim A living NPC.
+-- @param openmw.core#GameObject item An item in the NPC's inventory.
+-- @param #number count The number of items to steal from the stack (optional, all of them by default).
+-- @param openmw.async#Callback callback A function that receives `true` if the NPC noticed the player and `false` otherwise (optional). It receives `nil` if an earlier change in the frame took the items, so that nothing was stolen.
+-- @usage types.Player.pickpocket(player, victim, item, nil, async:callback(function(detected)
+--     if detected then
+--         player:sendEvent('StopPickpocketing')
+--     end
+-- end))
+
+---
+-- Stop picking an NPC's pockets, the way closing the container window does it (only in global scripts).
+-- The engine rolls once more, against @{#PLAYER.getPickpocketChance} without an item. If the NPC notices the player, the crime is reported with the NPC as its victim.
+-- The container window skips this when the NPC already noticed the player while they took an item. The roll happens at the end of the frame.
+-- @function [parent=#PLAYER] finishPickpocketing
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject victim A living NPC.
+-- @param openmw.async#Callback callback A function that receives `true` if the NPC noticed the player and `false` otherwise (optional).
+
+---
 -- Whether the character generation for this player is finished.
 -- @function [parent=#PLAYER] isCharGenFinished
 -- @param openmw.core#GameObject player

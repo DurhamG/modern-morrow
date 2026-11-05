@@ -547,6 +547,21 @@ testing.registerLocalTestStep('restore training on self', function(skillId)
     coroutine.yield()
 end)
 
+local skillsBeforeTest = {}
+
+testing.registerLocalTestStep('set skill on self', function(data)
+    local skill = types.NPC.stats.skills[data.skill](self)
+    skillsBeforeTest[data.skill] = skillsBeforeTest[data.skill] or skill.base
+    skill.base = data.value
+    coroutine.yield()
+end)
+
+testing.registerLocalTestStep('restore skill on self', function(skillId)
+    types.NPC.stats.skills[skillId](self).base = skillsBeforeTest[skillId]
+    skillsBeforeTest[skillId] = nil
+    coroutine.yield()
+end)
+
 testing.registerLocalTestStep('rest status on self', function()
     local status = types.Player.getRestStatus(self)
     testing.expectEqual(type(status.isUnderwater), 'boolean', 'isUnderwater should be a boolean')
