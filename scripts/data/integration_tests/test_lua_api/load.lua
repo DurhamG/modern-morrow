@@ -48,6 +48,11 @@ return {
             end
             content.repairs.records.OMW_Test_RepairTool = { name = 'Test hammer', maxCondition = 10, quality = 1 }
             content.miscs.records.OMW_Test_SoulGem = { name = 'Test soul gem', value = 10 }
+            content.apparatuses.records.OMW_Test_Mortar = {
+                name = 'Test mortar',
+                type = content.apparatuses.TYPE.MortarPestle,
+                quality = 1,
+            }
         end
     }
 }

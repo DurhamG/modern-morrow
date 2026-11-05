@@ -54,8 +54,6 @@ namespace MWMechanics
 
         void updateEffects();
 
-        Result getReadyStatus() const;
-
         const ESM::Potion* getRecord(const ESM::Potion& toFind) const;
         ///< Try to find a potion record similar to \a toFind in the record store, or return 0 if not found
         /// \note Does not account for record ID, model or icon
@@ -83,11 +81,18 @@ namespace MWMechanics
         TEffectsIterator endEffects() const;
 
     public:
+        Result getReadyStatus() const;
+        ///< What stops the alchemist from brewing, apart from a random failure. When the ingredients share no
+        /// effects, brewing still uses them up.
+
         int countPotionsToBrew() const;
         ///< calculates maximum amount of potions, which you can make from selected ingredients
 
         static bool knownEffect(size_t potionEffectIndex, const MWWorld::Ptr& npc);
         ///< Does npc have sufficient alchemy skill to know about this potion effect?
+
+        static bool knowsIngredientEffect(size_t ingredientEffectIndex, float alchemySkill);
+        ///< Does an alchemist with this skill know the effect in this slot of an ingredient?
 
         void setAlchemist(const MWWorld::Ptr& npc);
         ///< Set alchemist and configure alchemy setup accordingly. \a npc may be empty to indicate that

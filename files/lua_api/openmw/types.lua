@@ -1655,6 +1655,60 @@
 -- @param openmw.async#Callback callback A function that receives `true` if the item was enchanted and `false` otherwise, including when nothing happened (optional).
 
 ---
+-- What the player picked for brewing potions, like the choices in the alchemy window.
+-- Like an @{#EnchantingSetup}, it is a plain table that a script keeps and changes, and each function works everything out again from it.
+-- The ingredients and the apparatus must be in the player's inventory.
+-- @type AlchemySetup
+-- @field #list<openmw.core#GameObject> ingredients Up to four ingredients, each of a different kind. Their order matters, as in the alchemy window's slots.
+-- @field #list<openmw.core#GameObject> apparatus The apparatus to brew with, at most one of each type (optional). Without it, the player brews with the best apparatus of each type that they carry, as the alchemy window picks them.
+-- @field #string name The name of the potions (optional, the name that @{#AlchemyInfo} suggests by default).
+-- @field #number count The number of potions to brew (optional, 1 by default).
+
+---
+-- An effect of the potion that an @{#AlchemySetup} would brew.
+-- @type PotionEffectInfo
+-- @field #string id The magic effect's record ID.
+-- @field #string affectedSkill The skill that the effect changes, if it changes one.
+-- @field #string affectedAttribute The attribute that the effect changes, if it changes one.
+-- @field #boolean isKnown Whether the player's Alchemy skill is high enough to know the effect. The alchemy window hides the effects that the player doesn't know.
+
+---
+-- What the alchemy window shows for an @{#AlchemySetup}.
+-- @type AlchemyInfo
+-- @field #list<#PotionEffectInfo> effects The effects that at least two of the ingredients share, in the order that the potion would have them.
+-- @field #list<openmw.core#GameObject> apparatus The apparatus that brewing would use.
+-- @field #number maxCount The most potions that the ingredients make, one of each ingredient per potion. It is 0 when the potion can't be brewed, such as without a mortar and pestle, two ingredients, a name or shared effects.
+-- @field #string suggestedName The name that the alchemy window suggests: the name of the first effect.
+
+---
+-- The effects of an ingredient that the player knows, from their Alchemy skill and the `fWortChanceValue` game setting.
+-- The player knows the first effect at `fWortChanceValue` Alchemy, the second at twice that, and so on. The alchemy window shows only these effects.
+-- @function [parent=#PLAYER] getKnownIngredientEffects
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject ingredient
+-- @return #list<openmw.core#MagicEffectWithParams>
+
+---
+-- Work out what the alchemy window would show for a potion.
+-- This throws an error if the setup names an ingredient or apparatus that isn't in the player's inventory, the same kind of ingredient twice, or more than four ingredients.
+-- @function [parent=#PLAYER] getAlchemyInfo
+-- @param openmw.core#GameObject player
+-- @param #AlchemySetup setup
+-- @return #AlchemyInfo
+
+---
+-- Brew potions, the way the alchemy window does it (only in global scripts).
+-- Each potion uses up one of each ingredient, whether it works or not. A potion works if the player's Alchemy skill, Intelligence and Luck beat a roll. Its strength comes from those and the apparatus. The player's Alchemy skill progresses for each potion that works.
+-- If the ingredients share no effects, brewing fails and uses them up, as in the alchemy window.
+-- This throws an error without a mortar and pestle, two ingredients or a name. It shows no message and plays no sound.
+-- Brewing happens at the end of the frame, and makes at most as many potions as the ingredients allow. If an earlier change in the frame used up the ingredients or the apparatus, nothing happens.
+-- @function [parent=#PLAYER] brewPotion
+-- @param openmw.core#GameObject player
+-- @param #AlchemySetup setup
+-- @param openmw.async#Callback callback A function that receives the number of potions that worked, which is 0 when nothing happened (optional).
+-- @usage types.Player.brewPotion(player, { ingredients = { root, petal }, count = 5 })
+
+---
 -- Travel with a merchant to one of their travel destinations, the way the travel window does it (only in global scripts).
 -- The player pays @{#Actor.getTravelPrice}, and the gold goes to the merchant's barter gold. Then @{#Actor.getTravelHours} pass, while the player and other actors sleep. Last, the player and their followers move to the destination, and `GetPCTraveling` reports the trip to mwscripts for a frame.
 -- The player must have enough gold. Otherwise this throws an error.

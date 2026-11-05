@@ -3,9 +3,12 @@
 #include <algorithm>
 #include <optional>
 
+#include <components/esm3/loadappa.hpp>
 #include <components/esm3/loadbsgn.hpp>
 #include <components/esm3/loadcrea.hpp>
 #include <components/esm3/loadfact.hpp>
+#include <components/esm3/loadingr.hpp>
+#include <components/esm3/loadmgef.hpp>
 #include <components/esm3/loadmisc.hpp>
 #include <components/esm3/loadrepa.hpp>
 #include <components/esm3/loadskil.hpp>
@@ -22,12 +25,15 @@
 #include "apps/openmw/mwbase/mechanicsmanager.hpp"
 #include "apps/openmw/mwbase/world.hpp"
 #include "apps/openmw/mwmechanics/actorutil.hpp"
+#include "apps/openmw/mwmechanics/alchemy.hpp"
 #include "apps/openmw/mwmechanics/enchanting.hpp"
+#include "apps/openmw/mwmechanics/magiceffects.hpp"
 #include "apps/openmw/mwmechanics/npcstats.hpp"
 #include "apps/openmw/mwmechanics/pickpocket.hpp"
 #include "apps/openmw/mwmechanics/recharge.hpp"
 #include "apps/openmw/mwmechanics/repair.hpp"
 #include "apps/openmw/mwmechanics/services.hpp"
+#include "apps/openmw/mwmechanics/spellutil.hpp"
 #include "apps/openmw/mwworld/class.hpp"
 #include "apps/openmw/mwworld/containerstore.hpp"
 #include "apps/openmw/mwworld/esmstore.hpp"
@@ -601,6 +607,160 @@ namespace MWLua
               };
     }
 
+    // What a script picked for brewing, as it describes it in a Lua table. The items are kept as Lua objects, so
+    // that a queued action can find them again.
+    struct AlchemySetup
+    {
+        std::vector<Object> mIngredients;
+        std::optional<std::vector<Object>> mApparatus;
+        std::optional<std::string> mName;
+        int mCount = 1;
+    };
+
+    static std::vector<Object> toObjectList(const sol::table& table)
+    {
+        std::vector<Object> result;
+        for (size_t i = 1; i <= table.size(); ++i)
+            result.push_back(LuaUtil::cast<Object>(table[i]));
+        return result;
+    }
+
+    static AlchemySetup toAlchemySetup(const sol::table& table)
+    {
+        AlchemySetup setup;
+        if (const std::optional<sol::table> ingredients = getField<sol::table>(table, "ingredients"))
+            setup.mIngredients = toObjectList(*ingredients);
+        if (const std::optional<sol::table> apparatus = getField<sol::table>(table, "apparatus"))
+            setup.mApparatus = toObjectList(*apparatus);
+        setup.mName = getField<std::string>(table, "name");
+        setup.mCount = getField<int>(table, "count").value_or(1);
+        if (setup.mCount < 1)
+            throw std::runtime_error("The number of potions to brew must be at least 1");
+        return setup;
+    }
+
+    // Sets up the engine's alchemy the way the alchemy window would for the same choices.
+    static MWMechanics::Alchemy makeAlchemy(const AlchemySetup& setup)
+    {
+        const MWWorld::Ptr player = MWMechanics::getPlayer();
+        MWMechanics::Alchemy alchemy;
+        alchemy.setAlchemist(player);
+        if (setup.mApparatus)
+        {
+            const auto slots = std::distance(alchemy.beginTools(), alchemy.endTools());
+            for (std::ptrdiff_t slot = 0; slot < slots; ++slot)
+                alchemy.removeApparatus(static_cast<size_t>(slot));
+            for (const Object& object : *setup.mApparatus)
+            {
+                const MWWorld::Ptr apparatus = object.ptr();
+                verifyIsIn(apparatus, player);
+                if (apparatus.getType() != ESM::Apparatus::sRecordId)
+                    throw std::runtime_error("Apparatus expected");
+                alchemy.addApparatus(apparatus);
+            }
+        }
+        for (const Object& object : setup.mIngredients)
+        {
+            const MWWorld::Ptr ingredient = object.ptr();
+            verifyIsIn(ingredient, player);
+            if (ingredient.getType() != ESM::Ingredient::sRecordId)
+                throw std::runtime_error("Ingredient expected");
+            if (alchemy.addIngredient(ingredient) < 0)
+                throw std::runtime_error("Brewing takes at most four ingredients, each of a different kind");
+        }
+        alchemy.setPotionName(setup.mName.value_or(alchemy.suggestPotionName()));
+        return alchemy;
+    }
+
+    static void addAlchemyBindings(sol::table& playerBindings, const Context& context)
+    {
+        playerBindings["getKnownIngredientEffects"]
+            = [](sol::this_state thisState, const Object& player, const Object& ingredient) -> sol::table {
+            verifyPlayer(player);
+            const MWWorld::Ptr ingredientPtr = ingredient.ptr();
+            if (ingredientPtr.getType() != ESM::Ingredient::sRecordId)
+                throw std::runtime_error("Ingredient expected");
+            const MWWorld::Ptr playerPtr = player.ptr();
+            const float alchemySkill = playerPtr.getClass().getSkill(playerPtr, ESM::Skill::Alchemy);
+            const ESM::Ingredient* record = ingredientPtr.get<ESM::Ingredient>()->mBase;
+            sol::table result(thisState, sol::create);
+            for (uint32_t i = 0; i < 4 && MWMechanics::Alchemy::knowsIngredientEffect(i, alchemySkill); ++i)
+            {
+                if (const std::optional<ESM::IndexedENAMstruct> effect = MWMechanics::getIngredientEffect(record, i))
+                    result.add(*effect);
+            }
+            return result;
+        };
+        playerBindings["getAlchemyInfo"]
+            = [](sol::this_state thisState, const Object& player, const sol::table& table) -> sol::table {
+            verifyPlayer(player);
+            MWMechanics::Alchemy alchemy = makeAlchemy(toAlchemySetup(table));
+            const MWWorld::Ptr playerPtr = player.ptr();
+            const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+            sol::table effects(thisState, sol::create);
+            const std::vector<MWMechanics::EffectKey> keys = alchemy.listEffects();
+            for (size_t i = 0; i < keys.size(); ++i)
+            {
+                sol::table effect(thisState, sol::create);
+                effect["id"] = keys[i].mId;
+                const ESM::MagicEffect* magicEffect = store.get<ESM::MagicEffect>().find(keys[i].mId);
+                if (magicEffect->mData.mFlags & ESM::MagicEffect::TargetSkill)
+                    effect["affectedSkill"] = keys[i].mArg;
+                else if (magicEffect->mData.mFlags & ESM::MagicEffect::TargetAttribute)
+                    effect["affectedAttribute"] = keys[i].mArg;
+                effect["isKnown"] = MWMechanics::Alchemy::knownEffect(i, playerPtr);
+                effects.add(effect);
+            }
+            sol::table apparatus(thisState, sol::create);
+            for (auto it = alchemy.beginTools(); it != alchemy.endTools(); ++it)
+            {
+                if (!it->isEmpty())
+                    apparatus.add(player.isGObject() ? sol::make_object(thisState, GObject(*it))
+                                                     : sol::make_object(thisState, LObject(*it)));
+            }
+            sol::table result(thisState, sol::create);
+            result["effects"] = effects;
+            result["apparatus"] = apparatus;
+            result["maxCount"] = alchemy.countPotionsToBrew();
+            result["suggestedName"] = alchemy.suggestPotionName();
+            return result;
+        };
+        playerBindings["brewPotion"]
+            = [context](const Object& player, const sol::table& table, sol::optional<sol::table> callback) {
+                  verifyCrafter(player);
+                  const AlchemySetup setup = toAlchemySetup(table);
+                  switch (makeAlchemy(setup).getReadyStatus())
+                  {
+                      case MWMechanics::Alchemy::Result_NoMortarAndPestle:
+                          throw std::runtime_error("Brewing needs a mortar and pestle");
+                      case MWMechanics::Alchemy::Result_LessThanTwoIngredients:
+                          throw std::runtime_error("Brewing needs at least two ingredients");
+                      case MWMechanics::Alchemy::Result_NoName:
+                          throw std::runtime_error("The potion needs a name");
+                      default:
+                          break;
+                  }
+                  context.mLuaManager->addAction(
+                      [context, setup, callback = toCallback(callback)] {
+                          // An earlier action may have used up the ingredients or the apparatus.
+                          std::optional<MWMechanics::Alchemy> alchemy = setUpAgain([&] { return makeAlchemy(setup); });
+                          if (!alchemy
+                              || (alchemy->getReadyStatus() != MWMechanics::Alchemy::Result_Success
+                                  && alchemy->getReadyStatus() != MWMechanics::Alchemy::Result_NoEffects))
+                          {
+                              reportOutcome(context, callback, 0);
+                              return;
+                          }
+                          int count = std::min(setup.mCount, alchemy->countPotionsToBrew());
+                          const std::string name = setup.mName.value_or(alchemy->suggestPotionName());
+                          if (alchemy->create(name, count) == MWMechanics::Alchemy::Result_NoEffects)
+                              count = 0;
+                          reportOutcome(context, callback, count);
+                      },
+                      "BrewPotionAction");
+              };
+    }
+
     void addJournalClassBindings(sol::state_view& lua, const MWBase::Journal* journal)
     {
         auto journalBindingsClass = lua.new_usertype<MWBase::Journal>("MWDialogue_Journal");
@@ -1076,6 +1236,7 @@ namespace MWLua
         addTakingBindings(player, context);
         addToolBindings(player, context);
         addEnchantingBindings(player, context);
+        addAlchemyBindings(player, context);
 
         player["birthSigns"] = initBirthSignRecordBindings(context);
         player["getBirthSign"] = [](const Object& object) -> std::string {

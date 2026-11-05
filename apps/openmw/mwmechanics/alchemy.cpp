@@ -603,6 +603,13 @@ std::string MWMechanics::Alchemy::suggestPotionName()
     return effects.begin()->toString();
 }
 
+bool MWMechanics::Alchemy::knowsIngredientEffect(size_t ingredientEffectIndex, float alchemySkill)
+{
+    const static auto fWortChanceValue
+        = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>().find("fWortChanceValue")->mValue.getFloat();
+    return alchemySkill >= fWortChanceValue * static_cast<int>(ingredientEffectIndex + 1);
+}
+
 std::vector<std::string> MWMechanics::Alchemy::effectsDescription(
     const MWWorld::ConstPtr& ptr, const float alchemySkill)
 {
@@ -611,14 +618,13 @@ std::vector<std::string> MWMechanics::Alchemy::effectsDescription(
     const auto& item = ptr.get<ESM::Ingredient>()->mBase;
     const auto& store = MWBase::Environment::get().getESMStore();
     const auto& mgef = store->get<ESM::MagicEffect>();
-    const static auto fWortChanceValue = store->get<ESM::GameSetting>().find("fWortChanceValue")->mValue.getFloat();
     const auto& data = item->mData;
 
     for (size_t i = 0; i < sNumEffects; ++i)
     {
         const auto effectID = data.mEffectID[i];
 
-        if (alchemySkill < fWortChanceValue * static_cast<int>(i + 1))
+        if (!knowsIngredientEffect(i, alchemySkill))
             break;
 
         if (!effectID.empty())

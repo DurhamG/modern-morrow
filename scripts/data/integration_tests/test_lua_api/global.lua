@@ -657,6 +657,62 @@ testing.registerGlobalTest('enchanting', function()
     enchanter:remove()
 end)
 
+testing.registerGlobalTest('alchemy', function()
+    local player = initPlayer()
+    local inventory = types.Actor.inventory(player)
+    local function createIngredient(name)
+        return world.createRecord(types.Ingredient.createRecordDraft({
+            name = name,
+            weight = 1,
+            value = 1,
+            effects = { { id = findCostlyEffect().id } },
+        }))
+    end
+    local root = createIngredient('Test root')
+    local petal = createIngredient('Test petal')
+    world.createObject(root.id, 3):moveInto(player)
+    world.createObject(petal.id, 2):moveInto(player)
+    world.createObject('OMW_Test_Mortar', 1):moveInto(player)
+    coroutine.yield()
+    local ingredients = { inventory:find(root.id), inventory:find(petal.id) }
+    testing.runLocalTest(player, 'set skill on self', { skill = 'alchemy', value = 100 })
+
+    local known = types.Player.getKnownIngredientEffects(player, ingredients[1])
+    testing.expectEqual(#known, 1, 'A player with 100 Alchemy should know the effect of the root')
+    testing.expectEqual(known[1].id, findCostlyEffect().id, 'The known effect should be the effect of the root')
+
+    local info = types.Player.getAlchemyInfo(player, { ingredients = ingredients, name = 'Test potion' })
+    testing.expectEqual(#info.effects, 1, 'The potion should have the effect that both ingredients share')
+    testing.expectEqual(info.effects[1].id, findCostlyEffect().id, 'The potion should have the shared effect')
+    testing.expectEqual(info.effects[1].isKnown, true, 'A player with 100 Alchemy should know the effect')
+    testing.expectEqual(info.maxCount, 2, 'The scarcest ingredient should limit the number of potions')
+    testing.expectGreaterOrEqual(#info.apparatus, 1, 'The player should brew with the mortar they carry')
+    local twice = { ingredients = { ingredients[1], ingredients[1] } }
+    testing.expectEqual(pcall(types.Player.getAlchemyInfo, player, twice), false,
+        'The same kind of ingredient should not go in twice')
+    testing.expectEqual(pcall(types.Player.brewPotion, player, { ingredients = { ingredients[1] }, name = 'Potion' }),
+        false, 'The player should not brew with one ingredient')
+
+    local brewed = waitForOutcome(function(callback)
+        types.Player.brewPotion(player, { ingredients = ingredients, name = 'Test potion', count = 2 }, callback)
+    end)
+    testing.expectEqual(brewed, 2, 'A player with 100 Alchemy should brew every potion')
+    testing.expectEqual(inventory:countOf(root.id), 1, 'Each potion should use up one root')
+    testing.expectEqual(inventory:countOf(petal.id), 0, 'Each potion should use up one petal')
+    local potions = 0
+    for _, potion in ipairs(inventory:getAll(types.Potion)) do
+        if types.Potion.record(potion).name == 'Test potion' then
+            potions = potions + potion.count
+            potion:remove()
+        end
+    end
+    testing.expectEqual(potions, 2, 'The player should get the potions')
+
+    testing.runLocalTest(player, 'restore skill on self', 'alchemy')
+    inventory:find(root.id):remove()
+    inventory:find('OMW_Test_Mortar'):remove()
+end)
+
 testing.registerGlobalTest('stolen items', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({
