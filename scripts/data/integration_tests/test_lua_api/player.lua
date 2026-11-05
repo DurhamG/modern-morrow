@@ -212,6 +212,28 @@ testing.registerLocalTest('GUI input capture applies only in menus', function()
     I.UI.setPauseOnMode(I.UI.MODE.Interface, true)
 end)
 
+testing.registerLocalTest('Lua replaces the main menu', function()
+    local shown = false
+    I.UI.registerWindow(I.UI.WINDOW.MainMenu, function() shown = true end, function() shown = false end,
+        { capturesInput = true })
+    I.UI.setPauseOnMode(I.UI.MODE.MainMenu, false)
+    I.UI.setMode(I.UI.MODE.MainMenu)
+    while I.UI.getMode() ~= I.UI.MODE.MainMenu do
+        coroutine.yield()
+    end
+    testing.expectEqual(shown, true, 'The replacement should be shown with the main menu')
+    testing.expectEqual(ui._isWindowVisible(I.UI.WINDOW.MainMenu), false, "The engine's main menu should stay hidden")
+    testing.expectEqual(input.isGuiInputCaptured(), false,
+        'The main menu should not capture the input, because player scripts get no input events then')
+
+    I.UI.setMode()
+    while I.UI.getMode() ~= nil do
+        coroutine.yield()
+    end
+    I.UI.setPauseOnMode(I.UI.MODE.MainMenu, true)
+    testing.expectEqual(shown, false, 'The replacement should be hidden when the main menu closes')
+end)
+
 testing.registerLocalTest('Lua answers an interactive message', function()
     local asked = nil
     local answered = false

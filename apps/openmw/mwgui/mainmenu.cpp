@@ -129,6 +129,9 @@ namespace MWGui
 
     void MainMenu::setVisible(bool visible)
     {
+        // A menu that Lua disabled stays hidden, but its background still follows the main menu mode
+        visible = visible && !isDisabledByLua();
+
         if (visible)
             updateMenu();
 

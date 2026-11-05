@@ -58,6 +58,8 @@ namespace MWGui
 
         bool exit() override;
 
+        std::string_view getWindowIdForLua() const override { return "MainMenu"; }
+
     private:
         const VFS::Manager* mVFS;
 

@@ -42,11 +42,22 @@ local function registerWindow(window, showFn, hideFn, options)
     hiddenWindows[window] = nil
 end
 
+local function isMainMenuOpen()
+    for _, m in pairs(modeStack) do
+        if m == MODE.MainMenu then
+            return true
+        end
+    end
+    return false
+end
+
 local function updateInputCapture()
     local shouldCaptureInput = waitingMessageId ~= nil
     for _, state in pairs(replacedWindows) do
         shouldCaptureInput = shouldCaptureInput or (state.visible and state.capturesInput)
     end
+    -- Player scripts get no input events while the main menu is open, so no script could use the captured input.
+    shouldCaptureInput = shouldCaptureInput and not isMainMenuOpen()
     if shouldCaptureInput ~= inputCapturedByInterface then
         input.setGuiInputCaptured(shouldCaptureInput)
         inputCapturedByInterface = shouldCaptureInput
@@ -273,6 +284,10 @@ return {
 
         --- Register new implementation for the window with given name; overrides previous implementation.
         -- Adding new windows is not supported yet. At the moment it is only possible to override built-in windows.
+        -- A replacement of the main menu (`MainMenu`) is shown when the player opens the menu during a game. Before a game
+        -- is started or loaded, there are no player scripts, so the engine shows its own main menu. While the main menu
+        -- is open, player scripts get no input events such as `onKeyPress` or `onControllerButtonPress`, so the
+        -- replacement has to rely on the events of its own UI elements, such as `mouseClick`.
         -- @function [parent=#UI] registerWindow
         -- @param #string windowName
         -- @param #function showFn Callback that will be called when the window should become visible
@@ -281,6 +296,7 @@ return {
         --
         --   * `capturesInput` - if true, the engine leaves the controller and the keyboard to Lua while this window is shown.
         --     It sets @{openmw_input#(input).setGuiInputCaptured} when the window is shown, and clears it when no shown window captures the input.
+        --     The main menu is an exception. While it is open, the interface doesn't capture the input, because player scripts get no input events then.
         registerWindow = registerWindow,
 
         --- Returns windows that can be shown in given mode.
