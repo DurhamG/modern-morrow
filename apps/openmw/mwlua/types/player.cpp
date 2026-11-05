@@ -762,6 +762,10 @@ namespace MWLua
                 types.add(castStyle);
             result["types"] = types;
             setProblem(result, enchanting.getProblem());
+            const MWWorld::Ptr stolen = enchanting.getStolenItem();
+            if (!stolen.isEmpty())
+                result["stolenItem"] = player.isGObject() ? sol::make_object(thisState, GObject(stolen))
+                                                          : sol::make_object(thisState, LObject(stolen));
             return result;
         };
         playerBindings["enchantItem"]

@@ -1881,6 +1881,7 @@
 -- @field #number price The gold that the enchanter asks, adjusted by the enchanter's offer the same way as @{#Actor.getBuyingPrice}. It is 0 without an enchanter.
 -- @field #number type The cast type that enchanting would use, an @{openmw.core#EnchantmentType}.
 -- @field #list<#number> types The cast types that the item can take, in the order that the enchanting window steps through them. A constant effect needs a soul of at least the `iSoulAmountForConstantEffect` game setting. Empty without an item.
+-- @field openmw.core#GameObject stolenItem The item or the soul gem, if the player stole an item of its kind from the enchanter or from the enchanter's faction. The enchanter takes it back rather than enchant with it, as @{#PLAYER.enchantItem} tells. It is nil without an enchanter.
 -- @field #string problem Why the enchanting window would refuse to enchant, or nil if it wouldn't. The window checks in this order, and names the first problem that it finds: `'noEffects'`, `'noName'` (the new name is empty), `'noSoulGem'`, `'noItem'`, `'tooManyPoints'` (the effects need more than `maxPoints`) and `'notEnoughGold'` (the player can't pay the price).
 
 ---

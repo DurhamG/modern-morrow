@@ -1040,6 +1040,15 @@ testing.registerGlobalTest('stolen items', function()
     testing.expectEqual(owners[1].recordId, owner.id, 'The item should be stolen from its owner')
     testing.expectEqual(owners[1].factionId, nil, 'The owner should not be a faction')
     testing.expectEqual(owners[1].count, 1, 'The player should have stolen one item')
+
+    local enchanter = world.createObject(owner.id)
+    enchanter:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    coroutine.yield()
+    testing.expectEqual(types.Player.getEnchantingInfo(player, { enchanter = enchanter, item = stolen }).stolenItem,
+        stolen, 'The owner should take back the item if the player asks them to enchant it')
+    testing.expectEqual(types.Player.getEnchantingInfo(player, { item = stolen }).stolenItem, nil,
+        'Nobody should take back the item if the player enchants it themself')
+    enchanter:remove()
     stolen:remove()
 end)
 

@@ -108,7 +108,7 @@ namespace MWMechanics
         MWBase::MechanicsManager* mechanics = MWBase::Environment::get().getMechanicsManager();
         for (const MWWorld::Ptr& item : { mOldItemPtr, mSoulGemPtr })
         {
-            if (mechanics->isItemStolenFrom(item.getCellRef().getRefId(), mEnchanter))
+            if (!item.isEmpty() && mechanics->isItemStolenFrom(item.getCellRef().getRefId(), mEnchanter))
                 return item;
         }
         return {};
