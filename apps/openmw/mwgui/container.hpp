@@ -31,6 +31,8 @@ namespace MWGui
 
         void onClose() override;
 
+        void setVisible(bool visible) override;
+
         void clear() override { resetReference(); }
 
         void onFrame(float dt) override;

@@ -221,6 +221,19 @@ namespace MWGui
         mItemTransfer->removeTarget(*mItemView);
     }
 
+    void ContainerWindow::setVisible(bool visible)
+    {
+        WindowBase::setVisible(visible);
+        // A window that Lua replaced is never shown, so onClose doesn't run for it. The container still closes when the
+        // container mode ends. The Lua mod rolls the end of a pickpocketing attempt itself, with finishPickpocketing.
+        if (!visible && isDisabledByLua() && !MWBase::Environment::get().getWindowManager()->containsMode(GM_Container))
+        {
+            if (!mPtr.isEmpty())
+                MWBase::Environment::get().getMechanicsManager()->onClose(mPtr);
+            resetReference();
+        }
+    }
+
     void ContainerWindow::onCloseButtonClicked(MyGUI::Widget* /*sender*/)
     {
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Container);
