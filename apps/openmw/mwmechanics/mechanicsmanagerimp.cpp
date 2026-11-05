@@ -460,9 +460,19 @@ namespace MWMechanics
     {
         MWBase::World* world = MWBase::Environment::get().getWorld();
 
-        const ESM::Class* ptr = world->getStore().insert(value);
-
         ESM::NPC player = *world->getPlayerPtr().get<ESM::NPC>()->mBase;
+
+        // A class that the player made up before has a generated ID. Replace it, so that no unused class is left.
+        const ESM::Class* ptr;
+        if (player.mClass.is<ESM::GeneratedRefId>())
+        {
+            ESM::Class record = value;
+            record.mId = player.mClass;
+            ptr = world->getStore().overrideRecord(record);
+        }
+        else
+            ptr = world->getStore().insert(value);
+
         player.mClass = ptr->mId;
 
         world->getStore().insert(player);
