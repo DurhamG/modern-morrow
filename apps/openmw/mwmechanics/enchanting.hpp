@@ -67,6 +67,10 @@ namespace MWMechanics
         /// rather than enchant with it. This is always empty when the player enchants an item themself.
         MWWorld::Ptr getStolenItem() const;
         bool create(); // Return true if created, false if failed.
+        /// The cast types that the item can be enchanted with, as ESM::Enchantment::Type values, in the order that
+        /// the enchanting window steps through them. A constant effect needs a soul of at least the
+        /// iSoulAmountForConstantEffect game setting. This is empty when there is no item.
+        std::vector<int> getCastStyles() const;
         void nextCastStyle(); // Set enchant type to next possible type (for mOldItemPtr object)
         int getCastStyle() const;
         float getEnchantPoints(bool precise = true) const;

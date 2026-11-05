@@ -1,5 +1,7 @@
 #include "enchanting.hpp"
 
+#include <algorithm>
+
 #include <components/esm3/loadarmo.hpp>
 #include <components/esm3/loadbook.hpp>
 #include <components/esm3/loadclot.hpp>
@@ -164,10 +166,10 @@ namespace MWMechanics
         return true;
     }
 
-    void Enchanting::nextCastStyle()
+    std::vector<int> Enchanting::getCastStyles() const
     {
         if (itemEmpty())
-            return;
+            return {};
 
         const bool powerfulSoul = getGemCharge() >= MWBase::Environment::get()
                                                         .getESMStore()
@@ -176,47 +178,38 @@ namespace MWMechanics
                                                         ->mValue.getInteger();
         if ((mObjectType == ESM::Armor::sRecordId) || (mObjectType == ESM::Clothing::sRecordId))
         { // Armor or Clothing
-            switch (mCastStyle)
-            {
-                case ESM::Enchantment::WhenUsed:
-                    if (powerfulSoul)
-                        mCastStyle = ESM::Enchantment::ConstantEffect;
-                    return;
-                default: // takes care of Constant effect too
-                    mCastStyle = ESM::Enchantment::WhenUsed;
-                    return;
-            }
+            if (powerfulSoul)
+                return { ESM::Enchantment::WhenUsed, ESM::Enchantment::ConstantEffect };
+            return { ESM::Enchantment::WhenUsed };
         }
         else if (!mWeaponType.empty())
         { // Weapon
             ESM::WeaponType::Class weapclass = MWMechanics::getWeaponType(mWeaponType)->mWeaponClass;
-            switch (mCastStyle)
-            {
-                case ESM::Enchantment::WhenStrikes:
-                    if (weapclass == ESM::WeaponType::Melee || weapclass == ESM::WeaponType::Ranged)
-                        mCastStyle = ESM::Enchantment::WhenUsed;
-                    return;
-                case ESM::Enchantment::WhenUsed:
-                    if (powerfulSoul && weapclass != ESM::WeaponType::Ammo && weapclass != ESM::WeaponType::Thrown)
-                        mCastStyle = ESM::Enchantment::ConstantEffect;
-                    else if (weapclass != ESM::WeaponType::Ranged)
-                        mCastStyle = ESM::Enchantment::WhenStrikes;
-                    return;
-                default: // takes care of Constant effect too
-                    mCastStyle = ESM::Enchantment::WhenUsed;
-                    if (weapclass != ESM::WeaponType::Ranged)
-                        mCastStyle = ESM::Enchantment::WhenStrikes;
-                    return;
-            }
-        }
-        else if (mObjectType == ESM::Book::sRecordId)
-        { // Scroll or Book
-            mCastStyle = ESM::Enchantment::CastOnce;
-            return;
+            std::vector<int> styles;
+            if (weapclass != ESM::WeaponType::Ranged)
+                styles.push_back(ESM::Enchantment::WhenStrikes);
+            if (weapclass == ESM::WeaponType::Melee || weapclass == ESM::WeaponType::Ranged)
+                styles.push_back(ESM::Enchantment::WhenUsed);
+            if (powerfulSoul && weapclass != ESM::WeaponType::Ammo && weapclass != ESM::WeaponType::Thrown)
+                styles.push_back(ESM::Enchantment::ConstantEffect);
+            return styles;
         }
 
-        // Fail case
-        mCastStyle = ESM::Enchantment::CastOnce;
+        // Scrolls, and anything else
+        return { ESM::Enchantment::CastOnce };
+    }
+
+    void Enchanting::nextCastStyle()
+    {
+        const std::vector<int> styles = getCastStyles();
+        if (styles.empty())
+            return;
+
+        // Step to the next cast type, or back to the first one when there is no next one.
+        auto next = std::find(styles.begin(), styles.end(), mCastStyle);
+        if (next != styles.end())
+            ++next;
+        mCastStyle = next == styles.end() ? styles.front() : *next;
     }
 
     /*
