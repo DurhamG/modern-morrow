@@ -9,6 +9,7 @@
 #include <components/misc/resourcehelpers.hpp>
 
 #include "apps/openmw/mwbase/environment.hpp"
+#include "apps/openmw/mwworld/class.hpp"
 #include "apps/openmw/mwworld/esmstore.hpp"
 
 namespace sol
@@ -91,6 +92,10 @@ namespace MWLua
         miscellaneous["getSoul"]
             = [](const Object& object) -> ESM::RefId { return object.ptr().getCellRef().getSoul(); };
         miscellaneous["soul"] = miscellaneous["getSoul"]; // for compatibility; should be removed later
+        miscellaneous["isGold"]
+            = [](const Object& object) -> bool { return object.ptr().getClass().isGold(object.ptr()); };
+        miscellaneous["isSoulGem"]
+            = [](const Object& object) -> bool { return object.ptr().getClass().isSoulGem(object.ptr()); };
 
         sol::state_view lua = context.sol();
         addUserType<ESM::Miscellaneous>(lua, "ESM3_Miscellaneous");

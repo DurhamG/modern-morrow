@@ -2749,6 +2749,21 @@
 -- @return #MiscellaneousRecord
 
 ---
+-- Whether the engine treats the object as gold coins.
+-- These are the objects with the record ids `gold_001`, `gold_005`, `gold_010`, `gold_025` and `gold_100`.
+-- When gold goes into an inventory or a container, the engine turns it into `gold_001`, so that all gold stacks together.
+-- @function [parent=#Miscellaneous] isGold
+-- @param openmw.core#GameObject object
+-- @return #boolean
+
+---
+-- Whether the engine treats the object as a soul gem, which can hold a soul.
+-- These are the miscellaneous items whose record id starts with `misc_soulgem`.
+-- @function [parent=#Miscellaneous] isSoulGem
+-- @param openmw.core#GameObject object
+-- @return #boolean
+
+---
 -- (DEPRECATED, use itemData(item).soul) Returns the read-only soul of a miscellaneous item
 -- @function [parent=#Miscellaneous] getSoul
 -- @param openmw.core#GameObject object
