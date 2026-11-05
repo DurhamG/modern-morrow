@@ -3,7 +3,6 @@
 #include <sstream>
 
 #include "../mwmechanics/actorutil.hpp"
-#include "../mwmechanics/creaturestats.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
@@ -133,10 +132,6 @@ namespace MWGui
 
     bool InventoryItemModel::onTakeItem(const MWWorld::Ptr& item, int count)
     {
-        // Looting a dead corpse is considered OK
-        if (mActor.getClass().isActor() && mActor.getClass().getCreatureStats(mActor).isDead())
-            return true;
-
         MWWorld::Ptr player = MWMechanics::getPlayer();
         MWBase::Environment::get().getMechanicsManager()->itemTaken(player, item, mActor, count);
 

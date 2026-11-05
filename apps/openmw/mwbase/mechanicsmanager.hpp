@@ -146,6 +146,7 @@ namespace MWBase
         virtual void actorKilled(const MWWorld::Ptr& victim, const MWWorld::Ptr& attacker) = 0;
 
         /// Utility to check if taking this item is illegal and calling commitCrime if so
+        /// Taking an item from a corpse is never illegal.
         /// @param container The container the item is in; may be empty for an item in the world
         virtual void itemTaken(const MWWorld::Ptr& ptr, const MWWorld::Ptr& item, const MWWorld::Ptr& container,
             int count, bool alarm = true)

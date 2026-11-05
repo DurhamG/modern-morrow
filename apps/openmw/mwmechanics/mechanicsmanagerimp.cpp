@@ -1082,6 +1082,11 @@ namespace MWMechanics
         if (ptr != getPlayer())
             return;
 
+        // Looting a corpse is never a crime
+        if (!container.isEmpty() && container.getClass().isActor()
+            && container.getClass().getCreatureStats(container).isDead())
+            return;
+
         MWWorld::Ptr victim;
 
         bool isAllowed = true;

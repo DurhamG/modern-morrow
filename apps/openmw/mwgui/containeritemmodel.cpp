@@ -259,10 +259,6 @@ namespace MWGui
 
         MWWorld::Ptr target = mItemSources[0].first;
 
-        // Looting a dead corpse is considered OK
-        if (target.getClass().isActor() && target.getClass().getCreatureStats(target).isDead())
-            return true;
-
         MWWorld::Ptr player = MWMechanics::getPlayer();
         MWBase::Environment::get().getMechanicsManager()->itemTaken(player, item, target, count);
 
