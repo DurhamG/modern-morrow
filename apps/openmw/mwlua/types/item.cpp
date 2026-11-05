@@ -1,5 +1,7 @@
 #include <sol/sol.hpp>
 
+#include "../../mwbase/environment.hpp"
+#include "../../mwbase/mechanicsmanager.hpp"
 #include "../../mwmechanics/spellutil.hpp"
 #include "../../mwworld/class.hpp"
 
@@ -32,6 +34,22 @@ namespace MWLua
             if (!ptr.getClass().isItem(ptr))
                 throw std::runtime_error("Item expected");
             return ptr.getClass().getValue(ptr);
+        };
+
+        item["getStolenFrom"] = [](sol::this_state thisState, const Object& object) {
+            const MWWorld::Ptr& ptr = object.ptr();
+            if (!ptr.getClass().isItem(ptr))
+                throw std::runtime_error("Item expected");
+            sol::table result(thisState, sol::create);
+            for (const MWBase::MechanicsManager::StolenItemOwner& owner :
+                MWBase::Environment::get().getMechanicsManager()->getStolenItemOwners(ptr.getCellRef().getRefId()))
+            {
+                sol::table entry(thisState, sol::create);
+                entry[owner.mIsFaction ? "factionId" : "recordId"] = owner.mId.serializeText();
+                entry["count"] = owner.mCount;
+                result.add(entry);
+            }
+            return result;
         };
 
         addItemDataBindings(item, context);

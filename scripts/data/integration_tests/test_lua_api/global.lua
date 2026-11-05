@@ -274,6 +274,41 @@ testing.registerGlobalTest('barter prices', function()
     merchant:remove()
 end)
 
+testing.registerGlobalTest('stolen items', function()
+    local player = initPlayer()
+    local owner = world.createRecord(types.NPC.createRecordDraft({
+        template = types.NPC.record(player),
+        name = 'Item owner',
+    }))
+    local weapon = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        name = 'Owned dagger',
+    }))
+    local item = world.createObject(weapon.id, 1)
+    item:teleport(player.cell, player.position + util.vector3(0, 100, 0))
+    coroutine.yield()
+    item.owner.recordId = owner.id
+    testing.expectEqual(#types.Item.getStolenFrom(item), 0, 'An item the player has not taken should not be stolen')
+
+    item:activateBy(player)
+    local stolen = nil
+    for _ = 1, 10 do
+        coroutine.yield()
+        stolen = types.Actor.inventory(player):find(weapon.id)
+        if stolen then
+            break
+        end
+    end
+    testing.expect(stolen ~= nil, 'The player should pick up the item')
+
+    local owners = types.Item.getStolenFrom(stolen)
+    testing.expectEqual(#owners, 1, 'The item should be stolen from one owner')
+    testing.expectEqual(owners[1].recordId, owner.id, 'The item should be stolen from its owner')
+    testing.expectEqual(owners[1].factionId, nil, 'The owner should not be a faction')
+    testing.expectEqual(owners[1].count, 1, 'The player should have stolen one item')
+    stolen:remove()
+end)
+
 testing.registerGlobalTest('UTF-8 characters', function()
     testing.expectEqual(utf8.codepoint("😀"), 0x1F600)
 

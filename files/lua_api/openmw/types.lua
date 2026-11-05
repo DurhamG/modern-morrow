@@ -877,6 +877,24 @@
 -- @return #number
 
 ---
+-- Who the player has stolen this item from. An empty list means the item isn't stolen.
+-- The engine counts stolen items by record, not by object: once the player steals one item, every item with the same record id counts as stolen.
+-- Guards confiscate stolen items, and a merchant refuses to buy items that were stolen from them.
+-- @function [parent=#Item] getStolenFrom
+-- @param openmw.core#GameObject item
+-- @return #list<#StolenFrom>
+-- @usage
+-- for _, owner in ipairs(types.Item.getStolenFrom(item)) do
+--     print(owner.recordId or owner.factionId, owner.count)
+-- end
+
+---
+-- @type StolenFrom
+-- @field #string recordId The record id of the actor the item was stolen from, or `nil` if it was stolen from a faction.
+-- @field #string factionId The id of the faction the item was stolen from, or `nil` if it was stolen from an actor.
+-- @field #number count How many items with this record id the player has stolen from this owner. For games converted from Morrowind saves, the count is unknown and is a very large number.
+
+---
 -- Set of properties that differentiates one item from another of the same record type; can be used by any script, but only global and self scripts can change values.
 -- @function [parent=#Item] itemData
 -- @param openmw.core#GameObject item
