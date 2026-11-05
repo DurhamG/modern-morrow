@@ -1,5 +1,9 @@
 #include "text.hpp"
 
+#include <algorithm>
+
+#include <MyGUI_Gui.h>
+
 #include "alignment.hpp"
 
 namespace LuaUi
@@ -76,5 +80,23 @@ namespace LuaUi
     MyGUI::IntSize LuaText::getViewSize() const
     {
         return WidgetExtension::getContentSize();
+    }
+
+    MyGUI::IntSize measureText(std::string_view text, const TextMeasureOptions& options)
+    {
+        // A probe with the Text widget's skin, so that it uses the same font and text layout.
+        const int width = options.mWordWrap ? std::max(options.mWidth, 1) : 1;
+        MyGUI::EditBox* probe = MyGUI::Gui::getInstance().createWidgetT(
+            MyGUI::EditBox::getClassTypeName(), "LuaText", MyGUI::IntCoord(0, 0, width, 1), MyGUI::Align::Default, {})
+                                    ->castType<MyGUI::EditBox>();
+        probe->setVisible(false);
+        probe->setEditStatic(true);
+        probe->setEditMultiLine(options.mMultiline || options.mWordWrap);
+        probe->setEditWordWrap(options.mWordWrap);
+        probe->setFontHeight(options.mTextSize);
+        probe->setCaption(MyGUI::UString(text));
+        const MyGUI::IntSize size = probe->getTextSize();
+        MyGUI::Gui::getInstance().destroyWidget(probe);
+        return size;
     }
 }

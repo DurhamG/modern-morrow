@@ -5,6 +5,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <thread>
 
 #include <components/lua/inputactions.hpp>
 #include <components/lua/luastate.hpp>
@@ -206,6 +207,9 @@ namespace MWLua
 
         bool isSynchronizedUpdateRunning() const { return mRunningSynchronizedUpdates; }
 
+        // True on the thread that created the manager. Scripts also run on the Lua worker thread.
+        bool isMainThread() const { return std::this_thread::get_id() == mMainThreadId; }
+
     private:
         void initConfiguration(bool reload);
         LocalScripts* createLocalScripts(const MWWorld::Ptr& ptr,
@@ -221,6 +225,7 @@ namespace MWLua
         bool mNewGameStarted = false;
         bool mReloadAllScriptsRequested = false;
         bool mRunningSynchronizedUpdates = false;
+        std::thread::id mMainThreadId = std::this_thread::get_id();
         LuaUtil::ScriptsConfiguration mConfiguration;
         LuaUtil::LuaState mLua;
         LuaUi::ResourceManager mUiResourceManager;

@@ -11,6 +11,7 @@
 #include <components/lua_ui/layers.hpp>
 #include <components/lua_ui/registerscriptsettings.hpp>
 #include <components/lua_ui/resources.hpp>
+#include <components/lua_ui/text.hpp>
 #include <components/lua_ui/util.hpp>
 
 #include <components/misc/finitevalues.hpp>
@@ -391,6 +392,26 @@ namespace MWLua
         };
         api["getCursor"] = [luaManager = context.mLuaManager, windowManager]() {
             return luaManager->uiResourceManager()->findCursor(windowManager->getCurrentCursorName());
+        };
+
+        api["measureText"] = [luaManager = context.mLuaManager](
+                                 std::string_view text, const sol::optional<sol::table>& options) -> osg::Vec2f {
+            if (!luaManager->isMainThread())
+                throw std::runtime_error(
+                    "ui.measureText can't be used on the Lua worker thread. Call it from onFrame, an input handler, "
+                    "a UI event callback or a window's show function.");
+            LuaUi::TextMeasureOptions measure;
+            if (options)
+            {
+                measure.mTextSize = options->get_or("textSize", measure.mTextSize);
+                measure.mMultiline = options->get_or("multiline", measure.mMultiline);
+                measure.mWordWrap = options->get_or("wordWrap", measure.mWordWrap);
+                measure.mWidth = options->get_or("width", measure.mWidth);
+            }
+            if (measure.mWordWrap && measure.mWidth <= 0)
+                throw std::runtime_error("ui.measureText needs a positive width to wrap the text");
+            const MyGUI::IntSize size = LuaUi::measureText(text, measure);
+            return osg::Vec2f(static_cast<float>(size.width), static_cast<float>(size.height));
         };
 
         api["screenSize"] = []() {

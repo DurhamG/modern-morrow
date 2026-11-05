@@ -126,6 +126,25 @@
 -- @return openmw.util#Vector2
 
 ---
+-- Measures text the way a `Text` widget with the same properties lays it out.
+-- The size is in the units of the layer the text will be shown on, so it can be used to place widgets next to the text, or to wrap and cut text yourself.
+-- MyGUI color codes such as `#FF0000` take no room.
+-- Only available on the main thread: in `onFrame`, input handlers, UI event callbacks and the show and hide functions of `I.UI.registerWindow`.
+-- It raises an error in other places, such as in `onUpdate` or event handlers, which may run on the Lua worker thread.
+-- @function [parent=#ui] measureText
+-- @param #string text
+-- @param #table options (optional) A table with these optional fields:
+--
+--   * `textSize` - the text size, as the `Text` widget's `textSize` property. 10 by default.
+--   * `multiline` - as the `Text` widget's `multiline` property. False by default.
+--   * `wordWrap` - as the `Text` widget's `wordWrap` property. False by default. Needs `width`.
+--   * `width` - the width to wrap the text at.
+-- @return openmw.util#Vector2 The width and height of the text.
+-- @usage local size = ui.measureText('Fireball', { textSize = 18 })
+-- @usage -- The height of a paragraph wrapped at 400 units
+-- local height = ui.measureText(description, { textSize = 16, wordWrap = true, width = 400 }).y
+
+---
 -- Converts a given table of tables into an @{openmw.ui#Content}
 -- @function [parent=#ui] content
 -- @param #table table

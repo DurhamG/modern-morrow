@@ -195,6 +195,22 @@ testing.registerLocalTest('UI layer with a fixed height', function()
         'A height that is not positive should be an error')
 end)
 
+testing.registerLocalTest('measure text', function()
+    local short = ui.measureText('Hi', { textSize = 16 })
+    local long = ui.measureText('Hello there, outlander', { textSize = 16 })
+    testing.expectGreaterThan(short.x, 0, 'Text should have a width')
+    testing.expectGreaterThan(long.x, short.x, 'Longer text should be wider')
+    testing.expectEqual(long.y, short.y, 'One line of text should have the same height')
+    testing.expectGreaterThan(ui.measureText('Hi', { textSize = 32 }).x, short.x, 'Bigger text should be wider')
+
+    local wrapped = ui.measureText('Hello there, outlander', { textSize = 16, wordWrap = true, width = long.x / 2 })
+    testing.expectGreaterThan(wrapped.y, long.y, 'Wrapped text should take more lines')
+    testing.expectLessOrEqual(wrapped.x, long.x / 2, 'Wrapped text should fit the width')
+
+    local ok = pcall(ui.measureText, 'Hi', { wordWrap = true })
+    testing.expectEqual(ok, false, 'Wrapping without a width should be an error')
+end)
+
 testing.registerLocalTest('findPath',
     function()
         local src = util.vector3(4096, 4096, 1745)
