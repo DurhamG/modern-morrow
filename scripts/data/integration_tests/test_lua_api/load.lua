@@ -42,6 +42,7 @@ return {
         onContentFilesLoaded = function()
             content.statics.records.OMW_Generated_Static = { model = 'meshes/generatedonload.nif' }
             testApparatusContent()
+            content.magicEffects.records.firedamage.baseCost = 5
         end
     }
 }

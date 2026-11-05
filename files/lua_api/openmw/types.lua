@@ -457,6 +457,16 @@
 -- @param self
 -- @param #any spellOrId A @{openmw.core#Spell} or string record ID.
 
+---
+-- The chance, from 0 to 100, that the actor succeeds in casting the spell right now.
+-- It takes the actor's skills and attributes, fatigue, magicka, Sound and Silence into account, the same way as the chance shown in the HUD. The HUD and the spell window show the whole-number part of it.
+-- Powers give 100 when @{#ActorSpells.canUsePower} is true and 0 otherwise. Other spells that aren't cast, such as abilities, curses and diseases, give 100, or 0 while the actor is silenced.
+-- @function [parent=#ActorSpells] getSuccessChance
+-- @param self
+-- @param #any spellOrId A @{openmw.core#Spell} or string record ID.
+-- @return #number
+-- @usage local chance = types.Actor.spells(self):getSuccessChance('fireball')
+
 --- Values affect how much each attribute can be increased at level up, and are all reset to 0 upon level up.
 -- @type SkillIncreasesForAttributeStats
 -- @field #number agility Number of contributions to agility for the next level up.

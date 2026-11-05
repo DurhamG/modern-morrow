@@ -239,6 +239,8 @@ namespace MWLua
         sol::table spells(state, sol::create);
         addRecordFunctionBinding<ESM::Spell>(spells, context);
         spells["createRecordDraft"] = tableToSpell;
+        spells["getCost"]
+            = [](const sol::object& spellOrId) -> int { return MWMechanics::calcSpellCost(*toSpell(spellOrId)); };
         magicApi["spells"] = LuaUtil::makeReadOnly(spells);
 
         // Enchantment store
@@ -679,6 +681,13 @@ namespace MWLua
             if (auto* store = spells.getStore())
                 return store->canUsePower(spell);
             return false;
+        };
+
+        // types.Actor.spells(o):getSuccessChance()
+        spellsT["getSuccessChance"] = [](const ActorSpells& spells, const sol::object& spellOrId) -> float {
+            if (!spells.isActor())
+                throw std::runtime_error("Actor expected");
+            return MWMechanics::getSpellSuccessChance(toSpell(spellOrId), spells.mActor.ptr());
         };
 
         // pairs(types.Actor.activeSpells(o))

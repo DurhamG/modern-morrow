@@ -697,6 +697,14 @@
 -- @param #Spell spell A Lua table with the fields of a Spell, with an optional field `template` that accepts a @{#Spell} as a base.
 -- @return #Spell A strongly typed Spell record.
 
+---
+-- The magicka cost of casting the spell.
+-- For a spell with @{#Spell.isAutocalc} set, the engine computes the cost from the spell's effects, and the `cost` field of the record is ignored.
+-- @function [parent=#Spells] getCost
+-- @param #any spellOrId A @{#Spell} or string record ID.
+-- @return #number
+-- @usage local cost = core.magic.spells.getCost('fireball')
+
 --- List of all @{#Spell}s.
 -- @field [parent=#Spells] #list<#Spell> records A read-only list of all @{#Spell} records in the world database, may be indexed by recordId.
 -- Implements [iterables#List](iterables.html#List) of #Spell.

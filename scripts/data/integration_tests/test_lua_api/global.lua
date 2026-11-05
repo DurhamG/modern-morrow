@@ -192,6 +192,42 @@ testing.registerGlobalTest('record creation', function()
     end
 end)
 
+local function findCostlyEffect()
+    -- load.lua gives this effect a cost, because the example suite's effects cost nothing.
+    local effect = core.magic.effects.records[core.magic.EFFECT_TYPE.FireDamage]
+    testing.expectGreaterThan(effect.baseCost, 0, 'Expected the test effect to have a cost')
+    return effect
+end
+
+local function createTestSpell(fields)
+    local effect = findCostlyEffect()
+    fields.name = 'Test spell'
+    fields.effects = {
+        { id = effect.id, range = core.magic.RANGE.Self, magnitudeMin = 10, magnitudeMax = 10, duration = 10 },
+    }
+    return world.createRecord(core.magic.spells.createRecordDraft(fields))
+end
+
+testing.registerGlobalTest('spell cost', function()
+    local fixed = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 7, isAutocalc = false })
+    testing.expectEqual(core.magic.spells.getCost(fixed), 7, 'A spell without autocalc should cost its cost field')
+    testing.expectEqual(core.magic.spells.getCost(fixed.id), 7, 'getCost should accept a record id')
+
+    local autocalc = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 1, isAutocalc = true })
+    testing.expectGreaterThan(core.magic.spells.getCost(autocalc), 1,
+        'An autocalc spell should cost what its effects cost, not its cost field')
+end)
+
+testing.registerGlobalTest('spell success chance', function()
+    local player = initPlayer()
+    local spell = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 5, isAutocalc = false })
+    local power = createTestSpell({ type = core.magic.SPELL_TYPE.Power, cost = 0, isAutocalc = false })
+    types.Actor.spells(player):add(spell)
+    types.Actor.spells(player):add(power)
+    coroutine.yield()
+    testing.runLocalTest(player, 'spell success chance on self', { spell = spell.id, power = power.id })
+end)
+
 testing.registerGlobalTest('UTF-8 characters', function()
     testing.expectEqual(utf8.codepoint("😀"), 0x1F600)
 

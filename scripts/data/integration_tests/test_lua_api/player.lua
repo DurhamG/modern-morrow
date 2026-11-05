@@ -464,6 +464,22 @@ testing.registerLocalTestStep('equipped weapon damages a stationary target',
         attributes.agility(self).base = agility
     end)
 
+testing.registerLocalTestStep('spell success chance on self', function(ids)
+    local spells = types.Actor.spells(self)
+    local magicka = types.Actor.stats.dynamic.magicka(self)
+
+    magicka.current = 0
+    coroutine.yield()
+    testing.expectEqual(spells:getSuccessChance(ids.spell), 0, 'A spell should fail without enough magicka')
+
+    magicka.current = 100
+    coroutine.yield()
+    local chance = spells:getSuccessChance(ids.spell)
+    testing.expect(chance >= 0 and chance <= 100, 'The chance should be between 0 and 100, got ' .. chance)
+
+    testing.expectEqual(spells:getSuccessChance(ids.power), 100, 'An unused power should always succeed')
+end)
+
 return {
     engineHandlers = {
         onFrame = testing.updateLocal,
