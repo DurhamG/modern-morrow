@@ -326,6 +326,26 @@ testing.registerGlobalTest('enchantment cast cost', function()
     testing.runLocalTest(player, 'enchantment cast cost on self', enchantment.id)
 end)
 
+testing.registerGlobalTest('enchantment charge', function()
+    local effect = findCostlyEffect()
+    local fields = {
+        type = core.magic.ENCHANTMENT_TYPE.CastOnUse,
+        cost = 50,
+        charge = 1234,
+        isAutocalc = false,
+        effects = {
+            { id = effect.id, range = core.magic.RANGE.Self, magnitudeMin = 10, magnitudeMax = 10, duration = 10 },
+        },
+    }
+    local fixed = world.createRecord(core.magic.enchantments.createRecordDraft(fields))
+    testing.expectEqual(core.magic.enchantments.getMaxCharge(fixed), 1234, 'The record should give the charge')
+    fields.isAutocalc = true
+    local autocalc = world.createRecord(core.magic.enchantments.createRecordDraft(fields))
+    local charge = core.magic.enchantments.getMaxCharge(autocalc.id)
+    testing.expectGreaterThan(charge, 0, 'The engine should compute the charge from the effects')
+    testing.expectNotEqual(charge, 1234, "The engine should ignore the record's charge")
+end)
+
 testing.registerGlobalTest('barter prices', function()
     local player = initPlayer()
     local merchant = world.createObject('landracer')

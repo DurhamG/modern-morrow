@@ -777,6 +777,15 @@
 -- @return #number
 -- @usage local cost = core.magic.enchantments.getEffectiveCastCost(record.enchant, self)
 
+---
+-- The charge that an item with this enchantment holds when it is full.
+-- For an enchantment with @{#Enchantment.isAutocalc} set, the engine computes it from the enchantment's effects and the type of enchantment, and the `charge` field of the record is ignored.
+-- @function [parent=#Enchantments] getMaxCharge
+-- @param #any enchantmentOrId An @{#Enchantment} or string record ID.
+-- @return #number
+-- @usage local full = core.magic.enchantments.getMaxCharge(record.enchant)
+-- local charge = types.Item.itemData(item).enchantmentCharge or full
+
 --- A read-only list of all @{#Enchantment} records in the world database, may be indexed by recordId.
 -- Implements [iterables#List](iterables.html#List) and [iterables#Map](iterables.html#map-iterable) of #Enchantment.
 -- @field [parent=#Enchantments] #list<#Enchantment> records

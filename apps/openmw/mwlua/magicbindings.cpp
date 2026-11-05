@@ -278,6 +278,9 @@ namespace MWLua
                 throw std::runtime_error("Actor expected");
             return MWMechanics::getEffectiveEnchantmentCastCost(*toEnchantment(enchantmentOrId), ptr);
         };
+        enchantments["getMaxCharge"] = [](const sol::object& enchantmentOrId) -> int {
+            return MWMechanics::getEnchantmentCharge(*toEnchantment(enchantmentOrId));
+        };
         magicApi["enchantments"] = LuaUtil::makeReadOnly(enchantments);
 
         // MagicEffect store
