@@ -1,11 +1,15 @@
 #include "types.hpp"
 
+#include <algorithm>
+
 #include <components/esm3/loadbsgn.hpp>
 #include <components/esm3/loadfact.hpp>
+#include <components/esm3/loadskil.hpp>
 #include <components/lua/util.hpp>
 
 #include "../birthsignbindings.hpp"
 #include "../luamanagerimp.hpp"
+#include "../magicbindings.hpp"
 
 #include "apps/openmw/mwbase/dialoguemanager.hpp"
 #include "apps/openmw/mwbase/inputmanager.hpp"
@@ -13,7 +17,9 @@
 #include "apps/openmw/mwbase/mechanicsmanager.hpp"
 #include "apps/openmw/mwbase/world.hpp"
 #include "apps/openmw/mwmechanics/npcstats.hpp"
+#include "apps/openmw/mwmechanics/services.hpp"
 #include "apps/openmw/mwworld/class.hpp"
+#include "apps/openmw/mwworld/containerstore.hpp"
 #include "apps/openmw/mwworld/esmstore.hpp"
 #include "apps/openmw/mwworld/globals.hpp"
 #include "apps/openmw/mwworld/player.hpp"
@@ -123,6 +129,26 @@ namespace MWLua
     {
         if (!cls.isNpc())
             throw std::runtime_error("The argument must be a NPC!");
+    }
+
+    static void verifyActor(const MWWorld::Class& cls)
+    {
+        if (!cls.isActor())
+            throw std::runtime_error("Actor expected");
+    }
+
+    // Buying a service changes the merchant as well as the player, so only global scripts can do it.
+    static void verifyBuyer(const Object& player)
+    {
+        verifyPlayer(player);
+        if (!player.isGObject())
+            throw std::runtime_error("Only global scripts can buy services");
+    }
+
+    static bool canPay(int price)
+    {
+        const MWWorld::Ptr ptr = MWBase::Environment::get().getWorld()->getPlayerPtr();
+        return price <= ptr.getClass().getContainerStore(ptr).count(MWWorld::ContainerStore::sGoldId);
     }
 
     void addJournalClassBindings(sol::state_view& lua, const MWBase::Journal* journal)
@@ -282,6 +308,45 @@ namespace MWLua
         addJournalClassJournalEntryBindings(lua, journal);
     }
 
+    // A purchase checks these when the script asks for it, and again when the queued action runs, because an
+    // earlier action may have spent the gold or already made the same purchase.
+
+    // Why the player can't buy training in @a skill from @a trainer now, or nothing if they can.
+    static std::optional<std::string> getTrainingProblem(const MWWorld::Ptr& trainer, ESM::RefId skill)
+    {
+        const std::vector<ESM::RefId> skills = MWMechanics::getTrainingSkills(trainer);
+        if (std::find(skills.begin(), skills.end(), skill) == skills.end())
+            return "The trainer doesn't teach " + skill.toDebugString();
+        if (MWMechanics::getTrainingRefusal(trainer, skill) != MWMechanics::TrainingRefusal::None)
+            return "The trainer can't raise " + skill.toDebugString();
+        if (!canPay(MWMechanics::getTrainingPrice(trainer, skill)))
+            return "The player doesn't have enough gold";
+        return std::nullopt;
+    }
+
+    // Why the player can't buy @a spell from @a merchant now, or nothing if they can.
+    static std::optional<std::string> getSpellPurchaseProblem(const MWWorld::Ptr& merchant, const ESM::Spell& spell)
+    {
+        if (!MWMechanics::isSpellForSale(merchant, spell))
+            return "The merchant doesn't sell " + spell.mId.toDebugString();
+        if (!canPay(MWMechanics::getSpellPrice(merchant, spell)))
+            return "The player doesn't have enough gold";
+        return std::nullopt;
+    }
+
+    // Why the player can't pay @a merchant to repair @a item now, or nothing if they can.
+    static std::optional<std::string> getRepairPurchaseProblem(const MWWorld::Ptr& merchant, const MWWorld::Ptr& item)
+    {
+        const MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
+        if (item.getContainerStore() != &player.getClass().getContainerStore(player))
+            return "The item must be in the player's inventory";
+        if (!MWMechanics::canMerchantRepair(item))
+            return "Merchants can't repair this item";
+        if (!canPay(MWMechanics::getRepairPrice(merchant, item)))
+            return "The player doesn't have enough gold";
+        return std::nullopt;
+    }
+
     void addPlayerBindings(sol::table player, const Context& context)
     {
         MWBase::Journal* const journal = MWBase::Environment::get().getJournal();
@@ -435,6 +500,66 @@ namespace MWLua
             if (amount == 0)
                 MWBase::Environment::get().getWorld()->getPlayer().recordCrimeId();
         };
+        player["buyTraining"] = [context](const Object& buyer, const Object& trainer, std::string_view skill) {
+            verifyBuyer(buyer);
+            const MWWorld::Ptr trainerPtr = trainer.ptr();
+            verifyNpc(trainerPtr.getClass());
+            const ESM::RefId skillId = parseSkillId(skill);
+            if (const std::optional<std::string> problem = getTrainingProblem(trainerPtr, skillId))
+                throw std::runtime_error(*problem);
+            context.mLuaManager->addAction(
+                [trainer = Object(trainerPtr), skillId] {
+                    const MWWorld::Ptr ptr = trainer.ptr();
+                    if (const std::optional<std::string> problem = getTrainingProblem(ptr, skillId))
+                    {
+                        Log(Debug::Warning) << "The player didn't buy training: " << *problem;
+                        return;
+                    }
+                    MWMechanics::trainSkill(ptr, skillId);
+                    MWMechanics::passTrainingTime();
+                },
+                "BuyTrainingAction");
+        };
+        player["buySpell"] = [context](const Object& buyer, const Object& merchant, const sol::object& spellOrId) {
+            verifyBuyer(buyer);
+            const MWWorld::Ptr merchantPtr = merchant.ptr();
+            verifyActor(merchantPtr.getClass());
+            const ESM::Spell* spell = toSpell(spellOrId);
+            if (const std::optional<std::string> problem = getSpellPurchaseProblem(merchantPtr, *spell))
+                throw std::runtime_error(*problem);
+            context.mLuaManager->addAction(
+                [merchant = Object(merchantPtr), spell] {
+                    const MWWorld::Ptr ptr = merchant.ptr();
+                    if (const std::optional<std::string> problem = getSpellPurchaseProblem(ptr, *spell))
+                    {
+                        Log(Debug::Warning) << "The player didn't buy a spell: " << *problem;
+                        return;
+                    }
+                    MWMechanics::buySpell(ptr, *spell);
+                },
+                "BuySpellAction");
+        };
+        player["buyRepair"] = [context](const Object& buyer, const Object& merchant, const Object& item) {
+            verifyBuyer(buyer);
+            const MWWorld::Ptr merchantPtr = merchant.ptr();
+            verifyActor(merchantPtr.getClass());
+            const MWWorld::Ptr itemPtr = item.ptr();
+            if (const std::optional<std::string> problem = getRepairPurchaseProblem(merchantPtr, itemPtr))
+                throw std::runtime_error(*problem);
+            context.mLuaManager->addAction(
+                [merchant = Object(merchantPtr), item = Object(itemPtr)] {
+                    const MWWorld::Ptr ptr = merchant.ptr();
+                    const MWWorld::Ptr repaired = item.ptr();
+                    if (const std::optional<std::string> problem = getRepairPurchaseProblem(ptr, repaired))
+                    {
+                        Log(Debug::Warning) << "The player didn't buy a repair: " << *problem;
+                        return;
+                    }
+                    MWMechanics::repairItem(ptr, repaired);
+                },
+                "BuyRepairAction");
+        };
+
         player["isCharGenFinished"] = [](const Object&) -> bool {
             return MWBase::Environment::get().getWorld()->getGlobalFloat(MWWorld::Globals::sCharGenState) == -1;
         };

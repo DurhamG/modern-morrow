@@ -187,15 +187,6 @@ namespace
         return id;
     }
 
-    ESM::RefId parseSkillId(std::string_view skill)
-    {
-        ESM::RefId id = ESM::RefId::deserializeText(skill);
-        const MWWorld::ESMStore* store = MWBase::Environment::get().getESMStore();
-        if (!store->get<ESM::Skill>().search(id))
-            throw std::runtime_error("Skill '" + std::string(skill) + "' does not exist");
-        return id;
-    }
-
     void verifyPlayer(const MWLua::Object& o)
     {
         if (o.ptr() != MWBase::Environment::get().getWorld()->getPlayerPtr())
@@ -211,6 +202,15 @@ namespace
 
 namespace MWLua
 {
+    ESM::RefId parseSkillId(std::string_view skill)
+    {
+        ESM::RefId id = ESM::RefId::deserializeText(skill);
+        const MWWorld::ESMStore* store = MWBase::Environment::get().getESMStore();
+        if (!store->get<ESM::Skill>().search(id))
+            throw std::runtime_error("Skill '" + std::string(skill) + "' does not exist");
+        return id;
+    }
+
     void addNpcBindings(sol::table npc, const Context& context)
     {
         addNpcStatsBindings(npc, context);

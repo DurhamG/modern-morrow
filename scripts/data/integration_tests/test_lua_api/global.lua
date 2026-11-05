@@ -338,6 +338,107 @@ testing.registerGlobalTest('training', function()
     trainer:remove()
 end)
 
+local function removeGold(player)
+    local gold = types.Actor.inventory(player):find('gold_001')
+    if gold then
+        gold:remove()
+        coroutine.yield()
+    end
+end
+
+testing.registerGlobalTest('buying training', function()
+    local player = initPlayer()
+    removeGold(player)
+    local trainer = world.createObject(types.NPC.record(player).id)
+    trainer:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    coroutine.yield()
+    local skillId = types.NPC.getTrainingSkills(trainer)[1]
+    testing.runLocalTest(player, 'prepare training on self', { trainer = trainer, skill = skillId })
+    testing.expectEqual(types.NPC.canTrain(trainer, skillId), true, 'The player should be ready to train')
+
+    local price = types.NPC.getTrainingPrice(trainer, skillId)
+    testing.expectEqual(pcall(types.Player.buyTraining, player, trainer, skillId), false,
+        'The player should not train without enough gold')
+
+    world.createObject('gold_001', price):moveInto(player)
+    coroutine.yield()
+    local skill = types.NPC.stats.skills[skillId](player)
+    local oldSkill = skill.base
+    local trainerGold = types.Actor.getBarterGold(trainer)
+    local time = core.getGameTime()
+    types.Player.buyTraining(player, trainer, skillId)
+    for _ = 1, 10 do
+        coroutine.yield()
+        if skill.base > oldSkill then
+            break
+        end
+    end
+    testing.expectEqual(skill.base, oldSkill + 1, 'Training should raise the skill by one point')
+    testing.expectEqual(types.Actor.inventory(player):countOf('gold_001'), 0, 'The player should pay for training')
+    testing.expectEqual(types.Actor.getBarterGold(trainer), trainerGold + price, 'The trainer should get the gold')
+    testing.expectGreaterOrEqual(core.getGameTime() - time, 2 * 3600, 'Training should take two hours')
+
+    testing.runLocalTest(player, 'restore training on self', skillId)
+    trainer:remove()
+end)
+
+testing.registerGlobalTest('buying spells and repairs', function()
+    local player = initPlayer()
+    removeGold(player)
+    local merchant = world.createObject('landracer')
+    merchant:addScript('idle.lua')
+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    local spell = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 7, isAutocalc = false })
+    types.Actor.spells(merchant):add(spell)
+    local record = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        value = 100,
+        health = 40,
+    }))
+    world.createObject(record.id, 1):moveInto(player)
+    coroutine.yield()
+    local inventory = types.Actor.inventory(player)
+    local item = inventory:find(record.id)
+    types.Item.itemData(item).condition = 30
+    coroutine.yield()
+
+    local function isForSale()
+        for _, forSale in ipairs(types.Actor.getSpellsForSale(merchant)) do
+            if forSale.id == spell.id then
+                return true
+            end
+        end
+        return false
+    end
+    testing.expect(isForSale(), 'A merchant should sell a spell they know')
+    local spellPrice = types.Actor.getSpellPrice(merchant, spell)
+    local repairPrice = types.Actor.getRepairPrice(merchant, item)
+    testing.expectEqual(pcall(types.Player.buySpell, player, merchant, spell), false,
+        'The player should not buy a spell without enough gold')
+
+    world.createObject('gold_001', spellPrice + repairPrice):moveInto(player)
+    coroutine.yield()
+    local merchantGold = types.Actor.getBarterGold(merchant)
+    types.Player.buySpell(player, merchant, spell)
+    types.Player.buyRepair(player, merchant, item)
+    -- The checks run again when the purchases happen, so buying the same things twice in a frame charges once.
+    types.Player.buySpell(player, merchant, spell)
+    types.Player.buyRepair(player, merchant, item)
+    coroutine.yield()
+    testing.expect(types.Actor.spells(player)[spell.id] ~= nil, 'The player should learn the spell')
+    testing.expect(not isForSale(), 'A merchant should not sell a spell the player knows')
+    testing.expectEqual(types.Item.itemData(item).condition, 40, 'The item should be repaired')
+    testing.expectEqual(inventory:countOf('gold_001'), 0, 'The player should pay for the spell and the repair')
+    testing.expectEqual(types.Actor.getBarterGold(merchant), merchantGold + spellPrice + repairPrice,
+        'The merchant should get the gold')
+    testing.expectEqual(pcall(types.Player.buyRepair, player, merchant, item), false,
+        'A merchant should not repair an item in full condition')
+
+    types.Actor.spells(player):remove(spell)
+    item:remove()
+    merchant:remove()
+end)
+
 testing.registerGlobalTest('stolen items', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({

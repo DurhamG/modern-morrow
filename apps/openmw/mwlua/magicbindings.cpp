@@ -185,7 +185,7 @@ namespace MWLua
             return ESM::RefId::deserializeText(LuaUtil::cast<std::string_view>(recordOrId));
     }
 
-    static const ESM::Spell* toSpell(const sol::object& spellOrId)
+    const ESM::Spell* toSpell(const sol::object& spellOrId)
     {
         if (spellOrId.is<ESM::Spell>())
             return spellOrId.as<const ESM::Spell*>();
@@ -632,6 +632,19 @@ namespace MWLua
             if (!ptr.getClass().isActor())
                 throw std::runtime_error("Actor expected");
             return MWMechanics::getSpellPrice(ptr, *toSpell(spellOrId));
+        };
+
+        actor["getSpellsForSale"] = [](sol::this_state thisState, const Object& merchant) {
+            const MWWorld::Ptr ptr = merchant.ptr();
+            if (!ptr.getClass().isActor())
+                throw std::runtime_error("Actor expected");
+            sol::table result(thisState, sol::create);
+            for (const ESM::Spell* spell : ptr.getClass().getCreatureStats(ptr).getSpells())
+            {
+                if (MWMechanics::isSpellForSale(ptr, *spell))
+                    result.add(spell);
+            }
+            return result;
         };
 
         // #(types.Actor.spells(o))

@@ -27,6 +27,9 @@ namespace MWLua
 
     sol::table initTypesPackage(const Context& context);
 
+    // The ID of the skill that @a skill names. Throws an error if there is no such skill.
+    ESM::RefId parseSkillId(std::string_view skill);
+
     // used in initTypesPackage
     void addActivatorBindings(sol::table activator, const Context& context);
     ESM::Activator tableToActivator(const sol::table& rec);

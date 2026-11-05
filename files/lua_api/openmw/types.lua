@@ -65,6 +65,13 @@
 -- @usage local price = types.Actor.getSpellPrice(merchant, 'fireball')
 
 ---
+-- The spells a merchant offers to teach the player, in no particular order.
+-- These are the spells the spell buying window lists. Merchants teach the spells they know, except the ones the player knows already, their race's powers, and anything that isn't a spell, such as a disease or an ability.
+-- @function [parent=#Actor] getSpellsForSale
+-- @param openmw.core#GameObject merchant
+-- @return #list<openmw.core#Spell>
+
+---
 -- The gold a merchant asks to restore an item to full condition.
 -- This is the price that the merchant repair window shows. It grows with the condition the item has lost. Each lost point of condition costs less on an item that is worth less gold than its maximum condition, so the price also grows with the item's value, until the value reaches the maximum condition. It is adjusted by the `fRepairMult` game setting and by the merchant's offer the same way as @{#Actor.getBuyingPrice}.
 -- The merchant repair window lists only weapons and pieces of armor that have lost some condition. For any other item, this throws an error.
@@ -1441,6 +1448,37 @@
 -- @field #boolean isInAir The player is falling, jumping, flying or levitating.
 -- @field #boolean isEnemyNearby An actor nearby is fighting the player or is hostile to them.
 -- @field #boolean canSleep The cell allows sleeping and the player isn't a werewolf.
+
+---
+-- Buy training in a skill from a trainer, the way the training window does it (only in global scripts).
+-- The player's skill goes up by one point through the `SkillProgression` interface, with `'trainer'` as the source. The player pays @{#NPC.getTrainingPrice}, and the gold goes to the trainer's barter gold. Then two hours pass, while the player and other actors wait.
+-- The skill must be one of @{#NPC.getTrainingSkills}, @{#NPC.canTrain} must be true, and the player must have enough gold. Otherwise this throws an error.
+-- This doesn't check whether the trainer offers training as a service. The change happens at the end of the frame. The engine checks the rules again then, and skips the purchase with a warning in the log if an earlier change in the frame broke one, such as another purchase that spent the gold.
+-- @function [parent=#PLAYER] buyTraining
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject trainer
+-- @param #string skillId
+-- @usage types.Player.buyTraining(player, trainer, 'longblade')
+
+---
+-- Buy a spell from a merchant, the way the spell buying window does it (only in global scripts).
+-- The player learns the spell and pays @{#Actor.getSpellPrice}, and the gold goes to the merchant's barter gold.
+-- The spell must be one of @{#Actor.getSpellsForSale}, and the player must have enough gold. Otherwise this throws an error.
+-- This doesn't check whether the merchant offers spells as a service. The change happens at the end of the frame. As with @{#PLAYER.buyTraining}, the engine checks the rules again then, and skips the purchase if one no longer holds.
+-- @function [parent=#PLAYER] buySpell
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject merchant
+-- @param #any spellOrId A @{openmw.core#Spell} or string record ID.
+
+---
+-- Pay a merchant to restore an item to full condition, the way the merchant repair window does it (only in global scripts).
+-- The player pays @{#Actor.getRepairPrice}, and the gold goes to the merchant's barter gold.
+-- The item must be a weapon or a piece of armor in the player's inventory that has lost some of its condition, and the player must have enough gold. Otherwise this throws an error.
+-- This doesn't check whether the merchant offers repairs as a service. The change happens at the end of the frame. As with @{#PLAYER.buyTraining}, the engine checks the rules again then, and skips the purchase if one no longer holds.
+-- @function [parent=#PLAYER] buyRepair
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject merchant
+-- @param openmw.core#GameObject item
 
 ---
 -- Whether teleportation for this player is enabled.

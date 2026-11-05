@@ -43,6 +43,9 @@ return {
             content.statics.records.OMW_Generated_Static = { model = 'meshes/generatedonload.nif' }
             testApparatusContent()
             content.magicEffects.records.firedamage.baseCost = 5
+            for _, id in ipairs({ 'gold_001', 'gold_005', 'gold_010', 'gold_025', 'gold_100' }) do
+                content.miscs.records[id] = { name = 'Gold', value = 1 }
+            end
         end
     }
 }
