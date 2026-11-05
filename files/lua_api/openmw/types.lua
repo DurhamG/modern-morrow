@@ -2009,6 +2009,31 @@
 -- @param openmw.async#Callback callback A function that receives a @{#PLAYERDialogueOutcome} (optional).
 
 ---
+-- Whether the player can try to persuade the actor in the current conversation in the way `type`. The persuasion screen of the Dialogue window only enables these ways.
+-- Only NPCs can be persuaded, and a bribe needs the gold. The player can't try while they must answer a question, or after a script ended the conversation with `Goodbye`.
+-- False outside a conversation. The actor's disposition, which the Dialogue window shows next to the topics, is @{#NPC.getDisposition}.
+-- @function [parent=#PLAYER] canPersuadeDialogueActor
+-- @param openmw.core#GameObject player
+-- @param #string type One of `'admire'`, `'intimidate'`, `'taunt'`, `'bribe10'`, `'bribe100'` and `'bribe1000'`.
+-- @return #boolean
+
+---
+-- Try to persuade the actor in the current conversation, the way the persuasion screen of the Dialogue window does (only in global and player scripts).
+-- Whether the attempt succeeds depends on the player's and the actor's skills and attributes, the actor's disposition, and chance.
+-- The actor's disposition changes until the conversation ends. Then a smaller part of the change stays.
+-- The player's Speechcraft skill gains experience. A successful bribe gives the gold to the actor. A successful intimidation makes the actor more likely to flee, and a successful taunt more likely to fight.
+-- The actor replies with a line from the persuasion dialogue record for the outcome, such as `Admire Success` or `Bribe Fail`.
+-- This throws an error outside a conversation and if @{#PLAYER.canPersuadeDialogueActor} is false.
+-- The attempt happens at the end of the frame.
+-- @function [parent=#PLAYER] persuadeDialogueActor
+-- @param openmw.core#GameObject player
+-- @param #string type One of `'admire'`, `'intimidate'`, `'taunt'`, `'bribe10'`, `'bribe100'` and `'bribe1000'`.
+-- @param openmw.async#Callback callback A function that receives a @{#PLAYERDialogueOutcome} with `success` and `disposition` (optional).
+-- @usage types.Player.persuadeDialogueActor(self, 'admire', async:callback(function(outcome)
+--     print(outcome.success, outcome.disposition, outcome.lines[1].text)
+-- end))
+
+---
 -- What a step of the conversation led to.
 -- If the conversation changed before the end of the frame so that the step could no longer be taken, `lines` is empty.
 -- @type PLAYERDialogueOutcome
@@ -2016,6 +2041,8 @@
 -- @field #list<#PLAYERDialogueTopic> topics The topics after the step, as @{#PLAYER.getDialogueTopics} gives them.
 -- @field #list<#PLAYERDialogueChoice> choices The answers to the question that the step's dialogue script asked, if any.
 -- @field #boolean mustSayGoodbye Whether the step's dialogue script ended the conversation with `Goodbye`.
+-- @field #boolean success Only for @{#PLAYER.persuadeDialogueActor}: whether the attempt succeeded. Nil if the player couldn't try by the end of the frame.
+-- @field #number disposition Only for @{#PLAYER.persuadeDialogueActor}: the actor's disposition after the attempt, as @{#NPC.getDisposition} gives it. Nil if the player couldn't try by the end of the frame.
 
 ---
 -- End the conversation and leave the dialogue mode, the way the Goodbye button of the Dialogue window does (only in global and player scripts).

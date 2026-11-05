@@ -11,6 +11,7 @@
 
 #include "../mwbase/dialoguemanager.hpp"
 #include "../mwbase/environment.hpp"
+#include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwdialogue/keywordsearch.hpp"
@@ -133,6 +134,23 @@ namespace MWLua
                 throw std::runtime_error("The player must answer the question first");
         }
 
+        MWBase::MechanicsManager::PersuasionType parsePersuasionType(std::string_view type)
+        {
+            if (type == "admire")
+                return MWBase::MechanicsManager::PT_Admire;
+            if (type == "intimidate")
+                return MWBase::MechanicsManager::PT_Intimidate;
+            if (type == "taunt")
+                return MWBase::MechanicsManager::PT_Taunt;
+            if (type == "bribe10")
+                return MWBase::MechanicsManager::PT_Bribe10;
+            if (type == "bribe100")
+                return MWBase::MechanicsManager::PT_Bribe100;
+            if (type == "bribe1000")
+                return MWBase::MechanicsManager::PT_Bribe1000;
+            throw std::runtime_error("Unknown persuasion type: " + std::string(type));
+        }
+
         std::optional<LuaUtil::Callback> toCallback(const sol::optional<sol::table>& callback)
         {
             if (!callback)
@@ -141,7 +159,8 @@ namespace MWLua
         }
 
         // Gives the lines that an action added, and the state of the conversation after it, to the script's callback
-        void reportOutcome(const Context& context, const std::optional<LuaUtil::Callback>& callback, size_t firstLine)
+        void reportOutcome(const Context& context, const std::optional<LuaUtil::Callback>& callback, size_t firstLine,
+            sol::table outcome)
         {
             if (!callback)
                 return;
@@ -150,7 +169,6 @@ namespace MWLua
             const std::vector<DialogueManager::TranscriptEntry>& transcript = getDialogueManager().getTranscript();
             for (size_t i = firstLine; i < transcript.size(); ++i)
                 lines.add(makeTranscriptEntry(lua, transcript[i]));
-            sol::table outcome(lua, sol::create);
             outcome["lines"] = lines;
             outcome["topics"] = makeTopics(lua);
             outcome["choices"] = makeChoices(lua);
@@ -158,7 +176,8 @@ namespace MWLua
             context.mLuaManager->queueCallback(*callback, sol::main_object(lua, sol::in_place, outcome));
         }
 
-        // Runs a step of the conversation at the end of the frame, if the player is still talking by then
+        // Runs a step of the conversation at the end of the frame, if the player is still talking by then. The step can
+        // add its own results to the outcome.
         template <class Step>
         void queueStep(
             const Context& context, const sol::optional<sol::table>& callback, Step step, std::string_view name)
@@ -167,9 +186,10 @@ namespace MWLua
                 [context, callback = toCallback(callback), step = std::move(step)] {
                     MWBase::DialogueManager& dialogueManager = *MWBase::Environment::get().getDialogueManager();
                     const size_t firstLine = dialogueManager.getTranscript().size();
+                    sol::table outcome(context.mLua->unsafeState(), sol::create);
                     if (isInDialogue())
-                        step(dialogueManager);
-                    reportOutcome(context, callback, firstLine);
+                        step(dialogueManager, outcome);
+                    reportOutcome(context, callback, firstLine, outcome);
                 },
                 name);
         }
@@ -249,7 +269,7 @@ namespace MWLua
             queueStep(
                 context, callback,
                 [name = topic->mName](
-                    MWBase::DialogueManager& dialogueManager) { dialogueManager.keywordSelected(name); },
+                    MWBase::DialogueManager& dialogueManager, sol::table&) { dialogueManager.keywordSelected(name); },
                 "AskDialogueTopicAction");
         };
         player["answerDialogueChoice"] = [context](const Object& object, int answer,
@@ -261,7 +281,9 @@ namespace MWLua
                 throw std::runtime_error("The player can't give the answer " + std::to_string(answer));
             queueStep(
                 context, callback,
-                [answer](MWBase::DialogueManager& dialogueManager) { dialogueManager.questionAnswered(answer); },
+                [answer](MWBase::DialogueManager& dialogueManager, sol::table&) {
+                    dialogueManager.questionAnswered(answer);
+                },
                 "AnswerDialogueChoiceAction");
         };
         player["sayGoodbye"] = [context](const Object& object) {
@@ -270,11 +292,37 @@ namespace MWLua
                 throw std::runtime_error("The player must answer the question first");
             queueStep(
                 context, sol::nullopt,
-                [](MWBase::DialogueManager& dialogueManager) {
+                [](MWBase::DialogueManager& dialogueManager, sol::table&) {
                     if (dialogueManager.goodbyeSelected())
                         MWBase::Environment::get().getWindowManager()->removeGuiMode(MWGui::GM_Dialogue);
                 },
                 "SayGoodbyeAction");
         };
+
+        player["canPersuadeDialogueActor"] = [](const Object& object, std::string_view type) {
+            verifyPlayer(object);
+            const MWBase::MechanicsManager::PersuasionType persuasionType = parsePersuasionType(type);
+            return isInDialogue() && getDialogueManager().canPersuade(persuasionType);
+        };
+        player["persuadeDialogueActor"]
+            = [context](const Object& object, std::string_view type, const sol::optional<sol::table>& callback) {
+                  verifySpeaker(object);
+                  verifyNoQuestion();
+                  const MWBase::MechanicsManager::PersuasionType persuasionType = parsePersuasionType(type);
+                  if (!getDialogueManager().canPersuade(persuasionType))
+                      throw std::runtime_error("Only NPCs can be persuaded, and a bribe needs the gold");
+                  queueStep(
+                      context, callback,
+                      [persuasionType](MWBase::DialogueManager& dialogueManager, sol::table& outcome) {
+                          const std::optional<bool> success = dialogueManager.persuade(persuasionType);
+                          const MWWorld::Ptr actor = dialogueManager.getActor();
+                          if (!success || actor.isEmpty())
+                              return;
+                          outcome["success"] = *success;
+                          outcome["disposition"]
+                              = MWBase::Environment::get().getMechanicsManager()->getDerivedDisposition(actor);
+                      },
+                      "PersuadeDialogueActorAction");
+              };
     }
 }

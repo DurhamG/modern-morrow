@@ -319,6 +319,12 @@ testing.registerLocalTest('Dialogue outside a conversation', function()
     testing.expectEqual(pcall(types.Player.answerDialogueChoice, self, 1), false,
         'The player should not be able to answer a question')
     testing.expectEqual(pcall(types.Player.sayGoodbye, self), false, 'The player should not be able to say goodbye')
+    testing.expectEqual(types.Player.canPersuadeDialogueActor(self, 'admire'), false,
+        'The player should not be able to persuade anyone')
+    testing.expectEqual(pcall(types.Player.persuadeDialogueActor, self, 'admire'), false,
+        'The player should not be able to persuade anyone')
+    testing.expectEqual(pcall(types.Player.canPersuadeDialogueActor, self, 'flatter'), false,
+        'An unknown way to persuade should be an error')
 
     local shown = types.Player.findTopicLinks(self, 'Ask about @Balmora# in Balmora.')
     testing.expectEqual(shown.text, 'Ask about Balmora in Balmora.', 'The link marks should be removed')
