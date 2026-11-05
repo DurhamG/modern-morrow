@@ -38,10 +38,11 @@
 -- @return #boolean
 
 ---
--- Let a Lua menu take the controller while a menu is open.
--- While captured, the engine sends controller button presses only to Lua scripts (`onControllerButtonPress`).
+-- Let a Lua menu take the controller and the keyboard while a menu is open.
+-- While captured, the engine sends controller button presses and key presses only to Lua scripts (`onControllerButtonPress`, `onKeyPress`).
 -- It doesn't use them to navigate or close its own windows, and doesn't run the actions bound to them.
--- For example, B no longer closes the menu, the d-pad no longer moves the focus in built-in windows, and the triggers no longer switch between them.
+-- For example, B and Escape no longer close the menu, the d-pad and arrow keys no longer move the focus in built-in windows, and the triggers no longer switch between them.
+-- The console and screenshot keys keep working. A text box that has the focus still gets the keys, and scripts get `onKeyPress` for them as well, even for the characters typed into the box. The bound actions don't run, so Escape doesn't close the menu while the player types.
 -- Releases and stick movements still reach the bindings, so that no action stays held down. Read the sticks with @{#(input).getAxisValue}.
 -- It has no effect outside menus. It also has no effect while the console or a modal window of the engine, such as a message box, is open, because player scripts get no input events then. These windows keep their input.
 -- It stays set until a script clears it, or until a game is loaded or started.

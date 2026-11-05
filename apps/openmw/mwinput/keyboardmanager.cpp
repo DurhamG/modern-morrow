@@ -45,6 +45,28 @@ namespace MWInput
                 // Don't trust isprint for symbols outside the extended ASCII range
                 ((kc == MyGUI::KeyCode::None && arg.keysym.sym > 0xff)
                     || (arg.keysym.sym >= 0 && arg.keysym.sym <= 255 && std::isprint(arg.keysym.sym))));
+
+        MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
+        if (input->isGuiInputCaptured() && !mBindingsManager->isDetectingBindingState())
+        {
+            // The key goes to Lua, and to a focused text box such as a Lua text box, but not to the built-in windows.
+            // Only the console and screenshot keys reach the bindings, so that they work in every menu.
+            if (SDL_IsTextInputActive() && kc != MyGUI::KeyCode::None)
+                MyGUI::InputManager::getInstance().injectKeyPress(kc, 0);
+            if (!arg.repeat)
+            {
+                const SDL_Scancode scancode = arg.keysym.scancode;
+                if (!consumed && !input->controlsDisabled()
+                    && (scancode == mBindingsManager->getKeyBinding(A_Console)
+                        || scancode == mBindingsManager->getKeyBinding(A_Screenshot)))
+                    mBindingsManager->keyPressed(arg);
+                MWBase::Environment::get().getLuaManager()->inputEvent(
+                    { MWBase::LuaManager::InputEvent::KeyPressed, arg.keysym });
+            }
+            input->setJoystickLastUsed(false);
+            return;
+        }
+
         if (kc != MyGUI::KeyCode::None && !mBindingsManager->isDetectingBindingState())
         {
             if (MWBase::Environment::get().getWindowManager()->injectKeyPress(kc, 0, arg.repeat))
@@ -55,7 +77,6 @@ namespace MWInput
         if (arg.repeat)
             return;
 
-        MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
         if (!input->controlsDisabled() && !consumed)
             mBindingsManager->keyPressed(arg);
 

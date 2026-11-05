@@ -111,7 +111,7 @@ namespace MWBase
 
         virtual bool controlsDisabled() = 0;
 
-        /// While a menu is open and the GUI input is captured, controller presses go only to Lua.
+        /// While a menu is open and the GUI input is captured, controller and keyboard presses go only to Lua.
         /// The engine doesn't navigate its own windows with them or run their bindings.
         virtual void setGuiInputCaptured(bool captured) = 0;
         /// True when the GUI input is captured and a menu is open.
