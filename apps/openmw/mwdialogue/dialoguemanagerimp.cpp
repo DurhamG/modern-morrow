@@ -54,6 +54,24 @@
 
 namespace MWDialogue
 {
+    namespace
+    {
+        int getBribeGold(int type)
+        {
+            switch (type)
+            {
+                case MWBase::MechanicsManager::PT_Bribe10:
+                    return 10;
+                case MWBase::MechanicsManager::PT_Bribe100:
+                    return 100;
+                case MWBase::MechanicsManager::PT_Bribe1000:
+                    return 1000;
+                default:
+                    return 0;
+            }
+        }
+    }
+
     DialogueManager::DialogueManager(
         const Compiler::Extensions& extensions, Translation::Storage& translationDataStorage)
         : mTranslationDataStorage(translationDataStorage)
@@ -607,8 +625,20 @@ namespace MWDialogue
         mGoodbye = true;
     }
 
-    void DialogueManager::persuade(int type)
+    bool DialogueManager::canPersuade(int type) const
     {
+        if (mIsInChoice || mGoodbye || mActor.isEmpty() || !mActor.getClass().isNpc())
+            return false;
+        const MWWorld::Ptr player = MWMechanics::getPlayer();
+        return player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId)
+            >= getBribeGold(type);
+    }
+
+    std::optional<bool> DialogueManager::persuade(int type)
+    {
+        if (!canPersuade(type))
+            return std::nullopt;
+
         bool success;
         int temp, perm;
         MWBase::Environment::get().getMechanicsManager()->getPersuasionDispositionChange(
@@ -626,14 +656,7 @@ namespace MWDialogue
 
         if (success)
         {
-            int gold = 0;
-            if (type == MWBase::MechanicsManager::PT_Bribe10)
-                gold = 10;
-            else if (type == MWBase::MechanicsManager::PT_Bribe100)
-                gold = 100;
-            else if (type == MWBase::MechanicsManager::PT_Bribe1000)
-                gold = 1000;
-
+            const int gold = getBribeGold(type);
             if (gold)
             {
                 player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, gold);
@@ -656,6 +679,7 @@ namespace MWDialogue
 
         executeTopic(ESM::RefId::stringRefId(text + (success ? " Success" : " Fail")));
         updateAvailableTopics();
+        return success;
     }
 
     void DialogueManager::applyBarterDispositionChange(const MWWorld::Ptr& merchant, int delta)

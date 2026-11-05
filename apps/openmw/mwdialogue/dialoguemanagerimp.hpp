@@ -135,7 +135,9 @@ namespace MWDialogue
         bool goodbyeSelected() override;
         bool questionAnswered(int answer) override;
 
-        void persuade(int type) override;
+        bool canPersuade(int type) const override;
+
+        std::optional<bool> persuade(int type) override;
 
         /// @note Controlled by an option, gets discarded when dialogue ends by default
         void applyBarterDispositionChange(const MWWorld::Ptr& merchant, int delta) override;

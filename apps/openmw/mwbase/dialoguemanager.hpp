@@ -2,6 +2,7 @@
 #define GAME_MWBASE_DIALOGUEMANAGER_H
 
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -147,7 +148,14 @@ namespace MWBase
 
         virtual bool checkServiceRefused(ServiceType service = ServiceType::Any) = 0;
 
-        virtual void persuade(int type) = 0;
+        /// Whether the player can try to persuade the actor in the way @a type, a
+        /// MWBase::MechanicsManager::PersuasionType. Only NPCs can be persuaded, and a bribe needs the gold. The player
+        /// can't try while they must answer a choice or say goodbye.
+        virtual bool canPersuade(int type) const = 0;
+
+        /// Tries to persuade the actor in the way @a type, a MWBase::MechanicsManager::PersuasionType. Returns whether
+        /// the attempt succeeded. Does nothing and returns nothing if the player can't try (see canPersuade).
+        virtual std::optional<bool> persuade(int type) = 0;
 
         /// Changes the disposition of @a merchant after the player haggled with them. Does nothing unless the player
         /// is talking to @a merchant.

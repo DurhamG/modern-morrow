@@ -126,9 +126,13 @@ namespace MWGui
         MWWorld::Ptr player = MWMechanics::getPlayer();
         int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
 
-        mBribe10Button->setEnabled(playerGold >= 10);
-        mBribe100Button->setEnabled(playerGold >= 100);
-        mBribe1000Button->setEnabled(playerGold >= 1000);
+        const MWBase::DialogueManager& dialogueManager = *MWBase::Environment::get().getDialogueManager();
+        mAdmireButton->setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Admire));
+        mIntimidateButton->setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Intimidate));
+        mTauntButton->setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Taunt));
+        mBribe10Button->setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Bribe10));
+        mBribe100Button->setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Bribe100));
+        mBribe1000Button->setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Bribe1000));
 
         mGoldLabel->setCaptionWithReplacing("#{sGold}: " + MyGUI::utility::toString(playerGold));
 
@@ -142,9 +146,12 @@ namespace MWGui
         {
             mControllerFocus = 0;
             mButtons.clear();
-            mButtons.push_back(mAdmireButton);
-            mButtons.push_back(mIntimidateButton);
-            mButtons.push_back(mTauntButton);
+            if (mAdmireButton->getEnabled())
+                mButtons.push_back(mAdmireButton);
+            if (mIntimidateButton->getEnabled())
+                mButtons.push_back(mIntimidateButton);
+            if (mTauntButton->getEnabled())
+                mButtons.push_back(mTauntButton);
             if (mBribe10Button->getEnabled())
                 mButtons.push_back(mBribe10Button);
             if (mBribe100Button->getEnabled())
