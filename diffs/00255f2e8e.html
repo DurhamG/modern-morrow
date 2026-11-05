@@ -1,0 +1,116 @@
+<div class="file"><div class="path">apps/openmw/mwbase/inputmanager.hpp</div><pre>
+<span class="hunk">@@ -76,6 +76,7 @@ namespace MWBase</span>
+<span class="ctx"> </span>
+<span class="ctx">         virtual float getActionValue(int action) const = 0; // returns value in range [0, 1]</span>
+<span class="ctx">         virtual bool isControllerButtonPressed(SDL_GameControllerButton button) const = 0;</span>
+<span class="add">+        virtual bool isControllerButtonBound(SDL_GameControllerButton button) const = 0;</span>
+<span class="ctx">         virtual float getControllerAxisValue(SDL_GameControllerAxis axis) const = 0; // returns value in range [-1, 1]</span>
+<span class="ctx">         virtual int getMouseMoveX() const = 0;</span>
+<span class="ctx">         virtual int getMouseMoveY() const = 0;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwinput/bindingsmanager.cpp</div><pre>
+<span class="hunk">@@ -218,6 +218,11 @@ namespace MWInput</span>
+<span class="ctx">         return false;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    bool BindingsManager::isControllerButtonBound(int button) const</span>
+<span class="add">+    {</span>
+<span class="add">+        return mInputBinder-&gt;isJoystickButtonBound(sFakeDeviceId, static_cast&lt;unsigned int&gt;(button));</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void BindingsManager::setPlayerControlsEnabled(bool enabled)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         int playerChannels[] = { A_AutoMove, A_AlwaysRun, A_ToggleWeapon, A_ToggleSpell, A_Rest, A_QuickKey1,</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwinput/bindingsmanager.hpp</div><pre>
+<span class="hunk">@@ -41,6 +41,7 @@ namespace MWInput</span>
+<span class="ctx">         void setJoystickDeadZone(float deadZone);</span>
+<span class="ctx"> </span>
+<span class="ctx">         bool isLeftOrRightButton(int action, bool joystick) const;</span>
+<span class="add">+        bool isControllerButtonBound(int button) const;</span>
+<span class="ctx"> </span>
+<span class="ctx">         bool actionIsActive(int id) const;</span>
+<span class="ctx">         float getActionValue(int id) const; // returns value in range [0, 1]</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwinput/inputmanagerimp.cpp</div><pre>
+<span class="hunk">@@ -202,6 +202,11 @@ namespace MWInput</span>
+<span class="ctx">         return mControllerManager-&gt;isButtonPressed(button);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    bool InputManager::isControllerButtonBound(SDL_GameControllerButton button) const</span>
+<span class="add">+    {</span>
+<span class="add">+        return mBindingsManager-&gt;isControllerButtonBound(button);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     float InputManager::getControllerAxisValue(SDL_GameControllerAxis axis) const</span>
+<span class="ctx">     {</span>
+<span class="ctx">         return mControllerManager-&gt;getAxisValue(axis);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwinput/inputmanagerimp.hpp</div><pre>
+<span class="hunk">@@ -81,6 +81,7 @@ namespace MWInput</span>
+<span class="ctx"> </span>
+<span class="ctx">         float getActionValue(int action) const override;</span>
+<span class="ctx">         bool isControllerButtonPressed(SDL_GameControllerButton button) const override;</span>
+<span class="add">+        bool isControllerButtonBound(SDL_GameControllerButton button) const override;</span>
+<span class="ctx">         float getControllerAxisValue(SDL_GameControllerAxis axis) const override;</span>
+<span class="ctx">         int getMouseMoveX() const override;</span>
+<span class="ctx">         int getMouseMoveY() const override;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/inputbindings.cpp</div><pre>
+<span class="hunk">@@ -240,6 +240,9 @@ namespace MWLua</span>
+<span class="ctx">         api[&quot;isControllerButtonPressed&quot;] = [input](int button) {</span>
+<span class="ctx">             return input-&gt;isControllerButtonPressed(static_cast&lt;SDL_GameControllerButton&gt;(button));</span>
+<span class="ctx">         };</span>
+<span class="add">+        api[&quot;isControllerButtonBound&quot;] = [input](int button) {</span>
+<span class="add">+            return input-&gt;isControllerButtonBound(static_cast&lt;SDL_GameControllerButton&gt;(button));</span>
+<span class="add">+        };</span>
+<span class="ctx">         api[&quot;isMouseButtonPressed&quot;]</span>
+<span class="ctx">             = [](int button) -&gt; bool { return SDL_GetMouseState(nullptr, nullptr) &amp; SDL_BUTTON(button); };</span>
+<span class="ctx">         api[&quot;_isGamepadCursorActive&quot;] = [input]() -&gt; bool { return input-&gt;isGamepadGuiCursorEnabled(); };</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/input.lua</div><pre>
+<span class="hunk">@@ -55,6 +55,19 @@</span>
+<span class="ctx"> -- @param #number buttonId Button index (see @{openmw.input#CONTROLLER_BUTTON})</span>
+<span class="ctx"> -- @return #boolean</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Whether a controller button is bound to one of the engine&#x27;s actions (see @{openmw.input#ACTION}).</span>
+<span class="add">+-- The player can change these bindings in the Controls tab of the options menu.</span>
+<span class="add">+-- Actions and triggers registered by Lua scripts don&#x27;t count.</span>
+<span class="add">+-- Menus use some buttons directly, without these bindings, for example to move the focus or to close a window. So this can be false for a button that does something in menus.</span>
+<span class="add">+-- A script can use this to give a button its own meaning only while the player hasn&#x27;t bound it to anything else.</span>
+<span class="add">+-- @function [parent=#input] isControllerButtonBound</span>
+<span class="add">+-- @param #number buttonId Button index (see @{openmw.input#CONTROLLER_BUTTON})</span>
+<span class="add">+-- @return #boolean</span>
+<span class="add">+-- @usage if not input.isControllerButtonBound(input.CONTROLLER_BUTTON.DPadUp) then</span>
+<span class="add">+--     -- use the d-pad for quick keys</span>
+<span class="add">+-- end</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Is `Shift` key pressed.</span>
+<span class="ctx"> -- @function [parent=#input] isShiftPressed</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/menu.lua</div><pre>
+<span class="hunk">@@ -1,6 +1,7 @@</span>
+<span class="ctx"> ﻿local testing = require(&#x27;testing_util&#x27;)</span>
+<span class="ctx"> local matchers = require(&#x27;matchers&#x27;)</span>
+<span class="ctx"> local menu = require(&#x27;openmw.menu&#x27;)</span>
+<span class="add">+local input = require(&#x27;openmw.input&#x27;)</span>
+<span class="ctx"> </span>
+<span class="ctx"> testing.setSetupGlobalTest(function()</span>
+<span class="ctx">     menu.newGame({bypass = true})</span>
+<span class="hunk">@@ -84,6 +85,13 @@ testing.registerMenuTest(&#x27;load while teleporting&#x27;, function()</span>
+<span class="ctx">     menu.deleteGame(&#x27; - 1&#x27;, &#x27;load_while_teleporting.omwsave&#x27;)</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerMenuTest(&#x27;controller button bindings&#x27;, function()</span>
+<span class="add">+    testing.expectEqual(input.isControllerButtonBound(input.CONTROLLER_BUTTON.A), true,</span>
+<span class="add">+        &#x27;A should be bound to Activate by default&#x27;)</span>
+<span class="add">+    testing.expectEqual(input.isControllerButtonBound(input.CONTROLLER_BUTTON.DPadUp), false,</span>
+<span class="add">+        &#x27;The d-pad should not be bound to anything by default&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> return {</span>
+<span class="ctx">     engineHandlers = {</span>
+<span class="ctx">         onFrame = testing.makeUpdateMenu(),</span>
+</pre></div>

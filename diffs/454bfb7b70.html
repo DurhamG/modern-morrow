@@ -1,0 +1,28 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/actor.hpp</div><pre>
+<span class="hunk">@@ -12,6 +12,7 @@</span>
+<span class="ctx"> #include &lt;components/resource/resourcesystem.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;apps/openmw/mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;apps/openmw/mwmechanics/services.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/esmstore.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../context.hpp&quot;</span>
+<span class="hunk">@@ -65,6 +66,7 @@ namespace MWLua</span>
+<span class="ctx">                     travelDest[&quot;rotation&quot;] = LuaUtil::asTransform(Misc::Convert::makeOsgQuat(dest.mPos.rot));</span>
+<span class="ctx">                     travelDest[&quot;position&quot;] = dest.mPos.asVec3();</span>
+<span class="ctx">                     travelDest[&quot;cellId&quot;] = cellId.serializeText();</span>
+<span class="add">+                    travelDest[&quot;cellName&quot;] = MWMechanics::getTravelDestinationName(dest);</span>
+<span class="ctx"> </span>
+<span class="ctx">                     travelDests[index] = LuaUtil::makeReadOnly(travelDest);</span>
+<span class="ctx">                     index++;</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1483,6 +1483,7 @@</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- @type TravelDestination</span>
+<span class="ctx"> -- @field #string cellId ID of the Destination cell for this TravelDestination, Can be used with @{openmw_world#(world).getCellById}.</span>
+<span class="add">+-- @field #string cellName The name of the destination as the travel window shows it: the cell&#x27;s name, or for an exterior cell without a name, its region&#x27;s name.</span>
+<span class="ctx"> -- @field openmw.util#Vector3 position Destination position for this TravelDestination.</span>
+<span class="ctx"> -- @field openmw.util#Transform rotation Destination rotation for this TravelDestination.</span>
+<span class="ctx"> </span>
+</pre></div>

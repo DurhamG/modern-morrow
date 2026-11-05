@@ -1,0 +1,370 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -14,6 +14,7 @@</span>
+<span class="ctx"> #include &quot;../birthsignbindings.hpp&quot;</span>
+<span class="ctx"> #include &quot;../luamanagerimp.hpp&quot;</span>
+<span class="ctx"> #include &quot;../magicbindings.hpp&quot;</span>
+<span class="add">+#include &quot;../magictypebindings.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;apps/openmw/mwbase/dialoguemanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwbase/inputmanager.hpp&quot;</span>
+<span class="hunk">@@ -21,6 +22,7 @@</span>
+<span class="ctx"> #include &quot;apps/openmw/mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwbase/world.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/actorutil.hpp&quot;</span>
+<span class="add">+#include &quot;apps/openmw/mwmechanics/enchanting.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/npcstats.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/pickpocket.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/recharge.hpp&quot;</span>
+<span class="hunk">@@ -425,6 +427,180 @@ namespace MWLua</span>
+<span class="ctx">         };</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    // What a script picked for enchanting, as it describes it in a Lua table. The items are kept as Lua objects,</span>
+<span class="add">+    // so that a queued action can find them again.</span>
+<span class="add">+    struct EnchantingSetup</span>
+<span class="add">+    {</span>
+<span class="add">+        std::optional&lt;Object&gt; mEnchanter;</span>
+<span class="add">+        std::optional&lt;Object&gt; mItem;</span>
+<span class="add">+        std::optional&lt;Object&gt; mSoulGem;</span>
+<span class="add">+        ESM::EffectList mEffects;</span>
+<span class="add">+        std::optional&lt;std::string&gt; mName;</span>
+<span class="add">+        std::optional&lt;int&gt; mType;</span>
+<span class="add">+    };</span>
+<span class="add">+</span>
+<span class="add">+    template &lt;class T&gt;</span>
+<span class="add">+    static std::optional&lt;T&gt; getField(const sol::table&amp; table, std::string_view key)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (sol::optional&lt;T&gt; value = table.get&lt;sol::optional&lt;T&gt;&gt;(key))</span>
+<span class="add">+            return *value;</span>
+<span class="add">+        return std::nullopt;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    static EnchantingSetup toEnchantingSetup(const sol::table&amp; table)</span>
+<span class="add">+    {</span>
+<span class="add">+        EnchantingSetup setup;</span>
+<span class="add">+        setup.mEnchanter = getField&lt;Object&gt;(table, &quot;enchanter&quot;);</span>
+<span class="add">+        setup.mItem = getField&lt;Object&gt;(table, &quot;item&quot;);</span>
+<span class="add">+        setup.mSoulGem = getField&lt;Object&gt;(table, &quot;soulGem&quot;);</span>
+<span class="add">+        if (const std::optional&lt;sol::table&gt; effects = getField&lt;sol::table&gt;(table, &quot;effects&quot;))</span>
+<span class="add">+            setup.mEffects = tableToEffectList(*effects);</span>
+<span class="add">+        setup.mName = getField&lt;std::string&gt;(table, &quot;name&quot;);</span>
+<span class="add">+        setup.mType = getField&lt;int&gt;(table, &quot;type&quot;);</span>
+<span class="add">+        return setup;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    // Sets up the engine&#x27;s enchanting the way the enchanting window would for the same choices.</span>
+<span class="add">+    static MWMechanics::Enchanting makeEnchanting(const EnchantingSetup&amp; setup)</span>
+<span class="add">+    {</span>
+<span class="add">+        const MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="add">+        MWMechanics::Enchanting enchanting;</span>
+<span class="add">+        if (setup.mEnchanter)</span>
+<span class="add">+        {</span>
+<span class="add">+            const MWWorld::Ptr enchanter = setup.mEnchanter-&gt;ptr();</span>
+<span class="add">+            verifyActor(enchanter.getClass());</span>
+<span class="add">+            enchanting.setSelfEnchanting(false);</span>
+<span class="add">+            enchanting.setEnchanter(enchanter);</span>
+<span class="add">+        }</span>
+<span class="add">+        else</span>
+<span class="add">+        {</span>
+<span class="add">+            enchanting.setSelfEnchanting(true);</span>
+<span class="add">+            enchanting.setEnchanter(player);</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        if (setup.mItem)</span>
+<span class="add">+        {</span>
+<span class="add">+            const MWWorld::Ptr item = setup.mItem-&gt;ptr();</span>
+<span class="add">+            verifyIsIn(item, player);</span>
+<span class="add">+            if (!MWMechanics::Enchanting::canEnchant(item))</span>
+<span class="add">+                throw std::runtime_error(&quot;The item can&#x27;t be enchanted&quot;);</span>
+<span class="add">+            enchanting.setOldItem(item);</span>
+<span class="add">+            enchanting.setNewItemName(setup.mName.value_or(std::string(item.getClass().getName(item))));</span>
+<span class="add">+        }</span>
+<span class="add">+        else if (setup.mName)</span>
+<span class="add">+            enchanting.setNewItemName(*setup.mName);</span>
+<span class="add">+</span>
+<span class="add">+        if (setup.mSoulGem)</span>
+<span class="add">+        {</span>
+<span class="add">+            const MWWorld::Ptr gem = setup.mSoulGem-&gt;ptr();</span>
+<span class="add">+            verifyIsIn(gem, player);</span>
+<span class="add">+            verifyFilledSoulGem(gem);</span>
+<span class="add">+            enchanting.setSoulGem(gem);</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        enchanting.setEffect(setup.mEffects);</span>
+<span class="add">+</span>
+<span class="add">+        const std::vector&lt;int&gt; castStyles = enchanting.getCastStyles();</span>
+<span class="add">+        if (setup.mType)</span>
+<span class="add">+        {</span>
+<span class="add">+            if (std::find(castStyles.begin(), castStyles.end(), *setup.mType) == castStyles.end())</span>
+<span class="add">+                throw std::runtime_error(&quot;The item can&#x27;t be enchanted with cast type &quot; + std::to_string(*setup.mType));</span>
+<span class="add">+            enchanting.setCastStyle(*setup.mType);</span>
+<span class="add">+        }</span>
+<span class="add">+        else if (!castStyles.empty())</span>
+<span class="add">+            enchanting.setCastStyle(castStyles.front());</span>
+<span class="add">+        return enchanting;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    static void verifyCanEnchant(const MWMechanics::Enchanting&amp; enchanting)</span>
+<span class="add">+    {</span>
+<span class="add">+        switch (enchanting.getProblem())</span>
+<span class="add">+        {</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::None:</span>
+<span class="add">+                return;</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::NoEffects:</span>
+<span class="add">+                throw std::runtime_error(&quot;The enchantment needs at least one effect&quot;);</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::NoName:</span>
+<span class="add">+                throw std::runtime_error(&quot;The enchanted item needs a name&quot;);</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::NoSoulGem:</span>
+<span class="add">+                throw std::runtime_error(&quot;Enchanting needs a soul gem&quot;);</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::NoItem:</span>
+<span class="add">+                throw std::runtime_error(&quot;Enchanting needs an item&quot;);</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::TooManyPoints:</span>
+<span class="add">+                throw std::runtime_error(&quot;The effects need more enchantment points than the item has&quot;);</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::NotEnoughGold:</span>
+<span class="add">+                throw std::runtime_error(&quot;The player doesn&#x27;t have enough gold&quot;);</span>
+<span class="add">+        }</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    // Sets up an engine object, such as MWMechanics::Enchanting, again in a queued action. Setting it up throws an</span>
+<span class="add">+    // error when an earlier action used up an item that it needs. The queued action can&#x27;t give that error to the</span>
+<span class="add">+    // script, so this returns nothing instead.</span>
+<span class="add">+    template &lt;class Function&gt;</span>
+<span class="add">+    static auto setUpAgain(const Function&amp; setUp) -&gt; std::optional&lt;decltype(setUp())&gt;</span>
+<span class="add">+    {</span>
+<span class="add">+        try</span>
+<span class="add">+        {</span>
+<span class="add">+            return setUp();</span>
+<span class="add">+        }</span>
+<span class="add">+        catch (const std::runtime_error&amp;)</span>
+<span class="add">+        {</span>
+<span class="add">+            return std::nullopt;</span>
+<span class="add">+        }</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    static void addEnchantingBindings(sol::table&amp; playerBindings, const Context&amp; context)</span>
+<span class="add">+    {</span>
+<span class="add">+        playerBindings[&quot;getEnchantingInfo&quot;]</span>
+<span class="add">+            = [](sol::this_state thisState, const Object&amp; player, const sol::table&amp; table) -&gt; sol::table {</span>
+<span class="add">+            verifyPlayer(player);</span>
+<span class="add">+            const EnchantingSetup setup = toEnchantingSetup(table);</span>
+<span class="add">+            const MWMechanics::Enchanting enchanting = makeEnchanting(setup);</span>
+<span class="add">+            const bool selfEnchanting = !setup.mEnchanter.has_value();</span>
+<span class="add">+            sol::table result(thisState, sol::create);</span>
+<span class="add">+            result[&quot;points&quot;] = static_cast&lt;int&gt;(enchanting.getEnchantPoints(false));</span>
+<span class="add">+            result[&quot;maxPoints&quot;] = enchanting.getMaxEnchantValue();</span>
+<span class="add">+            result[&quot;charge&quot;] = enchanting.getGemCharge();</span>
+<span class="add">+            result[&quot;castCost&quot;] = enchanting.getEffectiveCastCost();</span>
+<span class="add">+            // An enchanter never fails. Only the player&#x27;s own attempts roll against the chance.</span>
+<span class="add">+            result[&quot;chance&quot;] = selfEnchanting ? std::clamp(enchanting.getEnchantChance(), 0, 100) : 100;</span>
+<span class="add">+            result[&quot;price&quot;] = selfEnchanting ? 0 : enchanting.getEnchantPrice();</span>
+<span class="add">+            result[&quot;type&quot;] = enchanting.getCastStyle();</span>
+<span class="add">+            sol::table types(thisState, sol::create);</span>
+<span class="add">+            for (int castStyle : enchanting.getCastStyles())</span>
+<span class="add">+                types.add(castStyle);</span>
+<span class="add">+            result[&quot;types&quot;] = types;</span>
+<span class="add">+            return result;</span>
+<span class="add">+        };</span>
+<span class="add">+        playerBindings[&quot;enchantItem&quot;]</span>
+<span class="add">+            = [context](const Object&amp; player, const sol::table&amp; table, sol::optional&lt;sol::table&gt; callback) {</span>
+<span class="add">+                  verifyCrafter(player);</span>
+<span class="add">+                  const EnchantingSetup setup = toEnchantingSetup(table);</span>
+<span class="add">+                  verifyCanEnchant(makeEnchanting(setup));</span>
+<span class="add">+                  context.mLuaManager-&gt;addAction(</span>
+<span class="add">+                      [context, setup, callback = toCallback(callback)] {</span>
+<span class="add">+                          // An earlier action may have spent the gold, or used up the item or the soul gem.</span>
+<span class="add">+                          std::optional&lt;MWMechanics::Enchanting&gt; enchanting</span>
+<span class="add">+                              = setUpAgain([&amp;] { return makeEnchanting(setup); });</span>
+<span class="add">+                          if (!enchanting || enchanting-&gt;getProblem() != MWMechanics::Enchanting::Problem::None)</span>
+<span class="add">+                          {</span>
+<span class="add">+                              reportOutcome(context, callback, false);</span>
+<span class="add">+                              return;</span>
+<span class="add">+                          }</span>
+<span class="add">+                          const MWWorld::Ptr stolen = enchanting-&gt;getStolenItem();</span>
+<span class="add">+                          if (!stolen.isEmpty())</span>
+<span class="add">+                          {</span>
+<span class="add">+                              MWBase::Environment::get().getMechanicsManager()-&gt;confiscateStolenItemToOwner(</span>
+<span class="add">+                                  MWMechanics::getPlayer(), stolen, setup.mEnchanter-&gt;ptr(), 1);</span>
+<span class="add">+                              reportOutcome(context, callback, false);</span>
+<span class="add">+                              return;</span>
+<span class="add">+                          }</span>
+<span class="add">+                          reportOutcome(context, callback, enchanting-&gt;create());</span>
+<span class="add">+                      },</span>
+<span class="add">+                      &quot;EnchantItemAction&quot;);</span>
+<span class="add">+              };</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void addJournalClassBindings(sol::state_view&amp; lua, const MWBase::Journal* journal)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         auto journalBindingsClass = lua.new_usertype&lt;MWBase::Journal&gt;(&quot;MWDialogue_Journal&quot;);</span>
+<span class="hunk">@@ -899,6 +1075,7 @@ namespace MWLua</span>
+<span class="ctx">         };</span>
+<span class="ctx">         addTakingBindings(player, context);</span>
+<span class="ctx">         addToolBindings(player, context);</span>
+<span class="add">+        addEnchantingBindings(player, context);</span>
+<span class="ctx"> </span>
+<span class="ctx">         player[&quot;birthSigns&quot;] = initBirthSignRecordBindings(context);</span>
+<span class="ctx">         player[&quot;getBirthSign&quot;] = [](const Object&amp; object) -&gt; std::string {</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/enchanting.hpp</div><pre>
+<span class="hunk">@@ -73,6 +73,8 @@ namespace MWMechanics</span>
+<span class="ctx">         std::vector&lt;int&gt; getCastStyles() const;</span>
+<span class="ctx">         void nextCastStyle(); // Set enchant type to next possible type (for mOldItemPtr object)</span>
+<span class="ctx">         int getCastStyle() const;</span>
+<span class="add">+        /// Set the cast type to one of getCastStyles.</span>
+<span class="add">+        void setCastStyle(int castStyle) { mCastStyle = castStyle; }</span>
+<span class="ctx">         float getEnchantPoints(bool precise = true) const;</span>
+<span class="ctx">         int getEffectiveCastCost()</span>
+<span class="ctx">             const; // Effective cost taking player Enchant skill into account, used for preview purposes in the UI</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1605,6 +1605,55 @@</span>
+<span class="ctx"> -- @param openmw.core#GameObject soulGem</span>
+<span class="ctx"> -- @param openmw.async#Callback callback A function that receives `true` if the item regained some charge and `false` otherwise, including when nothing happened (optional).</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- What the player picked for enchanting an item, like the choices in the enchanting window.</span>
+<span class="add">+-- It is a plain table that a script keeps and changes as the player picks. Each function that takes it works everything out again from the table, so nothing needs to be started or ended.</span>
+<span class="add">+-- The item and the soul gem must be in the player&#x27;s inventory.</span>
+<span class="add">+-- @type EnchantingSetup</span>
+<span class="add">+-- @field openmw.core#GameObject item The item to enchant: a weapon, a piece of armor or clothing, or a scroll, that isn&#x27;t enchanted already (optional).</span>
+<span class="add">+-- @field openmw.core#GameObject soulGem A soul gem with a soul in it (optional).</span>
+<span class="add">+-- @field #list&lt;#any&gt; effects The effects of the enchantment, as @{openmw.core#MagicEffectWithParams} or tables with the same fields, like the effects of @{openmw.core#Enchantments.createRecordDraft} (optional).</span>
+<span class="add">+-- @field #number type The cast type, an @{openmw.core#EnchantmentType}. It must be one of the types that @{#PLAYER.getEnchantingInfo} lists. Optional: the first of those types by default, as in the enchanting window.</span>
+<span class="add">+-- @field openmw.core#GameObject enchanter The NPC who enchants the item for gold (optional). Without one, the player enchants the item themself.</span>
+<span class="add">+-- @field #string name The name of the enchanted item (optional, the item&#x27;s name by default).</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- The numbers that the enchanting window shows for an @{#EnchantingSetup}.</span>
+<span class="add">+-- @type EnchantingInfo</span>
+<span class="add">+-- @field #number points The enchantment points that the effects need. Each effect costs more when it comes after other effects, and a constant effect costs more than the others.</span>
+<span class="add">+-- @field #number maxPoints The enchantment points that the item can hold, from its enchantment capacity and the `fEnchantmentMult` game setting. The effects must not need more than this.</span>
+<span class="add">+-- @field #number charge The strength of the soul in the soul gem, which becomes the item&#x27;s charge.</span>
+<span class="add">+-- @field #number castCost The charge that one use of the enchantment costs, after the player&#x27;s Enchant skill lowers it. A constant effect costs nothing.</span>
+<span class="add">+-- @field #number chance The chance, from 0 to 100, that the player enchants the item themself, from their Enchant skill, Intelligence, Luck and fatigue, and from the enchantment points. An enchanter never fails, so this is 100 with an enchanter.</span>
+<span class="add">+-- @field #number price The gold that the enchanter asks, adjusted by the enchanter&#x27;s offer the same way as @{#Actor.getBuyingPrice}. It is 0 without an enchanter.</span>
+<span class="add">+-- @field #number type The cast type that enchanting would use, an @{openmw.core#EnchantmentType}.</span>
+<span class="add">+-- @field #list&lt;#number&gt; types The cast types that the item can take, in the order that the enchanting window steps through them. A constant effect needs a soul of at least the `iSoulAmountForConstantEffect` game setting. Empty without an item.</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Work out the numbers that the enchanting window would show for an enchantment.</span>
+<span class="add">+-- This throws an error if the setup names an item that can&#x27;t be enchanted or isn&#x27;t in the player&#x27;s inventory, a soul gem without a soul, or a cast type that the item can&#x27;t take.</span>
+<span class="add">+-- @function [parent=#PLAYER] getEnchantingInfo</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param #EnchantingSetup setup</span>
+<span class="add">+-- @return #EnchantingInfo</span>
+<span class="add">+-- @usage local info = types.Player.getEnchantingInfo(player, {</span>
+<span class="add">+--     item = dagger,</span>
+<span class="add">+--     soulGem = gem,</span>
+<span class="add">+--     effects = { { id = &#x27;firedamage&#x27;, range = core.magic.RANGE.Touch, magnitudeMin = 1, magnitudeMax = 10, duration = 1 } },</span>
+<span class="add">+-- })</span>
+<span class="add">+-- print(info.points .. &#x27; / &#x27; .. info.maxPoints)</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Enchant an item, the way the enchanting window does it (only in global scripts).</span>
+<span class="add">+-- The soul gem is used up, except for Azura&#x27;s Star, which comes back empty. If the player enchants the item themself, they succeed with the chance in @{#EnchantingInfo}, and their Enchant skill progresses when they do. If an enchanter does it, the player pays the price, and the gold goes to the enchanter&#x27;s barter gold. When enchanting works, the item is replaced by an enchanted copy with the new name. A stack of thrown weapons or ammunition is enchanted together, as far as the soul&#x27;s strength goes.</span>
+<span class="add">+-- If the player stole the item or the soul gem from the enchanter, the enchanter takes it back instead, and nothing else happens.</span>
+<span class="add">+-- This throws an error when the enchanting window would refuse: without effects, a name, a soul gem or an item, when the effects need more points than the item holds, or when the player can&#x27;t pay. Unlike the window, it doesn&#x27;t check which effects the player knows, or their ranges. It shows no message and plays no sound.</span>
+<span class="add">+-- This doesn&#x27;t check whether the enchanter offers enchanting as a service. The enchanting happens at the end of the frame. If an earlier change in the frame used up the item or the soul gem, emptied the soul gem, or spent the gold, nothing happens.</span>
+<span class="add">+-- @function [parent=#PLAYER] enchantItem</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param #EnchantingSetup setup</span>
+<span class="add">+-- @param openmw.async#Callback callback A function that receives `true` if the item was enchanted and `false` otherwise, including when nothing happened (optional).</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Travel with a merchant to one of their travel destinations, the way the travel window does it (only in global scripts).</span>
+<span class="ctx"> -- The player pays @{#Actor.getTravelPrice}, and the gold goes to the merchant&#x27;s barter gold. Then @{#Actor.getTravelHours} pass, while the player and other actors sleep. Last, the player and their followers move to the destination, and `GetPCTraveling` reports the trip to mwscripts for a frame.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -572,6 +572,91 @@ testing.registerGlobalTest(&#x27;repairing and recharging&#x27;, function()</span>
+<span class="ctx">     tool:remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;enchanting&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    removeGold(player)</span>
+<span class="add">+    local inventory = types.Actor.inventory(player)</span>
+<span class="add">+    local soul = world.createRecord(types.Creature.createRecordDraft({</span>
+<span class="add">+        template = types.Creature.record(&#x27;landracer&#x27;),</span>
+<span class="add">+        soulValue = 400,</span>
+<span class="add">+    }))</span>
+<span class="add">+    local record = world.createRecord(types.Weapon.createRecordDraft({</span>
+<span class="add">+        template = types.Weapon.record(&#x27;basic_dagger1h&#x27;),</span>
+<span class="add">+        name = &#x27;Plain dagger&#x27;,</span>
+<span class="add">+        enchantCapacity = 100,</span>
+<span class="add">+    }))</span>
+<span class="add">+    world.createObject(record.id, 1):moveInto(player)</span>
+<span class="add">+    world.createObject(&#x27;OMW_Test_SoulGem&#x27;, 1):moveInto(player)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    local item = inventory:find(record.id)</span>
+<span class="add">+    local gem = inventory:find(&#x27;OMW_Test_SoulGem&#x27;)</span>
+<span class="add">+    types.Item.itemData(gem).soul = soul.id</span>
+<span class="add">+    local enchanter = world.createObject(types.NPC.record(player).id)</span>
+<span class="add">+    enchanter:teleport(player.cell, player.position + util.vector3(0, 500, 0))</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+</span>
+<span class="add">+    local setup = {</span>
+<span class="add">+        item = item,</span>
+<span class="add">+        soulGem = gem,</span>
+<span class="add">+        effects = {</span>
+<span class="add">+            {</span>
+<span class="add">+                id = findCostlyEffect().id,</span>
+<span class="add">+                range = core.magic.RANGE.Touch,</span>
+<span class="add">+                magnitudeMin = 1,</span>
+<span class="add">+                magnitudeMax = 5,</span>
+<span class="add">+                duration = 1,</span>
+<span class="add">+            },</span>
+<span class="add">+        },</span>
+<span class="add">+    }</span>
+<span class="add">+    local info = types.Player.getEnchantingInfo(player, setup)</span>
+<span class="add">+    testing.expectEqual(info.type, core.magic.ENCHANTMENT_TYPE.CastOnStrike,</span>
+<span class="add">+        &#x27;A dagger should cast when it strikes, unless the player picks another type&#x27;)</span>
+<span class="add">+    local canCastOnUse = false</span>
+<span class="add">+    for _, castType in ipairs(info.types) do</span>
+<span class="add">+        canCastOnUse = canCastOnUse or castType == core.magic.ENCHANTMENT_TYPE.CastOnUse</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expect(canCastOnUse, &#x27;A dagger should be able to cast when it is used&#x27;)</span>
+<span class="add">+    testing.expectGreaterThan(info.points, 0, &#x27;The effect should need enchantment points&#x27;)</span>
+<span class="add">+    testing.expectGreaterOrEqual(info.maxPoints, info.points, &#x27;The effect should fit in the dagger&#x27;)</span>
+<span class="add">+    testing.expectEqual(info.charge, 400, &#x27;The charge should be the strength of the soul&#x27;)</span>
+<span class="add">+    testing.expectEqual(info.price, 0, &#x27;Enchanting an item yourself should cost nothing&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.getEnchantingInfo, player,</span>
+<span class="add">+        { item = item, type = core.magic.ENCHANTMENT_TYPE.CastOnce }), false,</span>
+<span class="add">+        &#x27;A dagger should not be enchanted to cast once&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    setup.enchanter = enchanter</span>
+<span class="add">+    setup.name = &#x27;Enchanted dagger&#x27;</span>
+<span class="add">+    info = types.Player.getEnchantingInfo(player, setup)</span>
+<span class="add">+    testing.expectEqual(info.chance, 100, &#x27;An enchanter should never fail&#x27;)</span>
+<span class="add">+    testing.expectGreaterThan(info.price, 0, &#x27;An enchanter should ask for gold&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.enchantItem, player, setup), false,</span>
+<span class="add">+        &#x27;The player should not pay an enchanter without enough gold&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    world.createObject(&#x27;gold_001&#x27;, info.price):moveInto(player)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    local enchanterGold = types.Actor.getBarterGold(enchanter)</span>
+<span class="add">+    local enchanted = waitForOutcome(function(callback)</span>
+<span class="add">+        types.Player.enchantItem(player, setup, callback)</span>
+<span class="add">+    end)</span>
+<span class="add">+    testing.expectEqual(enchanted, true, &#x27;An enchanter should enchant the item&#x27;)</span>
+<span class="add">+    testing.expectEqual(inventory:countOf(record.id), 0, &#x27;The plain dagger should be gone&#x27;)</span>
+<span class="add">+    testing.expectEqual(inventory:countOf(&#x27;OMW_Test_SoulGem&#x27;), 0, &#x27;Enchanting should use up the soul gem&#x27;)</span>
+<span class="add">+    testing.expectEqual(inventory:countOf(&#x27;gold_001&#x27;), 0, &#x27;The player should pay the enchanter&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Actor.getBarterGold(enchanter), enchanterGold + info.price,</span>
+<span class="add">+        &#x27;The enchanter should get the gold&#x27;)</span>
+<span class="add">+    local result = nil</span>
+<span class="add">+    for _, weapon in ipairs(inventory:getAll(types.Weapon)) do</span>
+<span class="add">+        if types.Weapon.record(weapon).name == &#x27;Enchanted dagger&#x27; then</span>
+<span class="add">+            result = weapon</span>
+<span class="add">+        end</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expect(result ~= nil, &#x27;The player should get the enchanted dagger&#x27;)</span>
+<span class="add">+    testing.expect(types.Weapon.record(result).enchant ~= nil, &#x27;The new dagger should be enchanted&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    result:remove()</span>
+<span class="add">+    enchanter:remove()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;stolen items&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     local owner = world.createRecord(types.NPC.createRecordDraft({</span>
+</pre></div>

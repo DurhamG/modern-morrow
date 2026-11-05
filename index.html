@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Replacing OpenMW's UI from a Lua mod: the engine changes</title>
+<style>
+:root { --bg: #fbfaf7; --fg: #23201b; --muted: #6b665d; --line: #e4e0d8; --card: #fff;
+  --easy: #2f7d4f; --medium: #a66b00; --hard: #b3261e; --add: #e6f4ea; --del: #fde8e8; --hunk: #eef2fb; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--fg);
+  background: var(--bg); }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 12px; }
+h2 { font-size: 1.35rem; margin: 40px 0 8px; }
+.lead p { font-size: 1.08rem; max-width: 760px; }
+.stats { color: var(--muted); }
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin: 16px 0; }
+.shots figure { margin: 0; background: #111; border-radius: 6px; overflow: hidden; }
+.shots img { width: 100%; display: block; }
+.shots figcaption { color: #ddd; font-size: .85rem; padding: 4px 8px; }
+.kinds { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; padding: 0;
+  list-style: none; }
+.kinds li { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+.kinds .count { color: var(--muted); font-size: .85rem; }
+.filters { position: sticky; top: 0; background: var(--bg); padding: 10px 0; border-bottom: 1px solid var(--line);
+  z-index: 2; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.filters button { font: inherit; font-size: .85rem; border: 1px solid var(--line); background: var(--card);
+  border-radius: 999px; padding: 2px 10px; cursor: pointer; }
+.filters button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.filters .label { color: var(--muted); font-size: .85rem; margin-left: 8px; }
+.milestone > p { max-width: 780px; }
+details { background: var(--card); border: 1px solid var(--line); border-radius: 6px; margin: 8px 0; }
+details > summary { cursor: pointer; padding: 8px 12px; list-style: none; display: flex; gap: 10px;
+  align-items: baseline; flex-wrap: wrap; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "\25B8"; color: var(--muted); }
+details[open] > summary::before { content: "\25BE"; }
+.mr > summary .title { font-weight: 600; }
+.mr > .body { padding: 0 12px 10px 30px; }
+.mr .summary { margin: 0 0 6px; color: var(--fg); }
+.commit { margin: 6px 0; }
+.commit > summary { font-size: .95rem; }
+.commit > .body { padding: 0 12px 12px 30px; }
+.num { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .85rem; }
+.size { color: var(--muted); font-size: .8rem; margin-left: auto; font-variant-numeric: tabular-nums; }
+.tag { font-size: .75rem; border-radius: 4px; padding: 0 6px; border: 1px solid var(--line); white-space: nowrap; }
+.tag.diff-easy { color: var(--easy); border-color: var(--easy); }
+.tag.diff-medium { color: var(--medium); border-color: var(--medium); }
+.tag.diff-hard { color: var(--hard); border-color: var(--hard); }
+.tag.type { color: var(--muted); }
+.message { white-space: pre-wrap; font: .9rem/1.5 ui-monospace, Consolas, monospace; background: #f6f4ef;
+  border-radius: 4px; padding: 10px 12px; margin: 6px 0 10px; }
+.links { font-size: .85rem; }
+.diff .file { border: 1px solid var(--line); border-radius: 4px; margin: 10px 0; overflow: hidden; }
+.diff .path { font: .85rem ui-monospace, Consolas, monospace; background: #f1eee7; padding: 4px 10px;
+  border-bottom: 1px solid var(--line); }
+.diff pre { margin: 0; padding: 6px 0; overflow-x: auto; font: .8rem/1.45 ui-monospace, Consolas, monospace; }
+.diff span { display: block; padding: 0 10px; white-space: pre; }
+.diff .add { background: var(--add); }
+.diff .del { background: var(--del); }
+.diff .hunk { background: var(--hunk); color: var(--muted); }
+.hidden { display: none; }
+footer { color: var(--muted); font-size: .85rem; margin-top: 40px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Replacing OpenMW's UI from a Lua mod: the engine changes</h1>
+<div class="lead"><p>These engine changes aim to let a Lua mod replace the whole in-game UI. They give Lua the game rules, actions and input control that the built-in windows use today. To test them, the Modern Morrow controller UI was rebuilt as a Lua mod on top, and its inventory, crafting, dialogue and character creation screens run in the real game.</p></div>
+<p class="stats">124 commits on top of upstream <code>master</code>, in 61 planned merge requests:
+10,595 lines added and 2,157 removed, including Lua API docs and tests.
+Branch <a href="https://github.com/DurhamG/modern-morrow/commits/full"><code>full</code></a>.</p>
+<div class="shots"><figure><a href="img/inventory-chest-shirt.png"><img src="img/inventory-chest-shirt.png" alt="Inventory" loading="lazy"></a><figcaption>Inventory, drawn by the Lua mod</figcaption></figure><figure><a href="img/magic-spells.png"><img src="img/magic-spells.png" alt="Magic" loading="lazy"></a><figcaption>Magic, drawn by the Lua mod</figcaption></figure><figure><a href="img/m7b-barter-goods.png"><img src="img/m7b-barter-goods.png" alt="Barter" loading="lazy"></a><figcaption>Barter, drawn by the Lua mod</figcaption></figure><figure><a href="img/dialogue-sottilde.png"><img src="img/dialogue-sottilde.png" alt="Dialogue" loading="lazy"></a><figcaption>Dialogue, drawn by the Lua mod</figcaption></figure><figure><a href="img/alchemy-potion.png"><img src="img/alchemy-potion.png" alt="Alchemy" loading="lazy"></a><figcaption>Alchemy, drawn by the Lua mod</figcaption></figure><figure><a href="img/chargen-review.png"><img src="img/chargen-review.png" alt="Character creation" loading="lazy"></a><figcaption>Character creation, drawn by the Lua mod</figcaption></figure></div><h2>Kinds of work</h2><ul class="kinds"><li><strong>Lua getter</strong> <span class="count">31 commits</span><br>A read-only binding that gives Lua a value the engine already computes. Most call the same function as the built-in window.</li><li><strong>Lua action</strong> <span class="count">16 commits</span><br>A binding that changes the game. Most check their arguments at once, queue the change with addAction, and check again when the main thread runs it.</li><li><strong>Game rule move</strong> <span class="count">26 commits</span><br>A refactor that moves game logic out of a GUI window into mwmechanics or the world, so Lua can reach it. The window calls the moved code, and behaviour doesn&#x27;t change.</li><li><strong>Bug fix</strong> <span class="count">12 commits</span><br>A fix for a bug in the engine. Most were found while doing this work, and are useful on their own.</li><li><strong>Input ownership</strong> <span class="count">3 commits</span><br>Lets a Lua menu take the controller and keyboard while a menu is open, so the engine&#x27;s hidden windows don&#x27;t act on the same presses.</li><li><strong>Lua UI</strong> <span class="count">8 commits</span><br>Changes to Lua UI itself, such as layers that scale with the screen, text measurement, fonts, window IDs and the UI interface.</li><li><strong>Dialogs</strong> <span class="count">4 commits</span><br>Lets Lua show and answer the engine&#x27;s message boxes and plain messages in its own style.</li><li><strong>HUD</strong> <span class="count">4 commits</span><br>Lets a mod hide single HUD elements and draw its own, while following the engine&#x27;s rules for when each one shows.</li><li><strong>Dialogue</strong> <span class="count">11 commits</span><br>Moves the conversation&#x27;s state and rules from the Dialogue window into the dialogue manager, and lets Lua read and take part in a conversation.</li><li><strong>Character creation</strong> <span class="count">4 commits</span><br>Makes the character creation windows into real windows that Lua can replace, and lets Lua apply the player&#x27;s choices.</li><li><strong>Save format</strong> <span class="count">1 commits</span><br>A change to what the game writes to a save, with a new save format version.</li><li><strong>Engine event</strong> <span class="count">3 commits</span><br>A new engine handler or event that tells Lua scripts something happened, so they don&#x27;t have to poll for it.</li><li><strong>Version bump</strong> <span class="count">1 commits</span><br>The single Lua API revision bump for the whole stack.</li></ul><h2>The changes, in commit order</h2><p>Each section is a planned merge request. Open one to see its commits, and a commit to see its message and diff. The tags give a rough review difficulty and the kind of change.</p><div class="filters"><span class="label">Difficulty</span><button data-filter="difficulty" data-value="easy">easy</button><button data-filter="difficulty" data-value="medium">medium</button><button data-filter="difficulty" data-value="hard">hard</button><span class="label">Kind</span><button data-filter="type" data-value="Bug fix">Bug fix</button><button data-filter="type" data-value="Character creation">Character creation</button><button data-filter="type" data-value="Dialogs">Dialogs</button><button data-filter="type" data-value="Dialogue">Dialogue</button><button data-filter="type" data-value="Engine event">Engine event</button><button data-filter="type" data-value="Game rule move">Game rule move</button><button data-filter="type" data-value="HUD">HUD</button><button data-filter="type" data-value="Input ownership">Input ownership</button><button data-filter="type" data-value="Lua UI">Lua UI</button><button data-filter="type" data-value="Lua action">Lua action</button><button data-filter="type" data-value="Lua getter">Lua getter</button><button data-filter="type" data-value="Save format">Save format</button><button data-filter="type" data-value="Version bump">Version bump</button><span class="label"><a href="#" id="expand">open all</a> &middot; <a href="#" id="collapse">close all</a></span></div><section class="milestone"><h2>Milestone 1: Small fixes and read-only getters</h2><p>Gives a mod values that the engine already computes, such as spell costs, barter prices and whether an item is stolen. These are the smallest and safest changes, so they come first. One of them needed a refactor of the trade window first.</p><details class="mr"><summary><span class="num">MR 1</span><span class="title">Skip videos with controller buttons</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +15 &minus;0</span></summary><div class="body"><p class="summary">Fixes a bug: skippable videos stopped only for Escape. A, B and Start now skip them too.</p><details class="commit" data-difficulty="easy" data-type="Bug fix"><summary><span>Skip videos with controller buttons</span><span title="15 lines in the video loop"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+15 &minus;0</span></summary><div class="body"><div class="message">Skip videos with controller buttons
+
+Videos that allow skipping, such as the intro movies, only stopped for
+the Escape key. A player with a controller had to watch them to the
+end. Pressing A, B or Start now skips them too. Only a new press
+counts, so a button still held from the menu that started the video
+does not skip it at once.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/9feb8151fd795f4fdf36948c423e9ea225c339a2">9feb8151fd on GitHub</a></div><div class="diff" data-src="diffs/9feb8151fd.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 2</span><span class="title">Spell costs and success chances</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">2 commits, +132 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua read a spell&#x27;s magicka cost, an actor&#x27;s chance to cast it, and an enchantment&#x27;s cast cost. Each calls the function that the built-in windows use.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read spell costs and success chances</span><span title="two thin wrappers over existing functions"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+80 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read spell costs and success chances
+
+Lua scripts could not get the magicka cost of an autocalculated spell,
+or an actor&#x27;s chance to cast a spell. A spell menu written in Lua needs
+both. core.magic.spells.getCost returns the cost the engine uses. For
+an autocalculated spell, that cost comes from the spell&#x27;s effects.
+types.Actor.spells(actor):getSuccessChance returns the chance from 0
+to 100, from the same function as the spell window.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/08b0ab27b9902b720fd224d881644bda82c31a40">08b0ab27b9 on GitHub</a></div><div class="diff" data-src="diffs/08b0ab27b9.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read an enchantment&#x27;s effective cast cost</span><span title="one wrapper and a record lookup helper"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+52 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read an enchantment&#x27;s effective cast cost
+
+Lua scripts could read an enchantment&#x27;s base cost, but not the charge
+an actor spends to cast it. The engine lowers that cost as the actor&#x27;s
+Enchant skill rises. It also computes the base cost from the effects
+when the enchantment is autocalculated.
+core.magic.enchantments.getEffectiveCastCost returns that charge, from
+the same function as the magic window.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/5982f5a7162511a81595c4cb18b9eac9f1a3250a">5982f5a716 on GitHub</a></div><div class="diff" data-src="diffs/5982f5a716.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 3</span><span class="title">Barter prices and item values</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">3 commits, +151 &minus;31</span></summary><div class="body"><p class="summary">Moves the barter price rules out of the trade window into a new mwmechanics/barter.cpp. Lua can then read buying and selling prices, and an item&#x27;s value as the engine counts it.</p><details class="commit" data-difficulty="easy" data-type="Game rule move"><summary><span>Move the barter price rules out of the trade window</span><span title="about 60 lines moved, equivalence easy to see"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+63 &minus;31</span></summary><div class="body"><div class="message">Move the barter price rules out of the trade window
+
+The rules for an item&#x27;s price in a trade lived in private helpers in
+the trade window, so nothing else could ask what an item costs. This
+moves them into getEffectiveItemValue and getBarterPrice, in a new
+mwmechanics/barter.cpp. getEffectiveItemValue applies the item&#x27;s
+condition to its value. getBarterPrice asks the merchant for an offer
+and applies the 75% cap. Prices do not change.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/f5965d24bfbe46514abae3560538b23070ded75e">f5965d24bf on GitHub</a></div><div class="diff" data-src="diffs/f5965d24bf.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua bindings for barter prices</span><span title="thin wrappers over the moved function"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+72 &minus;0</span></summary><div class="body"><div class="message">Add Lua bindings for barter prices
+
+A Lua barter menu could not show what an item costs. The price depends
+on the item&#x27;s condition, both sides&#x27; skills and the merchant&#x27;s
+disposition, and the engine caps it. types.Actor.getBuyingPrice and
+types.Actor.getSellingPrice return the gold the player pays or gets for
+a number of items, before haggling. They call the same function as the
+trade window, so they match its offer.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/fcbeb4d1935a0e1cb53f406144dde58f5694ecd3">fcbeb4d193 on GitHub</a></div><div class="diff" data-src="diffs/fcbeb4d193.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read an item&#x27;s value as the engine counts it</span><span title="a 7-line wrapper"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+16 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read an item&#x27;s value as the engine counts it
+
+The value field of an item&#x27;s record is not always the value the engine
+uses. A soul gem with a soul in it is worth more, by a formula that
+depends on the &quot;rebalance soul gem values&quot; setting. A stack of gold is
+worth 1 per coin. types.Item.getValue returns the value from the
+item&#x27;s class, so a Lua inventory can show and sort by the same number.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/1f3998acfda7a94e6bd9efc1b1ff97f42df0cc4f">1f3998acfd on GitHub</a></div><div class="diff" data-src="diffs/1f3998acfd.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 4</span><span class="title">Whether an item is stolen</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">2 commits, +90 &minus;14</span></summary><div class="body"><p class="summary">getStolenItemOwners keeps the flag that tells an actor owner from a faction. Lua can then list whom the player stole an item from.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Keep the faction flag in getStolenItemOwners</span><span title="a return type gains one field"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+19 &minus;14</span></summary><div class="body"><div class="message">Keep the faction flag in getStolenItemOwners
+
+MechanicsManager::getStolenItemOwners returned each owner as an id and
+a count. It dropped the flag that says whether the owner is an actor or
+a faction, so a caller could not tell which kind of record to look up.
+The function now returns StolenItemOwner entries with the id, the flag
+and the count. The debug tooltip, the only caller, prints the same text
+as before.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/61a521d5eb95c82e30dc094e68fad480d1792969">61a521d5eb on GitHub</a></div><div class="diff" data-src="diffs/61a521d5eb.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read whether an item is stolen</span><span title="a short read of the stolen items map"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+71 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read whether an item is stolen
+
+Lua scripts could not tell whether the player had stolen an item. A Lua
+inventory needs that to mark stolen items. types.Item.getStolenFrom
+lists who the player has stolen items with this record from. Each entry
+has the owner&#x27;s recordId or factionId, and a count. The list is empty
+when the item is not stolen.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/8a354852c2d54a1add2ec71d121d1d6fb3edf82d">8a354852c2 on GitHub</a></div><div class="diff" data-src="diffs/8a354852c2.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 5</span><span class="title">Whether the player can rest</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +43 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua read the flags from World::canRest, the check that the rest menu makes when it opens.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to check whether the player can rest</span><span title="reads the flags of World::canRest"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+43 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to check whether the player can rest
+
+Lua scripts could not tell whether the player may rest or wait where
+they stand. A Lua rest menu needs that to choose between sleeping,
+waiting and refusing. types.Player.getRestStatus returns the flags from
+World::canRest, the same check the rest menu makes when it opens. They
+say whether the player is underwater, in the air or near an enemy, and
+whether the cell allows sleeping.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/7686e9f9e0f438586feabeb569a36add39319e65">7686e9f9e0 on GitHub</a></div><div class="diff" data-src="diffs/7686e9f9e0.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 6</span><span class="title">Cell name and date in the save list</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +46 &minus;0</span></summary><div class="body"><p class="summary">Adds the cell name, the in-game date and time and the player&#x27;s health to menu.getSaves. The values come from the save header.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add the cell name and game date to menu.getSaves</span><span title="copies fields from the save header"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+46 &minus;0</span></summary><div class="body"><div class="message">Add the cell name and game date to menu.getSaves
+
+menu.getSaves did not return the whole save header. The built-in save
+menu also shows the cell, the in-game date and time, the day count and
+the player&#x27;s health, so a Lua save menu could not match it. Each save&#x27;s
+info now has cellName, day, dayOfMonth, month, year, gameHour,
+playerHealth and playerMaxHealth. They come from the save header, so
+reading them does not load the save.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/637e7bd53566e617d34fde256ff754b707ed4f87">637e7bd535 on GitHub</a></div><div class="diff" data-src="diffs/637e7bd535.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 7</span><span class="title">Whether a controller button is bound</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +37 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua check whether a controller button has an engine binding, so a mod can leave bound buttons alone.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to check whether a controller button is bound</span><span title="a one-line query passed through three layers"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+37 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to check whether a controller button is bound
+
+Lua scripts could not tell whether the player has bound a controller
+button to one of the engine&#x27;s actions. A mod that puts quick keys on
+the d-pad needs to leave alone any button the player has bound to
+something else. input.isControllerButtonBound returns true when the
+button has an engine binding, such as A for Activate by default.
+Actions and triggers that Lua scripts register do not count.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/00255f2e8e6ad4bf03b89c7cc1eec7a8bf0511a5">00255f2e8e on GitHub</a></div><div class="diff" data-src="diffs/00255f2e8e.html">Loading the diff...</div></div></details></div></details></section><section class="milestone"><h2>Milestone 2: Game rules moved out of GUI windows, with bindings</h2><p>Moves the rules of services, crafting, barter, level-up and resting out of the windows into mechanics code, then lets Lua use them. A mod can then do what each window does, not only show it. This comes before any Lua window, because a window that can&#x27;t act is of little use.</p><details class="mr"><summary><span class="num">MR 8</span><span class="title">Training price bug fix</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +1 &minus;0</span></summary><div class="body"><p class="summary">Fixes a bug: the training window showed one price and charged another when the base price was 0.</p><details class="commit" data-difficulty="easy" data-type="Bug fix"><summary><span>Charge the training price that the training window shows</span><span title="a one-line fix"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+1 &minus;0</span></summary><div class="body"><div class="message">Charge the training price that the training window shows
+
+The training window showed one price and charged another. The button
+raised a base price of 0 to 1 before asking the trainer for an offer,
+but the charge skipped that step. The two differ only when the player&#x27;s
+skill or the iTrainingMod setting is 0. The window then showed at least
+1 gold but trained for free. The charge now raises the base price to 1
+as well.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/2e038402da83723ca8f43d0cf8093046e26fcca1">2e038402da on GitHub</a></div><div class="diff" data-src="diffs/2e038402da.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 9</span><span class="title">Service prices and training checks</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">3 commits, +404 &minus;102</span></summary><div class="body"><p class="summary">Moves the prices of training, spells and repairs, and the training checks, into a new mwmechanics/services.cpp. Lua can then read them.</p><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move the service prices out of the service windows</span><span title="price formulas leave three windows"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+96 &minus;39</span></summary><div class="body"><div class="message">Move the service prices out of the service windows
+
+The prices of training, spells and merchant repairs were worked out
+inside the windows that sell them. Nothing else could ask what a
+service costs. This moves the formulas into getTrainingPrice,
+getSpellPrice and getRepairPrice, in a new mwmechanics/services.cpp.
+The three windows call them. Prices do not change.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/ac96d44fcd84041fc0caaddc7038b4ce9ab3e6fa">ac96d44fcd on GitHub</a></div><div class="diff" data-src="diffs/ac96d44fcd.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move the training checks out of the training window</span><span title="training rules and refusal messages must match"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+99 &minus;63</span></summary><div class="body"><div class="message">Move the training checks out of the training window
+
+The training window decided which skills a trainer teaches and whether
+the trainer can raise one of the player&#x27;s skills. Nothing else could
+ask. This moves the rules into getTrainingSkills and getTrainingRefusal
+in mwmechanics/services.cpp. The window calls them and shows the same
+skills and messages as before.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/44c8ac8c97f6784b14c7104ca4c908efc6e9d192">44c8ac8c97 on GitHub</a></div><div class="diff" data-src="diffs/44c8ac8c97.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read service prices and training checks</span><span title="wrappers over the moved rules; most lines are tests"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+209 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read service prices and training checks
+
+A Lua menu for a merchant&#x27;s services could not show what training, a
+spell or a repair costs. It also could not tell which skills a trainer
+teaches, or whether the trainer can raise one of them. This adds
+types.Actor.getSpellPrice and getRepairPrice, and types.NPC
+getTrainingSkills, getTrainingPrice and canTrain. Each calls the same
+code as the window that sells the service.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/94f53f30e071a21b2437947e57352eeee47516a3">94f53f30e0 on GitHub</a></div><div class="diff" data-src="diffs/94f53f30e0.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 10</span><span class="title">Buying training, spells and repairs</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">2 commits, +438 &minus;79</span></summary><div class="body"><p class="summary">Moves the purchases out of the service windows. Global scripts can then buy services by the same rules.</p><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move service purchases out of the service windows</span><span title="gold, spells and repairs leave three windows"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+120 &minus;69</span></summary><div class="body"><div class="message">Move service purchases out of the service windows
+
+The training, spell buying and merchant repair windows made purchases
+themselves. Each changed the skill, spell list or item, took the
+player&#x27;s gold and paid the merchant. Nothing else could make these
+purchases by the engine&#x27;s rules. This moves those steps into
+mwmechanics/services.cpp, along with the rules for which spells and
+items a merchant offers. Sounds, fades and the training progress bar
+stay in the windows, and purchases do not change.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/3ad15c3a42c73bdf529722dc0cc7c708b5211723">3ad15c3a42 on GitHub</a></div><div class="diff" data-src="diffs/3ad15c3a42.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Lua action"><summary><span>Add Lua API to buy training, spells and repairs</span><span title="queued purchases that check again when they run"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+318 &minus;10</span></summary><div class="body"><div class="message">Add Lua API to buy training, spells and repairs
+
+A Lua service menu could show prices but could not sell anything. This
+adds types.Player.buyTraining, buySpell and buyRepair, and
+types.Actor.getSpellsForSale. Each purchase makes the window&#x27;s checks,
+throws an error if one fails, and queues the same code the window runs.
+The queued action makes the checks again, so two purchases in one frame
+can&#x27;t spend the same gold twice. Only global scripts can buy, because a
+purchase changes the merchant as well as the player. The tests add gold
+records, because the example suite has no gold.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/35db3110959ac5fcd163c29aa8d55ce002ebc417">35db311095 on GitHub</a></div><div class="diff" data-src="diffs/35db311095.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 11</span><span class="title">Travel prices and trips</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">2 commits, +235 &minus;94</span></summary><div class="body"><p class="summary">Moves the travel rules out of the travel window. Lua can read prices and durations, and global scripts can make a trip with followers.</p><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move the travel rules out of the travel window</span><span title="trip rules move, with a disposition subtlety in the price"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+143 &minus;94</span></summary><div class="body"><div class="message">Move the travel rules out of the travel window
+
+The travel window worked out what a trip costs and how long it takes,
+and carried it out. Nothing else could ask what a trip costs or make
+one. This moves the rules into getTravelDestinations, getTravelPrice,
+getTravelHours and travel, in mwmechanics/services.cpp. The window
+calls them and keeps the sound and the screen fades. It passes travel
+the price its button showed, because closing the Dialogue window first
+takes away any disposition the player gained by persuasion, which would
+change the price. Prices and trips do not change.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/de6edc2731dd0a92d792d0cdbebd7ab3a88c8641">de6edc2731 on GitHub</a></div><div class="diff" data-src="diffs/de6edc2731.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Lua action"><summary><span>Add Lua API to read travel prices and to travel</span><span title="the queued trip must run after other queued changes"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+92 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read travel prices and to travel
+
+A Lua travel menu could list a merchant&#x27;s destinations, but could not
+show what a trip costs or how long it takes, or make the trip. This
+adds types.Actor.getTravelPrice and getTravelHours, and
+types.Player.buyTravel. Each takes the index of a destination in the
+record&#x27;s travelDestinations, and calls the same code as the travel
+window. buyTravel is for global scripts only. Its queued action works
+out the price and checks the gold again before the trip, and it moves
+the player after the other changes queued that frame.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/fd51d205762bee317449d699a9d6f27df592ccd0">fd51d20576 on GitHub</a></div><div class="diff" data-src="diffs/fd51d20576.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 12</span><span class="title">Spell effect text</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">2 commits, +201 &minus;100</span></summary><div class="body"><p class="summary">Moves the text of a spell effect, such as &quot;Fire Damage 2 to 20 pts&quot;, out of the tooltip widget. Lua can then get the same line.</p><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move spell effect text out of the spell effect widget</span><span title="100 lines of text building move; game setting tags change"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+134 &minus;100</span></summary><div class="body"><div class="message">Move spell effect text out of the spell effect widget
+
+Spell tooltips describe each effect in one line, such as &quot;Fortify
+Strength 10 pts for 30 secs on Self&quot;. The widget that shows the line
+built the text itself, so nothing else could get it. This moves the
+code into MWMechanics::describeSpellEffect, next to
+getMagicEffectString. The function now looks up the sin and sfootarea
+game settings itself, instead of leaving tags for the widget to
+replace. Tooltips do not change.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/5562626375c3e7128aba3f544232a014430d22e6">5562626375 on GitHub</a></div><div class="diff" data-src="diffs/5562626375.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to describe a spell effect</span><span title="a wrapper that also accepts Lua tables"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+67 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to describe a spell effect
+
+A Lua menu that lists the effects of a spell, an enchantment or a
+potion could not write them out the way the tooltips do.
+core.magic.effects.getDescription returns the tooltip&#x27;s line for an
+effect. The effect can be a record&#x27;s effect or a Lua table with the
+same fields, so a spellmaking menu can describe an effect before the
+spell exists. Its options leave out parts of the line, the same way
+the engine does for constant effects, potions and ingredients.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/374dbb753bbf1016cd1b58540baca0fe080bf79d">374dbb753b on GitHub</a></div><div class="diff" data-src="diffs/374dbb753b.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 13</span><span class="title">Taking items and pickpocketing</span><span class="tag diff diff diff diff-hard">hard</span><span class="size">3 commits, +482 &minus;69</span></summary><div class="body"><p class="summary">Moves the corpse and pickpocketing rules out of the container window&#x27;s item models. Global scripts can then take items with the theft rules and pick pockets.</p><details class="commit" data-difficulty="easy" data-type="Game rule move"><summary><span>Move the corpse looting rule into itemTaken</span><span title="a few lines; the commit lists the other callers"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+6 &minus;9</span></summary><div class="body"><div class="message">Move the corpse looting rule into itemTaken
+
+Taking an item from a corpse is never theft. The container window&#x27;s two
+item models checked this before they called MechanicsManager::itemTaken,
+so any other caller had to repeat the check. This moves the check into
+itemTaken. Its other callers take items from the world, from plants or
+from living victims, so they behave as before.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/2f66f3c6bb62d427e5d728d6879334ffbded82dd">2f66f3c6bb on GitHub</a></div><div class="diff" data-src="diffs/2f66f3c6bb.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move the pickpocketing rules into MWMechanics::Pickpocket</span><span title="theft and experience rules leave the item model"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+46 &minus;33</span></summary><div class="body"><div class="message">Move the pickpocketing rules into MWMechanics::Pickpocket
+
+The pickpocket item model applied several game rules itself. It rolled
+which items the player notices and hid equipped and bound items. It
+reported the crime when the victim noticed, and gave Sneak experience
+when they didn&#x27;t. This moves those rules into MWMechanics::Pickpocket as
+noticesItem, canSteal, commitCrime and recordTheft, so that code outside
+the container window can use them. Closing the window when the victim
+notices stays in the item model.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/d05c04b0cbc5be9f09e043a7fc0a1a3afc7e114d">d05c04b0cb on GitHub</a></div><div class="diff" data-src="diffs/d05c04b0cb.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="hard" data-type="Lua action"><summary><span>Add Lua API to take items and pick pockets</span><span title="430 lines; sets the callback pattern for random outcomes"><span class="tag diff diff diff diff-hard">hard</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+430 &minus;27</span></summary><div class="body"><div class="message">Add Lua API to take items and pick pockets
+
+A Lua container menu could only move items with moveInto, which skips
+the crime rules. This adds types.Player.isAllowedToUse and takeItem,
+which take items with the theft rules. It also adds getPickpocketChance,
+getPickpocketItems, pickpocket and finishPickpocketing, which pick an
+NPC&#x27;s pockets the way the container window does. Taking items and
+picking pockets are for global scripts only and happen at the end of
+the frame, so the pickpocketing outcome goes to an optional callback.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/e87973b1c6eb3904886e330562abb3aa77ffee79">e87973b1c6 on GitHub</a></div><div class="diff" data-src="diffs/e87973b1c6.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 14</span><span class="title">Repair and recharge</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">2 commits, +298 &minus;49</span></summary><div class="body"><p class="summary">Moves the recharge item check into mwmechanics. Lua can read the chances, and global scripts can repair and recharge items.</p><details class="commit" data-difficulty="easy" data-type="Game rule move"><summary><span>Move the rechargeable item check into mwmechanics</span><span title="about 20 lines moved"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+25 &minus;21</span></summary><div class="body"><div class="message">Move the rechargeable item check into mwmechanics
+
+The rule for which items a soul gem can recharge lived in the inventory
+filter that the recharge window uses. This moves it into
+MWMechanics::canRecharge, next to rechargeItem, so that code outside the
+window can apply it. The filter calls it and lists the same items.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/eb41b340d8bd32e865ce02d446c2372e8533eebc">eb41b340d8 on GitHub</a></div><div class="diff" data-src="diffs/eb41b340d8.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Lua action"><summary><span>Add Lua API to repair and recharge items</span><span title="queued rolls with callbacks; repair and recharge now report success"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+273 &minus;28</span></summary><div class="body"><div class="message">Add Lua API to repair and recharge items
+
+A Lua repair or recharge menu could not use a repair tool or a soul gem
+by the engine&#x27;s rules, or show the chance of success. This adds
+types.Player.getRepairChance, repairItem, getRechargeChance and
+rechargeItem. The chances come from new MWMechanics functions that share
+their formulas with the rolls. Repair::repair and rechargeItem now
+return whether the item regained condition or charge. Repairing and
+recharging are for global scripts only, and the outcome goes to an
+optional callback.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/4f517414b83eb6c92b64b55100a2b5b43985115a">4f517414b8 on GitHub</a></div><div class="diff" data-src="diffs/4f517414b8.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 15</span><span class="title">Enchanting</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">3 commits, +456 &minus;101</span></summary><div class="body"><p class="summary">Moves the enchanting checks and the cast type rules out of the enchanting window. Lua can read the window&#x27;s numbers, and global scripts can enchant items.</p><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move the enchanting checks into MWMechanics::Enchanting</span><span title="the enchanting window&#x27;s checks move, with its messages"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+110 &minus;65</span></summary><div class="body"><div class="message">Move the enchanting checks into MWMechanics::Enchanting
+
+The enchanting window checked the effects, the name, the soul gem, the
+item, the enchantment points and the player&#x27;s gold before it enchanted.
+It also looked for an item that the player stole from the enchanter, and
+the inventory filter decided which items can be enchanted. This moves
+those rules into Enchanting::getProblem, getStolenItem and canEnchant,
+so that code outside the window can apply them. The window shows the
+same messages, and still takes back stolen items itself.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/fd97fbd4fd3a9018577dcb21bc22b438ff84da74">fd97fbd4fd on GitHub</a></div><div class="diff" data-src="diffs/fd97fbd4fd.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>List the cast types that an item can be enchanted with</span><span title="a switch is rewritten as a list; the order must match"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+33 &minus;36</span></summary><div class="body"><div class="message">List the cast types that an item can be enchanted with
+
+Enchanting::nextCastStyle worked out the next cast type with a switch
+for each kind of item, so nothing could list the types that an item
+allows. This adds getCastStyles, which lists them for the item and the
+soul gem, and makes nextCastStyle step through that list. The enchanting
+window offers the same types in the same order.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/6accf109aadd8c884da6073f4be3d98e9cbbf1fd">6accf109aa on GitHub</a></div><div class="diff" data-src="diffs/6accf109aa.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Lua action"><summary><span>Add Lua API to enchant items</span><span title="a large binding rebuilt from a Lua table on each call"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+313 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to enchant items
+
+A Lua enchanting menu could not show the enchanting window&#x27;s numbers, or
+enchant an item by the engine&#x27;s rules. This adds
+types.Player.getEnchantingInfo, which returns the points, the charge,
+the cast cost, the chance, the price and the allowed cast types. It also
+adds enchantItem. Both take a plain table with the player&#x27;s choices, and
+rebuild MWMechanics::Enchanting from it on each call. enchantItem is for
+global scripts only, and its outcome goes to an optional callback.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/58ca48d50cf8f6e5251ebb5e0a6fa3578f48b360">58ca48d50c on GitHub</a></div><div class="diff" data-src="diffs/58ca48d50c.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 16</span><span class="title">Alchemy</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">1 commit, +291 &minus;4</span></summary><div class="body"><p class="summary">Lets Lua read what the alchemy window shows and lets global scripts brew potions by the engine&#x27;s rules.</p><details class="commit" data-difficulty="medium" data-type="Lua action"><summary><span>Add Lua API to brew potions</span><span title="a large binding rebuilt from a Lua table on each call"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+291 &minus;4</span></summary><div class="body"><div class="message">Add Lua API to brew potions
+
+A Lua alchemy menu could not show what the alchemy window shows, or brew
+potions by the engine&#x27;s rules. This adds
+types.Player.getKnownIngredientEffects, getAlchemyInfo and brewPotion.
+They take a plain table with the ingredients, and optionally the
+apparatus, the name and the count, and rebuild MWMechanics::Alchemy
+from it on each call. The rule for which ingredient effects the player
+knows moves into Alchemy::knowsIngredientEffect. Brewing is for global
+scripts only, and the number of potions that worked goes to an
+optional callback.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/940acf6510f2a016134ce6fe59ba1d543e417043">940acf6510 on GitHub</a></div><div class="diff" data-src="diffs/940acf6510.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 17</span><span class="title">Level-up</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">2 commits, +353 &minus;140</span></summary><div class="body"><p class="summary">Moves the level-up rules into NpcStats. Lua can read what the level-up window shows, and global scripts can level the player up.</p><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move the level-up rules into NpcStats</span><span title="level-up rules leave two windows; levelUp&#x27;s signature changes"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+176 &minus;140</span></summary><div class="body"><div class="message">Move the level-up rules into NpcStats
+
+The level-up window held several game rules. They set how much each
+chosen attribute rises, how many attributes the player picks, and which
+class picture and text the window shows. The rest window checked on its
+own whether a level-up was ready. This moves those rules into NpcStats,
+and levelUp now takes the chosen attributes and raises them. The windows
+call the new functions, and levelling up works as before.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/33bc45df1ac1adccaa647e38a206ab4a984c4514">33bc45df1a on GitHub</a></div><div class="diff" data-src="diffs/33bc45df1a.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Lua action"><summary><span>Add Lua API to level up the player</span><span title="a queued level-up that repeats the window&#x27;s checks"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+177 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to level up the player
+
+A Lua level-up menu could not read what the level-up window shows, or
+level the player up by the engine&#x27;s rules. This adds
+types.Player.getLevelUpInfo and types.Player.levelUp. levelUp refuses
+what the window refuses: too few attributes, the same one twice, or one
+at 100. It is for global scripts only. It doesn&#x27;t check that a level-up
+is ready, because an mwscript can open the level-up window at any time.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/686ea875f20f7476a167f4a9e356ab2cf70217f4">686ea875f2 on GitHub</a></div><div class="diff" data-src="diffs/686ea875f2.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 18</span><span class="title">Barter with haggling</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">2 commits, +488 &minus;147</span></summary><div class="body"><p class="summary">Moves haggling and the barter checks back out of the trade window, where upstream put them in 2024. Global scripts can then make a trade by the engine&#x27;s rules.</p><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move haggling and the barter checks into mwmechanics</span><span title="about 200 lines of haggling and checks leave the trade window"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+207 &minus;147</span></summary><div class="body"><div class="message">Move haggling and the barter checks into mwmechanics
+
+The trade window held the barter rules. They decide which items a
+merchant trades and whether each side can pay. They roll the haggle,
+with its disposition change and Mercantile experience, and move the
+gold. This moves them into mwmechanics/barter.cpp as canBarterItem,
+getBarterProblem, haggle and payBarterBalance, so that code outside the
+window can apply them. Bartering works as before.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/5d143818f61602e556146e2cfaea156a994e86b1">5d143818f6 on GitHub</a></div><div class="diff" data-src="diffs/5d143818f6.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Lua action"><summary><span>Add Lua API to barter with merchants</span><span title="a queued trade with stolen items, haggling and gold"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+281 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to barter with merchants
+
+A Lua barter menu could read prices, but it could not make an offer by
+the engine&#x27;s rules. This adds types.Actor.canBarterItem, and
+types.Player.getBarterOffer and barter, which take a plain table with
+the items to buy and sell and the gold asked. barter refuses what the
+trade window refuses. At the end of the frame it takes back stolen
+items, haggles, and moves the items and the gold. It is for global
+scripts only, and whether the merchant accepted goes to an optional
+callback.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/a5fa9c13772bf13d34765ea8456c6be7fb35e806">a5fa9c1377 on GitHub</a></div><div class="diff" data-src="diffs/a5fa9c1377.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 19</span><span class="title">Spellmaking</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">3 commits, +629 &minus;117</span></summary><div class="body"><p class="summary">Moves the spellmaking rules into a new mwmechanics/spellmaking.cpp. Global scripts can make custom spells, and Lua enchanting uses the same effect checks.</p><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move the spellmaking rules into mwmechanics</span><span title="a large move of spellmaking rules into a new file"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+266 &minus;104</span></summary><div class="body"><div class="message">Move the spellmaking rules into mwmechanics
+
+The spellmaking window and its effect editor held the rules for custom
+spells. They cover the effects the player can use, the ranges an effect
+allows, the effect limits, the magicka cost, the price, the checks
+before buying, and the purchase itself. This moves them into a new
+mwmechanics/spellmaking.cpp, so that code outside the window can apply
+them. The spellmaking and enchanting windows call the new functions and
+work as before.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/7a450594cb79675339af926410b4da9384b458c8">7a450594cb on GitHub</a></div><div class="diff" data-src="diffs/7a450594cb.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Lua action"><summary><span>Add Lua API to make custom spells</span><span title="a large binding with a new check on finished effect lists"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+320 &minus;1</span></summary><div class="body"><div class="message">Add Lua API to make custom spells
+
+A Lua spellmaking menu could not show what the spellmaking window shows,
+or make a spell by the engine&#x27;s rules. This adds
+types.Player.getSpellmakingEffects, getSpellmakingInfo and makeSpell,
+which take a plain table with the merchant, the effects and the name.
+The new MWMechanics::getCustomEffectProblem checks a finished list of
+effects against the effect editor&#x27;s rules, which nothing checked before.
+makeSpell is for global scripts only, and the new spell&#x27;s record ID goes
+to an optional callback.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/83cf78ce6728fac3b14e1d9810ddad453bbecfed">83cf78ce67 on GitHub</a></div><div class="diff" data-src="diffs/83cf78ce67.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua action"><summary><span>Check the effect rules when Lua enchants an item</span><span title="adds a check to existing functions"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+43 &minus;12</span></summary><div class="body"><div class="message">Check the effect rules when Lua enchants an item
+
+types.Player.enchantItem and getEnchantingInfo accepted any effects,
+while the enchanting window offers only effects that the player knows,
+within its limits. Both functions now check the effects with
+getCustomEffectProblem, the same check as spellmaking, and throw an
+error when a rule is broken. This also adds
+types.Player.getEnchantingEffects, which lists the effects that the
+player can put into an enchantment.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/667a11e4fa976042ee2083b73fb8a3a6bfda773a">667a11e4fa on GitHub</a></div><div class="diff" data-src="diffs/667a11e4fa.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 20</span><span class="title">Resting and waiting</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">2 commits, +211 &minus;23</span></summary><div class="body"><p class="summary">Moves the bed rule into mwmechanics. Global scripts can start a rest, which still runs in the rest window so that autosave and scripts keep working.</p><details class="commit" data-difficulty="easy" data-type="Game rule move"><summary><span>Move the bed rule for resting into mwmechanics</span><span title="a small move into a new file"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+64 &minus;13</span></summary><div class="body"><div class="message">Move the bed rule for resting into mwmechanics
+
+The rest window decided whether the player can rest or wait. It added a
+bed rule to World::canRest: in the air a bed counts as solid ground, and
+a bed always lets the player sleep. This moves that decision into
+MWMechanics::getRestConditions, in a new mwmechanics/resting.cpp, so
+that code outside the window can apply it. The window calls it and
+shows the same messages.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/8c380e61dd0b4e5014c876ef09f46a158a45c3c8">8c380e61dd on GitHub</a></div><div class="diff" data-src="diffs/8c380e61dd.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Lua action"><summary><span>Add Lua API to rest in the rest menu</span><span title="starts a rest through the hidden rest window"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+147 &minus;10</span></summary><div class="body"><div class="message">Add Lua API to rest in the rest menu
+
+A Lua rest menu could read where the player can rest, but it could not
+apply the bed rule or start a rest. getRestStatus now takes an optional
+bed and also returns canWait and hoursUntilHealed. The new
+types.Player.rest starts a rest while the rest menu is open, as its
+buttons do. The rest still runs in the rest window, even when a Lua menu
+hides it. That keeps the autosave, the interruptions, WakeUpPC,
+GetPCSleep and the level-up menu working. rest is for global scripts
+only, and whether the rest lasted all its hours goes to an optional
+callback.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/32497fcf80969f377a71b1ab25442b921d84d35f">32497fcf80 on GitHub</a></div><div class="diff" data-src="diffs/32497fcf80.html">Loading the diff...</div></div></details></div></details></section><section class="milestone"><h2>Milestone 3: Input ownership and Lua UI layers</h2><p>Lets a Lua menu take the controller and keyboard, and gives it layers that scale with the screen and a way to measure text. These are the base that every Lua menu needs. It comes after the game rules, which don&#x27;t depend on it and can be reviewed first.</p><details class="mr"><summary><span class="num">MR 21</span><span class="title">Lua menus that capture input</span><span class="tag diff diff diff diff-hard">hard</span><span class="size">4 commits, +169 &minus;12</span></summary><div class="body"><p class="summary">Starts with a fix for the first controller press after a window is hidden. Then a Lua menu can take the controller and keyboard while a menu is open, through input.setGuiInputCaptured or a registerWindow option.</p><details class="commit" data-difficulty="easy" data-type="Bug fix"><summary><span>Fix the first controller press after a window is hidden</span><span title="a 3-line fix"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+3 &minus;0</span></summary><div class="body"><div class="message">Fix the first controller press after a window is hidden
+
+With controller menus on, the engine sends gamepad buttons to the
+active window of the open menu. When that window was hidden, the
+engine made the next visible window active, but still sent that one
+press to the hidden window. The press then fell through to the generic
+menu controls, so B could close the whole menu. The lookup now returns
+the window it just made active.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/41cfcbf1be8b551f2e5546d6f5ab3435c5c40745">41cfcbf1be on GitHub</a></div><div class="diff" data-src="diffs/41cfcbf1be.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="hard" data-type="Input ownership"><summary><span>Add Lua API to capture controller input in menus</span><span title="decides who gets each press; spans the input code and Lua"><span class="tag diff diff diff diff-hard">hard</span></span><span class="tag type type type type-input-ownership">Input ownership</span><span class="size">+116 &minus;4</span></summary><div class="body"><div class="message">Add Lua API to capture controller input in menus
+
+When a Lua script replaced a built-in window, the engine still used
+each gamepad button itself. B closed the whole menu, and the d-pad
+moved the focus in hidden widgets. input.setGuiInputCaptured(true) now
+sends controller presses only to Lua while a menu is open. Releases
+and stick movements still reach the bindings, so no action stays held
+down. input.isGuiInputCaptured() tells a script whether the input was
+captured when the event it handles happened.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/5ff5a3eeff5ca548db852c72375f73672cfb2023">5ff5a3eeff on GitHub</a></div><div class="diff" data-src="diffs/5ff5a3eeff.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Input ownership"><summary><span>Make the Lua input capture cover the keyboard</span><span title="keyboard routing with exceptions for the console and text boxes"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-input-ownership">Input ownership</span><span class="size">+27 &minus;5</span></summary><div class="body"><div class="message">Make the Lua input capture cover the keyboard
+
+A Lua menu that captured the controller still lost the keyboard. The
+arrow keys and Tab moved the focus in hidden built-in widgets, and
+Escape closed the whole menu. While input.setGuiInputCaptured is on,
+key presses in a menu now only reach Lua. The console and screenshot
+keys still work, and keys still reach a focused text box.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/95d745cc0907ac6a0b489ccd88f419f7cdd0125c">95d745cc09 on GitHub</a></div><div class="diff" data-src="diffs/95d745cc09.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Input ownership"><summary><span>Add a capturesInput option to I.UI.registerWindow</span><span title="a small change to the built-in UI script"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-input-ownership">Input ownership</span><span class="size">+23 &minus;3</span></summary><div class="body"><div class="message">Add a capturesInput option to I.UI.registerWindow
+
+A mod that replaces a built-in window had to turn
+input.setGuiInputCaptured on and off itself, in step with the UI
+interface showing and hiding its window. registerWindow now takes an
+options table. With capturesInput set, the UI interface captures the
+menu input while such a window is shown, and releases it once none
+is. The interface version goes up to 4.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/465c14937a1a3ac891b67256c0927cb57e16b45c">465c14937a on GitHub</a></div><div class="diff" data-src="diffs/465c14937a.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 22</span><span class="title">Fixed-height UI layers and text measurement</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">3 commits, +190 &minus;9</span></summary><div class="body"><p class="summary">Adds UI layers with a fixed virtual height that scale with the screen. Adds ui.measureText, which lays out text the way a Text widget does.</p><details class="commit" data-difficulty="easy" data-type="Lua UI"><summary><span>Add a fixed-height mode to ScalingLayer</span><span title="a self-contained layer mode"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-ui">Lua UI</span><span class="size">+36 &minus;1</span></summary><div class="body"><div class="message">Add a fixed-height mode to ScalingLayer
+
+ScalingLayer scales a virtual screen of fixed width and height to fit
+the real screen, with blank bands at the sides when the aspect ratios
+differ. UI that should fill a TV or handheld screen, at a constant size
+relative to its height, can&#x27;t use it. A new &quot;Height&quot; layer property, or
+setFixedHeight(), fixes only the virtual height. The virtual width then
+follows the screen&#x27;s aspect ratio, so the layer fills the screen.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/bbcc8f661f00d31e6374bb43a23228b829ddda40">bbcc8f661f on GitHub</a></div><div class="diff" data-src="diffs/bbcc8f661f.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua UI"><summary><span>Add a height option to Lua UI layers</span><span title="a layer option and a mouse position fix"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-ui">Lua UI</span><span class="size">+57 &minus;8</span></summary><div class="body"><div class="message">Add a height option to Lua UI layers
+
+Lua UI layers were always the size of the screen in UI pixels, so a
+menu laid out for a monitor came out tiny on a TV and huge on a small
+handheld. ui.layers.insertAfter and insertBefore now take a height
+option. The new layer then has that fixed virtual height and a width
+that follows the screen&#x27;s aspect ratio. Its contents scale with the
+screen. For example, a layer with height 720 is 1280 units wide on a
+16:9 screen.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/c84ce51e2e225ca5ad68e03b1e0d00ed07d2a07b">c84ce51e2e on GitHub</a></div><div class="diff" data-src="diffs/c84ce51e2e.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Lua UI"><summary><span>Add Lua API to measure text</span><span title="uses hidden MyGUI widgets and works only on the main thread"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-lua-ui">Lua UI</span><span class="size">+97 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to measure text
+
+A Lua menu couldn&#x27;t find out how big a piece of text will be. It had
+no way to wrap text into lines, to fit a label next to an icon, or to
+size a box around a message, so it had to guess from the character
+count.
+
+ui.measureText(text, options) returns the size that a Text widget with
+the same text size, multiline and word wrap settings gives the text.
+It lays the text out with a hidden widget that uses the Text widget&#x27;s
+skin, so the size matches what the widget draws. Because it uses MyGUI
+widgets, it only works on the main thread, such as in onFrame, input
+handlers and UI callbacks. It raises an error on the Lua worker thread.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/9e8ca9ab60e805ba86617c3cd6412a55cbb6a7a2">9e8ca9ab60 on GitHub</a></div><div class="diff" data-src="diffs/9e8ca9ab60.html">Loading the diff...</div></div></details></div></details></section><section class="milestone"><h2>Milestone 4: Message boxes, HUD and main menu</h2><p>Lets a mod answer the engine&#x27;s message boxes, hide single HUD elements, and replace the main menu during a game. These are the parts of the UI that aren&#x27;t regular windows. They build on the input capture of milestone 3.</p><details class="mr"><summary><span class="num">MR 23</span><span class="title">Interactive message box on the main thread</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +8 &minus;3</span></summary><div class="body"><p class="summary">Fixes a bug: I.UI.showInteractiveMessage created MyGUI widgets on the Lua worker thread, which can crash the game.</p><details class="commit" data-difficulty="easy" data-type="Bug fix"><summary><span>Create Lua&#x27;s interactive message box on the main thread</span><span title="queues the box with addAction"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+8 &minus;3</span></summary><div class="body"><div class="message">Create Lua&#x27;s interactive message box on the main thread
+
+I.UI.showInteractiveMessage created its MyGUI message box directly from
+the calling script. Its built-in caller, the message after serving jail
+time, runs in an engine event on the Lua worker thread. That thread
+runs while the main thread renders the scene, so the game could crash
+or draw a half-built box. ui._showInteractiveMessage now queues the box
+with addAction, so the main thread creates it.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/5b6c812c1afca0888db492c39a588a7d4d7d44df">5b6c812c1a on GitHub</a></div><div class="diff" data-src="diffs/5b6c812c1a.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 24</span><span class="title">Lua answers script message boxes</span><span class="tag diff diff diff diff-hard">hard</span><span class="size">3 commits, +384 &minus;48</span></summary><div class="body"><p class="summary">Lets player scripts show and answer message boxes with buttons, such as those from game scripts. GetButtonPressed in game scripts sees the Lua answer.</p><details class="commit" data-difficulty="hard" data-type="Dialogs"><summary><span>Allow player scripts to answer interactive message boxes</span><span title="Lua answers engine message boxes; touches saving and modal state"><span class="tag diff diff diff diff-hard">hard</span></span><span class="tag type type type type-dialogs">Dialogs</span><span class="size">+187 &minus;19</span></summary><div class="body"><div class="message">Allow player scripts to answer interactive message boxes
+
+Game scripts, the soul gem question and the question after death ask
+the player through an interactive message box. A Lua mod that redraws
+the menus couldn&#x27;t show these questions in its own style. While
+ui._setLuaAnswersInteractiveMessages(true) is in effect, the message
+box manager sends each box that doesn&#x27;t block to the player scripts&#x27;
+_onInteractiveMessage handler, instead of showing it.
+ui._answerInteractiveMessage(id, button) then does what a click on the
+box does, so GetButtonPressed in game scripts sees the answer. Saving is
+blocked while such a question waits, as it is for the engine&#x27;s box.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/a6fc56f422136c309415655bd0e768fc2fb4d557">a6fc56f422 on GitHub</a></div><div class="diff" data-src="diffs/a6fc56f422.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Dialogs"><summary><span>Add I.UI.registerInteractiveMessageHandler</span><span title="a Lua interface that also captures the input"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-dialogs">Dialogs</span><span class="size">+101 &minus;11</span></summary><div class="body"><div class="message">Add I.UI.registerInteractiveMessageHandler
+
+A mod that redraws the menus couldn&#x27;t redraw the messages with buttons
+that the player must answer, because the engine always drew them.
+I.UI.registerInteractiveMessageHandler(handler) now gives these
+messages to the mod, which calls answer(index) with the chosen button.
+Passing nil gives the messages back to the engine. Until the answer,
+the interface captures the menu input, as the engine&#x27;s modal box keeps
+Escape and B from closing the menu. The interface version goes up to 5.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/25a5a366d6b7f6d4bf47a292fafad216d5770456">25a5a366d6 on GitHub</a></div><div class="diff" data-src="diffs/25a5a366d6.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Dialogs"><summary><span>Add buttons and a callback to I.UI.showInteractiveMessage</span><span title="a callback through the window manager and the message box manager"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-dialogs">Dialogs</span><span class="size">+96 &minus;18</span></summary><div class="body"><div class="message">Add buttons and a callback to I.UI.showInteractiveMessage
+
+A Lua script could only show an interactive message with one OK button,
+so it couldn&#x27;t ask the player a question. The new buttons option gives
+the button labels. The callback option receives the 1-based index of
+the chosen button, whether the engine&#x27;s box or a Lua handler answers.
+WindowManager::interactiveMessageBox takes an optional function, which
+the message box manager calls once with the pressed button.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/3f2896c7619ae64273cf95b72ef911884124c723">3f2896c761 on GitHub</a></div><div class="diff" data-src="diffs/3f2896c761.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 25</span><span class="title">Hiding single HUD elements</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">2 commits, +310 &minus;30</span></summary><div class="body"><p class="summary">Lets a mod hide single HUD elements, such as the health bars, and keep the rest of the HUD and the engine&#x27;s messages.</p><details class="commit" data-difficulty="medium" data-type="HUD"><summary><span>Allow player scripts to hide single HUD elements</span><span title="every HUD element&#x27;s visibility goes through new state"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-hud">HUD</span><span class="size">+235 &minus;24</span></summary><div class="body"><div class="message">Allow player scripts to hide single HUD elements
+
+A mod that draws its own health bars or effect icons had to hide the
+whole HUD, along with the minimap and the messages.
+ui._setHudElementVisibility(element, visible) now hides one element,
+and ui._getAllHudElements() lists them. The HUD remembers which
+elements the engine wants to show. It shows each one only if Lua didn&#x27;t
+hide it, so the engine can&#x27;t undo a hidden element.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/7a37c98710fa06ea8a2edb0d618c88a0194ca76c">7a37c98710 on GitHub</a></div><div class="diff" data-src="diffs/7a37c98710.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="HUD"><summary><span>Add I.UI.setHudElementVisibility</span><span title="a Lua interface over the previous commit"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-hud">HUD</span><span class="size">+75 &minus;6</span></summary><div class="body"><div class="message">Add I.UI.setHudElementVisibility
+
+A mod that replaces part of the HUD, such as the health bars, could only
+hide the whole HUD with I.UI.setHudVisibility. It then had to redraw
+every part, and lost the engine&#x27;s messages and tooltips.
+I.UI.setHudElementVisibility(element, visible) now hides one element.
+I.UI.HUD_ELEMENT lists the elements, and I.UI.isHudElementVisible tells
+whether one is on the screen. The interface version goes up to 6.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/24256c2d338f283c2618a490293f977f0e5b2394">24256c2d33 on GitHub</a></div><div class="diff" data-src="diffs/24256c2d33.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 26</span><span class="title">Window ID for the main menu</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +45 &minus;0</span></summary><div class="body"><p class="summary">Gives the main menu a window ID so a mod can replace it. This only works during a game, because there are no player scripts before one starts.</p><details class="commit" data-difficulty="easy" data-type="Lua UI"><summary><span>Add a Lua window ID for the main menu</span><span title="a window ID and a visibility check"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-ui">Lua UI</span><span class="size">+45 &minus;0</span></summary><div class="body"><div class="message">Add a Lua window ID for the main menu
+
+A mod couldn&#x27;t replace the main menu that Escape opens during a game,
+because the menu had no window ID for I.UI.registerWindow. The main
+menu now has the window ID MainMenu, and stays hidden while Lua
+disables it. Its background image or video still follows the main menu
+mode. Before a game starts there are no player scripts, so the engine
+still shows its own main menu then.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/e3e34824cb2c596c1274e352679c023942dbd27c">e3e34824cb on GitHub</a></div><div class="diff" data-src="diffs/e3e34824cb.html">Loading the diff...</div></div></details></div></details></section><section class="milestone"><h2>Milestone 5: Dialogue</h2><p>Moves the conversation&#x27;s transcript, topics and rules from the Dialogue window into the dialogue manager. A mod can then show a conversation, take its steps, persuade and ask for services. It comes late because it needed the most refactoring.</p><details class="mr"><summary><span class="num">MR 27</span><span class="title">Dialogue bug fixes</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">2 commits, +8 &minus;8</span></summary><div class="body"><p class="summary">Fixes the record that DialogueResponse names when an NPC refuses. Also stops a Lua-replaced Dialogue window from keeping every conversation&#x27;s history.</p><details class="commit" data-difficulty="easy" data-type="Bug fix"><summary><span>Fix DialogueResponse&#x27;s recordId when an NPC refuses</span><span title="a 2-line fix"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+2 &minus;2</span></summary><div class="body"><div class="message">Fix DialogueResponse&#x27;s recordId when an NPC refuses
+
+When an NPC doesn&#x27;t like the player enough to answer, they say a line
+from the &quot;Info Refusal&quot; topic instead. The DialogueResponse event gave
+that line&#x27;s infoId, but its recordId named the topic the player asked
+about. Looking up the info in that record found nothing. The event now
+names the record that the line came from, for topics and for answers
+to a choice.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/a674d1d5efe20556416a56d4c79f31af55b0dc98">a674d1d5ef on GitHub</a></div><div class="diff" data-src="diffs/a674d1d5ef.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Bug fix"><summary><span>Clear the Dialogue window&#x27;s history when Lua replaces it</span><span title="a small change to when the history clears"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+6 &minus;6</span></summary><div class="body"><div class="message">Clear the Dialogue window&#x27;s history when Lua replaces it
+
+The Dialogue window forgot the lines of a conversation only when it
+closed. A window that a Lua mod replaces is never shown, so it never
+closed. Its history then grew with every conversation, and the window
+laid all of it out again after each line. The window now forgets the
+history whenever it is hidden while the dialogue mode is gone.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/c4d050b7e02b1f2b8043553d70f976f7397c94d4">c4d050b7e0 on GitHub</a></div><div class="diff" data-src="diffs/c4d050b7e0.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 28</span><span class="title">The conversation</span><span class="tag diff diff diff diff-hard">hard</span><span class="size">7 commits, +836 &minus;251</span></summary><div class="body"><p class="summary">Moves the transcript, the topic list, the rules on what the player may say, and topic link finding into the dialogue manager. Lua can then read the conversation and take its steps.</p><details class="commit" data-difficulty="hard" data-type="Dialogue"><summary><span>Keep the conversation transcript in the dialogue manager</span><span title="the transcript moves from the window into the dialogue manager"><span class="tag diff diff diff diff-hard">hard</span></span><span class="tag type type type type-dialogue">Dialogue</span><span class="size">+152 &minus;169</span></summary><div class="body"><div class="message">Keep the conversation transcript in the dialogue manager
+
+The lines of a conversation existed only in the Dialogue window, which
+received them through a callback. A Lua mod that replaces the window
+couldn&#x27;t read them, not even the greeting. The dialogue manager now
+keeps the transcript, with each line&#x27;s title, text, record and info.
+The window draws the transcript, and the callback is gone. Game messages
+during a conversation, and the merchant&#x27;s reply to a trade, go into the
+transcript too.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/a3f68435d7d47e589d0d59f103161d7e930ba8f0">a3f68435d7 on GitHub</a></div><div class="diff" data-src="diffs/a3f68435d7.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Dialogue"><summary><span>Store the available topics in the dialogue manager</span><span title="topics are worked out once per step, for thread safety"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-dialogue">Dialogue</span><span class="size">+46 &minus;19</span></summary><div class="body"><div class="message">Store the available topics in the dialogue manager
+
+The Dialogue window asked the dialogue manager for the topics after
+each step of a conversation. The manager worked the list out on every
+call, which also sets the globals that dialogue conditions read, so
+only the main thread could ask. The manager now works the list out once
+at the end of each step that can change it. It keeps each topic&#x27;s ID,
+name and flags, and the window reads the names and colours from it.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/e69e10a7aac92e822327fbf72c7220f7caa397c8">e69e10a7aa on GitHub</a></div><div class="diff" data-src="diffs/e69e10a7aa.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Dialogue"><summary><span>Check in the dialogue manager what the player may say</span><span title="the dialogue manager now refuses steps the window used to block"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-dialogue">Dialogue</span><span class="size">+45 &minus;32</span></summary><div class="body"><div class="message">Check in the dialogue manager what the player may say
+
+The dialogue manager answered any topic or choice at any time, and left
+the checks to the Dialogue window. keywordSelected now only asks about
+an available topic, and not during a choice or after Goodbye.
+questionAnswered only takes a listed answer, and goodbyeSelected refuses
+during a choice unless a script ended the conversation. Each returns
+whether it did anything.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/6b2d05504371400752e5280a2dae0fb3e0359c74">6b2d055043 on GitHub</a></div><div class="diff" data-src="diffs/6b2d055043.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Dialogue"><summary><span>Move finding topic links out of the Dialogue window</span><span title="link finding moves into the keyword search, with unit tests"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-dialogue">Dialogue</span><span class="size">+130 &minus;28</span></summary><div class="body"><div class="message">Move finding topic links out of the Dialogue window
+
+The Dialogue window found the topic names in a line and turned them
+into links while it drew the line, so a Lua script couldn&#x27;t find the
+same links. KeywordSearch::getDisplayText now removes the @topic#
+markers, and lists each link&#x27;s place in the shown text and its topic.
+The dialogue manager keeps the keyword search for the available topics,
+and the window draws lines with it. New unit tests cover the shown text
+and the link positions.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/842c272bc47966fde10fc394f8d28017e2965b94">842c272bc4 on GitHub</a></div><div class="diff" data-src="diffs/842c272bc4.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Dialogue"><summary><span>Add Lua API to read the player&#x27;s current conversation</span><span title="a new binding file; reads stored state from the Lua thread"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-dialogue">Dialogue</span><span class="size">+249 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read the player&#x27;s current conversation
+
+A Lua mod that replaces the Dialogue window had nothing to show. The
+window started the conversation while hidden, but Lua couldn&#x27;t read the
+greeting, the topics, a script&#x27;s question or the Goodbye state. New
+functions on types.Player read them: getDialogueActor,
+getDialogueTopics, getDialogueTranscript, getDialogueChoices and
+mustSayGoodbye. They read what the dialogue manager stored after the
+last step, so they are safe on the Lua thread.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/32f8a7618a50e499d91a7aff6f63c1a6e6f5ac0c">32f8a7618a on GitHub</a></div><div class="diff" data-src="diffs/32f8a7618a.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="hard" data-type="Dialogue"><summary><span>Add Lua API to ask topics, answer choices and say goodbye</span><span title="sets the shape of the conversation API; runs dialogue scripts"><span class="tag diff diff diff diff-hard">hard</span></span><span class="tag type type type type-dialogue">Dialogue</span><span class="size">+157 &minus;2</span></summary><div class="body"><div class="message">Add Lua API to ask topics, answer choices and say goodbye
+
+A Lua mod that replaces the Dialogue window could show the
+conversation, but the player couldn&#x27;t take part in it.
+types.Player.askDialogueTopic, answerDialogueChoice and sayGoodbye now
+take these steps, by the rules that the dialogue manager checks for the
+window. Each throws an error when the step isn&#x27;t allowed. Only player
+and global scripts can take the steps, because they run dialogue
+scripts, and they happen at the end of the frame. An optional callback
+gets the lines that the step added and the state after it.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/ff7168c9a7b7d253a4e5950489d2a66b0d6e1870">ff7168c9a7 on GitHub</a></div><div class="diff" data-src="diffs/ff7168c9a7.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Dialogue"><summary><span>Add Lua API to find topic links in a dialogue line</span><span title="a short wrapper over the keyword search"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-dialogue">Dialogue</span><span class="size">+57 &minus;1</span></summary><div class="body"><div class="message">Add Lua API to find topic links in a dialogue line
+
+The Dialogue window shows the names of available topics in a line as
+links, and shows each @topic# marker as the topic&#x27;s name. A Lua mod only
+had the marked text. types.Player.findTopicLinks(player, text) gives the
+text without the markers and the links in it, with the first and last
+byte of each. It uses the same search as the window, and only links to
+topics that the player can ask about.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/1e857145072dedf7ff547695a27dd4ef9a9fff7c">1e85714507 on GitHub</a></div><div class="diff" data-src="diffs/1e85714507.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 29</span><span class="title">Persuasion and dialogue services</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">6 commits, +474 &minus;133</span></summary><div class="body"><p class="summary">Starts with a fix for persuasion&#x27;s disposition when a conversation ends without goodbye. Then moves the persuasion checks and the service list out of the Dialogue window, and adds Lua persuasion and service requests.</p><details class="commit" data-difficulty="medium" data-type="Bug fix"><summary><span>Fix persuasion&#x27;s disposition when dialogue skips goodbye</span><span title="small, but the disposition rules are subtle"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+18 &minus;4</span></summary><div class="body"><div class="message">Fix persuasion&#x27;s disposition when dialogue skips goodbye
+
+Persuasion changes an NPC&#x27;s disposition until the conversation ends.
+Goodbye then replaces that temporary change with a smaller permanent
+one. But a conversation can end without goodbye, for example when a
+guard sends the player to jail. The temporary change then stayed on the
+NPC for good, and the permanent change was added to the next NPC the
+player said goodbye to. The dialogue manager now applies the goodbye
+rule whenever a conversation ends, if goodbye didn&#x27;t.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/028efd3e91792195a055de3de2d8d73d74c494c7">028efd3e91 on GitHub</a></div><div class="diff" data-src="diffs/028efd3e91.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Dialogue"><summary><span>Check in the dialogue manager whether persuasion is allowed</span><span title="persuasion rules move, and a bribe now checks the gold"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-dialogue">Dialogue</span><span class="size">+58 &minus;17</span></summary><div class="body"><div class="message">Check in the dialogue manager whether persuasion is allowed
+
+Only the Dialogue window kept the persuasion rules. It offered
+persuasion only for NPCs, and a bribe only with enough gold. A bribe
+without the gold still gave the NPC the full amount, while the player
+lost only what they had. The new DialogueManager::canPersuade checks
+these rules, and persuade() does nothing when they fail. persuade() also
+returns whether the attempt succeeded.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/f5a92a81eba82c100c20ba792c27f2a0ba62c57b">f5a92a81eb on GitHub</a></div><div class="diff" data-src="diffs/f5a92a81eb.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move the dialogue service list out of the Dialogue window</span><span title="the service list leaves the Dialogue window"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+93 &minus;54</span></summary><div class="body"><div class="message">Move the dialogue service list out of the Dialogue window
+
+The Dialogue window worked out which services an actor offers, such as
+barter, training, travel and the companion share. It read the service
+flags, travel destinations and companion variable itself, so other code
+couldn&#x27;t get the same list. MWMechanics::getDialogueServices now gives
+the list in the window&#x27;s order. MWMechanics::isCompanion tells whether
+an actor is a companion. No change in behaviour.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/3922afe993edcda6b650934002030c474efad786">3922afe993 on GitHub</a></div><div class="diff" data-src="diffs/3922afe993.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Dialogue"><summary><span>Move asking for a service out of the Dialogue window</span><span title="service requests move, with a change to topic updates"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-dialogue">Dialogue</span><span class="size">+89 &minus;50</span></summary><div class="body"><div class="message">Move asking for a service out of the Dialogue window
+
+When the player picked a service, the Dialogue window asked the
+dialogue manager whether the actor refuses, and opened the service&#x27;s
+window if not. Other code couldn&#x27;t ask for a service by the same rules.
+DialogueManager::requestService now does this, only for a service that
+the actor offers, and not during a choice or after Goodbye. The window
+now also updates its topics when the actor refuses only the picked
+service, because the refusal&#x27;s script can change them.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/597628240a1abfda92d746bf2922d60840d67845">597628240a on GitHub</a></div><div class="diff" data-src="diffs/597628240a.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Dialogue"><summary><span>Add Lua API to persuade the actor in a conversation</span><span title="a queued persuasion attempt with a callback"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-dialogue">Dialogue</span><span class="size">+89 &minus;8</span></summary><div class="body"><div class="message">Add Lua API to persuade the actor in a conversation
+
+A Lua mod that replaces the Dialogue window couldn&#x27;t offer persuasion.
+types.Player.canPersuadeDialogueActor(player, type) now says whether
+the player can try, by the persuasion screen&#x27;s rules.
+types.Player.persuadeDialogueActor(player, type, callback) makes the
+attempt at the end of the frame, from player or global scripts only.
+Its callback also gets whether the attempt succeeded and the actor&#x27;s
+disposition after it.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/ab000bd01b1a623c77bfe15ba1e337505fc4a5f2">ab000bd01b on GitHub</a></div><div class="diff" data-src="diffs/ab000bd01b.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Dialogue"><summary><span>Add Lua API to read and request dialogue services</span><span title="a queued service request that opens a mode"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-dialogue">Dialogue</span><span class="size">+127 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read and request dialogue services
+
+A Lua mod that replaces the Dialogue window couldn&#x27;t offer the services
+that the window lists, such as barter and training.
+types.Actor.getDialogueServices(actor) now lists an actor&#x27;s services in
+the window&#x27;s order. types.Player.requestDialogueService(player, service,
+callback) asks for one the way the window does, at the end of the frame.
+The actor can refuse with a &quot;Service Refusal&quot; line. Otherwise the
+service&#x27;s mode opens with the actor as its target.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/4dcee764f6f95a538cecc5b0d96ccc25badb6100">4dcee764f6 on GitHub</a></div><div class="diff" data-src="diffs/4dcee764f6.html">Loading the diff...</div></div></details></div></details></section><section class="milestone"><h2>Milestone 6: Character creation</h2><p>Makes the character creation windows into real windows, moves their rules into mechanics, and lets Lua apply the player&#x27;s choices. It comes last of the planned work because the windows needed a rework first.</p><details class="mr"><summary><span class="num">MR 30</span><span class="title">Character creation</span><span class="tag diff diff diff diff-hard">hard</span><span class="size">7 commits, +977 &minus;363</span></summary><div class="body"><p class="summary">Stops the chargen windows from being rebuilt on every UI refresh, and gives each step a window ID. Moves the class questions, head and hair choices and custom class checks into mechanics, then adds Lua setters for the player&#x27;s choices.</p><details class="commit" data-difficulty="hard" data-type="Character creation"><summary><span>Stop rebuilding chargen windows when the UI refreshes</span><span title="reworks how the chargen windows are created and shown"><span class="tag diff diff diff diff-hard">hard</span></span><span class="tag type type type type-character-creation">Character creation</span><span class="size">+207 &minus;197</span></summary><div class="body"><div class="message">Stop rebuilding chargen windows when the UI refreshes
+
+Opening the console or showing a message box during character creation
+threw away the open window and built a new one. The player lost the
+choices they hadn&#x27;t confirmed yet, and the class questions started
+again. The window manager now creates these windows once, and each
+character creation mode shows its window like any other mode.
+CharacterCreation only fills in a window when its mode opens.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/65cfaaf3f3f9c058a7255ee63e455e3eb235a84a">65cfaaf3f3 on GitHub</a></div><div class="diff" data-src="diffs/65cfaaf3f3.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Character creation"><summary><span>Add Lua window IDs for the character creation windows</span><span title="window IDs, plus changes to Escape and question voices"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-character-creation">Character creation</span><span class="size">+69 &minus;1</span></summary><div class="body"><div class="message">Add Lua window IDs for the character creation windows
+
+A Lua mod couldn&#x27;t replace the character creation windows, because they
+had no window IDs for I.UI.registerWindow. Each window now has the name
+of its UI mode, such as ChargenName. The review window is ChargenReview.
+The engine no longer reads out a class question while Lua replaces the
+questions. Escape still does nothing while Lua replaces one of these
+windows, as with the engine&#x27;s own modal windows.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/a91a02545eec694409592d5050ae4113784846a7">a91a02545e on GitHub</a></div><div class="diff" data-src="diffs/a91a02545e.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move the class questions and scoring into mwmechanics</span><span title="class question tables and scoring move into a new file"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+170 &minus;108</span></summary><div class="body"><div class="message">Move the class questions and scoring into mwmechanics
+
+Character creation can find a class by asking ten questions. The
+question texts, their voices and the table that turns the answers into
+a class lived in the window code, so a Lua mod couldn&#x27;t ask the same
+questions. They move into MWMechanics::getClassQuestions and
+getGeneratedClass in the new mwmechanics/chargen.cpp. No change in
+behaviour.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/d2d72105511846bf48ca13735f601c84d74827d8">d2d7210551 on GitHub</a></div><div class="diff" data-src="diffs/d2d7210551.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Game rule move"><summary><span>Move the choice of heads and hairs out of the race window</span><span title="a short filter moved"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+35 &minus;26</span></summary><div class="body"><div class="message">Move the choice of heads and hairs out of the race window
+
+The race window offers only some of the heads and hairs of a race and
+gender. It skips parts that aren&#x27;t playable or aren&#x27;t skin, and parts
+for the first person view. Lua can&#x27;t repeat that filter, because its
+body part records don&#x27;t carry those details. The filter moves into
+MWMechanics::getChargenBodyParts, and the race window calls it. No
+change in behaviour.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/6909c0eb33c4cfe29cb2dd344e070d19daa0b018">6909c0eb33 on GitHub</a></div><div class="diff" data-src="diffs/6909c0eb33.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move checking a custom class out of the class window</span><span title="the class window&#x27;s rules become one check"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+76 &minus;22</span></summary><div class="body"><div class="message">Move checking a custom class out of the class window
+
+The Create Class window refused a class without a name, and its other
+rules were built into its controls. Code outside the window, such as a
+Lua mod, had no way to check a class against those rules.
+MWMechanics::getCustomClassProblem now says why a custom class can&#x27;t be
+used, such as a missing name or a repeated skill. The window builds its
+class with CreateClassDialog::getCreatedClass and checks it with that
+function. No change in behaviour.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/b07d594972a31a7a683402ccf0ca644b3f549a42">b07d594972 on GitHub</a></div><div class="diff" data-src="diffs/b07d594972.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Bug fix"><summary><span>Don&#x27;t add a class record each time a custom class is made</span><span title="changes which class records the save keeps"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+12 &minus;2</span></summary><div class="body"><div class="message">Don&#x27;t add a class record each time a custom class is made
+
+Each time the player confirmed a custom class in character creation,
+the engine added a new class record. Going back and forward again added
+another, and the save kept all of them. When the player&#x27;s class already
+has a generated ID, setPlayerClass now writes the new class over that
+record. When the player&#x27;s class comes from the content files, the
+custom class still gets a new record.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/abbde29019b0f3a192b5004e56ff08fa2985a8f0">abbde29019 on GitHub</a></div><div class="diff" data-src="diffs/abbde29019.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Character creation"><summary><span>Add Lua API to create the player&#x27;s character</span><span title="a new binding file with queued setters for the player&#x27;s record"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-character-creation">Character creation</span><span class="size">+408 &minus;7</span></summary><div class="body"><div class="message">Add Lua API to create the player&#x27;s character
+
+A Lua mod that replaces the character creation windows had no way to
+apply the player&#x27;s choices. New functions on types.Player apply a name,
+race, class or birth sign the way the windows do: setCharGenName,
+setCharGenRace, setCharGenClass and setCharGenBirthSign. They rebuild
+the player&#x27;s stats and spells, so they work only until character
+creation is finished, and they run at the end of the frame. New getters
+list the heads, hairs and class questions that the windows offer, and
+the class that a set of answers leads to.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/03360a67ae2c775998a266d39212975ab6992408">03360a67ae on GitHub</a></div><div class="diff" data-src="diffs/03360a67ae.html">Loading the diff...</div></div></details></div></details></section><section class="milestone"><h2>Milestone 7: Gaps found while porting the UI</h2><p>Fills the gaps that porting every Modern Morrow screen to Lua showed. Each merge request is small and stands on its own. These came last because they were found by building the mod on the earlier milestones.</p><details class="mr"><summary><span class="num">MR 31</span><span class="title">Weapon skills, gold, soul gems and skill books</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">3 commits, +135 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua read a weapon&#x27;s skill, tell gold and soul gems apart, and check whether the player has read a skill book.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add the skill of a weapon to its Lua record</span><span title="a field from an existing table"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+23 &minus;0</span></summary><div class="body"><div class="message">Add the skill of a weapon to its Lua record
+
+A Lua mod couldn&#x27;t tell which skill a weapon uses, such as Long Blade
+for a claymore, without its own copy of the engine&#x27;s table of weapon
+types. Weapon records now have a skill field, which the engine reads
+from that table for the record&#x27;s type.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/8a0384533d8b4cf5dbd56efceccaf2a5aa940a35">8a0384533d on GitHub</a></div><div class="diff" data-src="diffs/8a0384533d.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to tell gold and soul gems apart from other items</span><span title="two short wrappers"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+37 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to tell gold and soul gems apart from other items
+
+The engine treats some miscellaneous items in special ways. Gold
+coins stack into one pile and count as the player&#x27;s money, and soul
+gems can hold souls. It picks them out by their record ids, so a Lua
+mod had to copy those ids. types.Miscellaneous.isGold and isSoulGem
+now ask the engine.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/a95360a499840b51e88e181c89a072ee7872a527">a95360a499 on GitHub</a></div><div class="diff" data-src="diffs/a95360a499.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to check whether the player has read a skill book</span><span title="a short wrapper"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+75 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to check whether the player has read a skill book
+
+The engine raises a skill only the first time the player reads a book
+that teaches it, and it remembers which books the player has read. A
+Lua inventory couldn&#x27;t show which skill books would still teach
+something. types.Player.hasReadSkillBook now reads that list.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/cbbd4e623312f272a09828b9b7dfd4c2d38ecf9d">cbbd4e6233 on GitHub</a></div><div class="diff" data-src="diffs/cbbd4e6233.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 32</span><span class="title">Equipment slots and item sounds</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">2 commits, +95 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua read the equipment slots of an item and its pick-up and put-down sounds.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to list the equipment slots of an item</span><span title="a short wrapper"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+54 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to list the equipment slots of an item
+
+Each kind of item goes in certain equipment slots, such as both ring
+slots for a ring, or the ammunition slot for arrows. A Lua inventory
+had to keep its own copy of that table to show where an item goes.
+types.Item.getEquipmentSlots now returns the slots that the engine&#x27;s
+item classes list, in the order that equipping tries them.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/bec2a78cd06395c3111fb9d2c02f6d666e36d3d6">bec2a78cd0 on GitHub</a></div><div class="diff" data-src="diffs/bec2a78cd0.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read the sounds of picking up and putting down an item</span><span title="two short wrappers"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+41 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read the sounds of picking up and putting down an item
+
+The engine plays a sound when the player picks an item up and another
+when the player puts it down. Each kind of item has its own, and gold
+has its own too. A Lua inventory couldn&#x27;t play the same sounds without
+copying that table. types.Item.getUpSound and getDownSound now return
+the engine&#x27;s sound ids.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/c5158c3f4d8aec593dcb2f2ce394500c4cb9f9db">c5158c3f4d on GitHub</a></div><div class="diff" data-src="diffs/c5158c3f4d.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 33</span><span class="title">Controller button icons</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +42 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua read the textures that the engine uses for controller button hints, which follow the controller type.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read the icons of controller buttons</span><span title="a short wrapper over existing icon lookup"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+42 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read the icons of controller buttons
+
+The engine&#x27;s own menus show button hints with icons that follow the
+controller type, such as a cross for A on a PlayStation controller. A
+Lua menu couldn&#x27;t tell which controller was in use, so its hints
+always showed the same icons. input.getControllerButtonIcon and
+input.getControllerAxisIcon now return the textures that the engine
+picks for a button, stick or trigger.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/e6423917d91f4f379ac6d2608093c5100df31f36">e6423917d9 on GitHub</a></div><div class="diff" data-src="diffs/e6423917d9.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 34</span><span class="title">Dropping items</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">2 commits, +146 &minus;15</span></summary><div class="body"><p class="summary">Moves dropping an item out of the inventory GUI. Global scripts can then drop items the way the inventory does.</p><details class="commit" data-difficulty="easy" data-type="Game rule move"><summary><span>Move dropping an item into the world out of the inventory GUI</span><span title="about 30 lines moved"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+37 &minus;15</span></summary><div class="body"><div class="message">Move dropping an item into the world out of the inventory GUI
+
+When the player drops an item from the inventory, the engine breaks
+the player&#x27;s invisibility, places the item where the cursor points or
+at the player&#x27;s feet, and clears the item&#x27;s owner. That code lived in
+the GUI&#x27;s WorldItemModel, so a Lua inventory couldn&#x27;t drop an item the
+same way. It moves into World::dropObjectFromPlayer, which
+WorldItemModel now calls. No change in behaviour.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/6053f1673b7bac963545a8edc1b7ce17fa6570e1">6053f1673b on GitHub</a></div><div class="diff" data-src="diffs/6053f1673b.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua action"><summary><span>Add Lua API to drop items from the player&#x27;s inventory</span><span title="a short queued action"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+109 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to drop items from the player&#x27;s inventory
+
+A Lua inventory had no way to drop an item the way the engine&#x27;s
+inventory does. Moving the item with teleport skipped the rest of the
+drop: OnPCDrop in the item&#x27;s script, breaking invisibility, clearing
+the owner, and landing where the crosshair points. The new
+types.Player.dropItem does all of that through
+World::dropObjectFromPlayer. Like takeItem, it works only in global
+scripts, and it checks the item again when the action runs.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/9e5ca3d98b402e1cae9f5e5da2d1b83036aef323">9e5ca3d98b on GitHub</a></div><div class="diff" data-src="diffs/9e5ca3d98b.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 35</span><span class="title">onItemAdded engine handler</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">1 commit, +72 &minus;5</span></summary><div class="body"><p class="summary">Adds an engine handler that tells local scripts when items go into an inventory or container.</p><details class="commit" data-difficulty="medium" data-type="Engine event"><summary><span>Add onItemAdded engine handler</span><span title="a new handler called from ContainerStore::add"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-engine-event">Engine event</span><span class="size">+72 &minus;5</span></summary><div class="body"><div class="message">Add onItemAdded engine handler
+
+Lua scripts weren&#x27;t told when items went into an inventory, so a mod
+that marks new items had to compare the whole inventory with an older
+copy several times a second. ContainerStore::add now queues an event
+for the local scripts of the actor or container. They get the stack
+that the items went into and how many were added, in their
+onItemAdded handler. Items that an inventory starts with or restocks
+don&#x27;t go through add, so they don&#x27;t fire it.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/89fb2866c7b2b974925222414800652ae9b5c0ee">89fb2866c7 on GitHub</a></div><div class="diff" data-src="diffs/89fb2866c7.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 36</span><span class="title">Spell schools, enchantment charge and a removed spell fix</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">3 commits, +137 &minus;2</span></summary><div class="body"><p class="summary">Fixes spells that Lua removed from the player coming back after loading. Lets Lua read a spell&#x27;s school and an enchantment&#x27;s full charge.</p><details class="commit" data-difficulty="medium" data-type="Bug fix"><summary><span>Keep spells that Lua removes from the player removed after loading</span><span title="changes the player&#x27;s base record when Lua removes spells"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+56 &minus;2</span></summary><div class="body"><div class="message">Keep spells that Lua removes from the player removed after loading
+
+A spell that a Lua script removed from the player came back when the
+game was loaded, if it was one of the spells in the player&#x27;s base
+record, such as a spell bought from a merchant. The save doesn&#x27;t store
+the spells of the base record, so loading adds them all back. The
+spell window removes a deleted spell from the base record too.
+ActorSpells remove and clear now do the same for the player. Other
+actors share their base record with every actor made from the same
+record, so their base record still doesn&#x27;t change.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/90b8a19eb5cda21b77ae0a88aed7584a8fc77c72">90b8a19eb5 on GitHub</a></div><div class="diff" data-src="diffs/90b8a19eb5.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read the school of a spell</span><span title="a short wrapper"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+49 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read the school of a spell
+
+The engine picks one magic school for each spell and actor. That
+school&#x27;s skill decides the chance to cast the spell, and casting it
+trains that skill. A Lua mod had to copy the engine&#x27;s formula to show
+it. core.magic.spells.getSchool now returns the school that
+MWMechanics::getSpellSchool picks.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/fa92939c43634facf9d80d8e75b14d556c594a28">fa92939c43 on GitHub</a></div><div class="diff" data-src="diffs/fa92939c43.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read the full charge of an enchantment</span><span title="a short wrapper"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+32 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read the full charge of an enchantment
+
+The charge field of an enchantment record is the raw value from the
+content file. For an autocalculated enchantment, the engine ignores it
+and computes the charge from the effects, so a Lua mod showed the
+wrong full charge for such items. core.magic.enchantments.getMaxCharge
+now returns the charge that the engine uses.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/abbeae0144903e7634b21cdf14419714da4e6483">abbeae0144 on GitHub</a></div><div class="diff" data-src="diffs/abbeae0144.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 37</span><span class="title">Faction rank skill checks</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +51 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua check whether an NPC has the skills that a faction rank asks for.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to check the skills an NPC needs for a faction rank</span><span title="a short wrapper"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+51 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to check the skills an NPC needs for a faction rank
+
+A faction rank asks for a level in the faction&#x27;s favoured skills. The
+engine checks the highest of those skills against one value and the
+next two against another, and its dialogue uses that check before a
+promotion. A Lua stats screen had to copy the rule to show whether the
+player can rise. types.NPC.hasSkillsForRank now calls
+NpcStats::hasSkillsForRank.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/f8431edfda58f185013fe003004f5c4ce9c88053">f8431edfda on GitHub</a></div><div class="diff" data-src="diffs/f8431edfda.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 38</span><span class="title">Requested windows for window replacements</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +48 &minus;3</span></summary><div class="body"><p class="summary">Passes the list of windows that I.UI.setMode asked for to each window replacement.</p><details class="commit" data-difficulty="easy" data-type="Lua UI"><summary><span>Pass the requested windows to I.UI window replacements</span><span title="a small change to the built-in UI script"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-ui">Lua UI</span><span class="size">+48 &minus;3</span></summary><div class="body"><div class="message">Pass the requested windows to I.UI window replacements
+
+I.UI.setMode and I.UI.addMode can open a mode with only some of its
+windows, such as only the map in the Interface mode. A script that
+replaces several windows of a mode couldn&#x27;t tell such a request from
+the player opening the whole mode, because each replacement only
+learned that it should show. showFn now gets the list of windows that
+the call asked for as its second argument, or nil when the mode opened
+without one. The UI interface version goes up to 7.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/54bb96faeceede163da3bc37ad4e13b711b7bc0e">54bb96faec on GitHub</a></div><div class="diff" data-src="diffs/54bb96faec.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 39</span><span class="title">A merchant&#x27;s goods</span><span class="tag diff diff diff diff-hard">hard</span><span class="size">3 commits, +201 &minus;14</span></summary><div class="body"><p class="summary">Moves finding a merchant&#x27;s goods out of the trade window. Lua can list them, including owned containers and items in the world, and buy them.</p><details class="commit" data-difficulty="easy" data-type="Game rule move"><summary><span>Move finding a merchant&#x27;s goods out of the trade window</span><span title="a short move"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+21 &minus;5</span></summary><div class="body"><div class="message">Move finding a merchant&#x27;s goods out of the trade window
+
+A merchant sells from their own inventory, from the containers they
+own in the active cells, and from the items they own that lie in the
+active cells. The trade window gathered those sources itself, so a Lua
+barter screen couldn&#x27;t find the same goods. The gathering moves into
+MWMechanics::getBarterSources, which the trade window now calls. No
+change in behaviour.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/287621dfbed3c90d501264ff19e2bf70ed9cda0c">287621dfbe on GitHub</a></div><div class="diff" data-src="diffs/287621dfbe.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="hard" data-type="Lua action"><summary><span>Add Lua API to list a merchant&#x27;s goods and buy them</span><span title="buying from owned containers and from the world"><span class="tag diff diff diff diff-hard">hard</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+176 &minus;8</span></summary><div class="body"><div class="message">Add Lua API to list a merchant&#x27;s goods and buy them
+
+Most merchants keep their stock in containers that they own, and some
+sell items that lie on their tables. The barter window lists those
+goods, but types.Player.barter could only buy from the merchant&#x27;s
+inventory, so a Lua barter screen showed little of what a merchant
+sells. types.Actor.getBarterItems now lists the goods that the barter
+window lists, from the sources that getBarterSources finds. barter
+accepts them in its buy list and moves them the way the trade window
+does: from the container, or out of the world.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/72741daa91597fc809d2335113b22ca70f68da40">72741daa91 on GitHub</a></div><div class="diff" data-src="diffs/72741daa91.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua action"><summary><span>Add the merchant&#x27;s reply to the transcript after a Lua barter</span><span title="a 3-line change"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+4 &minus;1</span></summary><div class="body"><div class="message">Add the merchant&#x27;s reply to the transcript after a Lua barter
+
+After a trade in the barter window, the merchant answers in the
+conversation with the sBarterDialog5 line. types.Player.barter didn&#x27;t
+add that line, so a Lua barter screen opened from a conversation left
+no trace of the trade in the transcript. barter now adds the line
+when the player is talking to the merchant.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/9d9f0571d8e573e1d67b2ca3714b00b12b9fa73d">9d9f0571d8 on GitHub</a></div><div class="diff" data-src="diffs/9d9f0571d8.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 40</span><span class="title">Lua-replaced container closing</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +15 &minus;0</span></summary><div class="body"><p class="summary">Fixes a bug: an animated container stayed open when a Lua mod had replaced the Container window.</p><details class="commit" data-difficulty="easy" data-type="Bug fix"><summary><span>Close the container when a Lua-replaced Container window closes</span><span title="a short close handler"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+15 &minus;0</span></summary><div class="body"><div class="message">Close the container when a Lua-replaced Container window closes
+
+When the player closes a container, the Container window&#x27;s onClose
+plays the container&#x27;s closing animation and lets go of the container&#x27;s
+contents. A window that a Lua mod replaced is never shown, so onClose
+never ran, and an animated container such as a chest stayed open. The
+Container window now does the same when the container mode ends while
+Lua has replaced it. It doesn&#x27;t roll the end of a pickpocketing
+attempt, because a Lua mod does that with
+types.Player.finishPickpocketing.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/441cb4d6017d95af7f9a6efa75c385c3e092a864">441cb4d601 on GitHub</a></div><div class="diff" data-src="diffs/441cb4d601.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 41</span><span class="title">Whether an item is bound</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +24 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua check whether an item is a summoned item, such as a bound dagger.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to check whether an item is bound</span><span title="a short wrapper"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+24 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to check whether an item is bound
+
+Summoned items, such as the dagger of Bound Dagger, can&#x27;t be dropped,
+sold or stolen. The engine recognises them by the record ids that the
+sMagicBound*ID game settings name, but Lua had no way to ask, so mods
+read those settings themselves. types.Item.isBound now asks
+MechanicsManager::isBoundItem.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/26cc50f499e5f60e4036de4abbcd8664b5e11ad7">26cc50f499 on GitHub</a></div><div class="diff" data-src="diffs/26cc50f499.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 42</span><span class="title">Travel destination names and trainer skills</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">3 commits, +55 &minus;18</span></summary><div class="body"><p class="summary">Moves naming travel destinations out of the travel window. Lua can read the names, and the trainer&#x27;s skill values that training compares.</p><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move naming travel destinations out of the travel window</span><span title="names now come from records instead of loaded cells"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+26 &minus;13</span></summary><div class="body"><div class="message">Move naming travel destinations out of the travel window
+
+The travel window names each destination after its cell. A
+destination in an exterior cell has no cell name, so the window loaded
+that cell to read its name or its region&#x27;s name. Lua couldn&#x27;t name a
+destination the same way. MWMechanics::getTravelDestinationName now
+names it from the cell and region records, and the travel window
+calls it. The names stay the same, and opening the window no longer
+loads the exterior cells that it lists.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/d0693224909d4c5fb5e8547195d4e580ea965fee">d069322490 on GitHub</a></div><div class="diff" data-src="diffs/d069322490.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read the name of a travel destination</span><span title="one new field"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+3 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read the name of a travel destination
+
+A travel destination in Lua only had a cell id. Player scripts can&#x27;t
+look a cell up by its id, because world.getCellById is for global
+scripts, so a Lua travel screen couldn&#x27;t name its destinations.
+Travel destinations now have a cellName field with the name that the
+travel window shows, from getTravelDestinationName.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/454bfb7b7040df852f3dd74650c06f97ef355965">454bfb7b70 on GitHub</a></div><div class="diff" data-src="diffs/454bfb7b70.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read the trainer&#x27;s skill values that training compares</span><span title="a small new function and a second list"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+26 &minus;5</span></summary><div class="body"><div class="message">Add Lua API to read the trainer&#x27;s skill values that training compares
+
+A trainer can teach the player a skill up to the trainer&#x27;s own value.
+Depending on the setting &quot;trainers training skills based on base
+skill&quot;, that value is the trainer&#x27;s base or modified skill, and Lua
+can&#x27;t read the setting. A Lua training screen couldn&#x27;t show the limit
+that the engine checks. types.NPC.getTrainingSkills now returns a
+second list with the trainer&#x27;s value of each skill, from the new
+MWMechanics::getTrainerSkill.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/83fe12fc22b30da4a73525f6964a674a1ef8d68b">83fe12fc22 on GitHub</a></div><div class="diff" data-src="diffs/83fe12fc22.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 43</span><span class="title">Picking up items from the world</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">2 commits, +83 &minus;8</span></summary><div class="body"><p class="summary">Moves taking an item from the world into its own function. Global scripts can then pick items up with the theft rules.</p><details class="commit" data-difficulty="easy" data-type="Game rule move"><summary><span>Move taking an item from the world into its own function</span><span title="a short move"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+18 &minus;8</span></summary><div class="body"><div class="message">Move taking an item from the world into its own function
+
+When the player takes an item that lies in the world, ActionTake
+records the theft if someone owns the item, moves the item into the
+inventory and removes it from the world. ActionTake also hands the
+item to the inventory&#x27;s drag and drop while the inventory is open, so
+a Lua mod couldn&#x27;t reuse it. The take moves into
+MWWorld::takeFromWorld, which ActionTake now calls. No change in
+behaviour.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/f3d3998240823babe94df6dc23b145cddcadbcdb">f3d3998240 on GitHub</a></div><div class="diff" data-src="diffs/f3d3998240.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua action"><summary><span>Add Lua API to pick up an item from the world</span><span title="a short queued action"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+65 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to pick up an item from the world
+
+Lua could move an item from the world into the player&#x27;s inventory
+with moveInto, but that skipped the crime rules. Taking an item that
+someone owns is theft: the engine records the stolen item and reports
+the crime. A Lua book or scroll screen couldn&#x27;t offer its Take button
+for such an item. types.Player.pickUpItem now takes an item the way
+activating it does, through MWWorld::takeFromWorld.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/326f067a85f3bb2dd3688663f372e10d86e3b166">326f067a85 on GitHub</a></div><div class="diff" data-src="diffs/326f067a85.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 44</span><span class="title">Cells where content files place a record</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +51 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua list the cells where content files place objects of a record, such as the cell where an NPC lives.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to list the cells where content files place a record</span><span title="a short wrapper over ESMStore::getRefCells"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+51 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to list the cells where content files place a record
+
+The engine knows which cells of the content files hold objects with a
+record id, such as the cell where an NPC lives. Lua had no way to ask,
+so a journal mod couldn&#x27;t tell where a quest giver is. The new
+core.contentFiles.getPlacedCells lists those cells, with their ids and
+names, from ESMStore::getRefCells.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/52bddb4d2bfb08151be32c665ad68561ea25a7ef">52bddb4d2b on GitHub</a></div><div class="diff" data-src="diffs/52bddb4d2b.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 45</span><span class="title">Disposing of a corpse</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">2 commits, +133 &minus;54</span></summary><div class="body"><p class="summary">Moves disposing of a corpse out of the container window. Global scripts can then do it the same way.</p><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Move disposing of a corpse out of the container window</span><span title="death and summon handling leave the container window"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+68 &minus;53</span></summary><div class="body"><div class="message">Move disposing of a corpse out of the container window
+
+The Dispose of Corpse button of the container window removes a dead
+actor from the world. If the death animation is still playing, it
+first counts the death, runs the actor&#x27;s script and makes the actor&#x27;s
+summons vanish. That code lived in the window, so Lua couldn&#x27;t dispose
+of a corpse the same way. It moves into MWMechanics::disposeCorpse,
+which the window now calls. No change in behaviour.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/3f0ea8a34954b870c154a668b34cde2d90f8d35f">3f0ea8a349 on GitHub</a></div><div class="diff" data-src="diffs/3f0ea8a349.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua action"><summary><span>Add Lua API to dispose of a corpse</span><span title="a short wrapper over the moved function"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-action">Lua action</span><span class="size">+65 &minus;1</span></summary><div class="body"><div class="message">Add Lua API to dispose of a corpse
+
+The container window lets the player dispose of a corpse, but Lua had
+no way to do it the same way. Deleting the actor skipped what the
+engine does when a corpse goes before its death animation ends: count
+the death, run the actor&#x27;s script and make its summons vanish.
+types.Actor.disposeCorpse now does it through
+MWMechanics::disposeCorpse, from global scripts.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/dcbcbb83cb0add08b866f87659fd3b45b872fe16">dcbcbb83cb on GitHub</a></div><div class="diff" data-src="diffs/dcbcbb83cb.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 46</span><span class="title">Screen fades</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +63 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua fade the screen out and in, the way the mwscript fade functions do.</p><details class="commit" data-difficulty="easy" data-type="Lua UI"><summary><span>Add Lua API to fade the screen</span><span title="short queued wrappers over existing fades"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-ui">Lua UI</span><span class="size">+63 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to fade the screen
+
+The engine fades the screen out and in when the player travels,
+trains or rests, and mwscripts can do it with FadeIn, FadeOut and
+FadeTo. Lua had no way to fade the screen, so a Lua training or travel
+screen couldn&#x27;t look like the engine&#x27;s. ui.fadeScreenIn,
+ui.fadeScreenOut and ui.fadeScreenTo now queue fades the way the
+mwscript functions do.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/f2f187fd685d953c0b2d16ffb9af517a5f3a792e">f2f187fd68 on GitHub</a></div><div class="diff" data-src="diffs/f2f187fd68.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 47</span><span class="title">Book text variables</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +26 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua replace the variables in a book&#x27;s text, such as %PCName, as the book window does.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to replace the variables in a book&#x27;s text</span><span title="a short wrapper"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+26 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to replace the variables in a book&#x27;s text
+
+Book texts can name variables, such as %PCName for the player&#x27;s name
+or %ActionActivate for the key that activates. The engine replaces
+them before it shows a book, but Lua only had the raw text, so a Lua
+book screen showed the variables. types.Book.substituteVariables now
+replaces them with Interpreter::fixDefinesBook, as the book window
+does.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/2271bd88fddc1f9534b4a032cdb0df843e4d6737">2271bd88fd on GitHub</a></div><div class="diff" data-src="diffs/2271bd88fd.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 48</span><span class="title">Fonts for Lua text</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +40 &minus;1</span></summary><div class="body"><p class="summary">Adds a font property to Lua Text widgets and a matching option to ui.measureText.</p><details class="commit" data-difficulty="easy" data-type="Lua UI"><summary><span>Add a font property to Lua Text widgets</span><span title="a small widget property"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-ui">Lua UI</span><span class="size">+40 &minus;1</span></summary><div class="body"><div class="message">Add a font property to Lua Text widgets
+
+Books and scrolls can show text in other fonts, such as the Daedric
+letters. Lua Text widgets always used the default font, so a Lua book
+screen couldn&#x27;t show such text. Text widgets now take a font
+property with the name of a font that the engine loaded, and
+ui.measureText takes a font option to match.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/b1e46463abad2243fe73365bc65757a18f5d7dc9">b1e46463ab on GitHub</a></div><div class="diff" data-src="diffs/b1e46463ab.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 49</span><span class="title">Crafting messages and problems</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">2 commits, +186 &minus;68</span></summary><div class="body"><p class="summary">Moves the crafting windows&#x27; sounds and messages into mechanics, so Lua crafting shows them too. Lua can read why a crafting setup can&#x27;t be made.</p><details class="commit" data-difficulty="medium" data-type="Game rule move"><summary><span>Show the crafting windows&#x27; messages when Lua crafts</span><span title="sounds and messages move out of three windows"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+90 &minus;65</span></summary><div class="body"><div class="message">Show the crafting windows&#x27; messages when Lua crafts
+
+The enchanting, alchemy and spellmaking windows play a sound and show
+a message when the player makes something. Lua&#x27;s enchantItem,
+brewPotion and makeSpell did the same work without either. Lua&#x27;s
+repairItem and rechargeItem did show them, because their messages
+live in the mechanics code. The sounds and messages now move from the
+windows into Enchanting::create, Alchemy::create and buyCustomSpell,
+which both the windows and Lua call. The message for a stolen item
+that the enchanter takes back moves into
+Enchanting::confiscateStolenItem. The windows behave as before.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/6eeb807d98b91fbf34abd186853870f783b0b1c1">6eeb807d98 on GitHub</a></div><div class="diff" data-src="diffs/6eeb807d98.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to tell why a crafting setup can&#x27;t be made</span><span title="maps existing checks to names"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+96 &minus;3</span></summary><div class="body"><div class="message">Add Lua API to tell why a crafting setup can&#x27;t be made
+
+The enchanting, spellmaking and alchemy windows check the player&#x27;s
+choices before they craft, and say what is missing, such as a name or
+the gold. Lua&#x27;s getEnchantingInfo, getSpellmakingInfo and
+getAlchemyInfo didn&#x27;t tell, so a Lua crafting screen had to repeat
+the checks. Each info now has a problem field, such as &#x27;noName&#x27; or
+&#x27;notEnoughGold&#x27;, with the first problem that the engine&#x27;s check finds.
+The crafting functions throw an error for the same problems as before.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/0bc0e578b8ddb0dc71938d4ee0c4237d6db1ff60">0bc0e578b8 on GitHub</a></div><div class="diff" data-src="diffs/0bc0e578b8.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 50</span><span class="title">The item an enchanter takes back</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +15 &minus;1</span></summary><div class="body"><p class="summary">Lets Lua name the stolen item that an enchanter takes back instead of using it.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to name the item that an enchanter takes back</span><span title="one new field"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+15 &minus;1</span></summary><div class="body"><div class="message">Add Lua API to name the item that an enchanter takes back
+
+When the player asks an enchanter to enchant an item, or to use a soul
+gem, that the player stole from the enchanter, the enchanter takes it
+back instead. Lua&#x27;s getEnchantingInfo didn&#x27;t tell, so a Lua enchanting
+screen had to work out the theft itself. EnchantingInfo now has a
+stolenItem field from Enchanting::getStolenItem. That function now also
+works before the player has picked both an item and a soul gem.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/d5d52999dc57edea8ad7f9c9f877786b30b855f7">d5d52999dc on GitHub</a></div><div class="diff" data-src="diffs/d5d52999dc.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 51</span><span class="title">Whether the enchant chance is shown</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +4 &minus;0</span></summary><div class="body"><p class="summary">Lets Lua follow the setting that decides whether the enchanting window shows the chance.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to tell whether the enchanting window shows the chance</span><span title="a one-line field"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+4 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to tell whether the enchanting window shows the chance
+
+The enchanting window shows the player&#x27;s chance to enchant an item
+only when the &quot;show enchant chance&quot; setting is on. Lua scripts can&#x27;t
+read that setting, so a Lua enchanting screen couldn&#x27;t follow it.
+EnchantingInfo now has a showChance field, which is true when the
+engine&#x27;s window would show the chance.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/07eb6cbed65a96cd2b69a596767342e172b9a8b9">07eb6cbed6 on GitHub</a></div><div class="diff" data-src="diffs/07eb6cbed6.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 52</span><span class="title">Custom effect limits</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">2 commits, +61 &minus;13</span></summary><div class="body"><p class="summary">Names the smallest values of player-made effects as constants. Lua can then read all the limits.</p><details class="commit" data-difficulty="easy" data-type="Game rule move"><summary><span>Name the smallest values of a magic effect that the player makes</span><span title="constants replace plain numbers"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-game-rule-move">Game rule move</span><span class="size">+18 &minus;12</span></summary><div class="body"><div class="message">Name the smallest values of a magic effect that the player makes
+
+The spellmaking and enchanting rules had constants for the highest
+magnitude, duration and area of an effect, but wrote the smallest
+values as plain numbers, in the rules and in the effect editor of the
+spellmaking window. They are now constants next to the highest values,
+so that other code can name them. No change in behaviour.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/8f0d7c1d4557f6b9d8ba6f06cf6e328378f61bd1">8f0d7c1d45 on GitHub</a></div><div class="diff" data-src="diffs/8f0d7c1d45.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read the limits on the effects the player makes</span><span title="a table of existing constants"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+43 &minus;1</span></summary><div class="body"><div class="message">Add Lua API to read the limits on the effects the player makes
+
+The spellmaking and enchanting windows keep the effects of a spell or
+an enchantment within limits: at most 8 effects, a magnitude from 1 to
+100, a duration from 1 to 1440 seconds and an area from 0 to 50 feet.
+Lua could only find them by trying values, so a Lua effect editor had
+to copy the numbers. core.magic.CUSTOM_EFFECT_LIMITS now gives them
+from the engine&#x27;s constants.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/c8907cd245eacd30bfc3c287e69451417498fb3b">c8907cd245 on GitHub</a></div><div class="diff" data-src="diffs/c8907cd245.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 53</span><span class="title">Rest progress</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">2 commits, +69 &minus;7</span></summary><div class="body"><p class="summary">Gives the rest&#x27;s progress bar a window ID, and sends the player an event as the hours of a rest pass.</p><details class="commit" data-difficulty="easy" data-type="Lua UI"><summary><span>Add a Lua window ID for the rest&#x27;s progress bar</span><span title="a window ID for one widget"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-ui">Lua UI</span><span class="size">+22 &minus;5</span></summary><div class="body"><div class="message">Add a Lua window ID for the rest&#x27;s progress bar
+
+While the player rests or waits, the engine shows a progress bar with
+the hours that have passed. The bar had no window ID, so a Lua mod that
+replaced the rest menu couldn&#x27;t hide it. It is now the
+WaitDialogProgressBar window of the Rest mode. The training window&#x27;s
+progress bar stays without an ID.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/8dc2a9406f4b6c75d55f33dd52ddb5e1ede4c995">8dc2a9406f on GitHub</a></div><div class="diff" data-src="diffs/8dc2a9406f.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Engine event"><summary><span>Send the player an event as the hours of a rest pass</span><span title="a small event sent from the rest window"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-engine-event">Engine event</span><span class="size">+47 &minus;2</span></summary><div class="body"><div class="message">Send the player an event as the hours of a rest pass
+
+While the player rests, the engine&#x27;s progress bar shows how many hours
+have passed. Lua couldn&#x27;t see that progress, so a Lua rest screen had
+to guess it from the game time. The engine now sends the player&#x27;s
+scripts a RestProgress event when the hours start to pass and after
+each hour, with the hours passed and the length of the rest. It comes
+for every rest, whether the engine&#x27;s menu or types.Player.rest started
+it.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/7d7f1a82d2cef1c5f88df3f9bb597e6d620b7e0a">7d7f1a82d2 on GitHub</a></div><div class="diff" data-src="diffs/7d7f1a82d2.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 54</span><span class="title">Jail progress</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +39 &minus;1</span></summary><div class="body"><p class="summary">Sends the player an event as a jail term passes.</p><details class="commit" data-difficulty="easy" data-type="Engine event"><summary><span>Send the player an event as a jail term passes</span><span title="a small event sent from the jail screen"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-engine-event">Engine event</span><span class="size">+39 &minus;1</span></summary><div class="body"><div class="message">Send the player an event as a jail term passes
+
+When the player goes to jail, the engine&#x27;s jail screen fills a
+progress bar before the days pass. Lua couldn&#x27;t see the length of the
+term or the progress, so a Lua jail screen had to copy the engine&#x27;s
+timing. The engine now sends the player&#x27;s scripts a JailProgress event
+when the term starts and at each step of the bar, with the days and
+how much of the term has passed.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/c090d9147ad683f55043dc32380a39d5221a2fd9">c090d9147a on GitHub</a></div><div class="diff" data-src="diffs/c090d9147a.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 55</span><span class="title">Level-up music and rest refusal fixes</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">2 commits, +21 &minus;7</span></summary><div class="body"><p class="summary">Fixes two bugs when Lua has replaced a window: the level-up music didn&#x27;t play, and the rest menu stayed open where resting is off.</p><details class="commit" data-difficulty="easy" data-type="Bug fix"><summary><span>Play the level-up music when Lua replaces the level-up window</span><span title="a short change to when the music starts"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+10 &minus;2</span></summary><div class="body"><div class="message">Play the level-up music when Lua replaces the level-up window
+
+When the level-up window opens, its onOpen starts the triumph music.
+A window that a Lua mod replaced is never shown, so onOpen never ran,
+and the level-up stayed silent. The music now starts whenever the
+level-up mode shows the window, whether Lua replaced it or not.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/a86f5f6da13d7594bfeb779633da23612fca8f65">a86f5f6da1 on GitHub</a></div><div class="diff" data-src="diffs/a86f5f6da1.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Bug fix"><summary><span>Close the rest menu when resting is off, also when Lua replaced it</span><span title="a short change to when the menu closes"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-bug-fix">Bug fix</span><span class="size">+11 &minus;5</span></summary><div class="body"><div class="message">Close the rest menu when resting is off, also when Lua replaced it
+
+Before character creation ends, and after an mwscript turns resting
+off, the rest menu&#x27;s onOpen closes the menu again. A bed&#x27;s script can
+still open it with ShowRestMenu. A window that a Lua mod replaced is
+never shown, so onOpen never ran, and the Lua rest screen stayed open
+where the player shouldn&#x27;t rest. The rest menu now closes whenever the
+Rest mode shows its window while resting is off, whether Lua replaced
+the window or not.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/cac30bd1272049d245dc5028823599f7d6b8a237">cac30bd127 on GitHub</a></div><div class="diff" data-src="diffs/cac30bd127.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 56</span><span class="title">Who added a journal entry, and where</span><span class="tag diff diff diff diff-hard">hard</span><span class="size">2 commits, +85 &minus;2</span></summary><div class="body"><p class="summary">Records the actor and the cell for each new quest entry, in save format 42. Lua can then read them.</p><details class="commit" data-difficulty="hard" data-type="Save format"><summary><span>Record who added each journal entry, and where</span><span title="a new save format version with optional subrecords"><span class="tag diff diff diff diff-hard">hard</span></span><span class="tag type type type type-save-format">Save format</span><span class="size">+71 &minus;2</span></summary><div class="body"><div class="message">Record who added each journal entry, and where
+
+The journal kept only the text and the date of each quest entry, so
+nothing could tell who gave a quest or where it started. Each quest
+entry now also keeps the actor that added it, and the cell that the
+player was in. The actor is the object that the Journal command ran
+on, when it is an actor other than the player, such as the NPC whose
+dialogue line ran it. Scripts of items or activators record only the
+cell.
+
+Both are saved as optional subrecords of the journal entry, from save
+format version 42. Older saves load with both empty.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/100ef6e02d7d9366351d4c9963dfb59c00e188be">100ef6e02d on GitHub</a></div><div class="diff" data-src="diffs/100ef6e02d.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to read who added a journal entry, and where</span><span title="two new fields"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+14 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to read who added a journal entry, and where
+
+The journal now records the actor that added each quest entry and the
+cell that the player was in. Lua&#x27;s journal text entries didn&#x27;t show
+them, so a Lua journal couldn&#x27;t name a quest&#x27;s giver or its place.
+They now have actorRecordId and cellId fields, which are nil when the
+journal doesn&#x27;t know.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/ae788264ce0359bda9b900d16f4c2e5930ce7ed1">ae788264ce on GitHub</a></div><div class="diff" data-src="diffs/ae788264ce.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 57</span><span class="title">Plain messages handled by Lua</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">1 commit, +89 &minus;3</span></summary><div class="body"><p class="summary">Lets a mod show the engine&#x27;s messages without buttons, such as a crime report, in its own style.</p><details class="commit" data-difficulty="medium" data-type="Dialogs"><summary><span>Add I.UI.registerMessageHandler to show plain messages in Lua</span><span title="routes plain messages to Lua across several layers"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-dialogs">Dialogs</span><span class="size">+89 &minus;3</span></summary><div class="body"><div class="message">Add I.UI.registerMessageHandler to show plain messages in Lua
+
+The engine shows messages without buttons, such as the one when a
+crime is reported, in its own boxes. Lua could neither see nor hide
+them, so a mod couldn&#x27;t show them in its own style.
+I.UI.registerMessageHandler now takes a handler, and while one is
+registered the engine sends each such message to it instead of showing
+its box. Messages in the transcript of a conversation and the static
+messages, such as the one while the game saves, stay as they are.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/eb705122202d37c5aede311bcad2a8c88dab2f59">eb70512220 on GitHub</a></div><div class="diff" data-src="diffs/eb70512220.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 58</span><span class="title">The HUD&#x27;s enemy</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +44 &minus;1</span></summary><div class="body"><p class="summary">Lets Lua read whose health the enemy bar shows and how long it stays.</p><details class="commit" data-difficulty="easy" data-type="HUD"><summary><span>Add I.UI.getHudEnemy to read whom the enemy health bar shows</span><span title="reads state the HUD already keeps"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-hud">HUD</span><span class="size">+44 &minus;1</span></summary><div class="body"><div class="message">Add I.UI.getHudEnemy to read whom the enemy health bar shows
+
+After the player hits an actor, with a weapon, a projectile or a
+spell, the HUD shows that actor&#x27;s health for a few seconds. Lua only
+saw weapon hits, so a mod that drew its own enemy bar missed the rest,
+and couldn&#x27;t match the engine&#x27;s timing. I.UI.getHudEnemy now returns
+the actor whose health the engine&#x27;s bar shows, and the seconds until
+the engine hides it.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/850e4414b853a071078b3955d0ac42c9e2738990">850e4414b8 on GitHub</a></div><div class="diff" data-src="diffs/850e4414b8.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 59</span><span class="title">Whether the engine wants a HUD element</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +61 &minus;1</span></summary><div class="body"><p class="summary">Lets Lua ask whether the engine would show a HUD element, such as the sneak indicator, if Lua hadn&#x27;t hidden it.</p><details class="commit" data-difficulty="easy" data-type="HUD"><summary><span>Add I.UI.isHudElementWanted to follow the engine&#x27;s HUD rules</span><span title="reads state the HUD already keeps"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-hud">HUD</span><span class="size">+61 &minus;1</span></summary><div class="body"><div class="message">Add I.UI.isHudElementWanted to follow the engine&#x27;s HUD rules
+
+The engine shows some HUD elements only at times, such as the sneak
+indicator while the player sneaks unseen and the breath meter under
+water. When a Lua mod hid such an element to draw its own, it couldn&#x27;t
+tell when the engine would show it, so it had to repeat the engine&#x27;s
+rules. I.UI.isHudElementWanted now tells whether the engine would show
+an element if Lua hadn&#x27;t hidden it, from the state that the HUD
+already keeps for each element.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/be629f98c6988e4472272d03be2beed82e6487b0">be629f98c6 on GitHub</a></div><div class="diff" data-src="diffs/be629f98c6.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 60</span><span class="title">Custom classes and finishing a chargen step</span><span class="tag diff diff diff diff-medium">medium</span><span class="size">2 commits, +101 &minus;5</span></summary><div class="body"><p class="summary">Lets Lua tell a class made in the game from a content file&#x27;s. Lets Lua end a character creation step the way the engine&#x27;s window does.</p><details class="commit" data-difficulty="easy" data-type="Lua getter"><summary><span>Add Lua API to tell a class made in the game from a content file&#x27;s</span><span title="a short wrapper"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-lua-getter">Lua getter</span><span class="size">+10 &minus;0</span></summary><div class="body"><div class="message">Add Lua API to tell a class made in the game from a content file&#x27;s
+
+The player&#x27;s own class from character creation, and the classes that
+scripts create, are records that the game made. Character creation&#x27;s
+class list leaves them out. Lua couldn&#x27;t tell them from the classes of
+the content files, except by the form of their IDs. Class records now
+have an isCustom field, which asks the record store as the class list
+does.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/8a8ab11159d75ae30954523476bd25a66d3226a0">8a8ab11159 on GitHub</a></div><div class="diff" data-src="diffs/8a8ab11159.html">Loading the diff...</div></div></details><details class="commit" data-difficulty="medium" data-type="Character creation"><summary><span>Add Lua API to finish a character creation step</span><span title="repeats the chargen windows&#x27; rules for the next step"><span class="tag diff diff diff diff-medium">medium</span></span><span class="tag type type type type-character-creation">Character creation</span><span class="size">+91 &minus;5</span></summary><div class="body"><div class="message">Add Lua API to finish a character creation step
+
+When the player is done with a step of character creation, the
+engine&#x27;s window of the step decides what comes next: the review again
+if the player came from it, the next step if the player has been
+through it before, or nothing, so that the game&#x27;s scripts go on.
+A Lua window that replaced a step couldn&#x27;t see that state, so it
+guessed, and the flow went wrong when Lua and engine windows were
+mixed. types.Player.finishCharGenStep now ends a step the way the
+engine&#x27;s window does.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/48e791f8219affcb66de98e122893fd14b881a32">48e791f821 on GitHub</a></div><div class="diff" data-src="diffs/48e791f821.html">Loading the diff...</div></div></details></div></details><details class="mr"><summary><span class="num">MR 61</span><span class="title">Lua API revision bump</span><span class="tag diff diff diff diff-easy">easy</span><span class="size">1 commit, +1 &minus;1</span></summary><div class="body"><p class="summary">One revision bump for every Lua API change in the stack, until the stack is split into merge requests.</p><details class="commit" data-difficulty="easy" data-type="Version bump"><summary><span>Lua API revision bump</span><span title="one number changes"><span class="tag diff diff diff diff-easy">easy</span></span><span class="tag type type type type-version-bump">Version bump</span><span class="size">+1 &minus;1</span></summary><div class="body"><div class="message">Lua API revision bump
+
+One bump for all the Lua API changes in this stack, until the stack is
+split into merge requests.</div><div class="links"><a href="https://github.com/DurhamG/modern-morrow/commit/4b55cdad1f5951283c639f59ccd6818f0f6d4826">4b55cdad1f on GitHub</a></div><div class="diff" data-src="diffs/4b55cdad1f.html">Loading the diff...</div></div></details></div></details></section><footer>Generated from the branch by upstreaming-notes/tools/build-site.py.</footer>
+</main>
+<script>
+// Load a commit's diff the first time it is opened.
+document.addEventListener('toggle', async (event) => {
+  const el = event.target;
+  if (!el.open || !el.classList.contains('commit')) return;
+  const diff = el.querySelector('.diff');
+  if (!diff || diff.dataset.loaded) return;
+  diff.dataset.loaded = '1';
+  try {
+    const response = await fetch(diff.dataset.src);
+    diff.innerHTML = await response.text();
+  } catch (e) {
+    diff.textContent = 'The diff could not be loaded.';
+  }
+}, true);
+
+// Filters: commits must match every active filter group; a merge request hides when none of its commits match.
+const active = { difficulty: new Set(), type: new Set() };
+function applyFilters() {
+  document.querySelectorAll('.commit').forEach((c) => {
+    const ok = Object.entries(active).every(([key, set]) => set.size === 0 || set.has(c.dataset[key]));
+    c.classList.toggle('hidden', !ok);
+  });
+  document.querySelectorAll('.mr').forEach((mr) => {
+    const any = mr.querySelector('.commit:not(.hidden)');
+    mr.classList.toggle('hidden', !any);
+    if (any && (active.difficulty.size || active.type.size)) mr.open = true;
+  });
+  document.querySelectorAll('.milestone').forEach((ms) => {
+    ms.classList.toggle('hidden', !ms.querySelector('.mr:not(.hidden)'));
+  });
+}
+document.querySelectorAll('.filters button').forEach((b) => b.addEventListener('click', () => {
+  const set = active[b.dataset.filter];
+  if (set.has(b.dataset.value)) set.delete(b.dataset.value); else set.add(b.dataset.value);
+  b.classList.toggle('on');
+  applyFilters();
+}));
+document.getElementById('expand').addEventListener('click', (e) => {
+  e.preventDefault(); document.querySelectorAll('.mr:not(.hidden)').forEach((d) => d.open = true);
+});
+document.getElementById('collapse').addEventListener('click', (e) => {
+  e.preventDefault(); document.querySelectorAll('details').forEach((d) => d.open = false);
+});
+</script>
+</body>
+</html>

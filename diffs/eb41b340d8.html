@@ -1,0 +1,92 @@
+<div class="file"><div class="path">apps/openmw/mwgui/sortfilteritemmodel.cpp</div><pre>
+<span class="hunk">@@ -1,6 +1,5 @@</span>
+<span class="ctx"> #include &quot;sortfilteritemmodel.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="del">-#include &lt;components/debug/debuglog.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadalch.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadappa.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadarmo.hpp&gt;</span>
+<span class="hunk">@@ -25,7 +24,7 @@</span>
+<span class="ctx"> #include &quot;../mwworld/esmstore.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwmechanics/alchemy.hpp&quot;</span>
+<span class="del">-#include &quot;../mwmechanics/spellutil.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/recharge.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace</span>
+<span class="ctx"> {</span>
+<span class="hunk">@@ -298,25 +297,8 @@ namespace MWGui</span>
+<span class="ctx">                 || (base.getType() != ESM::Weapon::sRecordId &amp;&amp; base.getType() != ESM::Armor::sRecordId)))</span>
+<span class="ctx">             return false;</span>
+<span class="ctx"> </span>
+<span class="del">-        if (mFilter &amp; Filter_OnlyRechargable)</span>
+<span class="del">-        {</span>
+<span class="del">-            if (!(item.mFlags &amp; ItemStack::Flag_Enchanted))</span>
+<span class="del">-                return false;</span>
+<span class="del">-</span>
+<span class="del">-            const ESM::RefId&amp; enchId = base.getClass().getEnchantment(base);</span>
+<span class="del">-            const ESM::Enchantment* ench</span>
+<span class="del">-                = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Enchantment&gt;().search(enchId);</span>
+<span class="del">-            if (!ench)</span>
+<span class="del">-            {</span>
+<span class="del">-                Log(Debug::Warning) &lt;&lt; &quot;Warning: Can&#x27;t find enchantment &#x27;&quot; &lt;&lt; enchId &lt;&lt; &quot;&#x27; on item &quot;</span>
+<span class="del">-                                    &lt;&lt; base.getCellRef().getRefId();</span>
+<span class="del">-                return false;</span>
+<span class="del">-            }</span>
+<span class="del">-</span>
+<span class="del">-            if (base.getCellRef().getEnchantmentCharge() == -1</span>
+<span class="del">-                || base.getCellRef().getEnchantmentCharge() &gt;= MWMechanics::getEnchantmentCharge(*ench))</span>
+<span class="del">-                return false;</span>
+<span class="del">-        }</span>
+<span class="add">+        if ((mFilter &amp; Filter_OnlyRechargable) &amp;&amp; !MWMechanics::canRecharge(base))</span>
+<span class="add">+            return false;</span>
+<span class="ctx"> </span>
+<span class="ctx">         if ((mFilter &amp; Filter_OnlyAlchemyTools))</span>
+<span class="ctx">         {</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/recharge.cpp</div><pre>
+<span class="hunk">@@ -1,5 +1,6 @@</span>
+<span class="ctx"> #include &quot;recharge.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;components/debug/debuglog.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadcrea.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadench.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/misc/rng.hpp&gt;</span>
+<span class="hunk">@@ -36,6 +37,25 @@ namespace MWMechanics</span>
+<span class="ctx">         return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    bool canRecharge(const MWWorld::ConstPtr&amp; item)</span>
+<span class="add">+    {</span>
+<span class="add">+        const ESM::RefId&amp; enchantmentId = item.getClass().getEnchantment(item);</span>
+<span class="add">+        if (enchantmentId.empty())</span>
+<span class="add">+            return false;</span>
+<span class="add">+</span>
+<span class="add">+        const ESM::Enchantment* enchantment</span>
+<span class="add">+            = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Enchantment&gt;().search(enchantmentId);</span>
+<span class="add">+        if (!enchantment)</span>
+<span class="add">+        {</span>
+<span class="add">+            Log(Debug::Warning) &lt;&lt; &quot;Warning: Can&#x27;t find enchantment &#x27;&quot; &lt;&lt; enchantmentId &lt;&lt; &quot;&#x27; on item &quot;</span>
+<span class="add">+                                &lt;&lt; item.getCellRef().getRefId();</span>
+<span class="add">+            return false;</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        const float charge = item.getCellRef().getEnchantmentCharge();</span>
+<span class="add">+        return charge != -1 &amp;&amp; charge &lt; getEnchantmentCharge(*enchantment);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     bool rechargeItem(const MWWorld::Ptr&amp; item, const MWWorld::Ptr&amp; gem)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         if (!gem.getCellRef().getCount())</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/recharge.hpp</div><pre>
+<span class="hunk">@@ -10,6 +10,8 @@ namespace MWMechanics</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool rechargeItem(const MWWorld::Ptr&amp; item, const MWWorld::Ptr&amp; gem);</span>
+<span class="ctx"> </span>
+<span class="add">+    /// Whether a soul gem can restore charge to @a item: an enchanted item that has lost some of its charge.</span>
+<span class="add">+    bool canRecharge(const MWWorld::ConstPtr&amp; item);</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="ctx"> #endif</span>
+</pre></div>

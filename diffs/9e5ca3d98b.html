@@ -1,0 +1,150 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -47,6 +47,7 @@</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/containerstore.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/esmstore.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/globals.hpp&quot;</span>
+<span class="add">+#include &quot;apps/openmw/mwworld/inventorystore.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/manualref.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/player.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -225,6 +226,24 @@ namespace MWLua</span>
+<span class="ctx">         container-&gt;remove(item, count, false);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    // Moves items from the player&#x27;s inventory into the world, the same way as the inventory does with a controller:</span>
+<span class="add">+    // they land where the crosshair points, or at the player&#x27;s feet.</span>
+<span class="add">+    static void dropFromPlayer(const MWWorld::Ptr&amp; item, int count)</span>
+<span class="add">+    {</span>
+<span class="add">+        const MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="add">+        MWBase::World&amp; world = *MWBase::Environment::get().getWorld();</span>
+<span class="add">+        player.getClass().getInventoryStore(player).remove(item, count, true);</span>
+<span class="add">+        if (item.getCellRef().getCount() == 0)</span>
+<span class="add">+        {</span>
+<span class="add">+            // The whole stack moves into the world. It keeps its count while it moves, like in moveInto.</span>
+<span class="add">+            item.getCellRef().setCount(count);</span>
+<span class="add">+            world.dropObjectFromPlayer(item, 0.5f, 0.5f, count, false);</span>
+<span class="add">+            item.getCellRef().setCount(0);</span>
+<span class="add">+        }</span>
+<span class="add">+        else</span>
+<span class="add">+            world.dropObjectFromPlayer(item, 0.5f, 0.5f, count, true);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     static std::optional&lt;LuaUtil::Callback&gt; toCallback(const sol::optional&lt;sol::table&gt;&amp; callback)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         if (!callback)</span>
+<span class="hunk">@@ -272,6 +291,30 @@ namespace MWLua</span>
+<span class="ctx">                       },</span>
+<span class="ctx">                       &quot;TakeItemAction&quot;);</span>
+<span class="ctx">               };</span>
+<span class="add">+        playerBindings[&quot;dropItem&quot;] = [context](const Object&amp; player, const Object&amp; item, sol::optional&lt;int&gt; count) {</span>
+<span class="add">+            verifyPlayer(player);</span>
+<span class="add">+            if (!player.isGObject())</span>
+<span class="add">+                throw std::runtime_error(&quot;Only global scripts can drop items&quot;);</span>
+<span class="add">+            const MWWorld::Ptr playerPtr = player.ptr();</span>
+<span class="add">+            const MWWorld::Ptr itemPtr = item.ptr();</span>
+<span class="add">+            verifyIsIn(itemPtr, playerPtr);</span>
+<span class="add">+            if (MWBase::Environment::get().getMechanicsManager()-&gt;isBoundItem(itemPtr))</span>
+<span class="add">+                throw std::runtime_error(&quot;Bound items can&#x27;t be dropped&quot;);</span>
+<span class="add">+            const int available = itemPtr.getCellRef().getCount();</span>
+<span class="add">+            const int countToDrop = count.value_or(available);</span>
+<span class="add">+            if (countToDrop &lt;= 0 || countToDrop &gt; available)</span>
+<span class="add">+                throw std::runtime_error(</span>
+<span class="add">+                    &quot;Can&#x27;t drop &quot; + std::to_string(countToDrop) + &quot; of &quot; + std::to_string(available) + &quot; items&quot;);</span>
+<span class="add">+            context.mLuaManager-&gt;addAction(</span>
+<span class="add">+                [item = Object(itemPtr), countToDrop] {</span>
+<span class="add">+                    const MWWorld::Ptr dropped = item.ptr();</span>
+<span class="add">+                    const int countLeft = getCountLeft(dropped, MWMechanics::getPlayer(), countToDrop);</span>
+<span class="add">+                    if (countLeft &lt;= 0)</span>
+<span class="add">+                        return;</span>
+<span class="add">+                    dropFromPlayer(dropped, countLeft);</span>
+<span class="add">+                },</span>
+<span class="add">+                &quot;DropItemAction&quot;);</span>
+<span class="add">+        };</span>
+<span class="ctx"> </span>
+<span class="ctx">         playerBindings[&quot;getPickpocketChance&quot;] = [](const Object&amp; player, const Object&amp; victim,</span>
+<span class="ctx">                                                     sol::optional&lt;Object&gt; item, sol::optional&lt;int&gt; count) -&gt; int {</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1516,6 +1516,22 @@</span>
+<span class="ctx"> --     types.Player.takeItem(player, chest, item)</span>
+<span class="ctx"> -- end</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Drop items from the player&#x27;s inventory into the world, the way the inventory does it (only in global scripts).</span>
+<span class="add">+-- The items land where the crosshair points, if there is a flat surface there within reach, and at the player&#x27;s feet otherwise. This is where the inventory drops an item with a controller.</span>
+<span class="add">+-- Dropping an item breaks the player&#x27;s invisibility, clears the item&#x27;s owner and sets `OnPCDrop` in the item&#x27;s mwscript. Dropping a whole equipped stack unequips it. Dropping part of an equipped stack, such as some of the equipped arrows, leaves the rest equipped.</span>
+<span class="add">+-- Bound items can&#x27;t be dropped. This doesn&#x27;t play a sound: the inventory plays @{#Item.getDownSound}.</span>
+<span class="add">+-- Global scripts see the dropped item in their `onPlaced` handler when it lands where the crosshair points, and in `onDropped` when it lands at the player&#x27;s feet.</span>
+<span class="add">+-- The change happens at the end of the frame. If an earlier change in the frame took some of the items, this drops the ones that are left.</span>
+<span class="add">+-- @function [parent=#PLAYER] dropItem</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param openmw.core#GameObject item An item in the player&#x27;s inventory.</span>
+<span class="add">+-- @param #number count The number of items to drop from the stack (optional, all of them by default).</span>
+<span class="add">+-- @usage -- In a global script, for a player script that sends this event</span>
+<span class="add">+-- eventHandlers = {</span>
+<span class="add">+--     DropItem = function(data) types.Player.dropItem(data.player, data.item, data.count) end,</span>
+<span class="add">+-- }</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- The chance, from 0 to 100, that an NPC doesn&#x27;t notice the player stealing items from their pockets.</span>
+<span class="ctx"> -- It takes the Agility, Luck, Sneak skill and fatigue of both the player and the NPC into account, as well as the value of the items. The NPC doesn&#x27;t notice the player when a roll from 0 to 99 is no higher than a limit. The limit is at least the player&#x27;s Sneak skill divided by the `iPickMinChance` game setting, and at most the `iPickMaxChance` game setting. The chance is one more than the limit.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -1033,6 +1033,56 @@ testing.registerGlobalTest(&#x27;taking items from containers&#x27;, function()</span>
+<span class="ctx">     chest:remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;dropping items&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    local weapon = world.createRecord(types.Weapon.createRecordDraft({</span>
+<span class="add">+        template = types.Weapon.record(&#x27;basic_dagger1h&#x27;),</span>
+<span class="add">+        name = &#x27;Dropped dagger&#x27;,</span>
+<span class="add">+    }))</span>
+<span class="add">+    world.createObject(weapon.id, 3):moveInto(player)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    local inventory = types.Actor.inventory(player)</span>
+<span class="add">+    local item = inventory:find(weapon.id)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.dropItem, player, item, 4), false,</span>
+<span class="add">+        &#x27;The player should not drop more items than the stack has&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local function droppedCount()</span>
+<span class="add">+        local count = 0</span>
+<span class="add">+        for _, object in ipairs(player.cell:getAll(types.Weapon)) do</span>
+<span class="add">+            if object.recordId == weapon.id then</span>
+<span class="add">+                count = count + object.count</span>
+<span class="add">+            end</span>
+<span class="add">+        end</span>
+<span class="add">+        return count</span>
+<span class="add">+    end</span>
+<span class="add">+</span>
+<span class="add">+    types.Player.dropItem(player, item, 1)</span>
+<span class="add">+    for _ = 1, 10 do</span>
+<span class="add">+        coroutine.yield()</span>
+<span class="add">+        if droppedCount() &gt; 0 then</span>
+<span class="add">+            break</span>
+<span class="add">+        end</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expectEqual(inventory:countOf(weapon.id), 2, &#x27;The player should keep the rest of the stack&#x27;)</span>
+<span class="add">+    testing.expectEqual(droppedCount(), 1, &#x27;One dagger should be in the world&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    types.Player.dropItem(player, inventory:find(weapon.id))</span>
+<span class="add">+    for _ = 1, 10 do</span>
+<span class="add">+        coroutine.yield()</span>
+<span class="add">+        if droppedCount() &gt; 1 then</span>
+<span class="add">+            break</span>
+<span class="add">+        end</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expectEqual(inventory:countOf(weapon.id), 0, &#x27;The player should drop the whole stack&#x27;)</span>
+<span class="add">+    testing.expectEqual(droppedCount(), 3, &#x27;Every dagger should be in the world&#x27;)</span>
+<span class="add">+    for _, object in ipairs(player.cell:getAll(types.Weapon)) do</span>
+<span class="add">+        if object.recordId == weapon.id then</span>
+<span class="add">+            testing.expectEqual(object.owner.recordId, nil, &#x27;A dropped item should have no owner&#x27;)</span>
+<span class="add">+            object:remove()</span>
+<span class="add">+        end</span>
+<span class="add">+    end</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;pickpocketing&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     removeGold(player)</span>
+</pre></div>

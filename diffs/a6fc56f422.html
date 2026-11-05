@@ -1,0 +1,430 @@
+<div class="file"><div class="path">apps/openmw/mwbase/luamanager.hpp</div><pre>
+<span class="hunk">@@ -108,6 +108,9 @@ namespace MWBase</span>
+<span class="ctx">         virtual void questUpdated(const ESM::RefId&amp; questId, int stage) = 0;</span>
+<span class="ctx">         // `arg` is either forwarded from MWGui::pushGuiMode or empty</span>
+<span class="ctx">         virtual void uiModeChanged(const MWWorld::Ptr&amp; arg) = 0;</span>
+<span class="add">+        // Sends an interactive message box to the player&#x27;s scripts, which answer it with</span>
+<span class="add">+        // `WindowManager::answerInteractiveMessage`. The texts have no #{...} tags left.</span>
+<span class="add">+        virtual void interactiveMessageRequested(int id, std::string message, std::vector&lt;std::string&gt; buttons) = 0;</span>
+<span class="ctx">         virtual void viewportResized(int width, int height) = 0;</span>
+<span class="ctx">         virtual void savePermanentStorage(const std::filesystem::path&amp; userConfigPath) = 0;</span>
+<span class="ctx">         virtual void applyMagicEffects(ESM::RefId id, const MWWorld::Ptr&amp; caster, ESM::RefNum item,</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwbase/windowmanager.hpp</div><pre>
+<span class="hunk">@@ -268,6 +268,12 @@ namespace MWBase</span>
+<span class="ctx">         /// (-&gt;MessageBoxmanager-&gt;InteractiveMessageBox)</span>
+<span class="ctx">         virtual int readPressedButton() = 0;</span>
+<span class="ctx"> </span>
+<span class="add">+        /// While set, interactive message boxes that don&#x27;t block go to the player&#x27;s Lua scripts instead of being</span>
+<span class="add">+        /// shown, and the scripts answer them with answerInteractiveMessage.</span>
+<span class="add">+        virtual void setLuaAnswersInteractiveMessages(bool answers) = 0;</span>
+<span class="add">+        /// Presses a button in the interactive message box that was sent to Lua with the given id.</span>
+<span class="add">+        virtual void answerInteractiveMessage(int id, int button) = 0;</span>
+<span class="add">+</span>
+<span class="ctx">         virtual void updateConsoleObjectPtr(const MWWorld::Ptr&amp; currentPtr, const MWWorld::Ptr&amp; newPtr) = 0;</span>
+<span class="ctx"> </span>
+<span class="ctx">         /**</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/messagebox.cpp</div><pre>
+<span class="hunk">@@ -1,5 +1,7 @@</span>
+<span class="ctx"> #include &quot;messagebox.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;stdexcept&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> #include &lt;MyGUI_Button.h&gt;</span>
+<span class="ctx"> #include &lt;MyGUI_EditBox.h&gt;</span>
+<span class="ctx"> #include &lt;MyGUI_LanguageManager.h&gt;</span>
+<span class="hunk">@@ -12,6 +14,7 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/inputmanager.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/luamanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWGui</span>
+<span class="hunk">@@ -36,11 +39,7 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void MessageBoxManager::clear()</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mInterMessageBoxe)</span>
+<span class="del">-        {</span>
+<span class="del">-            mInterMessageBoxe-&gt;setVisible(false);</span>
+<span class="del">-            mInterMessageBoxe.reset();</span>
+<span class="del">-        }</span>
+<span class="add">+        resetInteractiveMessageBox();</span>
+<span class="ctx"> </span>
+<span class="ctx">         mMessageBoxes.clear();</span>
+<span class="ctx">         mStaticMessageBox = nullptr;</span>
+<span class="hunk">@@ -55,6 +54,7 @@ namespace MWGui</span>
+<span class="ctx">             mInterMessageBoxe-&gt;setVisible(false);</span>
+<span class="ctx">             mInterMessageBoxe.reset();</span>
+<span class="ctx">         }</span>
+<span class="add">+        mLuaInteractiveMessage.reset();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void MessageBoxManager::setLastButtonPressed(int index)</span>
+<span class="hunk">@@ -92,6 +92,14 @@ namespace MWGui</span>
+<span class="ctx">             MWBase::Environment::get().getInputManager()-&gt;changeInputMode(</span>
+<span class="ctx">                 MWBase::Environment::get().getWindowManager()-&gt;isGuiMode());</span>
+<span class="ctx">         }</span>
+<span class="add">+</span>
+<span class="add">+        if (mLuaInteractiveMessage &amp;&amp; mLuaInteractiveMessage-&gt;mButtonPressed != -1)</span>
+<span class="add">+        {</span>
+<span class="add">+            mLastButtonPressed = mLuaInteractiveMessage-&gt;mButtonPressed;</span>
+<span class="add">+            mLuaInteractiveMessage.reset();</span>
+<span class="add">+            MWBase::Environment::get().getInputManager()-&gt;changeInputMode(</span>
+<span class="add">+                MWBase::Environment::get().getWindowManager()-&gt;isGuiMode());</span>
+<span class="add">+        }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void MessageBoxManager::createMessageBox(std::string_view message, bool stat)</span>
+<span class="hunk">@@ -127,25 +135,79 @@ namespace MWGui</span>
+<span class="ctx">         mStaticMessageBox = nullptr;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    bool MessageBoxManager::createInteractiveMessageBox(</span>
+<span class="del">-        std::string_view message, const std::vector&lt;std::string&gt;&amp; buttons, bool immediate, int defaultFocus)</span>
+<span class="add">+    bool MessageBoxManager::createInteractiveMessageBox(std::string_view message,</span>
+<span class="add">+        const std::vector&lt;std::string&gt;&amp; buttons, bool immediate, int defaultFocus, bool luaCanAnswer)</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mInterMessageBoxe != nullptr)</span>
+<span class="add">+        if (isInteractiveMessageBox())</span>
+<span class="ctx">         {</span>
+<span class="ctx">             Log(Debug::Warning) &lt;&lt; &quot;Warning: replacing an interactive message box that was not answered yet&quot;;</span>
+<span class="del">-            mInterMessageBoxe-&gt;setVisible(false);</span>
+<span class="add">+            if (mInterMessageBoxe != nullptr)</span>
+<span class="add">+                mInterMessageBoxe-&gt;setVisible(false);</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        mInterMessageBoxe</span>
+<span class="del">-            = std::make_unique&lt;InteractiveMessageBox&gt;(*this, std::string{ message }, buttons, immediate, defaultFocus);</span>
+<span class="add">+        if (luaCanAnswer &amp;&amp; mLuaAnswersInteractiveMessages)</span>
+<span class="add">+        {</span>
+<span class="add">+            mInterMessageBoxe.reset();</span>
+<span class="add">+            const int id = ++mLastLuaInteractiveMessageId;</span>
+<span class="add">+            mLuaInteractiveMessage</span>
+<span class="add">+                = LuaInteractiveMessage{ id, std::string{ message }, buttons, immediate, defaultFocus };</span>
+<span class="add">+</span>
+<span class="add">+            // Lua can&#x27;t look up #{...} tags, so it gets the text that the box would show.</span>
+<span class="add">+            MyGUI::LanguageManager&amp; languageManager = MyGUI::LanguageManager::getInstance();</span>
+<span class="add">+            std::vector&lt;std::string&gt; buttonLabels;</span>
+<span class="add">+            for (const std::string&amp; button : buttons)</span>
+<span class="add">+                buttonLabels.push_back(languageManager.replaceTags(MyGUI::UString(button)).asUTF8());</span>
+<span class="add">+            MWBase::Environment::get().getLuaManager()-&gt;interactiveMessageRequested(</span>
+<span class="add">+                id, languageManager.replaceTags(MyGUI::UString(message)).asUTF8(), std::move(buttonLabels));</span>
+<span class="add">+        }</span>
+<span class="add">+        else</span>
+<span class="add">+        {</span>
+<span class="add">+            mInterMessageBoxe = std::make_unique&lt;InteractiveMessageBox&gt;(</span>
+<span class="add">+                *this, std::string{ message }, buttons, immediate, defaultFocus);</span>
+<span class="add">+            mLuaInteractiveMessage.reset();</span>
+<span class="add">+        }</span>
+<span class="ctx">         mLastButtonPressed = -1;</span>
+<span class="ctx"> </span>
+<span class="ctx">         return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    bool MessageBoxManager::isInteractiveMessageBox()</span>
+<span class="add">+    bool MessageBoxManager::isInteractiveMessageBox() const</span>
+<span class="add">+    {</span>
+<span class="add">+        return mInterMessageBoxe != nullptr || mLuaInteractiveMessage.has_value();</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void MessageBoxManager::setLuaAnswersInteractiveMessages(bool answers)</span>
+<span class="add">+    {</span>
+<span class="add">+        mLuaAnswersInteractiveMessages = answers;</span>
+<span class="add">+        if (answers || !mLuaInteractiveMessage || mLuaInteractiveMessage-&gt;mButtonPressed != -1)</span>
+<span class="add">+            return;</span>
+<span class="add">+</span>
+<span class="add">+        // Nothing in Lua will answer the waiting message any more, so the manager shows it instead.</span>
+<span class="add">+        const LuaInteractiveMessage&amp; waiting = *mLuaInteractiveMessage;</span>
+<span class="add">+        mInterMessageBoxe = std::make_unique&lt;InteractiveMessageBox&gt;(</span>
+<span class="add">+            *this, waiting.mMessage, waiting.mButtons, waiting.mImmediate, waiting.mDefaultFocus);</span>
+<span class="add">+        mLuaInteractiveMessage.reset();</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void MessageBoxManager::answerInteractiveMessage(int id, int button)</span>
+<span class="ctx">     {</span>
+<span class="del">-        return mInterMessageBoxe != nullptr;</span>
+<span class="add">+        if (!mLuaInteractiveMessage || mLuaInteractiveMessage-&gt;mId != id</span>
+<span class="add">+            || mLuaInteractiveMessage-&gt;mButtonPressed != -1)</span>
+<span class="add">+            return;</span>
+<span class="add">+        if (button &lt; 0 || static_cast&lt;std::size_t&gt;(button) &gt;= mLuaInteractiveMessage-&gt;mButtons.size())</span>
+<span class="add">+            throw std::runtime_error(&quot;Invalid button index &quot; + std::to_string(button));</span>
+<span class="add">+</span>
+<span class="add">+        // The same steps as InteractiveMessageBox::buttonActivated. Unless the message is immediate, onFrame</span>
+<span class="add">+        // publishes the answer and removes the message, as it does for the box.</span>
+<span class="add">+        mLuaInteractiveMessage-&gt;mButtonPressed = button;</span>
+<span class="add">+        const bool immediate = mLuaInteractiveMessage-&gt;mImmediate;</span>
+<span class="add">+        onButtonPressed(button);</span>
+<span class="add">+        if (!immediate)</span>
+<span class="add">+            return;</span>
+<span class="add">+</span>
+<span class="add">+        setLastButtonPressed(button);</span>
+<span class="add">+        MWBase::Environment::get().getInputManager()-&gt;changeInputMode(</span>
+<span class="add">+            MWBase::Environment::get().getWindowManager()-&gt;isGuiMode());</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool MessageBoxManager::removeMessageBox(MessageBox* msgbox)</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/messagebox.hpp</div><pre>
+<span class="hunk">@@ -2,6 +2,9 @@</span>
+<span class="ctx"> #define MWGUI_MESSAGE_BOX_H</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;memory&gt;</span>
+<span class="add">+#include &lt;optional&gt;</span>
+<span class="add">+#include &lt;string&gt;</span>
+<span class="add">+#include &lt;vector&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;windowbase.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -25,9 +28,21 @@ namespace MWGui</span>
+<span class="ctx">         void onFrame(float frameDuration);</span>
+<span class="ctx">         void createMessageBox(std::string_view message, bool stat = false);</span>
+<span class="ctx">         void removeStaticMessageBox();</span>
+<span class="add">+        /// @param luaCanAnswer Whether the player&#x27;s Lua scripts may show and answer this box, if they answer</span>
+<span class="add">+        /// interactive message boxes. A caller that waits for the answer in a loop that doesn&#x27;t run Lua must pass</span>
+<span class="add">+        /// false.</span>
+<span class="ctx">         bool createInteractiveMessageBox(std::string_view message, const std::vector&lt;std::string&gt;&amp; buttons,</span>
+<span class="del">-            bool immediate = false, int defaultFocus = -1);</span>
+<span class="del">-        bool isInteractiveMessageBox();</span>
+<span class="add">+            bool immediate = false, int defaultFocus = -1, bool luaCanAnswer = true);</span>
+<span class="add">+        bool isInteractiveMessageBox() const;</span>
+<span class="add">+</span>
+<span class="add">+        /// While set, the manager doesn&#x27;t show the interactive message boxes that Lua can answer. It sends each one</span>
+<span class="add">+        /// to the player&#x27;s Lua scripts instead. They show it in their own way, and answer with</span>
+<span class="add">+        /// answerInteractiveMessage.</span>
+<span class="add">+        void setLuaAnswersInteractiveMessages(bool answers);</span>
+<span class="add">+</span>
+<span class="add">+        /// Presses the button with the given index in the interactive message box that was sent to Lua with the</span>
+<span class="add">+        /// given id. Does nothing if that box is no longer waiting for an answer.</span>
+<span class="add">+        void answerInteractiveMessage(int id, int button);</span>
+<span class="ctx"> </span>
+<span class="ctx">         std::size_t getMessagesCount();</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -61,8 +76,22 @@ namespace MWGui</span>
+<span class="ctx">         const std::vector&lt;std::unique_ptr&lt;MessageBox&gt;&gt;&amp; getActiveMessageBoxes() const;</span>
+<span class="ctx"> </span>
+<span class="ctx">     private:</span>
+<span class="add">+        /// An interactive message box that was sent to the player&#x27;s Lua scripts instead of being shown.</span>
+<span class="add">+        struct LuaInteractiveMessage</span>
+<span class="add">+        {</span>
+<span class="add">+            int mId;</span>
+<span class="add">+            std::string mMessage;</span>
+<span class="add">+            std::vector&lt;std::string&gt; mButtons;</span>
+<span class="add">+            bool mImmediate;</span>
+<span class="add">+            int mDefaultFocus;</span>
+<span class="add">+            int mButtonPressed = -1;</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="ctx">         std::vector&lt;std::unique_ptr&lt;MessageBox&gt;&gt; mMessageBoxes;</span>
+<span class="ctx">         std::unique_ptr&lt;InteractiveMessageBox&gt; mInterMessageBoxe;</span>
+<span class="add">+        std::optional&lt;LuaInteractiveMessage&gt; mLuaInteractiveMessage;</span>
+<span class="add">+        int mLastLuaInteractiveMessageId = 0;</span>
+<span class="add">+        bool mLuaAnswersInteractiveMessages = false;</span>
+<span class="ctx">         MessageBox* mStaticMessageBox;</span>
+<span class="ctx">         float mMessageBoxSpeed;</span>
+<span class="ctx">         int mLastButtonPressed;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/windowmanagerimp.cpp</div><pre>
+<span class="hunk">@@ -788,7 +788,9 @@ namespace MWGui</span>
+<span class="ctx">     void WindowManager::interactiveMessageBox(</span>
+<span class="ctx">         std::string_view message, const std::vector&lt;std::string&gt;&amp; buttons, bool block, int defaultFocus)</span>
+<span class="ctx">     {</span>
+<span class="del">-        mMessageBoxManager-&gt;createInteractiveMessageBox(message, buttons, block, defaultFocus);</span>
+<span class="add">+        // The loop below that waits for a blocking box&#x27;s answer doesn&#x27;t run Lua, so Lua can&#x27;t answer that box.</span>
+<span class="add">+        const bool luaCanAnswer = !block;</span>
+<span class="add">+        mMessageBoxManager-&gt;createInteractiveMessageBox(message, buttons, block, defaultFocus, luaCanAnswer);</span>
+<span class="ctx">         updateVisible();</span>
+<span class="ctx"> </span>
+<span class="ctx">         if (block)</span>
+<span class="hunk">@@ -859,6 +861,16 @@ namespace MWGui</span>
+<span class="ctx">         return mMessageBoxManager-&gt;readPressedButton();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    void WindowManager::setLuaAnswersInteractiveMessages(bool answers)</span>
+<span class="add">+    {</span>
+<span class="add">+        mMessageBoxManager-&gt;setLuaAnswersInteractiveMessages(answers);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void WindowManager::answerInteractiveMessage(int id, int button)</span>
+<span class="add">+    {</span>
+<span class="add">+        mMessageBoxManager-&gt;answerInteractiveMessage(id, button);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     std::string_view WindowManager::getGameSettingString(std::string_view id, std::string_view defaultValue)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         const ESM::GameSetting* setting = mStore-&gt;get&lt;ESM::GameSetting&gt;().search(id);</span>
+<span class="hunk">@@ -1029,7 +1041,7 @@ namespace MWGui</span>
+<span class="ctx">         // Make sure message boxes are always in front</span>
+<span class="ctx">         // This is an awful workaround for a series of awfully interwoven issues that couldn&#x27;t be worked around</span>
+<span class="ctx">         // in a better way because of an impressive number of even more awfully interwoven issues.</span>
+<span class="del">-        if (mMessageBoxManager &amp;&amp; mMessageBoxManager-&gt;isInteractiveMessageBox()</span>
+<span class="add">+        if (mMessageBoxManager &amp;&amp; mMessageBoxManager-&gt;getInteractiveMessageBox() != nullptr</span>
+<span class="ctx">             &amp;&amp; mCurrentModals.back() != mMessageBoxManager-&gt;getInteractiveMessageBox())</span>
+<span class="ctx">         {</span>
+<span class="ctx">             std::vector&lt;WindowModal*&gt;::iterator found = std::find(</span>
+<span class="hunk">@@ -2146,7 +2158,7 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool WindowManager::isSavingAllowed() const</span>
+<span class="ctx">     {</span>
+<span class="del">-        return !MyGUI::InputManager::getInstance().isModalAny()</span>
+<span class="add">+        return !MyGUI::InputManager::getInstance().isModalAny() &amp;&amp; !isInteractiveMessageBoxActive()</span>
+<span class="ctx">             &amp;&amp; !isConsoleMode()</span>
+<span class="ctx">             // TODO: remove this, once we have properly serialized the state of open windows</span>
+<span class="ctx">             &amp;&amp; (!isGuiMode() || (mGuiModes.size() == 1 &amp;&amp; (getMode() == GM_MainMenu || getMode() == GM_Rest)));</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/windowmanagerimp.hpp</div><pre>
+<span class="hunk">@@ -280,6 +280,9 @@ namespace MWGui</span>
+<span class="ctx">         int readPressedButton() override; ///&lt; returns the index of the pressed button or -1 if no button was pressed</span>
+<span class="ctx">                                           ///&lt; (-&gt;MessageBoxmanager-&gt;InteractiveMessageBox)</span>
+<span class="ctx"> </span>
+<span class="add">+        void setLuaAnswersInteractiveMessages(bool answers) override;</span>
+<span class="add">+        void answerInteractiveMessage(int id, int button) override;</span>
+<span class="add">+</span>
+<span class="ctx">         void update(float duration);</span>
+<span class="ctx"> </span>
+<span class="ctx">         void updateMouseEmulationCursor();</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/luamanagerimp.cpp</div><pre>
+<span class="hunk">@@ -415,6 +415,14 @@ namespace MWLua</span>
+<span class="ctx">                 playerScripts-&gt;uiModeChanged(*mDelayedUiModeChangedArg, true);</span>
+<span class="ctx">             mDelayedUiModeChangedArg = std::nullopt;</span>
+<span class="ctx">         }</span>
+<span class="add">+</span>
+<span class="add">+        if (mInteractiveMessageRequest)</span>
+<span class="add">+        {</span>
+<span class="add">+            if (playerScripts)</span>
+<span class="add">+                playerScripts-&gt;interactiveMessageRequested(mInteractiveMessageRequest-&gt;mId,</span>
+<span class="add">+                    mInteractiveMessageRequest-&gt;mMessage, mInteractiveMessageRequest-&gt;mButtons);</span>
+<span class="add">+            mInteractiveMessageRequest = std::nullopt;</span>
+<span class="add">+        }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void LuaManager::applyDelayedActions()</span>
+<span class="hunk">@@ -448,6 +456,8 @@ namespace MWLua</span>
+<span class="ctx">         mGlobalScriptsStarted = false;</span>
+<span class="ctx">         mNewGameStarted = false;</span>
+<span class="ctx">         mDelayedUiModeChangedArg = std::nullopt;</span>
+<span class="add">+        mInteractiveMessageRequest = std::nullopt;</span>
+<span class="add">+        MWBase::Environment::get().getWindowManager()-&gt;setLuaAnswersInteractiveMessages(false);</span>
+<span class="ctx">         if (!mPlayer.isEmpty())</span>
+<span class="ctx">         {</span>
+<span class="ctx">             mPlayer.getCellRef().unsetRefNum();</span>
+<span class="hunk">@@ -531,6 +541,11 @@ namespace MWLua</span>
+<span class="ctx">             playerScripts-&gt;uiModeChanged(argId, false);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    void LuaManager::interactiveMessageRequested(int id, std::string message, std::vector&lt;std::string&gt; buttons)</span>
+<span class="add">+    {</span>
+<span class="add">+        mInteractiveMessageRequest = InteractiveMessageRequest{ id, std::move(message), std::move(buttons) };</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void LuaManager::viewportResized(int width, int height)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         if (!mPlayer.isEmpty())</span>
+<span class="hunk">@@ -940,6 +955,7 @@ namespace MWLua</span>
+<span class="ctx">         LuaUi::clearMenuInterface();</span>
+<span class="ctx">         LuaUi::clearSettings();</span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;setConsoleMode(&quot;&quot;);</span>
+<span class="add">+        MWBase::Environment::get().getWindowManager()-&gt;setLuaAnswersInteractiveMessages(false);</span>
+<span class="ctx">         MWBase::Environment::get().getL10nManager()-&gt;dropCache();</span>
+<span class="ctx">         for (const std::string&amp; name : mUiResourceManager.cursorNames())</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;removeLuaCursor(name);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/luamanagerimp.hpp</div><pre>
+<span class="hunk">@@ -125,6 +125,7 @@ namespace MWLua</span>
+<span class="ctx">         void objectTeleported(const MWWorld::Ptr&amp; ptr) override;</span>
+<span class="ctx">         void questUpdated(const ESM::RefId&amp; questId, int stage) override;</span>
+<span class="ctx">         void uiModeChanged(const MWWorld::Ptr&amp; arg) override;</span>
+<span class="add">+        void interactiveMessageRequested(int id, std::string message, std::vector&lt;std::string&gt; buttons) override;</span>
+<span class="ctx">         void viewportResized(int width, int height) override;</span>
+<span class="ctx">         void actorDied(const MWWorld::Ptr&amp; actor) override;</span>
+<span class="ctx">         void onDialogueResponse(</span>
+<span class="hunk">@@ -280,6 +281,15 @@ namespace MWLua</span>
+<span class="ctx">         std::vector&lt;std::pair&lt;std::string, Misc::Color&gt;&gt; mInGameConsoleMessages;</span>
+<span class="ctx">         std::optional&lt;ObjectId&gt; mDelayedUiModeChangedArg;</span>
+<span class="ctx"> </span>
+<span class="add">+        struct InteractiveMessageRequest</span>
+<span class="add">+        {</span>
+<span class="add">+            int mId;</span>
+<span class="add">+            std::string mMessage;</span>
+<span class="add">+            std::vector&lt;std::string&gt; mButtons;</span>
+<span class="add">+        };</span>
+<span class="add">+        // A new request replaces an earlier one, so only the latest one is sent to the scripts.</span>
+<span class="add">+        std::optional&lt;InteractiveMessageRequest&gt; mInteractiveMessageRequest;</span>
+<span class="add">+</span>
+<span class="ctx">         LuaUtil::LuaStorage mGlobalStorage;</span>
+<span class="ctx">         LuaUtil::LuaStorage mPlayerStorage;</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/playerscripts.hpp</div><pre>
+<span class="hunk">@@ -1,8 +1,13 @@</span>
+<span class="ctx"> #ifndef MWLUA_PLAYERSCRIPTS_H</span>
+<span class="ctx"> #define MWLUA_PLAYERSCRIPTS_H</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;string&gt;</span>
+<span class="add">+#include &lt;string_view&gt;</span>
+<span class="add">+#include &lt;vector&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> #include &lt;SDL_events.h&gt;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;components/lua/util.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/sdlutil/events.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/luamanager.hpp&quot;</span>
+<span class="hunk">@@ -21,7 +26,7 @@ namespace MWLua</span>
+<span class="ctx">             , mInputProcessor(this)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             registerEngineHandlers({ &amp;mConsoleCommandHandlers, &amp;mOnFrameHandlers, &amp;mQuestUpdate,</span>
+<span class="del">-                &amp;mViewportResizedHandlers, &amp;mUiModeChanged });</span>
+<span class="add">+                &amp;mViewportResizedHandlers, &amp;mUiModeChanged, &amp;mInteractiveMessageRequested });</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         void processInputEvent(const MWBase::LuaManager::InputEvent&amp; event)</span>
+<span class="hunk">@@ -50,6 +55,14 @@ namespace MWLua</span>
+<span class="ctx">                 callEngineHandlers(mUiModeChanged, byLuaAction, LObject(arg));</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="add">+        void interactiveMessageRequested(int id, std::string_view message, const std::vector&lt;std::string&gt;&amp; buttons)</span>
+<span class="add">+        {</span>
+<span class="add">+            sol::table buttonTable(mLua.unsafeState(), sol::create);</span>
+<span class="add">+            for (std::size_t i = 0; i &lt; buttons.size(); ++i)</span>
+<span class="add">+                buttonTable[LuaUtil::toLuaIndex(i)] = buttons[i];</span>
+<span class="add">+            callEngineHandlers(mInteractiveMessageRequested, id, message, buttonTable);</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="ctx">     private:</span>
+<span class="ctx">         friend class MWLua::InputProcessor&lt;PlayerScripts&gt;;</span>
+<span class="ctx">         InputProcessor&lt;PlayerScripts&gt; mInputProcessor;</span>
+<span class="hunk">@@ -58,6 +71,7 @@ namespace MWLua</span>
+<span class="ctx">         EngineHandlerList mQuestUpdate{ &quot;onQuestUpdate&quot; };</span>
+<span class="ctx">         EngineHandlerList mViewportResizedHandlers{ &quot;onViewportResized&quot; };</span>
+<span class="ctx">         EngineHandlerList mUiModeChanged{ &quot;_onUiModeChanged&quot; };</span>
+<span class="add">+        EngineHandlerList mInteractiveMessageRequested{ &quot;_onInteractiveMessage&quot; };</span>
+<span class="ctx">     };</span>
+<span class="ctx"> </span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/uibindings.cpp</div><pre>
+<span class="hunk">@@ -158,6 +158,19 @@ namespace MWLua</span>
+<span class="ctx">                       },</span>
+<span class="ctx">                       &quot;Show interactive message&quot;);</span>
+<span class="ctx">               };</span>
+<span class="add">+        if (!menu)</span>
+<span class="add">+        {</span>
+<span class="add">+            api[&quot;_setLuaAnswersInteractiveMessages&quot;] = [windowManager, luaManager = context.mLuaManager](bool answers) {</span>
+<span class="add">+                luaManager-&gt;addAction(</span>
+<span class="add">+                    [windowManager, answers] { windowManager-&gt;setLuaAnswersInteractiveMessages(answers); },</span>
+<span class="add">+                    &quot;Set whether Lua answers interactive messages&quot;);</span>
+<span class="add">+            };</span>
+<span class="add">+            api[&quot;_answerInteractiveMessage&quot;] = [windowManager, luaManager = context.mLuaManager](int id, int button) {</span>
+<span class="add">+                luaManager-&gt;addAction(</span>
+<span class="add">+                    [windowManager, id, button] { windowManager-&gt;answerInteractiveMessage(id, button); },</span>
+<span class="add">+                    &quot;Answer interactive message&quot;);</span>
+<span class="add">+            };</span>
+<span class="add">+        }</span>
+<span class="ctx">         api[&quot;CONSOLE_COLOR&quot;] = LuaUtil::makeStrictReadOnly(LuaUtil::tableFromPairs&lt;std::string, Misc::Color&gt;(lua,</span>
+<span class="ctx">             {</span>
+<span class="ctx">                 { &quot;Default&quot;, Misc::Color::fromHex(MWBase::WindowManager::sConsoleColor_Default.substr(1)) },</span>
+</pre></div>

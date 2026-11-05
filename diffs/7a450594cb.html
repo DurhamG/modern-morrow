@@ -1,0 +1,473 @@
+<div class="file"><div class="path">apps/openmw/CMakeLists.txt</div><pre>
+<span class="hunk">@@ -104,7 +104,7 @@ add_openmw_dir (mwmechanics</span>
+<span class="ctx">     aicast aiescort aiface aiactivate aicombat recharge repair enchanting pathfinding pathgrid security spellcasting spellresistance</span>
+<span class="ctx">     disease pickpocket levelledlist combat steering obstacle autocalcspell difficultyscaling aicombataction summoning</span>
+<span class="ctx">     character actors objects aistate weaponpriority spellpriority weapontype spellutil</span>
+<span class="del">-    spelleffects barter services</span>
+<span class="add">+    spelleffects barter services spellmaking</span>
+<span class="ctx">     )</span>
+<span class="ctx"> </span>
+<span class="ctx"> add_openmw_dir (mwstate</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/spellcreationdialog.cpp</div><pre>
+<span class="hunk">@@ -12,11 +12,8 @@</span>
+<span class="ctx"> #include &lt;components/settings/values.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/widgets/list.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="del">-#include &lt;components/esm3/loadgmst.hpp&gt;</span>
+<span class="del">-</span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/inputmanager.hpp&quot;</span>
+<span class="del">-#include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="hunk">@@ -25,7 +22,7 @@</span>
+<span class="ctx"> #include &quot;../mwworld/store.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwmechanics/actorutil.hpp&quot;</span>
+<span class="del">-#include &quot;../mwmechanics/creaturestats.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/spellmaking.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/spellutil.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;class.hpp&quot;</span>
+<span class="hunk">@@ -94,6 +91,11 @@ namespace MWGui</span>
+<span class="ctx">         mDurationSlider-&gt;eventScrollChangePosition += MyGUI::newDelegate(this, &amp;EditEffectDialog::onDurationChanged);</span>
+<span class="ctx">         mAreaSlider-&gt;eventScrollChangePosition += MyGUI::newDelegate(this, &amp;EditEffectDialog::onAreaChanged);</span>
+<span class="ctx"> </span>
+<span class="add">+        mMagnitudeMinSlider-&gt;setScrollRange(MWMechanics::sMaxCustomMagnitude);</span>
+<span class="add">+        mMagnitudeMaxSlider-&gt;setScrollRange(MWMechanics::sMaxCustomMagnitude);</span>
+<span class="add">+        mDurationSlider-&gt;setScrollRange(MWMechanics::sMaxCustomDuration);</span>
+<span class="add">+        mAreaSlider-&gt;setScrollRange(MWMechanics::sMaxCustomArea + 1);</span>
+<span class="add">+</span>
+<span class="ctx">         if (Settings::gui().mControllerMenus)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             mControllerButtons.mA = &quot;#{Interface:Select}&quot;;</span>
+<span class="hunk">@@ -124,8 +126,8 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void EditEffectDialog::newEffect(const ESM::MagicEffect* effect)</span>
+<span class="ctx">     {</span>
+<span class="del">-        bool allowSelf = (effect-&gt;mData.mFlags &amp; ESM::MagicEffect::CastSelf) != 0 || mConstantEffect;</span>
+<span class="del">-        bool allowTouch = (effect-&gt;mData.mFlags &amp; ESM::MagicEffect::CastTouch) &amp;&amp; !mConstantEffect;</span>
+<span class="add">+        bool allowSelf = MWMechanics::isCustomEffectRangeAllowed(*effect, ESM::RT_Self, mConstantEffect);</span>
+<span class="add">+        bool allowTouch = MWMechanics::isCustomEffectRangeAllowed(*effect, ESM::RT_Touch, mConstantEffect);</span>
+<span class="ctx"> </span>
+<span class="ctx">         setMagicEffect(effect);</span>
+<span class="ctx">         mEditing = false;</span>
+<span class="hunk">@@ -282,9 +284,9 @@ namespace MWGui</span>
+<span class="ctx">         // cycle through range types until we find something that&#x27;s allowed</span>
+<span class="ctx">         // does not handle the case where nothing is allowed (this should be prevented before opening the Add Effect</span>
+<span class="ctx">         // dialog)</span>
+<span class="del">-        bool allowSelf = (mMagicEffect-&gt;mData.mFlags &amp; ESM::MagicEffect::CastSelf) != 0 || mConstantEffect;</span>
+<span class="del">-        bool allowTouch = (mMagicEffect-&gt;mData.mFlags &amp; ESM::MagicEffect::CastTouch) &amp;&amp; !mConstantEffect;</span>
+<span class="del">-        bool allowTarget = (mMagicEffect-&gt;mData.mFlags &amp; ESM::MagicEffect::CastTarget) &amp;&amp; !mConstantEffect;</span>
+<span class="add">+        bool allowSelf = MWMechanics::isCustomEffectRangeAllowed(*mMagicEffect, ESM::RT_Self, mConstantEffect);</span>
+<span class="add">+        bool allowTouch = MWMechanics::isCustomEffectRangeAllowed(*mMagicEffect, ESM::RT_Touch, mConstantEffect);</span>
+<span class="add">+        bool allowTarget = MWMechanics::isCustomEffectRangeAllowed(*mMagicEffect, ESM::RT_Target, mConstantEffect);</span>
+<span class="ctx">         if (mEffect.mRange == ESM::RT_Self &amp;&amp; !allowSelf)</span>
+<span class="ctx">             mEffect.mRange = (mEffect.mRange + 1) % 3;</span>
+<span class="ctx">         if (mEffect.mRange == ESM::RT_Touch &amp;&amp; !allowTouch)</span>
+<span class="hunk">@@ -624,49 +626,29 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void SpellCreationDialog::onBuyButtonClicked(MyGUI::Widget* /*sender*/)</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mEffects.size() &lt;= 0)</span>
+<span class="del">-        {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage30}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        if (mNameEdit-&gt;getCaption().empty())</span>
+<span class="del">-        {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage10}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        if (mMagickaCost-&gt;getCaption() == &quot;0&quot;)</span>
+<span class="del">-        {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sEnchantmentMenu8}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="del">-        int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);</span>
+<span class="add">+        mSpell.mName = mNameEdit-&gt;getCaption();</span>
+<span class="ctx"> </span>
+<span class="del">-        int price = MyGUI::utility::parseInt(mPriceLabel-&gt;getCaption());</span>
+<span class="del">-        if (price &gt; playerGold)</span>
+<span class="add">+        switch (MWMechanics::getSpellmakingProblem(mPtr, mSpell))</span>
+<span class="ctx">         {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage18}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="add">+            case MWMechanics::SpellmakingProblem::None:</span>
+<span class="add">+                break;</span>
+<span class="add">+            case MWMechanics::SpellmakingProblem::NoEffects:</span>
+<span class="add">+                MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage30}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="add">+            case MWMechanics::SpellmakingProblem::NoName:</span>
+<span class="add">+                MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage10}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="add">+            case MWMechanics::SpellmakingProblem::NoCost:</span>
+<span class="add">+                MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sEnchantmentMenu8}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="add">+            case MWMechanics::SpellmakingProblem::NotEnoughGold:</span>
+<span class="add">+                MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage18}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        mSpell.mName = mNameEdit-&gt;getCaption();</span>
+<span class="del">-</span>
+<span class="del">-        player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, price);</span>
+<span class="del">-</span>
+<span class="del">-        // add gold to NPC trading gold pool</span>
+<span class="del">-        MWMechanics::CreatureStats&amp; npcStats = mPtr.getClass().getCreatureStats(mPtr);</span>
+<span class="del">-        npcStats.setGoldPool(npcStats.getGoldPool() + price);</span>
+<span class="del">-</span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;playSound(ESM::RefId::stringRefId(&quot;Mysticism Hit&quot;));</span>
+<span class="ctx"> </span>
+<span class="del">-        const ESM::Spell* spell = MWBase::Environment::get().getESMStore()-&gt;insert(mSpell);</span>
+<span class="del">-</span>
+<span class="del">-        MWMechanics::CreatureStats&amp; stats = player.getClass().getCreatureStats(player);</span>
+<span class="del">-        MWMechanics::Spells&amp; spells = stats.getSpells();</span>
+<span class="del">-        spells.add(spell-&gt;mId);</span>
+<span class="add">+        MWMechanics::buyCustomSpell(mPtr, mSpell);</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(GM_SpellCreation);</span>
+<span class="ctx">     }</span>
+<span class="hunk">@@ -693,6 +675,10 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void SpellCreationDialog::notifyEffectsChanged()</span>
+<span class="ctx">     {</span>
+<span class="add">+        ESM::EffectList effects;</span>
+<span class="add">+        effects.populate(mEffects);</span>
+<span class="add">+        mSpell = MWMechanics::makeCustomSpell(mSpell.mName, effects);</span>
+<span class="add">+</span>
+<span class="ctx">         if (mEffects.empty())</span>
+<span class="ctx">         {</span>
+<span class="ctx">             mMagickaCost-&gt;setCaption(&quot;0&quot;);</span>
+<span class="hunk">@@ -701,32 +687,9 @@ namespace MWGui</span>
+<span class="ctx">             return;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        float y = 0;</span>
+<span class="del">-</span>
+<span class="del">-        const MWWorld::ESMStore&amp; store = *MWBase::Environment::get().getESMStore();</span>
+<span class="del">-</span>
+<span class="del">-        for (const ESM::ENAMstruct&amp; effect : mEffects)</span>
+<span class="del">-        {</span>
+<span class="del">-            y += std::max(</span>
+<span class="del">-                1.f, MWMechanics::calcEffectCost(effect, nullptr, MWMechanics::EffectCostMethod::PlayerSpell));</span>
+<span class="del">-</span>
+<span class="del">-            if (effect.mRange == ESM::RT_Target)</span>
+<span class="del">-                y *= 1.5;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        mSpell.mEffects.populate(mEffects);</span>
+<span class="del">-        mSpell.mData.mCost = int(y);</span>
+<span class="del">-        mSpell.mData.mType = ESM::Spell::ST_Spell;</span>
+<span class="del">-        mSpell.mData.mFlags = 0;</span>
+<span class="del">-</span>
+<span class="del">-        mMagickaCost-&gt;setCaption(MyGUI::utility::toString(int(y)));</span>
+<span class="del">-</span>
+<span class="del">-        float fSpellMakingValueMult = store.get&lt;ESM::GameSetting&gt;().find(&quot;fSpellMakingValueMult&quot;)-&gt;mValue.getFloat();</span>
+<span class="del">-</span>
+<span class="del">-        int price = std::max(1, static_cast&lt;int&gt;(y * fSpellMakingValueMult));</span>
+<span class="del">-        price = MWBase::Environment::get().getMechanicsManager()-&gt;getBarterOffer(mPtr, price, true);</span>
+<span class="add">+        mMagickaCost-&gt;setCaption(MyGUI::utility::toString(mSpell.mData.mCost));</span>
+<span class="ctx"> </span>
+<span class="del">-        mPriceLabel-&gt;setCaption(MyGUI::utility::toString(int(price)));</span>
+<span class="add">+        mPriceLabel-&gt;setCaption(MyGUI::utility::toString(MWMechanics::getCustomSpellPrice(mPtr, mSpell.mEffects)));</span>
+<span class="ctx"> </span>
+<span class="ctx">         float chance = MWMechanics::calcSpellBaseSuccessChance(&amp;mSpell, MWMechanics::getPlayer(), nullptr);</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -773,34 +736,8 @@ namespace MWGui</span>
+<span class="ctx">     void EffectEditorBase::startEditing()</span>
+<span class="ctx">     {</span>
+<span class="ctx">         // get the list of magic effects that are known to the player</span>
+<span class="del">-</span>
+<span class="del">-        MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="del">-        MWMechanics::CreatureStats&amp; stats = player.getClass().getCreatureStats(player);</span>
+<span class="del">-        MWMechanics::Spells&amp; spells = stats.getSpells();</span>
+<span class="del">-</span>
+<span class="del">-        std::vector&lt;const ESM::MagicEffect*&gt; knownEffects;</span>
+<span class="del">-</span>
+<span class="del">-        for (const ESM::Spell* spell : spells)</span>
+<span class="del">-        {</span>
+<span class="del">-            // only normal spells count</span>
+<span class="del">-            if (spell-&gt;mData.mType != ESM::Spell::ST_Spell)</span>
+<span class="del">-                continue;</span>
+<span class="del">-</span>
+<span class="del">-            for (const ESM::IndexedENAMstruct&amp; effectInfo : spell-&gt;mEffects.mList)</span>
+<span class="del">-            {</span>
+<span class="del">-                const ESM::MagicEffect* effect = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::MagicEffect&gt;().find(</span>
+<span class="del">-                    effectInfo.mData.mEffectID);</span>
+<span class="del">-</span>
+<span class="del">-                // skip effects that do not allow spellmaking/enchanting</span>
+<span class="del">-                int requiredFlags</span>
+<span class="del">-                    = (mType == Spellmaking) ? ESM::MagicEffect::AllowSpellmaking : ESM::MagicEffect::AllowEnchanting;</span>
+<span class="del">-                if (!(effect-&gt;mData.mFlags &amp; requiredFlags))</span>
+<span class="del">-                    continue;</span>
+<span class="del">-</span>
+<span class="del">-                if (std::find(knownEffects.begin(), knownEffects.end(), effect) == knownEffects.end())</span>
+<span class="del">-                    knownEffects.push_back(effect);</span>
+<span class="del">-            }</span>
+<span class="del">-        }</span>
+<span class="add">+        std::vector&lt;const ESM::MagicEffect*&gt; knownEffects = MWMechanics::getCustomMagicEffects(MWMechanics::getPlayer(),</span>
+<span class="add">+            mType == Spellmaking ? MWMechanics::CustomMagic::Spell : MWMechanics::CustomMagic::Enchantment);</span>
+<span class="ctx"> </span>
+<span class="ctx">         std::sort(knownEffects.begin(), knownEffects.end(), sortMagicEffects);</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -882,7 +819,7 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void EffectEditorBase::onAvailableEffectClicked(MyGUI::Widget* sender)</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mEffects.size() &gt;= 8)</span>
+<span class="add">+        if (mEffects.size() &gt;= MWMechanics::sMaxCustomEffects)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage28}&quot;);</span>
+<span class="ctx">             return;</span>
+<span class="hunk">@@ -894,9 +831,9 @@ namespace MWGui</span>
+<span class="ctx">         const ESM::MagicEffect* effect</span>
+<span class="ctx">             = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::MagicEffect&gt;().find(mSelectedKnownEffectId);</span>
+<span class="ctx"> </span>
+<span class="del">-        bool allowSelf = (effect-&gt;mData.mFlags &amp; ESM::MagicEffect::CastSelf) != 0 || mConstantEffect;</span>
+<span class="del">-        bool allowTouch = (effect-&gt;mData.mFlags &amp; ESM::MagicEffect::CastTouch) &amp;&amp; !mConstantEffect;</span>
+<span class="del">-        bool allowTarget = (effect-&gt;mData.mFlags &amp; ESM::MagicEffect::CastTarget) &amp;&amp; !mConstantEffect;</span>
+<span class="add">+        bool allowSelf = MWMechanics::isCustomEffectRangeAllowed(*effect, ESM::RT_Self, mConstantEffect);</span>
+<span class="add">+        bool allowTouch = MWMechanics::isCustomEffectRangeAllowed(*effect, ESM::RT_Touch, mConstantEffect);</span>
+<span class="add">+        bool allowTarget = MWMechanics::isCustomEffectRangeAllowed(*effect, ESM::RT_Target, mConstantEffect);</span>
+<span class="ctx"> </span>
+<span class="ctx">         if (!allowSelf &amp;&amp; !allowTouch &amp;&amp; !allowTarget)</span>
+<span class="ctx">             return; // TODO: Show an error message popup?</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/spellmaking.cpp</div><pre>
+<span class="hunk">@@ -0,0 +1,146 @@</span>
+<span class="add">+#include &quot;spellmaking.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;algorithm&gt;</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;components/esm3/loadgmst.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadmgef.hpp&gt;</span>
+<span class="add">+</span>
+<span class="add">+#include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+#include &quot;../mwworld/class.hpp&quot;</span>
+<span class="add">+#include &quot;../mwworld/containerstore.hpp&quot;</span>
+<span class="add">+#include &quot;../mwworld/esmstore.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+#include &quot;actorutil.hpp&quot;</span>
+<span class="add">+#include &quot;creaturestats.hpp&quot;</span>
+<span class="add">+#include &quot;spells.hpp&quot;</span>
+<span class="add">+#include &quot;spellutil.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+namespace</span>
+<span class="add">+{</span>
+<span class="add">+    float getExactCustomSpellCost(const ESM::EffectList&amp; effects)</span>
+<span class="add">+    {</span>
+<span class="add">+        float y = 0;</span>
+<span class="add">+</span>
+<span class="add">+        for (const ESM::IndexedENAMstruct&amp; effect : effects.mList)</span>
+<span class="add">+        {</span>
+<span class="add">+            y += std::max(</span>
+<span class="add">+                1.f, MWMechanics::calcEffectCost(effect.mData, nullptr, MWMechanics::EffectCostMethod::PlayerSpell));</span>
+<span class="add">+</span>
+<span class="add">+            if (effect.mData.mRange == ESM::RT_Target)</span>
+<span class="add">+                y *= 1.5;</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        return y;</span>
+<span class="add">+    }</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+namespace MWMechanics</span>
+<span class="add">+{</span>
+<span class="add">+    std::vector&lt;const ESM::MagicEffect*&gt; getCustomMagicEffects(const MWWorld::Ptr&amp; actor, CustomMagic type)</span>
+<span class="add">+    {</span>
+<span class="add">+        const MWWorld::Store&lt;ESM::MagicEffect&gt;&amp; store</span>
+<span class="add">+            = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::MagicEffect&gt;();</span>
+<span class="add">+        std::vector&lt;const ESM::MagicEffect*&gt; knownEffects;</span>
+<span class="add">+</span>
+<span class="add">+        for (const ESM::Spell* spell : actor.getClass().getCreatureStats(actor).getSpells())</span>
+<span class="add">+        {</span>
+<span class="add">+            // only normal spells count</span>
+<span class="add">+            if (spell-&gt;mData.mType != ESM::Spell::ST_Spell)</span>
+<span class="add">+                continue;</span>
+<span class="add">+</span>
+<span class="add">+            for (const ESM::IndexedENAMstruct&amp; effectInfo : spell-&gt;mEffects.mList)</span>
+<span class="add">+            {</span>
+<span class="add">+                const ESM::MagicEffect* effect = store.find(effectInfo.mData.mEffectID);</span>
+<span class="add">+</span>
+<span class="add">+                // skip effects that do not allow spellmaking/enchanting</span>
+<span class="add">+                int requiredFlags = (type == CustomMagic::Spell) ? ESM::MagicEffect::AllowSpellmaking</span>
+<span class="add">+                                                                 : ESM::MagicEffect::AllowEnchanting;</span>
+<span class="add">+                if (!(effect-&gt;mData.mFlags &amp; requiredFlags))</span>
+<span class="add">+                    continue;</span>
+<span class="add">+</span>
+<span class="add">+                if (std::find(knownEffects.begin(), knownEffects.end(), effect) == knownEffects.end())</span>
+<span class="add">+                    knownEffects.push_back(effect);</span>
+<span class="add">+            }</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        return knownEffects;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    bool isCustomEffectRangeAllowed(const ESM::MagicEffect&amp; effect, int range, bool isConstant)</span>
+<span class="add">+    {</span>
+<span class="add">+        switch (range)</span>
+<span class="add">+        {</span>
+<span class="add">+            case ESM::RT_Self:</span>
+<span class="add">+                return (effect.mData.mFlags &amp; ESM::MagicEffect::CastSelf) != 0 || isConstant;</span>
+<span class="add">+            case ESM::RT_Touch:</span>
+<span class="add">+                return (effect.mData.mFlags &amp; ESM::MagicEffect::CastTouch) != 0 &amp;&amp; !isConstant;</span>
+<span class="add">+            case ESM::RT_Target:</span>
+<span class="add">+                return (effect.mData.mFlags &amp; ESM::MagicEffect::CastTarget) != 0 &amp;&amp; !isConstant;</span>
+<span class="add">+            default:</span>
+<span class="add">+                return false;</span>
+<span class="add">+        }</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    int getCustomSpellCost(const ESM::EffectList&amp; effects)</span>
+<span class="add">+    {</span>
+<span class="add">+        return static_cast&lt;int&gt;(getExactCustomSpellCost(effects));</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    int getCustomSpellPrice(const MWWorld::Ptr&amp; merchant, const ESM::EffectList&amp; effects)</span>
+<span class="add">+    {</span>
+<span class="add">+        const MWWorld::ESMStore&amp; store = *MWBase::Environment::get().getESMStore();</span>
+<span class="add">+        float fSpellMakingValueMult = store.get&lt;ESM::GameSetting&gt;().find(&quot;fSpellMakingValueMult&quot;)-&gt;mValue.getFloat();</span>
+<span class="add">+</span>
+<span class="add">+        int price = std::max(1, static_cast&lt;int&gt;(getExactCustomSpellCost(effects) * fSpellMakingValueMult));</span>
+<span class="add">+        return MWBase::Environment::get().getMechanicsManager()-&gt;getBarterOffer(merchant, price, true);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    ESM::Spell makeCustomSpell(const std::string&amp; name, const ESM::EffectList&amp; effects)</span>
+<span class="add">+    {</span>
+<span class="add">+        ESM::Spell spell;</span>
+<span class="add">+        spell.mName = name;</span>
+<span class="add">+        spell.mEffects = effects;</span>
+<span class="add">+        spell.mData.mCost = getCustomSpellCost(effects);</span>
+<span class="add">+        spell.mData.mType = ESM::Spell::ST_Spell;</span>
+<span class="add">+        spell.mData.mFlags = 0;</span>
+<span class="add">+        return spell;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    SpellmakingProblem getSpellmakingProblem(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (spell.mEffects.mList.empty())</span>
+<span class="add">+            return SpellmakingProblem::NoEffects;</span>
+<span class="add">+</span>
+<span class="add">+        if (spell.mName.empty())</span>
+<span class="add">+            return SpellmakingProblem::NoName;</span>
+<span class="add">+</span>
+<span class="add">+        if (spell.mData.mCost == 0)</span>
+<span class="add">+            return SpellmakingProblem::NoCost;</span>
+<span class="add">+</span>
+<span class="add">+        const MWWorld::Ptr player = getPlayer();</span>
+<span class="add">+        int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);</span>
+<span class="add">+        if (getCustomSpellPrice(merchant, spell.mEffects) &gt; playerGold)</span>
+<span class="add">+            return SpellmakingProblem::NotEnoughGold;</span>
+<span class="add">+</span>
+<span class="add">+        return SpellmakingProblem::None;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    const ESM::Spell* buyCustomSpell(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell)</span>
+<span class="add">+    {</span>
+<span class="add">+        const int price = getCustomSpellPrice(merchant, spell.mEffects);</span>
+<span class="add">+        const MWWorld::Ptr player = getPlayer();</span>
+<span class="add">+</span>
+<span class="add">+        player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, price);</span>
+<span class="add">+</span>
+<span class="add">+        // add gold to NPC trading gold pool</span>
+<span class="add">+        CreatureStats&amp; npcStats = merchant.getClass().getCreatureStats(merchant);</span>
+<span class="add">+        npcStats.setGoldPool(npcStats.getGoldPool() + price);</span>
+<span class="add">+</span>
+<span class="add">+        const ESM::Spell* record = MWBase::Environment::get().getESMStore()-&gt;insert(spell);</span>
+<span class="add">+</span>
+<span class="add">+        player.getClass().getCreatureStats(player).getSpells().add(record-&gt;mId);</span>
+<span class="add">+        return record;</span>
+<span class="add">+    }</span>
+<span class="add">+}</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/spellmaking.hpp</div><pre>
+<span class="hunk">@@ -0,0 +1,79 @@</span>
+<span class="add">+#ifndef OPENMW_MECHANICS_SPELLMAKING_H</span>
+<span class="add">+#define OPENMW_MECHANICS_SPELLMAKING_H</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;cstddef&gt;</span>
+<span class="add">+#include &lt;string&gt;</span>
+<span class="add">+#include &lt;vector&gt;</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;components/esm3/effectlist.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadspel.hpp&gt;</span>
+<span class="add">+</span>
+<span class="add">+namespace ESM</span>
+<span class="add">+{</span>
+<span class="add">+    struct MagicEffect;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+namespace MWWorld</span>
+<span class="add">+{</span>
+<span class="add">+    class Ptr;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+namespace MWMechanics</span>
+<span class="add">+{</span>
+<span class="add">+    /// The most effects that a spell or an enchantment that the player makes can have.</span>
+<span class="add">+    static constexpr std::size_t sMaxCustomEffects = 8;</span>
+<span class="add">+</span>
+<span class="add">+    /// The highest magnitude that the player can give an effect of their own spell or enchantment.</span>
+<span class="add">+    static constexpr int sMaxCustomMagnitude = 100;</span>
+<span class="add">+</span>
+<span class="add">+    /// The longest duration, in seconds, that the player can give an effect of their own spell or enchantment.</span>
+<span class="add">+    static constexpr int sMaxCustomDuration = 1440;</span>
+<span class="add">+</span>
+<span class="add">+    /// The largest area, in feet, that the player can give an effect of their own spell or enchantment.</span>
+<span class="add">+    static constexpr int sMaxCustomArea = 50;</span>
+<span class="add">+</span>
+<span class="add">+    /// What the player makes from magic effects of their own choosing.</span>
+<span class="add">+    enum class CustomMagic</span>
+<span class="add">+    {</span>
+<span class="add">+        Spell,</span>
+<span class="add">+        Enchantment,</span>
+<span class="add">+    };</span>
+<span class="add">+</span>
+<span class="add">+    /// The magic effects that @a actor can put into a spell or an enchantment of their own. These are the effects of</span>
+<span class="add">+    /// the spells that they know, if the effect allows spellmaking or enchanting. Abilities, powers and other kinds</span>
+<span class="add">+    /// of spell don&#x27;t count. The list is in no particular order.</span>
+<span class="add">+    std::vector&lt;const ESM::MagicEffect*&gt; getCustomMagicEffects(const MWWorld::Ptr&amp; actor, CustomMagic type);</span>
+<span class="add">+</span>
+<span class="add">+    /// Whether an effect of the player&#x27;s own spell or enchantment can have @a range, an ESM::RangeType.</span>
+<span class="add">+    /// The effect must allow the range, and a constant effect works on self only.</span>
+<span class="add">+    bool isCustomEffectRangeAllowed(const ESM::MagicEffect&amp; effect, int range, bool isConstant);</span>
+<span class="add">+</span>
+<span class="add">+    /// The magicka cost of a spell that the player makes with @a effects.</span>
+<span class="add">+    int getCustomSpellCost(const ESM::EffectList&amp; effects);</span>
+<span class="add">+</span>
+<span class="add">+    /// The gold @a merchant asks to make a spell with @a effects for the player.</span>
+<span class="add">+    int getCustomSpellPrice(const MWWorld::Ptr&amp; merchant, const ESM::EffectList&amp; effects);</span>
+<span class="add">+</span>
+<span class="add">+    /// The spell that the spellmaking window makes with @a name and @a effects.</span>
+<span class="add">+    ESM::Spell makeCustomSpell(const std::string&amp; name, const ESM::EffectList&amp; effects);</span>
+<span class="add">+</span>
+<span class="add">+    /// The first problem that stops the player from buying a spell of their own.</span>
+<span class="add">+    enum class SpellmakingProblem</span>
+<span class="add">+    {</span>
+<span class="add">+        None,</span>
+<span class="add">+        NoEffects,</span>
+<span class="add">+        NoName,</span>
+<span class="add">+        NoCost,</span>
+<span class="add">+        NotEnoughGold,</span>
+<span class="add">+    };</span>
+<span class="add">+</span>
+<span class="add">+    /// What stops the player from buying @a spell from @a merchant, checked in the order that the spellmaking window</span>
+<span class="add">+    /// checks.</span>
+<span class="add">+    SpellmakingProblem getSpellmakingProblem(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell);</span>
+<span class="add">+</span>
+<span class="add">+    /// Makes the player pay @a merchant, adds @a spell to the game and teaches it to the player.</span>
+<span class="add">+    /// @return The new spell record.</span>
+<span class="add">+    const ESM::Spell* buyCustomSpell(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell);</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+#endif</span>
+</pre></div>

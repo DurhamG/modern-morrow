@@ -1,0 +1,98 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/actor.cpp</div><pre>
+<span class="hunk">@@ -425,6 +425,24 @@ namespace MWLua</span>
+<span class="ctx">             return target.getClass().getCreatureStats(target).isDeathAnimationFinished();</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+<span class="add">+        actor[&quot;disposeCorpse&quot;] = [context](const GObject&amp; object) {</span>
+<span class="add">+            const MWWorld::Ptr ptr = object.ptr();</span>
+<span class="add">+            if (!ptr.getClass().isActor() || ptr == MWMechanics::getPlayer())</span>
+<span class="add">+                throw std::runtime_error(&quot;Actor expected&quot;);</span>
+<span class="add">+            if (!ptr.getClass().getCreatureStats(ptr).isDead())</span>
+<span class="add">+                throw std::runtime_error(&quot;Only the corpses of dead actors can be disposed of&quot;);</span>
+<span class="add">+            if (ptr.getClass().isPersistent(ptr))</span>
+<span class="add">+                throw std::runtime_error(&quot;The corpses of persistent actors can&#x27;t be disposed of&quot;);</span>
+<span class="add">+            context.mLuaManager-&gt;addAction(</span>
+<span class="add">+                [object] {</span>
+<span class="add">+                    const MWWorld::Ptr corpse = object.ptr();</span>
+<span class="add">+                    // An earlier action may have removed the corpse already.</span>
+<span class="add">+                    if (corpse.getCellRef().getCount() &gt; 0 &amp;&amp; corpse.isInCell())</span>
+<span class="add">+                        MWMechanics::disposeCorpse(corpse);</span>
+<span class="add">+                },</span>
+<span class="add">+                &quot;DisposeCorpseAction&quot;);</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="ctx">         actor[&quot;getEncumbrance&quot;] = [](const Object&amp; object) -&gt; float {</span>
+<span class="ctx">             const MWWorld::Ptr ptr = object.ptr();</span>
+<span class="ctx">             return ptr.getClass().getEncumbrance(ptr);</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -141,6 +141,15 @@</span>
+<span class="ctx"> -- @param openmw.core#GameObject actor</span>
+<span class="ctx"> -- @return #boolean</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Remove a dead actor&#x27;s corpse from the world, the way the Dispose of Corpse button of the container window does (only in global scripts).</span>
+<span class="add">+-- If the death animation is still playing, the death is counted first, the actor&#x27;s mwscript runs, and the actor&#x27;s summoned creatures vanish, as they would when the animation ends.</span>
+<span class="add">+-- The button takes all the items out of the corpse before it disposes of it. This doesn&#x27;t: what the corpse still carries goes with it. Use @{#PLAYER.takeItem} first to keep the items.</span>
+<span class="add">+-- The actor must be dead and must not be the player. The corpses of persistent actors, such as some quest characters, stay, so this throws an error for them.</span>
+<span class="add">+-- The corpse leaves the world at the end of the frame.</span>
+<span class="add">+-- @function [parent=#Actor] disposeCorpse</span>
+<span class="add">+-- @param openmw.core#GameObject actor</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Agent bounds to be used for pathfinding functions.</span>
+<span class="ctx"> -- @function [parent=#Actor] getPathfindingAgentBounds</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -1261,6 +1261,35 @@ testing.registerGlobalTest(&#x27;picking up items&#x27;, function()</span>
+<span class="ctx">     inventory:find(weapon.id):remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;disposing of a corpse&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    local creature = world.createObject(types.Creature.record(&#x27;landracer&#x27;).id)</span>
+<span class="add">+    creature:addScript(&#x27;idle.lua&#x27;)</span>
+<span class="add">+    creature:teleport(player.cell, player.position + util.vector3(0, 300, 0))</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    testing.expectEqual(pcall(types.Actor.disposeCorpse, creature), false,</span>
+<span class="add">+        &#x27;The player should not dispose of a living actor&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Actor.disposeCorpse, player), false, &#x27;The player should not dispose of themselves&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    creature:sendEvent(&#x27;TestKill&#x27;)</span>
+<span class="add">+    for _ = 1, 10 do</span>
+<span class="add">+        coroutine.yield()</span>
+<span class="add">+        if types.Actor.isDead(creature) then</span>
+<span class="add">+            break</span>
+<span class="add">+        end</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expectEqual(types.Actor.isDead(creature), true, &#x27;The creature should die&#x27;)</span>
+<span class="add">+    types.Actor.disposeCorpse(creature)</span>
+<span class="add">+    for _ = 1, 10 do</span>
+<span class="add">+        coroutine.yield()</span>
+<span class="add">+        if creature.count == 0 then</span>
+<span class="add">+            break</span>
+<span class="add">+        end</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expectEqual(creature.count, 0, &#x27;The corpse should leave the world&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Actor.isDeathFinished(creature), true, &#x27;The death should count as finished&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;dropping items&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     local weapon = world.createRecord(types.Weapon.createRecordDraft({</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/idle.lua</div><pre>
+<span class="hunk">@@ -1,3 +1,11 @@</span>
+<span class="ctx"> local self = require(&#x27;openmw.self&#x27;)</span>
+<span class="add">+local types = require(&#x27;openmw.types&#x27;)</span>
+<span class="ctx"> self:enableAI(false)</span>
+<span class="del">-return {}</span>
+<span class="add">+return {</span>
+<span class="add">+    eventHandlers = {</span>
+<span class="add">+        -- Global scripts can&#x27;t change an actor&#x27;s health, so a test sends this event to kill the actor.</span>
+<span class="add">+        TestKill = function()</span>
+<span class="add">+            types.Actor.stats.dynamic.health(self).current = 0</span>
+<span class="add">+        end,</span>
+<span class="add">+    },</span>
+<span class="add">+}</span>
+</pre></div>

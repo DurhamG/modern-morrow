@@ -1,0 +1,250 @@
+<div class="file"><div class="path">apps/openmw/mwgui/dialogue.cpp</div><pre>
+<span class="hunk">@@ -8,7 +8,6 @@</span>
+<span class="ctx"> #include &lt;MyGUI_Window.h&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;components/debug/debuglog.hpp&gt;</span>
+<span class="del">-#include &lt;components/esm3/loadcrea.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/settings/values.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/translation/translation.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/widgets/box.hpp&gt;</span>
+<span class="hunk">@@ -30,6 +29,7 @@</span>
+<span class="ctx"> #include &quot;../mwmechanics/actorutil.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/creaturestats.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/npcstats.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/services.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;bookpage.hpp&quot;</span>
+<span class="ctx"> #include &quot;textcolours.hpp&quot;</span>
+<span class="hunk">@@ -290,9 +290,35 @@ namespace MWGui</span>
+<span class="ctx">     // Morrowind uses 3 px invisible borders for padding topics</span>
+<span class="ctx">     static constexpr int sVerticalPadding = 3;</span>
+<span class="ctx"> </span>
+<span class="add">+    // The game setting that names a service in the list of topics</span>
+<span class="add">+    static std::string_view getServiceSetting(MWMechanics::DialogueService service)</span>
+<span class="add">+    {</span>
+<span class="add">+        switch (service)</span>
+<span class="add">+        {</span>
+<span class="add">+            case MWMechanics::DialogueService::Persuasion:</span>
+<span class="add">+                return &quot;sPersuasion&quot;;</span>
+<span class="add">+            case MWMechanics::DialogueService::Barter:</span>
+<span class="add">+                return &quot;sBarter&quot;;</span>
+<span class="add">+            case MWMechanics::DialogueService::Spells:</span>
+<span class="add">+                return &quot;sSpells&quot;;</span>
+<span class="add">+            case MWMechanics::DialogueService::Travel:</span>
+<span class="add">+                return &quot;sTravel&quot;;</span>
+<span class="add">+            case MWMechanics::DialogueService::Spellmaking:</span>
+<span class="add">+                return &quot;sSpellmakingMenuTitle&quot;;</span>
+<span class="add">+            case MWMechanics::DialogueService::Enchanting:</span>
+<span class="add">+                return &quot;sEnchanting&quot;;</span>
+<span class="add">+            case MWMechanics::DialogueService::Training:</span>
+<span class="add">+                return &quot;sServiceTrainingTitle&quot;;</span>
+<span class="add">+            case MWMechanics::DialogueService::Repair:</span>
+<span class="add">+                return &quot;sRepair&quot;;</span>
+<span class="add">+            case MWMechanics::DialogueService::CompanionShare:</span>
+<span class="add">+                return &quot;sCompanionShare&quot;;</span>
+<span class="add">+        }</span>
+<span class="add">+        return {};</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     DialogueWindow::DialogueWindow()</span>
+<span class="ctx">         : WindowBase(&quot;openmw_dialogue_window.layout&quot;)</span>
+<span class="del">-        , mIsCompanion(false)</span>
+<span class="ctx">         , mGoodbye(false)</span>
+<span class="ctx">         , mPersuasionDialog(*this)</span>
+<span class="ctx">     {</span>
+<span class="hunk">@@ -460,7 +486,7 @@ namespace MWGui</span>
+<span class="ctx">             // If this is a companion, we must show the companion window directly (used by BM_bear_be_unique).</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(MWGui::GM_Dialogue);</span>
+<span class="ctx">             mPtr = MWWorld::Ptr();</span>
+<span class="del">-            if (isCompanion(actor))</span>
+<span class="add">+            if (MWMechanics::isCompanion(actor))</span>
+<span class="ctx">                 MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(MWGui::GM_Companion, actor);</span>
+<span class="ctx">             return;</span>
+<span class="ctx">         }</span>
+<span class="hunk">@@ -521,9 +547,10 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool DialogueWindow::setKeywords(const std::list&lt;std::string&gt;&amp; keyWords)</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mKeywords == keyWords &amp;&amp; isCompanion() == mIsCompanion)</span>
+<span class="add">+        std::vector&lt;MWMechanics::DialogueService&gt; services = MWMechanics::getDialogueServices(mPtr);</span>
+<span class="add">+        if (mKeywords == keyWords &amp;&amp; mServices == services)</span>
+<span class="ctx">             return false;</span>
+<span class="del">-        mIsCompanion = isCompanion();</span>
+<span class="add">+        mServices = std::move(services);</span>
+<span class="ctx">         mKeywords = keyWords;</span>
+<span class="ctx">         updateTopicsPane();</span>
+<span class="ctx">         return true;</span>
+<span class="hunk">@@ -548,41 +575,11 @@ namespace MWGui</span>
+<span class="ctx">             mDeleteLater.push_back(std::move(linkPair.second));</span>
+<span class="ctx">         mTopicLinks.clear();</span>
+<span class="ctx"> </span>
+<span class="del">-        int services = mPtr.getClass().getServices(mPtr);</span>
+<span class="del">-</span>
+<span class="del">-        bool travel = (mPtr.getType() == ESM::NPC::sRecordId &amp;&amp; !mPtr.get&lt;ESM::NPC&gt;()-&gt;mBase-&gt;getTransport().empty())</span>
+<span class="del">-            || (mPtr.getType() == ESM::Creature::sRecordId</span>
+<span class="del">-                &amp;&amp; !mPtr.get&lt;ESM::Creature&gt;()-&gt;mBase-&gt;getTransport().empty());</span>
+<span class="del">-</span>
+<span class="ctx">         const MWWorld::Store&lt;ESM::GameSetting&gt;&amp; gmst</span>
+<span class="ctx">             = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::GameSetting&gt;();</span>
+<span class="ctx"> </span>
+<span class="del">-        if (mPtr.getType() == ESM::NPC::sRecordId)</span>
+<span class="del">-            mTopicsList-&gt;addItem(gmst.find(&quot;sPersuasion&quot;)-&gt;mValue.getString());</span>
+<span class="del">-</span>
+<span class="del">-        if (services &amp; ESM::NPC::AllItems)</span>
+<span class="del">-            mTopicsList-&gt;addItem(gmst.find(&quot;sBarter&quot;)-&gt;mValue.getString());</span>
+<span class="del">-</span>
+<span class="del">-        if (services &amp; ESM::NPC::Spells)</span>
+<span class="del">-            mTopicsList-&gt;addItem(gmst.find(&quot;sSpells&quot;)-&gt;mValue.getString());</span>
+<span class="del">-</span>
+<span class="del">-        if (travel)</span>
+<span class="del">-            mTopicsList-&gt;addItem(gmst.find(&quot;sTravel&quot;)-&gt;mValue.getString());</span>
+<span class="del">-</span>
+<span class="del">-        if (services &amp; ESM::NPC::Spellmaking)</span>
+<span class="del">-            mTopicsList-&gt;addItem(gmst.find(&quot;sSpellmakingMenuTitle&quot;)-&gt;mValue.getString());</span>
+<span class="del">-</span>
+<span class="del">-        if (services &amp; ESM::NPC::Enchanting)</span>
+<span class="del">-            mTopicsList-&gt;addItem(gmst.find(&quot;sEnchanting&quot;)-&gt;mValue.getString());</span>
+<span class="del">-</span>
+<span class="del">-        if (services &amp; ESM::NPC::Training)</span>
+<span class="del">-            mTopicsList-&gt;addItem(gmst.find(&quot;sServiceTrainingTitle&quot;)-&gt;mValue.getString());</span>
+<span class="del">-</span>
+<span class="del">-        if (services &amp; ESM::NPC::Repair)</span>
+<span class="del">-            mTopicsList-&gt;addItem(gmst.find(&quot;sRepair&quot;)-&gt;mValue.getString());</span>
+<span class="del">-</span>
+<span class="del">-        if (isCompanion())</span>
+<span class="del">-            mTopicsList-&gt;addItem(gmst.find(&quot;sCompanionShare&quot;)-&gt;mValue.getString());</span>
+<span class="add">+        for (MWMechanics::DialogueService service : mServices)</span>
+<span class="add">+            mTopicsList-&gt;addItem(gmst.find(getServiceSetting(service))-&gt;mValue.getString());</span>
+<span class="ctx"> </span>
+<span class="ctx">         if (mTopicsList-&gt;getItemCount() &gt; 0)</span>
+<span class="ctx">             mTopicsList-&gt;addSeparator();</span>
+<span class="hunk">@@ -847,20 +844,6 @@ namespace MWGui</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    bool DialogueWindow::isCompanion()</span>
+<span class="del">-    {</span>
+<span class="del">-        return isCompanion(mPtr);</span>
+<span class="del">-    }</span>
+<span class="del">-</span>
+<span class="del">-    bool DialogueWindow::isCompanion(const MWWorld::Ptr&amp; actor)</span>
+<span class="del">-    {</span>
+<span class="del">-        if (actor.isEmpty())</span>
+<span class="del">-            return false;</span>
+<span class="del">-</span>
+<span class="del">-        return !actor.getClass().getScript(actor).empty()</span>
+<span class="del">-            &amp;&amp; actor.getRefData().getLocals().getIntVar(actor.getClass().getScript(actor), &quot;companion&quot;);</span>
+<span class="del">-    }</span>
+<span class="del">-</span>
+<span class="ctx">     void DialogueWindow::setControllerFocus(size_t index, bool focused)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         // List is mTopicsList + &quot;Goodbye&quot; button below the list.</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/dialogue.hpp</div><pre>
+<span class="hunk">@@ -3,6 +3,7 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;list&gt;</span>
+<span class="ctx"> #include &lt;memory&gt;</span>
+<span class="add">+#include &lt;vector&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;referenceinterface.hpp&quot;</span>
+<span class="ctx"> #include &quot;windowbase.hpp&quot;</span>
+<span class="hunk">@@ -19,6 +20,11 @@ namespace Gui</span>
+<span class="ctx">     class MWList;</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="add">+namespace MWMechanics</span>
+<span class="add">+{</span>
+<span class="add">+    enum class DialogueService;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="ctx"> namespace MWGui</span>
+<span class="ctx"> {</span>
+<span class="ctx">     class DialogueWindow;</span>
+<span class="hunk">@@ -121,8 +127,6 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     protected:</span>
+<span class="ctx">         void updateTopicsPane();</span>
+<span class="del">-        bool isCompanion(const MWWorld::Ptr&amp; actor);</span>
+<span class="del">-        bool isCompanion();</span>
+<span class="ctx"> </span>
+<span class="ctx">         void onSelectListItem(const std::string&amp; topic, int id);</span>
+<span class="ctx">         void onByeClicked(MyGUI::Widget* sender);</span>
+<span class="hunk">@@ -146,7 +150,7 @@ namespace MWGui</span>
+<span class="ctx">         void deleteLater();</span>
+<span class="ctx">         void redrawTopicsList();</span>
+<span class="ctx"> </span>
+<span class="del">-        bool mIsCompanion;</span>
+<span class="add">+        std::vector&lt;MWMechanics::DialogueService&gt; mServices;</span>
+<span class="ctx">         std::list&lt;std::string&gt; mKeywords;</span>
+<span class="ctx"> </span>
+<span class="ctx">         size_t mTranscriptSize = 0;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/services.cpp</div><pre>
+<span class="hunk">@@ -318,4 +318,35 @@ namespace MWMechanics</span>
+<span class="ctx">         MWWorld::ActionTeleport action(cellId, pos, true);</span>
+<span class="ctx">         action.execute(getPlayer());</span>
+<span class="ctx">     }</span>
+<span class="add">+</span>
+<span class="add">+    std::vector&lt;DialogueService&gt; getDialogueServices(const MWWorld::Ptr&amp; actor)</span>
+<span class="add">+    {</span>
+<span class="add">+        std::vector&lt;DialogueService&gt; services;</span>
+<span class="add">+        const int flags = actor.getClass().getServices(actor);</span>
+<span class="add">+        if (actor.getClass().isNpc())</span>
+<span class="add">+            services.push_back(DialogueService::Persuasion);</span>
+<span class="add">+        if (flags &amp; ESM::NPC::AllItems)</span>
+<span class="add">+            services.push_back(DialogueService::Barter);</span>
+<span class="add">+        if (flags &amp; ESM::NPC::Spells)</span>
+<span class="add">+            services.push_back(DialogueService::Spells);</span>
+<span class="add">+        if (!getTravelDestinations(actor).empty())</span>
+<span class="add">+            services.push_back(DialogueService::Travel);</span>
+<span class="add">+        if (flags &amp; ESM::NPC::Spellmaking)</span>
+<span class="add">+            services.push_back(DialogueService::Spellmaking);</span>
+<span class="add">+        if (flags &amp; ESM::NPC::Enchanting)</span>
+<span class="add">+            services.push_back(DialogueService::Enchanting);</span>
+<span class="add">+        if (flags &amp; ESM::NPC::Training)</span>
+<span class="add">+            services.push_back(DialogueService::Training);</span>
+<span class="add">+        if (flags &amp; ESM::NPC::Repair)</span>
+<span class="add">+            services.push_back(DialogueService::Repair);</span>
+<span class="add">+        if (isCompanion(actor))</span>
+<span class="add">+            services.push_back(DialogueService::CompanionShare);</span>
+<span class="add">+        return services;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    bool isCompanion(const MWWorld::Ptr&amp; actor)</span>
+<span class="add">+    {</span>
+<span class="add">+        const ESM::RefId&amp; script = actor.getClass().getScript(actor);</span>
+<span class="add">+        return !script.empty() &amp;&amp; actor.getRefData().getLocals().getIntVar(script, &quot;companion&quot;);</span>
+<span class="add">+    }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/services.hpp</div><pre>
+<span class="hunk">@@ -82,6 +82,27 @@ namespace MWMechanics</span>
+<span class="ctx">     /// @param price The price from getTravelPrice. The caller works it out before anything can change it, such as the</span>
+<span class="ctx">     /// end of the conversation, which takes back the disposition that the player gained by persuasion.</span>
+<span class="ctx">     void travel(const MWWorld::Ptr&amp; merchant, const ESM::Transport::Dest&amp; destination, int price);</span>
+<span class="add">+</span>
+<span class="add">+    /// What the player can ask an actor for in a conversation, besides topics.</span>
+<span class="add">+    enum class DialogueService</span>
+<span class="add">+    {</span>
+<span class="add">+        Persuasion,</span>
+<span class="add">+        Barter,</span>
+<span class="add">+        Spells,</span>
+<span class="add">+        Travel,</span>
+<span class="add">+        Spellmaking,</span>
+<span class="add">+        Enchanting,</span>
+<span class="add">+        Training,</span>
+<span class="add">+        Repair,</span>
+<span class="add">+        CompanionShare,</span>
+<span class="add">+    };</span>
+<span class="add">+</span>
+<span class="add">+    /// The services that @a actor offers in a conversation, in the order the Dialogue window lists them.</span>
+<span class="add">+    std::vector&lt;DialogueService&gt; getDialogueServices(const MWWorld::Ptr&amp; actor);</span>
+<span class="add">+</span>
+<span class="add">+    /// Whether @a actor is the player&#x27;s companion, who shares their inventory with the player. A mod makes an actor a</span>
+<span class="add">+    /// companion with the local variable &quot;companion&quot; in the actor&#x27;s script.</span>
+<span class="add">+    bool isCompanion(const MWWorld::Ptr&amp; actor);</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="ctx"> #endif</span>
+</pre></div>

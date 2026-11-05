@@ -1,0 +1,192 @@
+<div class="file"><div class="path">apps/openmw/mwlua/conversationbindings.cpp</div><pre>
+<span class="hunk">@@ -11,6 +11,7 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/dialoguemanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwdialogue/keywordsearch.hpp&quot;</span>
+<span class="hunk">@@ -133,6 +134,23 @@ namespace MWLua</span>
+<span class="ctx">                 throw std::runtime_error(&quot;The player must answer the question first&quot;);</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="add">+        MWBase::MechanicsManager::PersuasionType parsePersuasionType(std::string_view type)</span>
+<span class="add">+        {</span>
+<span class="add">+            if (type == &quot;admire&quot;)</span>
+<span class="add">+                return MWBase::MechanicsManager::PT_Admire;</span>
+<span class="add">+            if (type == &quot;intimidate&quot;)</span>
+<span class="add">+                return MWBase::MechanicsManager::PT_Intimidate;</span>
+<span class="add">+            if (type == &quot;taunt&quot;)</span>
+<span class="add">+                return MWBase::MechanicsManager::PT_Taunt;</span>
+<span class="add">+            if (type == &quot;bribe10&quot;)</span>
+<span class="add">+                return MWBase::MechanicsManager::PT_Bribe10;</span>
+<span class="add">+            if (type == &quot;bribe100&quot;)</span>
+<span class="add">+                return MWBase::MechanicsManager::PT_Bribe100;</span>
+<span class="add">+            if (type == &quot;bribe1000&quot;)</span>
+<span class="add">+                return MWBase::MechanicsManager::PT_Bribe1000;</span>
+<span class="add">+            throw std::runtime_error(&quot;Unknown persuasion type: &quot; + std::string(type));</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="ctx">         std::optional&lt;LuaUtil::Callback&gt; toCallback(const sol::optional&lt;sol::table&gt;&amp; callback)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             if (!callback)</span>
+<span class="hunk">@@ -141,7 +159,8 @@ namespace MWLua</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         // Gives the lines that an action added, and the state of the conversation after it, to the script&#x27;s callback</span>
+<span class="del">-        void reportOutcome(const Context&amp; context, const std::optional&lt;LuaUtil::Callback&gt;&amp; callback, size_t firstLine)</span>
+<span class="add">+        void reportOutcome(const Context&amp; context, const std::optional&lt;LuaUtil::Callback&gt;&amp; callback, size_t firstLine,</span>
+<span class="add">+            sol::table outcome)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             if (!callback)</span>
+<span class="ctx">                 return;</span>
+<span class="hunk">@@ -150,7 +169,6 @@ namespace MWLua</span>
+<span class="ctx">             const std::vector&lt;DialogueManager::TranscriptEntry&gt;&amp; transcript = getDialogueManager().getTranscript();</span>
+<span class="ctx">             for (size_t i = firstLine; i &lt; transcript.size(); ++i)</span>
+<span class="ctx">                 lines.add(makeTranscriptEntry(lua, transcript[i]));</span>
+<span class="del">-            sol::table outcome(lua, sol::create);</span>
+<span class="ctx">             outcome[&quot;lines&quot;] = lines;</span>
+<span class="ctx">             outcome[&quot;topics&quot;] = makeTopics(lua);</span>
+<span class="ctx">             outcome[&quot;choices&quot;] = makeChoices(lua);</span>
+<span class="hunk">@@ -158,7 +176,8 @@ namespace MWLua</span>
+<span class="ctx">             context.mLuaManager-&gt;queueCallback(*callback, sol::main_object(lua, sol::in_place, outcome));</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        // Runs a step of the conversation at the end of the frame, if the player is still talking by then</span>
+<span class="add">+        // Runs a step of the conversation at the end of the frame, if the player is still talking by then. The step can</span>
+<span class="add">+        // add its own results to the outcome.</span>
+<span class="ctx">         template &lt;class Step&gt;</span>
+<span class="ctx">         void queueStep(</span>
+<span class="ctx">             const Context&amp; context, const sol::optional&lt;sol::table&gt;&amp; callback, Step step, std::string_view name)</span>
+<span class="hunk">@@ -167,9 +186,10 @@ namespace MWLua</span>
+<span class="ctx">                 [context, callback = toCallback(callback), step = std::move(step)] {</span>
+<span class="ctx">                     MWBase::DialogueManager&amp; dialogueManager = *MWBase::Environment::get().getDialogueManager();</span>
+<span class="ctx">                     const size_t firstLine = dialogueManager.getTranscript().size();</span>
+<span class="add">+                    sol::table outcome(context.mLua-&gt;unsafeState(), sol::create);</span>
+<span class="ctx">                     if (isInDialogue())</span>
+<span class="del">-                        step(dialogueManager);</span>
+<span class="del">-                    reportOutcome(context, callback, firstLine);</span>
+<span class="add">+                        step(dialogueManager, outcome);</span>
+<span class="add">+                    reportOutcome(context, callback, firstLine, outcome);</span>
+<span class="ctx">                 },</span>
+<span class="ctx">                 name);</span>
+<span class="ctx">         }</span>
+<span class="hunk">@@ -249,7 +269,7 @@ namespace MWLua</span>
+<span class="ctx">             queueStep(</span>
+<span class="ctx">                 context, callback,</span>
+<span class="ctx">                 [name = topic-&gt;mName](</span>
+<span class="del">-                    MWBase::DialogueManager&amp; dialogueManager) { dialogueManager.keywordSelected(name); },</span>
+<span class="add">+                    MWBase::DialogueManager&amp; dialogueManager, sol::table&amp;) { dialogueManager.keywordSelected(name); },</span>
+<span class="ctx">                 &quot;AskDialogueTopicAction&quot;);</span>
+<span class="ctx">         };</span>
+<span class="ctx">         player[&quot;answerDialogueChoice&quot;] = [context](const Object&amp; object, int answer,</span>
+<span class="hunk">@@ -261,7 +281,9 @@ namespace MWLua</span>
+<span class="ctx">                 throw std::runtime_error(&quot;The player can&#x27;t give the answer &quot; + std::to_string(answer));</span>
+<span class="ctx">             queueStep(</span>
+<span class="ctx">                 context, callback,</span>
+<span class="del">-                [answer](MWBase::DialogueManager&amp; dialogueManager) { dialogueManager.questionAnswered(answer); },</span>
+<span class="add">+                [answer](MWBase::DialogueManager&amp; dialogueManager, sol::table&amp;) {</span>
+<span class="add">+                    dialogueManager.questionAnswered(answer);</span>
+<span class="add">+                },</span>
+<span class="ctx">                 &quot;AnswerDialogueChoiceAction&quot;);</span>
+<span class="ctx">         };</span>
+<span class="ctx">         player[&quot;sayGoodbye&quot;] = [context](const Object&amp; object) {</span>
+<span class="hunk">@@ -270,11 +292,37 @@ namespace MWLua</span>
+<span class="ctx">                 throw std::runtime_error(&quot;The player must answer the question first&quot;);</span>
+<span class="ctx">             queueStep(</span>
+<span class="ctx">                 context, sol::nullopt,</span>
+<span class="del">-                [](MWBase::DialogueManager&amp; dialogueManager) {</span>
+<span class="add">+                [](MWBase::DialogueManager&amp; dialogueManager, sol::table&amp;) {</span>
+<span class="ctx">                     if (dialogueManager.goodbyeSelected())</span>
+<span class="ctx">                         MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(MWGui::GM_Dialogue);</span>
+<span class="ctx">                 },</span>
+<span class="ctx">                 &quot;SayGoodbyeAction&quot;);</span>
+<span class="ctx">         };</span>
+<span class="add">+</span>
+<span class="add">+        player[&quot;canPersuadeDialogueActor&quot;] = [](const Object&amp; object, std::string_view type) {</span>
+<span class="add">+            verifyPlayer(object);</span>
+<span class="add">+            const MWBase::MechanicsManager::PersuasionType persuasionType = parsePersuasionType(type);</span>
+<span class="add">+            return isInDialogue() &amp;&amp; getDialogueManager().canPersuade(persuasionType);</span>
+<span class="add">+        };</span>
+<span class="add">+        player[&quot;persuadeDialogueActor&quot;]</span>
+<span class="add">+            = [context](const Object&amp; object, std::string_view type, const sol::optional&lt;sol::table&gt;&amp; callback) {</span>
+<span class="add">+                  verifySpeaker(object);</span>
+<span class="add">+                  verifyNoQuestion();</span>
+<span class="add">+                  const MWBase::MechanicsManager::PersuasionType persuasionType = parsePersuasionType(type);</span>
+<span class="add">+                  if (!getDialogueManager().canPersuade(persuasionType))</span>
+<span class="add">+                      throw std::runtime_error(&quot;Only NPCs can be persuaded, and a bribe needs the gold&quot;);</span>
+<span class="add">+                  queueStep(</span>
+<span class="add">+                      context, callback,</span>
+<span class="add">+                      [persuasionType](MWBase::DialogueManager&amp; dialogueManager, sol::table&amp; outcome) {</span>
+<span class="add">+                          const std::optional&lt;bool&gt; success = dialogueManager.persuade(persuasionType);</span>
+<span class="add">+                          const MWWorld::Ptr actor = dialogueManager.getActor();</span>
+<span class="add">+                          if (!success || actor.isEmpty())</span>
+<span class="add">+                              return;</span>
+<span class="add">+                          outcome[&quot;success&quot;] = *success;</span>
+<span class="add">+                          outcome[&quot;disposition&quot;]</span>
+<span class="add">+                              = MWBase::Environment::get().getMechanicsManager()-&gt;getDerivedDisposition(actor);</span>
+<span class="add">+                      },</span>
+<span class="add">+                      &quot;PersuadeDialogueActorAction&quot;);</span>
+<span class="add">+              };</span>
+<span class="ctx">     }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -2008,6 +2008,31 @@</span>
+<span class="ctx"> -- @param #number answer The `answer` of one of the @{#PLAYERDialogueChoice}s.</span>
+<span class="ctx"> -- @param openmw.async#Callback callback A function that receives a @{#PLAYERDialogueOutcome} (optional).</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Whether the player can try to persuade the actor in the current conversation in the way `type`. The persuasion screen of the Dialogue window only enables these ways.</span>
+<span class="add">+-- Only NPCs can be persuaded, and a bribe needs the gold. The player can&#x27;t try while they must answer a question, or after a script ended the conversation with `Goodbye`.</span>
+<span class="add">+-- False outside a conversation. The actor&#x27;s disposition, which the Dialogue window shows next to the topics, is @{#NPC.getDisposition}.</span>
+<span class="add">+-- @function [parent=#PLAYER] canPersuadeDialogueActor</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param #string type One of `&#x27;admire&#x27;`, `&#x27;intimidate&#x27;`, `&#x27;taunt&#x27;`, `&#x27;bribe10&#x27;`, `&#x27;bribe100&#x27;` and `&#x27;bribe1000&#x27;`.</span>
+<span class="add">+-- @return #boolean</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Try to persuade the actor in the current conversation, the way the persuasion screen of the Dialogue window does (only in global and player scripts).</span>
+<span class="add">+-- Whether the attempt succeeds depends on the player&#x27;s and the actor&#x27;s skills and attributes, the actor&#x27;s disposition, and chance.</span>
+<span class="add">+-- The actor&#x27;s disposition changes until the conversation ends. Then a smaller part of the change stays.</span>
+<span class="add">+-- The player&#x27;s Speechcraft skill gains experience. A successful bribe gives the gold to the actor. A successful intimidation makes the actor more likely to flee, and a successful taunt more likely to fight.</span>
+<span class="add">+-- The actor replies with a line from the persuasion dialogue record for the outcome, such as `Admire Success` or `Bribe Fail`.</span>
+<span class="add">+-- This throws an error outside a conversation and if @{#PLAYER.canPersuadeDialogueActor} is false.</span>
+<span class="add">+-- The attempt happens at the end of the frame.</span>
+<span class="add">+-- @function [parent=#PLAYER] persuadeDialogueActor</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param #string type One of `&#x27;admire&#x27;`, `&#x27;intimidate&#x27;`, `&#x27;taunt&#x27;`, `&#x27;bribe10&#x27;`, `&#x27;bribe100&#x27;` and `&#x27;bribe1000&#x27;`.</span>
+<span class="add">+-- @param openmw.async#Callback callback A function that receives a @{#PLAYERDialogueOutcome} with `success` and `disposition` (optional).</span>
+<span class="add">+-- @usage types.Player.persuadeDialogueActor(self, &#x27;admire&#x27;, async:callback(function(outcome)</span>
+<span class="add">+--     print(outcome.success, outcome.disposition, outcome.lines[1].text)</span>
+<span class="add">+-- end))</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- What a step of the conversation led to.</span>
+<span class="ctx"> -- If the conversation changed before the end of the frame so that the step could no longer be taken, `lines` is empty.</span>
+<span class="hunk">@@ -2016,6 +2041,8 @@</span>
+<span class="ctx"> -- @field #list&lt;#PLAYERDialogueTopic&gt; topics The topics after the step, as @{#PLAYER.getDialogueTopics} gives them.</span>
+<span class="ctx"> -- @field #list&lt;#PLAYERDialogueChoice&gt; choices The answers to the question that the step&#x27;s dialogue script asked, if any.</span>
+<span class="ctx"> -- @field #boolean mustSayGoodbye Whether the step&#x27;s dialogue script ended the conversation with `Goodbye`.</span>
+<span class="add">+-- @field #boolean success Only for @{#PLAYER.persuadeDialogueActor}: whether the attempt succeeded. Nil if the player couldn&#x27;t try by the end of the frame.</span>
+<span class="add">+-- @field #number disposition Only for @{#PLAYER.persuadeDialogueActor}: the actor&#x27;s disposition after the attempt, as @{#NPC.getDisposition} gives it. Nil if the player couldn&#x27;t try by the end of the frame.</span>
+<span class="ctx"> </span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- End the conversation and leave the dialogue mode, the way the Goodbye button of the Dialogue window does (only in global and player scripts).</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/player.lua</div><pre>
+<span class="hunk">@@ -319,6 +319,12 @@ testing.registerLocalTest(&#x27;Dialogue outside a conversation&#x27;, function()</span>
+<span class="ctx">     testing.expectEqual(pcall(types.Player.answerDialogueChoice, self, 1), false,</span>
+<span class="ctx">         &#x27;The player should not be able to answer a question&#x27;)</span>
+<span class="ctx">     testing.expectEqual(pcall(types.Player.sayGoodbye, self), false, &#x27;The player should not be able to say goodbye&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Player.canPersuadeDialogueActor(self, &#x27;admire&#x27;), false,</span>
+<span class="add">+        &#x27;The player should not be able to persuade anyone&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.persuadeDialogueActor, self, &#x27;admire&#x27;), false,</span>
+<span class="add">+        &#x27;The player should not be able to persuade anyone&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.canPersuadeDialogueActor, self, &#x27;flatter&#x27;), false,</span>
+<span class="add">+        &#x27;An unknown way to persuade should be an error&#x27;)</span>
+<span class="ctx"> </span>
+<span class="ctx">     local shown = types.Player.findTopicLinks(self, &#x27;Ask about @Balmora# in Balmora.&#x27;)</span>
+<span class="ctx">     testing.expectEqual(shown.text, &#x27;Ask about Balmora in Balmora.&#x27;, &#x27;The link marks should be removed&#x27;)</span>
+</pre></div>

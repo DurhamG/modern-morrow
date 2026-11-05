@@ -1,0 +1,98 @@
+<div class="file"><div class="path">apps/openmw/mwlua/conversationbindings.cpp</div><pre>
+<span class="hunk">@@ -13,6 +13,7 @@</span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="add">+#include &quot;../mwdialogue/keywordsearch.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/worldmodel.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;context.hpp&quot;</span>
+<span class="hunk">@@ -207,6 +208,33 @@ namespace MWLua</span>
+<span class="ctx">             verifyPlayer(object);</span>
+<span class="ctx">             return mustSayGoodbye();</span>
+<span class="ctx">         };</span>
+<span class="add">+        player[&quot;findTopicLinks&quot;] = [](sol::this_state thisState, const Object&amp; object, std::string_view text) {</span>
+<span class="add">+            verifyPlayer(object);</span>
+<span class="add">+            const DialogueManager&amp; dialogueManager = getDialogueManager();</span>
+<span class="add">+            const MWDialogue::KeywordSearch::DisplayText displayText</span>
+<span class="add">+                = dialogueManager.getAvailableTopicSearch().getDisplayText(</span>
+<span class="add">+                    std::string(text), MWBase::Environment::get().getWindowManager()-&gt;getTranslationDataStorage());</span>
+<span class="add">+            const std::vector&lt;DialogueManager::AvailableTopic&gt;&amp; topics = dialogueManager.getAvailableTopics();</span>
+<span class="add">+            sol::table links(thisState, sol::create);</span>
+<span class="add">+            for (const MWDialogue::KeywordSearch::Link&amp; link : displayText.mLinks)</span>
+<span class="add">+            {</span>
+<span class="add">+                // Like the Dialogue window, only link to the topics that the player can ask about</span>
+<span class="add">+                const ESM::RefId id = ESM::RefId::stringRefId(link.mTopicId);</span>
+<span class="add">+                const auto topic = std::find_if(topics.begin(), topics.end(),</span>
+<span class="add">+                    [&amp;](const DialogueManager::AvailableTopic&amp; available) { return available.mId == id; });</span>
+<span class="add">+                if (topic == topics.end() || link.mBegin == link.mEnd)</span>
+<span class="add">+                    continue;</span>
+<span class="add">+                sol::table entry(thisState, sol::create);</span>
+<span class="add">+                entry[&quot;first&quot;] = link.mBegin + 1;</span>
+<span class="add">+                entry[&quot;last&quot;] = link.mEnd;</span>
+<span class="add">+                entry[&quot;topicId&quot;] = topic-&gt;mId.serializeText();</span>
+<span class="add">+                links.add(entry);</span>
+<span class="add">+            }</span>
+<span class="add">+            sol::table result(thisState, sol::create);</span>
+<span class="add">+            result[&quot;text&quot;] = displayText.mText;</span>
+<span class="add">+            result[&quot;links&quot;] = links;</span>
+<span class="add">+            return result;</span>
+<span class="add">+        };</span>
+<span class="ctx"> </span>
+<span class="ctx">         player[&quot;askDialogueTopic&quot;] = [context](const Object&amp; object, std::string_view topicId,</span>
+<span class="ctx">                                          const sol::optional&lt;sol::table&gt;&amp; callback) {</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1934,7 +1934,7 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- @type PLAYERDialogueLine</span>
+<span class="add">+-- @field #string text The text. Variables such as `%PCName` are filled in. Links to topics are still marked as `@topic#`. @{#PLAYER.findTopicLinks} gives the text to show and its links.</span>
+<span class="ctx"> -- @field #string title The header above the line, such as the name of the topic the player asked about. Nil for greetings, answers to choices and messages.</span>
+<span class="ctx"> -- @field #boolean isMessage True for a message that the game showed during the conversation, such as &quot;Your journal has been updated&quot;.</span>
+<span class="ctx"> -- @field #string type The type of the dialogue record the line came from, as in the `DialogueResponse` event, such as `&#x27;greeting&#x27;` or `&#x27;topic&#x27;`. Nil for messages and for the merchant&#x27;s reply to a finished trade.</span>
+<span class="hunk">@@ -1960,6 +1960,30 @@</span>
+<span class="ctx"> -- @param openmw.core#GameObject player</span>
+<span class="ctx"> -- @return #boolean</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Find the links to topics in the text of a @{#PLAYERDialogueLine}, the way the Dialogue window does when it shows the line.</span>
+<span class="add">+-- A word or phrase that names an available topic is a link. So is a part of the text that the line marks as a link with `@topic#`, if that topic is available. The marks are removed from the text.</span>
+<span class="add">+-- The topics change during the conversation, so a line can gain or lose links. Outside a conversation, no topic is available, and the result has only the text without its marks.</span>
+<span class="add">+-- @function [parent=#PLAYER] findTopicLinks</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param #string text</span>
+<span class="add">+-- @return #PLAYERDialogueText</span>
+<span class="add">+-- @usage local shown = types.Player.findTopicLinks(self, line.text)</span>
+<span class="add">+-- for _, link in ipairs(shown.links) do</span>
+<span class="add">+--     print(shown.text:sub(link.first, link.last), &#x27;links to&#x27;, link.topicId)</span>
+<span class="add">+-- end</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- @type PLAYERDialogueText</span>
+<span class="add">+-- @field #string text The text to show.</span>
+<span class="add">+-- @field #list&lt;#PLAYERDialogueLink&gt; links The links in the text, in the order they appear.</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- @type PLAYERDialogueLink</span>
+<span class="add">+-- @field #number first The position of the first byte of the link in the text to show.</span>
+<span class="add">+-- @field #number last The position of the last byte of the link in the text to show.</span>
+<span class="add">+-- @field #string topicId The record ID of the topic, as @{#PLAYERDialogueTopic} gives it.</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Ask the actor about one of the topics in @{#PLAYER.getDialogueTopics}, the way clicking it in the Dialogue window does (only in global and player scripts).</span>
+<span class="ctx"> -- The actor answers with the first of the topic&#x27;s lines whose conditions match, and the line&#x27;s dialogue script runs. The answer goes into the journal.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/player.lua</div><pre>
+<span class="hunk">@@ -319,6 +319,10 @@ testing.registerLocalTest(&#x27;Dialogue outside a conversation&#x27;, function()</span>
+<span class="ctx">     testing.expectEqual(pcall(types.Player.answerDialogueChoice, self, 1), false,</span>
+<span class="ctx">         &#x27;The player should not be able to answer a question&#x27;)</span>
+<span class="ctx">     testing.expectEqual(pcall(types.Player.sayGoodbye, self), false, &#x27;The player should not be able to say goodbye&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local shown = types.Player.findTopicLinks(self, &#x27;Ask about @Balmora# in Balmora.&#x27;)</span>
+<span class="add">+    testing.expectEqual(shown.text, &#x27;Ask about Balmora in Balmora.&#x27;, &#x27;The link marks should be removed&#x27;)</span>
+<span class="add">+    testing.expectThat(shown.links, matchers.equalTo({}), &#x27;No topic should be available to link to&#x27;)</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="ctx"> testing.registerLocalTest(&#x27;findPath&#x27;,</span>
+</pre></div>

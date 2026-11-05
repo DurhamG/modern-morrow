@@ -1,0 +1,114 @@
+<div class="file"><div class="path">apps/openmw/mwlua/magicbindings.cpp</div><pre>
+<span class="hunk">@@ -197,6 +197,15 @@ namespace MWLua</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    // Whether removing spells from an actor also removes them from the actor&#x27;s base record. Otherwise the save</span>
+<span class="add">+    // doesn&#x27;t keep the removal of a spell from the base record, which comes back when the game is loaded. Only the</span>
+<span class="add">+    // player&#x27;s base record can change, like in the spell window, because other actors share theirs with every actor</span>
+<span class="add">+    // made from the same record.</span>
+<span class="add">+    static bool changesBaseSpells(const MWWorld::Ptr&amp; actor)</span>
+<span class="add">+    {</span>
+<span class="add">+        return actor == MWMechanics::getPlayer();</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     static const ESM::Enchantment* toEnchantment(const sol::object&amp; enchantmentOrId)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         if (enchantmentOrId.is&lt;ESM::Enchantment&gt;())</span>
+<span class="hunk">@@ -709,7 +718,7 @@ namespace MWLua</span>
+<span class="ctx">             context.mLuaManager-&gt;addAction([obj = spells.mActor.object(), spell = toSpell(spellOrId)]() {</span>
+<span class="ctx">                 const MWWorld::Ptr&amp; ptr = obj.ptr();</span>
+<span class="ctx">                 if (ptr.getClass().isActor())</span>
+<span class="del">-                    ptr.getClass().getCreatureStats(ptr).getSpells().remove(spell, false);</span>
+<span class="add">+                    ptr.getClass().getCreatureStats(ptr).getSpells().remove(spell, changesBaseSpells(ptr));</span>
+<span class="ctx">             });</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -720,7 +729,7 @@ namespace MWLua</span>
+<span class="ctx">             context.mLuaManager-&gt;addAction([obj = spells.mActor.object()]() {</span>
+<span class="ctx">                 const MWWorld::Ptr&amp; ptr = obj.ptr();</span>
+<span class="ctx">                 if (ptr.getClass().isActor())</span>
+<span class="del">-                    ptr.getClass().getCreatureStats(ptr).getSpells().clear();</span>
+<span class="add">+                    ptr.getClass().getCreatureStats(ptr).getSpells().clear(changesBaseSpells(ptr));</span>
+<span class="ctx">             });</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -524,12 +524,15 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Remove spell (only in global scripts or on self).</span>
+<span class="add">+-- For the player, this also removes the spell from the player&#x27;s base record, like deleting it in the spell window, so it stays removed after a saved game is loaded.</span>
+<span class="add">+-- Other actors share their base record with every actor made from it. For them, a spell from the base record comes back when a saved game is loaded.</span>
+<span class="ctx"> -- @function [parent=#ActorSpells] remove</span>
+<span class="ctx"> -- @param self</span>
+<span class="ctx"> -- @param #any spellOrId @{openmw.core#Spell} or string spell id</span>
+<span class="ctx"> </span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Remove all spells (only in global scripts or on self).</span>
+<span class="add">+-- Like @{#ActorSpells.remove}, this also empties the player&#x27;s base record, but not that of other actors.</span>
+<span class="ctx"> -- @function [parent=#ActorSpells] clear</span>
+<span class="ctx"> -- @param self</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -509,6 +509,31 @@ testing.registerGlobalTest(&#x27;buying spells and repairs&#x27;, function()</span>
+<span class="ctx">     merchant:remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTestStep(&#x27;removed spells stay removed - remove&#x27;, function()</span>
+<span class="add">+    local player = world.players[1]</span>
+<span class="add">+    local merchant = world.createObject(&#x27;landracer&#x27;)</span>
+<span class="add">+    merchant:addScript(&#x27;idle.lua&#x27;)</span>
+<span class="add">+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))</span>
+<span class="add">+    local spell = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 7, isAutocalc = false })</span>
+<span class="add">+    types.Actor.spells(merchant):add(spell)</span>
+<span class="add">+    world.createObject(&#x27;gold_001&#x27;, types.Actor.getSpellPrice(merchant, spell)):moveInto(player)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    -- A bought spell goes into the player&#x27;s base record.</span>
+<span class="add">+    types.Player.buySpell(player, merchant, spell)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    testing.expect(types.Actor.spells(player)[spell.id] ~= nil, &#x27;The player should learn the spell&#x27;)</span>
+<span class="add">+    types.Actor.spells(player):remove(spell)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    testing.expect(types.Actor.spells(player)[spell.id] == nil, &#x27;The spell should be removed&#x27;)</span>
+<span class="add">+    merchant:remove()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="add">+testing.registerGlobalTestStep(&#x27;removed spells stay removed - check&#x27;, function()</span>
+<span class="add">+    for _, spell in pairs(types.Actor.spells(world.players[1])) do</span>
+<span class="add">+        testing.expectNotEqual(spell.name, &#x27;Test spell&#x27;, &#x27;The removed spell should not come back after loading&#x27;)</span>
+<span class="add">+    end</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;travel&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     local merchant = world.createObject(&#x27;landracer&#x27;)</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/menu.lua</div><pre>
+<span class="hunk">@@ -68,6 +68,23 @@ testing.registerMenuTest(&#x27;save and load&#x27;, function()</span>
+<span class="ctx">     testing.expectThat(menu.getAllSaves(), matchers.equalTo({}))</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerMenuTest(&#x27;removed spells stay removed after loading&#x27;, function()</span>
+<span class="add">+    menu.newGame()</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+</span>
+<span class="add">+    testing.runGlobalTest(&#x27;removed spells stay removed - remove&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    menu.saveGame(&#x27;removed spells&#x27;)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+</span>
+<span class="add">+    menu.loadGame(&#x27; - 1&#x27;, &#x27;removed_spells.omwsave&#x27;)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+</span>
+<span class="add">+    testing.runGlobalTest(&#x27;removed spells stay removed - check&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    menu.deleteGame(&#x27; - 1&#x27;, &#x27;removed_spells.omwsave&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerMenuTest(&#x27;load while teleporting&#x27;, function()</span>
+<span class="ctx">     menu.newGame()</span>
+<span class="ctx">     coroutine.yield()</span>
+</pre></div>

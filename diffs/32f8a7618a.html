@@ -1,0 +1,350 @@
+<div class="file"><div class="path">apps/openmw/CMakeLists.txt</div><pre>
+<span class="hunk">@@ -62,6 +62,7 @@ add_openmw_dir (mwlua</span>
+<span class="ctx">     objectcache luamanagerimp object objectlists userdataserializer luaevents engineevents objectvariant loadscripts contentbindings</span>
+<span class="ctx">     context menuscripts globalscripts localscripts playerscripts luabindings objectbindings cellbindings coremwscriptbindings</span>
+<span class="ctx">     mwscriptbindings camerabindings vfsbindings uibindings soundbindings inputbindings nearbybindings dialoguebindings</span>
+<span class="add">+    conversationbindings</span>
+<span class="ctx">     postprocessingbindings stats recordstore debugbindings corebindings worldbindings worker landbindings magicbindings factionbindings</span>
+<span class="ctx">     classbindings itemdata inputprocessor animationbindings birthsignbindings racebindings markupbindings weatherbindings regionbindings</span>
+<span class="ctx">     types/types types/door types/item types/actor types/container types/lockable types/weapon types/npc types/bodypart</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwbase/dialoguemanager.hpp</div><pre>
+<span class="hunk">@@ -82,6 +82,9 @@ namespace MWBase</span>
+<span class="ctx">         /// Forgets the transcript once the conversation is over</span>
+<span class="ctx">         virtual void endDialogue() = 0;</span>
+<span class="ctx"> </span>
+<span class="add">+        /// The actor the player is talking to. Empty outside a conversation.</span>
+<span class="add">+        virtual MWWorld::Ptr getActor() const = 0;</span>
+<span class="add">+</span>
+<span class="ctx">         virtual const std::vector&lt;TranscriptEntry&gt;&amp; getTranscript() const = 0;</span>
+<span class="ctx"> </span>
+<span class="ctx">         /// Adds a message that the game shows during the conversation to the transcript</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.cpp</div><pre>
+<span class="hunk">@@ -73,6 +73,7 @@ namespace MWDialogue</span>
+<span class="ctx">     void DialogueManager::clear()</span>
+<span class="ctx">     {</span>
+<span class="ctx">         mKnownTopics.clear();</span>
+<span class="add">+        mInDialogue = false;</span>
+<span class="ctx">         mTalkedTo = false;</span>
+<span class="ctx">         mOriginalDisposition = 0;</span>
+<span class="ctx">         mCurrentDisposition = 0;</span>
+<span class="hunk">@@ -177,6 +178,7 @@ namespace MWDialogue</span>
+<span class="ctx">                 // Search a response (we do not accept a fallback to &quot;Info refusal&quot; here)</span>
+<span class="ctx">                 if (const ESM::DialInfo* info = filter.search(dialogue, false).second)</span>
+<span class="ctx">                 {</span>
+<span class="add">+                    mInDialogue = true;</span>
+<span class="ctx">                     creatureStats.talkedToPlayer();</span>
+<span class="ctx"> </span>
+<span class="ctx">                     if (!info-&gt;mSound.empty())</span>
+<span class="hunk">@@ -200,11 +202,19 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueManager::endDialogue()</span>
+<span class="ctx">     {</span>
+<span class="add">+        mInDialogue = false;</span>
+<span class="ctx">         mTranscript.clear();</span>
+<span class="ctx">         mAvailableTopics.clear();</span>
+<span class="ctx">         mAvailableTopicSearch.clear();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    MWWorld::Ptr DialogueManager::getActor() const</span>
+<span class="add">+    {</span>
+<span class="add">+        if (!mInDialogue)</span>
+<span class="add">+            return {};</span>
+<span class="add">+        return mActor;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     const std::vector&lt;MWBase::DialogueManager::TranscriptEntry&gt;&amp; DialogueManager::getTranscript() const</span>
+<span class="ctx">     {</span>
+<span class="ctx">         return mTranscript;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.hpp</div><pre>
+<span class="hunk">@@ -50,6 +50,7 @@ namespace MWDialogue</span>
+<span class="ctx">         Compiler::StreamErrorHandler mErrorHandler;</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWWorld::Ptr mActor;</span>
+<span class="add">+        bool mInDialogue = false;</span>
+<span class="ctx">         bool mTalkedTo;</span>
+<span class="ctx"> </span>
+<span class="ctx">         int mChoice;</span>
+<span class="hunk">@@ -97,6 +98,8 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">         void endDialogue() override;</span>
+<span class="ctx"> </span>
+<span class="add">+        MWWorld::Ptr getActor() const override;</span>
+<span class="add">+</span>
+<span class="ctx">         const std::vector&lt;TranscriptEntry&gt;&amp; getTranscript() const override;</span>
+<span class="ctx"> </span>
+<span class="ctx">         void addMessage(std::string_view text) override;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/conversationbindings.cpp</div><pre>
+<span class="hunk">@@ -0,0 +1,146 @@</span>
+<span class="add">+#include &quot;conversationbindings.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;stdexcept&gt;</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;components/esm3/loaddial.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadinfo.hpp&gt;</span>
+<span class="add">+</span>
+<span class="add">+#include &quot;../mwbase/dialoguemanager.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/world.hpp&quot;</span>
+<span class="add">+#include &quot;../mwworld/worldmodel.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+#include &quot;context.hpp&quot;</span>
+<span class="add">+#include &quot;object.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+namespace MWLua</span>
+<span class="add">+{</span>
+<span class="add">+    namespace</span>
+<span class="add">+    {</span>
+<span class="add">+        using DialogueManager = MWBase::DialogueManager;</span>
+<span class="add">+</span>
+<span class="add">+        const DialogueManager&amp; getDialogueManager()</span>
+<span class="add">+        {</span>
+<span class="add">+            return *MWBase::Environment::get().getDialogueManager();</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        bool isInDialogue()</span>
+<span class="add">+        {</span>
+<span class="add">+            return !getDialogueManager().getActor().isEmpty();</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        void verifyPlayer(const Object&amp; player)</span>
+<span class="add">+        {</span>
+<span class="add">+            if (player.ptr() != MWBase::Environment::get().getWorld()-&gt;getPlayerPtr())</span>
+<span class="add">+                throw std::runtime_error(&quot;The argument must be a player!&quot;);</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        std::string_view getRecordType(const ESM::Dialogue&amp; dialogue)</span>
+<span class="add">+        {</span>
+<span class="add">+            switch (dialogue.mType)</span>
+<span class="add">+            {</span>
+<span class="add">+                case ESM::Dialogue::Topic:</span>
+<span class="add">+                    return &quot;topic&quot;;</span>
+<span class="add">+                case ESM::Dialogue::Voice:</span>
+<span class="add">+                    return &quot;voice&quot;;</span>
+<span class="add">+                case ESM::Dialogue::Greeting:</span>
+<span class="add">+                    return &quot;greeting&quot;;</span>
+<span class="add">+                case ESM::Dialogue::Persuasion:</span>
+<span class="add">+                    return &quot;persuasion&quot;;</span>
+<span class="add">+                case ESM::Dialogue::Journal:</span>
+<span class="add">+                    return &quot;journal&quot;;</span>
+<span class="add">+                default:</span>
+<span class="add">+                    return {};</span>
+<span class="add">+            }</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        sol::table makeTranscriptEntry(sol::state_view lua, const DialogueManager::TranscriptEntry&amp; entry)</span>
+<span class="add">+        {</span>
+<span class="add">+            sol::table result(lua, sol::create);</span>
+<span class="add">+            result[&quot;text&quot;] = entry.mText;</span>
+<span class="add">+            if (!entry.mTitle.empty())</span>
+<span class="add">+                result[&quot;title&quot;] = entry.mTitle;</span>
+<span class="add">+            result[&quot;isMessage&quot;] = entry.mIsMessage;</span>
+<span class="add">+            if (entry.mDialogue != nullptr)</span>
+<span class="add">+            {</span>
+<span class="add">+                result[&quot;type&quot;] = getRecordType(*entry.mDialogue);</span>
+<span class="add">+                result[&quot;recordId&quot;] = entry.mDialogue-&gt;mId.serializeText();</span>
+<span class="add">+            }</span>
+<span class="add">+            if (entry.mInfo != nullptr)</span>
+<span class="add">+                result[&quot;infoId&quot;] = entry.mInfo-&gt;mId.serializeText();</span>
+<span class="add">+            return result;</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        sol::table makeTopics(sol::state_view lua)</span>
+<span class="add">+        {</span>
+<span class="add">+            sol::table result(lua, sol::create);</span>
+<span class="add">+            if (!isInDialogue())</span>
+<span class="add">+                return result;</span>
+<span class="add">+            for (const DialogueManager::AvailableTopic&amp; topic : getDialogueManager().getAvailableTopics())</span>
+<span class="add">+            {</span>
+<span class="add">+                sol::table entry(lua, sol::create);</span>
+<span class="add">+                entry[&quot;id&quot;] = topic.mId.serializeText();</span>
+<span class="add">+                entry[&quot;name&quot;] = topic.mName;</span>
+<span class="add">+                entry[&quot;specific&quot;] = (topic.mFlags &amp; DialogueManager::TopicType::Specific) != 0;</span>
+<span class="add">+                entry[&quot;exhausted&quot;] = (topic.mFlags &amp; DialogueManager::TopicType::Exhausted) != 0;</span>
+<span class="add">+                result.add(entry);</span>
+<span class="add">+            }</span>
+<span class="add">+            return result;</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        sol::table makeChoices(sol::state_view lua)</span>
+<span class="add">+        {</span>
+<span class="add">+            sol::table result(lua, sol::create);</span>
+<span class="add">+            if (!isInDialogue() || !getDialogueManager().isInChoice())</span>
+<span class="add">+                return result;</span>
+<span class="add">+            for (const auto&amp; [text, answer] : getDialogueManager().getChoices())</span>
+<span class="add">+            {</span>
+<span class="add">+                sol::table choice(lua, sol::create);</span>
+<span class="add">+                choice[&quot;text&quot;] = text;</span>
+<span class="add">+                choice[&quot;answer&quot;] = answer;</span>
+<span class="add">+                result.add(choice);</span>
+<span class="add">+            }</span>
+<span class="add">+            return result;</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        bool mustSayGoodbye()</span>
+<span class="add">+        {</span>
+<span class="add">+            return isInDialogue() &amp;&amp; getDialogueManager().isGoodbye();</span>
+<span class="add">+        }</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void addConversationBindings(sol::table&amp; player, const Context&amp; context)</span>
+<span class="add">+    {</span>
+<span class="add">+        player[&quot;getDialogueActor&quot;] = [](sol::this_state thisState, const Object&amp; object) -&gt; sol::object {</span>
+<span class="add">+            verifyPlayer(object);</span>
+<span class="add">+            const MWWorld::Ptr actor = getDialogueManager().getActor();</span>
+<span class="add">+            if (actor.isEmpty())</span>
+<span class="add">+                return sol::nil;</span>
+<span class="add">+            MWBase::Environment::get().getWorldModel()-&gt;registerPtr(actor);</span>
+<span class="add">+            if (object.isGObject())</span>
+<span class="add">+                return sol::make_object(thisState, GObject(actor));</span>
+<span class="add">+            return sol::make_object(thisState, LObject(actor));</span>
+<span class="add">+        };</span>
+<span class="add">+        player[&quot;getDialogueTopics&quot;] = [](sol::this_state thisState, const Object&amp; object) {</span>
+<span class="add">+            verifyPlayer(object);</span>
+<span class="add">+            return makeTopics(thisState);</span>
+<span class="add">+        };</span>
+<span class="add">+        player[&quot;getDialogueTranscript&quot;] = [](sol::this_state thisState, const Object&amp; object) {</span>
+<span class="add">+            verifyPlayer(object);</span>
+<span class="add">+            sol::table result(thisState, sol::create);</span>
+<span class="add">+            if (!isInDialogue())</span>
+<span class="add">+                return result;</span>
+<span class="add">+            for (const DialogueManager::TranscriptEntry&amp; entry : getDialogueManager().getTranscript())</span>
+<span class="add">+                result.add(makeTranscriptEntry(thisState, entry));</span>
+<span class="add">+            return result;</span>
+<span class="add">+        };</span>
+<span class="add">+        player[&quot;getDialogueChoices&quot;] = [](sol::this_state thisState, const Object&amp; object) {</span>
+<span class="add">+            verifyPlayer(object);</span>
+<span class="add">+            return makeChoices(thisState);</span>
+<span class="add">+        };</span>
+<span class="add">+        player[&quot;mustSayGoodbye&quot;] = [](const Object&amp; object) {</span>
+<span class="add">+            verifyPlayer(object);</span>
+<span class="add">+            return mustSayGoodbye();</span>
+<span class="add">+        };</span>
+<span class="add">+    }</span>
+<span class="add">+}</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/conversationbindings.hpp</div><pre>
+<span class="hunk">@@ -0,0 +1,14 @@</span>
+<span class="add">+#ifndef MWLUA_CONVERSATIONBINDINGS_H</span>
+<span class="add">+#define MWLUA_CONVERSATIONBINDINGS_H</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;sol/forward.hpp&gt;</span>
+<span class="add">+</span>
+<span class="add">+namespace MWLua</span>
+<span class="add">+{</span>
+<span class="add">+    struct Context;</span>
+<span class="add">+</span>
+<span class="add">+    // Adds the functions for the player&#x27;s current conversation to types.Player</span>
+<span class="add">+    void addConversationBindings(sol::table&amp; player, const Context&amp; context);</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+#endif // MWLUA_CONVERSATIONBINDINGS_H</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -17,6 +17,7 @@</span>
+<span class="ctx"> #include &lt;components/settings/values.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../birthsignbindings.hpp&quot;</span>
+<span class="add">+#include &quot;../conversationbindings.hpp&quot;</span>
+<span class="ctx"> #include &quot;../luamanagerimp.hpp&quot;</span>
+<span class="ctx"> #include &quot;../magicbindings.hpp&quot;</span>
+<span class="ctx"> #include &quot;../magictypebindings.hpp&quot;</span>
+<span class="hunk">@@ -1630,5 +1631,7 @@ namespace MWLua</span>
+<span class="ctx">                 throw std::runtime_error(&quot;Only global scripts can change birth signs&quot;);</span>
+<span class="ctx">             MWBase::Environment::get().getWorld()-&gt;getPlayer().setBirthSign(toBirthSignId(recordOrId));</span>
+<span class="ctx">         };</span>
+<span class="add">+</span>
+<span class="add">+        addConversationBindings(player, context);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1899,6 +1899,67 @@</span>
+<span class="ctx"> -- @usage -- Give all players in the current world a specific topic, in a global script</span>
+<span class="ctx"> -- for _, player in ipairs(world.players) do player.type.addTopic(player, &quot;Some Unrelated Work&quot;) end</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- The actor the player is talking to, or nil outside a conversation.</span>
+<span class="add">+-- A conversation starts when the dialogue mode opens with an actor who has a greeting for the player, such as with `I.UI.setMode(&#x27;Dialogue&#x27;, { target = actor })`. It ends when the dialogue mode closes.</span>
+<span class="add">+-- The conversation functions also work while a Lua mod replaces the Dialogue window.</span>
+<span class="add">+-- @function [parent=#PLAYER] getDialogueActor</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @return openmw.core#GameObject</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- The topics that the player can ask about in the current conversation, sorted by name, as the Dialogue window lists them.</span>
+<span class="add">+-- These are the topics that the player knows and that the actor has an answer to.</span>
+<span class="add">+-- The engine works the list out again after the greeting, a topic, an answer to a choice, a persuasion attempt and a refused service.</span>
+<span class="add">+-- Empty outside a conversation.</span>
+<span class="add">+-- @function [parent=#PLAYER] getDialogueTopics</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @return #list&lt;#PLAYERDialogueTopic&gt;</span>
+<span class="add">+-- @usage for _, topic in ipairs(types.Player.getDialogueTopics(self)) do print(topic.name) end</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- @type PLAYERDialogueTopic</span>
+<span class="add">+-- @field #string id The record ID of the topic, as in `core.dialogue.topic.records`.</span>
+<span class="add">+-- @field #string name The name of the topic.</span>
+<span class="add">+-- @field #boolean specific The actor&#x27;s answer is one that only this actor gives, and the player hasn&#x27;t heard it yet. The Dialogue window shows such topics in their own colour.</span>
+<span class="add">+-- @field #boolean exhausted The player has heard the actor&#x27;s answer, and it names no topic that the player doesn&#x27;t know yet. The Dialogue window shows such topics in their own colour.</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- The lines of the current conversation, from the greeting on, in the order the Dialogue window shows them.</span>
+<span class="add">+-- Empty outside a conversation.</span>
+<span class="add">+-- @function [parent=#PLAYER] getDialogueTranscript</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @return #list&lt;#PLAYERDialogueLine&gt;</span>
+<span class="add">+-- @usage for _, line in ipairs(types.Player.getDialogueTranscript(self)) do print(line.title, line.text) end</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- @type PLAYERDialogueLine</span>
+<span class="add">+-- @field #string text The text. Variables such as `%PCName` are filled in. Links to topics are still marked as `@topic#`.</span>
+<span class="add">+-- @field #string title The header above the line, such as the name of the topic the player asked about. Nil for greetings, answers to choices and messages.</span>
+<span class="add">+-- @field #boolean isMessage True for a message that the game showed during the conversation, such as &quot;Your journal has been updated&quot;.</span>
+<span class="add">+-- @field #string type The type of the dialogue record the line came from, as in the `DialogueResponse` event, such as `&#x27;greeting&#x27;` or `&#x27;topic&#x27;`. Nil for messages and for the merchant&#x27;s reply to a finished trade.</span>
+<span class="add">+-- @field #string recordId The ID of the dialogue record the line came from. When an actor refuses to answer because they don&#x27;t like the player enough, this is the `Info Refusal` topic. Nil when `type` is nil.</span>
+<span class="add">+-- @field #string infoId The ID of the info in that record. Nil when `type` is nil.</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- The answers that the player must choose from, after a dialogue script asked a question with `Choice`.</span>
+<span class="add">+-- Empty when there is no question to answer.</span>
+<span class="add">+-- @function [parent=#PLAYER] getDialogueChoices</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @return #list&lt;#PLAYERDialogueChoice&gt;</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- @type PLAYERDialogueChoice</span>
+<span class="add">+-- @field #string text The text of the answer.</span>
+<span class="add">+-- @field #number answer The number that the script gave this answer.</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Whether a dialogue script ended the conversation with `Goodbye`.</span>
+<span class="add">+-- The player can then only leave, and the Dialogue window shows a Goodbye link in place of the topics.</span>
+<span class="add">+-- @function [parent=#PLAYER] mustSayGoodbye</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @return #boolean</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Returns @{#PlayerJournal}, which contains the read-only access to journal text data accumulated by the player.</span>
+<span class="ctx"> -- Not the same as @{openmw_core#Dialogue.journal} which holds raw game records: with placeholders for dynamic variables and no player-specific info.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/player.lua</div><pre>
+<span class="hunk">@@ -308,6 +308,14 @@ testing.registerLocalTest(&#x27;measure text&#x27;, function()</span>
+<span class="ctx">     testing.expectEqual(ok, false, &#x27;Wrapping without a width should be an error&#x27;)</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerLocalTest(&#x27;Dialogue outside a conversation&#x27;, function()</span>
+<span class="add">+    testing.expectEqual(types.Player.getDialogueActor(self), nil, &#x27;The player should not be talking to anyone&#x27;)</span>
+<span class="add">+    testing.expectThat(types.Player.getDialogueTopics(self), matchers.equalTo({}), &#x27;There should be no topics&#x27;)</span>
+<span class="add">+    testing.expectThat(types.Player.getDialogueTranscript(self), matchers.equalTo({}), &#x27;There should be no lines&#x27;)</span>
+<span class="add">+    testing.expectThat(types.Player.getDialogueChoices(self), matchers.equalTo({}), &#x27;There should be no choices&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Player.mustSayGoodbye(self), false, &#x27;Nothing should ask the player to leave&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerLocalTest(&#x27;findPath&#x27;,</span>
+<span class="ctx">     function()</span>
+<span class="ctx">         local src = util.vector3(4096, 4096, 1745)</span>
+</pre></div>

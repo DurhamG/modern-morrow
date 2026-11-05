@@ -1,0 +1,50 @@
+<div class="file"><div class="path">apps/openmw/mwworld/actiontake.cpp</div><pre>
+<span class="hunk">@@ -12,6 +12,18 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWWorld</span>
+<span class="ctx"> {</span>
+<span class="add">+    Ptr takeFromWorld(const Ptr&amp; actor, const Ptr&amp; object)</span>
+<span class="add">+    {</span>
+<span class="add">+        int count = object.getCellRef().getCount();</span>
+<span class="add">+        if (object.getClass().isGold(object))</span>
+<span class="add">+            count *= object.getClass().getValue(object);</span>
+<span class="add">+</span>
+<span class="add">+        MWBase::Environment::get().getMechanicsManager()-&gt;itemTaken(actor, object, MWWorld::Ptr(), count);</span>
+<span class="add">+        MWWorld::Ptr newitem = *actor.getClass().getContainerStore(actor).add(object, count);</span>
+<span class="add">+        MWBase::Environment::get().getWorld()-&gt;deleteObject(object);</span>
+<span class="add">+        return newitem;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     ActionTake::ActionTake(const MWWorld::Ptr&amp; object)</span>
+<span class="ctx">         : Action(true, object)</span>
+<span class="ctx">     {</span>
+<span class="hunk">@@ -30,13 +42,6 @@ namespace MWWorld</span>
+<span class="ctx">             }</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        int count = getTarget().getCellRef().getCount();</span>
+<span class="del">-        if (getTarget().getClass().isGold(getTarget()))</span>
+<span class="del">-            count *= getTarget().getClass().getValue(getTarget());</span>
+<span class="del">-</span>
+<span class="del">-        MWBase::Environment::get().getMechanicsManager()-&gt;itemTaken(actor, getTarget(), MWWorld::Ptr(), count);</span>
+<span class="del">-        MWWorld::Ptr newitem = *actor.getClass().getContainerStore(actor).add(getTarget(), count);</span>
+<span class="del">-        MWBase::Environment::get().getWorld()-&gt;deleteObject(getTarget());</span>
+<span class="del">-        setTarget(newitem);</span>
+<span class="add">+        setTarget(takeFromWorld(actor, getTarget()));</span>
+<span class="ctx">     }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwworld/actiontake.hpp</div><pre>
+<span class="hunk">@@ -5,6 +5,11 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWWorld</span>
+<span class="ctx"> {</span>
+<span class="add">+    /// Moves @a object, which lies in the world, into @a actor&#x27;s inventory. Taking an item that someone owns is theft,</span>
+<span class="add">+    /// which the engine records and reports as a crime. A stack of gold coins counts each coin at its value.</span>
+<span class="add">+    /// @return The item in the inventory.</span>
+<span class="add">+    Ptr takeFromWorld(const Ptr&amp; actor, const Ptr&amp; object);</span>
+<span class="add">+</span>
+<span class="ctx">     class ActionTake : public Action</span>
+<span class="ctx">     {</span>
+<span class="ctx">         void executeImp(const Ptr&amp; actor) override;</span>
+</pre></div>

@@ -1,0 +1,69 @@
+<div class="file"><div class="path">apps/openmw/mwlua/inputbindings.cpp</div><pre>
+<span class="hunk">@@ -243,6 +243,18 @@ namespace MWLua</span>
+<span class="ctx">         api[&quot;isControllerButtonBound&quot;] = [input](int button) {</span>
+<span class="ctx">             return input-&gt;isControllerButtonBound(static_cast&lt;SDL_GameControllerButton&gt;(button));</span>
+<span class="ctx">         };</span>
+<span class="add">+        api[&quot;getControllerButtonIcon&quot;] = [input](int button) -&gt; sol::optional&lt;std::string&gt; {</span>
+<span class="add">+            std::string icon = input-&gt;getControllerButtonIcon(button);</span>
+<span class="add">+            if (icon.empty())</span>
+<span class="add">+                return sol::nullopt;</span>
+<span class="add">+            return icon;</span>
+<span class="add">+        };</span>
+<span class="add">+        api[&quot;getControllerAxisIcon&quot;] = [input](int axis) -&gt; sol::optional&lt;std::string&gt; {</span>
+<span class="add">+            std::string icon = input-&gt;getControllerAxisIcon(axis);</span>
+<span class="add">+            if (icon.empty())</span>
+<span class="add">+                return sol::nullopt;</span>
+<span class="add">+            return icon;</span>
+<span class="add">+        };</span>
+<span class="ctx">         api[&quot;isMouseButtonPressed&quot;]</span>
+<span class="ctx">             = [](int button) -&gt; bool { return SDL_GetMouseState(nullptr, nullptr) &amp; SDL_BUTTON(button); };</span>
+<span class="ctx">         api[&quot;_isGamepadCursorActive&quot;] = [input]() -&gt; bool { return input-&gt;isGamepadGuiCursorEnabled(); };</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/input.lua</div><pre>
+<span class="hunk">@@ -88,6 +88,22 @@</span>
+<span class="ctx"> --     -- use the d-pad for quick keys</span>
+<span class="ctx"> -- end</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- The texture that the engine shows for a controller button, such as in the hints of its own menus.</span>
+<span class="add">+-- It follows the type of the controller that is in use: for example, A is a cross on a PlayStation controller, and the shoulder buttons are LB and RB on an Xbox controller.</span>
+<span class="add">+-- With no controller, or one of another type, it is the generic icon.</span>
+<span class="add">+-- @function [parent=#input] getControllerButtonIcon</span>
+<span class="add">+-- @param #number buttonId Button index (see @{openmw.input#CONTROLLER_BUTTON})</span>
+<span class="add">+-- @return #string A texture path, or nil if the engine has no icon for the button, such as for the Guide button</span>
+<span class="add">+-- @usage local icon = ui.texture { path = input.getControllerButtonIcon(input.CONTROLLER_BUTTON.A) }</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- The texture that the engine shows for a controller stick or trigger, which follows the type of the controller like @{#input.getControllerButtonIcon}.</span>
+<span class="add">+-- Both axes of a stick have the same icon.</span>
+<span class="add">+-- @function [parent=#input] getControllerAxisIcon</span>
+<span class="add">+-- @param #number axisId Axis index (see @{openmw.input#CONTROLLER_AXIS})</span>
+<span class="add">+-- @return #string A texture path, or nil if the engine has no icon for the axis, such as for the deprecated axes that follow an action</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Is `Shift` key pressed.</span>
+<span class="ctx"> -- @function [parent=#input] isShiftPressed</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/menu.lua</div><pre>
+<span class="hunk">@@ -85,6 +85,20 @@ testing.registerMenuTest(&#x27;load while teleporting&#x27;, function()</span>
+<span class="ctx">     menu.deleteGame(&#x27; - 1&#x27;, &#x27;load_while_teleporting.omwsave&#x27;)</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerMenuTest(&#x27;controller button icons&#x27;, function()</span>
+<span class="add">+    -- The tests run without a controller, so the engine shows its generic icons.</span>
+<span class="add">+    testing.expectEqual(input.getControllerButtonIcon(input.CONTROLLER_BUTTON.A), &#x27;textures/omw_steam_button_a.dds&#x27;,</span>
+<span class="add">+        &#x27;A should have the generic icon&#x27;)</span>
+<span class="add">+    testing.expectEqual(input.getControllerButtonIcon(input.CONTROLLER_BUTTON.Guide), nil,</span>
+<span class="add">+        &#x27;The Guide button should have no icon&#x27;)</span>
+<span class="add">+    testing.expectEqual(input.getControllerAxisIcon(input.CONTROLLER_AXIS.TriggerLeft),</span>
+<span class="add">+        &#x27;textures/omw_steam_button_l2.dds&#x27;, &#x27;The left trigger should have the generic icon&#x27;)</span>
+<span class="add">+    testing.expectEqual(input.getControllerAxisIcon(input.CONTROLLER_AXIS.LeftY),</span>
+<span class="add">+        input.getControllerAxisIcon(input.CONTROLLER_AXIS.LeftX), &#x27;Both axes of a stick should have the same icon&#x27;)</span>
+<span class="add">+    testing.expectEqual(input.getControllerAxisIcon(input.CONTROLLER_AXIS.MoveForwardBackward), nil,</span>
+<span class="add">+        &#x27;An axis that follows an action should have no icon&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerMenuTest(&#x27;controller button bindings&#x27;, function()</span>
+<span class="ctx">     testing.expectEqual(input.isControllerButtonBound(input.CONTROLLER_BUTTON.A), true,</span>
+<span class="ctx">         &#x27;A should be bound to Activate by default&#x27;)</span>
+</pre></div>

@@ -1,0 +1,134 @@
+<div class="file"><div class="path">files/data/scripts/omw/ui.lua</div><pre>
+<span class="hunk">@@ -8,6 +8,7 @@ local input = require(&#x27;openmw.input&#x27;)</span>
+<span class="ctx"> </span>
+<span class="ctx"> local MODE = ui._getAllUiModes()</span>
+<span class="ctx"> local WINDOW = ui._getAllWindowIds()</span>
+<span class="add">+local HUD_ELEMENT = ui._getAllHudElements()</span>
+<span class="ctx"> </span>
+<span class="ctx"> local replacedWindows = {}</span>
+<span class="ctx"> local hiddenWindows = {}</span>
+<span class="hunk">@@ -220,6 +221,13 @@ local function onUiModeChangedEvent(data)</span>
+<span class="ctx">     end</span>
+<span class="ctx"> end</span>
+<span class="ctx"> </span>
+<span class="add">+local function setHudElementVisibility(element, visible)</span>
+<span class="add">+    if not HUD_ELEMENT[element] then</span>
+<span class="add">+        error(&#x27;HUD element &quot;&#x27; .. tostring(element) .. &#x27;&quot; not found.&#x27;)</span>
+<span class="add">+    end</span>
+<span class="add">+    ui._setHudElementVisibility(element, visible)</span>
+<span class="add">+end</span>
+<span class="add">+</span>
+<span class="ctx"> local function isWindowVisible(windowName)</span>
+<span class="ctx">     if replacedWindows[windowName] then</span>
+<span class="ctx">         return replacedWindows[windowName].visible</span>
+<span class="hunk">@@ -236,7 +244,7 @@ return {</span>
+<span class="ctx">     interface = {</span>
+<span class="ctx">         --- Interface version</span>
+<span class="ctx">         -- @field [parent=#UI] #number version</span>
+<span class="del">-        version = 5,</span>
+<span class="add">+        version = 6,</span>
+<span class="ctx"> </span>
+<span class="ctx">         --- All available UI modes.</span>
+<span class="ctx">         -- Use `view(I.UI.MODE)` in `luap` console mode to see the list.</span>
+<span class="hunk">@@ -248,6 +256,21 @@ return {</span>
+<span class="ctx">         -- @field [parent=#UI] #table WINDOW</span>
+<span class="ctx">         WINDOW = util.makeStrictReadOnly(WINDOW),</span>
+<span class="ctx"> </span>
+<span class="add">+        --- All HUD elements that @{#UI.setHudElementVisibility} can hide.</span>
+<span class="add">+        --</span>
+<span class="add">+        --   * `DynamicStats` - the health, magicka and fatigue bars</span>
+<span class="add">+        --   * `EnemyHealth` - the health bar of the last actor the player hit</span>
+<span class="add">+        --   * `Weapon` - the icon and condition bar of the equipped weapon</span>
+<span class="add">+        --   * `Spell` - the icon of the selected spell or enchanted item, and its bar</span>
+<span class="add">+        --   * `WeaponSpellName` - the name that appears for a few seconds when the weapon or the spell changes</span>
+<span class="add">+        --   * `Sneak` - the sneak indicator</span>
+<span class="add">+        --   * `ActiveEffects` - the icons of the spell effects on the player</span>
+<span class="add">+        --   * `Minimap` - the local map with the compass</span>
+<span class="add">+        --   * `CellName` - the cell name that appears for a few seconds when the player enters a cell</span>
+<span class="add">+        --   * `DrowningBar` - the breath meter that appears under water</span>
+<span class="add">+        -- @field [parent=#UI] #table HUD_ELEMENT</span>
+<span class="add">+        HUD_ELEMENT = util.makeStrictReadOnly(HUD_ELEMENT),</span>
+<span class="add">+</span>
+<span class="ctx">         --- Register new implementation for the window with given name; overrides previous implementation.</span>
+<span class="ctx">         -- Adding new windows is not supported yet. At the moment it is only possible to override built-in windows.</span>
+<span class="ctx">         -- @function [parent=#UI] registerWindow</span>
+<span class="hunk">@@ -316,6 +339,29 @@ return {</span>
+<span class="ctx">         -- @return #boolean</span>
+<span class="ctx">         isHudVisible = function() return ui._isHudVisible() end,</span>
+<span class="ctx"> </span>
+<span class="add">+        ---</span>
+<span class="add">+        -- Hide one element of the HUD, or let the engine show it again. Use it to replace an element with a mod&#x27;s own,</span>
+<span class="add">+        -- for example to draw the health bars in another style. The other elements of the HUD stay as they are.</span>
+<span class="add">+        --</span>
+<span class="add">+        -- While an element is hidden this way, the engine keeps it hidden, even at times when it would show it. With</span>
+<span class="add">+        -- `visible` true, the engine shows and hides the element by its own rules again. For example, it hides the</span>
+<span class="add">+        -- minimap while the map window is pinned, and shows the sneak indicator while the player sneaks unseen. The</span>
+<span class="add">+        -- elements beside a hidden one move into its place, as they do when the player pins a window.</span>
+<span class="add">+        --</span>
+<span class="add">+        -- All elements go back to the engine when a game is started or loaded.</span>
+<span class="add">+        -- @function [parent=#UI] setHudElementVisibility</span>
+<span class="add">+        -- @param #string element One of @{#UI.HUD_ELEMENT}</span>
+<span class="add">+        -- @param #boolean visible False to hide the element, true to let the engine show it</span>
+<span class="add">+        -- @usage I.UI.setHudElementVisibility(I.UI.HUD_ELEMENT.DynamicStats, false)</span>
+<span class="add">+        setHudElementVisibility = setHudElementVisibility,</span>
+<span class="add">+</span>
+<span class="add">+        ---</span>
+<span class="add">+        -- Returns whether the given HUD element is on the screen now.</span>
+<span class="add">+        -- @function [parent=#UI] isHudElementVisible</span>
+<span class="add">+        -- @param #string element One of @{#UI.HUD_ELEMENT}</span>
+<span class="add">+        -- @return #boolean</span>
+<span class="add">+        isHudElementVisible = function(element) return ui._isHudElementVisible(element) end,</span>
+<span class="add">+</span>
+<span class="ctx">         ---</span>
+<span class="ctx">         -- Returns if the given window is visible or not</span>
+<span class="ctx">         -- @function [parent=#UI] isWindowVisible</span>
+<span class="hunk">@@ -364,11 +410,6 @@ return {</span>
+<span class="ctx">         --     -- Show the message, and call answer(i) when the player picks buttons[i].</span>
+<span class="ctx">         -- end)</span>
+<span class="ctx">         registerInteractiveMessageHandler = registerInteractiveMessageHandler,</span>
+<span class="del">-</span>
+<span class="del">-        -- TODO</span>
+<span class="del">-        -- registerHudElement = function(name, showFn, hideFn) end,</span>
+<span class="del">-        -- showHudElement = function(name, bool) end,</span>
+<span class="del">-        -- hudElements,  -- map from element name to its visibility</span>
+<span class="ctx">     },</span>
+<span class="ctx">     engineHandlers = {</span>
+<span class="ctx">         _onUiModeChanged = onUiModeChanged,</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/player.lua</div><pre>
+<span class="hunk">@@ -163,6 +163,34 @@ testing.registerLocalTest(&#x27;player diagonal walking&#x27;,</span>
+<span class="ctx">         testing.expectEqualWithDelta(direction.y, -0.707, 0.1, &#x27;Walk diagonally, Y coord&#x27;)</span>
+<span class="ctx">     end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerLocalTest(&#x27;Lua hides a HUD element&#x27;, function()</span>
+<span class="add">+    local minimap = I.UI.HUD_ELEMENT.Minimap</span>
+<span class="add">+    local weapon = I.UI.HUD_ELEMENT.Weapon</span>
+<span class="add">+    testing.expectEqual(I.UI.isHudElementVisible(minimap), true, &#x27;The minimap should be visible at first&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    I.UI.setHudElementVisibility(minimap, false)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    testing.expectEqual(I.UI.isHudElementVisible(minimap), false, &#x27;Lua should hide the minimap&#x27;)</span>
+<span class="add">+    testing.expectEqual(I.UI.isHudElementVisible(weapon), true, &#x27;The other elements should stay visible&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    -- Opening and closing a menu makes the engine show the minimap again, unless Lua hid it.</span>
+<span class="add">+    I.UI.setPauseOnMode(I.UI.MODE.Interface, false)</span>
+<span class="add">+    I.UI.setMode(I.UI.MODE.Interface, { windows = {} })</span>
+<span class="add">+    while I.UI.getMode() ~= I.UI.MODE.Interface do</span>
+<span class="add">+        coroutine.yield()</span>
+<span class="add">+    end</span>
+<span class="add">+    I.UI.setMode()</span>
+<span class="add">+    while I.UI.getMode() ~= nil do</span>
+<span class="add">+        coroutine.yield()</span>
+<span class="add">+    end</span>
+<span class="add">+    I.UI.setPauseOnMode(I.UI.MODE.Interface, true)</span>
+<span class="add">+    testing.expectEqual(I.UI.isHudElementVisible(minimap), false, &#x27;The engine should not show the minimap again&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    I.UI.setHudElementVisibility(minimap, true)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    testing.expectEqual(I.UI.isHudElementVisible(minimap), true, &#x27;The engine should show the minimap again&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerLocalTest(&#x27;GUI input capture applies only in menus&#x27;, function()</span>
+<span class="ctx">     input.setGuiInputCaptured(true)</span>
+<span class="ctx">     testing.expectEqual(input.isGuiInputCaptured(), false, &#x27;The capture should have no effect outside menus&#x27;)</span>
+</pre></div>

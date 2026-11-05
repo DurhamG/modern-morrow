@@ -1,0 +1,97 @@
+<div class="file"><div class="path">apps/openmw/mwlua/menuscripts.cpp</div><pre>
+<span class="hunk">@@ -2,9 +2,11 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;components/lua/util.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/misc/strings/lower.hpp&gt;</span>
+<span class="add">+#include &lt;components/translation/translation.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/statemanager.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwstate/character.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;context.hpp&quot;</span>
+<span class="hunk">@@ -99,6 +101,8 @@ namespace MWLua</span>
+<span class="ctx"> </span>
+<span class="ctx">         auto getSaves = [](sol::state_view currentState, const MWState::Character&amp; character) {</span>
+<span class="ctx">             sol::table saves(currentState, sol::create);</span>
+<span class="add">+            const Translation::Storage&amp; translations</span>
+<span class="add">+                = MWBase::Environment::get().getWindowManager()-&gt;getTranslationDataStorage();</span>
+<span class="ctx">             for (const MWState::Slot&amp; slot : character)</span>
+<span class="ctx">             {</span>
+<span class="ctx">                 sol::table slotInfo(currentState, sol::create);</span>
+<span class="hunk">@@ -106,6 +110,14 @@ namespace MWLua</span>
+<span class="ctx">                 slotInfo[&quot;playerName&quot;] = slot.mProfile.mPlayerName;</span>
+<span class="ctx">                 slotInfo[&quot;playerLevel&quot;] = slot.mProfile.mPlayerLevel;</span>
+<span class="ctx">                 slotInfo[&quot;timePlayed&quot;] = slot.mProfile.mTimePlayed;</span>
+<span class="add">+                slotInfo[&quot;playerHealth&quot;] = slot.mProfile.mCurrentHealth;</span>
+<span class="add">+                slotInfo[&quot;playerMaxHealth&quot;] = slot.mProfile.mMaximumHealth;</span>
+<span class="add">+                slotInfo[&quot;cellName&quot;] = translations.translateCellName(slot.mProfile.mPlayerCellName);</span>
+<span class="add">+                slotInfo[&quot;day&quot;] = slot.mProfile.mCurrentDay;</span>
+<span class="add">+                slotInfo[&quot;dayOfMonth&quot;] = slot.mProfile.mInGameTime.mDay;</span>
+<span class="add">+                slotInfo[&quot;month&quot;] = slot.mProfile.mInGameTime.mMonth + 1;</span>
+<span class="add">+                slotInfo[&quot;year&quot;] = slot.mProfile.mInGameTime.mYear;</span>
+<span class="add">+                slotInfo[&quot;gameHour&quot;] = slot.mProfile.mInGameTime.mGameHour;</span>
+<span class="ctx">                 sol::table contentFiles(currentState, sol::create);</span>
+<span class="ctx">                 for (size_t i = 0; i &lt; slot.mProfile.mContentFiles.size(); ++i)</span>
+<span class="ctx">                     contentFiles[LuaUtil::toLuaIndex(i)] = Misc::StringUtils::lowerCase(slot.mProfile.mContentFiles[i]);</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/menu.lua</div><pre>
+<span class="hunk">@@ -60,6 +60,14 @@</span>
+<span class="ctx"> -- @field #number timePlayed Gameplay time for this saved game. Note: available even with [time played](../modding/settings/saves.html#timeplayed) turned off</span>
+<span class="ctx"> -- @field #number creationTime Time at which the game was saved, as a timestamp in seconds. Can be passed as the second argument to `os.data`.</span>
+<span class="ctx"> -- @field #list&lt;#string&gt; contentFiles</span>
+<span class="add">+-- @field #number playerHealth The player&#x27;s health when the game was saved. It is 0 in saves made by old versions of OpenMW.</span>
+<span class="add">+-- @field #number playerMaxHealth The player&#x27;s maximum health when the game was saved. It is 0 in saves made by old versions of OpenMW.</span>
+<span class="add">+-- @field #string cellName The name of the cell the player was in, translated the same way as @{openmw.core#Cell.displayName}. For an exterior cell without a name, it is the name of the region.</span>
+<span class="add">+-- @field #number day The number of days passed in the game, from the `DaysPassed` game variable. It is 0 in saves made by old versions of OpenMW.</span>
+<span class="add">+-- @field #number dayOfMonth The in-game day of the month.</span>
+<span class="add">+-- @field #number month The in-game month, from 1 to 12.</span>
+<span class="add">+-- @field #number year The in-game year.</span>
+<span class="add">+-- @field #number gameHour The in-game hour, from 0 to 24, with a fractional part for the minutes.</span>
+<span class="ctx"> </span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- All the saves for the given directory</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/menu.lua</div><pre>
+<span class="hunk">@@ -7,6 +7,24 @@ testing.setSetupGlobalTest(function()</span>
+<span class="ctx">     coroutine.yield()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+local function isOfType(expectedType)</span>
+<span class="add">+    return function(actual)</span>
+<span class="add">+        if type(actual) ~= expectedType then</span>
+<span class="add">+            return string.format(&#x27;expected a %s, got %s&#x27;, expectedType, tostring(actual))</span>
+<span class="add">+        end</span>
+<span class="add">+        return &#x27;&#x27;</span>
+<span class="add">+    end</span>
+<span class="add">+end</span>
+<span class="add">+</span>
+<span class="add">+local function isNumberBetween(min, max)</span>
+<span class="add">+    return function(actual)</span>
+<span class="add">+        if type(actual) ~= &#x27;number&#x27; or actual &lt; min or actual &gt; max then</span>
+<span class="add">+            return string.format(&#x27;expected a number from %s to %s, got %s&#x27;, min, max, tostring(actual))</span>
+<span class="add">+        end</span>
+<span class="add">+        return &#x27;&#x27;</span>
+<span class="add">+    end</span>
+<span class="add">+end</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerMenuTest(&#x27;save and load&#x27;, function()</span>
+<span class="ctx">     menu.newGame()</span>
+<span class="ctx">     coroutine.yield()</span>
+<span class="hunk">@@ -28,6 +46,14 @@ testing.registerMenuTest(&#x27;save and load&#x27;, function()</span>
+<span class="ctx">             &#x27;test_lua_api.omwscripts&#x27;,</span>
+<span class="ctx">         },</span>
+<span class="ctx">         creationTime = matchers.isAny(),</span>
+<span class="add">+        playerHealth = isNumberBetween(1, math.huge),</span>
+<span class="add">+        playerMaxHealth = isNumberBetween(1, math.huge),</span>
+<span class="add">+        cellName = isOfType(&#x27;string&#x27;),</span>
+<span class="add">+        day = isNumberBetween(0, math.huge),</span>
+<span class="add">+        dayOfMonth = isNumberBetween(1, 31),</span>
+<span class="add">+        month = isNumberBetween(1, 12),</span>
+<span class="add">+        year = isOfType(&#x27;number&#x27;),</span>
+<span class="add">+        gameHour = isNumberBetween(0, 24),</span>
+<span class="ctx">     }</span>
+<span class="ctx">     local expectedAllSaves = {}</span>
+<span class="ctx">     expectedAllSaves[&#x27; - 1&#x27;] = directorySaves</span>
+</pre></div>

@@ -1,0 +1,476 @@
+<div class="file"><div class="path">apps/openmw/mwgui/recharge.cpp</div><pre>
+<span class="hunk">@@ -134,9 +134,10 @@ namespace MWGui</span>
+<span class="ctx">     void Recharge::onItemClicked(MyGUI::Widget* /*sender*/, const MWWorld::Ptr&amp; item)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         MWWorld::Ptr gem = *mGemIcon-&gt;getUserData&lt;MWWorld::Ptr&gt;();</span>
+<span class="del">-        if (!MWMechanics::rechargeItem(item, gem))</span>
+<span class="add">+        if (!gem.getCellRef().getCount())</span>
+<span class="ctx">             return;</span>
+<span class="ctx"> </span>
+<span class="add">+        MWMechanics::rechargeItem(item, gem);</span>
+<span class="ctx">         updateView();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -4,7 +4,10 @@</span>
+<span class="ctx"> #include &lt;optional&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;components/esm3/loadbsgn.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadcrea.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadfact.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadmisc.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadrepa.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadskil.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/lua/util.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -20,6 +23,8 @@</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/actorutil.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/npcstats.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/pickpocket.hpp&quot;</span>
+<span class="add">+#include &quot;apps/openmw/mwmechanics/recharge.hpp&quot;</span>
+<span class="add">+#include &quot;apps/openmw/mwmechanics/repair.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/services.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/containerstore.hpp&quot;</span>
+<span class="hunk">@@ -341,6 +346,85 @@ namespace MWLua</span>
+<span class="ctx">               };</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    // Using a tool changes the items in the player&#x27;s inventory, which only global scripts can do.</span>
+<span class="add">+    static void verifyCrafter(const Object&amp; player)</span>
+<span class="add">+    {</span>
+<span class="add">+        verifyPlayer(player);</span>
+<span class="add">+        if (!player.isGObject())</span>
+<span class="add">+            throw std::runtime_error(&quot;Only global scripts can change the player&#x27;s items&quot;);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    static void verifyFilledSoulGem(const MWWorld::Ptr&amp; gem)</span>
+<span class="add">+    {</span>
+<span class="add">+        const ESM::RefId&amp; soul = gem.getCellRef().getSoul();</span>
+<span class="add">+        if (gem.getType() != ESM::Miscellaneous::sRecordId || soul.empty()</span>
+<span class="add">+            || !MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Creature&gt;().search(soul))</span>
+<span class="add">+            throw std::runtime_error(&quot;A soul gem with a soul expected&quot;);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    static void addToolBindings(sol::table&amp; playerBindings, const Context&amp; context)</span>
+<span class="add">+    {</span>
+<span class="add">+        playerBindings[&quot;getRepairChance&quot;] = [](const Object&amp; player) -&gt; int {</span>
+<span class="add">+            verifyPlayer(player);</span>
+<span class="add">+            return MWMechanics::getRepairChance();</span>
+<span class="add">+        };</span>
+<span class="add">+        playerBindings[&quot;getRechargeChance&quot;] = [](const Object&amp; player) -&gt; int {</span>
+<span class="add">+            verifyPlayer(player);</span>
+<span class="add">+            return MWMechanics::getRechargeChance();</span>
+<span class="add">+        };</span>
+<span class="add">+        playerBindings[&quot;repairItem&quot;] = [context](const Object&amp; player, const Object&amp; item, const Object&amp; tool,</span>
+<span class="add">+                                           sol::optional&lt;sol::table&gt; callback) {</span>
+<span class="add">+            verifyCrafter(player);</span>
+<span class="add">+            const MWWorld::Ptr itemPtr = item.ptr();</span>
+<span class="add">+            const MWWorld::Ptr toolPtr = tool.ptr();</span>
+<span class="add">+            verifyIsIn(itemPtr, player.ptr());</span>
+<span class="add">+            verifyIsIn(toolPtr, player.ptr());</span>
+<span class="add">+            if (toolPtr.getType() != ESM::Repair::sRecordId)</span>
+<span class="add">+                throw std::runtime_error(&quot;Repair tool expected&quot;);</span>
+<span class="add">+            if (!MWMechanics::canMerchantRepair(itemPtr))</span>
+<span class="add">+                throw std::runtime_error(&quot;The item must be a weapon or a piece of armor that has lost some condition&quot;);</span>
+<span class="add">+            context.mLuaManager-&gt;addAction(</span>
+<span class="add">+                [context, item = Object(itemPtr), tool = Object(toolPtr), callback = toCallback(callback)] {</span>
+<span class="add">+                    const MWWorld::Ptr repaired = item.ptr();</span>
+<span class="add">+                    const MWWorld::Ptr used = tool.ptr();</span>
+<span class="add">+                    // An earlier action may have used up the tool or repaired the item.</span>
+<span class="add">+                    if (used.getCellRef().getCount() &lt;= 0 || !MWMechanics::canMerchantRepair(repaired))</span>
+<span class="add">+                    {</span>
+<span class="add">+                        reportOutcome(context, callback, false);</span>
+<span class="add">+                        return;</span>
+<span class="add">+                    }</span>
+<span class="add">+                    MWMechanics::Repair repair;</span>
+<span class="add">+                    repair.setTool(used);</span>
+<span class="add">+                    reportOutcome(context, callback, repair.repair(repaired));</span>
+<span class="add">+                },</span>
+<span class="add">+                &quot;RepairItemAction&quot;);</span>
+<span class="add">+        };</span>
+<span class="add">+        playerBindings[&quot;rechargeItem&quot;] = [context](const Object&amp; player, const Object&amp; item, const Object&amp; soulGem,</span>
+<span class="add">+                                             sol::optional&lt;sol::table&gt; callback) {</span>
+<span class="add">+            verifyCrafter(player);</span>
+<span class="add">+            const MWWorld::Ptr itemPtr = item.ptr();</span>
+<span class="add">+            const MWWorld::Ptr gemPtr = soulGem.ptr();</span>
+<span class="add">+            verifyIsIn(itemPtr, player.ptr());</span>
+<span class="add">+            verifyIsIn(gemPtr, player.ptr());</span>
+<span class="add">+            verifyFilledSoulGem(gemPtr);</span>
+<span class="add">+            if (!MWMechanics::canRecharge(itemPtr))</span>
+<span class="add">+                throw std::runtime_error(&quot;The item must be an enchanted item that has lost some charge&quot;);</span>
+<span class="add">+            context.mLuaManager-&gt;addAction(</span>
+<span class="add">+                [context, item = Object(itemPtr), soulGem = Object(gemPtr), callback = toCallback(callback)] {</span>
+<span class="add">+                    const MWWorld::Ptr recharged = item.ptr();</span>
+<span class="add">+                    const MWWorld::Ptr used = soulGem.ptr();</span>
+<span class="add">+                    // An earlier action may have used up the soul gem or recharged the item.</span>
+<span class="add">+                    if (used.getCellRef().getCount() &lt;= 0 || !MWMechanics::canRecharge(recharged))</span>
+<span class="add">+                    {</span>
+<span class="add">+                        reportOutcome(context, callback, false);</span>
+<span class="add">+                        return;</span>
+<span class="add">+                    }</span>
+<span class="add">+                    reportOutcome(context, callback, MWMechanics::rechargeItem(recharged, used));</span>
+<span class="add">+                },</span>
+<span class="add">+                &quot;RechargeItemAction&quot;);</span>
+<span class="add">+        };</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void addJournalClassBindings(sol::state_view&amp; lua, const MWBase::Journal* journal)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         auto journalBindingsClass = lua.new_usertype&lt;MWBase::Journal&gt;(&quot;MWDialogue_Journal&quot;);</span>
+<span class="hunk">@@ -814,6 +898,7 @@ namespace MWLua</span>
+<span class="ctx">                 static_cast&lt;MWBase::MechanicsManager::OffenseType&gt;(type), factionId, arg, victimAware);</span>
+<span class="ctx">         };</span>
+<span class="ctx">         addTakingBindings(player, context);</span>
+<span class="add">+        addToolBindings(player, context);</span>
+<span class="ctx"> </span>
+<span class="ctx">         player[&quot;birthSigns&quot;] = initBirthSignRecordBindings(context);</span>
+<span class="ctx">         player[&quot;getBirthSign&quot;] = [](const Object&amp; object) -&gt; std::string {</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/recharge.cpp</div><pre>
+<span class="hunk">@@ -1,5 +1,8 @@</span>
+<span class="ctx"> #include &quot;recharge.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;algorithm&gt;</span>
+<span class="add">+#include &lt;cmath&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> #include &lt;components/debug/debuglog.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadcrea.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadench.hpp&gt;</span>
+<span class="hunk">@@ -20,6 +23,28 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWMechanics</span>
+<span class="ctx"> {</span>
+<span class="add">+    namespace</span>
+<span class="add">+    {</span>
+<span class="add">+        // Recharging succeeds when a roll from 0 to 99 is below this.</span>
+<span class="add">+        float getRechargeSkillTerm(const MWWorld::Ptr&amp; player)</span>
+<span class="add">+        {</span>
+<span class="add">+            const CreatureStats&amp; stats = player.getClass().getCreatureStats(player);</span>
+<span class="add">+</span>
+<span class="add">+            float luckTerm = 0.1f * stats.getAttribute(ESM::Attribute::Luck).getModified();</span>
+<span class="add">+            if (luckTerm &lt; 1 || luckTerm &gt; 10)</span>
+<span class="add">+                luckTerm = 1;</span>
+<span class="add">+</span>
+<span class="add">+            float intelligenceTerm = 0.2f * stats.getAttribute(ESM::Attribute::Intelligence).getModified();</span>
+<span class="add">+</span>
+<span class="add">+            if (intelligenceTerm &gt; 20)</span>
+<span class="add">+                intelligenceTerm = 20;</span>
+<span class="add">+            if (intelligenceTerm &lt; 1)</span>
+<span class="add">+                intelligenceTerm = 1;</span>
+<span class="add">+</span>
+<span class="add">+            return (player.getClass().getSkill(player, ESM::Skill::Enchant) + intelligenceTerm + luckTerm)</span>
+<span class="add">+                * stats.getFatigueTerm();</span>
+<span class="add">+        }</span>
+<span class="add">+    }</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool rechargeItem(const MWWorld::Ptr&amp; item, const float maxCharge, const float duration)</span>
+<span class="ctx">     {</span>
+<span class="hunk">@@ -37,6 +62,12 @@ namespace MWMechanics</span>
+<span class="ctx">         return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    int getRechargeChance()</span>
+<span class="add">+    {</span>
+<span class="add">+        const float x = getRechargeSkillTerm(getPlayer());</span>
+<span class="add">+        return static_cast&lt;int&gt;(std::clamp(std::ceil(x), 0.f, 100.f));</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     bool canRecharge(const MWWorld::ConstPtr&amp; item)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         const ESM::RefId&amp; enchantmentId = item.getClass().getEnchantment(item);</span>
+<span class="hunk">@@ -62,26 +93,14 @@ namespace MWMechanics</span>
+<span class="ctx">             return false;</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="del">-        MWMechanics::CreatureStats&amp; stats = player.getClass().getCreatureStats(player);</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWBase::Environment::get().getWorld()-&gt;breakInvisibility(player);</span>
+<span class="ctx"> </span>
+<span class="del">-        float luckTerm = 0.1f * stats.getAttribute(ESM::Attribute::Luck).getModified();</span>
+<span class="del">-        if (luckTerm &lt; 1 || luckTerm &gt; 10)</span>
+<span class="del">-            luckTerm = 1;</span>
+<span class="del">-</span>
+<span class="del">-        float intelligenceTerm = 0.2f * stats.getAttribute(ESM::Attribute::Intelligence).getModified();</span>
+<span class="del">-</span>
+<span class="del">-        if (intelligenceTerm &gt; 20)</span>
+<span class="del">-            intelligenceTerm = 20;</span>
+<span class="del">-        if (intelligenceTerm &lt; 1)</span>
+<span class="del">-            intelligenceTerm = 1;</span>
+<span class="del">-</span>
+<span class="del">-        float x = (player.getClass().getSkill(player, ESM::Skill::Enchant) + intelligenceTerm + luckTerm)</span>
+<span class="del">-            * stats.getFatigueTerm();</span>
+<span class="add">+        float x = getRechargeSkillTerm(player);</span>
+<span class="ctx">         auto&amp; prng = MWBase::Environment::get().getWorld()-&gt;getPrng();</span>
+<span class="ctx">         int roll = Misc::Rng::roll0to99(prng);</span>
+<span class="del">-        if (roll &lt; x)</span>
+<span class="add">+        const bool recharged = roll &lt; x;</span>
+<span class="add">+        if (recharged)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             const ESM::RefId&amp; soul = gem.getCellRef().getSoul();</span>
+<span class="ctx">             const ESM::Creature* creature = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Creature&gt;().find(soul);</span>
+<span class="hunk">@@ -124,7 +143,7 @@ namespace MWMechanics</span>
+<span class="ctx">                 player.getClass().getContainerStore(player).add(soulGemAzura, 1);</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        return true;</span>
+<span class="add">+        return recharged;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/recharge.hpp</div><pre>
+<span class="hunk">@@ -8,6 +8,12 @@ namespace MWMechanics</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool rechargeItem(const MWWorld::Ptr&amp; item, const float maxCharge, const float duration);</span>
+<span class="ctx"> </span>
+<span class="add">+    /// The chance, from 0 to 100, that a soul gem restores some of an item&#x27;s charge.</span>
+<span class="add">+    /// It depends on the player, not on the soul gem.</span>
+<span class="add">+    int getRechargeChance();</span>
+<span class="add">+</span>
+<span class="add">+    /// Use @a gem, which the player carries, to restore some of the charge of @a item.</span>
+<span class="add">+    /// @return Whether the item regained some charge. This is false when the gem is used up already.</span>
+<span class="ctx">     bool rechargeItem(const MWWorld::Ptr&amp; item, const MWWorld::Ptr&amp; gem);</span>
+<span class="ctx"> </span>
+<span class="ctx">     /// Whether a soul gem can restore charge to @a item: an enchanted item that has lost some of its charge.</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/repair.cpp</div><pre>
+<span class="hunk">@@ -1,5 +1,8 @@</span>
+<span class="ctx"> #include &quot;repair.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;algorithm&gt;</span>
+<span class="add">+#include &lt;cmath&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> #include &lt;components/misc/rng.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/misc/strings/format.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -16,8 +19,29 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWMechanics</span>
+<span class="ctx"> {</span>
+<span class="add">+    namespace</span>
+<span class="add">+    {</span>
+<span class="add">+        // A use of a repair tool succeeds when a roll from 0 to 99 is at most this.</span>
+<span class="add">+        float getRepairSkillTerm(const MWWorld::Ptr&amp; player)</span>
+<span class="add">+        {</span>
+<span class="add">+            const CreatureStats&amp; stats = player.getClass().getCreatureStats(player);</span>
+<span class="add">+</span>
+<span class="add">+            float fatigueTerm = stats.getFatigueTerm();</span>
+<span class="add">+            float pcStrength = stats.getAttribute(ESM::Attribute::Strength).getModified();</span>
+<span class="add">+            float pcLuck = stats.getAttribute(ESM::Attribute::Luck).getModified();</span>
+<span class="add">+            float armorerSkill = player.getClass().getSkill(player, ESM::Skill::Armorer);</span>
+<span class="add">+</span>
+<span class="add">+            return (0.1f * pcStrength + 0.1f * pcLuck + armorerSkill) * fatigueTerm;</span>
+<span class="add">+        }</span>
+<span class="add">+    }</span>
+<span class="ctx"> </span>
+<span class="del">-    void Repair::repair(const MWWorld::Ptr&amp; itemToRepair)</span>
+<span class="add">+    int getRepairChance()</span>
+<span class="add">+    {</span>
+<span class="add">+        const float x = getRepairSkillTerm(getPlayer());</span>
+<span class="add">+        return static_cast&lt;int&gt;(std::clamp(std::floor(x) + 1, 0.f, 100.f));</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    bool Repair::repair(const MWWorld::Ptr&amp; itemToRepair)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         MWWorld::Ptr player = getPlayer();</span>
+<span class="ctx">         MWWorld::LiveCellRef&lt;ESM::Repair&gt;* ref = mTool.get&lt;ESM::Repair&gt;();</span>
+<span class="hunk">@@ -32,13 +56,6 @@ namespace MWMechanics</span>
+<span class="ctx">         uses -= std::min(uses, 1);</span>
+<span class="ctx">         mTool.getCellRef().setCharge(uses);</span>
+<span class="ctx"> </span>
+<span class="del">-        MWMechanics::CreatureStats&amp; stats = player.getClass().getCreatureStats(player);</span>
+<span class="del">-</span>
+<span class="del">-        float fatigueTerm = stats.getFatigueTerm();</span>
+<span class="del">-        float pcStrength = stats.getAttribute(ESM::Attribute::Strength).getModified();</span>
+<span class="del">-        float pcLuck = stats.getAttribute(ESM::Attribute::Luck).getModified();</span>
+<span class="del">-        float armorerSkill = player.getClass().getSkill(player, ESM::Skill::Armorer);</span>
+<span class="del">-</span>
+<span class="ctx">         float fRepairAmountMult = MWBase::Environment::get()</span>
+<span class="ctx">                                       .getESMStore()</span>
+<span class="ctx">                                       -&gt;get&lt;ESM::GameSetting&gt;()</span>
+<span class="hunk">@@ -47,11 +64,12 @@ namespace MWMechanics</span>
+<span class="ctx"> </span>
+<span class="ctx">         float toolQuality = ref-&gt;mBase-&gt;mData.mQuality;</span>
+<span class="ctx"> </span>
+<span class="del">-        float x = (0.1f * pcStrength + 0.1f * pcLuck + armorerSkill) * fatigueTerm;</span>
+<span class="add">+        float x = getRepairSkillTerm(player);</span>
+<span class="ctx"> </span>
+<span class="ctx">         auto&amp; prng = MWBase::Environment::get().getWorld()-&gt;getPrng();</span>
+<span class="ctx">         int roll = Misc::Rng::roll0to99(prng);</span>
+<span class="del">-        if (roll &lt;= x)</span>
+<span class="add">+        const bool repaired = roll &lt;= x;</span>
+<span class="add">+        if (repaired)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             int y = static_cast&lt;int&gt;(fRepairAmountMult * toolQuality * roll);</span>
+<span class="ctx">             y = std::max(1, y);</span>
+<span class="hunk">@@ -110,6 +128,8 @@ namespace MWMechanics</span>
+<span class="ctx">                 }</span>
+<span class="ctx">             }</span>
+<span class="ctx">         }</span>
+<span class="add">+</span>
+<span class="add">+        return repaired;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/repair.hpp</div><pre>
+<span class="hunk">@@ -5,6 +5,9 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWMechanics</span>
+<span class="ctx"> {</span>
+<span class="add">+    /// The chance, from 0 to 100, that one use of a repair tool restores some of an item&#x27;s condition.</span>
+<span class="add">+    /// It depends on the player, not on the tool.</span>
+<span class="add">+    int getRepairChance();</span>
+<span class="ctx"> </span>
+<span class="ctx">     class Repair</span>
+<span class="ctx">     {</span>
+<span class="hunk">@@ -12,7 +15,9 @@ namespace MWMechanics</span>
+<span class="ctx">         void setTool(const MWWorld::Ptr&amp; tool) { mTool = tool; }</span>
+<span class="ctx">         MWWorld::Ptr getTool() { return mTool; }</span>
+<span class="ctx"> </span>
+<span class="del">-        void repair(const MWWorld::Ptr&amp; itemToRepair);</span>
+<span class="add">+        /// Use the tool once on @a itemToRepair, which the player carries.</span>
+<span class="add">+        /// @return Whether the item regained some condition.</span>
+<span class="add">+        bool repair(const MWWorld::Ptr&amp; itemToRepair);</span>
+<span class="ctx"> </span>
+<span class="ctx">     private:</span>
+<span class="ctx">         MWWorld::Ptr mTool;</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1569,6 +1569,42 @@</span>
+<span class="ctx"> -- @param openmw.core#GameObject merchant</span>
+<span class="ctx"> -- @param openmw.core#GameObject item</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- The chance, from 0 to 100, that one use of a repair tool restores some of an item&#x27;s condition.</span>
+<span class="add">+-- It takes the player&#x27;s Armorer skill, Strength, Luck and fatigue into account. It doesn&#x27;t depend on the tool or the item.</span>
+<span class="add">+-- @function [parent=#PLAYER] getRepairChance</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @return #number</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Use a repair tool once on an item, the way the repair window does it (only in global scripts).</span>
+<span class="add">+-- The tool loses one use, and is removed when it has none left. With the chance of @{#PLAYER.getRepairChance}, the item regains some condition. The amount is random, and grows with the tool&#x27;s quality and the `fRepairAmountMult` game setting. Then the player&#x27;s Armorer skill progresses, and the item&#x27;s mwscript sees `OnPCRepair`.</span>
+<span class="add">+-- The engine plays the sound and shows the message that the repair window would. The item and the tool must be in the player&#x27;s inventory, and the item must be a weapon or a piece of armor that has lost some condition. Otherwise this throws an error.</span>
+<span class="add">+-- The repair happens at the end of the frame. If an earlier change in the frame used up the tool, or left the item in full condition, nothing happens.</span>
+<span class="add">+-- @function [parent=#PLAYER] repairItem</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param openmw.core#GameObject item</span>
+<span class="add">+-- @param openmw.core#GameObject tool A repair tool.</span>
+<span class="add">+-- @param openmw.async#Callback callback A function that receives `true` if the item regained some condition and `false` otherwise, including when nothing happened (optional).</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- The chance, from 0 to 100, that a soul gem restores some of an item&#x27;s charge.</span>
+<span class="add">+-- It takes the player&#x27;s Enchant skill, Intelligence, Luck and fatigue into account. It doesn&#x27;t depend on the soul gem or the item.</span>
+<span class="add">+-- @function [parent=#PLAYER] getRechargeChance</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @return #number</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Use a soul gem to recharge an enchanted item, the way the recharge window does it (only in global scripts).</span>
+<span class="add">+-- The soul gem is used up, except for Azura&#x27;s Star, which comes back empty. With the chance of @{#PLAYER.getRechargeChance}, the item regains some charge, up to the strength of the soul. Either way, the player&#x27;s Enchant skill progresses.</span>
+<span class="add">+-- The engine plays the sound that the recharge window would. The item and the soul gem must be in the player&#x27;s inventory, the soul gem must hold a soul, and the item must have lost some of its charge. Otherwise this throws an error.</span>
+<span class="add">+-- The recharge happens at the end of the frame. If an earlier change in the frame used up the soul gem, or left the item fully charged, nothing happens.</span>
+<span class="add">+-- @function [parent=#PLAYER] rechargeItem</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param openmw.core#GameObject item An enchanted item.</span>
+<span class="add">+-- @param openmw.core#GameObject soulGem</span>
+<span class="add">+-- @param openmw.async#Callback callback A function that receives `true` if the item regained some charge and `false` otherwise, including when nothing happened (optional).</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Travel with a merchant to one of their travel destinations, the way the travel window does it (only in global scripts).</span>
+<span class="ctx"> -- The player pays @{#Actor.getTravelPrice}, and the gold goes to the merchant&#x27;s barter gold. Then @{#Actor.getTravelHours} pass, while the player and other actors sleep. Last, the player and their followers move to the destination, and `GetPCTraveling` reports the trip to mwscripts for a frame.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -501,6 +501,77 @@ local function waitForOutcome(start)</span>
+<span class="ctx">     return result</span>
+<span class="ctx"> end</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;repairing and recharging&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    local inventory = types.Actor.inventory(player)</span>
+<span class="add">+    local soul = world.createRecord(types.Creature.createRecordDraft({</span>
+<span class="add">+        template = types.Creature.record(&#x27;landracer&#x27;),</span>
+<span class="add">+        soulValue = 100,</span>
+<span class="add">+    }))</span>
+<span class="add">+    local enchantment = world.createRecord(core.magic.enchantments.createRecordDraft({</span>
+<span class="add">+        type = core.magic.ENCHANTMENT_TYPE.CastOnUse,</span>
+<span class="add">+        cost = 5,</span>
+<span class="add">+        charge = 100,</span>
+<span class="add">+        isAutocalc = false,</span>
+<span class="add">+        effects = {</span>
+<span class="add">+            { id = findCostlyEffect().id, range = core.magic.RANGE.Self, magnitudeMin = 1, magnitudeMax = 1 },</span>
+<span class="add">+        },</span>
+<span class="add">+    }))</span>
+<span class="add">+    local record = world.createRecord(types.Weapon.createRecordDraft({</span>
+<span class="add">+        template = types.Weapon.record(&#x27;basic_dagger1h&#x27;),</span>
+<span class="add">+        health = 40,</span>
+<span class="add">+        enchant = enchantment.id,</span>
+<span class="add">+    }))</span>
+<span class="add">+    world.createObject(record.id, 1):moveInto(player)</span>
+<span class="add">+    world.createObject(&#x27;OMW_Test_RepairTool&#x27;, 1):moveInto(player)</span>
+<span class="add">+    world.createObject(&#x27;OMW_Test_SoulGem&#x27;, 1):moveInto(player)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    local item = inventory:find(record.id)</span>
+<span class="add">+    local tool = inventory:find(&#x27;OMW_Test_RepairTool&#x27;)</span>
+<span class="add">+    local gem = inventory:find(&#x27;OMW_Test_SoulGem&#x27;)</span>
+<span class="add">+    types.Item.itemData(item).condition = 10</span>
+<span class="add">+    types.Item.itemData(item).enchantmentCharge = 10</span>
+<span class="add">+    types.Item.itemData(gem).soul = soul.id</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;set skill on self&#x27;, { skill = &#x27;armorer&#x27;, value = 100 })</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;set skill on self&#x27;, { skill = &#x27;enchant&#x27;, value = 100 })</span>
+<span class="add">+</span>
+<span class="add">+    local repairChance = types.Player.getRepairChance(player)</span>
+<span class="add">+    testing.expectGreaterThan(repairChance, 0, &#x27;A player with 100 Armorer should be able to repair&#x27;)</span>
+<span class="add">+    testing.expectLessOrEqual(repairChance, 100, &#x27;The chance should be at most 100&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.repairItem, player, item, gem), false,</span>
+<span class="add">+        &#x27;The player should not repair with something that is not a repair tool&#x27;)</span>
+<span class="add">+    local repaired = waitForOutcome(function(callback)</span>
+<span class="add">+        types.Player.repairItem(player, item, tool, callback)</span>
+<span class="add">+    end)</span>
+<span class="add">+    testing.expect(repaired ~= nil, &#x27;The callback should receive whether the item was repaired&#x27;)</span>
+<span class="add">+    if repaired then</span>
+<span class="add">+        testing.expectGreaterThan(types.Item.itemData(item).condition, 10, &#x27;A repair should restore some condition&#x27;)</span>
+<span class="add">+    else</span>
+<span class="add">+        testing.expectEqual(types.Item.itemData(item).condition, 10, &#x27;A failed repair should restore nothing&#x27;)</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expectEqual(types.Item.itemData(tool).condition, 9, &#x27;Each repair should use the tool once&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local rechargeChance = types.Player.getRechargeChance(player)</span>
+<span class="add">+    testing.expectGreaterThan(rechargeChance, 0, &#x27;A player with 100 Enchant should be able to recharge&#x27;)</span>
+<span class="add">+    testing.expectLessOrEqual(rechargeChance, 100, &#x27;The chance should be at most 100&#x27;)</span>
+<span class="add">+    local recharged = waitForOutcome(function(callback)</span>
+<span class="add">+        types.Player.rechargeItem(player, item, gem, callback)</span>
+<span class="add">+    end)</span>
+<span class="add">+    testing.expect(recharged ~= nil, &#x27;The callback should receive whether the item was recharged&#x27;)</span>
+<span class="add">+    if recharged then</span>
+<span class="add">+        testing.expectGreaterOrEqual(types.Item.itemData(item).enchantmentCharge, 10,</span>
+<span class="add">+            &#x27;Recharging should not take charge away&#x27;)</span>
+<span class="add">+    else</span>
+<span class="add">+        testing.expectEqual(types.Item.itemData(item).enchantmentCharge, 10, &#x27;A failed recharge should restore nothing&#x27;)</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expectEqual(inventory:countOf(&#x27;OMW_Test_SoulGem&#x27;), 0, &#x27;Recharging should use up the soul gem&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;restore skill on self&#x27;, &#x27;armorer&#x27;)</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;restore skill on self&#x27;, &#x27;enchant&#x27;)</span>
+<span class="add">+    item:remove()</span>
+<span class="add">+    tool:remove()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;stolen items&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     local owner = world.createRecord(types.NPC.createRecordDraft({</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/load.lua</div><pre>
+<span class="hunk">@@ -46,6 +46,8 @@ return {</span>
+<span class="ctx">             for _, id in ipairs({ &#x27;gold_001&#x27;, &#x27;gold_005&#x27;, &#x27;gold_010&#x27;, &#x27;gold_025&#x27;, &#x27;gold_100&#x27; }) do</span>
+<span class="ctx">                 content.miscs.records[id] = { name = &#x27;Gold&#x27;, value = 1 }</span>
+<span class="ctx">             end</span>
+<span class="add">+            content.repairs.records.OMW_Test_RepairTool = { name = &#x27;Test hammer&#x27;, maxCondition = 10, quality = 1 }</span>
+<span class="add">+            content.miscs.records.OMW_Test_SoulGem = { name = &#x27;Test soul gem&#x27;, value = 10 }</span>
+<span class="ctx">         end</span>
+<span class="ctx">     }</span>
+<span class="ctx"> }</span>
+</pre></div>

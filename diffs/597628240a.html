@@ -1,0 +1,217 @@
+<div class="file"><div class="path">apps/openmw/mwbase/dialoguemanager.hpp</div><pre>
+<span class="hunk">@@ -29,6 +29,11 @@ namespace MWDialogue</span>
+<span class="ctx">     class KeywordSearch;</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="add">+namespace MWMechanics</span>
+<span class="add">+{</span>
+<span class="add">+    enum class DialogueService;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="ctx"> namespace MWWorld</span>
+<span class="ctx"> {</span>
+<span class="ctx">     class Ptr;</span>
+<span class="hunk">@@ -127,18 +132,6 @@ namespace MWBase</span>
+<span class="ctx">             Exhausted = 2</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+<span class="del">-        enum ServiceType</span>
+<span class="del">-        {</span>
+<span class="del">-            Any = -1,</span>
+<span class="del">-            Barter = 1,</span>
+<span class="del">-            Repair = 2,</span>
+<span class="del">-            Spells = 3,</span>
+<span class="del">-            Training = 4,</span>
+<span class="del">-            Travel = 5,</span>
+<span class="del">-            Spellmaking = 6,</span>
+<span class="del">-            Enchanting = 7</span>
+<span class="del">-        };</span>
+<span class="del">-</span>
+<span class="ctx">         /// The topics that the player can ask about, sorted by name. They are worked out again after each step of the</span>
+<span class="ctx">         /// conversation.</span>
+<span class="ctx">         virtual const std::vector&lt;AvailableTopic&gt;&amp; getAvailableTopics() const = 0;</span>
+<span class="hunk">@@ -146,7 +139,11 @@ namespace MWBase</span>
+<span class="ctx">         /// Finds the available topics in a text, to show them as links</span>
+<span class="ctx">         virtual const MWDialogue::KeywordSearch&amp; getAvailableTopicSearch() const = 0;</span>
+<span class="ctx"> </span>
+<span class="del">-        virtual bool checkServiceRefused(ServiceType service = ServiceType::Any) = 0;</span>
+<span class="add">+        /// Asks the actor for @a service, one of the services in MWMechanics::getDialogueServices. The actor can refuse</span>
+<span class="add">+        /// with a line from the &quot;Service Refusal&quot; topic. Otherwise the service&#x27;s window opens. Returns whether it</span>
+<span class="add">+        /// opened. Does nothing and returns false if the actor doesn&#x27;t offer the service, or while the player must</span>
+<span class="add">+        /// answer a choice or say goodbye. Persuasion has no window of its own here, see persuade.</span>
+<span class="add">+        virtual bool requestService(MWMechanics::DialogueService service) = 0;</span>
+<span class="ctx"> </span>
+<span class="ctx">         /// Whether the player can try to persuade the actor in the way @a type, a</span>
+<span class="ctx">         /// MWBase::MechanicsManager::PersuasionType. Only NPCs can be persuaded, and a bribe needs the gold. The player</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.cpp</div><pre>
+<span class="hunk">@@ -48,6 +48,7 @@</span>
+<span class="ctx"> #include &quot;../mwmechanics/actorutil.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/creaturestats.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/npcstats.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/services.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;filter.hpp&quot;</span>
+<span class="ctx"> #include &quot;keywordsearch.hpp&quot;</span>
+<span class="hunk">@@ -724,6 +725,61 @@ namespace MWDialogue</span>
+<span class="ctx">         return false;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    bool DialogueManager::requestService(MWMechanics::DialogueService service)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (mIsInChoice || mGoodbye || mActor.isEmpty())</span>
+<span class="add">+            return false;</span>
+<span class="add">+        const std::vector&lt;MWMechanics::DialogueService&gt; services = MWMechanics::getDialogueServices(mActor);</span>
+<span class="add">+        if (std::find(services.begin(), services.end(), service) == services.end())</span>
+<span class="add">+            return false;</span>
+<span class="add">+</span>
+<span class="add">+        ServiceType type;</span>
+<span class="add">+        MWGui::GuiMode mode;</span>
+<span class="add">+        switch (service)</span>
+<span class="add">+        {</span>
+<span class="add">+            case MWMechanics::DialogueService::Barter:</span>
+<span class="add">+                type = ServiceType::Barter;</span>
+<span class="add">+                mode = MWGui::GM_Barter;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case MWMechanics::DialogueService::Spells:</span>
+<span class="add">+                type = ServiceType::Spells;</span>
+<span class="add">+                mode = MWGui::GM_SpellBuying;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case MWMechanics::DialogueService::Travel:</span>
+<span class="add">+                type = ServiceType::Travel;</span>
+<span class="add">+                mode = MWGui::GM_Travel;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case MWMechanics::DialogueService::Spellmaking:</span>
+<span class="add">+                type = ServiceType::Spellmaking;</span>
+<span class="add">+                mode = MWGui::GM_SpellCreation;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case MWMechanics::DialogueService::Enchanting:</span>
+<span class="add">+                type = ServiceType::Enchanting;</span>
+<span class="add">+                mode = MWGui::GM_Enchanting;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case MWMechanics::DialogueService::Training:</span>
+<span class="add">+                type = ServiceType::Training;</span>
+<span class="add">+                mode = MWGui::GM_Training;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case MWMechanics::DialogueService::Repair:</span>
+<span class="add">+                type = ServiceType::Repair;</span>
+<span class="add">+                mode = MWGui::GM_MerchantRepair;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case MWMechanics::DialogueService::CompanionShare:</span>
+<span class="add">+                // Companions don&#x27;t refuse to share</span>
+<span class="add">+                MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(MWGui::GM_Companion, mActor);</span>
+<span class="add">+                return true;</span>
+<span class="add">+            default:</span>
+<span class="add">+                return false;</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        // First the refusals for any service, then the ones for this service</span>
+<span class="add">+        if (checkServiceRefused(ServiceType::Any) || checkServiceRefused(type))</span>
+<span class="add">+            return false;</span>
+<span class="add">+        MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(mode, mActor);</span>
+<span class="add">+        return true;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     bool DialogueManager::say(const MWWorld::Ptr&amp; actor, const ESM::RefId&amp; topic)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         MWBase::SoundManager* sndMgr = MWBase::Environment::get().getSoundManager();</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.hpp</div><pre>
+<span class="hunk">@@ -28,6 +28,19 @@ namespace MWDialogue</span>
+<span class="ctx"> {</span>
+<span class="ctx">     class DialogueManager : public MWBase::DialogueManager</span>
+<span class="ctx">     {</span>
+<span class="add">+        /// The services that the conditions of the &quot;Service Refusal&quot; topic tell apart, as the value of the choice</span>
+<span class="add">+        enum ServiceType</span>
+<span class="add">+        {</span>
+<span class="add">+            Any = -1,</span>
+<span class="add">+            Barter = 1,</span>
+<span class="add">+            Repair = 2,</span>
+<span class="add">+            Spells = 3,</span>
+<span class="add">+            Training = 4,</span>
+<span class="add">+            Travel = 5,</span>
+<span class="add">+            Spellmaking = 6,</span>
+<span class="add">+            Enchanting = 7</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="ctx">         struct ActorKnownTopicInfo</span>
+<span class="ctx">         {</span>
+<span class="ctx">             int mFlags;</span>
+<span class="hunk">@@ -87,6 +100,8 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">         void updateOriginalDisposition();</span>
+<span class="ctx"> </span>
+<span class="add">+        bool checkServiceRefused(ServiceType service);</span>
+<span class="add">+</span>
+<span class="ctx">         /// Replaces the temporary changes to the actor&#x27;s disposition with the permanent ones</span>
+<span class="ctx">         void makeDispositionChangesPermanent();</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -126,7 +141,7 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">         void goodbye() override;</span>
+<span class="ctx"> </span>
+<span class="del">-        bool checkServiceRefused(ServiceType service = ServiceType::Any) override;</span>
+<span class="add">+        bool requestService(MWMechanics::DialogueService service) override;</span>
+<span class="ctx"> </span>
+<span class="ctx">         bool say(const MWWorld::Ptr&amp; actor, const ESM::RefId&amp; topic) override;</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/dialogue.cpp</div><pre>
+<span class="hunk">@@ -410,49 +410,20 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         const MWWorld::Store&lt;ESM::GameSetting&gt;&amp; gmst</span>
+<span class="ctx">             = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::GameSetting&gt;();</span>
+<span class="add">+        const auto service</span>
+<span class="add">+            = std::find_if(mServices.begin(), mServices.end(), [&amp;](MWMechanics::DialogueService offered) {</span>
+<span class="add">+                  return topic == gmst.find(getServiceSetting(offered))-&gt;mValue.getString();</span>
+<span class="add">+              });</span>
+<span class="ctx"> </span>
+<span class="del">-        const std::string&amp; sPersuasion = gmst.find(&quot;sPersuasion&quot;)-&gt;mValue.getString();</span>
+<span class="del">-        const std::string&amp; sCompanionShare = gmst.find(&quot;sCompanionShare&quot;)-&gt;mValue.getString();</span>
+<span class="del">-        const std::string&amp; sBarter = gmst.find(&quot;sBarter&quot;)-&gt;mValue.getString();</span>
+<span class="del">-        const std::string&amp; sSpells = gmst.find(&quot;sSpells&quot;)-&gt;mValue.getString();</span>
+<span class="del">-        const std::string&amp; sTravel = gmst.find(&quot;sTravel&quot;)-&gt;mValue.getString();</span>
+<span class="del">-        const std::string&amp; sSpellMakingMenuTitle = gmst.find(&quot;sSpellMakingMenuTitle&quot;)-&gt;mValue.getString();</span>
+<span class="del">-        const std::string&amp; sEnchanting = gmst.find(&quot;sEnchanting&quot;)-&gt;mValue.getString();</span>
+<span class="del">-        const std::string&amp; sServiceTrainingTitle = gmst.find(&quot;sServiceTrainingTitle&quot;)-&gt;mValue.getString();</span>
+<span class="del">-        const std::string&amp; sRepair = gmst.find(&quot;sRepair&quot;)-&gt;mValue.getString();</span>
+<span class="del">-</span>
+<span class="del">-        if (topic != sPersuasion &amp;&amp; topic != sCompanionShare &amp;&amp; topic != sBarter &amp;&amp; topic != sSpells &amp;&amp; topic != sTravel</span>
+<span class="del">-            &amp;&amp; topic != sSpellMakingMenuTitle &amp;&amp; topic != sEnchanting &amp;&amp; topic != sServiceTrainingTitle</span>
+<span class="del">-            &amp;&amp; topic != sRepair)</span>
+<span class="add">+        if (service == mServices.end())</span>
+<span class="ctx">         {</span>
+<span class="ctx">             onTopicActivated(topic);</span>
+<span class="ctx">             if (mGoodbyeButton-&gt;getEnabled())</span>
+<span class="ctx">                 MWBase::Environment::get().getWindowManager()-&gt;setKeyFocusWidget(mGoodbyeButton);</span>
+<span class="ctx">         }</span>
+<span class="del">-        else if (topic == sPersuasion)</span>
+<span class="add">+        else if (*service == MWMechanics::DialogueService::Persuasion)</span>
+<span class="ctx">             mPersuasionDialog.setVisible(true);</span>
+<span class="del">-        else if (topic == sCompanionShare)</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(GM_Companion, mPtr);</span>
+<span class="del">-        else if (!dialogueManager-&gt;checkServiceRefused())</span>
+<span class="del">-        {</span>
+<span class="del">-            if (topic == sBarter &amp;&amp; !dialogueManager-&gt;checkServiceRefused(MWBase::DialogueManager::Barter))</span>
+<span class="del">-                MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(GM_Barter, mPtr);</span>
+<span class="del">-            else if (topic == sSpells &amp;&amp; !dialogueManager-&gt;checkServiceRefused(MWBase::DialogueManager::Spells))</span>
+<span class="del">-                MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(GM_SpellBuying, mPtr);</span>
+<span class="del">-            else if (topic == sTravel &amp;&amp; !dialogueManager-&gt;checkServiceRefused(MWBase::DialogueManager::Travel))</span>
+<span class="del">-                MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(GM_Travel, mPtr);</span>
+<span class="del">-            else if (topic == sSpellMakingMenuTitle</span>
+<span class="del">-                &amp;&amp; !dialogueManager-&gt;checkServiceRefused(MWBase::DialogueManager::Spellmaking))</span>
+<span class="del">-                MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(GM_SpellCreation, mPtr);</span>
+<span class="del">-            else if (topic == sEnchanting &amp;&amp; !dialogueManager-&gt;checkServiceRefused(MWBase::DialogueManager::Enchanting))</span>
+<span class="del">-                MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(GM_Enchanting, mPtr);</span>
+<span class="del">-            else if (topic == sServiceTrainingTitle</span>
+<span class="del">-                &amp;&amp; !dialogueManager-&gt;checkServiceRefused(MWBase::DialogueManager::Training))</span>
+<span class="del">-                MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(GM_Training, mPtr);</span>
+<span class="del">-            else if (topic == sRepair &amp;&amp; !dialogueManager-&gt;checkServiceRefused(MWBase::DialogueManager::Repair))</span>
+<span class="del">-                MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(GM_MerchantRepair, mPtr);</span>
+<span class="del">-        }</span>
+<span class="del">-        else</span>
+<span class="add">+        else if (!dialogueManager-&gt;requestService(*service))</span>
+<span class="ctx">             updateTopics();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+</pre></div>

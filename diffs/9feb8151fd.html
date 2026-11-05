@@ -1,0 +1,31 @@
+<div class="file"><div class="path">apps/openmw/mwgui/windowmanagerimp.cpp</div><pre>
+<span class="hunk">@@ -2173,6 +2173,16 @@ namespace MWGui</span>
+<span class="ctx">             MWBase::Environment::get().getSoundManager()-&gt;pauseSounds(</span>
+<span class="ctx">                 MWSound::VideoPlayback, ~MWSound::Type::Movie &amp; MWSound::Type::Mask);</span>
+<span class="ctx"> </span>
+<span class="add">+        // A controller skips the video with A, B or Start. Only a new press counts, so a button still held from</span>
+<span class="add">+        // the menu that started the video doesn&#x27;t skip it.</span>
+<span class="add">+        const auto skipButtonPressed = [] {</span>
+<span class="add">+            const MWBase::InputManager* input = MWBase::Environment::get().getInputManager();</span>
+<span class="add">+            return input-&gt;isControllerButtonPressed(SDL_CONTROLLER_BUTTON_A)</span>
+<span class="add">+                || input-&gt;isControllerButtonPressed(SDL_CONTROLLER_BUTTON_B)</span>
+<span class="add">+                || input-&gt;isControllerButtonPressed(SDL_CONTROLLER_BUTTON_START);</span>
+<span class="add">+        };</span>
+<span class="add">+        bool skipButtonWasPressed = skipButtonPressed();</span>
+<span class="add">+</span>
+<span class="ctx">         Misc::FrameRateLimiter frameRateLimiter</span>
+<span class="ctx">             = Misc::makeFrameRateLimiter(MWBase::Environment::get().getFrameRateLimit());</span>
+<span class="ctx">         while (mVideoWidget-&gt;update() &amp;&amp; !MWBase::Environment::get().getStateManager()-&gt;hasQuitRequest())</span>
+<span class="hunk">@@ -2183,6 +2193,11 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">             MWBase::Environment::get().getInputManager()-&gt;update(dt, true, false);</span>
+<span class="ctx"> </span>
+<span class="add">+            const bool skipButtonIsPressed = skipButtonPressed();</span>
+<span class="add">+            if (allowSkipping &amp;&amp; skipButtonIsPressed &amp;&amp; !skipButtonWasPressed)</span>
+<span class="add">+                mVideoWidget-&gt;stop();</span>
+<span class="add">+            skipButtonWasPressed = skipButtonIsPressed;</span>
+<span class="add">+</span>
+<span class="ctx">             if (!mWindowVisible)</span>
+<span class="ctx">             {</span>
+<span class="ctx">                 mVideoWidget-&gt;pause();</span>
+</pre></div>

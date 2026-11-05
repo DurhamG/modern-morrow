@@ -1,0 +1,78 @@
+<div class="file"><div class="path">apps/openmw/mwlua/magicbindings.cpp</div><pre>
+<span class="hunk">@@ -27,6 +27,7 @@</span>
+<span class="ctx"> #include &quot;../mwmechanics/creaturestats.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/magiceffects.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/services.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/spellmaking.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/spellutil.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/datetimemanager.hpp&quot;</span>
+<span class="hunk">@@ -246,6 +247,18 @@ namespace MWLua</span>
+<span class="ctx">                     { &quot;ConstantEffect&quot;, ESM::Enchantment::Type::ConstantEffect },</span>
+<span class="ctx">                 }));</span>
+<span class="ctx"> </span>
+<span class="add">+        magicApi[&quot;CUSTOM_EFFECT_LIMITS&quot;]</span>
+<span class="add">+            = LuaUtil::makeStrictReadOnly(LuaUtil::tableFromPairs&lt;std::string_view, int&gt;(state,</span>
+<span class="add">+                {</span>
+<span class="add">+                    { &quot;maxEffects&quot;, static_cast&lt;int&gt;(MWMechanics::sMaxCustomEffects) },</span>
+<span class="add">+                    { &quot;minMagnitude&quot;, MWMechanics::sMinCustomMagnitude },</span>
+<span class="add">+                    { &quot;maxMagnitude&quot;, MWMechanics::sMaxCustomMagnitude },</span>
+<span class="add">+                    { &quot;minDuration&quot;, MWMechanics::sMinCustomDuration },</span>
+<span class="add">+                    { &quot;maxDuration&quot;, MWMechanics::sMaxCustomDuration },</span>
+<span class="add">+                    { &quot;minArea&quot;, MWMechanics::sMinCustomArea },</span>
+<span class="add">+                    { &quot;maxArea&quot;, MWMechanics::sMaxCustomArea },</span>
+<span class="add">+                }));</span>
+<span class="add">+</span>
+<span class="ctx">         sol::table effect(state, sol::create);</span>
+<span class="ctx">         magicApi[&quot;EFFECT_TYPE&quot;] = LuaUtil::makeStrictReadOnly(effect);</span>
+<span class="ctx">         for (int i = 0; i &lt; ESM::MagicEffect::Length; ++i)</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/core.lua</div><pre>
+<span class="hunk">@@ -542,6 +542,25 @@</span>
+<span class="ctx"> -- @field #number Target Ranged spell</span>
+<span class="ctx"> </span>
+<span class="ctx"> </span>
+<span class="add">+--- The limits that the spellmaking and enchanting windows set on the effects of a spell or an enchantment that the</span>
+<span class="add">+-- player makes. Lua&#x27;s spellmaking and enchanting functions, such as `types.Player.makeSpell`, keep to them too.</span>
+<span class="add">+-- @field [parent=#Magic] #CustomEffectLimits CUSTOM_EFFECT_LIMITS</span>
+<span class="add">+</span>
+<span class="add">+--- `core.magic.CUSTOM_EFFECT_LIMITS`</span>
+<span class="add">+-- The magnitude limits don&#x27;t apply to an effect without a magnitude, and the duration limits don&#x27;t apply to an</span>
+<span class="add">+-- effect without a duration or to a constant effect. An effect on self always has the smallest area.</span>
+<span class="add">+-- A new effect in the windows&#x27; effect editor starts with the smallest magnitude, duration and area, and the first</span>
+<span class="add">+-- range of self, touch and target that it allows.</span>
+<span class="add">+-- @type CustomEffectLimits</span>
+<span class="add">+-- @field #number maxEffects The most effects that a spell or an enchantment can have (8)</span>
+<span class="add">+-- @field #number minMagnitude The smallest magnitude (1)</span>
+<span class="add">+-- @field #number maxMagnitude The largest magnitude (100)</span>
+<span class="add">+-- @field #number minDuration The shortest duration, in seconds (1)</span>
+<span class="add">+-- @field #number maxDuration The longest duration, in seconds (1440)</span>
+<span class="add">+-- @field #number minArea The smallest area, in feet (0)</span>
+<span class="add">+-- @field #number maxArea The largest area, in feet (50)</span>
+<span class="add">+</span>
+<span class="add">+</span>
+<span class="ctx"> --- Possible @{#MagicEffectId} values</span>
+<span class="ctx"> -- @field [parent=#Magic] #MagicEffectId EFFECT_TYPE</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -926,7 +926,17 @@ testing.registerGlobalTest(&#x27;spellmaking&#x27;, function()</span>
+<span class="ctx">     testing.expectEqual(types.Player.getSpellmakingInfo(player, { merchant = merchant, name = &#x27;Empty&#x27; }).problem,</span>
+<span class="ctx">         &#x27;noEffects&#x27;, &#x27;The spell should need an effect&#x27;)</span>
+<span class="ctx"> </span>
+<span class="del">-    local tooStrong = { id = effect.id, range = core.magic.RANGE.Target, magnitudeMin = 1, magnitudeMax = 101 }</span>
+<span class="add">+    local limits = core.magic.CUSTOM_EFFECT_LIMITS</span>
+<span class="add">+    testing.expectEqual(limits.maxEffects, 8, &#x27;A spell should have at most 8 effects&#x27;)</span>
+<span class="add">+    testing.expectEqual(limits.minMagnitude, 1, &#x27;The magnitude should be at least 1&#x27;)</span>
+<span class="add">+    testing.expectEqual(limits.maxDuration, 1440, &#x27;The duration should be at most 1440 seconds&#x27;)</span>
+<span class="add">+    testing.expectEqual(limits.minArea, 0, &#x27;The area should be at least 0&#x27;)</span>
+<span class="add">+    local tooStrong = {</span>
+<span class="add">+        id = effect.id,</span>
+<span class="add">+        range = core.magic.RANGE.Target,</span>
+<span class="add">+        magnitudeMin = 1,</span>
+<span class="add">+        magnitudeMax = limits.maxMagnitude + 1,</span>
+<span class="add">+    }</span>
+<span class="ctx">     local strong = { merchant = merchant, effects = { tooStrong } }</span>
+<span class="ctx">     testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, strong), false,</span>
+<span class="ctx">         &#x27;The magnitude should be at most 100&#x27;)</span>
+</pre></div>

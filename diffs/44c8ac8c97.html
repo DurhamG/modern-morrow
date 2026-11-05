@@ -1,0 +1,254 @@
+<div class="file"><div class="path">apps/openmw/mwgui/trainingwindow.cpp</div><pre>
+<span class="hunk">@@ -70,39 +70,8 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         mPlayerGold-&gt;setCaptionWithReplacing(&quot;#{sGold}: &quot; + MyGUI::utility::toString(playerGold));</span>
+<span class="ctx"> </span>
+<span class="del">-        const auto&amp; store = MWBase::Environment::get().getESMStore();</span>
+<span class="del">-        const MWWorld::Store&lt;ESM::Skill&gt;&amp; skillStore = store-&gt;get&lt;ESM::Skill&gt;();</span>
+<span class="del">-</span>
+<span class="del">-        // NPC can train you in their best 3 skills</span>
+<span class="del">-        constexpr size_t maxSkills = 3;</span>
+<span class="del">-        std::vector&lt;std::pair&lt;const ESM::Skill*, float&gt;&gt; skills;</span>
+<span class="del">-        skills.reserve(maxSkills);</span>
+<span class="del">-</span>
+<span class="del">-        const auto sortByValue</span>
+<span class="del">-            = [](const std::pair&lt;const ESM::Skill*, float&gt;&amp; lhs, const std::pair&lt;const ESM::Skill*, float&gt;&amp; rhs) {</span>
+<span class="del">-                  return lhs.second &gt; rhs.second;</span>
+<span class="del">-              };</span>
+<span class="del">-        // Maintain a sorted vector of max maxSkills elements, ordering skills by value and content file order</span>
+<span class="del">-        const MWMechanics::NpcStats&amp; actorStats = actor.getClass().getNpcStats(actor);</span>
+<span class="del">-        for (const ESM::Skill&amp; skill : skillStore)</span>
+<span class="del">-        {</span>
+<span class="del">-            float value = getSkillForTraining(actorStats, skill.mId);</span>
+<span class="del">-            if (skills.size() &lt; maxSkills)</span>
+<span class="del">-            {</span>
+<span class="del">-                skills.emplace_back(&amp;skill, value);</span>
+<span class="del">-                std::stable_sort(skills.begin(), skills.end(), sortByValue);</span>
+<span class="del">-            }</span>
+<span class="del">-            else</span>
+<span class="del">-            {</span>
+<span class="del">-                auto&amp; lowest = skills[maxSkills - 1];</span>
+<span class="del">-                if (lowest.second &lt; value)</span>
+<span class="del">-                {</span>
+<span class="del">-                    lowest.first = &amp;skill;</span>
+<span class="del">-                    lowest.second = value;</span>
+<span class="del">-                    std::stable_sort(skills.begin(), skills.end(), sortByValue);</span>
+<span class="del">-                }</span>
+<span class="del">-            }</span>
+<span class="del">-        }</span>
+<span class="add">+        const MWWorld::Store&lt;ESM::Skill&gt;&amp; skillStore = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Skill&gt;();</span>
+<span class="add">+        const std::vector&lt;ESM::RefId&gt; skills = MWMechanics::getTrainingSkills(actor);</span>
+<span class="ctx"> </span>
+<span class="ctx">         MyGUI::EnumeratorWidgetPtr widgets = mTrainingOptions-&gt;getEnumerator();</span>
+<span class="ctx">         MyGUI::Gui::getInstance().destroyWidgets(widgets);</span>
+<span class="hunk">@@ -112,7 +81,7 @@ namespace MWGui</span>
+<span class="ctx">         mTrainingButtons.clear();</span>
+<span class="ctx">         for (size_t i = 0; i &lt; skills.size(); ++i)</span>
+<span class="ctx">         {</span>
+<span class="del">-            const ESM::Skill* skill = skills[i].first;</span>
+<span class="add">+            const ESM::Skill* skill = skillStore.find(skills[i]);</span>
+<span class="ctx">             const int price = MWMechanics::getTrainingPrice(mPtr, skill-&gt;mId);</span>
+<span class="ctx"> </span>
+<span class="ctx">             MyGUI::Button* button = mTrainingOptions-&gt;createWidget&lt;MyGUI::Button&gt;(price &lt;= playerGold</span>
+<span class="hunk">@@ -121,7 +90,7 @@ namespace MWGui</span>
+<span class="ctx">                 MyGUI::IntCoord(4, static_cast&lt;int&gt;(3 + i * lineHeight), mTrainingOptions-&gt;getWidth() - 10, lineHeight),</span>
+<span class="ctx">                 MyGUI::Align::Default);</span>
+<span class="ctx"> </span>
+<span class="del">-            button-&gt;setUserData(skills[i].first);</span>
+<span class="add">+            button-&gt;setUserData(skill);</span>
+<span class="ctx">             button-&gt;eventMouseButtonClick += MyGUI::newDelegate(this, &amp;TrainingWindow::onTrainingSelected);</span>
+<span class="ctx"> </span>
+<span class="ctx">             button-&gt;setCaptionWithReplacing(</span>
+<span class="hunk">@@ -160,25 +129,22 @@ namespace MWGui</span>
+<span class="ctx">         const ESM::Skill* skill = *sender-&gt;getUserData&lt;const ESM::Skill*&gt;();</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWWorld::Ptr player = MWBase::Environment::get().getWorld()-&gt;getPlayerPtr();</span>
+<span class="del">-        MWMechanics::NpcStats&amp; pcStats = player.getClass().getNpcStats(player);</span>
+<span class="ctx"> </span>
+<span class="ctx">         const int price = MWMechanics::getTrainingPrice(mPtr, skill-&gt;mId);</span>
+<span class="ctx"> </span>
+<span class="ctx">         if (price &gt; player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId))</span>
+<span class="ctx">             return;</span>
+<span class="ctx"> </span>
+<span class="del">-        if (getSkillForTraining(mPtr.getClass().getNpcStats(mPtr), skill-&gt;mId)</span>
+<span class="del">-            &lt;= pcStats.getSkill(skill-&gt;mId).getBase())</span>
+<span class="del">-        {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sServiceTrainingWords}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        // You can not train a skill above its governing attribute</span>
+<span class="del">-        if (pcStats.getSkill(skill-&gt;mId).getBase() &gt;= pcStats.getAttribute(skill-&gt;mData.mAttribute).getModified())</span>
+<span class="add">+        switch (MWMechanics::getTrainingRefusal(mPtr, skill-&gt;mId))</span>
+<span class="ctx">         {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage17}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="add">+            case MWMechanics::TrainingRefusal::None:</span>
+<span class="add">+                break;</span>
+<span class="add">+            case MWMechanics::TrainingRefusal::TrainerSkillTooLow:</span>
+<span class="add">+                MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sServiceTrainingWords}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="add">+            case MWMechanics::TrainingRefusal::AttributeTooLow:</span>
+<span class="add">+                MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage17}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         // increase skill</span>
+<span class="hunk">@@ -218,13 +184,6 @@ namespace MWGui</span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;exitCurrentGuiMode();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    float TrainingWindow::getSkillForTraining(const MWMechanics::NpcStats&amp; stats, ESM::RefId id) const</span>
+<span class="del">-    {</span>
+<span class="del">-        if (Settings::game().mTrainersTrainingSkillsBasedOnBaseSkill)</span>
+<span class="del">-            return stats.getSkill(id).getBase();</span>
+<span class="del">-        return stats.getSkill(id).getModified();</span>
+<span class="del">-    }</span>
+<span class="del">-</span>
+<span class="ctx">     void TrainingWindow::onFrame(float dt)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         checkReferenceAvailable();</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/trainingwindow.hpp</div><pre>
+<span class="hunk">@@ -6,11 +6,6 @@</span>
+<span class="ctx"> #include &quot;waitdialog.hpp&quot;</span>
+<span class="ctx"> #include &quot;windowbase.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="del">-namespace MWMechanics</span>
+<span class="del">-{</span>
+<span class="del">-    class NpcStats;</span>
+<span class="del">-}</span>
+<span class="del">-</span>
+<span class="ctx"> namespace MWGui</span>
+<span class="ctx"> {</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -42,10 +37,6 @@ namespace MWGui</span>
+<span class="ctx">         void onTrainingProgressChanged(int cur, int total);</span>
+<span class="ctx">         void onTrainingFinished();</span>
+<span class="ctx"> </span>
+<span class="del">-        // Retrieve the base skill value if the setting &#x27;training skills based on base skill&#x27; is set;</span>
+<span class="del">-        // otherwise returns the modified skill</span>
+<span class="del">-        float getSkillForTraining(const MWMechanics::NpcStats&amp; stats, ESM::RefId id) const;</span>
+<span class="del">-</span>
+<span class="ctx">         MyGUI::Widget* mTrainingOptions;</span>
+<span class="ctx">         MyGUI::Button* mCancelButton;</span>
+<span class="ctx">         MyGUI::TextBox* mPlayerGold;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/services.cpp</div><pre>
+<span class="hunk">@@ -3,6 +3,8 @@</span>
+<span class="ctx"> #include &lt;algorithm&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;components/esm3/loadgmst.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadskil.hpp&gt;</span>
+<span class="add">+#include &lt;components/settings/values.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="hunk">@@ -23,6 +25,71 @@ namespace MWMechanics</span>
+<span class="ctx">         {</span>
+<span class="ctx">             return MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::GameSetting&gt;();</span>
+<span class="ctx">         }</span>
+<span class="add">+</span>
+<span class="add">+        // Retrieve the base skill value if the setting &#x27;training skills based on base skill&#x27; is set;</span>
+<span class="add">+        // otherwise returns the modified skill</span>
+<span class="add">+        float getSkillForTraining(const NpcStats&amp; stats, ESM::RefId id)</span>
+<span class="add">+        {</span>
+<span class="add">+            if (Settings::game().mTrainersTrainingSkillsBasedOnBaseSkill)</span>
+<span class="add">+                return stats.getSkill(id).getBase();</span>
+<span class="add">+            return stats.getSkill(id).getModified();</span>
+<span class="add">+        }</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    std::vector&lt;ESM::RefId&gt; getTrainingSkills(const MWWorld::Ptr&amp; trainer)</span>
+<span class="add">+    {</span>
+<span class="add">+        // NPC can train you in their best 3 skills</span>
+<span class="add">+        constexpr size_t maxSkills = 3;</span>
+<span class="add">+        std::vector&lt;std::pair&lt;ESM::RefId, float&gt;&gt; skills;</span>
+<span class="add">+        skills.reserve(maxSkills);</span>
+<span class="add">+</span>
+<span class="add">+        const auto sortByValue = [](const std::pair&lt;ESM::RefId, float&gt;&amp; lhs, const std::pair&lt;ESM::RefId, float&gt;&amp; rhs) {</span>
+<span class="add">+            return lhs.second &gt; rhs.second;</span>
+<span class="add">+        };</span>
+<span class="add">+        // Maintain a sorted vector of max maxSkills elements, ordering skills by value and content file order</span>
+<span class="add">+        const NpcStats&amp; trainerStats = trainer.getClass().getNpcStats(trainer);</span>
+<span class="add">+        for (const ESM::Skill&amp; skill : MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Skill&gt;())</span>
+<span class="add">+        {</span>
+<span class="add">+            float value = getSkillForTraining(trainerStats, skill.mId);</span>
+<span class="add">+            if (skills.size() &lt; maxSkills)</span>
+<span class="add">+            {</span>
+<span class="add">+                skills.emplace_back(skill.mId, value);</span>
+<span class="add">+                std::stable_sort(skills.begin(), skills.end(), sortByValue);</span>
+<span class="add">+            }</span>
+<span class="add">+            else</span>
+<span class="add">+            {</span>
+<span class="add">+                auto&amp; lowest = skills[maxSkills - 1];</span>
+<span class="add">+                if (lowest.second &lt; value)</span>
+<span class="add">+                {</span>
+<span class="add">+                    lowest.first = skill.mId;</span>
+<span class="add">+                    lowest.second = value;</span>
+<span class="add">+                    std::stable_sort(skills.begin(), skills.end(), sortByValue);</span>
+<span class="add">+                }</span>
+<span class="add">+            }</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        std::vector&lt;ESM::RefId&gt; result;</span>
+<span class="add">+        result.reserve(skills.size());</span>
+<span class="add">+        for (const auto&amp; [skill, value] : skills)</span>
+<span class="add">+            result.push_back(skill);</span>
+<span class="add">+        return result;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    TrainingRefusal getTrainingRefusal(const MWWorld::Ptr&amp; trainer, ESM::RefId skill)</span>
+<span class="add">+    {</span>
+<span class="add">+        const MWWorld::Ptr player = getPlayer();</span>
+<span class="add">+        const NpcStats&amp; playerStats = player.getClass().getNpcStats(player);</span>
+<span class="add">+        const float playerSkill = playerStats.getSkill(skill).getBase();</span>
+<span class="add">+</span>
+<span class="add">+        if (getSkillForTraining(trainer.getClass().getNpcStats(trainer), skill) &lt;= playerSkill)</span>
+<span class="add">+            return TrainingRefusal::TrainerSkillTooLow;</span>
+<span class="add">+</span>
+<span class="add">+        // You can not train a skill above its governing attribute</span>
+<span class="add">+        const ESM::Skill* record = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Skill&gt;().find(skill);</span>
+<span class="add">+        if (playerSkill &gt;= playerStats.getAttribute(record-&gt;mData.mAttribute).getModified())</span>
+<span class="add">+            return TrainingRefusal::AttributeTooLow;</span>
+<span class="add">+</span>
+<span class="add">+        return TrainingRefusal::None;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     int getTrainingPrice(const MWWorld::Ptr&amp; trainer, ESM::RefId skill)</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/services.hpp</div><pre>
+<span class="hunk">@@ -1,6 +1,8 @@</span>
+<span class="ctx"> #ifndef OPENMW_MECHANICS_SERVICES_H</span>
+<span class="ctx"> #define OPENMW_MECHANICS_SERVICES_H</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;vector&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> #include &lt;components/esm/refid.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace ESM</span>
+<span class="hunk">@@ -15,6 +17,23 @@ namespace MWWorld</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWMechanics</span>
+<span class="ctx"> {</span>
+<span class="add">+    /// The skills @a trainer teaches: their three best skills, best first.</span>
+<span class="add">+    std::vector&lt;ESM::RefId&gt; getTrainingSkills(const MWWorld::Ptr&amp; trainer);</span>
+<span class="add">+</span>
+<span class="add">+    /// The reason a trainer can&#x27;t raise one of the player&#x27;s skills.</span>
+<span class="add">+    enum class TrainingRefusal</span>
+<span class="add">+    {</span>
+<span class="add">+        None,</span>
+<span class="add">+        /// The player&#x27;s skill is already as high as the trainer&#x27;s.</span>
+<span class="add">+        TrainerSkillTooLow,</span>
+<span class="add">+        /// The player&#x27;s skill is already as high as the attribute that governs it.</span>
+<span class="add">+        AttributeTooLow,</span>
+<span class="add">+    };</span>
+<span class="add">+</span>
+<span class="add">+    /// Whether @a trainer can raise the player&#x27;s @a skill by one point, and if not, why.</span>
+<span class="add">+    /// This does not check whether the player can pay for it.</span>
+<span class="add">+    TrainingRefusal getTrainingRefusal(const MWWorld::Ptr&amp; trainer, ESM::RefId skill);</span>
+<span class="add">+</span>
+<span class="ctx">     /// The gold @a trainer asks to raise the player&#x27;s @a skill by one point.</span>
+<span class="ctx">     int getTrainingPrice(const MWWorld::Ptr&amp; trainer, ESM::RefId skill);</span>
+<span class="ctx"> </span>
+</pre></div>

@@ -1,0 +1,746 @@
+<div class="file"><div class="path">apps/openmw/mwgui/charactercreation.cpp</div><pre>
+<span class="hunk">@@ -93,10 +93,48 @@ namespace</span>
+<span class="ctx"> namespace MWGui</span>
+<span class="ctx"> {</span>
+<span class="ctx"> </span>
+<span class="del">-    CharacterCreation::CharacterCreation()</span>
+<span class="del">-        : mGenerateClassStep(0)</span>
+<span class="add">+    CharacterCreation::CharacterCreation(const Windows&amp; windows)</span>
+<span class="add">+        : mNameDialog(windows.mName)</span>
+<span class="add">+        , mRaceDialog(windows.mRace)</span>
+<span class="add">+        , mClassChoiceDialog(windows.mClassChoice)</span>
+<span class="add">+        , mGenerateClassQuestionDialog(windows.mClassQuestion)</span>
+<span class="add">+        , mGenerateClassResultDialog(windows.mClassResult)</span>
+<span class="add">+        , mPickClassDialog(windows.mPickClass)</span>
+<span class="add">+        , mCreateClassDialog(windows.mCreateClass)</span>
+<span class="add">+        , mBirthSignDialog(windows.mBirthSign)</span>
+<span class="add">+        , mReviewDialog(windows.mReview)</span>
+<span class="add">+    {</span>
+<span class="add">+        clear();</span>
+<span class="add">+</span>
+<span class="add">+        mNameDialog-&gt;setTextLabel(MWBase::Environment::get().getWindowManager()-&gt;getGameSettingString(&quot;sName&quot;, &quot;Name&quot;));</span>
+<span class="add">+        mNameDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onNameDialogDone);</span>
+<span class="add">+        mRaceDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onRaceDialogDone);</span>
+<span class="add">+        mRaceDialog-&gt;eventBack += MyGUI::newDelegate(this, &amp;CharacterCreation::onRaceDialogBack);</span>
+<span class="add">+        mClassChoiceDialog-&gt;eventButtonSelected += MyGUI::newDelegate(this, &amp;CharacterCreation::onClassChoice);</span>
+<span class="add">+        mGenerateClassQuestionDialog-&gt;eventButtonSelected</span>
+<span class="add">+            += MyGUI::newDelegate(this, &amp;CharacterCreation::onClassQuestionChosen);</span>
+<span class="add">+        mGenerateClassResultDialog-&gt;eventBack += MyGUI::newDelegate(this, &amp;CharacterCreation::onGenerateClassBack);</span>
+<span class="add">+        mGenerateClassResultDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onGenerateClassDone);</span>
+<span class="add">+        mPickClassDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onPickClassDialogDone);</span>
+<span class="add">+        mPickClassDialog-&gt;eventBack += MyGUI::newDelegate(this, &amp;CharacterCreation::onPickClassDialogBack);</span>
+<span class="add">+        mCreateClassDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onCreateClassDialogDone);</span>
+<span class="add">+        mCreateClassDialog-&gt;eventBack += MyGUI::newDelegate(this, &amp;CharacterCreation::onCreateClassDialogBack);</span>
+<span class="add">+        mBirthSignDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onBirthSignDialogDone);</span>
+<span class="add">+        mBirthSignDialog-&gt;eventBack += MyGUI::newDelegate(this, &amp;CharacterCreation::onBirthSignDialogBack);</span>
+<span class="add">+        mReviewDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onReviewDialogDone);</span>
+<span class="add">+        mReviewDialog-&gt;eventBack += MyGUI::newDelegate(this, &amp;CharacterCreation::onReviewDialogBack);</span>
+<span class="add">+        mReviewDialog-&gt;eventActivateDialog += MyGUI::newDelegate(this, &amp;CharacterCreation::onReviewActivateDialog);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void CharacterCreation::clear()</span>
+<span class="ctx">     {</span>
+<span class="ctx">         mCreationStage = CSE_NotStarted;</span>
+<span class="add">+        mPlayerName.clear();</span>
+<span class="add">+        mPlayerRaceId = ESM::RefId();</span>
+<span class="add">+        mPlayerBirthSignId = ESM::RefId();</span>
+<span class="add">+        mPlayerClass = ESM::Class();</span>
+<span class="add">+        mGenerateClassStep = 0;</span>
+<span class="add">+        mGenerateClass = ESM::RefId();</span>
+<span class="ctx">         mGenerateClassResponses[0] = ESM::Class::Combat;</span>
+<span class="ctx">         mGenerateClassResponses[1] = ESM::Class::Magic;</span>
+<span class="ctx">         mGenerateClassResponses[2] = ESM::Class::Stealth;</span>
+<span class="hunk">@@ -105,6 +143,10 @@ namespace MWGui</span>
+<span class="ctx">         mGenerateClassSpecializations[2] = 0;</span>
+<span class="ctx"> </span>
+<span class="ctx">         // Setup player stats</span>
+<span class="add">+        mPlayerAttributes.clear();</span>
+<span class="add">+        mPlayerSkillValues.clear();</span>
+<span class="add">+        mPlayerMajorSkills.clear();</span>
+<span class="add">+        mPlayerMinorSkills.clear();</span>
+<span class="ctx">         const auto&amp; store = MWBase::Environment::get().getWorld()-&gt;getStore();</span>
+<span class="ctx">         for (const ESM::Attribute&amp; attribute : store.get&lt;ESM::Attribute&gt;())</span>
+<span class="ctx">             mPlayerAttributes.emplace(attribute.mId, MWMechanics::AttributeValue());</span>
+<span class="hunk">@@ -116,34 +158,29 @@ namespace MWGui</span>
+<span class="ctx">     void CharacterCreation::setAttribute(ESM::RefId id, const MWMechanics::AttributeValue&amp; value)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         mPlayerAttributes[id] = value;</span>
+<span class="del">-        if (mReviewDialog)</span>
+<span class="del">-            mReviewDialog-&gt;setAttribute(id, value);</span>
+<span class="add">+        mReviewDialog-&gt;setAttribute(id, value);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::setValue(std::string_view id, const MWMechanics::DynamicStat&lt;float&gt;&amp; value)</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mReviewDialog)</span>
+<span class="add">+        if (id == &quot;HBar&quot;)</span>
+<span class="ctx">         {</span>
+<span class="del">-            if (id == &quot;HBar&quot;)</span>
+<span class="del">-            {</span>
+<span class="del">-                mReviewDialog-&gt;setHealth(value);</span>
+<span class="del">-            }</span>
+<span class="del">-            else if (id == &quot;MBar&quot;)</span>
+<span class="del">-            {</span>
+<span class="del">-                mReviewDialog-&gt;setMagicka(value);</span>
+<span class="del">-            }</span>
+<span class="del">-            else if (id == &quot;FBar&quot;)</span>
+<span class="del">-            {</span>
+<span class="del">-                mReviewDialog-&gt;setFatigue(value);</span>
+<span class="del">-            }</span>
+<span class="add">+            mReviewDialog-&gt;setHealth(value);</span>
+<span class="add">+        }</span>
+<span class="add">+        else if (id == &quot;MBar&quot;)</span>
+<span class="add">+        {</span>
+<span class="add">+            mReviewDialog-&gt;setMagicka(value);</span>
+<span class="add">+        }</span>
+<span class="add">+        else if (id == &quot;FBar&quot;)</span>
+<span class="add">+        {</span>
+<span class="add">+            mReviewDialog-&gt;setFatigue(value);</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::setValue(ESM::RefId id, const MWMechanics::SkillValue&amp; value)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         mPlayerSkillValues[id] = value;</span>
+<span class="del">-        if (mReviewDialog)</span>
+<span class="del">-            mReviewDialog-&gt;setSkillValue(id, value);</span>
+<span class="add">+        mReviewDialog-&gt;setSkillValue(id, value);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::configureSkills(std::span&lt;const ESM::RefId&gt; major, std::span&lt;const ESM::RefId&gt; minor)</span>
+<span class="hunk">@@ -151,17 +188,10 @@ namespace MWGui</span>
+<span class="ctx">         mPlayerMajorSkills.assign(major.begin(), major.end());</span>
+<span class="ctx">         mPlayerMinorSkills.assign(minor.begin(), minor.end());</span>
+<span class="ctx"> </span>
+<span class="del">-        if (mReviewDialog)</span>
+<span class="del">-            mReviewDialog-&gt;configureSkills(mPlayerMajorSkills, mPlayerMinorSkills);</span>
+<span class="del">-    }</span>
+<span class="del">-</span>
+<span class="del">-    void CharacterCreation::onFrame(float duration)</span>
+<span class="del">-    {</span>
+<span class="del">-        if (mReviewDialog)</span>
+<span class="del">-            mReviewDialog-&gt;onFrame(duration);</span>
+<span class="add">+        mReviewDialog-&gt;configureSkills(mPlayerMajorSkills, mPlayerMinorSkills);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    void CharacterCreation::spawnDialog(const GuiMode id)</span>
+<span class="add">+    void CharacterCreation::prepareDialog(const GuiMode id)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         try</span>
+<span class="ctx">         {</span>
+<span class="hunk">@@ -169,78 +199,48 @@ namespace MWGui</span>
+<span class="ctx">             {</span>
+<span class="ctx">                 case GM_Name:</span>
+<span class="ctx">                 {</span>
+<span class="del">-                    MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mNameDialog));</span>
+<span class="del">-                    mNameDialog = std::make_unique&lt;TextInputDialog&gt;();</span>
+<span class="del">-                    mNameDialog-&gt;setTextLabel(</span>
+<span class="del">-                        MWBase::Environment::get().getWindowManager()-&gt;getGameSettingString(&quot;sName&quot;, &quot;Name&quot;));</span>
+<span class="ctx">                     mNameDialog-&gt;setTextInput(mPlayerName);</span>
+<span class="ctx">                     mNameDialog-&gt;setNextButtonShow(mCreationStage &gt;= CSE_NameChosen);</span>
+<span class="del">-                    mNameDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onNameDialogDone);</span>
+<span class="del">-                    mNameDialog-&gt;setVisible(true);</span>
+<span class="add">+                    mNameDialog-&gt;center();</span>
+<span class="ctx">                     break;</span>
+<span class="ctx">                 }</span>
+<span class="ctx">                 case GM_Race:</span>
+<span class="ctx">                 {</span>
+<span class="del">-                    MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mRaceDialog));</span>
+<span class="del">-                    mRaceDialog = std::make_unique&lt;RaceDialog&gt;();</span>
+<span class="ctx">                     mRaceDialog-&gt;setNextButtonShow(mCreationStage &gt;= CSE_RaceChosen);</span>
+<span class="ctx">                     mRaceDialog-&gt;setRaceId(mPlayerRaceId);</span>
+<span class="del">-                    mRaceDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onRaceDialogDone);</span>
+<span class="del">-                    mRaceDialog-&gt;eventBack += MyGUI::newDelegate(this, &amp;CharacterCreation::onRaceDialogBack);</span>
+<span class="del">-                    mRaceDialog-&gt;setVisible(true);</span>
+<span class="add">+                    mRaceDialog-&gt;center();</span>
+<span class="ctx">                     if (mCreationStage &lt; CSE_NameChosen)</span>
+<span class="ctx">                         mCreationStage = CSE_NameChosen;</span>
+<span class="ctx">                     break;</span>
+<span class="ctx">                 }</span>
+<span class="ctx">                 case GM_Class:</span>
+<span class="ctx">                 {</span>
+<span class="del">-                    MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mClassChoiceDialog));</span>
+<span class="del">-                    mClassChoiceDialog = std::make_unique&lt;ClassChoiceDialog&gt;();</span>
+<span class="del">-                    mClassChoiceDialog-&gt;eventButtonSelected</span>
+<span class="del">-                        += MyGUI::newDelegate(this, &amp;CharacterCreation::onClassChoice);</span>
+<span class="del">-                    mClassChoiceDialog-&gt;setVisible(true);</span>
+<span class="ctx">                     if (mCreationStage &lt; CSE_RaceChosen)</span>
+<span class="ctx">                         mCreationStage = CSE_RaceChosen;</span>
+<span class="ctx">                     break;</span>
+<span class="ctx">                 }</span>
+<span class="ctx">                 case GM_ClassPick:</span>
+<span class="ctx">                 {</span>
+<span class="del">-                    MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mPickClassDialog));</span>
+<span class="del">-                    mPickClassDialog = std::make_unique&lt;PickClassDialog&gt;();</span>
+<span class="ctx">                     mPickClassDialog-&gt;setNextButtonShow(mCreationStage &gt;= CSE_ClassChosen);</span>
+<span class="ctx">                     mPickClassDialog-&gt;setClassId(mPlayerClass.mId);</span>
+<span class="del">-                    mPickClassDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onPickClassDialogDone);</span>
+<span class="del">-                    mPickClassDialog-&gt;eventBack += MyGUI::newDelegate(this, &amp;CharacterCreation::onPickClassDialogBack);</span>
+<span class="del">-                    mPickClassDialog-&gt;setVisible(true);</span>
+<span class="add">+                    mPickClassDialog-&gt;center();</span>
+<span class="ctx">                     if (mCreationStage &lt; CSE_RaceChosen)</span>
+<span class="ctx">                         mCreationStage = CSE_RaceChosen;</span>
+<span class="ctx">                     break;</span>
+<span class="ctx">                 }</span>
+<span class="ctx">                 case GM_Birth:</span>
+<span class="ctx">                 {</span>
+<span class="del">-                    MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mBirthSignDialog));</span>
+<span class="del">-                    mBirthSignDialog = std::make_unique&lt;BirthDialog&gt;();</span>
+<span class="ctx">                     mBirthSignDialog-&gt;setNextButtonShow(mCreationStage &gt;= CSE_BirthSignChosen);</span>
+<span class="ctx">                     mBirthSignDialog-&gt;setBirthId(mPlayerBirthSignId);</span>
+<span class="del">-                    mBirthSignDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onBirthSignDialogDone);</span>
+<span class="del">-                    mBirthSignDialog-&gt;eventBack += MyGUI::newDelegate(this, &amp;CharacterCreation::onBirthSignDialogBack);</span>
+<span class="del">-                    mBirthSignDialog-&gt;setVisible(true);</span>
+<span class="add">+                    mBirthSignDialog-&gt;center();</span>
+<span class="ctx">                     if (mCreationStage &lt; CSE_ClassChosen)</span>
+<span class="ctx">                         mCreationStage = CSE_ClassChosen;</span>
+<span class="ctx">                     break;</span>
+<span class="ctx">                 }</span>
+<span class="ctx">                 case GM_ClassCreate:</span>
+<span class="ctx">                 {</span>
+<span class="del">-                    if (mCreateClassDialog == nullptr)</span>
+<span class="del">-                    {</span>
+<span class="del">-                        mCreateClassDialog = std::make_unique&lt;CreateClassDialog&gt;();</span>
+<span class="del">-                        mCreateClassDialog-&gt;eventDone</span>
+<span class="del">-                            += MyGUI::newDelegate(this, &amp;CharacterCreation::onCreateClassDialogDone);</span>
+<span class="del">-                        mCreateClassDialog-&gt;eventBack</span>
+<span class="del">-                            += MyGUI::newDelegate(this, &amp;CharacterCreation::onCreateClassDialogBack);</span>
+<span class="del">-                    }</span>
+<span class="ctx">                     mCreateClassDialog-&gt;setNextButtonShow(mCreationStage &gt;= CSE_ClassChosen);</span>
+<span class="del">-                    mCreateClassDialog-&gt;setVisible(true);</span>
+<span class="add">+                    mCreateClassDialog-&gt;center();</span>
+<span class="ctx">                     if (mCreationStage &lt; CSE_RaceChosen)</span>
+<span class="ctx">                         mCreationStage = CSE_RaceChosen;</span>
+<span class="ctx">                     break;</span>
+<span class="hunk">@@ -252,16 +252,14 @@ namespace MWGui</span>
+<span class="ctx">                     mGenerateClassSpecializations[0] = 0;</span>
+<span class="ctx">                     mGenerateClassSpecializations[1] = 0;</span>
+<span class="ctx">                     mGenerateClassSpecializations[2] = 0;</span>
+<span class="del">-                    showClassQuestionDialog();</span>
+<span class="add">+                    mGenerateClassResultDialog-&gt;setVisible(false);</span>
+<span class="add">+                    setClassQuestion();</span>
+<span class="ctx">                     if (mCreationStage &lt; CSE_RaceChosen)</span>
+<span class="ctx">                         mCreationStage = CSE_RaceChosen;</span>
+<span class="ctx">                     break;</span>
+<span class="ctx">                 }</span>
+<span class="ctx">                 case GM_Review:</span>
+<span class="ctx">                 {</span>
+<span class="del">-                    MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mReviewDialog));</span>
+<span class="del">-                    mReviewDialog = std::make_unique&lt;ReviewDialog&gt;();</span>
+<span class="del">-</span>
+<span class="ctx">                     MWBase::World* world = MWBase::Environment::get().getWorld();</span>
+<span class="ctx"> </span>
+<span class="ctx">                     const ESM::NPC* playerNpc = world-&gt;getPlayerPtr().get&lt;ESM::NPC&gt;()-&gt;mBase;</span>
+<span class="hunk">@@ -290,37 +288,29 @@ namespace MWGui</span>
+<span class="ctx">                         mReviewDialog-&gt;setSkillValue(skill, value);</span>
+<span class="ctx">                     }</span>
+<span class="ctx">                     mReviewDialog-&gt;configureSkills(mPlayerMajorSkills, mPlayerMinorSkills);</span>
+<span class="add">+                    mReviewDialog-&gt;center();</span>
+<span class="ctx"> </span>
+<span class="del">-                    mReviewDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onReviewDialogDone);</span>
+<span class="del">-                    mReviewDialog-&gt;eventBack += MyGUI::newDelegate(this, &amp;CharacterCreation::onReviewDialogBack);</span>
+<span class="del">-                    mReviewDialog-&gt;eventActivateDialog</span>
+<span class="del">-                        += MyGUI::newDelegate(this, &amp;CharacterCreation::onReviewActivateDialog);</span>
+<span class="del">-                    mReviewDialog-&gt;setVisible(true);</span>
+<span class="ctx">                     if (mCreationStage &lt; CSE_BirthSignChosen)</span>
+<span class="ctx">                         mCreationStage = CSE_BirthSignChosen;</span>
+<span class="ctx">                     break;</span>
+<span class="ctx">                 }</span>
+<span class="ctx">                 default:</span>
+<span class="del">-                {</span>
+<span class="del">-                    Log(Debug::Error) &lt;&lt; &quot;Unexpected GuiMode in CharacterCreation::spawnDialog: &quot; &lt;&lt; id;</span>
+<span class="del">-                }</span>
+<span class="add">+                    break;</span>
+<span class="ctx">             }</span>
+<span class="ctx">         }</span>
+<span class="ctx">         catch (std::exception&amp; e)</span>
+<span class="ctx">         {</span>
+<span class="del">-            Log(Debug::Error) &lt;&lt; &quot;Error: Failed to create chargen window: &quot; &lt;&lt; e.what();</span>
+<span class="add">+            Log(Debug::Error) &lt;&lt; &quot;Error: Failed to set up chargen window: &quot; &lt;&lt; e.what();</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::onReviewDialogDone(WindowBase* parWindow)</span>
+<span class="ctx">     {</span>
+<span class="del">-        MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mReviewDialog));</span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;popGuiMode();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::onReviewDialogBack()</span>
+<span class="ctx">     {</span>
+<span class="del">-        MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mReviewDialog));</span>
+<span class="ctx">         mCreationStage = CSE_ReviewBack;</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;popGuiMode();</span>
+<span class="hunk">@@ -329,7 +319,6 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::onReviewActivateDialog(int parDialog)</span>
+<span class="ctx">     {</span>
+<span class="del">-        MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mReviewDialog));</span>
+<span class="ctx">         mCreationStage = CSE_ReviewNext;</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;popGuiMode();</span>
+<span class="hunk">@@ -352,18 +341,14 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::selectPickedClass()</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mPickClassDialog)</span>
+<span class="del">-        {</span>
+<span class="del">-            const ESM::RefId&amp; classId = mPickClassDialog-&gt;getClassId();</span>
+<span class="del">-            if (!classId.empty())</span>
+<span class="del">-                MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerClass(classId);</span>
+<span class="add">+        const ESM::RefId&amp; classId = mPickClassDialog-&gt;getClassId();</span>
+<span class="add">+        if (!classId.empty())</span>
+<span class="add">+            MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerClass(classId);</span>
+<span class="ctx"> </span>
+<span class="del">-            const ESM::Class* pickedClass = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Class&gt;().find(classId);</span>
+<span class="del">-            if (pickedClass)</span>
+<span class="del">-            {</span>
+<span class="del">-                mPlayerClass = *pickedClass;</span>
+<span class="del">-            }</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mPickClassDialog));</span>
+<span class="add">+        const ESM::Class* pickedClass = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Class&gt;().find(classId);</span>
+<span class="add">+        if (pickedClass)</span>
+<span class="add">+        {</span>
+<span class="add">+            mPlayerClass = *pickedClass;</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -384,8 +369,6 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::onClassChoice(int index)</span>
+<span class="ctx">     {</span>
+<span class="del">-        MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mClassChoiceDialog));</span>
+<span class="del">-</span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;popGuiMode();</span>
+<span class="ctx"> </span>
+<span class="ctx">         switch (index)</span>
+<span class="hunk">@@ -407,31 +390,22 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::onNameDialogDone(WindowBase* parWindow)</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mNameDialog)</span>
+<span class="del">-        {</span>
+<span class="del">-            mPlayerName = mNameDialog-&gt;getTextInput();</span>
+<span class="del">-            MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerName(mPlayerName);</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mNameDialog));</span>
+<span class="del">-        }</span>
+<span class="add">+        mPlayerName = mNameDialog-&gt;getTextInput();</span>
+<span class="add">+        MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerName(mPlayerName);</span>
+<span class="ctx"> </span>
+<span class="ctx">         handleDialogDone(CSE_NameChosen, GM_Race);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::selectRace()</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mRaceDialog)</span>
+<span class="add">+        const ESM::NPC&amp; data = mRaceDialog-&gt;getResult();</span>
+<span class="add">+        mPlayerRaceId = data.mRace;</span>
+<span class="add">+        if (!mPlayerRaceId.empty())</span>
+<span class="ctx">         {</span>
+<span class="del">-            const ESM::NPC&amp; data = mRaceDialog-&gt;getResult();</span>
+<span class="del">-            mPlayerRaceId = data.mRace;</span>
+<span class="del">-            if (!mPlayerRaceId.empty())</span>
+<span class="del">-            {</span>
+<span class="del">-                MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerRace(</span>
+<span class="del">-                    data.mRace, data.isMale(), data.mHead, data.mHair);</span>
+<span class="del">-            }</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;getInventoryWindow()-&gt;rebuildAvatar();</span>
+<span class="del">-</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mRaceDialog));</span>
+<span class="add">+            MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerRace(</span>
+<span class="add">+                data.mRace, data.isMale(), data.mHead, data.mHair);</span>
+<span class="ctx">         }</span>
+<span class="add">+        MWBase::Environment::get().getWindowManager()-&gt;getInventoryWindow()-&gt;rebuildAvatar();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::onRaceDialogBack()</span>
+<span class="hunk">@@ -451,13 +425,9 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::selectBirthSign()</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mBirthSignDialog)</span>
+<span class="del">-        {</span>
+<span class="del">-            mPlayerBirthSignId = mBirthSignDialog-&gt;getBirthId();</span>
+<span class="del">-            if (!mPlayerBirthSignId.empty())</span>
+<span class="del">-                MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerBirthsign(mPlayerBirthSignId);</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mBirthSignDialog));</span>
+<span class="del">-        }</span>
+<span class="add">+        mPlayerBirthSignId = mBirthSignDialog-&gt;getBirthId();</span>
+<span class="add">+        if (!mPlayerBirthSignId.empty())</span>
+<span class="add">+            MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerBirthsign(mPlayerBirthSignId);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::onBirthSignDialogDone(WindowBase* parWindow)</span>
+<span class="hunk">@@ -477,35 +447,29 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::selectCreatedClass()</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mCreateClassDialog)</span>
+<span class="del">-        {</span>
+<span class="del">-            ESM::Class createdClass;</span>
+<span class="del">-            createdClass.mName = mCreateClassDialog-&gt;getName();</span>
+<span class="del">-            createdClass.mDescription = mCreateClassDialog-&gt;getDescription();</span>
+<span class="del">-            createdClass.mData.mSpecialization = mCreateClassDialog-&gt;getSpecializationId();</span>
+<span class="del">-            createdClass.mData.mIsPlayable = true;</span>
+<span class="del">-            createdClass.mRecordFlags = 0;</span>
+<span class="del">-</span>
+<span class="del">-            std::vector&lt;ESM::RefId&gt; attributes = mCreateClassDialog-&gt;getFavoriteAttributes();</span>
+<span class="del">-            assert(attributes.size() &gt;= createdClass.mData.mAttribute.size());</span>
+<span class="del">-            for (size_t i = 0; i &lt; createdClass.mData.mAttribute.size(); ++i)</span>
+<span class="del">-                createdClass.mData.mAttribute[i] = attributes[i];</span>
+<span class="del">-</span>
+<span class="del">-            std::vector&lt;ESM::RefId&gt; majorSkills = mCreateClassDialog-&gt;getMajorSkills();</span>
+<span class="del">-            std::vector&lt;ESM::RefId&gt; minorSkills = mCreateClassDialog-&gt;getMinorSkills();</span>
+<span class="del">-            assert(majorSkills.size() &gt;= createdClass.mData.mMajorSkills.size());</span>
+<span class="del">-            assert(minorSkills.size() &gt;= createdClass.mData.mMinorSkills.size());</span>
+<span class="del">-            for (size_t i = 0; i &lt; createdClass.mData.mMajorSkills.size(); ++i)</span>
+<span class="del">-                createdClass.mData.mMajorSkills[i] = majorSkills[i];</span>
+<span class="del">-            for (size_t i = 0; i &lt; createdClass.mData.mMinorSkills.size(); ++i)</span>
+<span class="del">-                createdClass.mData.mMinorSkills[i] = minorSkills[i];</span>
+<span class="del">-</span>
+<span class="del">-            MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerClass(createdClass);</span>
+<span class="del">-            mPlayerClass = std::move(createdClass);</span>
+<span class="del">-</span>
+<span class="del">-            // Do not delete dialog, so that choices are remembered in case we want to go back and adjust them later</span>
+<span class="del">-            mCreateClassDialog-&gt;setVisible(false);</span>
+<span class="del">-        }</span>
+<span class="add">+        ESM::Class createdClass;</span>
+<span class="add">+        createdClass.mName = mCreateClassDialog-&gt;getName();</span>
+<span class="add">+        createdClass.mDescription = mCreateClassDialog-&gt;getDescription();</span>
+<span class="add">+        createdClass.mData.mSpecialization = mCreateClassDialog-&gt;getSpecializationId();</span>
+<span class="add">+        createdClass.mData.mIsPlayable = true;</span>
+<span class="add">+        createdClass.mRecordFlags = 0;</span>
+<span class="add">+</span>
+<span class="add">+        std::vector&lt;ESM::RefId&gt; attributes = mCreateClassDialog-&gt;getFavoriteAttributes();</span>
+<span class="add">+        assert(attributes.size() &gt;= createdClass.mData.mAttribute.size());</span>
+<span class="add">+        for (size_t i = 0; i &lt; createdClass.mData.mAttribute.size(); ++i)</span>
+<span class="add">+            createdClass.mData.mAttribute[i] = attributes[i];</span>
+<span class="add">+</span>
+<span class="add">+        std::vector&lt;ESM::RefId&gt; majorSkills = mCreateClassDialog-&gt;getMajorSkills();</span>
+<span class="add">+        std::vector&lt;ESM::RefId&gt; minorSkills = mCreateClassDialog-&gt;getMinorSkills();</span>
+<span class="add">+        assert(majorSkills.size() &gt;= createdClass.mData.mMajorSkills.size());</span>
+<span class="add">+        assert(minorSkills.size() &gt;= createdClass.mData.mMinorSkills.size());</span>
+<span class="add">+        for (size_t i = 0; i &lt; createdClass.mData.mMajorSkills.size(); ++i)</span>
+<span class="add">+            createdClass.mData.mMajorSkills[i] = majorSkills[i];</span>
+<span class="add">+        for (size_t i = 0; i &lt; createdClass.mData.mMinorSkills.size(); ++i)</span>
+<span class="add">+            createdClass.mData.mMinorSkills[i] = minorSkills[i];</span>
+<span class="add">+</span>
+<span class="add">+        MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerClass(createdClass);</span>
+<span class="add">+        mPlayerClass = std::move(createdClass);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::onCreateClassDialogDone(WindowBase* parWindow)</span>
+<span class="hunk">@@ -528,8 +492,6 @@ namespace MWGui</span>
+<span class="ctx">     {</span>
+<span class="ctx">         MWBase::Environment::get().getSoundManager()-&gt;stopSay();</span>
+<span class="ctx"> </span>
+<span class="del">-        MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mGenerateClassQuestionDialog));</span>
+<span class="del">-</span>
+<span class="ctx">         if (index &lt; 0 || index &gt;= 3)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;popGuiMode();</span>
+<span class="hunk">@@ -645,12 +607,9 @@ namespace MWGui</span>
+<span class="ctx">                 }</span>
+<span class="ctx">             }</span>
+<span class="ctx">             mGenerateClass = ESM::RefId::stringRefId(className);</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mGenerateClassResultDialog));</span>
+<span class="ctx"> </span>
+<span class="del">-            mGenerateClassResultDialog = std::make_unique&lt;GenerateClassResultDialog&gt;();</span>
+<span class="add">+            mGenerateClassQuestionDialog-&gt;setVisible(false);</span>
+<span class="ctx">             mGenerateClassResultDialog-&gt;setClassId(mGenerateClass);</span>
+<span class="del">-            mGenerateClassResultDialog-&gt;eventBack += MyGUI::newDelegate(this, &amp;CharacterCreation::onGenerateClassBack);</span>
+<span class="del">-            mGenerateClassResultDialog-&gt;eventDone += MyGUI::newDelegate(this, &amp;CharacterCreation::onGenerateClassDone);</span>
+<span class="ctx">             mGenerateClassResultDialog-&gt;setVisible(true);</span>
+<span class="ctx">             return;</span>
+<span class="ctx">         }</span>
+<span class="hunk">@@ -662,10 +621,14 @@ namespace MWGui</span>
+<span class="ctx">             return;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mGenerateClassQuestionDialog));</span>
+<span class="del">-</span>
+<span class="del">-        mGenerateClassQuestionDialog = std::make_unique&lt;InfoBoxDialog&gt;();</span>
+<span class="add">+        // Show the question again, so that the window fits the new text</span>
+<span class="add">+        mGenerateClassQuestionDialog-&gt;setVisible(false);</span>
+<span class="add">+        setClassQuestion();</span>
+<span class="add">+        mGenerateClassQuestionDialog-&gt;setVisible(true);</span>
+<span class="add">+    }</span>
+<span class="ctx"> </span>
+<span class="add">+    void CharacterCreation::setClassQuestion()</span>
+<span class="add">+    {</span>
+<span class="ctx">         const Step step = generateClassSteps(mGenerateClassStep);</span>
+<span class="ctx">         mGenerateClassResponses[0] = step.mResponses[0].mSpecialization;</span>
+<span class="ctx">         mGenerateClassResponses[1] = step.mResponses[1].mSpecialization;</span>
+<span class="hunk">@@ -677,16 +640,13 @@ namespace MWGui</span>
+<span class="ctx">         buttons.emplace_back(step.mResponses[1].mAnswer);</span>
+<span class="ctx">         buttons.emplace_back(step.mResponses[2].mAnswer);</span>
+<span class="ctx">         mGenerateClassQuestionDialog-&gt;setButtons(buttons);</span>
+<span class="del">-        mGenerateClassQuestionDialog-&gt;eventButtonSelected</span>
+<span class="del">-            += MyGUI::newDelegate(this, &amp;CharacterCreation::onClassQuestionChosen);</span>
+<span class="del">-        mGenerateClassQuestionDialog-&gt;setVisible(true);</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWBase::Environment::get().getSoundManager()-&gt;say(Misc::ResourceHelpers::correctSoundPath(step.mSound));</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::selectGeneratedClass()</span>
+<span class="ctx">     {</span>
+<span class="del">-        MWBase::Environment::get().getWindowManager()-&gt;removeDialog(std::move(mGenerateClassResultDialog));</span>
+<span class="add">+        mGenerateClassResultDialog-&gt;setVisible(false);</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerClass(mGenerateClass);</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/charactercreation.hpp</div><pre>
+<span class="hunk">@@ -4,7 +4,6 @@</span>
+<span class="ctx"> #include &lt;components/esm3/loadclas.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;map&gt;</span>
+<span class="del">-#include &lt;memory&gt;</span>
+<span class="ctx"> #include &lt;vector&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;mode.hpp&quot;</span>
+<span class="hunk">@@ -29,34 +28,49 @@ namespace MWGui</span>
+<span class="ctx">     class CharacterCreation : public StatsListener</span>
+<span class="ctx">     {</span>
+<span class="ctx">     public:</span>
+<span class="del">-        CharacterCreation();</span>
+<span class="add">+        // The windows of the character creation steps. The window manager owns them.</span>
+<span class="add">+        struct Windows</span>
+<span class="add">+        {</span>
+<span class="add">+            TextInputDialog* mName;</span>
+<span class="add">+            RaceDialog* mRace;</span>
+<span class="add">+            ClassChoiceDialog* mClassChoice;</span>
+<span class="add">+            InfoBoxDialog* mClassQuestion;</span>
+<span class="add">+            GenerateClassResultDialog* mClassResult;</span>
+<span class="add">+            PickClassDialog* mPickClass;</span>
+<span class="add">+            CreateClassDialog* mCreateClass;</span>
+<span class="add">+            BirthDialog* mBirthSign;</span>
+<span class="add">+            ReviewDialog* mReview;</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="add">+        explicit CharacterCreation(const Windows&amp; windows);</span>
+<span class="ctx">         virtual ~CharacterCreation();</span>
+<span class="ctx"> </span>
+<span class="del">-        // Show a dialog</span>
+<span class="del">-        void spawnDialog(const GuiMode id);</span>
+<span class="add">+        // Forget the choices made for the last character</span>
+<span class="add">+        void clear();</span>
+<span class="add">+</span>
+<span class="add">+        // Fill in the window of a step before the window manager shows it</span>
+<span class="add">+        void prepareDialog(GuiMode id);</span>
+<span class="ctx"> </span>
+<span class="ctx">         void setAttribute(ESM::RefId id, const MWMechanics::AttributeValue&amp; value) override;</span>
+<span class="ctx">         void setValue(std::string_view id, const MWMechanics::DynamicStat&lt;float&gt;&amp; value) override;</span>
+<span class="ctx">         void setValue(ESM::RefId id, const MWMechanics::SkillValue&amp; value) override;</span>
+<span class="ctx">         void configureSkills(std::span&lt;const ESM::RefId&gt; major, std::span&lt;const ESM::RefId&gt; minor) override;</span>
+<span class="ctx"> </span>
+<span class="del">-        void onFrame(float duration);</span>
+<span class="del">-</span>
+<span class="ctx">     private:</span>
+<span class="ctx">         std::vector&lt;ESM::RefId&gt; mPlayerMajorSkills, mPlayerMinorSkills;</span>
+<span class="ctx">         std::map&lt;ESM::RefId, MWMechanics::AttributeValue&gt; mPlayerAttributes;</span>
+<span class="ctx">         std::map&lt;ESM::RefId, MWMechanics::SkillValue&gt; mPlayerSkillValues;</span>
+<span class="ctx"> </span>
+<span class="ctx">         // Dialogs</span>
+<span class="del">-        std::unique_ptr&lt;TextInputDialog&gt; mNameDialog;</span>
+<span class="del">-        std::unique_ptr&lt;RaceDialog&gt; mRaceDialog;</span>
+<span class="del">-        std::unique_ptr&lt;ClassChoiceDialog&gt; mClassChoiceDialog;</span>
+<span class="del">-        std::unique_ptr&lt;InfoBoxDialog&gt; mGenerateClassQuestionDialog;</span>
+<span class="del">-        std::unique_ptr&lt;GenerateClassResultDialog&gt; mGenerateClassResultDialog;</span>
+<span class="del">-        std::unique_ptr&lt;PickClassDialog&gt; mPickClassDialog;</span>
+<span class="del">-        std::unique_ptr&lt;CreateClassDialog&gt; mCreateClassDialog;</span>
+<span class="del">-        std::unique_ptr&lt;BirthDialog&gt; mBirthSignDialog;</span>
+<span class="del">-        std::unique_ptr&lt;ReviewDialog&gt; mReviewDialog;</span>
+<span class="add">+        TextInputDialog* mNameDialog;</span>
+<span class="add">+        RaceDialog* mRaceDialog;</span>
+<span class="add">+        ClassChoiceDialog* mClassChoiceDialog;</span>
+<span class="add">+        InfoBoxDialog* mGenerateClassQuestionDialog;</span>
+<span class="add">+        GenerateClassResultDialog* mGenerateClassResultDialog;</span>
+<span class="add">+        PickClassDialog* mPickClassDialog;</span>
+<span class="add">+        CreateClassDialog* mCreateClassDialog;</span>
+<span class="add">+        BirthDialog* mBirthSignDialog;</span>
+<span class="add">+        ReviewDialog* mReviewDialog;</span>
+<span class="ctx"> </span>
+<span class="ctx">         // Player data</span>
+<span class="ctx">         std::string mPlayerName;</span>
+<span class="hunk">@@ -87,6 +101,7 @@ namespace MWGui</span>
+<span class="ctx">         void onCreateClassDialogDone(WindowBase* parWindow);</span>
+<span class="ctx">         void onCreateClassDialogBack();</span>
+<span class="ctx">         void showClassQuestionDialog();</span>
+<span class="add">+        void setClassQuestion();</span>
+<span class="ctx">         void onClassQuestionChosen(int index);</span>
+<span class="ctx">         void onGenerateClassBack();</span>
+<span class="ctx">         void onGenerateClassDone(WindowBase* parWindow);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/class.cpp</div><pre>
+<span class="hunk">@@ -416,6 +416,7 @@ namespace MWGui</span>
+<span class="ctx">             MyGUI::Gui::getInstance().destroyWidget(button);</span>
+<span class="ctx">         }</span>
+<span class="ctx">         this-&gt;mButtons.clear();</span>
+<span class="add">+        mControllerFocus = 0;</span>
+<span class="ctx"> </span>
+<span class="ctx">         // TODO: The buttons should be generated from a template in the layout file, ie. cloning an existing widget</span>
+<span class="ctx">         MyGUI::Button* button;</span>
+<span class="hunk">@@ -591,6 +592,16 @@ namespace MWGui</span>
+<span class="ctx">             mControllerButtons.mB = &quot;#{Interface:Back}&quot;;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="add">+        clear();</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void CreateClassDialog::clear()</span>
+<span class="add">+    {</span>
+<span class="add">+        onDialogCancel();</span>
+<span class="add">+</span>
+<span class="add">+        mEditName-&gt;setCaption({});</span>
+<span class="add">+        mDescription.clear();</span>
+<span class="add">+</span>
+<span class="ctx">         // Set default skills, attributes</span>
+<span class="ctx"> </span>
+<span class="ctx">         mFavoriteAttribute0-&gt;setAttributeId(ESM::Attribute::Strength);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/class.hpp</div><pre>
+<span class="hunk">@@ -293,6 +293,8 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         bool exit() override { return false; }</span>
+<span class="ctx"> </span>
+<span class="add">+        void clear() override;</span>
+<span class="add">+</span>
+<span class="ctx">         std::string getName() const;</span>
+<span class="ctx">         std::string getDescription() const;</span>
+<span class="ctx">         ESM::Class::Specialization getSpecializationId() const;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/windowmanagerimp.cpp</div><pre>
+<span class="hunk">@@ -83,8 +83,10 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;alchemywindow.hpp&quot;</span>
+<span class="ctx"> #include &quot;backgroundimage.hpp&quot;</span>
+<span class="add">+#include &quot;birth.hpp&quot;</span>
+<span class="ctx"> #include &quot;bookpage.hpp&quot;</span>
+<span class="ctx"> #include &quot;bookwindow.hpp&quot;</span>
+<span class="add">+#include &quot;class.hpp&quot;</span>
+<span class="ctx"> #include &quot;companionwindow.hpp&quot;</span>
+<span class="ctx"> #include &quot;confirmationdialog.hpp&quot;</span>
+<span class="ctx"> #include &quot;console.hpp&quot;</span>
+<span class="hunk">@@ -114,9 +116,11 @@</span>
+<span class="ctx"> #include &quot;merchantrepair.hpp&quot;</span>
+<span class="ctx"> #include &quot;postprocessorhud.hpp&quot;</span>
+<span class="ctx"> #include &quot;quickkeysmenu.hpp&quot;</span>
+<span class="add">+#include &quot;race.hpp&quot;</span>
+<span class="ctx"> #include &quot;recharge.hpp&quot;</span>
+<span class="ctx"> #include &quot;repair.hpp&quot;</span>
+<span class="ctx"> #include &quot;resourceskin.hpp&quot;</span>
+<span class="add">+#include &quot;review.hpp&quot;</span>
+<span class="ctx"> #include &quot;screenfader.hpp&quot;</span>
+<span class="ctx"> #include &quot;scrollwindow.hpp&quot;</span>
+<span class="ctx"> #include &quot;settingswindow.hpp&quot;</span>
+<span class="hunk">@@ -124,6 +128,7 @@</span>
+<span class="ctx"> #include &quot;spellview.hpp&quot;</span>
+<span class="ctx"> #include &quot;spellwindow.hpp&quot;</span>
+<span class="ctx"> #include &quot;statswindow.hpp&quot;</span>
+<span class="add">+#include &quot;textinput.hpp&quot;</span>
+<span class="ctx"> #include &quot;tradewindow.hpp&quot;</span>
+<span class="ctx"> #include &quot;trainingwindow.hpp&quot;</span>
+<span class="ctx"> #include &quot;travelwindow.hpp&quot;</span>
+<span class="hunk">@@ -535,7 +540,44 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         mHud-&gt;setVisible(true);</span>
+<span class="ctx"> </span>
+<span class="del">-        mCharGen = std::make_unique&lt;CharacterCreation&gt;();</span>
+<span class="add">+        auto nameDialog = std::make_unique&lt;TextInputDialog&gt;();</span>
+<span class="add">+        auto raceDialog = std::make_unique&lt;RaceDialog&gt;();</span>
+<span class="add">+        auto classChoiceDialog = std::make_unique&lt;ClassChoiceDialog&gt;();</span>
+<span class="add">+        auto classQuestionDialog = std::make_unique&lt;InfoBoxDialog&gt;();</span>
+<span class="add">+        auto classResultDialog = std::make_unique&lt;GenerateClassResultDialog&gt;();</span>
+<span class="add">+        auto pickClassDialog = std::make_unique&lt;PickClassDialog&gt;();</span>
+<span class="add">+        auto createClassDialog = std::make_unique&lt;CreateClassDialog&gt;();</span>
+<span class="add">+        auto birthSignDialog = std::make_unique&lt;BirthDialog&gt;();</span>
+<span class="add">+        auto reviewDialog = std::make_unique&lt;ReviewDialog&gt;();</span>
+<span class="add">+        mGuiModeStates[GM_Name] = GuiModeState(nameDialog.get());</span>
+<span class="add">+        mGuiModeStates[GM_Race] = GuiModeState(raceDialog.get());</span>
+<span class="add">+        mGuiModeStates[GM_Class] = GuiModeState(classChoiceDialog.get());</span>
+<span class="add">+        // The class questions and their result take turns in one mode, so character creation shows the result itself</span>
+<span class="add">+        mGuiModeStates[GM_ClassGenerate] = GuiModeState(classQuestionDialog.get());</span>
+<span class="add">+        mGuiModeStates[GM_ClassPick] = GuiModeState(pickClassDialog.get());</span>
+<span class="add">+        mGuiModeStates[GM_ClassCreate] = GuiModeState(createClassDialog.get());</span>
+<span class="add">+        mGuiModeStates[GM_Birth] = GuiModeState(birthSignDialog.get());</span>
+<span class="add">+        mGuiModeStates[GM_Review] = GuiModeState(reviewDialog.get());</span>
+<span class="add">+        mCharGen = std::make_unique&lt;CharacterCreation&gt;(CharacterCreation::Windows{</span>
+<span class="add">+            .mName = nameDialog.get(),</span>
+<span class="add">+            .mRace = raceDialog.get(),</span>
+<span class="add">+            .mClassChoice = classChoiceDialog.get(),</span>
+<span class="add">+            .mClassQuestion = classQuestionDialog.get(),</span>
+<span class="add">+            .mClassResult = classResultDialog.get(),</span>
+<span class="add">+            .mPickClass = pickClassDialog.get(),</span>
+<span class="add">+            .mCreateClass = createClassDialog.get(),</span>
+<span class="add">+            .mBirthSign = birthSignDialog.get(),</span>
+<span class="add">+            .mReview = reviewDialog.get(),</span>
+<span class="add">+        });</span>
+<span class="add">+        mWindows.push_back(std::move(nameDialog));</span>
+<span class="add">+        mWindows.push_back(std::move(raceDialog));</span>
+<span class="add">+        mWindows.push_back(std::move(classChoiceDialog));</span>
+<span class="add">+        mWindows.push_back(std::move(classQuestionDialog));</span>
+<span class="add">+        mWindows.push_back(std::move(classResultDialog));</span>
+<span class="add">+        mWindows.push_back(std::move(pickClassDialog));</span>
+<span class="add">+        mWindows.push_back(std::move(createClassDialog));</span>
+<span class="add">+        mWindows.push_back(std::move(birthSignDialog));</span>
+<span class="add">+        mWindows.push_back(std::move(reviewDialog));</span>
+<span class="ctx"> </span>
+<span class="ctx">         updatePinnedWindows();</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -560,9 +602,7 @@ namespace MWGui</span>
+<span class="ctx">         {</span>
+<span class="ctx">             disallowAll();</span>
+<span class="ctx"> </span>
+<span class="del">-            mStatsWatcher-&gt;removeListener(mCharGen.get());</span>
+<span class="del">-            mCharGen = std::make_unique&lt;CharacterCreation&gt;();</span>
+<span class="del">-            mStatsWatcher-&gt;addListener(mCharGen.get());</span>
+<span class="add">+            mCharGen-&gt;clear();</span>
+<span class="ctx">         }</span>
+<span class="ctx">         else</span>
+<span class="ctx">             allow(GW_ALL);</span>
+<span class="hunk">@@ -727,23 +767,6 @@ namespace MWGui</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         updateControllerButtonsOverlay();</span>
+<span class="del">-</span>
+<span class="del">-        switch (mode)</span>
+<span class="del">-        {</span>
+<span class="del">-            // FIXME: refactor chargen windows to use modes properly (or not use them at all)</span>
+<span class="del">-            case GM_Name:</span>
+<span class="del">-            case GM_Race:</span>
+<span class="del">-            case GM_Class:</span>
+<span class="del">-            case GM_ClassPick:</span>
+<span class="del">-            case GM_ClassCreate:</span>
+<span class="del">-            case GM_Birth:</span>
+<span class="del">-            case GM_ClassGenerate:</span>
+<span class="del">-            case GM_Review:</span>
+<span class="del">-                mCharGen-&gt;spawnDialog(mode);</span>
+<span class="del">-                break;</span>
+<span class="del">-            default:</span>
+<span class="del">-                break;</span>
+<span class="del">-        }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void WindowManager::setDrowningTimeLeft(float time, float maxTime)</span>
+<span class="hunk">@@ -1129,9 +1152,6 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         mPostProcessorHud-&gt;onFrame(frameDuration);</span>
+<span class="ctx"> </span>
+<span class="del">-        if (mCharGen)</span>
+<span class="del">-            mCharGen-&gt;onFrame(frameDuration);</span>
+<span class="del">-</span>
+<span class="ctx">         updateActivatedQuickKey();</span>
+<span class="ctx"> </span>
+<span class="ctx">         mStatsWatcher-&gt;update();</span>
+<span class="hunk">@@ -1453,6 +1473,8 @@ namespace MWGui</span>
+<span class="ctx">             }</span>
+<span class="ctx">             mGuiModes.push_back(mode);</span>
+<span class="ctx"> </span>
+<span class="add">+            if (mCharGen)</span>
+<span class="add">+                mCharGen-&gt;prepareDialog(mode);</span>
+<span class="ctx">             mGuiModeStates[mode].update(true);</span>
+<span class="ctx">         }</span>
+<span class="ctx">         if (force)</span>
+</pre></div>

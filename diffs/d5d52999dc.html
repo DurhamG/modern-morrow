@@ -1,0 +1,52 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -762,6 +762,10 @@ namespace MWLua</span>
+<span class="ctx">                 types.add(castStyle);</span>
+<span class="ctx">             result[&quot;types&quot;] = types;</span>
+<span class="ctx">             setProblem(result, enchanting.getProblem());</span>
+<span class="add">+            const MWWorld::Ptr stolen = enchanting.getStolenItem();</span>
+<span class="add">+            if (!stolen.isEmpty())</span>
+<span class="add">+                result[&quot;stolenItem&quot;] = player.isGObject() ? sol::make_object(thisState, GObject(stolen))</span>
+<span class="add">+                                                          : sol::make_object(thisState, LObject(stolen));</span>
+<span class="ctx">             return result;</span>
+<span class="ctx">         };</span>
+<span class="ctx">         playerBindings[&quot;enchantItem&quot;]</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/enchanting.cpp</div><pre>
+<span class="hunk">@@ -108,7 +108,7 @@ namespace MWMechanics</span>
+<span class="ctx">         MWBase::MechanicsManager* mechanics = MWBase::Environment::get().getMechanicsManager();</span>
+<span class="ctx">         for (const MWWorld::Ptr&amp; item : { mOldItemPtr, mSoulGemPtr })</span>
+<span class="ctx">         {</span>
+<span class="del">-            if (mechanics-&gt;isItemStolenFrom(item.getCellRef().getRefId(), mEnchanter))</span>
+<span class="add">+            if (!item.isEmpty() &amp;&amp; mechanics-&gt;isItemStolenFrom(item.getCellRef().getRefId(), mEnchanter))</span>
+<span class="ctx">                 return item;</span>
+<span class="ctx">         }</span>
+<span class="ctx">         return {};</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1881,6 +1881,7 @@</span>
+<span class="ctx"> -- @field #number price The gold that the enchanter asks, adjusted by the enchanter&#x27;s offer the same way as @{#Actor.getBuyingPrice}. It is 0 without an enchanter.</span>
+<span class="ctx"> -- @field #number type The cast type that enchanting would use, an @{openmw.core#EnchantmentType}.</span>
+<span class="ctx"> -- @field #list&lt;#number&gt; types The cast types that the item can take, in the order that the enchanting window steps through them. A constant effect needs a soul of at least the `iSoulAmountForConstantEffect` game setting. Empty without an item.</span>
+<span class="add">+-- @field openmw.core#GameObject stolenItem The item or the soul gem, if the player stole an item of its kind from the enchanter or from the enchanter&#x27;s faction. The enchanter takes it back rather than enchant with it, as @{#PLAYER.enchantItem} tells. It is nil without an enchanter.</span>
+<span class="ctx"> -- @field #string problem Why the enchanting window would refuse to enchant, or nil if it wouldn&#x27;t. The window checks in this order, and names the first problem that it finds: `&#x27;noEffects&#x27;`, `&#x27;noName&#x27;` (the new name is empty), `&#x27;noSoulGem&#x27;`, `&#x27;noItem&#x27;`, `&#x27;tooManyPoints&#x27;` (the effects need more than `maxPoints`) and `&#x27;notEnoughGold&#x27;` (the player can&#x27;t pay the price).</span>
+<span class="ctx"> </span>
+<span class="ctx"> ---</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -1040,6 +1040,15 @@ testing.registerGlobalTest(&#x27;stolen items&#x27;, function()</span>
+<span class="ctx">     testing.expectEqual(owners[1].recordId, owner.id, &#x27;The item should be stolen from its owner&#x27;)</span>
+<span class="ctx">     testing.expectEqual(owners[1].factionId, nil, &#x27;The owner should not be a faction&#x27;)</span>
+<span class="ctx">     testing.expectEqual(owners[1].count, 1, &#x27;The player should have stolen one item&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local enchanter = world.createObject(owner.id)</span>
+<span class="add">+    enchanter:teleport(player.cell, player.position + util.vector3(0, 500, 0))</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    testing.expectEqual(types.Player.getEnchantingInfo(player, { enchanter = enchanter, item = stolen }).stolenItem,</span>
+<span class="add">+        stolen, &#x27;The owner should take back the item if the player asks them to enchant it&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Player.getEnchantingInfo(player, { item = stolen }).stolenItem, nil,</span>
+<span class="add">+        &#x27;Nobody should take back the item if the player enchants it themself&#x27;)</span>
+<span class="add">+    enchanter:remove()</span>
+<span class="ctx">     stolen:remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+</pre></div>

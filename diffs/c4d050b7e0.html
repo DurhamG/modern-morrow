@@ -1,0 +1,31 @@
+<div class="file"><div class="path">apps/openmw/mwgui/dialogue.cpp</div><pre>
+<span class="hunk">@@ -545,12 +545,12 @@ namespace MWGui</span>
+<span class="ctx">         mDeleteLater.clear();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    void DialogueWindow::onClose()</span>
+<span class="add">+    void DialogueWindow::setVisible(bool visible)</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (MWBase::Environment::get().getWindowManager()-&gt;containsMode(GM_Dialogue))</span>
+<span class="del">-            return;</span>
+<span class="del">-        // Reset history</span>
+<span class="del">-        mHistoryContents.clear();</span>
+<span class="add">+        WindowBase::setVisible(visible);</span>
+<span class="add">+        // The conversation is over once the dialogue mode is gone. This also runs while Lua hides the window.</span>
+<span class="add">+        if (!visible &amp;&amp; !MWBase::Environment::get().getWindowManager()-&gt;containsMode(GM_Dialogue))</span>
+<span class="add">+            mHistoryContents.clear();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool DialogueWindow::setKeywords(const std::list&lt;std::string&gt;&amp; keyWords)</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/dialogue.hpp</div><pre>
+<span class="hunk">@@ -160,7 +160,7 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         void updateTopics();</span>
+<span class="ctx"> </span>
+<span class="del">-        void onClose() override;</span>
+<span class="add">+        void setVisible(bool visible) override;</span>
+<span class="ctx"> </span>
+<span class="ctx">         std::string_view getWindowIdForLua() const override { return &quot;Dialogue&quot;; }</span>
+<span class="ctx"> </span>
+</pre></div>

@@ -1,0 +1,168 @@
+<div class="file"><div class="path">apps/components_tests/esm3/testsaveload.cpp</div><pre>
+<span class="hunk">@@ -4,6 +4,7 @@</span>
+<span class="ctx"> #include &lt;components/esm3/effectlist.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/esmreader.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/esmwriter.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/journalentry.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadbook.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadclas.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadcont.hpp&gt;</span>
+<span class="hunk">@@ -341,6 +342,42 @@ namespace ESM</span>
+<span class="ctx">             EXPECT_EQ(record.mPaidCrimeId, result.mPaidCrimeId);</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="add">+        TEST_P(Esm3SaveLoadRecordTest, journalEntryShouldNotChange)</span>
+<span class="add">+        {</span>
+<span class="add">+            // Journal entries are not saved to vanilla ESM format.</span>
+<span class="add">+            if (GetParam() == CurrentContentFormatVersion)</span>
+<span class="add">+                return;</span>
+<span class="add">+            JournalEntry record{};</span>
+<span class="add">+            record.mType = JournalEntry::Type_Journal;</span>
+<span class="add">+            record.mTopic = generateRandomRefId();</span>
+<span class="add">+            record.mInfo = generateRandomRefId();</span>
+<span class="add">+            record.mText = generateRandomString(42);</span>
+<span class="add">+            record.mDay = 3;</span>
+<span class="add">+            record.mMonth = 7;</span>
+<span class="add">+            record.mDayOfMonth = 16;</span>
+<span class="add">+            record.mActor = generateRandomRefId();</span>
+<span class="add">+            record.mCell = generateRandomRefId();</span>
+<span class="add">+            JournalEntry result;</span>
+<span class="add">+            saveAndLoadRecord(record, GetParam(), result);</span>
+<span class="add">+            EXPECT_EQ(record.mTopic, result.mTopic);</span>
+<span class="add">+            EXPECT_EQ(record.mInfo, result.mInfo);</span>
+<span class="add">+            EXPECT_EQ(record.mText, result.mText);</span>
+<span class="add">+            EXPECT_EQ(record.mDay, result.mDay);</span>
+<span class="add">+            EXPECT_EQ(record.mMonth, result.mMonth);</span>
+<span class="add">+            EXPECT_EQ(record.mDayOfMonth, result.mDayOfMonth);</span>
+<span class="add">+            // Saves from before the actor and cell were recorded have neither.</span>
+<span class="add">+            if (GetParam() &gt; MaxNoJournalSourceFormatVersion)</span>
+<span class="add">+            {</span>
+<span class="add">+                EXPECT_EQ(record.mActor, result.mActor);</span>
+<span class="add">+                EXPECT_EQ(record.mCell, result.mCell);</span>
+<span class="add">+            }</span>
+<span class="add">+            else</span>
+<span class="add">+            {</span>
+<span class="add">+                EXPECT_TRUE(result.mActor.empty());</span>
+<span class="add">+                EXPECT_TRUE(result.mCell.empty());</span>
+<span class="add">+            }</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="ctx">         TEST_P(Esm3SaveLoadRecordTest, cellRefShouldNotChange)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             CellRef record;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/journalentry.cpp</div><pre>
+<span class="hunk">@@ -9,6 +9,8 @@</span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &quot;../mwworld/cellstore.hpp&quot;</span>
+<span class="add">+#include &quot;../mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/esmstore.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/globals.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -119,6 +121,8 @@ namespace MWDialogue</span>
+<span class="ctx">         , mDay(record.mDay)</span>
+<span class="ctx">         , mMonth(record.mMonth)</span>
+<span class="ctx">         , mDayOfMonth(record.mDayOfMonth)</span>
+<span class="add">+        , mActor(record.mActor)</span>
+<span class="add">+        , mCell(record.mCell)</span>
+<span class="ctx">     {</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -128,6 +132,8 @@ namespace MWDialogue</span>
+<span class="ctx">         entry.mDay = mDay;</span>
+<span class="ctx">         entry.mMonth = mMonth;</span>
+<span class="ctx">         entry.mDayOfMonth = mDayOfMonth;</span>
+<span class="add">+        entry.mActor = mActor;</span>
+<span class="add">+        entry.mCell = mCell;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     StampedJournalEntry StampedJournalEntry::makeFromQuest(</span>
+<span class="hunk">@@ -137,6 +143,15 @@ namespace MWDialogue</span>
+<span class="ctx">         const int month = MWBase::Environment::get().getWorld()-&gt;getGlobalInt(MWWorld::Globals::sMonth);</span>
+<span class="ctx">         const int dayOfMonth = MWBase::Environment::get().getWorld()-&gt;getGlobalInt(MWWorld::Globals::sDay);</span>
+<span class="ctx"> </span>
+<span class="del">-        return StampedJournalEntry(topic, idFromIndex(topic, index), day, month, dayOfMonth, actor);</span>
+<span class="add">+        StampedJournalEntry entry(topic, idFromIndex(topic, index), day, month, dayOfMonth, actor);</span>
+<span class="add">+</span>
+<span class="add">+        // Scripts run the Journal command on whatever object they belong to, or on the player when they have none.</span>
+<span class="add">+        // Only another actor counts as someone the player heard it from.</span>
+<span class="add">+        const MWWorld::Ptr player = MWBase::Environment::get().getWorld()-&gt;getPlayerPtr();</span>
+<span class="add">+        if (!actor.isEmpty() &amp;&amp; actor != player &amp;&amp; actor.getClass().isActor())</span>
+<span class="add">+            entry.mActor = actor.getCellRef().getRefId();</span>
+<span class="add">+        if (player.isInCell())</span>
+<span class="add">+            entry.mCell = player.getCell()-&gt;getCell()-&gt;getId();</span>
+<span class="add">+        return entry;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/journalentry.hpp</div><pre>
+<span class="hunk">@@ -62,6 +62,10 @@ namespace MWDialogue</span>
+<span class="ctx">         int mDay;</span>
+<span class="ctx">         int mMonth;</span>
+<span class="ctx">         int mDayOfMonth;</span>
+<span class="add">+        // The actor that added the entry, such as the NPC whose dialogue line ran the Journal command, and the cell</span>
+<span class="add">+        // that the player was in. Either may be empty, and entries from older saves have neither.</span>
+<span class="add">+        ESM::RefId mActor;</span>
+<span class="add">+        ESM::RefId mCell;</span>
+<span class="ctx"> </span>
+<span class="ctx">         StampedJournalEntry();</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">components/esm3/formatversion.hpp</div><pre>
+<span class="hunk">@@ -34,7 +34,8 @@ namespace ESM</span>
+<span class="ctx">     inline constexpr FormatVersion MaxIngredientIndexFormatVersion = 37;</span>
+<span class="ctx">     inline constexpr FormatVersion MaxFixedStatsFormatVersion = 39;</span>
+<span class="ctx">     inline constexpr FormatVersion MaxWeatherIndexFormatVersion = 40;</span>
+<span class="del">-    inline constexpr FormatVersion CurrentSaveGameFormatVersion = 41;</span>
+<span class="add">+    inline constexpr FormatVersion MaxNoJournalSourceFormatVersion = 41;</span>
+<span class="add">+    inline constexpr FormatVersion CurrentSaveGameFormatVersion = 42;</span>
+<span class="ctx"> </span>
+<span class="ctx">     inline constexpr FormatVersion MinSupportedSaveGameFormatVersion = 5;</span>
+<span class="ctx">     inline constexpr FormatVersion OpenMW0_49MinSaveGameFormatVersion = 5;</span>
+</pre></div>
+<div class="file"><div class="path">components/esm3/journalentry.cpp</div><pre>
+<span class="hunk">@@ -2,6 +2,7 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;esmreader.hpp&quot;</span>
+<span class="ctx"> #include &quot;esmwriter.hpp&quot;</span>
+<span class="add">+#include &quot;formatversion.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace ESM</span>
+<span class="ctx"> {</span>
+<span class="hunk">@@ -18,6 +19,11 @@ namespace ESM</span>
+<span class="ctx">             esm.getHNT(mDay, &quot;JEDA&quot;);</span>
+<span class="ctx">             esm.getHNT(mMonth, &quot;JEMO&quot;);</span>
+<span class="ctx">             esm.getHNT(mDayOfMonth, &quot;JEDM&quot;);</span>
+<span class="add">+            if (esm.getFormatVersion() &gt; MaxNoJournalSourceFormatVersion)</span>
+<span class="add">+            {</span>
+<span class="add">+                mActor = esm.getHNORefId(&quot;JEAC&quot;);</span>
+<span class="add">+                mCell = esm.getHNORefId(&quot;JECE&quot;);</span>
+<span class="add">+            }</span>
+<span class="ctx">         }</span>
+<span class="ctx">         else if (mType == Type_Topic)</span>
+<span class="ctx">             mActorName = esm.getHNOString(&quot;ACT_&quot;);</span>
+<span class="hunk">@@ -35,6 +41,8 @@ namespace ESM</span>
+<span class="ctx">             esm.writeHNT(&quot;JEDA&quot;, mDay);</span>
+<span class="ctx">             esm.writeHNT(&quot;JEMO&quot;, mMonth);</span>
+<span class="ctx">             esm.writeHNT(&quot;JEDM&quot;, mDayOfMonth);</span>
+<span class="add">+            esm.writeHNORefId(&quot;JEAC&quot;, mActor);</span>
+<span class="add">+            esm.writeHNORefId(&quot;JECE&quot;, mCell);</span>
+<span class="ctx">         }</span>
+<span class="ctx">         else if (mType == Type_Topic)</span>
+<span class="ctx">             esm.writeHNString(&quot;ACT_&quot;, mActorName);</span>
+</pre></div>
+<div class="file"><div class="path">components/esm3/journalentry.hpp</div><pre>
+<span class="hunk">@@ -31,6 +31,10 @@ namespace ESM</span>
+<span class="ctx">         int32_t mDay; // time stamp</span>
+<span class="ctx">         int32_t mMonth;</span>
+<span class="ctx">         int32_t mDayOfMonth;</span>
+<span class="add">+        // For quest entries: the record ID of the actor that added the entry, if any, and the cell that the player</span>
+<span class="add">+        // was in. Both are empty for entries from older saves.</span>
+<span class="add">+        ESM::RefId mActor;</span>
+<span class="add">+        ESM::RefId mCell;</span>
+<span class="ctx"> </span>
+<span class="ctx">         void load(ESMReader&amp; esm);</span>
+<span class="ctx">         void save(ESMWriter&amp; esm) const;</span>
+</pre></div>

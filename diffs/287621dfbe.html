@@ -1,0 +1,61 @@
+<div class="file"><div class="path">apps/openmw/mwgui/tradewindow.cpp</div><pre>
+<span class="hunk">@@ -121,12 +121,8 @@ namespace MWGui</span>
+<span class="ctx">         mCurrentMerchantOffer = 0;</span>
+<span class="ctx"> </span>
+<span class="ctx">         std::vector&lt;MWWorld::Ptr&gt; itemSources;</span>
+<span class="del">-        // Important: actor goes first, so purchased items come out of the actor&#x27;s pocket first</span>
+<span class="del">-        itemSources.push_back(actor);</span>
+<span class="del">-        MWBase::Environment::get().getWorld()-&gt;getContainersOwnedBy(actor, itemSources);</span>
+<span class="del">-</span>
+<span class="ctx">         std::vector&lt;MWWorld::Ptr&gt; worldItems;</span>
+<span class="del">-        MWBase::Environment::get().getWorld()-&gt;getItemsOwnedBy(actor, worldItems);</span>
+<span class="add">+        MWMechanics::getBarterSources(actor, itemSources, worldItems);</span>
+<span class="ctx"> </span>
+<span class="ctx">         auto tradeModel</span>
+<span class="ctx">             = std::make_unique&lt;TradeItemModel&gt;(std::make_unique&lt;ContainerItemModel&gt;(itemSources, worldItems), mPtr);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/barter.cpp</div><pre>
+<span class="hunk">@@ -96,6 +96,15 @@ namespace</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWMechanics</span>
+<span class="ctx"> {</span>
+<span class="add">+    void getBarterSources(</span>
+<span class="add">+        const MWWorld::Ptr&amp; merchant, std::vector&lt;MWWorld::Ptr&gt;&amp; containers, std::vector&lt;MWWorld::Ptr&gt;&amp; worldItems)</span>
+<span class="add">+    {</span>
+<span class="add">+        MWBase::World&amp; world = *MWBase::Environment::get().getWorld();</span>
+<span class="add">+        containers.push_back(merchant);</span>
+<span class="add">+        world.getContainersOwnedBy(merchant, containers);</span>
+<span class="add">+        world.getItemsOwnedBy(merchant, worldItems);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     int getEffectiveItemValue(const MWWorld::Ptr&amp; item, int count)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         float price = static_cast&lt;float&gt;(item.getClass().getValue(item));</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/barter.hpp</div><pre>
+<span class="hunk">@@ -1,6 +1,8 @@</span>
+<span class="ctx"> #ifndef OPENMW_MECHANICS_BARTER_H</span>
+<span class="ctx"> #define OPENMW_MECHANICS_BARTER_H</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;vector&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> namespace MWWorld</span>
+<span class="ctx"> {</span>
+<span class="ctx">     class Ptr;</span>
+<span class="hunk">@@ -12,6 +14,15 @@ namespace MWMechanics</span>
+<span class="ctx">     /// Items that wear down are worth less as their condition drops.</span>
+<span class="ctx">     int getEffectiveItemValue(const MWWorld::Ptr&amp; item, int count);</span>
+<span class="ctx"> </span>
+<span class="add">+    /// Finds the goods that @a merchant offers in a trade. They are the merchant&#x27;s own inventory, the containers in</span>
+<span class="add">+    /// the active cells that the merchant owns, and the items lying in the active cells that the merchant owns.</span>
+<span class="add">+    /// Containers that can&#x27;t hold anything don&#x27;t count, as in the original game.</span>
+<span class="add">+    /// @param containers Gets the merchant first, so that the player buys from the merchant&#x27;s own inventory before the</span>
+<span class="add">+    /// containers, and then the containers.</span>
+<span class="add">+    /// @param worldItems Gets the items lying in the world.</span>
+<span class="add">+    void getBarterSources(</span>
+<span class="add">+        const MWWorld::Ptr&amp; merchant, std::vector&lt;MWWorld::Ptr&gt;&amp; containers, std::vector&lt;MWWorld::Ptr&gt;&amp; worldItems);</span>
+<span class="add">+</span>
+<span class="ctx">     /// The gold that changes hands when the player trades @a count of @a item with @a merchant, before haggling.</span>
+<span class="ctx">     /// @param playerBuys true when the player buys the item from the merchant, false when the player sells it.</span>
+<span class="ctx">     int getBarterPrice(const MWWorld::Ptr&amp; merchant, const MWWorld::Ptr&amp; item, int count, bool playerBuys);</span>
+</pre></div>

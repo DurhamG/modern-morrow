@@ -1,0 +1,20 @@
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.cpp</div><pre>
+<span class="hunk">@@ -313,7 +313,7 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">             MWScript::InterpreterContext interpreterContext(&amp;mActor.getRefData().getLocals(), mActor);</span>
+<span class="ctx">             callback-&gt;addResponse(title, Interpreter::fixDefinesDialog(info-&gt;mResponse, interpreterContext));</span>
+<span class="del">-            MWBase::Environment::get().getLuaManager()-&gt;onDialogueResponse(mActor, *info, dialogue);</span>
+<span class="add">+            MWBase::Environment::get().getLuaManager()-&gt;onDialogueResponse(mActor, *info, *responseTopic);</span>
+<span class="ctx"> </span>
+<span class="ctx">             if (dialogue.mType == ESM::Dialogue::Topic)</span>
+<span class="ctx">             {</span>
+<span class="hunk">@@ -484,7 +484,7 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">                     MWScript::InterpreterContext interpreterContext(&amp;mActor.getRefData().getLocals(), mActor);</span>
+<span class="ctx">                     callback-&gt;addResponse({}, Interpreter::fixDefinesDialog(text, interpreterContext));</span>
+<span class="del">-                    MWBase::Environment::get().getLuaManager()-&gt;onDialogueResponse(mActor, *info, *dialogue);</span>
+<span class="add">+                    MWBase::Environment::get().getLuaManager()-&gt;onDialogueResponse(mActor, *info, *responseTopic);</span>
+<span class="ctx"> </span>
+<span class="ctx">                     if (dialogue-&gt;mType == ESM::Dialogue::Topic)</span>
+<span class="ctx">                     {</span>
+</pre></div>

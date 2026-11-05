@@ -1,0 +1,38 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -755,6 +755,7 @@ namespace MWLua</span>
+<span class="ctx">             result[&quot;castCost&quot;] = enchanting.getEffectiveCastCost();</span>
+<span class="ctx">             // An enchanter never fails. Only the player&#x27;s own attempts roll against the chance.</span>
+<span class="ctx">             result[&quot;chance&quot;] = selfEnchanting ? std::clamp(enchanting.getEnchantChance(), 0, 100) : 100;</span>
+<span class="add">+            result[&quot;showChance&quot;] = selfEnchanting &amp;&amp; Settings::game().mShowEnchantChance;</span>
+<span class="ctx">             result[&quot;price&quot;] = selfEnchanting ? 0 : enchanting.getEnchantPrice();</span>
+<span class="ctx">             result[&quot;type&quot;] = enchanting.getCastStyle();</span>
+<span class="ctx">             sol::table types(thisState, sol::create);</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1878,6 +1878,7 @@</span>
+<span class="ctx"> -- @field #number charge The strength of the soul in the soul gem, which becomes the item&#x27;s charge.</span>
+<span class="ctx"> -- @field #number castCost The charge that one use of the enchantment costs, after the player&#x27;s Enchant skill lowers it. A constant effect costs nothing.</span>
+<span class="ctx"> -- @field #number chance The chance, from 0 to 100, that the player enchants the item themself, from their Enchant skill, Intelligence, Luck and fatigue, and from the enchantment points. An enchanter never fails, so this is 100 with an enchanter.</span>
+<span class="add">+-- @field #boolean showChance Whether the enchanting window shows the chance. It does when the player enchants the item themself and the `show enchant chance` setting of the `Game` section is on.</span>
+<span class="ctx"> -- @field #number price The gold that the enchanter asks, adjusted by the enchanter&#x27;s offer the same way as @{#Actor.getBuyingPrice}. It is 0 without an enchanter.</span>
+<span class="ctx"> -- @field #number type The cast type that enchanting would use, an @{openmw.core#EnchantmentType}.</span>
+<span class="ctx"> -- @field #list&lt;#number&gt; types The cast types that the item can take, in the order that the enchanting window steps through them. A constant effect needs a soul of at least the `iSoulAmountForConstantEffect` game setting. Empty without an item.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -780,6 +780,7 @@ testing.registerGlobalTest(&#x27;enchanting&#x27;, function()</span>
+<span class="ctx">     testing.expectGreaterOrEqual(info.maxPoints, info.points, &#x27;The effect should fit in the dagger&#x27;)</span>
+<span class="ctx">     testing.expectEqual(info.charge, 400, &#x27;The charge should be the strength of the soul&#x27;)</span>
+<span class="ctx">     testing.expectEqual(info.price, 0, &#x27;Enchanting an item yourself should cost nothing&#x27;)</span>
+<span class="add">+    testing.expectEqual(type(info.showChance), &#x27;boolean&#x27;, &#x27;The info should tell whether the window shows the chance&#x27;)</span>
+<span class="ctx">     testing.expectEqual(info.problem, nil, &#x27;Nothing should stop the player from enchanting the dagger&#x27;)</span>
+<span class="ctx">     testing.expectEqual(types.Player.getEnchantingInfo(player, { item = item, soulGem = gem }).problem, &#x27;noEffects&#x27;,</span>
+<span class="ctx">         &#x27;Enchanting should need an effect&#x27;)</span>
+<span class="hunk">@@ -793,6 +794,7 @@ testing.registerGlobalTest(&#x27;enchanting&#x27;, function()</span>
+<span class="ctx">     setup.name = &#x27;Enchanted dagger&#x27;</span>
+<span class="ctx">     info = types.Player.getEnchantingInfo(player, setup)</span>
+<span class="ctx">     testing.expectEqual(info.chance, 100, &#x27;An enchanter should never fail&#x27;)</span>
+<span class="add">+    testing.expectEqual(info.showChance, false, &#x27;The window should not show the chance of an enchanter&#x27;)</span>
+<span class="ctx">     testing.expectGreaterThan(info.price, 0, &#x27;An enchanter should ask for gold&#x27;)</span>
+<span class="ctx">     testing.expectEqual(info.problem, &#x27;notEnoughGold&#x27;, &#x27;The player should not have the gold for the enchanter&#x27;)</span>
+<span class="ctx">     testing.expectEqual(pcall(types.Player.enchantItem, player, setup), false,</span>
+</pre></div>

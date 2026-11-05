@@ -1,0 +1,248 @@
+<div class="file"><div class="path">apps/openmw/mwgui/enchantingdialog.cpp</div><pre>
+<span class="hunk">@@ -303,72 +303,52 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void EnchantingDialog::onBuyButtonClicked(MyGUI::Widget* /*sender*/)</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mEffects.size() &lt;= 0)</span>
+<span class="del">-        {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sEnchantmentMenu11}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        if (mName-&gt;getCaption().empty())</span>
+<span class="del">-        {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage10}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        if (mEnchanting.soulEmpty())</span>
+<span class="del">-        {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage52}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        if (mEnchanting.itemEmpty())</span>
+<span class="del">-        {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage11}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        if (static_cast&lt;int&gt;(mEnchanting.getEnchantPoints(false)) &gt; mEnchanting.getMaxEnchantValue())</span>
+<span class="del">-        {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage29}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="ctx">         mEnchanting.setNewItemName(mName-&gt;getCaption());</span>
+<span class="ctx">         mEnchanting.setEffect(mEffectList);</span>
+<span class="ctx"> </span>
+<span class="del">-        MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="del">-        int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);</span>
+<span class="del">-        if (mPtr != player &amp;&amp; mEnchanting.getEnchantPrice() &gt; playerGold)</span>
+<span class="add">+        MWBase::WindowManager* windowManager = MWBase::Environment::get().getWindowManager();</span>
+<span class="add">+        switch (mEnchanting.getProblem())</span>
+<span class="ctx">         {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage18}&quot;);</span>
+<span class="del">-            return;</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::None:</span>
+<span class="add">+                break;</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::NoEffects:</span>
+<span class="add">+                windowManager-&gt;messageBox(&quot;#{sEnchantmentMenu11}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::NoName:</span>
+<span class="add">+                windowManager-&gt;messageBox(&quot;#{sNotifyMessage10}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::NoSoulGem:</span>
+<span class="add">+                windowManager-&gt;messageBox(&quot;#{sNotifyMessage52}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::NoItem:</span>
+<span class="add">+                windowManager-&gt;messageBox(&quot;#{sNotifyMessage11}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::TooManyPoints:</span>
+<span class="add">+                windowManager-&gt;messageBox(&quot;#{sNotifyMessage29}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="add">+            case MWMechanics::Enchanting::Problem::NotEnoughGold:</span>
+<span class="add">+                windowManager-&gt;messageBox(&quot;#{sNotifyMessage18}&quot;);</span>
+<span class="add">+                return;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         // check if the player is attempting to use a soulstone or item that was stolen from this actor</span>
+<span class="del">-        if (mPtr != player)</span>
+<span class="add">+        const MWWorld::Ptr stolen = mEnchanting.getStolenItem();</span>
+<span class="add">+        if (!stolen.isEmpty())</span>
+<span class="ctx">         {</span>
+<span class="del">-            for (int i = 0; i &lt; 2; ++i)</span>
+<span class="del">-            {</span>
+<span class="del">-                MWWorld::Ptr item = (i == 0) ? mEnchanting.getOldItem() : mEnchanting.getGem();</span>
+<span class="del">-                if (MWBase::Environment::get().getMechanicsManager()-&gt;isItemStolenFrom(</span>
+<span class="del">-                        item.getCellRef().getRefId(), mPtr))</span>
+<span class="del">-                {</span>
+<span class="del">-                    std::string msg = MWBase::Environment::get()</span>
+<span class="del">-                                          .getESMStore()</span>
+<span class="del">-                                          -&gt;get&lt;ESM::GameSetting&gt;()</span>
+<span class="del">-                                          .find(&quot;sNotifyMessage49&quot;)</span>
+<span class="del">-                                          -&gt;mValue.getString();</span>
+<span class="del">-                    msg = Misc::StringUtils::format(msg, item.getClass().getName(item));</span>
+<span class="del">-                    MWBase::Environment::get().getWindowManager()-&gt;messageBox(msg);</span>
+<span class="del">-</span>
+<span class="del">-                    MWBase::Environment::get().getMechanicsManager()-&gt;confiscateStolenItemToOwner(</span>
+<span class="del">-                        player, item, mPtr, 1);</span>
+<span class="del">-</span>
+<span class="del">-                    MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(GM_Enchanting);</span>
+<span class="del">-                    MWBase::Environment::get().getWindowManager()-&gt;exitCurrentGuiMode();</span>
+<span class="del">-                    return;</span>
+<span class="del">-                }</span>
+<span class="del">-            }</span>
+<span class="add">+            std::string msg = MWBase::Environment::get()</span>
+<span class="add">+                                  .getESMStore()</span>
+<span class="add">+                                  -&gt;get&lt;ESM::GameSetting&gt;()</span>
+<span class="add">+                                  .find(&quot;sNotifyMessage49&quot;)</span>
+<span class="add">+                                  -&gt;mValue.getString();</span>
+<span class="add">+            msg = Misc::StringUtils::format(msg, stolen.getClass().getName(stolen));</span>
+<span class="add">+            windowManager-&gt;messageBox(msg);</span>
+<span class="add">+</span>
+<span class="add">+            MWBase::Environment::get().getMechanicsManager()-&gt;confiscateStolenItemToOwner(</span>
+<span class="add">+                MWMechanics::getPlayer(), stolen, mPtr, 1);</span>
+<span class="add">+</span>
+<span class="add">+            windowManager-&gt;removeGuiMode(GM_Enchanting);</span>
+<span class="add">+            windowManager-&gt;exitCurrentGuiMode();</span>
+<span class="add">+            return;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         if (mEnchanting.create())</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/sortfilteritemmodel.cpp</div><pre>
+<span class="hunk">@@ -24,6 +24,7 @@</span>
+<span class="ctx"> #include &quot;../mwworld/esmstore.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwmechanics/alchemy.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/enchanting.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/recharge.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace</span>
+<span class="hunk">@@ -275,13 +276,7 @@ namespace MWGui</span>
+<span class="ctx">             return false;</span>
+<span class="ctx">         if ((mFilter &amp; Filter_OnlyRepairTools) &amp;&amp; (base.getType() != ESM::Repair::sRecordId))</span>
+<span class="ctx">             return false;</span>
+<span class="del">-        if ((mFilter &amp; Filter_OnlyEnchantable)</span>
+<span class="del">-            &amp;&amp; (item.mFlags &amp; ItemStack::Flag_Enchanted</span>
+<span class="del">-                || (base.getType() != ESM::Armor::sRecordId &amp;&amp; base.getType() != ESM::Clothing::sRecordId</span>
+<span class="del">-                    &amp;&amp; base.getType() != ESM::Weapon::sRecordId &amp;&amp; base.getType() != ESM::Book::sRecordId)))</span>
+<span class="del">-            return false;</span>
+<span class="del">-        if ((mFilter &amp; Filter_OnlyEnchantable) &amp;&amp; base.getType() == ESM::Book::sRecordId</span>
+<span class="del">-            &amp;&amp; !base.get&lt;ESM::Book&gt;()-&gt;mBase-&gt;mData.mIsScroll)</span>
+<span class="add">+        if ((mFilter &amp; Filter_OnlyEnchantable) &amp;&amp; !MWMechanics::Enchanting::canEnchant(base))</span>
+<span class="ctx">             return false;</span>
+<span class="ctx"> </span>
+<span class="ctx">         if ((mFilter &amp; Filter_OnlyUsableItems))</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/enchanting.cpp</div><pre>
+<span class="hunk">@@ -1,7 +1,11 @@</span>
+<span class="ctx"> #include &quot;enchanting.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;components/esm3/loadarmo.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadbook.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadclot.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadcrea.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadmgef.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadweap.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/misc/rng.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/settings/values.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -20,6 +24,16 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWMechanics</span>
+<span class="ctx"> {</span>
+<span class="add">+    bool Enchanting::canEnchant(const MWWorld::ConstPtr&amp; item)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (!item.getClass().getEnchantment(item).empty())</span>
+<span class="add">+            return false;</span>
+<span class="add">+        const unsigned int type = item.getType();</span>
+<span class="add">+        if (type == ESM::Book::sRecordId)</span>
+<span class="add">+            return item.get&lt;ESM::Book&gt;()-&gt;mBase-&gt;mData.mIsScroll != 0;</span>
+<span class="add">+        return type == ESM::Armor::sRecordId || type == ESM::Clothing::sRecordId || type == ESM::Weapon::sRecordId;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     Enchanting::Enchanting()</span>
+<span class="ctx">         : mCastStyle(ESM::Enchantment::CastOnce)</span>
+<span class="ctx">         , mSelfEnchanting(false)</span>
+<span class="hunk">@@ -60,6 +74,41 @@ namespace MWMechanics</span>
+<span class="ctx">         mSoulGemPtr = soulGem;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    Enchanting::Problem Enchanting::getProblem() const</span>
+<span class="add">+    {</span>
+<span class="add">+        if (mEffectList.mList.empty())</span>
+<span class="add">+            return Problem::NoEffects;</span>
+<span class="add">+        if (mNewItemName.empty())</span>
+<span class="add">+            return Problem::NoName;</span>
+<span class="add">+        if (soulEmpty())</span>
+<span class="add">+            return Problem::NoSoulGem;</span>
+<span class="add">+        if (itemEmpty())</span>
+<span class="add">+            return Problem::NoItem;</span>
+<span class="add">+        if (static_cast&lt;int&gt;(getEnchantPoints(false)) &gt; getMaxEnchantValue())</span>
+<span class="add">+            return Problem::TooManyPoints;</span>
+<span class="add">+        if (!mSelfEnchanting)</span>
+<span class="add">+        {</span>
+<span class="add">+            const MWWorld::Ptr player = getPlayer();</span>
+<span class="add">+            const int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);</span>
+<span class="add">+            if (getEnchantPrice() &gt; playerGold)</span>
+<span class="add">+                return Problem::NotEnoughGold;</span>
+<span class="add">+        }</span>
+<span class="add">+        return Problem::None;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    MWWorld::Ptr Enchanting::getStolenItem() const</span>
+<span class="add">+    {</span>
+<span class="add">+        if (mSelfEnchanting)</span>
+<span class="add">+            return {};</span>
+<span class="add">+        MWBase::MechanicsManager* mechanics = MWBase::Environment::get().getMechanicsManager();</span>
+<span class="add">+        for (const MWWorld::Ptr&amp; item : { mOldItemPtr, mSoulGemPtr })</span>
+<span class="add">+        {</span>
+<span class="add">+            if (mechanics-&gt;isItemStolenFrom(item.getCellRef().getRefId(), mEnchanter))</span>
+<span class="add">+                return item;</span>
+<span class="add">+        }</span>
+<span class="add">+        return {};</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     bool Enchanting::create()</span>
+<span class="ctx">     {</span>
+<span class="ctx">         const MWWorld::Ptr&amp; player = getPlayer();</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/enchanting.hpp</div><pre>
+<span class="hunk">@@ -36,6 +36,22 @@ namespace MWMechanics</span>
+<span class="ctx">         std::vector&lt;float&gt; getEffectCosts() const;</span>
+<span class="ctx"> </span>
+<span class="ctx">     public:</span>
+<span class="add">+        /// The first problem that stops the player from enchanting the item.</span>
+<span class="add">+        enum class Problem</span>
+<span class="add">+        {</span>
+<span class="add">+            None,</span>
+<span class="add">+            NoEffects,</span>
+<span class="add">+            NoName,</span>
+<span class="add">+            NoSoulGem,</span>
+<span class="add">+            NoItem,</span>
+<span class="add">+            TooManyPoints,</span>
+<span class="add">+            NotEnoughGold,</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="add">+        /// Whether @a item can be enchanted: a weapon, a piece of armor or clothing, or a scroll, that isn&#x27;t</span>
+<span class="add">+        /// enchanted already.</span>
+<span class="add">+        static bool canEnchant(const MWWorld::ConstPtr&amp; item);</span>
+<span class="add">+</span>
+<span class="ctx">         Enchanting();</span>
+<span class="ctx">         void setEnchanter(const MWWorld::Ptr&amp; enchanter);</span>
+<span class="ctx">         void setSelfEnchanting(bool selfEnchanting);</span>
+<span class="hunk">@@ -45,6 +61,11 @@ namespace MWMechanics</span>
+<span class="ctx">         void setNewItemName(const std::string&amp; s);</span>
+<span class="ctx">         void setEffect(const ESM::EffectList&amp; effectList);</span>
+<span class="ctx">         void setSoulGem(const MWWorld::Ptr&amp; soulGem);</span>
+<span class="add">+        /// What stops the enchanting, checked in the order that the enchanting window checks.</span>
+<span class="add">+        Problem getProblem() const;</span>
+<span class="add">+        /// The item or the soul gem, if any, that the player stole from the enchanter. The enchanter takes it back</span>
+<span class="add">+        /// rather than enchant with it. This is always empty when the player enchants an item themself.</span>
+<span class="add">+        MWWorld::Ptr getStolenItem() const;</span>
+<span class="ctx">         bool create(); // Return true if created, false if failed.</span>
+<span class="ctx">         void nextCastStyle(); // Set enchant type to next possible type (for mOldItemPtr object)</span>
+<span class="ctx">         int getCastStyle() const;</span>
+</pre></div>

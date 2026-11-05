@@ -1,0 +1,158 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/actor.cpp</div><pre>
+<span class="hunk">@@ -31,6 +31,14 @@ namespace MWLua</span>
+<span class="ctx">     using Equipment = std::map&lt;int, EquipmentItem&gt;;</span>
+<span class="ctx">     static constexpr int sAnySlot = -1;</span>
+<span class="ctx"> </span>
+<span class="add">+    const ESM::Transport::Dest&amp; getTravelDestination(const MWWorld::Ptr&amp; merchant, int64_t index)</span>
+<span class="add">+    {</span>
+<span class="add">+        const std::vector&lt;ESM::Transport::Dest&gt;&amp; destinations = MWMechanics::getTravelDestinations(merchant);</span>
+<span class="add">+        if (index &lt; 1 || index &gt; static_cast&lt;int64_t&gt;(destinations.size()))</span>
+<span class="add">+            throw std::runtime_error(&quot;The merchant has no travel destination &quot; + std::to_string(index));</span>
+<span class="add">+        return destinations[LuaUtil::fromLuaIndex(index)];</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     static std::pair&lt;MWWorld::ContainerStoreIterator, bool&gt; findInInventory(</span>
+<span class="ctx">         MWWorld::ContainerStore&amp; store, const EquipmentItem&amp; item, int slot, bool isInventoryStore)</span>
+<span class="ctx">     {</span>
+<span class="hunk">@@ -473,6 +481,18 @@ namespace MWLua</span>
+<span class="ctx">                 throw std::runtime_error(&quot;The item must be a weapon or a piece of armor that has lost some condition&quot;);</span>
+<span class="ctx">             return MWMechanics::getRepairPrice(merchantPtr, itemPtr);</span>
+<span class="ctx">         };</span>
+<span class="add">+        actor[&quot;getTravelPrice&quot;] = [](const Object&amp; merchant, int64_t destination) -&gt; int {</span>
+<span class="add">+            const MWWorld::Ptr ptr = merchant.ptr();</span>
+<span class="add">+            if (!ptr.getClass().isActor())</span>
+<span class="add">+                throw std::runtime_error(&quot;Actor expected&quot;);</span>
+<span class="add">+            return MWMechanics::getTravelPrice(ptr, getTravelDestination(ptr, destination));</span>
+<span class="add">+        };</span>
+<span class="add">+        actor[&quot;getTravelHours&quot;] = [](const Object&amp; merchant, int64_t destination) -&gt; int {</span>
+<span class="add">+            const MWWorld::Ptr ptr = merchant.ptr();</span>
+<span class="add">+            if (!ptr.getClass().isActor())</span>
+<span class="add">+                throw std::runtime_error(&quot;Actor expected&quot;);</span>
+<span class="add">+            return MWMechanics::getTravelHours(ptr, getTravelDestination(ptr, destination));</span>
+<span class="add">+        };</span>
+<span class="ctx"> </span>
+<span class="ctx">         actor[&quot;_onHit&quot;] = [context](const SelfObject&amp; self, const sol::table&amp; options) {</span>
+<span class="ctx">             sol::optional&lt;sol::table&gt; damageLua = options.get&lt;sol::optional&lt;sol::table&gt;&gt;(&quot;damage&quot;);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -559,6 +559,26 @@ namespace MWLua</span>
+<span class="ctx">                 },</span>
+<span class="ctx">                 &quot;BuyRepairAction&quot;);</span>
+<span class="ctx">         };</span>
+<span class="add">+        player[&quot;buyTravel&quot;] = [context](const Object&amp; buyer, const Object&amp; merchant, int64_t destination) {</span>
+<span class="add">+            verifyBuyer(buyer);</span>
+<span class="add">+            const MWWorld::Ptr merchantPtr = merchant.ptr();</span>
+<span class="add">+            verifyActor(merchantPtr.getClass());</span>
+<span class="add">+            const ESM::Transport::Dest&amp; dest = getTravelDestination(merchantPtr, destination);</span>
+<span class="add">+            if (!canPay(MWMechanics::getTravelPrice(merchantPtr, dest)))</span>
+<span class="add">+                throw std::runtime_error(&quot;The player doesn&#x27;t have enough gold&quot;);</span>
+<span class="add">+            // The trip moves the player, so it must wait until the other queued actions are done.</span>
+<span class="add">+            context.mLuaManager-&gt;addTeleportPlayerAction([merchant = Object(merchantPtr), dest] {</span>
+<span class="add">+                const MWWorld::Ptr ptr = merchant.ptr();</span>
+<span class="add">+                const int price = MWMechanics::getTravelPrice(ptr, dest);</span>
+<span class="add">+                // An earlier action may have spent the gold.</span>
+<span class="add">+                if (!canPay(price))</span>
+<span class="add">+                {</span>
+<span class="add">+                    Log(Debug::Warning) &lt;&lt; &quot;The player didn&#x27;t travel: The player doesn&#x27;t have enough gold&quot;;</span>
+<span class="add">+                    return;</span>
+<span class="add">+                }</span>
+<span class="add">+                MWMechanics::travel(ptr, dest, price);</span>
+<span class="add">+            });</span>
+<span class="add">+        };</span>
+<span class="ctx"> </span>
+<span class="ctx">         player[&quot;isCharGenFinished&quot;] = [](const Object&amp;) -&gt; bool {</span>
+<span class="ctx">             return MWBase::Environment::get().getWorld()-&gt;getGlobalFloat(MWWorld::Globals::sCharGenState) == -1;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/types/types.hpp</div><pre>
+<span class="hunk">@@ -4,6 +4,7 @@</span>
+<span class="ctx"> #include &lt;sol/sol.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;components/esm/defs.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/transport.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/lua/luastate.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../context.hpp&quot;</span>
+<span class="hunk">@@ -30,6 +31,10 @@ namespace MWLua</span>
+<span class="ctx">     // The ID of the skill that @a skill names. Throws an error if there is no such skill.</span>
+<span class="ctx">     ESM::RefId parseSkillId(std::string_view skill);</span>
+<span class="ctx"> </span>
+<span class="add">+    // The destination at a Lua index in the merchant record&#x27;s list of travel destinations. Throws an error if there</span>
+<span class="add">+    // is none.</span>
+<span class="add">+    const ESM::Transport::Dest&amp; getTravelDestination(const MWWorld::Ptr&amp; merchant, int64_t index);</span>
+<span class="add">+</span>
+<span class="ctx">     // used in initTypesPackage</span>
+<span class="ctx">     void addActivatorBindings(sol::table activator, const Context&amp; context);</span>
+<span class="ctx">     ESM::Activator tableToActivator(const sol::table&amp; rec);</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -80,6 +80,26 @@</span>
+<span class="ctx"> -- @param openmw.core#GameObject item A weapon or a piece of armor that has lost some condition.</span>
+<span class="ctx"> -- @return #number</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- The gold a merchant asks to take the player to one of their travel destinations.</span>
+<span class="add">+-- This is the price that the travel window shows. A guild guide, who works from an interior, asks the `fMagesGuildTravel` game setting. Other merchants ask for the distance from the player divided by the `fTravelMult` game setting.</span>
+<span class="add">+-- Each follower who would come along pays the same as the player. The total is adjusted by the merchant&#x27;s offer the same way as @{#Actor.getBuyingPrice}.</span>
+<span class="add">+-- @function [parent=#Actor] getTravelPrice</span>
+<span class="add">+-- @param openmw.core#GameObject merchant</span>
+<span class="add">+-- @param #number destination The index of the destination in the merchant record&#x27;s `travelDestinations`.</span>
+<span class="add">+-- @return #number</span>
+<span class="add">+-- @usage for i, destination in ipairs(types.NPC.record(merchant).travelDestinations) do</span>
+<span class="add">+--     print(destination.cellId, types.Actor.getTravelPrice(merchant, i))</span>
+<span class="add">+-- end</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- The hours that pass on a trip with a merchant to one of their travel destinations.</span>
+<span class="add">+-- A trip with a guild guide, who works from an interior, takes no time. Other trips take the distance from the player divided by the `fTravelTimeMult` game setting.</span>
+<span class="add">+-- @function [parent=#Actor] getTravelHours</span>
+<span class="add">+-- @param openmw.core#GameObject merchant</span>
+<span class="add">+-- @param #number destination The index of the destination in the merchant record&#x27;s `travelDestinations`.</span>
+<span class="add">+-- @return #number</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Check if the given actor is dead (health reached 0, so death process started).</span>
+<span class="ctx"> -- @function [parent=#Actor] isDead</span>
+<span class="hunk">@@ -1480,6 +1500,16 @@</span>
+<span class="ctx"> -- @param openmw.core#GameObject merchant</span>
+<span class="ctx"> -- @param openmw.core#GameObject item</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Travel with a merchant to one of their travel destinations, the way the travel window does it (only in global scripts).</span>
+<span class="add">+-- The player pays @{#Actor.getTravelPrice}, and the gold goes to the merchant&#x27;s barter gold. Then @{#Actor.getTravelHours} pass, while the player and other actors sleep. Last, the player and their followers move to the destination, and `GetPCTraveling` reports the trip to mwscripts for a frame.</span>
+<span class="add">+-- The player must have enough gold. Otherwise this throws an error.</span>
+<span class="add">+-- This doesn&#x27;t check whether the merchant offers travel as a service. The trip happens at the end of the frame, after the other changes that scripts made in it. As with @{#PLAYER.buyTraining}, the engine checks the gold again then, and skips the trip if the player can no longer pay.</span>
+<span class="add">+-- @function [parent=#PLAYER] buyTravel</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param openmw.core#GameObject merchant</span>
+<span class="add">+-- @param #number destination The index of the destination in the merchant record&#x27;s `travelDestinations`.</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Whether teleportation for this player is enabled.</span>
+<span class="ctx"> -- @function [parent=#PLAYER] isTeleportingEnabled</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -439,6 +439,23 @@ testing.registerGlobalTest(&#x27;buying spells and repairs&#x27;, function()</span>
+<span class="ctx">     merchant:remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;travel&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    local merchant = world.createObject(&#x27;landracer&#x27;)</span>
+<span class="add">+    merchant:addScript(&#x27;idle.lua&#x27;)</span>
+<span class="add">+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    -- The example suite has no merchant with travel destinations, and Lua can&#x27;t add them to a record.</span>
+<span class="add">+    testing.expectEqual(#types.Creature.record(merchant).travelDestinations, 0, &#x27;The creature should not offer travel&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Actor.getTravelPrice, merchant, 1), false,</span>
+<span class="add">+        &#x27;A merchant should have no price for a destination they do not offer&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Actor.getTravelHours, merchant, 1), false,</span>
+<span class="add">+        &#x27;A merchant should have no travel time for a destination they do not offer&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.buyTravel, player, merchant, 1), false,</span>
+<span class="add">+        &#x27;The player should not travel to a destination the merchant does not offer&#x27;)</span>
+<span class="add">+    merchant:remove()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;stolen items&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     local owner = world.createRecord(types.NPC.createRecordDraft({</span>
+</pre></div>

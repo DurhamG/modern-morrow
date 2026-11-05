@@ -1,0 +1,65 @@
+<div class="file"><div class="path">apps/openmw/mwgui/spellcreationdialog.cpp</div><pre>
+<span class="hunk">@@ -139,10 +139,10 @@ namespace MWGui</span>
+<span class="ctx">             mEffect.mRange = ESM::RT_Touch;</span>
+<span class="ctx">         if (!allowTouch)</span>
+<span class="ctx">             mEffect.mRange = ESM::RT_Target;</span>
+<span class="del">-        mEffect.mMagnMin = 1;</span>
+<span class="del">-        mEffect.mMagnMax = 1;</span>
+<span class="del">-        mEffect.mDuration = 1;</span>
+<span class="del">-        mEffect.mArea = 0;</span>
+<span class="add">+        mEffect.mMagnMin = MWMechanics::sMinCustomMagnitude;</span>
+<span class="add">+        mEffect.mMagnMax = MWMechanics::sMinCustomMagnitude;</span>
+<span class="add">+        mEffect.mDuration = MWMechanics::sMinCustomDuration;</span>
+<span class="add">+        mEffect.mArea = MWMechanics::sMinCustomArea;</span>
+<span class="ctx">         mEffect.mSkill = ESM::RefId();</span>
+<span class="ctx">         mEffect.mAttribute = ESM::RefId();</span>
+<span class="ctx">         eventEffectAdded(mEffect);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/spellmaking.cpp</div><pre>
+<span class="hunk">@@ -124,15 +124,16 @@ namespace MWMechanics</span>
+<span class="ctx">                 return CustomEffectProblem::RangeNotAllowed;</span>
+<span class="ctx"> </span>
+<span class="ctx">             if (!(flags &amp; ESM::MagicEffect::NoMagnitude)</span>
+<span class="del">-                &amp;&amp; (params.mMagnMin &lt; 1 || params.mMagnMax &lt; params.mMagnMin || params.mMagnMax &gt; sMaxCustomMagnitude))</span>
+<span class="add">+                &amp;&amp; (params.mMagnMin &lt; sMinCustomMagnitude || params.mMagnMax &lt; params.mMagnMin</span>
+<span class="add">+                    || params.mMagnMax &gt; sMaxCustomMagnitude))</span>
+<span class="ctx">                 return CustomEffectProblem::InvalidParameters;</span>
+<span class="ctx">             if (!(flags &amp; ESM::MagicEffect::NoDuration) &amp;&amp; !isConstant</span>
+<span class="del">-                &amp;&amp; (params.mDuration &lt; 1 || params.mDuration &gt; sMaxCustomDuration))</span>
+<span class="add">+                &amp;&amp; (params.mDuration &lt; sMinCustomDuration || params.mDuration &gt; sMaxCustomDuration))</span>
+<span class="ctx">                 return CustomEffectProblem::InvalidParameters;</span>
+<span class="del">-            if (params.mArea &lt; 0 || params.mArea &gt; sMaxCustomArea)</span>
+<span class="add">+            if (params.mArea &lt; sMinCustomArea || params.mArea &gt; sMaxCustomArea)</span>
+<span class="ctx">                 return CustomEffectProblem::InvalidParameters;</span>
+<span class="del">-            // The effect editor hides the area of an effect on self, and sets it to 0.</span>
+<span class="del">-            if (params.mRange == ESM::RT_Self &amp;&amp; params.mArea != 0)</span>
+<span class="add">+            // The effect editor hides the area of an effect on self, and sets it to the smallest area.</span>
+<span class="add">+            if (params.mRange == ESM::RT_Self &amp;&amp; params.mArea != sMinCustomArea)</span>
+<span class="ctx">                 return CustomEffectProblem::InvalidParameters;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/spellmaking.hpp</div><pre>
+<span class="hunk">@@ -23,13 +23,18 @@ namespace MWMechanics</span>
+<span class="ctx">     /// The most effects that a spell or an enchantment that the player makes can have.</span>
+<span class="ctx">     static constexpr std::size_t sMaxCustomEffects = 8;</span>
+<span class="ctx"> </span>
+<span class="del">-    /// The highest magnitude that the player can give an effect of their own spell or enchantment.</span>
+<span class="add">+    /// The lowest and the highest magnitude that the player can give an effect of their own spell or enchantment.</span>
+<span class="add">+    static constexpr int sMinCustomMagnitude = 1;</span>
+<span class="ctx">     static constexpr int sMaxCustomMagnitude = 100;</span>
+<span class="ctx"> </span>
+<span class="del">-    /// The longest duration, in seconds, that the player can give an effect of their own spell or enchantment.</span>
+<span class="add">+    /// The shortest and the longest duration, in seconds, that the player can give an effect of their own spell or</span>
+<span class="add">+    /// enchantment.</span>
+<span class="add">+    static constexpr int sMinCustomDuration = 1;</span>
+<span class="ctx">     static constexpr int sMaxCustomDuration = 1440;</span>
+<span class="ctx"> </span>
+<span class="del">-    /// The largest area, in feet, that the player can give an effect of their own spell or enchantment.</span>
+<span class="add">+    /// The smallest and the largest area, in feet, that the player can give an effect of their own spell or</span>
+<span class="add">+    /// enchantment.</span>
+<span class="add">+    static constexpr int sMinCustomArea = 0;</span>
+<span class="ctx">     static constexpr int sMaxCustomArea = 50;</span>
+<span class="ctx"> </span>
+<span class="ctx">     /// What the player makes from magic effects of their own choosing.</span>
+</pre></div>

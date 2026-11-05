@@ -1,0 +1,470 @@
+<div class="file"><div class="path">apps/openmw/mwbase/windowmanager.hpp</div><pre>
+<span class="hunk">@@ -434,6 +434,9 @@ namespace MWBase</span>
+<span class="ctx">         virtual bool isWindowVisible(std::string_view windowId) const = 0;</span>
+<span class="ctx">         virtual std::vector&lt;std::string_view&gt; getAllWindowIds() const = 0;</span>
+<span class="ctx">         virtual std::vector&lt;std::string_view&gt; getAllowedWindowIds(MWGui::GuiMode mode) const = 0;</span>
+<span class="add">+        virtual void setHudElementDisabledByLua(std::string_view elementId, bool disabled) = 0;</span>
+<span class="add">+        virtual bool isHudElementVisible(std::string_view elementId) const = 0;</span>
+<span class="add">+        virtual std::vector&lt;std::string_view&gt; getAllHudElementIds() const = 0;</span>
+<span class="ctx">     };</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/hud.cpp</div><pre>
+<span class="hunk">@@ -1,5 +1,9 @@</span>
+<span class="ctx"> #include &quot;hud.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;stdexcept&gt;</span>
+<span class="add">+#include &lt;string&gt;</span>
+<span class="add">+#include &lt;utility&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> #include &lt;MyGUI_Button.h&gt;</span>
+<span class="ctx"> #include &lt;MyGUI_ImageBox.h&gt;</span>
+<span class="ctx"> #include &lt;MyGUI_InputManager.h&gt;</span>
+<span class="hunk">@@ -33,6 +37,32 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWGui</span>
+<span class="ctx"> {</span>
+<span class="add">+    namespace</span>
+<span class="add">+    {</span>
+<span class="add">+        constexpr std::pair&lt;std::string_view, HUD::Element&gt; sElementIds[] = {</span>
+<span class="add">+            { &quot;DynamicStats&quot;, HUD::Element::DynamicStats },</span>
+<span class="add">+            { &quot;EnemyHealth&quot;, HUD::Element::EnemyHealth },</span>
+<span class="add">+            { &quot;Weapon&quot;, HUD::Element::Weapon },</span>
+<span class="add">+            { &quot;Spell&quot;, HUD::Element::Spell },</span>
+<span class="add">+            { &quot;WeaponSpellName&quot;, HUD::Element::WeaponSpellName },</span>
+<span class="add">+            { &quot;Sneak&quot;, HUD::Element::Sneak },</span>
+<span class="add">+            { &quot;ActiveEffects&quot;, HUD::Element::ActiveEffects },</span>
+<span class="add">+            { &quot;Minimap&quot;, HUD::Element::Minimap },</span>
+<span class="add">+            { &quot;CellName&quot;, HUD::Element::CellName },</span>
+<span class="add">+            { &quot;DrowningBar&quot;, HUD::Element::DrowningBar },</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="add">+        HUD::Element findElement(std::string_view elementId)</span>
+<span class="add">+        {</span>
+<span class="add">+            for (const auto&amp; [id, element] : sElementIds)</span>
+<span class="add">+            {</span>
+<span class="add">+                if (id == elementId)</span>
+<span class="add">+                    return element;</span>
+<span class="add">+            }</span>
+<span class="add">+            throw std::logic_error(&quot;Invalid HUD element: &quot; + std::string(elementId));</span>
+<span class="add">+        }</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     HUD::HUD(CustomMarkerCollection&amp; customMarkers, DragAndDrop* dragAndDrop, MWRender::LocalMap* localMapRender)</span>
+<span class="ctx">         : WindowBase(&quot;openmw_hud.layout&quot;)</span>
+<span class="ctx">         , LocalMapBase(customMarkers, localMapRender, Settings::map().mLocalMapHudFogOfWar)</span>
+<span class="hunk">@@ -161,7 +191,8 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void HUD::setDrowningBarVisible(bool visible)</span>
+<span class="ctx">     {</span>
+<span class="del">-        mDrowningBar-&gt;setVisible(visible);</span>
+<span class="add">+        mDrowningBarVisible = visible;</span>
+<span class="add">+        mDrowningBar-&gt;setVisible(visible &amp;&amp; !isDisabledByLua(Element::DrowningBar));</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void HUD::dropDraggedItem(float mouseX, float mouseY)</span>
+<span class="hunk">@@ -290,7 +321,7 @@ namespace MWGui</span>
+<span class="ctx">             mCellName = cellName;</span>
+<span class="ctx"> </span>
+<span class="ctx">             mCellNameBox-&gt;setCaptionWithReplacing(&quot;#{sCell=&quot; + mCellName + &quot;}&quot;);</span>
+<span class="del">-            mCellNameBox-&gt;setVisible(mMapVisible);</span>
+<span class="add">+            mCellNameBox-&gt;setVisible(mMapVisible &amp;&amp; !isDisabledByLua(Element::CellName));</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -306,11 +337,8 @@ namespace MWGui</span>
+<span class="ctx">             mWeaponSpellBox-&gt;setVisible(false);</span>
+<span class="ctx"> </span>
+<span class="ctx">         mEnemyHealthTimer -= dt;</span>
+<span class="del">-        if (mEnemyHealth-&gt;getVisible() &amp;&amp; mEnemyHealthTimer &lt; 0)</span>
+<span class="del">-        {</span>
+<span class="del">-            mEnemyHealth-&gt;setVisible(false);</span>
+<span class="del">-            mWeaponSpellBox-&gt;setPosition(mWeaponSpellBox-&gt;getPosition() + MyGUI::IntPoint(0, 20));</span>
+<span class="del">-        }</span>
+<span class="add">+        if (mEnemyHealthTimer &lt; 0)</span>
+<span class="add">+            setEnemyHealthVisible(false);</span>
+<span class="ctx"> </span>
+<span class="ctx">         mSpellIcons-&gt;updateWidgets(mEffectBox, true);</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -343,7 +371,7 @@ namespace MWGui</span>
+<span class="ctx">             mWeaponSpellTimer = 5.0f;</span>
+<span class="ctx">             mSpellName = spellName;</span>
+<span class="ctx">             mWeaponSpellBox-&gt;setCaption(mSpellName);</span>
+<span class="del">-            mWeaponSpellBox-&gt;setVisible(true);</span>
+<span class="add">+            mWeaponSpellBox-&gt;setVisible(!isDisabledByLua(Element::WeaponSpellName));</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         mSpellStatus-&gt;setProgressRange(100);</span>
+<span class="hunk">@@ -374,7 +402,7 @@ namespace MWGui</span>
+<span class="ctx">             mWeaponSpellTimer = 5.0f;</span>
+<span class="ctx">             mSpellName = itemName;</span>
+<span class="ctx">             mWeaponSpellBox-&gt;setCaption(mSpellName);</span>
+<span class="del">-            mWeaponSpellBox-&gt;setVisible(true);</span>
+<span class="add">+            mWeaponSpellBox-&gt;setVisible(!isDisabledByLua(Element::WeaponSpellName));</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         mSpellStatus-&gt;setProgressRange(100);</span>
+<span class="hunk">@@ -394,7 +422,7 @@ namespace MWGui</span>
+<span class="ctx">             mWeaponSpellTimer = 5.0f;</span>
+<span class="ctx">             mWeaponName = itemName;</span>
+<span class="ctx">             mWeaponSpellBox-&gt;setCaption(mWeaponName);</span>
+<span class="del">-            mWeaponSpellBox-&gt;setVisible(true);</span>
+<span class="add">+            mWeaponSpellBox-&gt;setVisible(!isDisabledByLua(Element::WeaponSpellName));</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         mWeapBox-&gt;clearUserStrings();</span>
+<span class="hunk">@@ -415,7 +443,7 @@ namespace MWGui</span>
+<span class="ctx">             mWeaponSpellTimer = 5.0f;</span>
+<span class="ctx">             mSpellName = spellName;</span>
+<span class="ctx">             mWeaponSpellBox-&gt;setCaptionWithReplacing(mSpellName);</span>
+<span class="del">-            mWeaponSpellBox-&gt;setVisible(true);</span>
+<span class="add">+            mWeaponSpellBox-&gt;setVisible(!isDisabledByLua(Element::WeaponSpellName));</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         mSpellStatus-&gt;setProgressRange(100);</span>
+<span class="hunk">@@ -433,7 +461,7 @@ namespace MWGui</span>
+<span class="ctx">             mWeaponSpellTimer = 5.0f;</span>
+<span class="ctx">             mWeaponName = itemName;</span>
+<span class="ctx">             mWeaponSpellBox-&gt;setCaptionWithReplacing(mWeaponName);</span>
+<span class="del">-            mWeaponSpellBox-&gt;setVisible(true);</span>
+<span class="add">+            mWeaponSpellBox-&gt;setVisible(!isDisabledByLua(Element::WeaponSpellName));</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         mWeapStatus-&gt;setProgressRange(100);</span>
+<span class="hunk">@@ -490,6 +518,8 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void HUD::setHmsVisible(bool visible)</span>
+<span class="ctx">     {</span>
+<span class="add">+        mHmsVisible = visible;</span>
+<span class="add">+        visible = visible &amp;&amp; !isDisabledByLua(Element::DynamicStats);</span>
+<span class="ctx">         mHealth-&gt;setVisible(visible);</span>
+<span class="ctx">         mMagicka-&gt;setVisible(visible);</span>
+<span class="ctx">         mStamina-&gt;setVisible(visible);</span>
+<span class="hunk">@@ -498,31 +528,36 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void HUD::setWeapVisible(bool visible)</span>
+<span class="ctx">     {</span>
+<span class="del">-        mWeapBox-&gt;setVisible(visible);</span>
+<span class="add">+        mWeaponVisible = visible;</span>
+<span class="add">+        mWeapBox-&gt;setVisible(visible &amp;&amp; !isDisabledByLua(Element::Weapon));</span>
+<span class="ctx">         updatePositions();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void HUD::setSpellVisible(bool visible)</span>
+<span class="ctx">     {</span>
+<span class="del">-        mSpellBox-&gt;setVisible(visible);</span>
+<span class="add">+        mSpellVisible = visible;</span>
+<span class="add">+        mSpellBox-&gt;setVisible(visible &amp;&amp; !isDisabledByLua(Element::Spell));</span>
+<span class="ctx">         updatePositions();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void HUD::setSneakVisible(bool visible)</span>
+<span class="ctx">     {</span>
+<span class="del">-        mSneakBox-&gt;setVisible(visible);</span>
+<span class="add">+        mSneakVisible = visible;</span>
+<span class="add">+        mSneakBox-&gt;setVisible(visible &amp;&amp; !isDisabledByLua(Element::Sneak));</span>
+<span class="ctx">         updatePositions();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void HUD::setEffectVisible(bool visible)</span>
+<span class="ctx">     {</span>
+<span class="del">-        mEffectBox-&gt;setVisible(visible);</span>
+<span class="add">+        mEffectVisible = visible;</span>
+<span class="add">+        mEffectBox-&gt;setVisible(visible &amp;&amp; !isDisabledByLua(Element::ActiveEffects));</span>
+<span class="ctx">         updatePositions();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void HUD::setMinimapVisible(bool visible)</span>
+<span class="ctx">     {</span>
+<span class="del">-        mMinimapBox-&gt;setVisible(visible);</span>
+<span class="add">+        mMapVisible = visible;</span>
+<span class="add">+        mMinimapBox-&gt;setVisible(visible &amp;&amp; !isDisabledByLua(Element::Minimap));</span>
+<span class="ctx">         updatePositions();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -541,8 +576,6 @@ namespace MWGui</span>
+<span class="ctx">         if (!mSpellBox-&gt;getVisible())</span>
+<span class="ctx">             sneakDx += mSneakBoxBaseLeft - mSpellBoxBaseLeft;</span>
+<span class="ctx"> </span>
+<span class="del">-        mWeaponVisible = mWeapBox-&gt;getVisible();</span>
+<span class="del">-        mSpellVisible = mSpellBox-&gt;getVisible();</span>
+<span class="ctx">         if (!mWeaponVisible &amp;&amp; !mSpellVisible)</span>
+<span class="ctx">             mWeaponSpellBox-&gt;setVisible(false);</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -557,7 +590,6 @@ namespace MWGui</span>
+<span class="ctx">         if (!mMinimapBox-&gt;getVisible())</span>
+<span class="ctx">             effectsDx = mEffectBoxBaseRight - mMinimapBoxBaseRight;</span>
+<span class="ctx"> </span>
+<span class="del">-        mMapVisible = mMinimapBox-&gt;getVisible();</span>
+<span class="ctx">         if (!mMapVisible)</span>
+<span class="ctx">             mCellNameBox-&gt;setVisible(false);</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -593,12 +625,20 @@ namespace MWGui</span>
+<span class="ctx">                                 -&gt;get&lt;ESM::GameSetting&gt;()</span>
+<span class="ctx">                                 .find(&quot;fNPCHealthBarTime&quot;)</span>
+<span class="ctx">                                 -&gt;mValue.getFloat();</span>
+<span class="del">-        if (!mEnemyHealth-&gt;getVisible())</span>
+<span class="del">-            mWeaponSpellBox-&gt;setPosition(mWeaponSpellBox-&gt;getPosition() - MyGUI::IntPoint(0, 20));</span>
+<span class="del">-        mEnemyHealth-&gt;setVisible(true);</span>
+<span class="add">+        setEnemyHealthVisible(true);</span>
+<span class="ctx">         updateEnemyHealthBar();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    void HUD::setEnemyHealthVisible(bool visible)</span>
+<span class="add">+    {</span>
+<span class="add">+        visible = visible &amp;&amp; !isDisabledByLua(Element::EnemyHealth);</span>
+<span class="add">+        if (mEnemyHealth-&gt;getVisible() == visible)</span>
+<span class="add">+            return;</span>
+<span class="add">+        mEnemyHealth-&gt;setVisible(visible);</span>
+<span class="add">+        // The weapon or spell name moves up to make room for the enemy&#x27;s health bar</span>
+<span class="add">+        mWeaponSpellBox-&gt;setPosition(mWeaponSpellBox-&gt;getPosition() + MyGUI::IntPoint(0, visible ? -20 : 20));</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void HUD::clear()</span>
+<span class="ctx">     {</span>
+<span class="ctx">         mEnemyActor = {};</span>
+<span class="hunk">@@ -623,6 +663,106 @@ namespace MWGui</span>
+<span class="ctx">         mSpellBox-&gt;setUserData(MyGUI::Any::Null);</span>
+<span class="ctx"> </span>
+<span class="ctx">         mActiveCell = nullptr;</span>
+<span class="add">+</span>
+<span class="add">+        for (Element element : std::exchange(mElementsDisabledByLua, {}))</span>
+<span class="add">+            updateElementVisibility(element);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    std::vector&lt;std::string_view&gt; HUD::getElementIdsForLua()</span>
+<span class="add">+    {</span>
+<span class="add">+        std::vector&lt;std::string_view&gt; ids;</span>
+<span class="add">+        for (const auto&amp; [id, element] : sElementIds)</span>
+<span class="add">+            ids.push_back(id);</span>
+<span class="add">+        return ids;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void HUD::setElementDisabledByLua(std::string_view elementId, bool disabled)</span>
+<span class="add">+    {</span>
+<span class="add">+        const Element element = findElement(elementId);</span>
+<span class="add">+        if (disabled)</span>
+<span class="add">+            mElementsDisabledByLua.insert(element);</span>
+<span class="add">+        else</span>
+<span class="add">+            mElementsDisabledByLua.erase(element);</span>
+<span class="add">+        updateElementVisibility(element);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    bool HUD::isElementVisible(std::string_view elementId) const</span>
+<span class="add">+    {</span>
+<span class="add">+        const MyGUI::Widget* widget = nullptr;</span>
+<span class="add">+        switch (findElement(elementId))</span>
+<span class="add">+        {</span>
+<span class="add">+            case Element::DynamicStats:</span>
+<span class="add">+                widget = mHealth;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::EnemyHealth:</span>
+<span class="add">+                widget = mEnemyHealth;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::Weapon:</span>
+<span class="add">+                widget = mWeapBox;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::Spell:</span>
+<span class="add">+                widget = mSpellBox;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::WeaponSpellName:</span>
+<span class="add">+                widget = mWeaponSpellBox;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::Sneak:</span>
+<span class="add">+                widget = mSneakBox;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::ActiveEffects:</span>
+<span class="add">+                widget = mEffectBox;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::Minimap:</span>
+<span class="add">+                widget = mMinimapBox;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::CellName:</span>
+<span class="add">+                widget = mCellNameBox;</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::DrowningBar:</span>
+<span class="add">+                widget = mDrowningBar;</span>
+<span class="add">+                break;</span>
+<span class="add">+        }</span>
+<span class="add">+        return widget-&gt;getInheritedVisible();</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void HUD::updateElementVisibility(Element element)</span>
+<span class="add">+    {</span>
+<span class="add">+        switch (element)</span>
+<span class="add">+        {</span>
+<span class="add">+            case Element::DynamicStats:</span>
+<span class="add">+                setHmsVisible(mHmsVisible);</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::EnemyHealth:</span>
+<span class="add">+                setEnemyHealthVisible(mEnemyHealthTimer &gt;= 0);</span>
+<span class="add">+                if (mEnemyActor.isSet() &amp;&amp; mEnemyHealth-&gt;getVisible())</span>
+<span class="add">+                    updateEnemyHealthBar();</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::Weapon:</span>
+<span class="add">+                setWeapVisible(mWeaponVisible);</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::Spell:</span>
+<span class="add">+                setSpellVisible(mSpellVisible);</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::WeaponSpellName:</span>
+<span class="add">+                mWeaponSpellBox-&gt;setVisible(</span>
+<span class="add">+                    !isDisabledByLua(element) &amp;&amp; mWeaponSpellTimer &gt; 0 &amp;&amp; (mWeaponVisible || mSpellVisible));</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::Sneak:</span>
+<span class="add">+                setSneakVisible(mSneakVisible);</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::ActiveEffects:</span>
+<span class="add">+                setEffectVisible(mEffectVisible);</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::Minimap:</span>
+<span class="add">+                setMinimapVisible(mMapVisible);</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::CellName:</span>
+<span class="add">+                mCellNameBox-&gt;setVisible(!isDisabledByLua(element) &amp;&amp; mCellNameTimer &gt; 0 &amp;&amp; mMapVisible);</span>
+<span class="add">+                break;</span>
+<span class="add">+            case Element::DrowningBar:</span>
+<span class="add">+                setDrowningBarVisible(mDrowningBarVisible);</span>
+<span class="add">+                break;</span>
+<span class="add">+        }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void HUD::customMarkerCreated(MyGUI::Widget* marker)</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/hud.hpp</div><pre>
+<span class="hunk">@@ -2,6 +2,9 @@</span>
+<span class="ctx"> #define OPENMW_GAME_MWGUI_HUD_H</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;memory&gt;</span>
+<span class="add">+#include &lt;set&gt;</span>
+<span class="add">+#include &lt;string_view&gt;</span>
+<span class="add">+#include &lt;vector&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;mapwindow.hpp&quot;</span>
+<span class="ctx"> #include &quot;spellicons.hpp&quot;</span>
+<span class="hunk">@@ -21,6 +24,21 @@ namespace MWGui</span>
+<span class="ctx">     class HUD : public WindowBase, public LocalMapBase, public StatsListener</span>
+<span class="ctx">     {</span>
+<span class="ctx">     public:</span>
+<span class="add">+        /// The parts of the HUD that Lua can hide one by one</span>
+<span class="add">+        enum class Element</span>
+<span class="add">+        {</span>
+<span class="add">+            DynamicStats,</span>
+<span class="add">+            EnemyHealth,</span>
+<span class="add">+            Weapon,</span>
+<span class="add">+            Spell,</span>
+<span class="add">+            WeaponSpellName,</span>
+<span class="add">+            Sneak,</span>
+<span class="add">+            ActiveEffects,</span>
+<span class="add">+            Minimap,</span>
+<span class="add">+            CellName,</span>
+<span class="add">+            DrowningBar,</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="ctx">         HUD(CustomMarkerCollection&amp; customMarkers, DragAndDrop* dragAndDrop, MWRender::LocalMap* localMapRender);</span>
+<span class="ctx">         virtual ~HUD();</span>
+<span class="ctx">         void setValue(std::string_view id, const MWMechanics::DynamicStat&lt;float&gt;&amp; value) override;</span>
+<span class="hunk">@@ -66,6 +84,12 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         void dropDraggedItem(float mouseX, float mouseY);</span>
+<span class="ctx"> </span>
+<span class="add">+        static std::vector&lt;std::string_view&gt; getElementIdsForLua();</span>
+<span class="add">+</span>
+<span class="add">+        /// While an element is disabled by Lua, it stays hidden when the engine would show it.</span>
+<span class="add">+        void setElementDisabledByLua(std::string_view elementId, bool disabled);</span>
+<span class="add">+        bool isElementVisible(std::string_view elementId) const;</span>
+<span class="add">+</span>
+<span class="ctx">     private:</span>
+<span class="ctx">         MyGUI::ProgressBar *mHealth = nullptr, *mMagicka = nullptr, *mStamina = nullptr, *mEnemyHealth = nullptr,</span>
+<span class="ctx">                            *mDrowning = nullptr;</span>
+<span class="hunk">@@ -99,9 +123,17 @@ namespace MWGui</span>
+<span class="ctx">         float mEnemyHealthTimer = -1;</span>
+<span class="ctx">         float mDrowningFlashTheta = 0.f;</span>
+<span class="ctx"> </span>
+<span class="del">-        bool mMapVisible = true;</span>
+<span class="add">+        // Whether the engine shows these elements. Lua can still hide them.</span>
+<span class="add">+        bool mHmsVisible = true;</span>
+<span class="ctx">         bool mWeaponVisible = true;</span>
+<span class="ctx">         bool mSpellVisible = true;</span>
+<span class="add">+        bool mSneakVisible = false;</span>
+<span class="add">+        bool mEffectVisible = true;</span>
+<span class="add">+        bool mMapVisible = true;</span>
+<span class="add">+        bool mDrowningBarVisible = false;</span>
+<span class="add">+</span>
+<span class="add">+        std::set&lt;Element&gt; mElementsDisabledByLua;</span>
+<span class="add">+</span>
+<span class="ctx">         bool mWorldMouseOver = false;</span>
+<span class="ctx">         bool mIsDrowning = false;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -118,6 +150,10 @@ namespace MWGui</span>
+<span class="ctx">         void doorMarkerCreated(MyGUI::Widget* marker) override;</span>
+<span class="ctx"> </span>
+<span class="ctx">         void updateEnemyHealthBar();</span>
+<span class="add">+        void setEnemyHealthVisible(bool visible);</span>
+<span class="add">+</span>
+<span class="add">+        bool isDisabledByLua(Element element) const { return mElementsDisabledByLua.contains(element); }</span>
+<span class="add">+        void updateElementVisibility(Element element);</span>
+<span class="ctx"> </span>
+<span class="ctx">         void updatePositions();</span>
+<span class="ctx">     };</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/windowmanagerimp.cpp</div><pre>
+<span class="hunk">@@ -2783,6 +2783,21 @@ namespace MWGui</span>
+<span class="ctx">         return res;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    void WindowManager::setHudElementDisabledByLua(std::string_view elementId, bool disabled)</span>
+<span class="add">+    {</span>
+<span class="add">+        mHud-&gt;setElementDisabledByLua(elementId, disabled);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    bool WindowManager::isHudElementVisible(std::string_view elementId) const</span>
+<span class="add">+    {</span>
+<span class="add">+        return mHud-&gt;isElementVisible(elementId);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    std::vector&lt;std::string_view&gt; WindowManager::getAllHudElementIds() const</span>
+<span class="add">+    {</span>
+<span class="add">+        return HUD::getElementIdsForLua();</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     int WindowManager::getControllerMenuHeight()</span>
+<span class="ctx">     {</span>
+<span class="ctx">         int height = MyGUI::RenderManager::getInstance().getViewSize().height;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/windowmanagerimp.hpp</div><pre>
+<span class="hunk">@@ -422,6 +422,9 @@ namespace MWGui</span>
+<span class="ctx">         bool isWindowVisible(std::string_view windowId) const override;</span>
+<span class="ctx">         std::vector&lt;std::string_view&gt; getAllWindowIds() const override;</span>
+<span class="ctx">         std::vector&lt;std::string_view&gt; getAllowedWindowIds(GuiMode mode) const override;</span>
+<span class="add">+        void setHudElementDisabledByLua(std::string_view elementId, bool disabled) override;</span>
+<span class="add">+        bool isHudElementVisible(std::string_view elementId) const override;</span>
+<span class="add">+        std::vector&lt;std::string_view&gt; getAllHudElementIds() const override;</span>
+<span class="ctx"> </span>
+<span class="ctx">     private:</span>
+<span class="ctx">         unsigned int mOldUpdateMask;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/uibindings.cpp</div><pre>
+<span class="hunk">@@ -134,6 +134,20 @@ namespace MWLua</span>
+<span class="ctx">             luaManager-&gt;addAction([state] { MWBase::Environment::get().getWindowManager()-&gt;setHudVisibility(state); });</span>
+<span class="ctx">         };</span>
+<span class="ctx">         api[&quot;_isHudVisible&quot;] = []() -&gt; bool { return MWBase::Environment::get().getWindowManager()-&gt;isHudVisible(); };</span>
+<span class="add">+        api[&quot;_getAllHudElements&quot;] = [windowManager](sol::this_state thisState) {</span>
+<span class="add">+            sol::table res(thisState, sol::create);</span>
+<span class="add">+            for (std::string_view name : windowManager-&gt;getAllHudElementIds())</span>
+<span class="add">+                res[name] = name;</span>
+<span class="add">+            return res;</span>
+<span class="add">+        };</span>
+<span class="add">+        api[&quot;_setHudElementVisibility&quot;] = [windowManager, luaManager = context.mLuaManager](</span>
+<span class="add">+                                              std::string element, bool visible) {</span>
+<span class="add">+            luaManager-&gt;addAction(</span>
+<span class="add">+                [=, element = std::move(element)] { windowManager-&gt;setHudElementDisabledByLua(element, !visible); },</span>
+<span class="add">+                &quot;Set HUD element visibility&quot;);</span>
+<span class="add">+        };</span>
+<span class="add">+        api[&quot;_isHudElementVisible&quot;]</span>
+<span class="add">+            = [windowManager](std::string_view element) { return windowManager-&gt;isHudElementVisible(element); };</span>
+<span class="ctx">         api[&quot;_getDefaultFontSize&quot;] = []() -&gt; int { return Settings::gui().mFontSize; };</span>
+<span class="ctx">         api[&quot;showMessage&quot;]</span>
+<span class="ctx">             = [luaManager = context.mLuaManager](std::string_view message, const sol::optional&lt;sol::table&gt;&amp; options) {</span>
+</pre></div>

@@ -1,0 +1,131 @@
+<div class="file"><div class="path">apps/openmw/mwbase/windowmanager.hpp</div><pre>
+<span class="hunk">@@ -439,6 +439,9 @@ namespace MWBase</span>
+<span class="ctx">         virtual std::vector&lt;std::string_view&gt; getAllowedWindowIds(MWGui::GuiMode mode) const = 0;</span>
+<span class="ctx">         virtual void setHudElementDisabledByLua(std::string_view elementId, bool disabled) = 0;</span>
+<span class="ctx">         virtual bool isHudElementVisible(std::string_view elementId) const = 0;</span>
+<span class="add">+        /// The actor whose health the HUD&#x27;s enemy health bar shows, or an empty Ptr while the engine doesn&#x27;t show it.</span>
+<span class="add">+        /// @param secondsLeft Receives the time until the engine hides the bar.</span>
+<span class="add">+        virtual MWWorld::Ptr getHudEnemy(float&amp; secondsLeft) const = 0;</span>
+<span class="ctx">         virtual std::vector&lt;std::string_view&gt; getAllHudElementIds() const = 0;</span>
+<span class="ctx">     };</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/hud.cpp</div><pre>
+<span class="hunk">@@ -629,6 +629,15 @@ namespace MWGui</span>
+<span class="ctx">         updateEnemyHealthBar();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    MWWorld::Ptr HUD::getEnemy(float&amp; secondsLeft) const</span>
+<span class="add">+    {</span>
+<span class="add">+        secondsLeft = 0;</span>
+<span class="add">+        if (!mEnemyActor.isSet() || mEnemyHealthTimer &lt; 0)</span>
+<span class="add">+            return {};</span>
+<span class="add">+        secondsLeft = mEnemyHealthTimer;</span>
+<span class="add">+        return MWBase::Environment::get().getWorldModel()-&gt;getPtr(mEnemyActor);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void HUD::setEnemyHealthVisible(bool visible)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         visible = visible &amp;&amp; !isDisabledByLua(Element::EnemyHealth);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/hud.hpp</div><pre>
+<span class="hunk">@@ -79,6 +79,9 @@ namespace MWGui</span>
+<span class="ctx">         MyGUI::Widget* getEffectBox() { return mEffectBox; }</span>
+<span class="ctx"> </span>
+<span class="ctx">         void setEnemy(const MWWorld::Ptr&amp; enemy);</span>
+<span class="add">+        /// The actor whose health the enemy health bar shows, while the engine shows the bar, even if Lua hid it.</span>
+<span class="add">+        /// @param secondsLeft Receives the time until the engine hides the bar.</span>
+<span class="add">+        MWWorld::Ptr getEnemy(float&amp; secondsLeft) const;</span>
+<span class="ctx"> </span>
+<span class="ctx">         void clear() override;</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/windowmanagerimp.cpp</div><pre>
+<span class="hunk">@@ -2828,6 +2828,11 @@ namespace MWGui</span>
+<span class="ctx">         return mHud-&gt;isElementVisible(elementId);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    MWWorld::Ptr WindowManager::getHudEnemy(float&amp; secondsLeft) const</span>
+<span class="add">+    {</span>
+<span class="add">+        return mHud-&gt;getEnemy(secondsLeft);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     std::vector&lt;std::string_view&gt; WindowManager::getAllHudElementIds() const</span>
+<span class="ctx">     {</span>
+<span class="ctx">         return HUD::getElementIdsForLua();</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/windowmanagerimp.hpp</div><pre>
+<span class="hunk">@@ -425,6 +425,7 @@ namespace MWGui</span>
+<span class="ctx">         std::vector&lt;std::string_view&gt; getAllowedWindowIds(GuiMode mode) const override;</span>
+<span class="ctx">         void setHudElementDisabledByLua(std::string_view elementId, bool disabled) override;</span>
+<span class="ctx">         bool isHudElementVisible(std::string_view elementId) const override;</span>
+<span class="add">+        MWWorld::Ptr getHudEnemy(float&amp; secondsLeft) const override;</span>
+<span class="ctx">         std::vector&lt;std::string_view&gt; getAllHudElementIds() const override;</span>
+<span class="ctx"> </span>
+<span class="ctx">     private:</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/uibindings.cpp</div><pre>
+<span class="hunk">@@ -2,6 +2,7 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;cstdint&gt;</span>
+<span class="ctx"> #include &lt;functional&gt;</span>
+<span class="add">+#include &lt;tuple&gt;</span>
+<span class="ctx"> #include &lt;unordered_map&gt;</span>
+<span class="ctx"> #include &lt;utility&gt;</span>
+<span class="ctx"> #include &lt;vector&gt;</span>
+<span class="hunk">@@ -176,6 +177,13 @@ namespace MWLua</span>
+<span class="ctx">         };</span>
+<span class="ctx">         api[&quot;_isHudElementVisible&quot;]</span>
+<span class="ctx">             = [windowManager](std::string_view element) { return windowManager-&gt;isHudElementVisible(element); };</span>
+<span class="add">+        api[&quot;_getHudEnemy&quot;] = [windowManager]() -&gt; std::tuple&lt;sol::optional&lt;LObject&gt;, float&gt; {</span>
+<span class="add">+            float secondsLeft = 0;</span>
+<span class="add">+            const MWWorld::Ptr enemy = windowManager-&gt;getHudEnemy(secondsLeft);</span>
+<span class="add">+            if (enemy.isEmpty())</span>
+<span class="add">+                return { sol::nullopt, 0.f };</span>
+<span class="add">+            return { LObject(enemy), secondsLeft };</span>
+<span class="add">+        };</span>
+<span class="ctx">         api[&quot;_getDefaultFontSize&quot;] = []() -&gt; int { return Settings::gui().mFontSize; };</span>
+<span class="ctx">         api[&quot;showMessage&quot;]</span>
+<span class="ctx">             = [luaManager = context.mLuaManager](std::string_view message, const sol::optional&lt;sol::table&gt;&amp; options) {</span>
+</pre></div>
+<div class="file"><div class="path">files/data/scripts/omw/ui.lua</div><pre>
+<span class="hunk">@@ -279,7 +279,7 @@ return {</span>
+<span class="ctx">     interface = {</span>
+<span class="ctx">         --- Interface version</span>
+<span class="ctx">         -- @field [parent=#UI] #number version</span>
+<span class="del">-        version = 8,</span>
+<span class="add">+        version = 9,</span>
+<span class="ctx"> </span>
+<span class="ctx">         --- All available UI modes.</span>
+<span class="ctx">         -- Use `view(I.UI.MODE)` in `luap` console mode to see the list.</span>
+<span class="hunk">@@ -421,6 +421,17 @@ return {</span>
+<span class="ctx">         -- @return #boolean</span>
+<span class="ctx">         isHudElementVisible = function(element) return ui._isHudElementVisible(element) end,</span>
+<span class="ctx"> </span>
+<span class="add">+        ---</span>
+<span class="add">+        -- Returns the actor whose health the engine&#x27;s enemy health bar shows, while the engine shows the bar.</span>
+<span class="add">+        -- The engine shows it for the `fNPCHealthBarTime` game setting&#x27;s seconds after the player hits an actor, or</span>
+<span class="add">+        -- casts a spell on them that changes their health, and fades it out over the last `fNPCHealthBarFade` seconds.</span>
+<span class="add">+        -- Hiding the `EnemyHealth` element with @{#UI.setHudElementVisibility} doesn&#x27;t change what this returns, so</span>
+<span class="add">+        -- a mod can draw its own bar in its place.</span>
+<span class="add">+        -- @function [parent=#UI] getHudEnemy</span>
+<span class="add">+        -- @return openmw.core#GameObject, #number The actor and the seconds until the engine hides the bar, or nil</span>
+<span class="add">+        -- while the engine doesn&#x27;t show the bar.</span>
+<span class="add">+        getHudEnemy = function() return ui._getHudEnemy() end,</span>
+<span class="add">+</span>
+<span class="ctx">         ---</span>
+<span class="ctx">         -- Returns if the given window is visible or not</span>
+<span class="ctx">         -- @function [parent=#UI] isWindowVisible</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/player.lua</div><pre>
+<span class="hunk">@@ -613,6 +613,9 @@ testing.registerLocalTestStep(&#x27;player approaches and attacks a creature&#x27;,</span>
+<span class="ctx"> </span>
+<span class="ctx">             if targetActor ~= nil and types.Actor.stats.dynamic.health(targetActor).current &lt; previousHealth then</span>
+<span class="ctx">                 print(&#x27;Dealt &#x27; .. (previousHealth - types.Actor.stats.dynamic.health(targetActor).current) .. &#x27; damage to &#x27; .. tostring(targetActor))</span>
+<span class="add">+                local enemy, secondsLeft = I.UI.getHudEnemy()</span>
+<span class="add">+                testing.expectEqual(enemy, targetActor, &#x27;The enemy health bar should show the creature that the player hit&#x27;)</span>
+<span class="add">+                testing.expectGreaterThan(secondsLeft, 0, &#x27;The engine should show the bar for a while&#x27;)</span>
+<span class="ctx">                 break</span>
+<span class="ctx">             end</span>
+<span class="ctx"> </span>
+</pre></div>

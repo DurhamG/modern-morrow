@@ -1,0 +1,186 @@
+<div class="file"><div class="path">apps/openmw/mwgui/pickpocketitemmodel.cpp</div><pre>
+<span class="hunk">@@ -1,8 +1,5 @@</span>
+<span class="ctx"> #include &quot;pickpocketitemmodel.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="del">-#include &lt;components/esm3/loadskil.hpp&gt;</span>
+<span class="del">-#include &lt;components/misc/rng.hpp&gt;</span>
+<span class="del">-</span>
+<span class="ctx"> #include &quot;../mwmechanics/actorutil.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/creaturestats.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/pickpocket.hpp&quot;</span>
+<span class="hunk">@@ -10,9 +7,7 @@</span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="del">-#include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="del">-#include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWGui</span>
+<span class="ctx"> {</span>
+<span class="hunk">@@ -22,18 +17,16 @@ namespace MWGui</span>
+<span class="ctx">         : mActor(actor)</span>
+<span class="ctx">         , mPickpocketDetected(false)</span>
+<span class="ctx">     {</span>
+<span class="del">-        MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="ctx">         mSourceModel = std::move(sourceModel);</span>
+<span class="del">-        float chance = player.getClass().getSkill(player, ESM::Skill::Sneak);</span>
+<span class="ctx"> </span>
+<span class="ctx">         mSourceModel-&gt;update();</span>
+<span class="ctx">         // build list of items that player is unable to find when attempts to pickpocket.</span>
+<span class="ctx">         if (hideItems)</span>
+<span class="ctx">         {</span>
+<span class="del">-            auto&amp; prng = MWBase::Environment::get().getWorld()-&gt;getPrng();</span>
+<span class="add">+            const MWMechanics::Pickpocket pickpocket(MWMechanics::getPlayer(), mActor);</span>
+<span class="ctx">             for (size_t i = 0; i &lt; mSourceModel-&gt;getItemCount(); ++i)</span>
+<span class="ctx">             {</span>
+<span class="del">-                if (Misc::Rng::roll0to99(prng) &gt; chance)</span>
+<span class="add">+                if (!pickpocket.noticesItem())</span>
+<span class="ctx">                     mHiddenItems.push_back(mSourceModel-&gt;getItem(static_cast&lt;ModelIndex&gt;(i)));</span>
+<span class="ctx">             }</span>
+<span class="ctx">         }</span>
+<span class="hunk">@@ -62,16 +55,12 @@ namespace MWGui</span>
+<span class="ctx">     {</span>
+<span class="ctx">         mSourceModel-&gt;update();</span>
+<span class="ctx">         mItems.clear();</span>
+<span class="add">+        const MWMechanics::Pickpocket pickpocket(MWMechanics::getPlayer(), mActor);</span>
+<span class="ctx">         for (size_t i = 0; i &lt; mSourceModel-&gt;getItemCount(); ++i)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             const ItemStack&amp; item = mSourceModel-&gt;getItem(static_cast&lt;ModelIndex&gt;(i));</span>
+<span class="del">-</span>
+<span class="del">-            // Bound items may not be stolen</span>
+<span class="del">-            if (item.mFlags &amp; ItemStack::Flag_Bound)</span>
+<span class="del">-                continue;</span>
+<span class="del">-</span>
+<span class="ctx">             if (std::find(mHiddenItems.begin(), mHiddenItems.end(), item) == mHiddenItems.end()</span>
+<span class="del">-                &amp;&amp; item.mType != ItemStack::Type_Equipped)</span>
+<span class="add">+                &amp;&amp; pickpocket.canSteal(item.mBase))</span>
+<span class="ctx">                 mItems.push_back(item);</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="hunk">@@ -90,12 +79,10 @@ namespace MWGui</span>
+<span class="ctx">             || mPickpocketDetected)</span>
+<span class="ctx">             return;</span>
+<span class="ctx"> </span>
+<span class="del">-        MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="del">-        MWMechanics::Pickpocket pickpocket(player, mActor);</span>
+<span class="add">+        MWMechanics::Pickpocket pickpocket(MWMechanics::getPlayer(), mActor);</span>
+<span class="ctx">         if (pickpocket.finish())</span>
+<span class="ctx">         {</span>
+<span class="del">-            MWBase::Environment::get().getMechanicsManager()-&gt;commitCrime(</span>
+<span class="del">-                player, mActor, MWBase::MechanicsManager::OT_Pickpocket, ESM::RefId(), 0, true);</span>
+<span class="add">+            pickpocket.commitCrime();</span>
+<span class="ctx">             mPickpocketDetected = true;</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(MWGui::GM_Container);</span>
+<span class="ctx">         }</span>
+<span class="hunk">@@ -106,31 +93,21 @@ namespace MWGui</span>
+<span class="ctx">         if (mActor.getClass().getCreatureStats(mActor).getKnockedDown())</span>
+<span class="ctx">             return mSourceModel-&gt;onTakeItem(item, count);</span>
+<span class="ctx"> </span>
+<span class="del">-        bool success = stealItem(item, count);</span>
+<span class="del">-        if (success)</span>
+<span class="del">-        {</span>
+<span class="del">-            MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="del">-            MWBase::Environment::get().getMechanicsManager()-&gt;itemTaken(player, item, mActor, count, false);</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        return success;</span>
+<span class="add">+        return stealItem(item, count);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool PickpocketItemModel::stealItem(const MWWorld::Ptr&amp; item, int count)</span>
+<span class="ctx">     {</span>
+<span class="del">-        MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="del">-        MWMechanics::Pickpocket pickpocket(player, mActor);</span>
+<span class="add">+        MWMechanics::Pickpocket pickpocket(MWMechanics::getPlayer(), mActor);</span>
+<span class="ctx">         if (pickpocket.pick(item, count))</span>
+<span class="ctx">         {</span>
+<span class="del">-            MWBase::Environment::get().getMechanicsManager()-&gt;commitCrime(</span>
+<span class="del">-                player, mActor, MWBase::MechanicsManager::OT_Pickpocket, ESM::RefId(), 0, true);</span>
+<span class="add">+            pickpocket.commitCrime();</span>
+<span class="ctx">             mPickpocketDetected = true;</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(MWGui::GM_Container);</span>
+<span class="ctx">             return false;</span>
+<span class="ctx">         }</span>
+<span class="del">-        else</span>
+<span class="del">-            player.getClass().skillUsageSucceeded(player, ESM::Skill::Sneak, ESM::Skill::Sneak_PickPocket);</span>
+<span class="ctx"> </span>
+<span class="add">+        pickpocket.recordTheft(item, count);</span>
+<span class="ctx">         return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/pickpocket.cpp</div><pre>
+<span class="hunk">@@ -4,8 +4,10 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/esmstore.hpp&quot;</span>
+<span class="add">+#include &quot;../mwworld/inventorystore.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;npcstats.hpp&quot;</span>
+<span class="hunk">@@ -60,6 +62,19 @@ namespace MWMechanics</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    bool Pickpocket::canSteal(const MWWorld::Ptr&amp; item) const</span>
+<span class="add">+    {</span>
+<span class="add">+        if (MWBase::Environment::get().getMechanicsManager()-&gt;isBoundItem(item))</span>
+<span class="add">+            return false;</span>
+<span class="add">+        return !mVictim.getClass().getInventoryStore(mVictim).isEquipped(item);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    bool Pickpocket::noticesItem() const</span>
+<span class="add">+    {</span>
+<span class="add">+        const float sneak = mThief.getClass().getSkill(mThief, ESM::Skill::Sneak);</span>
+<span class="add">+        return Misc::Rng::roll0to99(MWBase::Environment::get().getWorld()-&gt;getPrng()) &lt;= sneak;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     bool Pickpocket::pick(const MWWorld::Ptr&amp; item, int count)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         float stackValue = static_cast&lt;float&gt;(item.getClass().getValue(item) * count);</span>
+<span class="hunk">@@ -78,4 +93,15 @@ namespace MWMechanics</span>
+<span class="ctx">         return getDetected(0.f);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    void Pickpocket::commitCrime() const</span>
+<span class="add">+    {</span>
+<span class="add">+        MWBase::Environment::get().getMechanicsManager()-&gt;commitCrime(</span>
+<span class="add">+            mThief, mVictim, MWBase::MechanicsManager::OT_Pickpocket, ESM::RefId(), 0, true);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void Pickpocket::recordTheft(const MWWorld::Ptr&amp; item, int count) const</span>
+<span class="add">+    {</span>
+<span class="add">+        mThief.getClass().skillUsageSucceeded(mThief, ESM::Skill::Sneak, ESM::Skill::Sneak_PickPocket);</span>
+<span class="add">+        MWBase::Environment::get().getMechanicsManager()-&gt;itemTaken(mThief, item, mVictim, count, false);</span>
+<span class="add">+    }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/pickpocket.hpp</div><pre>
+<span class="hunk">@@ -11,12 +11,22 @@ namespace MWMechanics</span>
+<span class="ctx">     public:</span>
+<span class="ctx">         Pickpocket(const MWWorld::Ptr&amp; thief, const MWWorld::Ptr&amp; victim);</span>
+<span class="ctx"> </span>
+<span class="add">+        /// Whether @a item, which the victim carries, can be stolen. Equipped items and bound items can&#x27;t.</span>
+<span class="add">+        bool canSteal(const MWWorld::Ptr&amp; item) const;</span>
+<span class="add">+        /// Roll whether the thief notices an item in the victim&#x27;s pockets. The items the thief doesn&#x27;t notice stay</span>
+<span class="add">+        /// hidden from them while they pick the pockets.</span>
+<span class="add">+        bool noticesItem() const;</span>
+<span class="ctx">         /// Steal some items</span>
+<span class="ctx">         /// @return Was the thief detected?</span>
+<span class="ctx">         bool pick(const MWWorld::Ptr&amp; item, int count);</span>
+<span class="ctx">         /// End the pickpocketing process</span>
+<span class="ctx">         /// @return Was the thief detected?</span>
+<span class="ctx">         bool finish();</span>
+<span class="add">+        /// Report the crime after the victim detected the thief.</span>
+<span class="add">+        void commitCrime() const;</span>
+<span class="add">+        /// Give the thief Sneak experience after they stole @a count of @a item unnoticed, and record the item as</span>
+<span class="add">+        /// stolen from the victim.</span>
+<span class="add">+        void recordTheft(const MWWorld::Ptr&amp; item, int count) const;</span>
+<span class="ctx"> </span>
+<span class="ctx">     private:</span>
+<span class="ctx">         bool getDetected(float valueTerm);</span>
+</pre></div>

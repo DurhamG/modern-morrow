@@ -1,0 +1,177 @@
+<div class="file"><div class="path">apps/openmw/mwgui/charactercreation.cpp</div><pre>
+<span class="hunk">@@ -443,27 +443,7 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::selectCreatedClass()</span>
+<span class="ctx">     {</span>
+<span class="del">-        ESM::Class createdClass;</span>
+<span class="del">-        createdClass.mName = mCreateClassDialog-&gt;getName();</span>
+<span class="del">-        createdClass.mDescription = mCreateClassDialog-&gt;getDescription();</span>
+<span class="del">-        createdClass.mData.mSpecialization = mCreateClassDialog-&gt;getSpecializationId();</span>
+<span class="del">-        createdClass.mData.mIsPlayable = true;</span>
+<span class="del">-        createdClass.mRecordFlags = 0;</span>
+<span class="del">-</span>
+<span class="del">-        std::vector&lt;ESM::RefId&gt; attributes = mCreateClassDialog-&gt;getFavoriteAttributes();</span>
+<span class="del">-        assert(attributes.size() &gt;= createdClass.mData.mAttribute.size());</span>
+<span class="del">-        for (size_t i = 0; i &lt; createdClass.mData.mAttribute.size(); ++i)</span>
+<span class="del">-            createdClass.mData.mAttribute[i] = attributes[i];</span>
+<span class="del">-</span>
+<span class="del">-        std::vector&lt;ESM::RefId&gt; majorSkills = mCreateClassDialog-&gt;getMajorSkills();</span>
+<span class="del">-        std::vector&lt;ESM::RefId&gt; minorSkills = mCreateClassDialog-&gt;getMinorSkills();</span>
+<span class="del">-        assert(majorSkills.size() &gt;= createdClass.mData.mMajorSkills.size());</span>
+<span class="del">-        assert(minorSkills.size() &gt;= createdClass.mData.mMinorSkills.size());</span>
+<span class="del">-        for (size_t i = 0; i &lt; createdClass.mData.mMajorSkills.size(); ++i)</span>
+<span class="del">-            createdClass.mData.mMajorSkills[i] = majorSkills[i];</span>
+<span class="del">-        for (size_t i = 0; i &lt; createdClass.mData.mMinorSkills.size(); ++i)</span>
+<span class="del">-            createdClass.mData.mMinorSkills[i] = minorSkills[i];</span>
+<span class="del">-</span>
+<span class="add">+        ESM::Class createdClass = mCreateClassDialog-&gt;getCreatedClass();</span>
+<span class="ctx">         MWBase::Environment::get().getMechanicsManager()-&gt;setPlayerClass(createdClass);</span>
+<span class="ctx">         mPlayerClass = std::move(createdClass);</span>
+<span class="ctx">     }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/class.cpp</div><pre>
+<span class="hunk">@@ -1,5 +1,7 @@</span>
+<span class="ctx"> #include &quot;class.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;cassert&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> #include &lt;MyGUI_Gui.h&gt;</span>
+<span class="ctx"> #include &lt;MyGUI_ImageBox.h&gt;</span>
+<span class="ctx"> #include &lt;MyGUI_ListBox.h&gt;</span>
+<span class="hunk">@@ -11,6 +13,7 @@</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwmechanics/actorutil.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/chargen.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/esmstore.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -682,6 +685,32 @@ namespace MWGui</span>
+<span class="ctx">         return v;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    ESM::Class CreateClassDialog::getCreatedClass() const</span>
+<span class="add">+    {</span>
+<span class="add">+        ESM::Class createdClass;</span>
+<span class="add">+        createdClass.mName = getName();</span>
+<span class="add">+        createdClass.mDescription = getDescription();</span>
+<span class="add">+        createdClass.mData.mSpecialization = getSpecializationId();</span>
+<span class="add">+        createdClass.mData.mIsPlayable = true;</span>
+<span class="add">+        createdClass.mRecordFlags = 0;</span>
+<span class="add">+</span>
+<span class="add">+        std::vector&lt;ESM::RefId&gt; attributes = getFavoriteAttributes();</span>
+<span class="add">+        assert(attributes.size() &gt;= createdClass.mData.mAttribute.size());</span>
+<span class="add">+        for (size_t i = 0; i &lt; createdClass.mData.mAttribute.size(); ++i)</span>
+<span class="add">+            createdClass.mData.mAttribute[i] = attributes[i];</span>
+<span class="add">+</span>
+<span class="add">+        std::vector&lt;ESM::RefId&gt; majorSkills = getMajorSkills();</span>
+<span class="add">+        std::vector&lt;ESM::RefId&gt; minorSkills = getMinorSkills();</span>
+<span class="add">+        assert(majorSkills.size() &gt;= createdClass.mData.mMajorSkills.size());</span>
+<span class="add">+        assert(minorSkills.size() &gt;= createdClass.mData.mMinorSkills.size());</span>
+<span class="add">+        for (size_t i = 0; i &lt; createdClass.mData.mMajorSkills.size(); ++i)</span>
+<span class="add">+            createdClass.mData.mMajorSkills[i] = majorSkills[i];</span>
+<span class="add">+        for (size_t i = 0; i &lt; createdClass.mData.mMinorSkills.size(); ++i)</span>
+<span class="add">+            createdClass.mData.mMinorSkills[i] = minorSkills[i];</span>
+<span class="add">+</span>
+<span class="add">+        return createdClass;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void CreateClassDialog::setNextButtonShow(bool shown)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         MyGUI::Button* okButton;</span>
+<span class="hunk">@@ -848,7 +877,7 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CreateClassDialog::onOkClicked(MyGUI::Widget* /*sender*/)</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (getName().size() &lt;= 0)</span>
+<span class="add">+        if (!MWMechanics::getCustomClassProblem(getCreatedClass()).empty())</span>
+<span class="ctx">             return;</span>
+<span class="ctx">         eventDone(this);</span>
+<span class="ctx">     }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/class.hpp</div><pre>
+<span class="hunk">@@ -311,6 +311,9 @@ namespace MWGui</span>
+<span class="ctx">         std::vector&lt;ESM::RefId&gt; getMajorSkills() const;</span>
+<span class="ctx">         std::vector&lt;ESM::RefId&gt; getMinorSkills() const;</span>
+<span class="ctx"> </span>
+<span class="add">+        /// The class that the player made up in this window</span>
+<span class="add">+        ESM::Class getCreatedClass() const;</span>
+<span class="add">+</span>
+<span class="ctx">         void setNextButtonShow(bool shown);</span>
+<span class="ctx"> </span>
+<span class="ctx">         // Events</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/chargen.cpp</div><pre>
+<span class="hunk">@@ -1,8 +1,11 @@</span>
+<span class="ctx"> #include &quot;chargen.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;algorithm&gt;</span>
+<span class="ctx"> #include &lt;format&gt;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;components/esm/attr.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadclas.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadskil.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/fallback/fallback.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="hunk">@@ -145,4 +148,34 @@ namespace MWMechanics</span>
+<span class="ctx">         }</span>
+<span class="ctx">         return result;</span>
+<span class="ctx">     }</span>
+<span class="add">+</span>
+<span class="add">+    std::string_view getCustomClassProblem(const ESM::Class&amp; value)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (value.mName.empty())</span>
+<span class="add">+            return &quot;The class has no name&quot;;</span>
+<span class="add">+        if (value.mData.mSpecialization &lt; ESM::Class::Combat || value.mData.mSpecialization &gt; ESM::Class::Stealth)</span>
+<span class="add">+            return &quot;The class has no valid specialization&quot;;</span>
+<span class="add">+</span>
+<span class="add">+        const MWWorld::ESMStore&amp; store = *MWBase::Environment::get().getESMStore();</span>
+<span class="add">+        for (const ESM::RefId&amp; attribute : value.mData.mAttribute)</span>
+<span class="add">+        {</span>
+<span class="add">+            if (store.get&lt;ESM::Attribute&gt;().search(attribute) == nullptr)</span>
+<span class="add">+                return &quot;A favorite attribute of the class doesn&#x27;t exist&quot;;</span>
+<span class="add">+        }</span>
+<span class="add">+        if (value.mData.mAttribute[0] == value.mData.mAttribute[1])</span>
+<span class="add">+            return &quot;The favorite attributes of the class must be two different attributes&quot;;</span>
+<span class="add">+</span>
+<span class="add">+        std::vector&lt;ESM::RefId&gt; skills(value.mData.mMajorSkills.begin(), value.mData.mMajorSkills.end());</span>
+<span class="add">+        skills.insert(skills.end(), value.mData.mMinorSkills.begin(), value.mData.mMinorSkills.end());</span>
+<span class="add">+        for (const ESM::RefId&amp; skill : skills)</span>
+<span class="add">+        {</span>
+<span class="add">+            if (store.get&lt;ESM::Skill&gt;().search(skill) == nullptr)</span>
+<span class="add">+                return &quot;A major or minor skill of the class doesn&#x27;t exist&quot;;</span>
+<span class="add">+        }</span>
+<span class="add">+        std::sort(skills.begin(), skills.end());</span>
+<span class="add">+        if (std::adjacent_find(skills.begin(), skills.end()) != skills.end())</span>
+<span class="add">+            return &quot;The major and minor skills of the class must all be different skills&quot;;</span>
+<span class="add">+</span>
+<span class="add">+        return {};</span>
+<span class="add">+    }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/chargen.hpp</div><pre>
+<span class="hunk">@@ -9,6 +9,11 @@</span>
+<span class="ctx"> #include &lt;components/esm3/loadbody.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/vfs/pathutil.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="add">+namespace ESM</span>
+<span class="add">+{</span>
+<span class="add">+    struct Class;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="ctx"> namespace MWMechanics</span>
+<span class="ctx"> {</span>
+<span class="ctx">     /// One of the questions that character creation asks to find a class for the player.</span>
+<span class="hunk">@@ -35,6 +40,10 @@ namespace MWMechanics</span>
+<span class="ctx">     /// The heads or the hairs that the player may choose for a race and a gender in character creation. These are the</span>
+<span class="ctx">     /// playable skin body parts of that race and gender, except the ones for the first person view.</span>
+<span class="ctx">     std::vector&lt;ESM::RefId&gt; getChargenBodyParts(ESM::BodyPart::MeshPart part, const ESM::RefId&amp; race, bool isMale);</span>
+<span class="add">+</span>
+<span class="add">+    /// Why character creation can&#x27;t give the player @a value as a class that they made up, or an empty string if it</span>
+<span class="add">+    /// can. Such a class needs a name, a specialization, two different favorite attributes, and ten different skills.</span>
+<span class="add">+    std::string_view getCustomClassProblem(const ESM::Class&amp; value);</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="ctx"> #endif</span>
+</pre></div>

@@ -1,0 +1,33 @@
+<div class="file"><div class="path">apps/openmw/mwgui/container.cpp</div><pre>
+<span class="hunk">@@ -221,6 +221,19 @@ namespace MWGui</span>
+<span class="ctx">         mItemTransfer-&gt;removeTarget(*mItemView);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    void ContainerWindow::setVisible(bool visible)</span>
+<span class="add">+    {</span>
+<span class="add">+        WindowBase::setVisible(visible);</span>
+<span class="add">+        // A window that Lua replaced is never shown, so onClose doesn&#x27;t run for it. The container still closes when the</span>
+<span class="add">+        // container mode ends. The Lua mod rolls the end of a pickpocketing attempt itself, with finishPickpocketing.</span>
+<span class="add">+        if (!visible &amp;&amp; isDisabledByLua() &amp;&amp; !MWBase::Environment::get().getWindowManager()-&gt;containsMode(GM_Container))</span>
+<span class="add">+        {</span>
+<span class="add">+            if (!mPtr.isEmpty())</span>
+<span class="add">+                MWBase::Environment::get().getMechanicsManager()-&gt;onClose(mPtr);</span>
+<span class="add">+            resetReference();</span>
+<span class="add">+        }</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void ContainerWindow::onCloseButtonClicked(MyGUI::Widget* /*sender*/)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(GM_Container);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/container.hpp</div><pre>
+<span class="hunk">@@ -31,6 +31,8 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         void onClose() override;</span>
+<span class="ctx"> </span>
+<span class="add">+        void setVisible(bool visible) override;</span>
+<span class="add">+</span>
+<span class="ctx">         void clear() override { resetReference(); }</span>
+<span class="ctx"> </span>
+<span class="ctx">         void onFrame(float dt) override;</span>
+</pre></div>

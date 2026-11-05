@@ -1,0 +1,104 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/item.cpp</div><pre>
+<span class="hunk">@@ -1,5 +1,7 @@</span>
+<span class="ctx"> #include &lt;sol/sol.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &quot;../../mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;../../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../../mwmechanics/spellutil.hpp&quot;</span>
+<span class="ctx"> #include &quot;../../mwworld/class.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -34,6 +36,22 @@ namespace MWLua</span>
+<span class="ctx">             return ptr.getClass().getValue(ptr);</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+<span class="add">+        item[&quot;getStolenFrom&quot;] = [](sol::this_state thisState, const Object&amp; object) {</span>
+<span class="add">+            const MWWorld::Ptr&amp; ptr = object.ptr();</span>
+<span class="add">+            if (!ptr.getClass().isItem(ptr))</span>
+<span class="add">+                throw std::runtime_error(&quot;Item expected&quot;);</span>
+<span class="add">+            sol::table result(thisState, sol::create);</span>
+<span class="add">+            for (const MWBase::MechanicsManager::StolenItemOwner&amp; owner :</span>
+<span class="add">+                MWBase::Environment::get().getMechanicsManager()-&gt;getStolenItemOwners(ptr.getCellRef().getRefId()))</span>
+<span class="add">+            {</span>
+<span class="add">+                sol::table entry(thisState, sol::create);</span>
+<span class="add">+                entry[owner.mIsFaction ? &quot;factionId&quot; : &quot;recordId&quot;] = owner.mId.serializeText();</span>
+<span class="add">+                entry[&quot;count&quot;] = owner.mCount;</span>
+<span class="add">+                result.add(entry);</span>
+<span class="add">+            }</span>
+<span class="add">+            return result;</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="ctx">         addItemDataBindings(item, context);</span>
+<span class="ctx">         item[&quot;levelledItems&quot;] = addLevelledItemBindings(context);</span>
+<span class="ctx">     }</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -876,6 +876,24 @@</span>
+<span class="ctx"> -- @param openmw.core#GameObject item</span>
+<span class="ctx"> -- @return #number</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Who the player has stolen this item from. An empty list means the item isn&#x27;t stolen.</span>
+<span class="add">+-- The engine counts stolen items by record, not by object: once the player steals one item, every item with the same record id counts as stolen.</span>
+<span class="add">+-- Guards confiscate stolen items, and a merchant refuses to buy items that were stolen from them.</span>
+<span class="add">+-- @function [parent=#Item] getStolenFrom</span>
+<span class="add">+-- @param openmw.core#GameObject item</span>
+<span class="add">+-- @return #list&lt;#StolenFrom&gt;</span>
+<span class="add">+-- @usage</span>
+<span class="add">+-- for _, owner in ipairs(types.Item.getStolenFrom(item)) do</span>
+<span class="add">+--     print(owner.recordId or owner.factionId, owner.count)</span>
+<span class="add">+-- end</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- @type StolenFrom</span>
+<span class="add">+-- @field #string recordId The record id of the actor the item was stolen from, or `nil` if it was stolen from a faction.</span>
+<span class="add">+-- @field #string factionId The id of the faction the item was stolen from, or `nil` if it was stolen from an actor.</span>
+<span class="add">+-- @field #number count How many items with this record id the player has stolen from this owner. For games converted from Morrowind saves, the count is unknown and is a very large number.</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Set of properties that differentiates one item from another of the same record type; can be used by any script, but only global and self scripts can change values.</span>
+<span class="ctx"> -- @function [parent=#Item] itemData</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -274,6 +274,41 @@ testing.registerGlobalTest(&#x27;barter prices&#x27;, function()</span>
+<span class="ctx">     merchant:remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;stolen items&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    local owner = world.createRecord(types.NPC.createRecordDraft({</span>
+<span class="add">+        template = types.NPC.record(player),</span>
+<span class="add">+        name = &#x27;Item owner&#x27;,</span>
+<span class="add">+    }))</span>
+<span class="add">+    local weapon = world.createRecord(types.Weapon.createRecordDraft({</span>
+<span class="add">+        template = types.Weapon.record(&#x27;basic_dagger1h&#x27;),</span>
+<span class="add">+        name = &#x27;Owned dagger&#x27;,</span>
+<span class="add">+    }))</span>
+<span class="add">+    local item = world.createObject(weapon.id, 1)</span>
+<span class="add">+    item:teleport(player.cell, player.position + util.vector3(0, 100, 0))</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    item.owner.recordId = owner.id</span>
+<span class="add">+    testing.expectEqual(#types.Item.getStolenFrom(item), 0, &#x27;An item the player has not taken should not be stolen&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    item:activateBy(player)</span>
+<span class="add">+    local stolen = nil</span>
+<span class="add">+    for _ = 1, 10 do</span>
+<span class="add">+        coroutine.yield()</span>
+<span class="add">+        stolen = types.Actor.inventory(player):find(weapon.id)</span>
+<span class="add">+        if stolen then</span>
+<span class="add">+            break</span>
+<span class="add">+        end</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expect(stolen ~= nil, &#x27;The player should pick up the item&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local owners = types.Item.getStolenFrom(stolen)</span>
+<span class="add">+    testing.expectEqual(#owners, 1, &#x27;The item should be stolen from one owner&#x27;)</span>
+<span class="add">+    testing.expectEqual(owners[1].recordId, owner.id, &#x27;The item should be stolen from its owner&#x27;)</span>
+<span class="add">+    testing.expectEqual(owners[1].factionId, nil, &#x27;The owner should not be a faction&#x27;)</span>
+<span class="add">+    testing.expectEqual(owners[1].count, 1, &#x27;The player should have stolen one item&#x27;)</span>
+<span class="add">+    stolen:remove()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;UTF-8 characters&#x27;, function()</span>
+<span class="ctx">     testing.expectEqual(utf8.codepoint(&quot;😀&quot;), 0x1F600)</span>
+<span class="ctx"> </span>
+</pre></div>

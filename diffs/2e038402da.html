@@ -1,0 +1,10 @@
+<div class="file"><div class="path">apps/openmw/mwgui/trainingwindow.cpp</div><pre>
+<span class="hunk">@@ -171,6 +171,7 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         int price = static_cast&lt;int&gt;(pcStats.getSkill(skill-&gt;mId).getBase()</span>
+<span class="ctx">             * store.get&lt;ESM::GameSetting&gt;().find(&quot;iTrainingMod&quot;)-&gt;mValue.getInteger());</span>
+<span class="add">+        price = std::max(1, price);</span>
+<span class="ctx">         price = MWBase::Environment::get().getMechanicsManager()-&gt;getBarterOffer(mPtr, price, true);</span>
+<span class="ctx"> </span>
+<span class="ctx">         if (price &gt; player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId))</span>
+</pre></div>

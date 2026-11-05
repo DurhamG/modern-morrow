@@ -1,0 +1,118 @@
+<div class="file"><div class="path">apps/openmw/mwgui/race.cpp</div><pre>
+<span class="hunk">@@ -17,6 +17,7 @@</span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/chargen.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwrender/characterpreview.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwrender/renderingmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/esmstore.hpp&quot;</span>
+<span class="hunk">@@ -322,32 +323,11 @@ namespace MWGui</span>
+<span class="ctx">         eventDone(this);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    void RaceDialog::getBodyParts(int part, std::vector&lt;ESM::RefId&gt;&amp; out)</span>
+<span class="del">-    {</span>
+<span class="del">-        out.clear();</span>
+<span class="del">-        const MWWorld::Store&lt;ESM::BodyPart&gt;&amp; store = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::BodyPart&gt;();</span>
+<span class="del">-</span>
+<span class="del">-        for (const ESM::BodyPart&amp; bodypart : store)</span>
+<span class="del">-        {</span>
+<span class="del">-            if (bodypart.mData.mFlags &amp; ESM::BodyPart::BPF_NotPlayable)</span>
+<span class="del">-                continue;</span>
+<span class="del">-            if (bodypart.mData.mType != ESM::BodyPart::MT_Skin)</span>
+<span class="del">-                continue;</span>
+<span class="del">-            if (bodypart.mData.mPart != static_cast&lt;ESM::BodyPart::MeshPart&gt;(part))</span>
+<span class="del">-                continue;</span>
+<span class="del">-            if (mGenderIndex != (bodypart.mData.mFlags &amp; ESM::BodyPart::BPF_Female))</span>
+<span class="del">-                continue;</span>
+<span class="del">-            if (ESM::isFirstPersonBodyPart(bodypart))</span>
+<span class="del">-                continue;</span>
+<span class="del">-            if (bodypart.mRace == mCurrentRaceId)</span>
+<span class="del">-                out.push_back(bodypart.mId);</span>
+<span class="del">-        }</span>
+<span class="del">-    }</span>
+<span class="del">-</span>
+<span class="ctx">     void RaceDialog::recountParts()</span>
+<span class="ctx">     {</span>
+<span class="del">-        getBodyParts(ESM::BodyPart::MP_Hair, mAvailableHairs);</span>
+<span class="del">-        getBodyParts(ESM::BodyPart::MP_Head, mAvailableHeads);</span>
+<span class="add">+        const bool isMale = mGenderIndex == 0;</span>
+<span class="add">+        mAvailableHairs = MWMechanics::getChargenBodyParts(ESM::BodyPart::MP_Hair, mCurrentRaceId, isMale);</span>
+<span class="add">+        mAvailableHeads = MWMechanics::getChargenBodyParts(ESM::BodyPart::MP_Head, mCurrentRaceId, isMale);</span>
+<span class="ctx"> </span>
+<span class="ctx">         mFaceIndex = 0;</span>
+<span class="ctx">         mHairIndex = 0;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/race.hpp</div><pre>
+<span class="hunk">@@ -83,8 +83,6 @@ namespace MWGui</span>
+<span class="ctx">         void updatePreview();</span>
+<span class="ctx">         void recountParts();</span>
+<span class="ctx"> </span>
+<span class="del">-        void getBodyParts(int part, std::vector&lt;ESM::RefId&gt;&amp; out);</span>
+<span class="del">-</span>
+<span class="ctx">         std::vector&lt;ESM::RefId&gt; mAvailableHeads;</span>
+<span class="ctx">         std::vector&lt;ESM::RefId&gt; mAvailableHairs;</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/chargen.cpp</div><pre>
+<span class="hunk">@@ -5,6 +5,9 @@</span>
+<span class="ctx"> #include &lt;components/esm3/loadclas.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/fallback/fallback.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;../mwworld/esmstore.hpp&quot;</span>
+<span class="add">+</span>
+<span class="ctx"> namespace MWMechanics</span>
+<span class="ctx"> {</span>
+<span class="ctx">     std::vector&lt;ClassQuestion&gt; getClassQuestions()</span>
+<span class="hunk">@@ -119,4 +122,27 @@ namespace MWMechanics</span>
+<span class="ctx">         }</span>
+<span class="ctx">         return ESM::RefId::stringRefId(className);</span>
+<span class="ctx">     }</span>
+<span class="add">+</span>
+<span class="add">+    std::vector&lt;ESM::RefId&gt; getChargenBodyParts(ESM::BodyPart::MeshPart part, const ESM::RefId&amp; race, bool isMale)</span>
+<span class="add">+    {</span>
+<span class="add">+        std::vector&lt;ESM::RefId&gt; result;</span>
+<span class="add">+        const MWWorld::Store&lt;ESM::BodyPart&gt;&amp; store = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::BodyPart&gt;();</span>
+<span class="add">+</span>
+<span class="add">+        for (const ESM::BodyPart&amp; bodypart : store)</span>
+<span class="add">+        {</span>
+<span class="add">+            if (bodypart.mData.mFlags &amp; ESM::BodyPart::BPF_NotPlayable)</span>
+<span class="add">+                continue;</span>
+<span class="add">+            if (bodypart.mData.mType != ESM::BodyPart::MT_Skin)</span>
+<span class="add">+                continue;</span>
+<span class="add">+            if (bodypart.mData.mPart != part)</span>
+<span class="add">+                continue;</span>
+<span class="add">+            if (isMale == ((bodypart.mData.mFlags &amp; ESM::BodyPart::BPF_Female) != 0))</span>
+<span class="add">+                continue;</span>
+<span class="add">+            if (ESM::isFirstPersonBodyPart(bodypart))</span>
+<span class="add">+                continue;</span>
+<span class="add">+            if (bodypart.mRace == race)</span>
+<span class="add">+                result.push_back(bodypart.mId);</span>
+<span class="add">+        }</span>
+<span class="add">+        return result;</span>
+<span class="add">+    }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/chargen.hpp</div><pre>
+<span class="hunk">@@ -6,6 +6,7 @@</span>
+<span class="ctx"> #include &lt;vector&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;components/esm/refid.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadbody.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/vfs/pathutil.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWMechanics</span>
+<span class="hunk">@@ -30,6 +31,10 @@ namespace MWMechanics</span>
+<span class="ctx">     /// The class that the answers to the class questions lead to. The arguments count the answers that the player</span>
+<span class="ctx">     /// chose for each specialization.</span>
+<span class="ctx">     ESM::RefId getGeneratedClass(unsigned combat, unsigned magic, unsigned stealth);</span>
+<span class="add">+</span>
+<span class="add">+    /// The heads or the hairs that the player may choose for a race and a gender in character creation. These are the</span>
+<span class="add">+    /// playable skin body parts of that race and gender, except the ones for the first person view.</span>
+<span class="add">+    std::vector&lt;ESM::RefId&gt; getChargenBodyParts(ESM::BodyPart::MeshPart part, const ESM::RefId&amp; race, bool isMale);</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="ctx"> #endif</span>
+</pre></div>

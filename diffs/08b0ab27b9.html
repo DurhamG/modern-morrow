@@ -1,0 +1,141 @@
+<div class="file"><div class="path">apps/openmw/mwlua/magicbindings.cpp</div><pre>
+<span class="hunk">@@ -239,6 +239,8 @@ namespace MWLua</span>
+<span class="ctx">         sol::table spells(state, sol::create);</span>
+<span class="ctx">         addRecordFunctionBinding&lt;ESM::Spell&gt;(spells, context);</span>
+<span class="ctx">         spells[&quot;createRecordDraft&quot;] = tableToSpell;</span>
+<span class="add">+        spells[&quot;getCost&quot;]</span>
+<span class="add">+            = [](const sol::object&amp; spellOrId) -&gt; int { return MWMechanics::calcSpellCost(*toSpell(spellOrId)); };</span>
+<span class="ctx">         magicApi[&quot;spells&quot;] = LuaUtil::makeReadOnly(spells);</span>
+<span class="ctx"> </span>
+<span class="ctx">         // Enchantment store</span>
+<span class="hunk">@@ -681,6 +683,13 @@ namespace MWLua</span>
+<span class="ctx">             return false;</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+<span class="add">+        // types.Actor.spells(o):getSuccessChance()</span>
+<span class="add">+        spellsT[&quot;getSuccessChance&quot;] = [](const ActorSpells&amp; spells, const sol::object&amp; spellOrId) -&gt; float {</span>
+<span class="add">+            if (!spells.isActor())</span>
+<span class="add">+                throw std::runtime_error(&quot;Actor expected&quot;);</span>
+<span class="add">+            return MWMechanics::getSpellSuccessChance(toSpell(spellOrId), spells.mActor.ptr());</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="ctx">         // pairs(types.Actor.activeSpells(o))</span>
+<span class="ctx">         activeSpellsT[&quot;__pairs&quot;] = [](sol::this_state ts, ActorActiveSpells&amp; self) {</span>
+<span class="ctx">             sol::state_view lua(ts);</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/core.lua</div><pre>
+<span class="hunk">@@ -697,6 +697,14 @@</span>
+<span class="ctx"> -- @param #Spell spell A Lua table with the fields of a Spell, with an optional field `template` that accepts a @{#Spell} as a base.</span>
+<span class="ctx"> -- @return #Spell A strongly typed Spell record.</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- The magicka cost of casting the spell.</span>
+<span class="add">+-- For a spell with @{#Spell.isAutocalc} set, the engine computes the cost from the spell&#x27;s effects, and the `cost` field of the record is ignored.</span>
+<span class="add">+-- @function [parent=#Spells] getCost</span>
+<span class="add">+-- @param #any spellOrId A @{#Spell} or string record ID.</span>
+<span class="add">+-- @return #number</span>
+<span class="add">+-- @usage local cost = core.magic.spells.getCost(&#x27;fireball&#x27;)</span>
+<span class="add">+</span>
+<span class="ctx"> --- List of all @{#Spell}s.</span>
+<span class="ctx"> -- @field [parent=#Spells] #list&lt;#Spell&gt; records A read-only list of all @{#Spell} records in the world database, may be indexed by recordId.</span>
+<span class="ctx"> -- Implements [iterables#List](iterables.html#List) of #Spell.</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -457,6 +457,16 @@</span>
+<span class="ctx"> -- @param self</span>
+<span class="ctx"> -- @param #any spellOrId A @{openmw.core#Spell} or string record ID.</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- The chance, from 0 to 100, that the actor succeeds in casting the spell right now.</span>
+<span class="add">+-- It takes the actor&#x27;s skills and attributes, fatigue, magicka, Sound and Silence into account, the same way as the chance shown in the HUD. The HUD and the spell window show the whole-number part of it.</span>
+<span class="add">+-- Powers give 100 when @{#ActorSpells.canUsePower} is true and 0 otherwise. Other spells that aren&#x27;t cast, such as abilities, curses and diseases, give 100, or 0 while the actor is silenced.</span>
+<span class="add">+-- @function [parent=#ActorSpells] getSuccessChance</span>
+<span class="add">+-- @param self</span>
+<span class="add">+-- @param #any spellOrId A @{openmw.core#Spell} or string record ID.</span>
+<span class="add">+-- @return #number</span>
+<span class="add">+-- @usage local chance = types.Actor.spells(self):getSuccessChance(&#x27;fireball&#x27;)</span>
+<span class="add">+</span>
+<span class="ctx"> --- Values affect how much each attribute can be increased at level up, and are all reset to 0 upon level up.</span>
+<span class="ctx"> -- @type SkillIncreasesForAttributeStats</span>
+<span class="ctx"> -- @field #number agility Number of contributions to agility for the next level up.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -192,6 +192,42 @@ testing.registerGlobalTest(&#x27;record creation&#x27;, function()</span>
+<span class="ctx">     end</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+local function findCostlyEffect()</span>
+<span class="add">+    -- load.lua gives this effect a cost, because the example suite&#x27;s effects cost nothing.</span>
+<span class="add">+    local effect = core.magic.effects.records[core.magic.EFFECT_TYPE.FireDamage]</span>
+<span class="add">+    testing.expectGreaterThan(effect.baseCost, 0, &#x27;Expected the test effect to have a cost&#x27;)</span>
+<span class="add">+    return effect</span>
+<span class="add">+end</span>
+<span class="add">+</span>
+<span class="add">+local function createTestSpell(fields)</span>
+<span class="add">+    local effect = findCostlyEffect()</span>
+<span class="add">+    fields.name = &#x27;Test spell&#x27;</span>
+<span class="add">+    fields.effects = {</span>
+<span class="add">+        { id = effect.id, range = core.magic.RANGE.Self, magnitudeMin = 10, magnitudeMax = 10, duration = 10 },</span>
+<span class="add">+    }</span>
+<span class="add">+    return world.createRecord(core.magic.spells.createRecordDraft(fields))</span>
+<span class="add">+end</span>
+<span class="add">+</span>
+<span class="add">+testing.registerGlobalTest(&#x27;spell cost&#x27;, function()</span>
+<span class="add">+    local fixed = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 7, isAutocalc = false })</span>
+<span class="add">+    testing.expectEqual(core.magic.spells.getCost(fixed), 7, &#x27;A spell without autocalc should cost its cost field&#x27;)</span>
+<span class="add">+    testing.expectEqual(core.magic.spells.getCost(fixed.id), 7, &#x27;getCost should accept a record id&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local autocalc = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 1, isAutocalc = true })</span>
+<span class="add">+    testing.expectGreaterThan(core.magic.spells.getCost(autocalc), 1,</span>
+<span class="add">+        &#x27;An autocalc spell should cost what its effects cost, not its cost field&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="add">+testing.registerGlobalTest(&#x27;spell success chance&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    local spell = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 5, isAutocalc = false })</span>
+<span class="add">+    local power = createTestSpell({ type = core.magic.SPELL_TYPE.Power, cost = 0, isAutocalc = false })</span>
+<span class="add">+    types.Actor.spells(player):add(spell)</span>
+<span class="add">+    types.Actor.spells(player):add(power)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;spell success chance on self&#x27;, { spell = spell.id, power = power.id })</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;UTF-8 characters&#x27;, function()</span>
+<span class="ctx">     testing.expectEqual(utf8.codepoint(&quot;😀&quot;), 0x1F600)</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/load.lua</div><pre>
+<span class="hunk">@@ -42,6 +42,7 @@ return {</span>
+<span class="ctx">         onContentFilesLoaded = function()</span>
+<span class="ctx">             content.statics.records.OMW_Generated_Static = { model = &#x27;meshes/generatedonload.nif&#x27; }</span>
+<span class="ctx">             testApparatusContent()</span>
+<span class="add">+            content.magicEffects.records.firedamage.baseCost = 5</span>
+<span class="ctx">         end</span>
+<span class="ctx">     }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/player.lua</div><pre>
+<span class="hunk">@@ -464,6 +464,22 @@ testing.registerLocalTestStep(&#x27;equipped weapon damages a stationary target&#x27;,</span>
+<span class="ctx">         attributes.agility(self).base = agility</span>
+<span class="ctx">     end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerLocalTestStep(&#x27;spell success chance on self&#x27;, function(ids)</span>
+<span class="add">+    local spells = types.Actor.spells(self)</span>
+<span class="add">+    local magicka = types.Actor.stats.dynamic.magicka(self)</span>
+<span class="add">+</span>
+<span class="add">+    magicka.current = 0</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    testing.expectEqual(spells:getSuccessChance(ids.spell), 0, &#x27;A spell should fail without enough magicka&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    magicka.current = 100</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    local chance = spells:getSuccessChance(ids.spell)</span>
+<span class="add">+    testing.expect(chance &gt;= 0 and chance &lt;= 100, &#x27;The chance should be between 0 and 100, got &#x27; .. chance)</span>
+<span class="add">+</span>
+<span class="add">+    testing.expectEqual(spells:getSuccessChance(ids.power), 100, &#x27;An unused power should always succeed&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> return {</span>
+<span class="ctx">     engineHandlers = {</span>
+<span class="ctx">         onFrame = testing.updateLocal,</span>
+</pre></div>

@@ -1,0 +1,137 @@
+<div class="file"><div class="path">apps/openmw/CMakeLists.txt</div><pre>
+<span class="hunk">@@ -104,7 +104,7 @@ add_openmw_dir (mwmechanics</span>
+<span class="ctx">     aicast aiescort aiface aiactivate aicombat recharge repair enchanting pathfinding pathgrid security spellcasting spellresistance</span>
+<span class="ctx">     disease pickpocket levelledlist combat steering obstacle autocalcspell difficultyscaling aicombataction summoning</span>
+<span class="ctx">     character actors objects aistate weaponpriority spellpriority weapontype spellutil</span>
+<span class="del">-    spelleffects</span>
+<span class="add">+    spelleffects barter</span>
+<span class="ctx">     )</span>
+<span class="ctx"> </span>
+<span class="ctx"> add_openmw_dir (mwstate</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/tradewindow.cpp</div><pre>
+<span class="hunk">@@ -22,6 +22,7 @@</span>
+<span class="ctx"> #include &quot;../mwworld/esmstore.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwmechanics/actorutil.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/barter.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/creaturestats.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;containeritemmodel.hpp&quot;</span>
+<span class="hunk">@@ -35,16 +36,6 @@</span>
+<span class="ctx"> namespace</span>
+<span class="ctx"> {</span>
+<span class="ctx"> </span>
+<span class="del">-    int getEffectiveValue(MWWorld::Ptr item, int count)</span>
+<span class="del">-    {</span>
+<span class="del">-        float price = static_cast&lt;float&gt;(item.getClass().getValue(item));</span>
+<span class="del">-        if (item.getClass().hasItemHealth(item))</span>
+<span class="del">-        {</span>
+<span class="del">-            price *= item.getClass().getItemNormalizedHealth(item);</span>
+<span class="del">-        }</span>
+<span class="del">-        return static_cast&lt;int&gt;(price * count);</span>
+<span class="del">-    }</span>
+<span class="del">-</span>
+<span class="ctx">     bool haggle(const MWWorld::Ptr&amp; player, const MWWorld::Ptr&amp; merchant, int playerOffer, int merchantOffer)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         // accept if merchant offer is better than player offer</span>
+<span class="hunk">@@ -612,31 +603,15 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         int merchantOffer = 0;</span>
+<span class="ctx"> </span>
+<span class="del">-        // The offered price must be capped at 75% of the base price to avoid exploits</span>
+<span class="del">-        // connected to buying and selling the same item.</span>
+<span class="del">-        // This value has been determined by researching the limitations of the vanilla formula</span>
+<span class="del">-        // and may not be sufficient if getBarterOffer behavior has been changed.</span>
+<span class="ctx">         const std::vector&lt;ItemStack&gt;&amp; playerBorrowed = playerTradeModel-&gt;getItemsBorrowedToUs();</span>
+<span class="ctx">         for (const ItemStack&amp; itemStack : playerBorrowed)</span>
+<span class="del">-        {</span>
+<span class="del">-            const int basePrice = getEffectiveValue(itemStack.mBase, static_cast&lt;int&gt;(itemStack.mCount));</span>
+<span class="del">-            const int cap</span>
+<span class="del">-                = static_cast&lt;int&gt;(std::max(1.f, 0.75f * basePrice)); // Minimum buying price -- 75% of the base</span>
+<span class="del">-            const int buyingPrice</span>
+<span class="del">-                = MWBase::Environment::get().getMechanicsManager()-&gt;getBarterOffer(mPtr, basePrice, true);</span>
+<span class="del">-            merchantOffer -= std::max(cap, buyingPrice);</span>
+<span class="del">-        }</span>
+<span class="add">+            merchantOffer</span>
+<span class="add">+                -= MWMechanics::getBarterPrice(mPtr, itemStack.mBase, static_cast&lt;int&gt;(itemStack.mCount), true);</span>
+<span class="ctx"> </span>
+<span class="ctx">         const std::vector&lt;ItemStack&gt;&amp; merchantBorrowed = mTradeModel-&gt;getItemsBorrowedToUs();</span>
+<span class="ctx">         for (const ItemStack&amp; itemStack : merchantBorrowed)</span>
+<span class="del">-        {</span>
+<span class="del">-            const int basePrice = getEffectiveValue(itemStack.mBase, static_cast&lt;int&gt;(itemStack.mCount));</span>
+<span class="del">-            const int cap</span>
+<span class="del">-                = static_cast&lt;int&gt;(std::max(1.f, 0.75f * basePrice)); // Maximum selling price -- 75% of the base</span>
+<span class="del">-            const int sellingPrice</span>
+<span class="del">-                = MWBase::Environment::get().getMechanicsManager()-&gt;getBarterOffer(mPtr, basePrice, false);</span>
+<span class="del">-            merchantOffer += mPtr.getClass().isNpc() ? std::min(cap, sellingPrice) : sellingPrice;</span>
+<span class="del">-        }</span>
+<span class="add">+            merchantOffer</span>
+<span class="add">+                += MWMechanics::getBarterPrice(mPtr, itemStack.mBase, static_cast&lt;int&gt;(itemStack.mCount), false);</span>
+<span class="ctx"> </span>
+<span class="ctx">         int diff = merchantOffer - mCurrentMerchantOffer;</span>
+<span class="ctx">         mCurrentMerchantOffer = merchantOffer;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/barter.cpp</div><pre>
+<span class="hunk">@@ -0,0 +1,37 @@</span>
+<span class="add">+#include &quot;barter.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;algorithm&gt;</span>
+<span class="add">+</span>
+<span class="add">+#include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+#include &quot;../mwworld/class.hpp&quot;</span>
+<span class="add">+#include &quot;../mwworld/ptr.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+namespace MWMechanics</span>
+<span class="add">+{</span>
+<span class="add">+    int getEffectiveItemValue(const MWWorld::Ptr&amp; item, int count)</span>
+<span class="add">+    {</span>
+<span class="add">+        float price = static_cast&lt;float&gt;(item.getClass().getValue(item));</span>
+<span class="add">+        if (item.getClass().hasItemHealth(item))</span>
+<span class="add">+        {</span>
+<span class="add">+            price *= item.getClass().getItemNormalizedHealth(item);</span>
+<span class="add">+        }</span>
+<span class="add">+        return static_cast&lt;int&gt;(price * count);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    int getBarterPrice(const MWWorld::Ptr&amp; merchant, const MWWorld::Ptr&amp; item, int count, bool playerBuys)</span>
+<span class="add">+    {</span>
+<span class="add">+        // The offered price must be capped at 75% of the base price to avoid exploits</span>
+<span class="add">+        // connected to buying and selling the same item.</span>
+<span class="add">+        // This value has been determined by researching the limitations of the vanilla formula</span>
+<span class="add">+        // and may not be sufficient if getBarterOffer behavior has been changed.</span>
+<span class="add">+        const int basePrice = getEffectiveItemValue(item, count);</span>
+<span class="add">+        const int cap = static_cast&lt;int&gt;(std::max(1.f, 0.75f * basePrice));</span>
+<span class="add">+        const int offer</span>
+<span class="add">+            = MWBase::Environment::get().getMechanicsManager()-&gt;getBarterOffer(merchant, basePrice, playerBuys);</span>
+<span class="add">+        if (playerBuys)</span>
+<span class="add">+            return std::max(cap, offer); // Minimum buying price -- 75% of the base</span>
+<span class="add">+        return merchant.getClass().isNpc() ? std::min(cap, offer) : offer; // Maximum selling price -- 75% of the base</span>
+<span class="add">+    }</span>
+<span class="add">+}</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/barter.hpp</div><pre>
+<span class="hunk">@@ -0,0 +1,20 @@</span>
+<span class="add">+#ifndef OPENMW_MECHANICS_BARTER_H</span>
+<span class="add">+#define OPENMW_MECHANICS_BARTER_H</span>
+<span class="add">+</span>
+<span class="add">+namespace MWWorld</span>
+<span class="add">+{</span>
+<span class="add">+    class Ptr;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+namespace MWMechanics</span>
+<span class="add">+{</span>
+<span class="add">+    /// The value of @a count of @a item in a trade, before the merchant&#x27;s offer.</span>
+<span class="add">+    /// Items that wear down are worth less as their condition drops.</span>
+<span class="add">+    int getEffectiveItemValue(const MWWorld::Ptr&amp; item, int count);</span>
+<span class="add">+</span>
+<span class="add">+    /// The gold that changes hands when the player trades @a count of @a item with @a merchant, before haggling.</span>
+<span class="add">+    /// @param playerBuys true when the player buys the item from the merchant, false when the player sells it.</span>
+<span class="add">+    int getBarterPrice(const MWWorld::Ptr&amp; merchant, const MWWorld::Ptr&amp; item, int count, bool playerBuys);</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+#endif</span>
+</pre></div>

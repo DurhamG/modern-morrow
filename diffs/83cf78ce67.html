@@ -1,0 +1,405 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -36,6 +36,7 @@</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/recharge.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/repair.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/services.hpp&quot;</span>
+<span class="add">+#include &quot;apps/openmw/mwmechanics/spellmaking.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/spellutil.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/containerstore.hpp&quot;</span>
+<span class="hunk">@@ -437,6 +438,31 @@ namespace MWLua</span>
+<span class="ctx">         };</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    // Throws an error for effects that the spellmaking or enchanting window wouldn&#x27;t let the player choose.</span>
+<span class="add">+    static void verifyCustomEffects(const ESM::EffectList&amp; effects, MWMechanics::CustomMagic type, bool isConstant)</span>
+<span class="add">+    {</span>
+<span class="add">+        switch (MWMechanics::getCustomEffectProblem(MWMechanics::getPlayer(), effects, type, isConstant))</span>
+<span class="add">+        {</span>
+<span class="add">+            case MWMechanics::CustomEffectProblem::None:</span>
+<span class="add">+                return;</span>
+<span class="add">+            case MWMechanics::CustomEffectProblem::TooManyEffects:</span>
+<span class="add">+                throw std::runtime_error(</span>
+<span class="add">+                    &quot;There can be at most &quot; + std::to_string(MWMechanics::sMaxCustomEffects) + &quot; effects&quot;);</span>
+<span class="add">+            case MWMechanics::CustomEffectProblem::UnknownEffect:</span>
+<span class="add">+                throw std::runtime_error(type == MWMechanics::CustomMagic::Spell</span>
+<span class="add">+                        ? &quot;The player doesn&#x27;t know an effect, or it doesn&#x27;t allow spellmaking&quot;</span>
+<span class="add">+                        : &quot;The player doesn&#x27;t know an effect, or it doesn&#x27;t allow enchanting&quot;);</span>
+<span class="add">+            case MWMechanics::CustomEffectProblem::RepeatedEffect:</span>
+<span class="add">+                throw std::runtime_error(&quot;An effect is there twice&quot;);</span>
+<span class="add">+            case MWMechanics::CustomEffectProblem::RangeNotAllowed:</span>
+<span class="add">+                throw std::runtime_error(&quot;An effect has a range that it doesn&#x27;t allow&quot;);</span>
+<span class="add">+            case MWMechanics::CustomEffectProblem::InvalidParameters:</span>
+<span class="add">+                throw std::runtime_error(</span>
+<span class="add">+                    &quot;An effect lacks its skill or attribute, its magnitude, duration or area is out of bounds, or an &quot;</span>
+<span class="add">+                    &quot;effect on self has an area&quot;);</span>
+<span class="add">+        }</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     // What a script picked for enchanting, as it describes it in a Lua table. The items are kept as Lua objects,</span>
+<span class="ctx">     // so that a queued action can find them again.</span>
+<span class="ctx">     struct EnchantingSetup</span>
+<span class="hunk">@@ -611,6 +637,93 @@ namespace MWLua</span>
+<span class="ctx">               };</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    // What a script picked for spellmaking, as it describes it in a Lua table. The merchant is kept as a Lua object,</span>
+<span class="add">+    // so that a queued action can find them again.</span>
+<span class="add">+    struct SpellmakingSetup</span>
+<span class="add">+    {</span>
+<span class="add">+        std::optional&lt;Object&gt; mMerchant;</span>
+<span class="add">+        ESM::Spell mSpell;</span>
+<span class="add">+    };</span>
+<span class="add">+</span>
+<span class="add">+    static SpellmakingSetup toSpellmakingSetup(const sol::table&amp; table)</span>
+<span class="add">+    {</span>
+<span class="add">+        SpellmakingSetup setup;</span>
+<span class="add">+        setup.mMerchant = getField&lt;Object&gt;(table, &quot;merchant&quot;);</span>
+<span class="add">+        if (!setup.mMerchant)</span>
+<span class="add">+            throw std::runtime_error(&quot;Spellmaking needs a merchant&quot;);</span>
+<span class="add">+        verifyActor(setup.mMerchant-&gt;ptr().getClass());</span>
+<span class="add">+        ESM::EffectList effects;</span>
+<span class="add">+        if (const std::optional&lt;sol::table&gt; list = getField&lt;sol::table&gt;(table, &quot;effects&quot;))</span>
+<span class="add">+            effects = tableToEffectList(*list);</span>
+<span class="add">+        verifyCustomEffects(effects, MWMechanics::CustomMagic::Spell, false);</span>
+<span class="add">+        setup.mSpell = MWMechanics::makeCustomSpell(getField&lt;std::string&gt;(table, &quot;name&quot;).value_or(&quot;&quot;), effects);</span>
+<span class="add">+        return setup;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    static sol::table toMagicEffectList(sol::this_state thisState, MWMechanics::CustomMagic type)</span>
+<span class="add">+    {</span>
+<span class="add">+        sol::table result(thisState, sol::create);</span>
+<span class="add">+        for (const ESM::MagicEffect* effect : MWMechanics::getCustomMagicEffects(MWMechanics::getPlayer(), type))</span>
+<span class="add">+            result.add(effect);</span>
+<span class="add">+        return result;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    static void addSpellmakingBindings(sol::table&amp; playerBindings, const Context&amp; context)</span>
+<span class="add">+    {</span>
+<span class="add">+        playerBindings[&quot;getSpellmakingEffects&quot;] = [](sol::this_state thisState, const Object&amp; player) -&gt; sol::table {</span>
+<span class="add">+            verifyPlayer(player);</span>
+<span class="add">+            return toMagicEffectList(thisState, MWMechanics::CustomMagic::Spell);</span>
+<span class="add">+        };</span>
+<span class="add">+        playerBindings[&quot;getSpellmakingInfo&quot;]</span>
+<span class="add">+            = [](sol::this_state thisState, const Object&amp; player, const sol::table&amp; table) -&gt; sol::table {</span>
+<span class="add">+            verifyPlayer(player);</span>
+<span class="add">+            const SpellmakingSetup setup = toSpellmakingSetup(table);</span>
+<span class="add">+            sol::table result(thisState, sol::create);</span>
+<span class="add">+            result[&quot;cost&quot;] = setup.mSpell.mData.mCost;</span>
+<span class="add">+            result[&quot;price&quot;] = 0;</span>
+<span class="add">+            result[&quot;chance&quot;] = 0;</span>
+<span class="add">+            // The spellmaking window shows no price or chance without effects.</span>
+<span class="add">+            if (!setup.mSpell.mEffects.mList.empty())</span>
+<span class="add">+            {</span>
+<span class="add">+                const float chance = MWMechanics::calcSpellBaseSuccessChance(&amp;setup.mSpell, player.ptr(), nullptr);</span>
+<span class="add">+                result[&quot;price&quot;] = MWMechanics::getCustomSpellPrice(setup.mMerchant-&gt;ptr(), setup.mSpell.mEffects);</span>
+<span class="add">+                result[&quot;chance&quot;] = std::clamp(static_cast&lt;int&gt;(chance), 0, 100);</span>
+<span class="add">+            }</span>
+<span class="add">+            return result;</span>
+<span class="add">+        };</span>
+<span class="add">+        playerBindings[&quot;makeSpell&quot;]</span>
+<span class="add">+            = [context](const Object&amp; player, const sol::table&amp; table, sol::optional&lt;sol::table&gt; callback) {</span>
+<span class="add">+                  verifyBuyer(player);</span>
+<span class="add">+                  const SpellmakingSetup setup = toSpellmakingSetup(table);</span>
+<span class="add">+                  switch (MWMechanics::getSpellmakingProblem(setup.mMerchant-&gt;ptr(), setup.mSpell))</span>
+<span class="add">+                  {</span>
+<span class="add">+                      case MWMechanics::SpellmakingProblem::None:</span>
+<span class="add">+                          break;</span>
+<span class="add">+                      case MWMechanics::SpellmakingProblem::NoEffects:</span>
+<span class="add">+                      case MWMechanics::SpellmakingProblem::NoCost:</span>
+<span class="add">+                          throw std::runtime_error(&quot;The spell needs at least one effect&quot;);</span>
+<span class="add">+                      case MWMechanics::SpellmakingProblem::NoName:</span>
+<span class="add">+                          throw std::runtime_error(&quot;The spell needs a name&quot;);</span>
+<span class="add">+                      case MWMechanics::SpellmakingProblem::NotEnoughGold:</span>
+<span class="add">+                          throw std::runtime_error(&quot;The player doesn&#x27;t have enough gold&quot;);</span>
+<span class="add">+                  }</span>
+<span class="add">+                  context.mLuaManager-&gt;addAction(</span>
+<span class="add">+                      [context, setup, callback = toCallback(callback)] {</span>
+<span class="add">+                          const MWWorld::Ptr merchant = setup.mMerchant-&gt;ptr();</span>
+<span class="add">+                          // An earlier action may have spent the gold.</span>
+<span class="add">+                          if (MWMechanics::getSpellmakingProblem(merchant, setup.mSpell)</span>
+<span class="add">+                              != MWMechanics::SpellmakingProblem::None)</span>
+<span class="add">+                          {</span>
+<span class="add">+                              reportOutcome(context, callback, sol::lua_nil);</span>
+<span class="add">+                              return;</span>
+<span class="add">+                          }</span>
+<span class="add">+                          const ESM::Spell* spell = MWMechanics::buyCustomSpell(merchant, setup.mSpell);</span>
+<span class="add">+                          reportOutcome(context, callback, spell-&gt;mId.serializeText());</span>
+<span class="add">+                      },</span>
+<span class="add">+                      &quot;MakeSpellAction&quot;);</span>
+<span class="add">+              };</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     // What a script picked for brewing, as it describes it in a Lua table. The items are kept as Lua objects, so</span>
+<span class="ctx">     // that a queued action can find them again.</span>
+<span class="ctx">     struct AlchemySetup</span>
+<span class="hunk">@@ -1465,6 +1578,7 @@ namespace MWLua</span>
+<span class="ctx">         addToolBindings(player, context);</span>
+<span class="ctx">         addEnchantingBindings(player, context);</span>
+<span class="ctx">         addAlchemyBindings(player, context);</span>
+<span class="add">+        addSpellmakingBindings(player, context);</span>
+<span class="ctx">         addBarterBindings(player, context);</span>
+<span class="ctx">         addLevelUpBindings(player, context);</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/spellmaking.cpp</div><pre>
+<span class="hunk">@@ -2,8 +2,10 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;algorithm&gt;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;components/esm/attr.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadgmst.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadmgef.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadskil.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="hunk">@@ -83,6 +85,59 @@ namespace MWMechanics</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    CustomEffectProblem getCustomEffectProblem(</span>
+<span class="add">+        const MWWorld::Ptr&amp; actor, const ESM::EffectList&amp; effects, CustomMagic type, bool isConstant)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (effects.mList.size() &gt; sMaxCustomEffects)</span>
+<span class="add">+            return CustomEffectProblem::TooManyEffects;</span>
+<span class="add">+</span>
+<span class="add">+        const MWWorld::ESMStore&amp; store = *MWBase::Environment::get().getESMStore();</span>
+<span class="add">+        const std::vector&lt;const ESM::MagicEffect*&gt; knownEffects = getCustomMagicEffects(actor, type);</span>
+<span class="add">+        for (auto it = effects.mList.begin(); it != effects.mList.end(); ++it)</span>
+<span class="add">+        {</span>
+<span class="add">+            const ESM::ENAMstruct&amp; params = it-&gt;mData;</span>
+<span class="add">+            const ESM::MagicEffect* effect = store.get&lt;ESM::MagicEffect&gt;().search(params.mEffectID);</span>
+<span class="add">+            if (effect == nullptr || std::find(knownEffects.begin(), knownEffects.end(), effect) == knownEffects.end())</span>
+<span class="add">+                return CustomEffectProblem::UnknownEffect;</span>
+<span class="add">+</span>
+<span class="add">+            const int flags = effect-&gt;mData.mFlags;</span>
+<span class="add">+            if (flags &amp; ESM::MagicEffect::TargetSkill)</span>
+<span class="add">+            {</span>
+<span class="add">+                if (!store.get&lt;ESM::Skill&gt;().search(params.mSkill))</span>
+<span class="add">+                    return CustomEffectProblem::InvalidParameters;</span>
+<span class="add">+            }</span>
+<span class="add">+            else if (flags &amp; ESM::MagicEffect::TargetAttribute)</span>
+<span class="add">+            {</span>
+<span class="add">+                if (!store.get&lt;ESM::Attribute&gt;().search(params.mAttribute))</span>
+<span class="add">+                    return CustomEffectProblem::InvalidParameters;</span>
+<span class="add">+            }</span>
+<span class="add">+            else</span>
+<span class="add">+            {</span>
+<span class="add">+                const auto isSameEffect</span>
+<span class="add">+                    = [&amp;](const ESM::IndexedENAMstruct&amp; other) { return other.mData.mEffectID == params.mEffectID; };</span>
+<span class="add">+                if (std::any_of(effects.mList.begin(), it, isSameEffect))</span>
+<span class="add">+                    return CustomEffectProblem::RepeatedEffect;</span>
+<span class="add">+            }</span>
+<span class="add">+</span>
+<span class="add">+            if (!isCustomEffectRangeAllowed(*effect, params.mRange, isConstant))</span>
+<span class="add">+                return CustomEffectProblem::RangeNotAllowed;</span>
+<span class="add">+</span>
+<span class="add">+            if (!(flags &amp; ESM::MagicEffect::NoMagnitude)</span>
+<span class="add">+                &amp;&amp; (params.mMagnMin &lt; 1 || params.mMagnMax &lt; params.mMagnMin || params.mMagnMax &gt; sMaxCustomMagnitude))</span>
+<span class="add">+                return CustomEffectProblem::InvalidParameters;</span>
+<span class="add">+            if (!(flags &amp; ESM::MagicEffect::NoDuration) &amp;&amp; !isConstant</span>
+<span class="add">+                &amp;&amp; (params.mDuration &lt; 1 || params.mDuration &gt; sMaxCustomDuration))</span>
+<span class="add">+                return CustomEffectProblem::InvalidParameters;</span>
+<span class="add">+            if (params.mArea &lt; 0 || params.mArea &gt; sMaxCustomArea)</span>
+<span class="add">+                return CustomEffectProblem::InvalidParameters;</span>
+<span class="add">+            // The effect editor hides the area of an effect on self, and sets it to 0.</span>
+<span class="add">+            if (params.mRange == ESM::RT_Self &amp;&amp; params.mArea != 0)</span>
+<span class="add">+                return CustomEffectProblem::InvalidParameters;</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        return CustomEffectProblem::None;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     int getCustomSpellCost(const ESM::EffectList&amp; effects)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         return static_cast&lt;int&gt;(getExactCustomSpellCost(effects));</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/spellmaking.hpp</div><pre>
+<span class="hunk">@@ -48,6 +48,28 @@ namespace MWMechanics</span>
+<span class="ctx">     /// The effect must allow the range, and a constant effect works on self only.</span>
+<span class="ctx">     bool isCustomEffectRangeAllowed(const ESM::MagicEffect&amp; effect, int range, bool isConstant);</span>
+<span class="ctx"> </span>
+<span class="add">+    /// A rule for effects that the spellmaking and enchanting windows don&#x27;t let the player break.</span>
+<span class="add">+    enum class CustomEffectProblem</span>
+<span class="add">+    {</span>
+<span class="add">+        None,</span>
+<span class="add">+        /// There are more than sMaxCustomEffects effects.</span>
+<span class="add">+        TooManyEffects,</span>
+<span class="add">+        /// An effect isn&#x27;t one of getCustomMagicEffects.</span>
+<span class="add">+        UnknownEffect,</span>
+<span class="add">+        /// An effect that doesn&#x27;t change a skill or an attribute is there twice.</span>
+<span class="add">+        RepeatedEffect,</span>
+<span class="add">+        /// An effect has a range that isCustomEffectRangeAllowed refuses.</span>
+<span class="add">+        RangeNotAllowed,</span>
+<span class="add">+        /// An effect lacks the skill or the attribute that it changes, or its magnitude, duration or area is out of</span>
+<span class="add">+        /// bounds. An effect on self has no area.</span>
+<span class="add">+        InvalidParameters,</span>
+<span class="add">+    };</span>
+<span class="add">+</span>
+<span class="add">+    /// The first rule that @a effects break, for a spell or an enchantment that @a actor makes.</span>
+<span class="add">+    /// @param isConstant Whether the effects are for a constant effect enchantment.</span>
+<span class="add">+    CustomEffectProblem getCustomEffectProblem(</span>
+<span class="add">+        const MWWorld::Ptr&amp; actor, const ESM::EffectList&amp; effects, CustomMagic type, bool isConstant);</span>
+<span class="add">+</span>
+<span class="ctx">     /// The magicka cost of a spell that the player makes with @a effects.</span>
+<span class="ctx">     int getCustomSpellCost(const ESM::EffectList&amp; effects);</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1687,6 +1687,58 @@</span>
+<span class="ctx"> -- @param #EnchantingSetup setup</span>
+<span class="ctx"> -- @param openmw.async#Callback callback A function that receives `true` if the item was enchanted and `false` otherwise, including when nothing happened (optional).</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- What the player picked for a spell of their own, like the choices in the spellmaking window.</span>
+<span class="add">+-- It is a plain table, like an @{#EnchantingSetup}. Each function that takes it works everything out again from the table.</span>
+<span class="add">+-- @type SpellmakingSetup</span>
+<span class="add">+-- @field openmw.core#GameObject merchant The NPC who makes the spell for gold.</span>
+<span class="add">+-- @field #list&lt;#any&gt; effects The effects of the spell, as @{openmw.core#MagicEffectWithParams} or tables with the same fields, like the effects of @{openmw.core#Spells.createRecordDraft} (optional).</span>
+<span class="add">+-- @field #string name The name of the spell (optional).</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- What the spellmaking window shows for a @{#SpellmakingSetup}.</span>
+<span class="add">+-- @type SpellmakingInfo</span>
+<span class="add">+-- @field #number cost The magicka cost of the spell. Each effect costs at least 1, from its magnitude, duration and area, and the effect&#x27;s base cost. Each effect with the target range raises the cost of the effects before it, and its own, by half.</span>
+<span class="add">+-- @field #number price The gold that the merchant asks: the cost times the `fSpellMakingValueMult` game setting, adjusted by the merchant&#x27;s offer the same way as @{#Actor.getBuyingPrice}. It is 0 without effects.</span>
+<span class="add">+-- @field #number chance The chance, from 0 to 100, that the player casts the spell, from the spell&#x27;s cost, their skill in the spell&#x27;s school, Willpower and Luck. Unlike @{#ActorSpells.getSuccessChance}, it leaves out fatigue. It is 0 without effects.</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- The magic effects that the player can put into a spell of their own. These are the effects of the spells that the player knows, if the effect allows spellmaking. Abilities, powers and other kinds of spell don&#x27;t count.</span>
+<span class="add">+-- @function [parent=#PLAYER] getSpellmakingEffects</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @return #list&lt;openmw.core#MagicEffect&gt;</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Work out what the spellmaking window would show for a spell.</span>
+<span class="add">+-- This throws an error without a merchant, or when the effects break a rule of the spellmaking window:</span>
+<span class="add">+--</span>
+<span class="add">+--   * each effect must be one of @{#PLAYER.getSpellmakingEffects};</span>
+<span class="add">+--   * the spell can have at most 8 effects;</span>
+<span class="add">+--   * only effects that change a skill or an attribute can be there more than once, and they need the skill or the attribute;</span>
+<span class="add">+--   * the range must be one that the effect allows;</span>
+<span class="add">+--   * the magnitude must be from 1 to 100, unless the effect has no magnitude;</span>
+<span class="add">+--   * the duration must be from 1 to 1440, unless the effect has no duration;</span>
+<span class="add">+--   * the area must be from 0 to 50, and 0 for an effect on self.</span>
+<span class="add">+-- @function [parent=#PLAYER] getSpellmakingInfo</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param #SpellmakingSetup setup</span>
+<span class="add">+-- @return #SpellmakingInfo</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Buy a spell of the player&#x27;s own from a merchant, the way the spellmaking window does it (only in global scripts).</span>
+<span class="add">+-- The player pays the price in @{#SpellmakingInfo}, and the gold goes to the merchant&#x27;s barter gold. Then the engine creates a new spell record, and the player learns it.</span>
+<span class="add">+-- This throws an error like @{#PLAYER.getSpellmakingInfo}, and when the spellmaking window would refuse: without effects or a name, or when the player can&#x27;t pay.</span>
+<span class="add">+-- This doesn&#x27;t check whether the merchant offers spellmaking as a service. The spell is made at the end of the frame. If an earlier change in the frame spent the gold, nothing happens. It shows no message and plays no sound.</span>
+<span class="add">+-- @function [parent=#PLAYER] makeSpell</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param #SpellmakingSetup setup</span>
+<span class="add">+-- @param openmw.async#Callback callback A function that receives the record ID of the new spell, or `nil` when nothing happened (optional).</span>
+<span class="add">+-- @usage types.Player.makeSpell(player, {</span>
+<span class="add">+--     merchant = merchant,</span>
+<span class="add">+--     name = &#x27;Fire bolt&#x27;,</span>
+<span class="add">+--     effects = { { id = &#x27;firedamage&#x27;, range = core.magic.RANGE.Target, magnitudeMin = 5, magnitudeMax = 10, duration = 1 } },</span>
+<span class="add">+-- })</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- What the player picked for brewing potions, like the choices in the alchemy window.</span>
+<span class="ctx"> -- Like an @{#EnchantingSetup}, it is a plain table that a script keeps and changes, and each function works everything out again from it.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -713,6 +713,76 @@ testing.registerGlobalTest(&#x27;alchemy&#x27;, function()</span>
+<span class="ctx">     inventory:find(&#x27;OMW_Test_Mortar&#x27;):remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;spellmaking&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    removeGold(player)</span>
+<span class="add">+    local merchant = world.createObject(types.NPC.record(player).id)</span>
+<span class="add">+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))</span>
+<span class="add">+    local known = createTestSpell({ type = core.magic.SPELL_TYPE.Spell })</span>
+<span class="add">+    local effect = findCostlyEffect()</span>
+<span class="add">+    local spells = types.Actor.spells(player)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+</span>
+<span class="add">+    local params = {</span>
+<span class="add">+        id = effect.id,</span>
+<span class="add">+        range = core.magic.RANGE.Target,</span>
+<span class="add">+        magnitudeMin = 1,</span>
+<span class="add">+        magnitudeMax = 10,</span>
+<span class="add">+        duration = 5,</span>
+<span class="add">+    }</span>
+<span class="add">+    local setup = { merchant = merchant, name = &#x27;Custom spell&#x27;, effects = { params } }</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, setup), false,</span>
+<span class="add">+        &#x27;The player should not use an effect from a spell they do not know&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    spells:add(known)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    local listed = false</span>
+<span class="add">+    for _, listedEffect in ipairs(types.Player.getSpellmakingEffects(player)) do</span>
+<span class="add">+        listed = listed or listedEffect.id == effect.id</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expect(listed, &#x27;The player should be able to use the effects of the spells they know&#x27;)</span>
+<span class="add">+    local info = types.Player.getSpellmakingInfo(player, setup)</span>
+<span class="add">+    testing.expectGreaterThan(info.cost, 0, &#x27;The spell should cost magicka&#x27;)</span>
+<span class="add">+    testing.expectGreaterThan(info.price, 0, &#x27;The merchant should ask for gold&#x27;)</span>
+<span class="add">+    testing.expectGreaterOrEqual(info.chance, 0, &#x27;The chance should be at least 0&#x27;)</span>
+<span class="add">+    testing.expectLessOrEqual(info.chance, 100, &#x27;The chance should be at most 100&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local tooStrong = { id = effect.id, range = core.magic.RANGE.Target, magnitudeMin = 1, magnitudeMax = 101 }</span>
+<span class="add">+    local strong = { merchant = merchant, effects = { tooStrong } }</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, strong), false,</span>
+<span class="add">+        &#x27;The magnitude should be at most 100&#x27;)</span>
+<span class="add">+    local twice = { merchant = merchant, effects = { params, params } }</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, twice), false,</span>
+<span class="add">+        &#x27;An effect should not be there twice&#x27;)</span>
+<span class="add">+    local onSelf = { id = effect.id, range = core.magic.RANGE.Self, magnitudeMin = 1, magnitudeMax = 10, duration = 5 }</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, { merchant = merchant, effects = { onSelf } }),</span>
+<span class="add">+        true, &#x27;An effect on self should be allowed&#x27;)</span>
+<span class="add">+    onSelf.area = 5</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, { merchant = merchant, effects = { onSelf } }),</span>
+<span class="add">+        false, &#x27;An effect on self should have no area&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.makeSpell, player, setup), false,</span>
+<span class="add">+        &#x27;The player should not make a spell without enough gold&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    world.createObject(&#x27;gold_001&#x27;, info.price):moveInto(player)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    local merchantGold = types.Actor.getBarterGold(merchant)</span>
+<span class="add">+    local spellId = waitForOutcome(function(callback)</span>
+<span class="add">+        types.Player.makeSpell(player, setup, callback)</span>
+<span class="add">+    end)</span>
+<span class="add">+    testing.expect(spellId ~= nil, &#x27;The callback should receive the new spell&#x27;)</span>
+<span class="add">+    local spell = core.magic.spells.records[spellId]</span>
+<span class="add">+    testing.expectEqual(spell.name, &#x27;Custom spell&#x27;, &#x27;The spell should have its name&#x27;)</span>
+<span class="add">+    testing.expectEqual(spell.cost, info.cost, &#x27;The spell should cost what the info said&#x27;)</span>
+<span class="add">+    testing.expect(spells[spellId] ~= nil, &#x27;The player should know the new spell&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Actor.inventory(player):countOf(&#x27;gold_001&#x27;), 0, &#x27;The player should pay for the spell&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Actor.getBarterGold(merchant), merchantGold + info.price,</span>
+<span class="add">+        &#x27;The merchant should get the gold&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    spells:remove(spellId)</span>
+<span class="add">+    spells:remove(known)</span>
+<span class="add">+    merchant:remove()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;stolen items&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     local owner = world.createRecord(types.NPC.createRecordDraft({</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/load.lua</div><pre>
+<span class="hunk">@@ -42,7 +42,13 @@ return {</span>
+<span class="ctx">         onContentFilesLoaded = function()</span>
+<span class="ctx">             content.statics.records.OMW_Generated_Static = { model = &#x27;meshes/generatedonload.nif&#x27; }</span>
+<span class="ctx">             testApparatusContent()</span>
+<span class="del">-            content.magicEffects.records.firedamage.baseCost = 5</span>
+<span class="add">+            local fireDamage = content.magicEffects.records.firedamage</span>
+<span class="add">+            fireDamage.baseCost = 5</span>
+<span class="add">+            fireDamage.onSelf = true</span>
+<span class="add">+            fireDamage.onTouch = true</span>
+<span class="add">+            fireDamage.onTarget = true</span>
+<span class="add">+            fireDamage.allowsSpellmaking = true</span>
+<span class="add">+            fireDamage.allowsEnchanting = true</span>
+<span class="ctx">             for _, id in ipairs({ &#x27;gold_001&#x27;, &#x27;gold_005&#x27;, &#x27;gold_010&#x27;, &#x27;gold_025&#x27;, &#x27;gold_100&#x27; }) do</span>
+<span class="ctx">                 content.miscs.records[id] = { name = &#x27;Gold&#x27;, value = 1 }</span>
+<span class="ctx">             end</span>
+</pre></div>

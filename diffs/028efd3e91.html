@@ -1,0 +1,70 @@
+<div class="file"><div class="path">apps/openmw/mwbase/dialoguemanager.hpp</div><pre>
+<span class="hunk">@@ -79,7 +79,8 @@ namespace MWBase</span>
+<span class="ctx"> </span>
+<span class="ctx">         virtual bool startDialogue(const MWWorld::Ptr&amp; actor) = 0;</span>
+<span class="ctx"> </span>
+<span class="del">-        /// Forgets the transcript once the conversation is over</span>
+<span class="add">+        /// Ends the conversation once the dialogue mode is gone. If goodbyeSelected hasn&#x27;t run, the changes to the</span>
+<span class="add">+        /// actor&#x27;s disposition from persuasion become permanent here. Forgets the transcript.</span>
+<span class="ctx">         virtual void endDialogue() = 0;</span>
+<span class="ctx"> </span>
+<span class="ctx">         /// The actor the player is talking to. Empty outside a conversation.</span>
+<span class="hunk">@@ -111,8 +112,9 @@ namespace MWBase</span>
+<span class="ctx">         /// Asks the actor about one of the available topics. Does nothing and returns false if the topic isn&#x27;t</span>
+<span class="ctx">         /// available, or while the player must answer a choice or say goodbye.</span>
+<span class="ctx">         virtual bool keywordSelected(std::string_view keyword) = 0;</span>
+<span class="del">-        /// Ends the conversation from the dialogue manager&#x27;s side. Does nothing and returns false while the player must</span>
+<span class="del">-        /// answer a choice, unless a script has ended the conversation with Goodbye.</span>
+<span class="add">+        /// Ends the conversation from the dialogue manager&#x27;s side, and makes the changes to the actor&#x27;s disposition</span>
+<span class="add">+        /// from persuasion permanent. Does nothing and returns false while the player must answer a choice, unless a</span>
+<span class="add">+        /// script has ended the conversation with Goodbye.</span>
+<span class="ctx">         virtual bool goodbyeSelected() = 0;</span>
+<span class="ctx">         /// Answers the current choice. Does nothing and returns false if the player isn&#x27;t in a choice or the answer</span>
+<span class="ctx">         /// isn&#x27;t one of the choices.</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.cpp</div><pre>
+<span class="hunk">@@ -202,6 +202,10 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueManager::endDialogue()</span>
+<span class="ctx">     {</span>
+<span class="add">+        // A conversation can end without goodbye. For example, a guard can send the player to jail, or a Lua script can</span>
+<span class="add">+        // close the dialogue mode while the player must answer a choice.</span>
+<span class="add">+        if (mInDialogue)</span>
+<span class="add">+            makeDispositionChangesPermanent();</span>
+<span class="ctx">         mInDialogue = false;</span>
+<span class="ctx">         mTranscript.clear();</span>
+<span class="ctx">         mAvailableTopics.clear();</span>
+<span class="hunk">@@ -505,6 +509,12 @@ namespace MWDialogue</span>
+<span class="ctx">         if (mIsInChoice &amp;&amp; !mGoodbye)</span>
+<span class="ctx">             return false;</span>
+<span class="ctx"> </span>
+<span class="add">+        makeDispositionChangesPermanent();</span>
+<span class="add">+        return true;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void DialogueManager::makeDispositionChangesPermanent()</span>
+<span class="add">+    {</span>
+<span class="ctx">         // Apply disposition change to NPC&#x27;s base disposition if we **think** we need to change something</span>
+<span class="ctx">         if ((mPermanentDispositionChange || mOriginalDisposition != mCurrentDisposition) &amp;&amp; mActor.getClass().isNpc())</span>
+<span class="ctx">         {</span>
+<span class="hunk">@@ -524,7 +534,6 @@ namespace MWDialogue</span>
+<span class="ctx">         mPermanentDispositionChange = 0;</span>
+<span class="ctx">         mOriginalDisposition = 0;</span>
+<span class="ctx">         mCurrentDisposition = 0;</span>
+<span class="del">-        return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool DialogueManager::questionAnswered(int answer)</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.hpp</div><pre>
+<span class="hunk">@@ -87,6 +87,9 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">         void updateOriginalDisposition();</span>
+<span class="ctx"> </span>
+<span class="add">+        /// Replaces the temporary changes to the actor&#x27;s disposition with the permanent ones</span>
+<span class="add">+        void makeDispositionChangesPermanent();</span>
+<span class="add">+</span>
+<span class="ctx">     public:</span>
+<span class="ctx">         DialogueManager(const Compiler::Extensions&amp; extensions, Translation::Storage&amp; translationDataStorage);</span>
+<span class="ctx"> </span>
+</pre></div>

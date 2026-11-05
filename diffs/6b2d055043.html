@@ -1,0 +1,154 @@
+<div class="file"><div class="path">apps/openmw/mwbase/dialoguemanager.hpp</div><pre>
+<span class="hunk">@@ -100,9 +100,15 @@ namespace MWBase</span>
+<span class="ctx"> </span>
+<span class="ctx">         virtual bool say(const MWWorld::Ptr&amp; actor, const ESM::RefId&amp; topic) = 0;</span>
+<span class="ctx"> </span>
+<span class="del">-        virtual void keywordSelected(std::string_view keyword) = 0;</span>
+<span class="del">-        virtual void goodbyeSelected() = 0;</span>
+<span class="del">-        virtual void questionAnswered(int answer) = 0;</span>
+<span class="add">+        /// Asks the actor about one of the available topics. Does nothing and returns false if the topic isn&#x27;t</span>
+<span class="add">+        /// available, or while the player must answer a choice or say goodbye.</span>
+<span class="add">+        virtual bool keywordSelected(std::string_view keyword) = 0;</span>
+<span class="add">+        /// Ends the conversation from the dialogue manager&#x27;s side. Does nothing and returns false while the player must</span>
+<span class="add">+        /// answer a choice, unless a script has ended the conversation with Goodbye.</span>
+<span class="add">+        virtual bool goodbyeSelected() = 0;</span>
+<span class="add">+        /// Answers the current choice. Does nothing and returns false if the player isn&#x27;t in a choice or the answer</span>
+<span class="add">+        /// isn&#x27;t one of the choices.</span>
+<span class="add">+        virtual bool questionAnswered(int answer) = 0;</span>
+<span class="ctx"> </span>
+<span class="ctx">         enum TopicType</span>
+<span class="ctx">         {</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.cpp</div><pre>
+<span class="hunk">@@ -455,17 +455,22 @@ namespace MWDialogue</span>
+<span class="ctx">         return mAvailableTopics;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    void DialogueManager::keywordSelected(std::string_view keyword)</span>
+<span class="add">+    bool DialogueManager::keywordSelected(std::string_view keyword)</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (!mIsInChoice)</span>
+<span class="del">-        {</span>
+<span class="del">-            const ESM::Dialogue* dialogue = searchDialogue(ESM::RefId::stringRefId(keyword));</span>
+<span class="del">-            if (dialogue &amp;&amp; dialogue-&gt;mType == ESM::Dialogue::Topic)</span>
+<span class="del">-            {</span>
+<span class="del">-                executeTopic(dialogue-&gt;mId);</span>
+<span class="del">-                updateAvailableTopics();</span>
+<span class="del">-            }</span>
+<span class="del">-        }</span>
+<span class="add">+        if (mIsInChoice || mGoodbye)</span>
+<span class="add">+            return false;</span>
+<span class="add">+</span>
+<span class="add">+        const ESM::RefId topicId = ESM::RefId::stringRefId(keyword);</span>
+<span class="add">+        const auto topic = std::find_if(mAvailableTopics.begin(), mAvailableTopics.end(),</span>
+<span class="add">+            [&amp;](const AvailableTopic&amp; available) { return available.mId == topicId; });</span>
+<span class="add">+        if (topic == mAvailableTopics.end())</span>
+<span class="add">+            return false;</span>
+<span class="add">+</span>
+<span class="add">+        // Use the record&#x27;s own id. Copy it, because updating the topics replaces the list.</span>
+<span class="add">+        const ESM::RefId dialogueId = topic-&gt;mId;</span>
+<span class="add">+        executeTopic(dialogueId);</span>
+<span class="add">+        updateAvailableTopics();</span>
+<span class="add">+        return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool DialogueManager::isInChoice() const</span>
+<span class="hunk">@@ -473,8 +478,11 @@ namespace MWDialogue</span>
+<span class="ctx">         return mIsInChoice;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    void DialogueManager::goodbyeSelected()</span>
+<span class="add">+    bool DialogueManager::goodbyeSelected()</span>
+<span class="ctx">     {</span>
+<span class="add">+        if (mIsInChoice &amp;&amp; !mGoodbye)</span>
+<span class="add">+            return false;</span>
+<span class="add">+</span>
+<span class="ctx">         // Apply disposition change to NPC&#x27;s base disposition if we **think** we need to change something</span>
+<span class="ctx">         if ((mPermanentDispositionChange || mOriginalDisposition != mCurrentDisposition) &amp;&amp; mActor.getClass().isNpc())</span>
+<span class="ctx">         {</span>
+<span class="hunk">@@ -494,10 +502,15 @@ namespace MWDialogue</span>
+<span class="ctx">         mPermanentDispositionChange = 0;</span>
+<span class="ctx">         mOriginalDisposition = 0;</span>
+<span class="ctx">         mCurrentDisposition = 0;</span>
+<span class="add">+        return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    void DialogueManager::questionAnswered(int answer)</span>
+<span class="add">+    bool DialogueManager::questionAnswered(int answer)</span>
+<span class="ctx">     {</span>
+<span class="add">+        const auto isAnswer = [&amp;](const std::pair&lt;std::string, int&gt;&amp; choice) { return choice.second == answer; };</span>
+<span class="add">+        if (!mIsInChoice || std::none_of(mChoices.begin(), mChoices.end(), isAnswer))</span>
+<span class="add">+            return false;</span>
+<span class="add">+</span>
+<span class="ctx">         mChoice = answer;</span>
+<span class="ctx"> </span>
+<span class="ctx">         const ESM::Dialogue* dialogue = searchDialogue(mLastTopic);</span>
+<span class="hunk">@@ -538,6 +551,7 @@ namespace MWDialogue</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         updateAvailableTopics();</span>
+<span class="add">+        return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueManager::addChoice(std::string_view text, int choice)</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.hpp</div><pre>
+<span class="hunk">@@ -122,9 +122,9 @@ namespace MWDialogue</span>
+<span class="ctx">         bool say(const MWWorld::Ptr&amp; actor, const ESM::RefId&amp; topic) override;</span>
+<span class="ctx"> </span>
+<span class="ctx">         // calbacks for the GUI</span>
+<span class="del">-        void keywordSelected(std::string_view keyword) override;</span>
+<span class="del">-        void goodbyeSelected() override;</span>
+<span class="del">-        void questionAnswered(int answer) override;</span>
+<span class="add">+        bool keywordSelected(std::string_view keyword) override;</span>
+<span class="add">+        bool goodbyeSelected() override;</span>
+<span class="add">+        bool questionAnswered(int answer) override;</span>
+<span class="ctx"> </span>
+<span class="ctx">         void persuade(int type) override;</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/dialogue.cpp</div><pre>
+<span class="hunk">@@ -342,17 +342,12 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool DialogueWindow::exit()</span>
+<span class="ctx">     {</span>
+<span class="del">-        if ((MWBase::Environment::get().getDialogueManager()-&gt;isInChoice()))</span>
+<span class="del">-        {</span>
+<span class="add">+        if (!MWBase::Environment::get().getDialogueManager()-&gt;goodbyeSelected())</span>
+<span class="ctx">             return false;</span>
+<span class="del">-        }</span>
+<span class="del">-        else</span>
+<span class="del">-        {</span>
+<span class="del">-            resetReference();</span>
+<span class="del">-            MWBase::Environment::get().getDialogueManager()-&gt;goodbyeSelected();</span>
+<span class="del">-            mTopicsList-&gt;scrollToTop();</span>
+<span class="del">-            return true;</span>
+<span class="del">-        }</span>
+<span class="add">+</span>
+<span class="add">+        resetReference();</span>
+<span class="add">+        mTopicsList-&gt;scrollToTop();</span>
+<span class="add">+        return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueWindow::onWindowResize(MyGUI::Window* sender)</span>
+<span class="hunk">@@ -726,9 +721,6 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueWindow::onTopicActivated(const std::string&amp; topicId)</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mGoodbye)</span>
+<span class="del">-            return;</span>
+<span class="del">-</span>
+<span class="ctx">         MWBase::Environment::get().getDialogueManager()-&gt;keywordSelected(topicId);</span>
+<span class="ctx">         updateTopics();</span>
+<span class="ctx">     }</span>
+<span class="hunk">@@ -746,7 +738,8 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueWindow::onGoodbyeActivated()</span>
+<span class="ctx">     {</span>
+<span class="del">-        MWBase::Environment::get().getDialogueManager()-&gt;goodbyeSelected();</span>
+<span class="add">+        if (!MWBase::Environment::get().getDialogueManager()-&gt;goodbyeSelected())</span>
+<span class="add">+            return;</span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(MWGui::GM_Dialogue);</span>
+<span class="ctx">         resetReference();</span>
+<span class="ctx">     }</span>
+</pre></div>

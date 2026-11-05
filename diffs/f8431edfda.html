@@ -1,0 +1,87 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/npc.cpp</div><pre>
+<span class="hunk">@@ -371,6 +371,19 @@ namespace MWLua</span>
+<span class="ctx">             return 0;</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+<span class="add">+        npc[&quot;hasSkillsForRank&quot;] = [](const Object&amp; actor, std::string_view faction, int rank) -&gt; bool {</span>
+<span class="add">+            const MWWorld::Ptr ptr = actor.ptr();</span>
+<span class="add">+            if (!ptr.getClass().isNpc())</span>
+<span class="add">+                throw std::runtime_error(&quot;NPC expected&quot;);</span>
+<span class="add">+            ESM::RefId factionId = parseFactionId(faction);</span>
+<span class="add">+            const ESM::Faction* factionPtr</span>
+<span class="add">+                = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Faction&gt;().find(factionId);</span>
+<span class="add">+            if (rank &lt;= 0 || rank &gt; static_cast&lt;int&gt;(getValidRanksCount(factionPtr)))</span>
+<span class="add">+                throw std::runtime_error(&quot;Requested rank does not exist&quot;);</span>
+<span class="add">+            return ptr.getClass().getNpcStats(ptr).hasSkillsForRank(</span>
+<span class="add">+                factionId, static_cast&lt;int&gt;(LuaUtil::fromLuaIndex(rank)));</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="ctx">         npc[&quot;setFactionRank&quot;] = [](Object&amp; actor, std::string_view faction, int value) {</span>
+<span class="ctx">             if (actor.isLObject() &amp;&amp; !actor.isSelfObject())</span>
+<span class="ctx">                 throw std::runtime_error(&quot;Local scripts can modify only self&quot;);</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1178,6 +1178,18 @@</span>
+<span class="ctx"> -- @usage local NPC = require(&#x27;openmw.types&#x27;).NPC;</span>
+<span class="ctx"> -- print(NPC.getFactionRank(player, &quot;mages guild&quot;);</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Whether the NPC&#x27;s skills are high enough for a rank in a faction, as the engine checks before an NPC promotes the player.</span>
+<span class="add">+-- The engine sorts the base values of the NPC&#x27;s skills among the faction&#x27;s favoured skills. The highest must reach the rank&#x27;s `primarySkillValue`, and the next two must reach its `favouredSkillValue`.</span>
+<span class="add">+-- The rank&#x27;s attribute values are a separate requirement, which this doesn&#x27;t check. A faction without favoured skills has no skill requirement.</span>
+<span class="add">+-- @function [parent=#NPC] hasSkillsForRank</span>
+<span class="add">+-- @param openmw.core#GameObject actor NPC object</span>
+<span class="add">+-- @param #string faction Faction ID</span>
+<span class="add">+-- @param #number rank Rank index (from 1).</span>
+<span class="add">+-- @return #boolean</span>
+<span class="add">+-- @usage local nextRank = types.NPC.getFactionRank(self, &#x27;mages guild&#x27;) + 1</span>
+<span class="add">+-- local skilled = types.NPC.hasSkillsForRank(self, &#x27;mages guild&#x27;, nextRank)</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Set rank of given NPC in given faction.</span>
+<span class="ctx"> -- Throws an exception if there is no such faction, target rank does not exist or actor is not a member of given faction.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -1221,6 +1221,24 @@ testing.registerGlobalTest(&#x27;pickpocketing&#x27;, function()</span>
+<span class="ctx">     types.Player.setCrimeLevel(player, 0)</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;faction rank skills&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    local faction = &#x27;omw_test_faction&#x27;</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;set skill on self&#x27;, { skill = &#x27;longblade&#x27;, value = 70 })</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;set skill on self&#x27;, { skill = &#x27;axe&#x27;, value = 50 })</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;set skill on self&#x27;, { skill = &#x27;spear&#x27;, value = 30 })</span>
+<span class="add">+    testing.expectEqual(types.NPC.hasSkillsForRank(player, faction, 1), true, &#x27;The player should be skilled enough&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.NPC.hasSkillsForRank(player, faction, 2), false,</span>
+<span class="add">+        &#x27;The third favoured skill should be too low&#x27;)</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;set skill on self&#x27;, { skill = &#x27;spear&#x27;, value = 45 })</span>
+<span class="add">+    testing.expectEqual(types.NPC.hasSkillsForRank(player, faction, 2), true,</span>
+<span class="add">+        &#x27;All the favoured skills should be high enough&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.NPC.hasSkillsForRank, player, faction, 3), false, &#x27;Rank 3 should not exist&#x27;)</span>
+<span class="add">+    for _, skill in ipairs({ &#x27;longblade&#x27;, &#x27;axe&#x27;, &#x27;spear&#x27; }) do</span>
+<span class="add">+        testing.runLocalTest(player, &#x27;restore skill on self&#x27;, skill)</span>
+<span class="add">+    end</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;level up&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     testing.runLocalTest(player, &#x27;prepare level up on self&#x27;)</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/load.lua</div><pre>
+<span class="hunk">@@ -60,6 +60,14 @@ return {</span>
+<span class="ctx">                 type = content.apparatuses.TYPE.MortarPestle,</span>
+<span class="ctx">                 quality = 1,</span>
+<span class="ctx">             }</span>
+<span class="add">+            content.factions.records.omw_test_faction = {</span>
+<span class="add">+                name = &#x27;Test faction&#x27;,</span>
+<span class="add">+                skills = { &#x27;longblade&#x27;, &#x27;axe&#x27;, &#x27;spear&#x27; },</span>
+<span class="add">+                ranks = {</span>
+<span class="add">+                    { name = &#x27;Novice&#x27;, primarySkillValue = 10, favouredSkillValue = 5 },</span>
+<span class="add">+                    { name = &#x27;Expert&#x27;, primarySkillValue = 60, favouredSkillValue = 40 },</span>
+<span class="add">+                },</span>
+<span class="add">+            }</span>
+<span class="ctx">             -- Races and a class for the character creation tests</span>
+<span class="ctx">             content.spells.records.omw_chargen_power = { name = &#x27;Chargen power&#x27;, type = content.spells.TYPE.Power }</span>
+<span class="ctx">             content.races.records.omw_chargen_race = {</span>
+</pre></div>

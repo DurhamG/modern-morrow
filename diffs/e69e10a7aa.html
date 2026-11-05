@@ -1,0 +1,231 @@
+<div class="file"><div class="path">apps/openmw/mwbase/dialoguemanager.hpp</div><pre>
+<span class="hunk">@@ -1,7 +1,6 @@</span>
+<span class="ctx"> #ifndef GAME_MWBASE_DIALOGUEMANAGER_H</span>
+<span class="ctx"> #define GAME_MWBASE_DIALOGUEMANAGER_H</span>
+<span class="ctx"> </span>
+<span class="del">-#include &lt;list&gt;</span>
+<span class="ctx"> #include &lt;map&gt;</span>
+<span class="ctx"> #include &lt;string&gt;</span>
+<span class="ctx"> #include &lt;string_view&gt;</span>
+<span class="hunk">@@ -9,6 +8,8 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;cstdint&gt;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;components/esm/refid.hpp&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> namespace Loading</span>
+<span class="ctx"> {</span>
+<span class="ctx">     class Listener;</span>
+<span class="hunk">@@ -18,7 +19,6 @@ namespace ESM</span>
+<span class="ctx"> {</span>
+<span class="ctx">     class ESMReader;</span>
+<span class="ctx">     class ESMWriter;</span>
+<span class="del">-    class RefId;</span>
+<span class="ctx">     struct DialInfo;</span>
+<span class="ctx">     struct Dialogue;</span>
+<span class="ctx"> }</span>
+<span class="hunk">@@ -54,6 +54,16 @@ namespace MWBase</span>
+<span class="ctx">             bool mIsMessage = false;</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+<span class="add">+        /// A topic that the player can ask the actor about</span>
+<span class="add">+        struct AvailableTopic</span>
+<span class="add">+        {</span>
+<span class="add">+            ESM::RefId mId;</span>
+<span class="add">+            /// The name of the topic as the dialogue window lists it</span>
+<span class="add">+            std::string mName;</span>
+<span class="add">+            /// TopicType flags</span>
+<span class="add">+            int mFlags;</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="ctx">         DialogueManager() {}</span>
+<span class="ctx"> </span>
+<span class="ctx">         virtual void clear() = 0;</span>
+<span class="hunk">@@ -112,8 +122,9 @@ namespace MWBase</span>
+<span class="ctx">             Enchanting = 7</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+<span class="del">-        virtual std::list&lt;std::string&gt; getAvailableTopics() = 0;</span>
+<span class="del">-        virtual int getTopicFlag(const ESM::RefId&amp;) const = 0;</span>
+<span class="add">+        /// The topics that the player can ask about, sorted by name. They are worked out again after each step of the</span>
+<span class="add">+        /// conversation.</span>
+<span class="add">+        virtual const std::vector&lt;AvailableTopic&gt;&amp; getAvailableTopics() const = 0;</span>
+<span class="ctx"> </span>
+<span class="ctx">         virtual bool checkServiceRefused(ServiceType service = ServiceType::Any) = 0;</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.cpp</div><pre>
+<span class="hunk">@@ -80,6 +80,7 @@ namespace MWDialogue</span>
+<span class="ctx">         mKeywordSearch.clear();</span>
+<span class="ctx">         mKeywordSearchInitialized = false;</span>
+<span class="ctx">         mTranscript.clear();</span>
+<span class="add">+        mAvailableTopics.clear();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueManager::addTopic(const ESM::RefId&amp; topic)</span>
+<span class="hunk">@@ -187,6 +188,7 @@ namespace MWDialogue</span>
+<span class="ctx">                     mLastTopic = dialogue.mId;</span>
+<span class="ctx"> </span>
+<span class="ctx">                     addTopicsFromText(info-&gt;mResponse);</span>
+<span class="add">+                    updateAvailableTopics();</span>
+<span class="ctx"> </span>
+<span class="ctx">                     return true;</span>
+<span class="ctx">                 }</span>
+<span class="hunk">@@ -198,6 +200,7 @@ namespace MWDialogue</span>
+<span class="ctx">     void DialogueManager::endDialogue()</span>
+<span class="ctx">     {</span>
+<span class="ctx">         mTranscript.clear();</span>
+<span class="add">+        mAvailableTopics.clear();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     const std::vector&lt;MWBase::DialogueManager::TranscriptEntry&gt;&amp; DialogueManager::getTranscript() const</span>
+<span class="hunk">@@ -427,30 +430,29 @@ namespace MWDialogue</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    std::list&lt;std::string&gt; DialogueManager::getAvailableTopics()</span>
+<span class="add">+    void DialogueManager::updateAvailableTopics()</span>
+<span class="ctx">     {</span>
+<span class="ctx">         updateActorKnownTopics();</span>
+<span class="ctx"> </span>
+<span class="del">-        std::list&lt;std::string&gt; keywordList;</span>
+<span class="add">+        mAvailableTopics.clear();</span>
+<span class="ctx">         const auto&amp; store = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Dialogue&gt;();</span>
+<span class="ctx">         for (const auto&amp; [topic, topicInfo] : mActorKnownTopics)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             // does the player know the topic?</span>
+<span class="ctx">             if (mKnownTopics.contains(topic))</span>
+<span class="del">-                keywordList.push_back(store.find(topic)-&gt;mStringId);</span>
+<span class="add">+                mAvailableTopics.push_back({ topic, store.find(topic)-&gt;mStringId, topicInfo.mFlags });</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         // sort again, because the previous sort was case-sensitive</span>
+<span class="del">-        keywordList.sort(Misc::StringUtils::ciLess);</span>
+<span class="del">-        return keywordList;</span>
+<span class="add">+        std::stable_sort(mAvailableTopics.begin(), mAvailableTopics.end(),</span>
+<span class="add">+            [](const AvailableTopic&amp; left, const AvailableTopic&amp; right) {</span>
+<span class="add">+                return Misc::StringUtils::ciLess(left.mName, right.mName);</span>
+<span class="add">+            });</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    int DialogueManager::getTopicFlag(const ESM::RefId&amp; topicId) const</span>
+<span class="add">+    const std::vector&lt;MWBase::DialogueManager::AvailableTopic&gt;&amp; DialogueManager::getAvailableTopics() const</span>
+<span class="ctx">     {</span>
+<span class="del">-        auto known = mActorKnownTopics.find(topicId);</span>
+<span class="del">-        if (known != mActorKnownTopics.end())</span>
+<span class="del">-            return known-&gt;second.mFlags;</span>
+<span class="del">-        return 0;</span>
+<span class="add">+        return mAvailableTopics;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueManager::keywordSelected(std::string_view keyword)</span>
+<span class="hunk">@@ -461,6 +463,7 @@ namespace MWDialogue</span>
+<span class="ctx">             if (dialogue &amp;&amp; dialogue-&gt;mType == ESM::Dialogue::Topic)</span>
+<span class="ctx">             {</span>
+<span class="ctx">                 executeTopic(dialogue-&gt;mId);</span>
+<span class="add">+                updateAvailableTopics();</span>
+<span class="ctx">             }</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="hunk">@@ -534,7 +537,7 @@ namespace MWDialogue</span>
+<span class="ctx">             }</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        updateActorKnownTopics();</span>
+<span class="add">+        updateAvailableTopics();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueManager::addChoice(std::string_view text, int choice)</span>
+<span class="hunk">@@ -607,6 +610,7 @@ namespace MWDialogue</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         executeTopic(ESM::RefId::stringRefId(text + (success ? &quot; Success&quot; : &quot; Fail&quot;)));</span>
+<span class="add">+        updateAvailableTopics();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueManager::applyBarterDispositionChange(const MWWorld::Ptr&amp; merchant, int delta)</span>
+<span class="hunk">@@ -645,6 +649,7 @@ namespace MWDialogue</span>
+<span class="ctx">             addResponse(gmsts.find(&quot;sServiceRefusal&quot;)-&gt;mValue.getString(), *info, dialogue);</span>
+<span class="ctx"> </span>
+<span class="ctx">             executeScript(info-&gt;mResultScript, mActor);</span>
+<span class="add">+            updateAvailableTopics();</span>
+<span class="ctx">             return true;</span>
+<span class="ctx">         }</span>
+<span class="ctx">         return false;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.hpp</div><pre>
+<span class="hunk">@@ -61,6 +61,8 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">         std::vector&lt;TranscriptEntry&gt; mTranscript;</span>
+<span class="ctx"> </span>
+<span class="add">+        std::vector&lt;AvailableTopic&gt; mAvailableTopics;</span>
+<span class="add">+</span>
+<span class="ctx">         int mOriginalDisposition;</span>
+<span class="ctx">         int mCurrentDisposition;</span>
+<span class="ctx">         int mPermanentDispositionChange;</span>
+<span class="hunk">@@ -70,6 +72,7 @@ namespace MWDialogue</span>
+<span class="ctx">         void addTopicsFromText(const std::string&amp; text);</span>
+<span class="ctx"> </span>
+<span class="ctx">         void updateActorKnownTopics();</span>
+<span class="add">+        void updateAvailableTopics();</span>
+<span class="ctx">         void updateGlobals();</span>
+<span class="ctx"> </span>
+<span class="ctx">         std::optional&lt;Interpreter::Program&gt; compile(const std::string&amp; cmd, const MWWorld::Ptr&amp; actor);</span>
+<span class="hunk">@@ -101,8 +104,7 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">         void executeScript(const std::string&amp; script, const MWWorld::Ptr&amp; actor) override;</span>
+<span class="ctx"> </span>
+<span class="del">-        std::list&lt;std::string&gt; getAvailableTopics() override;</span>
+<span class="del">-        int getTopicFlag(const ESM::RefId&amp; topicId) const override;</span>
+<span class="add">+        const std::vector&lt;AvailableTopic&gt;&amp; getAvailableTopics() const override;</span>
+<span class="ctx"> </span>
+<span class="ctx">         bool inJournal(const ESM::RefId&amp; topicId, const ESM::RefId&amp; infoId) const override;</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/dialogue.cpp</div><pre>
+<span class="hunk">@@ -1,5 +1,7 @@</span>
+<span class="ctx"> #include &quot;dialogue.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;algorithm&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> #include &lt;MyGUI_Button.h&gt;</span>
+<span class="ctx"> #include &lt;MyGUI_ProgressBar.h&gt;</span>
+<span class="ctx"> #include &lt;MyGUI_ScrollBar.h&gt;</span>
+<span class="hunk">@@ -811,9 +813,12 @@ namespace MWGui</span>
+<span class="ctx">         if (!Settings::gui().mColorTopicEnable)</span>
+<span class="ctx">             return;</span>
+<span class="ctx"> </span>
+<span class="add">+        const auto&amp; topics = MWBase::Environment::get().getDialogueManager()-&gt;getAvailableTopics();</span>
+<span class="ctx">         for (const std::string&amp; keyword : mKeywords)</span>
+<span class="ctx">         {</span>
+<span class="del">-            int flag = MWBase::Environment::get().getDialogueManager()-&gt;getTopicFlag(ESM::RefId::stringRefId(keyword));</span>
+<span class="add">+            const auto topic = std::find_if(</span>
+<span class="add">+                topics.begin(), topics.end(), [&amp;](const auto&amp; available) { return available.mName == keyword; });</span>
+<span class="add">+            const int flag = topic != topics.end() ? topic-&gt;mFlags : 0;</span>
+<span class="ctx">             MyGUI::Button* button = mTopicsList-&gt;getItemWidget(keyword);</span>
+<span class="ctx">             const auto oldCaption = button-&gt;getCaption();</span>
+<span class="ctx">             const MyGUI::IntSize oldSize = button-&gt;getSize();</span>
+<span class="hunk">@@ -844,8 +849,11 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueWindow::updateTopics()</span>
+<span class="ctx">     {</span>
+<span class="add">+        std::list&lt;std::string&gt; keywords;</span>
+<span class="add">+        for (const auto&amp; topic : MWBase::Environment::get().getDialogueManager()-&gt;getAvailableTopics())</span>
+<span class="add">+            keywords.push_back(topic.mName);</span>
+<span class="ctx">         // Topic formatting needs to be updated regardless of whether the topic list has changed</span>
+<span class="del">-        if (!setKeywords(MWBase::Environment::get().getDialogueManager()-&gt;getAvailableTopics()))</span>
+<span class="add">+        if (!setKeywords(keywords))</span>
+<span class="ctx">         {</span>
+<span class="ctx">             updateTopicFormat();</span>
+<span class="ctx">             if (mTranscriptSize != MWBase::Environment::get().getDialogueManager()-&gt;getTranscript().size())</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/dialogue.hpp</div><pre>
+<span class="hunk">@@ -1,6 +1,7 @@</span>
+<span class="ctx"> #ifndef MWGUI_DIALOGE_H</span>
+<span class="ctx"> #define MWGUI_DIALOGE_H</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;list&gt;</span>
+<span class="ctx"> #include &lt;memory&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;referenceinterface.hpp&quot;</span>
+</pre></div>

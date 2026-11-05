@@ -1,0 +1,119 @@
+<div class="file"><div class="path">apps/openmw/mwlua/magicbindings.cpp</div><pre>
+<span class="hunk">@@ -268,6 +268,19 @@ namespace MWLua</span>
+<span class="ctx">         // MagicEffect store</span>
+<span class="ctx">         sol::table magicEffects(state, sol::create);</span>
+<span class="ctx">         addRecordFunctionBinding&lt;ESM::MagicEffect&gt;(magicEffects, context);</span>
+<span class="add">+        magicEffects[&quot;getDescription&quot;]</span>
+<span class="add">+            = [](const sol::object&amp; effectParams, const sol::optional&lt;sol::table&gt;&amp; options) -&gt; std::string {</span>
+<span class="add">+            bool isConstant = false;</span>
+<span class="add">+            bool noTarget = false;</span>
+<span class="add">+            bool noMagnitude = false;</span>
+<span class="add">+            if (options)</span>
+<span class="add">+            {</span>
+<span class="add">+                isConstant = options-&gt;get_or(&quot;isConstant&quot;, false);</span>
+<span class="add">+                noTarget = options-&gt;get_or(&quot;noTarget&quot;, false);</span>
+<span class="add">+                noMagnitude = options-&gt;get_or(&quot;noMagnitude&quot;, false);</span>
+<span class="add">+            }</span>
+<span class="add">+            return MWMechanics::describeSpellEffect(toEffectParams(effectParams), isConstant, noTarget, noMagnitude);</span>
+<span class="add">+        };</span>
+<span class="ctx">         magicApi[&quot;effects&quot;] = LuaUtil::makeReadOnly(magicEffects);</span>
+<span class="ctx">         const auto* magicEffectStore = &amp;MWBase::Environment::get().getWorld()-&gt;getStore().get&lt;ESM::MagicEffect&gt;();</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/magictypebindings.cpp</div><pre>
+<span class="hunk">@@ -483,6 +483,11 @@ namespace MWLua</span>
+<span class="ctx">         return out;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    ESM::ENAMstruct toEffectParams(const sol::object&amp; value)</span>
+<span class="add">+    {</span>
+<span class="add">+        return tableToEnamStruct(value).mData;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void addMagicEffectType(sol::state_view&amp; lua)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         addMagicEffectType&lt;ESM::MagicEffect&gt;(lua, &quot;ESM3_MagicEffect&quot;);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/magictypebindings.hpp</div><pre>
+<span class="hunk">@@ -6,6 +6,7 @@</span>
+<span class="ctx"> namespace ESM</span>
+<span class="ctx"> {</span>
+<span class="ctx">     struct EffectList;</span>
+<span class="add">+    struct ENAMstruct;</span>
+<span class="ctx">     struct Enchantment;</span>
+<span class="ctx">     struct MagicEffect;</span>
+<span class="ctx">     struct Potion;</span>
+<span class="hunk">@@ -26,6 +27,8 @@ namespace MWLua</span>
+<span class="ctx">     void addMutablePotionType(sol::state_view&amp; lua);</span>
+<span class="ctx"> </span>
+<span class="ctx">     ESM::EffectList tableToEffectList(const sol::table&amp;);</span>
+<span class="add">+    // Reads the parameters of one effect from a MagicEffectWithParams or from a Lua table with the same fields.</span>
+<span class="add">+    ESM::ENAMstruct toEffectParams(const sol::object&amp;);</span>
+<span class="ctx"> </span>
+<span class="ctx">     void addMagicEffectType(sol::state_view&amp;);</span>
+<span class="ctx">     void addMutableMagicEffectType(sol::state_view&amp; lua);</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/core.lua</div><pre>
+<span class="hunk">@@ -732,6 +732,22 @@</span>
+<span class="ctx"> -- local mgef = core.magic.effects.records[core.magic.EFFECT_TYPE.Reflect]</span>
+<span class="ctx"> -- print(&#x27;Reflect Icon: &#x27;..tostring(mgef.icon))</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- The line of text that spell tooltips show for an effect, such as &quot;Fortify Strength 10 pts for 30 secs on Self&quot;.</span>
+<span class="add">+-- The text uses the game settings for its words, and the units that suit the effect, such as points, percent or feet.</span>
+<span class="add">+-- It leaves out what the effect doesn&#x27;t have, such as the magnitude of Water Walking or the duration of an effect that is applied once.</span>
+<span class="add">+-- @function [parent=#Effects] getDescription</span>
+<span class="add">+-- @param #any effect A @{#MagicEffectWithParams}, or a Lua table with the same fields.</span>
+<span class="add">+-- @param #table options (optional) A table of flags that leave out parts of the text, as the engine does for some kinds of magic:</span>
+<span class="add">+--</span>
+<span class="add">+--   * `isConstant` - leave out the duration, the area and the range, as for a constant effect enchantment or an ability;</span>
+<span class="add">+--   * `noTarget` - leave out the range, as for a potion;</span>
+<span class="add">+--   * `noMagnitude` - leave out the magnitude, as for an ingredient.</span>
+<span class="add">+-- @return #string</span>
+<span class="add">+-- @usage local text = core.magic.effects.getDescription(core.magic.spells.records[&#x27;fireball&#x27;].effects[1])</span>
+<span class="add">+-- @usage local text = core.magic.effects.getDescription(enchantment.effects[1],</span>
+<span class="add">+--     { isConstant = enchantment.type == core.magic.ENCHANTMENT_TYPE.ConstantEffect })</span>
+<span class="add">+</span>
+<span class="ctx"> --- @{#Enchantments}: Enchantments</span>
+<span class="ctx"> -- @field [parent=#Magic] #Enchantments enchantments</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -218,6 +218,36 @@ testing.registerGlobalTest(&#x27;spell cost&#x27;, function()</span>
+<span class="ctx">         &#x27;An autocalc spell should cost what its effects cost, not its cost field&#x27;)</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;effect description&#x27;, function()</span>
+<span class="add">+    local function gmst(name)</span>
+<span class="add">+        return core.getGMST(name) or &#x27;&#x27;</span>
+<span class="add">+    end</span>
+<span class="add">+    local spell = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 5, isAutocalc = false })</span>
+<span class="add">+    local effect = spell.effects[1]</span>
+<span class="add">+    local name = effect.effect.name</span>
+<span class="add">+    testing.expectEqual(core.magic.effects.getDescription(effect),</span>
+<span class="add">+        name .. &#x27; 10 &#x27; .. gmst(&#x27;spoints&#x27;) .. &#x27; &#x27; .. gmst(&#x27;sfor&#x27;) .. &#x27; 10 &#x27; .. gmst(&#x27;sseconds&#x27;) .. &#x27; &#x27;</span>
+<span class="add">+            .. gmst(&#x27;sonword&#x27;) .. &#x27; &#x27; .. gmst(&#x27;sRangeSelf&#x27;),</span>
+<span class="add">+        &#x27;The description should give the magnitude, the duration and the range&#x27;)</span>
+<span class="add">+    testing.expectEqual(core.magic.effects.getDescription(effect, { isConstant = true }),</span>
+<span class="add">+        name .. &#x27; 10 &#x27; .. gmst(&#x27;spoints&#x27;), &#x27;A constant effect should have no duration or range&#x27;)</span>
+<span class="add">+    testing.expectEqual(core.magic.effects.getDescription(effect, { isConstant = true, noMagnitude = true }), name,</span>
+<span class="add">+        &#x27;An effect without magnitude should only have a name&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local area = core.magic.effects.getDescription({</span>
+<span class="add">+        id = effect.id,</span>
+<span class="add">+        range = core.magic.RANGE.Target,</span>
+<span class="add">+        area = 15,</span>
+<span class="add">+        magnitudeMin = 1,</span>
+<span class="add">+        magnitudeMax = 5,</span>
+<span class="add">+        duration = 1,</span>
+<span class="add">+    }, { noTarget = true })</span>
+<span class="add">+    testing.expectEqual(area,</span>
+<span class="add">+        name .. &#x27; 1 &#x27; .. gmst(&#x27;sTo&#x27;) .. &#x27; 5 &#x27; .. gmst(&#x27;spoints&#x27;) .. &#x27; &#x27; .. gmst(&#x27;sfor&#x27;) .. &#x27; 1 &#x27; .. gmst(&#x27;ssecond&#x27;)</span>
+<span class="add">+            .. &#x27; &#x27; .. gmst(&#x27;sin&#x27;) .. &#x27; 15 &#x27; .. gmst(&#x27;sfootarea&#x27;),</span>
+<span class="add">+        &#x27;getDescription should accept a table, and give a range of magnitudes and the area&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;spell success chance&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     local spell = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 5, isAutocalc = false })</span>
+</pre></div>

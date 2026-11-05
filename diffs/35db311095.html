@@ -1,0 +1,470 @@
+<div class="file"><div class="path">apps/openmw/mwlua/magicbindings.cpp</div><pre>
+<span class="hunk">@@ -185,7 +185,7 @@ namespace MWLua</span>
+<span class="ctx">             return ESM::RefId::deserializeText(LuaUtil::cast&lt;std::string_view&gt;(recordOrId));</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    static const ESM::Spell* toSpell(const sol::object&amp; spellOrId)</span>
+<span class="add">+    const ESM::Spell* toSpell(const sol::object&amp; spellOrId)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         if (spellOrId.is&lt;ESM::Spell&gt;())</span>
+<span class="ctx">             return spellOrId.as&lt;const ESM::Spell*&gt;();</span>
+<span class="hunk">@@ -634,6 +634,19 @@ namespace MWLua</span>
+<span class="ctx">             return MWMechanics::getSpellPrice(ptr, *toSpell(spellOrId));</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+<span class="add">+        actor[&quot;getSpellsForSale&quot;] = [](sol::this_state thisState, const Object&amp; merchant) {</span>
+<span class="add">+            const MWWorld::Ptr ptr = merchant.ptr();</span>
+<span class="add">+            if (!ptr.getClass().isActor())</span>
+<span class="add">+                throw std::runtime_error(&quot;Actor expected&quot;);</span>
+<span class="add">+            sol::table result(thisState, sol::create);</span>
+<span class="add">+            for (const ESM::Spell* spell : ptr.getClass().getCreatureStats(ptr).getSpells())</span>
+<span class="add">+            {</span>
+<span class="add">+                if (MWMechanics::isSpellForSale(ptr, *spell))</span>
+<span class="add">+                    result.add(spell);</span>
+<span class="add">+            }</span>
+<span class="add">+            return result;</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="ctx">         // #(types.Actor.spells(o))</span>
+<span class="ctx">         spellsT[sol::meta_function::length] = [](const ActorSpells&amp; spells) -&gt; size_t {</span>
+<span class="ctx">             if (auto* store = spells.getStore())</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/magicbindings.hpp</div><pre>
+<span class="hunk">@@ -3,12 +3,20 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;sol/forward.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="add">+namespace ESM</span>
+<span class="add">+{</span>
+<span class="add">+    struct Spell;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="ctx"> namespace MWLua</span>
+<span class="ctx"> {</span>
+<span class="ctx">     struct Context;</span>
+<span class="ctx"> </span>
+<span class="ctx">     sol::table initCoreMagicBindings(const Context&amp; context);</span>
+<span class="ctx">     void addActorMagicBindings(sol::table&amp; actor, const Context&amp; context);</span>
+<span class="add">+</span>
+<span class="add">+    // Finds the spell that a Lua argument names, either as a spell record or as a record ID.</span>
+<span class="add">+    const ESM::Spell* toSpell(const sol::object&amp; spellOrId);</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="ctx"> #endif // MWLUA_MAGICBINDINGS_H</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/types/npc.cpp</div><pre>
+<span class="hunk">@@ -187,15 +187,6 @@ namespace</span>
+<span class="ctx">         return id;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    ESM::RefId parseSkillId(std::string_view skill)</span>
+<span class="del">-    {</span>
+<span class="del">-        ESM::RefId id = ESM::RefId::deserializeText(skill);</span>
+<span class="del">-        const MWWorld::ESMStore* store = MWBase::Environment::get().getESMStore();</span>
+<span class="del">-        if (!store-&gt;get&lt;ESM::Skill&gt;().search(id))</span>
+<span class="del">-            throw std::runtime_error(&quot;Skill &#x27;&quot; + std::string(skill) + &quot;&#x27; does not exist&quot;);</span>
+<span class="del">-        return id;</span>
+<span class="del">-    }</span>
+<span class="del">-</span>
+<span class="ctx">     void verifyPlayer(const MWLua::Object&amp; o)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         if (o.ptr() != MWBase::Environment::get().getWorld()-&gt;getPlayerPtr())</span>
+<span class="hunk">@@ -211,6 +202,15 @@ namespace</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWLua</span>
+<span class="ctx"> {</span>
+<span class="add">+    ESM::RefId parseSkillId(std::string_view skill)</span>
+<span class="add">+    {</span>
+<span class="add">+        ESM::RefId id = ESM::RefId::deserializeText(skill);</span>
+<span class="add">+        const MWWorld::ESMStore* store = MWBase::Environment::get().getESMStore();</span>
+<span class="add">+        if (!store-&gt;get&lt;ESM::Skill&gt;().search(id))</span>
+<span class="add">+            throw std::runtime_error(&quot;Skill &#x27;&quot; + std::string(skill) + &quot;&#x27; does not exist&quot;);</span>
+<span class="add">+        return id;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void addNpcBindings(sol::table npc, const Context&amp; context)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         addNpcStatsBindings(npc, context);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -1,11 +1,15 @@</span>
+<span class="ctx"> #include &quot;types.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;algorithm&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> #include &lt;components/esm3/loadbsgn.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadfact.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadskil.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/lua/util.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../birthsignbindings.hpp&quot;</span>
+<span class="ctx"> #include &quot;../luamanagerimp.hpp&quot;</span>
+<span class="add">+#include &quot;../magicbindings.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;apps/openmw/mwbase/dialoguemanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwbase/inputmanager.hpp&quot;</span>
+<span class="hunk">@@ -13,7 +17,9 @@</span>
+<span class="ctx"> #include &quot;apps/openmw/mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwbase/world.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/npcstats.hpp&quot;</span>
+<span class="add">+#include &quot;apps/openmw/mwmechanics/services.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/class.hpp&quot;</span>
+<span class="add">+#include &quot;apps/openmw/mwworld/containerstore.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/esmstore.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/globals.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/player.hpp&quot;</span>
+<span class="hunk">@@ -125,6 +131,26 @@ namespace MWLua</span>
+<span class="ctx">             throw std::runtime_error(&quot;The argument must be a NPC!&quot;);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    static void verifyActor(const MWWorld::Class&amp; cls)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (!cls.isActor())</span>
+<span class="add">+            throw std::runtime_error(&quot;Actor expected&quot;);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    // Buying a service changes the merchant as well as the player, so only global scripts can do it.</span>
+<span class="add">+    static void verifyBuyer(const Object&amp; player)</span>
+<span class="add">+    {</span>
+<span class="add">+        verifyPlayer(player);</span>
+<span class="add">+        if (!player.isGObject())</span>
+<span class="add">+            throw std::runtime_error(&quot;Only global scripts can buy services&quot;);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    static bool canPay(int price)</span>
+<span class="add">+    {</span>
+<span class="add">+        const MWWorld::Ptr ptr = MWBase::Environment::get().getWorld()-&gt;getPlayerPtr();</span>
+<span class="add">+        return price &lt;= ptr.getClass().getContainerStore(ptr).count(MWWorld::ContainerStore::sGoldId);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void addJournalClassBindings(sol::state_view&amp; lua, const MWBase::Journal* journal)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         auto journalBindingsClass = lua.new_usertype&lt;MWBase::Journal&gt;(&quot;MWDialogue_Journal&quot;);</span>
+<span class="hunk">@@ -282,6 +308,45 @@ namespace MWLua</span>
+<span class="ctx">         addJournalClassJournalEntryBindings(lua, journal);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    // A purchase checks these when the script asks for it, and again when the queued action runs, because an</span>
+<span class="add">+    // earlier action may have spent the gold or already made the same purchase.</span>
+<span class="add">+</span>
+<span class="add">+    // Why the player can&#x27;t buy training in @a skill from @a trainer now, or nothing if they can.</span>
+<span class="add">+    static std::optional&lt;std::string&gt; getTrainingProblem(const MWWorld::Ptr&amp; trainer, ESM::RefId skill)</span>
+<span class="add">+    {</span>
+<span class="add">+        const std::vector&lt;ESM::RefId&gt; skills = MWMechanics::getTrainingSkills(trainer);</span>
+<span class="add">+        if (std::find(skills.begin(), skills.end(), skill) == skills.end())</span>
+<span class="add">+            return &quot;The trainer doesn&#x27;t teach &quot; + skill.toDebugString();</span>
+<span class="add">+        if (MWMechanics::getTrainingRefusal(trainer, skill) != MWMechanics::TrainingRefusal::None)</span>
+<span class="add">+            return &quot;The trainer can&#x27;t raise &quot; + skill.toDebugString();</span>
+<span class="add">+        if (!canPay(MWMechanics::getTrainingPrice(trainer, skill)))</span>
+<span class="add">+            return &quot;The player doesn&#x27;t have enough gold&quot;;</span>
+<span class="add">+        return std::nullopt;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    // Why the player can&#x27;t buy @a spell from @a merchant now, or nothing if they can.</span>
+<span class="add">+    static std::optional&lt;std::string&gt; getSpellPurchaseProblem(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (!MWMechanics::isSpellForSale(merchant, spell))</span>
+<span class="add">+            return &quot;The merchant doesn&#x27;t sell &quot; + spell.mId.toDebugString();</span>
+<span class="add">+        if (!canPay(MWMechanics::getSpellPrice(merchant, spell)))</span>
+<span class="add">+            return &quot;The player doesn&#x27;t have enough gold&quot;;</span>
+<span class="add">+        return std::nullopt;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    // Why the player can&#x27;t pay @a merchant to repair @a item now, or nothing if they can.</span>
+<span class="add">+    static std::optional&lt;std::string&gt; getRepairPurchaseProblem(const MWWorld::Ptr&amp; merchant, const MWWorld::Ptr&amp; item)</span>
+<span class="add">+    {</span>
+<span class="add">+        const MWWorld::Ptr player = MWBase::Environment::get().getWorld()-&gt;getPlayerPtr();</span>
+<span class="add">+        if (item.getContainerStore() != &amp;player.getClass().getContainerStore(player))</span>
+<span class="add">+            return &quot;The item must be in the player&#x27;s inventory&quot;;</span>
+<span class="add">+        if (!MWMechanics::canMerchantRepair(item))</span>
+<span class="add">+            return &quot;Merchants can&#x27;t repair this item&quot;;</span>
+<span class="add">+        if (!canPay(MWMechanics::getRepairPrice(merchant, item)))</span>
+<span class="add">+            return &quot;The player doesn&#x27;t have enough gold&quot;;</span>
+<span class="add">+        return std::nullopt;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void addPlayerBindings(sol::table player, const Context&amp; context)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         MWBase::Journal* const journal = MWBase::Environment::get().getJournal();</span>
+<span class="hunk">@@ -435,6 +500,66 @@ namespace MWLua</span>
+<span class="ctx">             if (amount == 0)</span>
+<span class="ctx">                 MWBase::Environment::get().getWorld()-&gt;getPlayer().recordCrimeId();</span>
+<span class="ctx">         };</span>
+<span class="add">+        player[&quot;buyTraining&quot;] = [context](const Object&amp; buyer, const Object&amp; trainer, std::string_view skill) {</span>
+<span class="add">+            verifyBuyer(buyer);</span>
+<span class="add">+            const MWWorld::Ptr trainerPtr = trainer.ptr();</span>
+<span class="add">+            verifyNpc(trainerPtr.getClass());</span>
+<span class="add">+            const ESM::RefId skillId = parseSkillId(skill);</span>
+<span class="add">+            if (const std::optional&lt;std::string&gt; problem = getTrainingProblem(trainerPtr, skillId))</span>
+<span class="add">+                throw std::runtime_error(*problem);</span>
+<span class="add">+            context.mLuaManager-&gt;addAction(</span>
+<span class="add">+                [trainer = Object(trainerPtr), skillId] {</span>
+<span class="add">+                    const MWWorld::Ptr ptr = trainer.ptr();</span>
+<span class="add">+                    if (const std::optional&lt;std::string&gt; problem = getTrainingProblem(ptr, skillId))</span>
+<span class="add">+                    {</span>
+<span class="add">+                        Log(Debug::Warning) &lt;&lt; &quot;The player didn&#x27;t buy training: &quot; &lt;&lt; *problem;</span>
+<span class="add">+                        return;</span>
+<span class="add">+                    }</span>
+<span class="add">+                    MWMechanics::trainSkill(ptr, skillId);</span>
+<span class="add">+                    MWMechanics::passTrainingTime();</span>
+<span class="add">+                },</span>
+<span class="add">+                &quot;BuyTrainingAction&quot;);</span>
+<span class="add">+        };</span>
+<span class="add">+        player[&quot;buySpell&quot;] = [context](const Object&amp; buyer, const Object&amp; merchant, const sol::object&amp; spellOrId) {</span>
+<span class="add">+            verifyBuyer(buyer);</span>
+<span class="add">+            const MWWorld::Ptr merchantPtr = merchant.ptr();</span>
+<span class="add">+            verifyActor(merchantPtr.getClass());</span>
+<span class="add">+            const ESM::Spell* spell = toSpell(spellOrId);</span>
+<span class="add">+            if (const std::optional&lt;std::string&gt; problem = getSpellPurchaseProblem(merchantPtr, *spell))</span>
+<span class="add">+                throw std::runtime_error(*problem);</span>
+<span class="add">+            context.mLuaManager-&gt;addAction(</span>
+<span class="add">+                [merchant = Object(merchantPtr), spell] {</span>
+<span class="add">+                    const MWWorld::Ptr ptr = merchant.ptr();</span>
+<span class="add">+                    if (const std::optional&lt;std::string&gt; problem = getSpellPurchaseProblem(ptr, *spell))</span>
+<span class="add">+                    {</span>
+<span class="add">+                        Log(Debug::Warning) &lt;&lt; &quot;The player didn&#x27;t buy a spell: &quot; &lt;&lt; *problem;</span>
+<span class="add">+                        return;</span>
+<span class="add">+                    }</span>
+<span class="add">+                    MWMechanics::buySpell(ptr, *spell);</span>
+<span class="add">+                },</span>
+<span class="add">+                &quot;BuySpellAction&quot;);</span>
+<span class="add">+        };</span>
+<span class="add">+        player[&quot;buyRepair&quot;] = [context](const Object&amp; buyer, const Object&amp; merchant, const Object&amp; item) {</span>
+<span class="add">+            verifyBuyer(buyer);</span>
+<span class="add">+            const MWWorld::Ptr merchantPtr = merchant.ptr();</span>
+<span class="add">+            verifyActor(merchantPtr.getClass());</span>
+<span class="add">+            const MWWorld::Ptr itemPtr = item.ptr();</span>
+<span class="add">+            if (const std::optional&lt;std::string&gt; problem = getRepairPurchaseProblem(merchantPtr, itemPtr))</span>
+<span class="add">+                throw std::runtime_error(*problem);</span>
+<span class="add">+            context.mLuaManager-&gt;addAction(</span>
+<span class="add">+                [merchant = Object(merchantPtr), item = Object(itemPtr)] {</span>
+<span class="add">+                    const MWWorld::Ptr ptr = merchant.ptr();</span>
+<span class="add">+                    const MWWorld::Ptr repaired = item.ptr();</span>
+<span class="add">+                    if (const std::optional&lt;std::string&gt; problem = getRepairPurchaseProblem(ptr, repaired))</span>
+<span class="add">+                    {</span>
+<span class="add">+                        Log(Debug::Warning) &lt;&lt; &quot;The player didn&#x27;t buy a repair: &quot; &lt;&lt; *problem;</span>
+<span class="add">+                        return;</span>
+<span class="add">+                    }</span>
+<span class="add">+                    MWMechanics::repairItem(ptr, repaired);</span>
+<span class="add">+                },</span>
+<span class="add">+                &quot;BuyRepairAction&quot;);</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="ctx">         player[&quot;isCharGenFinished&quot;] = [](const Object&amp;) -&gt; bool {</span>
+<span class="ctx">             return MWBase::Environment::get().getWorld()-&gt;getGlobalFloat(MWWorld::Globals::sCharGenState) == -1;</span>
+<span class="ctx">         };</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/types/types.hpp</div><pre>
+<span class="hunk">@@ -27,6 +27,9 @@ namespace MWLua</span>
+<span class="ctx"> </span>
+<span class="ctx">     sol::table initTypesPackage(const Context&amp; context);</span>
+<span class="ctx"> </span>
+<span class="add">+    // The ID of the skill that @a skill names. Throws an error if there is no such skill.</span>
+<span class="add">+    ESM::RefId parseSkillId(std::string_view skill);</span>
+<span class="add">+</span>
+<span class="ctx">     // used in initTypesPackage</span>
+<span class="ctx">     void addActivatorBindings(sol::table activator, const Context&amp; context);</span>
+<span class="ctx">     ESM::Activator tableToActivator(const sol::table&amp; rec);</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -64,6 +64,13 @@</span>
+<span class="ctx"> -- @return #number</span>
+<span class="ctx"> -- @usage local price = types.Actor.getSpellPrice(merchant, &#x27;fireball&#x27;)</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- The spells a merchant offers to teach the player, in no particular order.</span>
+<span class="add">+-- These are the spells the spell buying window lists. Merchants teach the spells they know, except the ones the player knows already, their race&#x27;s powers, and anything that isn&#x27;t a spell, such as a disease or an ability.</span>
+<span class="add">+-- @function [parent=#Actor] getSpellsForSale</span>
+<span class="add">+-- @param openmw.core#GameObject merchant</span>
+<span class="add">+-- @return #list&lt;openmw.core#Spell&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- The gold a merchant asks to restore an item to full condition.</span>
+<span class="ctx"> -- This is the price that the merchant repair window shows. It grows with the condition the item has lost. Each lost point of condition costs less on an item that is worth less gold than its maximum condition, so the price also grows with the item&#x27;s value, until the value reaches the maximum condition. It is adjusted by the `fRepairMult` game setting and by the merchant&#x27;s offer the same way as @{#Actor.getBuyingPrice}.</span>
+<span class="hunk">@@ -1442,6 +1449,37 @@</span>
+<span class="ctx"> -- @field #boolean isEnemyNearby An actor nearby is fighting the player or is hostile to them.</span>
+<span class="ctx"> -- @field #boolean canSleep The cell allows sleeping and the player isn&#x27;t a werewolf.</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Buy training in a skill from a trainer, the way the training window does it (only in global scripts).</span>
+<span class="add">+-- The player&#x27;s skill goes up by one point through the `SkillProgression` interface, with `&#x27;trainer&#x27;` as the source. The player pays @{#NPC.getTrainingPrice}, and the gold goes to the trainer&#x27;s barter gold. Then two hours pass, while the player and other actors wait.</span>
+<span class="add">+-- The skill must be one of @{#NPC.getTrainingSkills}, @{#NPC.canTrain} must be true, and the player must have enough gold. Otherwise this throws an error.</span>
+<span class="add">+-- This doesn&#x27;t check whether the trainer offers training as a service. The change happens at the end of the frame. The engine checks the rules again then, and skips the purchase with a warning in the log if an earlier change in the frame broke one, such as another purchase that spent the gold.</span>
+<span class="add">+-- @function [parent=#PLAYER] buyTraining</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param openmw.core#GameObject trainer</span>
+<span class="add">+-- @param #string skillId</span>
+<span class="add">+-- @usage types.Player.buyTraining(player, trainer, &#x27;longblade&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Buy a spell from a merchant, the way the spell buying window does it (only in global scripts).</span>
+<span class="add">+-- The player learns the spell and pays @{#Actor.getSpellPrice}, and the gold goes to the merchant&#x27;s barter gold.</span>
+<span class="add">+-- The spell must be one of @{#Actor.getSpellsForSale}, and the player must have enough gold. Otherwise this throws an error.</span>
+<span class="add">+-- This doesn&#x27;t check whether the merchant offers spells as a service. The change happens at the end of the frame. As with @{#PLAYER.buyTraining}, the engine checks the rules again then, and skips the purchase if one no longer holds.</span>
+<span class="add">+-- @function [parent=#PLAYER] buySpell</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param openmw.core#GameObject merchant</span>
+<span class="add">+-- @param #any spellOrId A @{openmw.core#Spell} or string record ID.</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Pay a merchant to restore an item to full condition, the way the merchant repair window does it (only in global scripts).</span>
+<span class="add">+-- The player pays @{#Actor.getRepairPrice}, and the gold goes to the merchant&#x27;s barter gold.</span>
+<span class="add">+-- The item must be a weapon or a piece of armor in the player&#x27;s inventory that has lost some of its condition, and the player must have enough gold. Otherwise this throws an error.</span>
+<span class="add">+-- This doesn&#x27;t check whether the merchant offers repairs as a service. The change happens at the end of the frame. As with @{#PLAYER.buyTraining}, the engine checks the rules again then, and skips the purchase if one no longer holds.</span>
+<span class="add">+-- @function [parent=#PLAYER] buyRepair</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param openmw.core#GameObject merchant</span>
+<span class="add">+-- @param openmw.core#GameObject item</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Whether teleportation for this player is enabled.</span>
+<span class="ctx"> -- @function [parent=#PLAYER] isTeleportingEnabled</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -338,6 +338,107 @@ testing.registerGlobalTest(&#x27;training&#x27;, function()</span>
+<span class="ctx">     trainer:remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+local function removeGold(player)</span>
+<span class="add">+    local gold = types.Actor.inventory(player):find(&#x27;gold_001&#x27;)</span>
+<span class="add">+    if gold then</span>
+<span class="add">+        gold:remove()</span>
+<span class="add">+        coroutine.yield()</span>
+<span class="add">+    end</span>
+<span class="add">+end</span>
+<span class="add">+</span>
+<span class="add">+testing.registerGlobalTest(&#x27;buying training&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    removeGold(player)</span>
+<span class="add">+    local trainer = world.createObject(types.NPC.record(player).id)</span>
+<span class="add">+    trainer:teleport(player.cell, player.position + util.vector3(0, 500, 0))</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    local skillId = types.NPC.getTrainingSkills(trainer)[1]</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;prepare training on self&#x27;, { trainer = trainer, skill = skillId })</span>
+<span class="add">+    testing.expectEqual(types.NPC.canTrain(trainer, skillId), true, &#x27;The player should be ready to train&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local price = types.NPC.getTrainingPrice(trainer, skillId)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.buyTraining, player, trainer, skillId), false,</span>
+<span class="add">+        &#x27;The player should not train without enough gold&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    world.createObject(&#x27;gold_001&#x27;, price):moveInto(player)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    local skill = types.NPC.stats.skills[skillId](player)</span>
+<span class="add">+    local oldSkill = skill.base</span>
+<span class="add">+    local trainerGold = types.Actor.getBarterGold(trainer)</span>
+<span class="add">+    local time = core.getGameTime()</span>
+<span class="add">+    types.Player.buyTraining(player, trainer, skillId)</span>
+<span class="add">+    for _ = 1, 10 do</span>
+<span class="add">+        coroutine.yield()</span>
+<span class="add">+        if skill.base &gt; oldSkill then</span>
+<span class="add">+            break</span>
+<span class="add">+        end</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expectEqual(skill.base, oldSkill + 1, &#x27;Training should raise the skill by one point&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Actor.inventory(player):countOf(&#x27;gold_001&#x27;), 0, &#x27;The player should pay for training&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Actor.getBarterGold(trainer), trainerGold + price, &#x27;The trainer should get the gold&#x27;)</span>
+<span class="add">+    testing.expectGreaterOrEqual(core.getGameTime() - time, 2 * 3600, &#x27;Training should take two hours&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;restore training on self&#x27;, skillId)</span>
+<span class="add">+    trainer:remove()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="add">+testing.registerGlobalTest(&#x27;buying spells and repairs&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    removeGold(player)</span>
+<span class="add">+    local merchant = world.createObject(&#x27;landracer&#x27;)</span>
+<span class="add">+    merchant:addScript(&#x27;idle.lua&#x27;)</span>
+<span class="add">+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))</span>
+<span class="add">+    local spell = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 7, isAutocalc = false })</span>
+<span class="add">+    types.Actor.spells(merchant):add(spell)</span>
+<span class="add">+    local record = world.createRecord(types.Weapon.createRecordDraft({</span>
+<span class="add">+        template = types.Weapon.record(&#x27;basic_dagger1h&#x27;),</span>
+<span class="add">+        value = 100,</span>
+<span class="add">+        health = 40,</span>
+<span class="add">+    }))</span>
+<span class="add">+    world.createObject(record.id, 1):moveInto(player)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    local inventory = types.Actor.inventory(player)</span>
+<span class="add">+    local item = inventory:find(record.id)</span>
+<span class="add">+    types.Item.itemData(item).condition = 30</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+</span>
+<span class="add">+    local function isForSale()</span>
+<span class="add">+        for _, forSale in ipairs(types.Actor.getSpellsForSale(merchant)) do</span>
+<span class="add">+            if forSale.id == spell.id then</span>
+<span class="add">+                return true</span>
+<span class="add">+            end</span>
+<span class="add">+        end</span>
+<span class="add">+        return false</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expect(isForSale(), &#x27;A merchant should sell a spell they know&#x27;)</span>
+<span class="add">+    local spellPrice = types.Actor.getSpellPrice(merchant, spell)</span>
+<span class="add">+    local repairPrice = types.Actor.getRepairPrice(merchant, item)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.buySpell, player, merchant, spell), false,</span>
+<span class="add">+        &#x27;The player should not buy a spell without enough gold&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    world.createObject(&#x27;gold_001&#x27;, spellPrice + repairPrice):moveInto(player)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    local merchantGold = types.Actor.getBarterGold(merchant)</span>
+<span class="add">+    types.Player.buySpell(player, merchant, spell)</span>
+<span class="add">+    types.Player.buyRepair(player, merchant, item)</span>
+<span class="add">+    -- The checks run again when the purchases happen, so buying the same things twice in a frame charges once.</span>
+<span class="add">+    types.Player.buySpell(player, merchant, spell)</span>
+<span class="add">+    types.Player.buyRepair(player, merchant, item)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    testing.expect(types.Actor.spells(player)[spell.id] ~= nil, &#x27;The player should learn the spell&#x27;)</span>
+<span class="add">+    testing.expect(not isForSale(), &#x27;A merchant should not sell a spell the player knows&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Item.itemData(item).condition, 40, &#x27;The item should be repaired&#x27;)</span>
+<span class="add">+    testing.expectEqual(inventory:countOf(&#x27;gold_001&#x27;), 0, &#x27;The player should pay for the spell and the repair&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Actor.getBarterGold(merchant), merchantGold + spellPrice + repairPrice,</span>
+<span class="add">+        &#x27;The merchant should get the gold&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.buyRepair, player, merchant, item), false,</span>
+<span class="add">+        &#x27;A merchant should not repair an item in full condition&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    types.Actor.spells(player):remove(spell)</span>
+<span class="add">+    item:remove()</span>
+<span class="add">+    merchant:remove()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;stolen items&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     local owner = world.createRecord(types.NPC.createRecordDraft({</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/load.lua</div><pre>
+<span class="hunk">@@ -43,6 +43,9 @@ return {</span>
+<span class="ctx">             content.statics.records.OMW_Generated_Static = { model = &#x27;meshes/generatedonload.nif&#x27; }</span>
+<span class="ctx">             testApparatusContent()</span>
+<span class="ctx">             content.magicEffects.records.firedamage.baseCost = 5</span>
+<span class="add">+            for _, id in ipairs({ &#x27;gold_001&#x27;, &#x27;gold_005&#x27;, &#x27;gold_010&#x27;, &#x27;gold_025&#x27;, &#x27;gold_100&#x27; }) do</span>
+<span class="add">+                content.miscs.records[id] = { name = &#x27;Gold&#x27;, value = 1 }</span>
+<span class="add">+            end</span>
+<span class="ctx">         end</span>
+<span class="ctx">     }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/player.lua</div><pre>
+<span class="hunk">@@ -530,6 +530,23 @@ testing.registerLocalTestStep(&#x27;training checks on self&#x27;, function(data)</span>
+<span class="ctx">     attribute.base = oldAttribute</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+local statsBeforeTraining = nil</span>
+<span class="add">+</span>
+<span class="add">+testing.registerLocalTestStep(&#x27;prepare training on self&#x27;, function(data)</span>
+<span class="add">+    local skill = types.NPC.stats.skills[data.skill](self)</span>
+<span class="add">+    local attribute = types.Actor.stats.attributes[core.stats.Skill.record(data.skill).attribute](self)</span>
+<span class="add">+    statsBeforeTraining = { skill = skill.base, attribute = attribute.base }</span>
+<span class="add">+    skill.base = types.NPC.stats.skills[data.skill](data.trainer).modified - 1</span>
+<span class="add">+    attribute.base = 200</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="add">+testing.registerLocalTestStep(&#x27;restore training on self&#x27;, function(skillId)</span>
+<span class="add">+    types.NPC.stats.skills[skillId](self).base = statsBeforeTraining.skill</span>
+<span class="add">+    types.Actor.stats.attributes[core.stats.Skill.record(skillId).attribute](self).base = statsBeforeTraining.attribute</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerLocalTestStep(&#x27;rest status on self&#x27;, function()</span>
+<span class="ctx">     local status = types.Player.getRestStatus(self)</span>
+<span class="ctx">     testing.expectEqual(type(status.isUnderwater), &#x27;boolean&#x27;, &#x27;isUnderwater should be a boolean&#x27;)</span>
+</pre></div>

@@ -1,0 +1,80 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/misc.cpp</div><pre>
+<span class="hunk">@@ -9,6 +9,7 @@</span>
+<span class="ctx"> #include &lt;components/misc/resourcehelpers.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;apps/openmw/mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;apps/openmw/mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/esmstore.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace sol</span>
+<span class="hunk">@@ -91,6 +92,10 @@ namespace MWLua</span>
+<span class="ctx">         miscellaneous[&quot;getSoul&quot;]</span>
+<span class="ctx">             = [](const Object&amp; object) -&gt; ESM::RefId { return object.ptr().getCellRef().getSoul(); };</span>
+<span class="ctx">         miscellaneous[&quot;soul&quot;] = miscellaneous[&quot;getSoul&quot;]; // for compatibility; should be removed later</span>
+<span class="add">+        miscellaneous[&quot;isGold&quot;]</span>
+<span class="add">+            = [](const Object&amp; object) -&gt; bool { return object.ptr().getClass().isGold(object.ptr()); };</span>
+<span class="add">+        miscellaneous[&quot;isSoulGem&quot;]</span>
+<span class="add">+            = [](const Object&amp; object) -&gt; bool { return object.ptr().getClass().isSoulGem(object.ptr()); };</span>
+<span class="ctx"> </span>
+<span class="ctx">         sol::state_view lua = context.sol();</span>
+<span class="ctx">         addUserType&lt;ESM::Miscellaneous&gt;(lua, &quot;ESM3_Miscellaneous&quot;);</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -2748,6 +2748,21 @@</span>
+<span class="ctx"> -- @param #any objectOrRecordId</span>
+<span class="ctx"> -- @return #MiscellaneousRecord</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Whether the engine treats the object as gold coins.</span>
+<span class="add">+-- These are the objects with the record ids `gold_001`, `gold_005`, `gold_010`, `gold_025` and `gold_100`.</span>
+<span class="add">+-- When gold goes into an inventory or a container, the engine turns it into `gold_001`, so that all gold stacks together.</span>
+<span class="add">+-- @function [parent=#Miscellaneous] isGold</span>
+<span class="add">+-- @param openmw.core#GameObject object</span>
+<span class="add">+-- @return #boolean</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Whether the engine treats the object as a soul gem, which can hold a soul.</span>
+<span class="add">+-- These are the miscellaneous items whose record id starts with `misc_soulgem`.</span>
+<span class="add">+-- @function [parent=#Miscellaneous] isSoulGem</span>
+<span class="add">+-- @param openmw.core#GameObject object</span>
+<span class="add">+-- @return #boolean</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- (DEPRECATED, use itemData(item).soul) Returns the read-only soul of a miscellaneous item</span>
+<span class="ctx"> -- @function [parent=#Miscellaneous] getSoul</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -875,6 +875,22 @@ testing.registerGlobalTest(&#x27;stolen items&#x27;, function()</span>
+<span class="ctx">     stolen:remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;gold and soul gems&#x27;, function()</span>
+<span class="add">+    local gold = world.createObject(&#x27;gold_001&#x27;, 10)</span>
+<span class="add">+    testing.expectEqual(types.Miscellaneous.isGold(gold), true, &#x27;gold_001 should be gold&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Miscellaneous.isSoulGem(gold), false, &#x27;Gold should not be a soul gem&#x27;)</span>
+<span class="add">+    local soulGem = world.createObject(&#x27;misc_soulgem_omw_test&#x27;, 1)</span>
+<span class="add">+    testing.expectEqual(types.Miscellaneous.isSoulGem(soulGem), true, &#x27;A misc_soulgem item should be a soul gem&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Miscellaneous.isGold(soulGem), false, &#x27;A soul gem should not be gold&#x27;)</span>
+<span class="add">+    local misc = world.createRecord(types.Miscellaneous.createRecordDraft({ name = &#x27;Test trinket&#x27;, value = 5 }))</span>
+<span class="add">+    local trinket = world.createObject(misc.id, 1)</span>
+<span class="add">+    testing.expectEqual(types.Miscellaneous.isGold(trinket), false, &#x27;A made-up item should not be gold&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Miscellaneous.isSoulGem(trinket), false, &#x27;A made-up item should not be a soul gem&#x27;)</span>
+<span class="add">+    local dagger = world.createObject(&#x27;basic_dagger1h&#x27;, 1)</span>
+<span class="add">+    testing.expectEqual(types.Miscellaneous.isGold(dagger), false, &#x27;A weapon should not be gold&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Miscellaneous.isSoulGem(dagger), false, &#x27;A weapon should not be a soul gem&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;bartering&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     removeGold(player)</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/load.lua</div><pre>
+<span class="hunk">@@ -54,6 +54,7 @@ return {</span>
+<span class="ctx">             end</span>
+<span class="ctx">             content.repairs.records.OMW_Test_RepairTool = { name = &#x27;Test hammer&#x27;, maxCondition = 10, quality = 1 }</span>
+<span class="ctx">             content.miscs.records.OMW_Test_SoulGem = { name = &#x27;Test soul gem&#x27;, value = 10 }</span>
+<span class="add">+            content.miscs.records.misc_soulgem_omw_test = { name = &#x27;Test soul gem with its usual id&#x27;, value = 10 }</span>
+<span class="ctx">             content.apparatuses.records.OMW_Test_Mortar = {</span>
+<span class="ctx">                 name = &#x27;Test mortar&#x27;,</span>
+<span class="ctx">                 type = content.apparatuses.TYPE.MortarPestle,</span>
+</pre></div>

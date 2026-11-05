@@ -1,0 +1,76 @@
+<div class="file"><div class="path">apps/openmw/mwlua/magicbindings.cpp</div><pre>
+<span class="hunk">@@ -260,6 +260,12 @@ namespace MWLua</span>
+<span class="ctx">         spells[&quot;createRecordDraft&quot;] = tableToSpell;</span>
+<span class="ctx">         spells[&quot;getCost&quot;]</span>
+<span class="ctx">             = [](const sol::object&amp; spellOrId) -&gt; int { return MWMechanics::calcSpellCost(*toSpell(spellOrId)); };</span>
+<span class="add">+        spells[&quot;getSchool&quot;] = [](const sol::object&amp; spellOrId, const Object&amp; actor) -&gt; ESM::RefId {</span>
+<span class="add">+            const MWWorld::Ptr&amp; ptr = actor.ptr();</span>
+<span class="add">+            if (!ptr.getClass().isActor())</span>
+<span class="add">+                throw std::runtime_error(&quot;Actor expected&quot;);</span>
+<span class="add">+            return MWMechanics::getSpellSchool(toSpell(spellOrId), ptr);</span>
+<span class="add">+        };</span>
+<span class="ctx">         magicApi[&quot;spells&quot;] = LuaUtil::makeReadOnly(spells);</span>
+<span class="ctx"> </span>
+<span class="ctx">         // Enchantment store</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/core.lua</div><pre>
+<span class="hunk">@@ -705,6 +705,15 @@</span>
+<span class="ctx"> -- @return #number</span>
+<span class="ctx"> -- @usage local cost = core.magic.spells.getCost(&#x27;fireball&#x27;)</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- The magic school whose skill decides the actor&#x27;s chance to cast the spell, and which casting it trains.</span>
+<span class="add">+-- For each of the spell&#x27;s effects, the engine takes twice the actor&#x27;s skill in the effect&#x27;s school and subtracts the effect&#x27;s cost. The effect with the lowest result decides the school.</span>
+<span class="add">+-- @function [parent=#Spells] getSchool</span>
+<span class="add">+-- @param #any spellOrId A @{#Spell} or string record ID.</span>
+<span class="add">+-- @param #GameObject actor The actor who casts it.</span>
+<span class="add">+-- @return #string The skill ID of the school (see @{openmw.core#SKILL}), or nil for a spell without effects.</span>
+<span class="add">+-- @usage local school = core.magic.spells.getSchool(&#x27;fireball&#x27;, self)</span>
+<span class="add">+</span>
+<span class="ctx"> --- List of all @{#Spell}s.</span>
+<span class="ctx"> -- @field [parent=#Spells] #list&lt;#Spell&gt; records A read-only list of all @{#Spell} records in the world database, may be indexed by recordId.</span>
+<span class="ctx"> -- Implements [iterables#List](iterables.html#List) of #Spell.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -277,6 +277,40 @@ testing.registerGlobalTest(&#x27;spell success chance&#x27;, function()</span>
+<span class="ctx">     testing.runLocalTest(player, &#x27;spell success chance on self&#x27;, { spell = spell.id, power = power.id })</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;spell school&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    local costly = findCostlyEffect()</span>
+<span class="add">+    local free = nil</span>
+<span class="add">+    for _, effect in ipairs(core.magic.effects.records) do</span>
+<span class="add">+        if effect.school ~= nil and effect.school ~= costly.school and effect.baseCost == 0 then</span>
+<span class="add">+            free = effect</span>
+<span class="add">+            break</span>
+<span class="add">+        end</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expect(free ~= nil, &#x27;Expected an effect of another school&#x27;)</span>
+<span class="add">+    local spell = world.createRecord(core.magic.spells.createRecordDraft({</span>
+<span class="add">+        name = &#x27;Test spell with two schools&#x27;,</span>
+<span class="add">+        type = core.magic.SPELL_TYPE.Spell,</span>
+<span class="add">+        cost = 5,</span>
+<span class="add">+        isAutocalc = false,</span>
+<span class="add">+        effects = {</span>
+<span class="add">+            { id = costly.id, range = core.magic.RANGE.Self, magnitudeMin = 10, magnitudeMax = 10, duration = 10 },</span>
+<span class="add">+            { id = free.id, range = core.magic.RANGE.Self, magnitudeMin = 10, magnitudeMax = 10, duration = 10 },</span>
+<span class="add">+        },</span>
+<span class="add">+    }))</span>
+<span class="add">+</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;set skill on self&#x27;, { skill = costly.school, value = 100 })</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;set skill on self&#x27;, { skill = free.school, value = 5 })</span>
+<span class="add">+    testing.expectEqual(core.magic.spells.getSchool(spell, player), free.school,</span>
+<span class="add">+        &#x27;The school with the weakest skill should decide&#x27;)</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;set skill on self&#x27;, { skill = costly.school, value = 5 })</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;set skill on self&#x27;, { skill = free.school, value = 100 })</span>
+<span class="add">+    testing.expectEqual(core.magic.spells.getSchool(spell.id, player), costly.school,</span>
+<span class="add">+        &#x27;The costly effect should decide when its skill is weak&#x27;)</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;restore skill on self&#x27;, costly.school)</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;restore skill on self&#x27;, free.school)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;enchantment cast cost&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     local effect = findCostlyEffect()</span>
+</pre></div>

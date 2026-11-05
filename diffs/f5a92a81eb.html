@@ -1,0 +1,147 @@
+<div class="file"><div class="path">apps/openmw/mwbase/dialoguemanager.hpp</div><pre>
+<span class="hunk">@@ -2,6 +2,7 @@</span>
+<span class="ctx"> #define GAME_MWBASE_DIALOGUEMANAGER_H</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;map&gt;</span>
+<span class="add">+#include &lt;optional&gt;</span>
+<span class="ctx"> #include &lt;string&gt;</span>
+<span class="ctx"> #include &lt;string_view&gt;</span>
+<span class="ctx"> #include &lt;vector&gt;</span>
+<span class="hunk">@@ -147,7 +148,14 @@ namespace MWBase</span>
+<span class="ctx"> </span>
+<span class="ctx">         virtual bool checkServiceRefused(ServiceType service = ServiceType::Any) = 0;</span>
+<span class="ctx"> </span>
+<span class="del">-        virtual void persuade(int type) = 0;</span>
+<span class="add">+        /// Whether the player can try to persuade the actor in the way @a type, a</span>
+<span class="add">+        /// MWBase::MechanicsManager::PersuasionType. Only NPCs can be persuaded, and a bribe needs the gold. The player</span>
+<span class="add">+        /// can&#x27;t try while they must answer a choice or say goodbye.</span>
+<span class="add">+        virtual bool canPersuade(int type) const = 0;</span>
+<span class="add">+</span>
+<span class="add">+        /// Tries to persuade the actor in the way @a type, a MWBase::MechanicsManager::PersuasionType. Returns whether</span>
+<span class="add">+        /// the attempt succeeded. Does nothing and returns nothing if the player can&#x27;t try (see canPersuade).</span>
+<span class="add">+        virtual std::optional&lt;bool&gt; persuade(int type) = 0;</span>
+<span class="ctx"> </span>
+<span class="ctx">         /// Changes the disposition of @a merchant after the player haggled with them. Does nothing unless the player</span>
+<span class="ctx">         /// is talking to @a merchant.</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.cpp</div><pre>
+<span class="hunk">@@ -54,6 +54,24 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWDialogue</span>
+<span class="ctx"> {</span>
+<span class="add">+    namespace</span>
+<span class="add">+    {</span>
+<span class="add">+        int getBribeGold(int type)</span>
+<span class="add">+        {</span>
+<span class="add">+            switch (type)</span>
+<span class="add">+            {</span>
+<span class="add">+                case MWBase::MechanicsManager::PT_Bribe10:</span>
+<span class="add">+                    return 10;</span>
+<span class="add">+                case MWBase::MechanicsManager::PT_Bribe100:</span>
+<span class="add">+                    return 100;</span>
+<span class="add">+                case MWBase::MechanicsManager::PT_Bribe1000:</span>
+<span class="add">+                    return 1000;</span>
+<span class="add">+                default:</span>
+<span class="add">+                    return 0;</span>
+<span class="add">+            }</span>
+<span class="add">+        }</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     DialogueManager::DialogueManager(</span>
+<span class="ctx">         const Compiler::Extensions&amp; extensions, Translation::Storage&amp; translationDataStorage)</span>
+<span class="ctx">         : mTranslationDataStorage(translationDataStorage)</span>
+<span class="hunk">@@ -607,8 +625,20 @@ namespace MWDialogue</span>
+<span class="ctx">         mGoodbye = true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    void DialogueManager::persuade(int type)</span>
+<span class="add">+    bool DialogueManager::canPersuade(int type) const</span>
+<span class="ctx">     {</span>
+<span class="add">+        if (mIsInChoice || mGoodbye || mActor.isEmpty() || !mActor.getClass().isNpc())</span>
+<span class="add">+            return false;</span>
+<span class="add">+        const MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="add">+        return player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId)</span>
+<span class="add">+            &gt;= getBribeGold(type);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    std::optional&lt;bool&gt; DialogueManager::persuade(int type)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (!canPersuade(type))</span>
+<span class="add">+            return std::nullopt;</span>
+<span class="add">+</span>
+<span class="ctx">         bool success;</span>
+<span class="ctx">         int temp, perm;</span>
+<span class="ctx">         MWBase::Environment::get().getMechanicsManager()-&gt;getPersuasionDispositionChange(</span>
+<span class="hunk">@@ -626,14 +656,7 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">         if (success)</span>
+<span class="ctx">         {</span>
+<span class="del">-            int gold = 0;</span>
+<span class="del">-            if (type == MWBase::MechanicsManager::PT_Bribe10)</span>
+<span class="del">-                gold = 10;</span>
+<span class="del">-            else if (type == MWBase::MechanicsManager::PT_Bribe100)</span>
+<span class="del">-                gold = 100;</span>
+<span class="del">-            else if (type == MWBase::MechanicsManager::PT_Bribe1000)</span>
+<span class="del">-                gold = 1000;</span>
+<span class="del">-</span>
+<span class="add">+            const int gold = getBribeGold(type);</span>
+<span class="ctx">             if (gold)</span>
+<span class="ctx">             {</span>
+<span class="ctx">                 player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, gold);</span>
+<span class="hunk">@@ -656,6 +679,7 @@ namespace MWDialogue</span>
+<span class="ctx"> </span>
+<span class="ctx">         executeTopic(ESM::RefId::stringRefId(text + (success ? &quot; Success&quot; : &quot; Fail&quot;)));</span>
+<span class="ctx">         updateAvailableTopics();</span>
+<span class="add">+        return success;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void DialogueManager::applyBarterDispositionChange(const MWWorld::Ptr&amp; merchant, int delta)</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwdialogue/dialoguemanagerimp.hpp</div><pre>
+<span class="hunk">@@ -135,7 +135,9 @@ namespace MWDialogue</span>
+<span class="ctx">         bool goodbyeSelected() override;</span>
+<span class="ctx">         bool questionAnswered(int answer) override;</span>
+<span class="ctx"> </span>
+<span class="del">-        void persuade(int type) override;</span>
+<span class="add">+        bool canPersuade(int type) const override;</span>
+<span class="add">+</span>
+<span class="add">+        std::optional&lt;bool&gt; persuade(int type) override;</span>
+<span class="ctx"> </span>
+<span class="ctx">         /// @note Controlled by an option, gets discarded when dialogue ends by default</span>
+<span class="ctx">         void applyBarterDispositionChange(const MWWorld::Ptr&amp; merchant, int delta) override;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/dialogue.cpp</div><pre>
+<span class="hunk">@@ -126,9 +126,13 @@ namespace MWGui</span>
+<span class="ctx">         MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="ctx">         int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);</span>
+<span class="ctx"> </span>
+<span class="del">-        mBribe10Button-&gt;setEnabled(playerGold &gt;= 10);</span>
+<span class="del">-        mBribe100Button-&gt;setEnabled(playerGold &gt;= 100);</span>
+<span class="del">-        mBribe1000Button-&gt;setEnabled(playerGold &gt;= 1000);</span>
+<span class="add">+        const MWBase::DialogueManager&amp; dialogueManager = *MWBase::Environment::get().getDialogueManager();</span>
+<span class="add">+        mAdmireButton-&gt;setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Admire));</span>
+<span class="add">+        mIntimidateButton-&gt;setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Intimidate));</span>
+<span class="add">+        mTauntButton-&gt;setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Taunt));</span>
+<span class="add">+        mBribe10Button-&gt;setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Bribe10));</span>
+<span class="add">+        mBribe100Button-&gt;setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Bribe100));</span>
+<span class="add">+        mBribe1000Button-&gt;setEnabled(dialogueManager.canPersuade(MWBase::MechanicsManager::PT_Bribe1000));</span>
+<span class="ctx"> </span>
+<span class="ctx">         mGoldLabel-&gt;setCaptionWithReplacing(&quot;#{sGold}: &quot; + MyGUI::utility::toString(playerGold));</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -142,9 +146,12 @@ namespace MWGui</span>
+<span class="ctx">         {</span>
+<span class="ctx">             mControllerFocus = 0;</span>
+<span class="ctx">             mButtons.clear();</span>
+<span class="del">-            mButtons.push_back(mAdmireButton);</span>
+<span class="del">-            mButtons.push_back(mIntimidateButton);</span>
+<span class="del">-            mButtons.push_back(mTauntButton);</span>
+<span class="add">+            if (mAdmireButton-&gt;getEnabled())</span>
+<span class="add">+                mButtons.push_back(mAdmireButton);</span>
+<span class="add">+            if (mIntimidateButton-&gt;getEnabled())</span>
+<span class="add">+                mButtons.push_back(mIntimidateButton);</span>
+<span class="add">+            if (mTauntButton-&gt;getEnabled())</span>
+<span class="add">+                mButtons.push_back(mTauntButton);</span>
+<span class="ctx">             if (mBribe10Button-&gt;getEnabled())</span>
+<span class="ctx">                 mButtons.push_back(mBribe10Button);</span>
+<span class="ctx">             if (mBribe100Button-&gt;getEnabled())</span>
+</pre></div>

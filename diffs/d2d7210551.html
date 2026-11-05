@@ -1,0 +1,347 @@
+<div class="file"><div class="path">apps/openmw/CMakeLists.txt</div><pre>
+<span class="hunk">@@ -105,7 +105,7 @@ add_openmw_dir (mwmechanics</span>
+<span class="ctx">     aicast aiescort aiface aiactivate aicombat recharge repair enchanting pathfinding pathgrid security spellcasting spellresistance</span>
+<span class="ctx">     disease pickpocket levelledlist combat steering obstacle autocalcspell difficultyscaling aicombataction summoning</span>
+<span class="ctx">     character actors objects aistate weaponpriority spellpriority weapontype spellutil</span>
+<span class="del">-    spelleffects barter services spellmaking resting</span>
+<span class="add">+    spelleffects barter services spellmaking resting chargen</span>
+<span class="ctx">     )</span>
+<span class="ctx"> </span>
+<span class="ctx"> add_openmw_dir (mwstate</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/charactercreation.cpp</div><pre>
+<span class="hunk">@@ -1,13 +1,11 @@</span>
+<span class="ctx"> #include &quot;charactercreation.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;array&gt;</span>
+<span class="del">-#include &lt;format&gt;</span>
+<span class="ctx"> #include &lt;string_view&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;MyGUI_ITexture.h&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;components/debug/debuglog.hpp&gt;</span>
+<span class="del">-#include &lt;components/fallback/fallback.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/misc/resourcehelpers.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/misc/rng.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -18,6 +16,7 @@</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwmechanics/actorutil.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/chargen.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/creaturestats.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="hunk">@@ -65,17 +64,14 @@ namespace</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    Step generateClassSteps(int number)</span>
+<span class="add">+    Step generateClassSteps(unsigned number)</span>
+<span class="ctx">     {</span>
+<span class="del">-        number++;</span>
+<span class="add">+        const MWMechanics::ClassQuestion question = MWMechanics::getClassQuestions().at(number);</span>
+<span class="ctx"> </span>
+<span class="ctx">         const std::array&lt;Response, 3&gt; responses = {</span>
+<span class="del">-            Response{ Fallback::Map::getString(std::format(&quot;Question_{}_AnswerOne&quot;, number)),</span>
+<span class="del">-                ESM::Class::Specialization::Combat },</span>
+<span class="del">-            Response{ Fallback::Map::getString(std::format(&quot;Question_{}_AnswerTwo&quot;, number)),</span>
+<span class="del">-                ESM::Class::Specialization::Magic },</span>
+<span class="del">-            Response{ Fallback::Map::getString(std::format(&quot;Question_{}_AnswerThree&quot;, number)),</span>
+<span class="del">-                ESM::Class::Specialization::Stealth },</span>
+<span class="add">+            Response{ question.mAnswers[ESM::Class::Combat], ESM::Class::Specialization::Combat },</span>
+<span class="add">+            Response{ question.mAnswers[ESM::Class::Magic], ESM::Class::Specialization::Magic },</span>
+<span class="add">+            Response{ question.mAnswers[ESM::Class::Stealth], ESM::Class::Specialization::Stealth },</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+<span class="ctx">         // randomize order in which responses are displayed</span>
+<span class="hunk">@@ -83,9 +79,9 @@ namespace</span>
+<span class="ctx">         const std::array&lt;std::size_t, 3&gt; indices = getIndices(order);</span>
+<span class="ctx"> </span>
+<span class="ctx">         return Step{</span>
+<span class="del">-            .mQuestion = Fallback::Map::getString(std::format(&quot;Question_{}_Question&quot;, number)),</span>
+<span class="add">+            .mQuestion = question.mQuestion,</span>
+<span class="ctx">             .mResponses = { responses[indices[0]], responses[indices[1]], responses[indices[2]] },</span>
+<span class="del">-            .mSound = VFS::Path::Normalized(std::format(&quot;vo/misc/chargen qa{}.wav&quot;, number)),</span>
+<span class="add">+            .mSound = question.mSound,</span>
+<span class="ctx">         };</span>
+<span class="ctx">     }</span>
+<span class="ctx"> }</span>
+<span class="hunk">@@ -512,101 +508,10 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void CharacterCreation::showClassQuestionDialog()</span>
+<span class="ctx">     {</span>
+<span class="del">-        if (mGenerateClassStep == 10)</span>
+<span class="add">+        if (mGenerateClassStep == MWMechanics::sClassQuestionCount)</span>
+<span class="ctx">         {</span>
+<span class="del">-            unsigned combat = mGenerateClassSpecializations[0];</span>
+<span class="del">-            unsigned magic = mGenerateClassSpecializations[1];</span>
+<span class="del">-            unsigned stealth = mGenerateClassSpecializations[2];</span>
+<span class="del">-            std::string_view className;</span>
+<span class="del">-            if (combat &gt; 7)</span>
+<span class="del">-            {</span>
+<span class="del">-                className = &quot;Warrior&quot;;</span>
+<span class="del">-            }</span>
+<span class="del">-            else if (magic &gt; 7)</span>
+<span class="del">-            {</span>
+<span class="del">-                className = &quot;Mage&quot;;</span>
+<span class="del">-            }</span>
+<span class="del">-            else if (stealth &gt; 7)</span>
+<span class="del">-            {</span>
+<span class="del">-                className = &quot;Thief&quot;;</span>
+<span class="del">-            }</span>
+<span class="del">-            else</span>
+<span class="del">-            {</span>
+<span class="del">-                switch (combat)</span>
+<span class="del">-                {</span>
+<span class="del">-                    case 4:</span>
+<span class="del">-                        className = &quot;Rogue&quot;;</span>
+<span class="del">-                        break;</span>
+<span class="del">-                    case 5:</span>
+<span class="del">-                        if (stealth == 3)</span>
+<span class="del">-                            className = &quot;Scout&quot;;</span>
+<span class="del">-                        else</span>
+<span class="del">-                            className = &quot;Archer&quot;;</span>
+<span class="del">-                        break;</span>
+<span class="del">-                    case 6:</span>
+<span class="del">-                        if (stealth == 1)</span>
+<span class="del">-                            className = &quot;Barbarian&quot;;</span>
+<span class="del">-                        else if (stealth == 3)</span>
+<span class="del">-                            className = &quot;Crusader&quot;;</span>
+<span class="del">-                        else</span>
+<span class="del">-                            className = &quot;Knight&quot;;</span>
+<span class="del">-                        break;</span>
+<span class="del">-                    case 7:</span>
+<span class="del">-                        className = &quot;Warrior&quot;;</span>
+<span class="del">-                        break;</span>
+<span class="del">-                    default:</span>
+<span class="del">-                        switch (magic)</span>
+<span class="del">-                        {</span>
+<span class="del">-                            case 4:</span>
+<span class="del">-                                className = &quot;Spellsword&quot;;</span>
+<span class="del">-                                break;</span>
+<span class="del">-                            case 5:</span>
+<span class="del">-                                className = &quot;Witchhunter&quot;;</span>
+<span class="del">-                                break;</span>
+<span class="del">-                            case 6:</span>
+<span class="del">-                                if (combat == 2)</span>
+<span class="del">-                                    className = &quot;Sorcerer&quot;;</span>
+<span class="del">-                                else if (combat == 3)</span>
+<span class="del">-                                    className = &quot;Healer&quot;;</span>
+<span class="del">-                                else</span>
+<span class="del">-                                    className = &quot;Battlemage&quot;;</span>
+<span class="del">-                                break;</span>
+<span class="del">-                            case 7:</span>
+<span class="del">-                                className = &quot;Mage&quot;;</span>
+<span class="del">-                                break;</span>
+<span class="del">-                            default:</span>
+<span class="del">-                                switch (stealth)</span>
+<span class="del">-                                {</span>
+<span class="del">-                                    case 3:</span>
+<span class="del">-                                        if (magic == 3)</span>
+<span class="del">-                                            className = &quot;Bard&quot;; // unreachable</span>
+<span class="del">-                                        else</span>
+<span class="del">-                                            className = &quot;Warrior&quot;;</span>
+<span class="del">-                                        break;</span>
+<span class="del">-                                    case 5:</span>
+<span class="del">-                                        if (magic == 3)</span>
+<span class="del">-                                            className = &quot;Monk&quot;;</span>
+<span class="del">-                                        else</span>
+<span class="del">-                                            className = &quot;Pilgrim&quot;;</span>
+<span class="del">-                                        break;</span>
+<span class="del">-                                    case 6:</span>
+<span class="del">-                                        if (magic == 1)</span>
+<span class="del">-                                            className = &quot;Agent&quot;;</span>
+<span class="del">-                                        else if (magic == 3)</span>
+<span class="del">-                                            className = &quot;Assassin&quot;;</span>
+<span class="del">-                                        else</span>
+<span class="del">-                                            className = &quot;Acrobat&quot;;</span>
+<span class="del">-                                        break;</span>
+<span class="del">-                                    case 7:</span>
+<span class="del">-                                        className = &quot;Thief&quot;;</span>
+<span class="del">-                                        break;</span>
+<span class="del">-                                    default:</span>
+<span class="del">-                                        className = &quot;Warrior&quot;;</span>
+<span class="del">-                                }</span>
+<span class="del">-                        }</span>
+<span class="del">-                }</span>
+<span class="del">-            }</span>
+<span class="del">-            mGenerateClass = ESM::RefId::stringRefId(className);</span>
+<span class="add">+            mGenerateClass = MWMechanics::getGeneratedClass(</span>
+<span class="add">+                mGenerateClassSpecializations[0], mGenerateClassSpecializations[1], mGenerateClassSpecializations[2]);</span>
+<span class="ctx"> </span>
+<span class="ctx">             mGenerateClassQuestionDialog-&gt;setVisible(false);</span>
+<span class="ctx">             mGenerateClassResultDialog-&gt;setClassId(mGenerateClass);</span>
+<span class="hunk">@@ -614,7 +519,7 @@ namespace MWGui</span>
+<span class="ctx">             return;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        if (mGenerateClassStep &gt; 10)</span>
+<span class="add">+        if (mGenerateClassStep &gt; MWMechanics::sClassQuestionCount)</span>
+<span class="ctx">         {</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;popGuiMode();</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(GM_Class);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/chargen.cpp</div><pre>
+<span class="hunk">@@ -0,0 +1,122 @@</span>
+<span class="add">+#include &quot;chargen.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;format&gt;</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;components/esm3/loadclas.hpp&gt;</span>
+<span class="add">+#include &lt;components/fallback/fallback.hpp&gt;</span>
+<span class="add">+</span>
+<span class="add">+namespace MWMechanics</span>
+<span class="add">+{</span>
+<span class="add">+    std::vector&lt;ClassQuestion&gt; getClassQuestions()</span>
+<span class="add">+    {</span>
+<span class="add">+        std::vector&lt;ClassQuestion&gt; questions;</span>
+<span class="add">+        questions.reserve(sClassQuestionCount);</span>
+<span class="add">+        for (unsigned number = 1; number &lt;= sClassQuestionCount; ++number)</span>
+<span class="add">+        {</span>
+<span class="add">+            ClassQuestion&amp; question = questions.emplace_back();</span>
+<span class="add">+            question.mQuestion = Fallback::Map::getString(std::format(&quot;Question_{}_Question&quot;, number));</span>
+<span class="add">+            question.mAnswers[ESM::Class::Combat]</span>
+<span class="add">+                = Fallback::Map::getString(std::format(&quot;Question_{}_AnswerOne&quot;, number));</span>
+<span class="add">+            question.mAnswers[ESM::Class::Magic]</span>
+<span class="add">+                = Fallback::Map::getString(std::format(&quot;Question_{}_AnswerTwo&quot;, number));</span>
+<span class="add">+            question.mAnswers[ESM::Class::Stealth]</span>
+<span class="add">+                = Fallback::Map::getString(std::format(&quot;Question_{}_AnswerThree&quot;, number));</span>
+<span class="add">+            question.mSound = VFS::Path::Normalized(std::format(&quot;vo/misc/chargen qa{}.wav&quot;, number));</span>
+<span class="add">+        }</span>
+<span class="add">+        return questions;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    ESM::RefId getGeneratedClass(unsigned combat, unsigned magic, unsigned stealth)</span>
+<span class="add">+    {</span>
+<span class="add">+        std::string_view className;</span>
+<span class="add">+        if (combat &gt; 7)</span>
+<span class="add">+        {</span>
+<span class="add">+            className = &quot;Warrior&quot;;</span>
+<span class="add">+        }</span>
+<span class="add">+        else if (magic &gt; 7)</span>
+<span class="add">+        {</span>
+<span class="add">+            className = &quot;Mage&quot;;</span>
+<span class="add">+        }</span>
+<span class="add">+        else if (stealth &gt; 7)</span>
+<span class="add">+        {</span>
+<span class="add">+            className = &quot;Thief&quot;;</span>
+<span class="add">+        }</span>
+<span class="add">+        else</span>
+<span class="add">+        {</span>
+<span class="add">+            switch (combat)</span>
+<span class="add">+            {</span>
+<span class="add">+                case 4:</span>
+<span class="add">+                    className = &quot;Rogue&quot;;</span>
+<span class="add">+                    break;</span>
+<span class="add">+                case 5:</span>
+<span class="add">+                    if (stealth == 3)</span>
+<span class="add">+                        className = &quot;Scout&quot;;</span>
+<span class="add">+                    else</span>
+<span class="add">+                        className = &quot;Archer&quot;;</span>
+<span class="add">+                    break;</span>
+<span class="add">+                case 6:</span>
+<span class="add">+                    if (stealth == 1)</span>
+<span class="add">+                        className = &quot;Barbarian&quot;;</span>
+<span class="add">+                    else if (stealth == 3)</span>
+<span class="add">+                        className = &quot;Crusader&quot;;</span>
+<span class="add">+                    else</span>
+<span class="add">+                        className = &quot;Knight&quot;;</span>
+<span class="add">+                    break;</span>
+<span class="add">+                case 7:</span>
+<span class="add">+                    className = &quot;Warrior&quot;;</span>
+<span class="add">+                    break;</span>
+<span class="add">+                default:</span>
+<span class="add">+                    switch (magic)</span>
+<span class="add">+                    {</span>
+<span class="add">+                        case 4:</span>
+<span class="add">+                            className = &quot;Spellsword&quot;;</span>
+<span class="add">+                            break;</span>
+<span class="add">+                        case 5:</span>
+<span class="add">+                            className = &quot;Witchhunter&quot;;</span>
+<span class="add">+                            break;</span>
+<span class="add">+                        case 6:</span>
+<span class="add">+                            if (combat == 2)</span>
+<span class="add">+                                className = &quot;Sorcerer&quot;;</span>
+<span class="add">+                            else if (combat == 3)</span>
+<span class="add">+                                className = &quot;Healer&quot;;</span>
+<span class="add">+                            else</span>
+<span class="add">+                                className = &quot;Battlemage&quot;;</span>
+<span class="add">+                            break;</span>
+<span class="add">+                        case 7:</span>
+<span class="add">+                            className = &quot;Mage&quot;;</span>
+<span class="add">+                            break;</span>
+<span class="add">+                        default:</span>
+<span class="add">+                            switch (stealth)</span>
+<span class="add">+                            {</span>
+<span class="add">+                                case 3:</span>
+<span class="add">+                                    if (magic == 3)</span>
+<span class="add">+                                        className = &quot;Bard&quot;; // unreachable</span>
+<span class="add">+                                    else</span>
+<span class="add">+                                        className = &quot;Warrior&quot;;</span>
+<span class="add">+                                    break;</span>
+<span class="add">+                                case 5:</span>
+<span class="add">+                                    if (magic == 3)</span>
+<span class="add">+                                        className = &quot;Monk&quot;;</span>
+<span class="add">+                                    else</span>
+<span class="add">+                                        className = &quot;Pilgrim&quot;;</span>
+<span class="add">+                                    break;</span>
+<span class="add">+                                case 6:</span>
+<span class="add">+                                    if (magic == 1)</span>
+<span class="add">+                                        className = &quot;Agent&quot;;</span>
+<span class="add">+                                    else if (magic == 3)</span>
+<span class="add">+                                        className = &quot;Assassin&quot;;</span>
+<span class="add">+                                    else</span>
+<span class="add">+                                        className = &quot;Acrobat&quot;;</span>
+<span class="add">+                                    break;</span>
+<span class="add">+                                case 7:</span>
+<span class="add">+                                    className = &quot;Thief&quot;;</span>
+<span class="add">+                                    break;</span>
+<span class="add">+                                default:</span>
+<span class="add">+                                    className = &quot;Warrior&quot;;</span>
+<span class="add">+                            }</span>
+<span class="add">+                    }</span>
+<span class="add">+            }</span>
+<span class="add">+        }</span>
+<span class="add">+        return ESM::RefId::stringRefId(className);</span>
+<span class="add">+    }</span>
+<span class="add">+}</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/chargen.hpp</div><pre>
+<span class="hunk">@@ -0,0 +1,35 @@</span>
+<span class="add">+#ifndef OPENMW_MECHANICS_CHARGEN_H</span>
+<span class="add">+#define OPENMW_MECHANICS_CHARGEN_H</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;array&gt;</span>
+<span class="add">+#include &lt;string_view&gt;</span>
+<span class="add">+#include &lt;vector&gt;</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;components/esm/refid.hpp&gt;</span>
+<span class="add">+#include &lt;components/vfs/pathutil.hpp&gt;</span>
+<span class="add">+</span>
+<span class="add">+namespace MWMechanics</span>
+<span class="add">+{</span>
+<span class="add">+    /// One of the questions that character creation asks to find a class for the player.</span>
+<span class="add">+    struct ClassQuestion</span>
+<span class="add">+    {</span>
+<span class="add">+        std::string_view mQuestion;</span>
+<span class="add">+        /// The answers for each specialization, indexed by ESM::Class::Specialization.</span>
+<span class="add">+        std::array&lt;std::string_view, 3&gt; mAnswers;</span>
+<span class="add">+        /// The voice that reads out the question.</span>
+<span class="add">+        VFS::Path::Normalized mSound;</span>
+<span class="add">+    };</span>
+<span class="add">+</span>
+<span class="add">+    /// The number of questions that character creation asks to find a class for the player.</span>
+<span class="add">+    constexpr unsigned sClassQuestionCount = 10;</span>
+<span class="add">+</span>
+<span class="add">+    /// The questions that character creation asks to find a class for the player, in the order it asks them.</span>
+<span class="add">+    /// The texts come from the game&#x27;s fallback settings.</span>
+<span class="add">+    std::vector&lt;ClassQuestion&gt; getClassQuestions();</span>
+<span class="add">+</span>
+<span class="add">+    /// The class that the answers to the class questions lead to. The arguments count the answers that the player</span>
+<span class="add">+    /// chose for each specialization.</span>
+<span class="add">+    ESM::RefId getGeneratedClass(unsigned combat, unsigned magic, unsigned stealth);</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+#endif</span>
+</pre></div>

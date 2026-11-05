@@ -1,0 +1,268 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/actor.cpp</div><pre>
+<span class="hunk">@@ -482,6 +482,35 @@ namespace MWLua</span>
+<span class="ctx">                 throw std::runtime_error(&quot;Item expected&quot;);</span>
+<span class="ctx">             return MWMechanics::canBarterItem(merchantPtr, itemPtr);</span>
+<span class="ctx">         };</span>
+<span class="add">+        actor[&quot;getBarterItems&quot;] = [](sol::this_state thisState, const Object&amp; merchant) -&gt; sol::table {</span>
+<span class="add">+            const MWWorld::Ptr merchantPtr = merchant.ptr();</span>
+<span class="add">+            if (!merchantPtr.getClass().isActor())</span>
+<span class="add">+                throw std::runtime_error(&quot;Actor expected&quot;);</span>
+<span class="add">+            std::vector&lt;MWWorld::Ptr&gt; containers;</span>
+<span class="add">+            std::vector&lt;MWWorld::Ptr&gt; worldItems;</span>
+<span class="add">+            MWMechanics::getBarterSources(merchantPtr, containers, worldItems);</span>
+<span class="add">+            sol::table result(thisState, sol::create);</span>
+<span class="add">+            const auto addItem = [&amp;](const MWWorld::Ptr&amp; item) {</span>
+<span class="add">+                if (!MWMechanics::canBarterItem(merchantPtr, item))</span>
+<span class="add">+                    return;</span>
+<span class="add">+                if (merchant.isGObject())</span>
+<span class="add">+                    result.add(GObject(item));</span>
+<span class="add">+                else</span>
+<span class="add">+                    result.add(LObject(item));</span>
+<span class="add">+            };</span>
+<span class="add">+            for (const MWWorld::Ptr&amp; container : containers)</span>
+<span class="add">+            {</span>
+<span class="add">+                MWWorld::ContainerStore&amp; store = container.getClass().getContainerStore(container);</span>
+<span class="add">+                for (MWWorld::ContainerStoreIterator it = store.begin(); it != store.end(); ++it)</span>
+<span class="add">+                    addItem(*it);</span>
+<span class="add">+            }</span>
+<span class="add">+            for (const MWWorld::Ptr&amp; item : worldItems)</span>
+<span class="add">+            {</span>
+<span class="add">+                if (item.getCellRef().getCount() &gt; 0)</span>
+<span class="add">+                    addItem(item);</span>
+<span class="add">+            }</span>
+<span class="add">+            return result;</span>
+<span class="add">+        };</span>
+<span class="ctx">         actor[&quot;getRepairPrice&quot;] = [](const Object&amp; merchant, const Object&amp; item) -&gt; int {</span>
+<span class="ctx">             const MWWorld::Ptr merchantPtr = merchant.ptr();</span>
+<span class="ctx">             if (!merchantPtr.getClass().isActor())</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -952,7 +952,37 @@ namespace MWLua</span>
+<span class="ctx">         std::optional&lt;int&gt; mGold;</span>
+<span class="ctx">     };</span>
+<span class="ctx"> </span>
+<span class="del">-    static BarterItems toBarterItems(const sol::table&amp; table, const MWWorld::Ptr&amp; owner, const MWWorld::Ptr&amp; merchant)</span>
+<span class="add">+    // The places that a merchant sells from, as the trade window finds them.</span>
+<span class="add">+    struct BarterStock</span>
+<span class="add">+    {</span>
+<span class="add">+        std::vector&lt;MWWorld::Ptr&gt; mContainers;</span>
+<span class="add">+        std::vector&lt;MWWorld::Ptr&gt; mWorldItems;</span>
+<span class="add">+</span>
+<span class="add">+        explicit BarterStock(const MWWorld::Ptr&amp; merchant)</span>
+<span class="add">+        {</span>
+<span class="add">+            MWMechanics::getBarterSources(merchant, mContainers, mWorldItems);</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        // The number of items that the merchant can still sell, out of the @a count that the script asked for.</span>
+<span class="add">+        int getCountInStock(const MWWorld::Ptr&amp; item, int count) const</span>
+<span class="add">+        {</span>
+<span class="add">+            if (const MWWorld::ContainerStore* store = item.getContainerStore())</span>
+<span class="add">+            {</span>
+<span class="add">+                const bool inStock</span>
+<span class="add">+                    = std::any_of(mContainers.begin(), mContainers.end(), [&amp;](const MWWorld::Ptr&amp; container) {</span>
+<span class="add">+                          return store == &amp;container.getClass().getContainerStore(container);</span>
+<span class="add">+                      });</span>
+<span class="add">+                return inStock ? std::min(count, item.getCellRef().getCount()) : 0;</span>
+<span class="add">+            }</span>
+<span class="add">+            if (std::find(mWorldItems.begin(), mWorldItems.end(), item) == mWorldItems.end())</span>
+<span class="add">+                return 0;</span>
+<span class="add">+            return std::min(count, item.getCellRef().getCount());</span>
+<span class="add">+        }</span>
+<span class="add">+    };</span>
+<span class="add">+</span>
+<span class="add">+    // Reads the items of a table that buys from the merchant&#x27;s goods, when @a stock is set, or sells from the player&#x27;s</span>
+<span class="add">+    // inventory.</span>
+<span class="add">+    static BarterItems toBarterItems(const sol::table&amp; table, const MWWorld::Ptr&amp; merchant, const BarterStock* stock)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         BarterItems result;</span>
+<span class="ctx">         for (size_t i = 1; i &lt;= table.size(); ++i)</span>
+<span class="hunk">@@ -960,7 +990,10 @@ namespace MWLua</span>
+<span class="ctx">             const sol::table entry = LuaUtil::cast&lt;sol::table&gt;(table[i]);</span>
+<span class="ctx">             const Object item = LuaUtil::cast&lt;Object&gt;(entry.get&lt;sol::object&gt;(&quot;item&quot;));</span>
+<span class="ctx">             const MWWorld::Ptr itemPtr = item.ptr();</span>
+<span class="del">-            verifyIsIn(itemPtr, owner);</span>
+<span class="add">+            if (!stock)</span>
+<span class="add">+                verifyIsIn(itemPtr, MWMechanics::getPlayer());</span>
+<span class="add">+            else if (stock-&gt;getCountInStock(itemPtr, 1) &lt;= 0)</span>
+<span class="add">+                throw std::runtime_error(itemPtr.toString() + &quot; is not among the merchant&#x27;s goods&quot;);</span>
+<span class="ctx">             if (!MWMechanics::canBarterItem(merchant, itemPtr))</span>
+<span class="ctx">                 throw std::runtime_error(&quot;The merchant doesn&#x27;t trade &quot; + itemPtr.toString());</span>
+<span class="ctx">             for (const auto&amp; [listed, count] : result)</span>
+<span class="hunk">@@ -977,9 +1010,12 @@ namespace MWLua</span>
+<span class="ctx">     {</span>
+<span class="ctx">         BarterSetup setup;</span>
+<span class="ctx">         if (const std::optional&lt;sol::table&gt; bought = getField&lt;sol::table&gt;(table, &quot;buy&quot;))</span>
+<span class="del">-            setup.mBought = toBarterItems(*bought, merchant, merchant);</span>
+<span class="add">+        {</span>
+<span class="add">+            const BarterStock stock(merchant);</span>
+<span class="add">+            setup.mBought = toBarterItems(*bought, merchant, &amp;stock);</span>
+<span class="add">+        }</span>
+<span class="ctx">         if (const std::optional&lt;sol::table&gt; sold = getField&lt;sol::table&gt;(table, &quot;sell&quot;))</span>
+<span class="del">-            setup.mSold = toBarterItems(*sold, MWMechanics::getPlayer(), merchant);</span>
+<span class="add">+            setup.mSold = toBarterItems(*sold, merchant, nullptr);</span>
+<span class="ctx">         setup.mGold = getField&lt;int&gt;(table, &quot;gold&quot;);</span>
+<span class="ctx">         return setup;</span>
+<span class="ctx">     }</span>
+<span class="hunk">@@ -1007,12 +1043,34 @@ namespace MWLua</span>
+<span class="ctx">         return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    static bool areBarterItemsLeft(const BarterItems&amp; items, const BarterStock&amp; stock)</span>
+<span class="add">+    {</span>
+<span class="add">+        for (const auto&amp; [item, count] : items)</span>
+<span class="add">+        {</span>
+<span class="add">+            if (stock.getCountInStock(item.ptr(), count) &lt; count)</span>
+<span class="add">+                return false;</span>
+<span class="add">+        }</span>
+<span class="add">+        return true;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     // Moves items to another inventory, the way the trade window moves them. A merchant never runs out of items</span>
+<span class="ctx">     // that restock, so the merchant keeps those.</span>
+<span class="ctx">     static void moveBarterItem(const MWWorld::Ptr&amp; item, int count, const MWWorld::Ptr&amp; to, bool equipReplacement)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         const bool allowAutoEquip = !Settings::game().mPreventMerchantEquipping;</span>
+<span class="ctx">         MWWorld::ContainerStore&amp; store = to.getClass().getContainerStore(to);</span>
+<span class="add">+        if (!item.getContainerStore())</span>
+<span class="add">+        {</span>
+<span class="add">+            // The item lies in the world.</span>
+<span class="add">+            MWWorld::ManualRef copy(*MWBase::Environment::get().getESMStore(), item, count);</span>
+<span class="add">+            store.add(copy.getPtr(), count, allowAutoEquip);</span>
+<span class="add">+            const int countLeft = item.getCellRef().getCount() - count;</span>
+<span class="add">+            if (countLeft &lt;= 0)</span>
+<span class="add">+                MWBase::Environment::get().getWorld()-&gt;deleteObject(item);</span>
+<span class="add">+            else</span>
+<span class="add">+                item.getCellRef().setCount(countLeft);</span>
+<span class="add">+            return;</span>
+<span class="add">+        }</span>
+<span class="ctx">         const bool restocks = item.getCellRef().getCount(false) &lt; 0;</span>
+<span class="ctx">         if (!restocks)</span>
+<span class="ctx">             item.getContainerStore()-&gt;remove(item, count, equipReplacement);</span>
+<span class="hunk">@@ -1060,7 +1118,8 @@ namespace MWLua</span>
+<span class="ctx">                     const MWWorld::Ptr trader = merchant.ptr();</span>
+<span class="ctx">                     const MWWorld::Ptr buyer = MWMechanics::getPlayer();</span>
+<span class="ctx">                     // An earlier action may have moved the items or spent the gold.</span>
+<span class="del">-                    if (!areBarterItemsLeft(setup.mBought, trader) || !areBarterItemsLeft(setup.mSold, buyer)</span>
+<span class="add">+                    if (!areBarterItemsLeft(setup.mBought, BarterStock(trader))</span>
+<span class="add">+                        || !areBarterItemsLeft(setup.mSold, buyer)</span>
+<span class="ctx">                         || MWMechanics::getBarterProblem(trader, gold) != MWMechanics::BarterProblem::None)</span>
+<span class="ctx">                     {</span>
+<span class="ctx">                         reportOutcome(context, callback, false);</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -63,6 +63,18 @@</span>
+<span class="ctx"> -- @param openmw.core#GameObject item</span>
+<span class="ctx"> -- @return #boolean</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- The goods that a merchant sells, as the barter window lists them.</span>
+<span class="add">+-- They come from the merchant&#x27;s inventory, from the containers that the merchant owns in the active cells, and from the items that the merchant owns that lie in the active cells. Containers that can&#x27;t hold anything don&#x27;t count. Only the items that @{#Actor.canBarterItem} allows are listed.</span>
+<span class="add">+-- The list has the merchant&#x27;s own items first. Items of the same kind from different places are separate entries, while the barter window shows them as one stack.</span>
+<span class="add">+-- A container that nobody has opened yet holds only the items that its record names directly. It gets its levelled items when it is resolved, which the engine does while the barter mode is open, or a global script does with `inventory:resolve()`.</span>
+<span class="add">+-- @function [parent=#Actor] getBarterItems</span>
+<span class="add">+-- @param openmw.core#GameObject merchant</span>
+<span class="add">+-- @return #list&lt;openmw.core#GameObject&gt;</span>
+<span class="add">+-- @usage for _, item in ipairs(types.Actor.getBarterItems(merchant)) do</span>
+<span class="add">+--     print(item.recordId, item.count, types.Actor.getBuyingPrice(merchant, item))</span>
+<span class="add">+-- end</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- The gold a merchant asks to teach the player a spell.</span>
+<span class="ctx"> -- This is the price that the spell buying window shows. It is the spell&#x27;s cost times the `fSpellValueMult` game setting, adjusted by the merchant&#x27;s offer the same way as @{#Actor.getBuyingPrice}.</span>
+<span class="hunk">@@ -1979,7 +1991,7 @@</span>
+<span class="ctx"> -- What the player offers a merchant, like the items and the gold in the barter window.</span>
+<span class="ctx"> -- It is a plain table, like an @{#EnchantingSetup}. Each function that takes it works everything out again from the table.</span>
+<span class="ctx"> -- @type BarterSetup</span>
+<span class="add">+-- @field #list&lt;#BarterItem&gt; buy The items that the player buys. They must be among @{#Actor.getBarterItems} (optional).</span>
+<span class="ctx"> -- @field #list&lt;#BarterItem&gt; sell The items that the player sells. They must be in the player&#x27;s inventory (optional).</span>
+<span class="ctx"> -- @field #number gold The gold that the player asks for, or pays when it is negative (optional, @{#PLAYER.getBarterOffer} by default).</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -2002,10 +2014,9 @@</span>
+<span class="ctx"> -- Make an offer to a merchant, the way the offer button of the barter window does it (only in global scripts).</span>
+<span class="ctx"> -- If the player asks for no more than @{#PLAYER.getBarterOffer}, the merchant accepts. Otherwise an NPC merchant accepts if the player beats a roll, with their Mercantile skill, Personality, Luck and fatigue against the merchant&#x27;s, and with the merchant&#x27;s disposition. A creature refuses. A merchant also refuses when the player asks for gold and buys items at the same time.</span>
+<span class="ctx"> -- When an NPC merchant accepts, the player&#x27;s Mercantile skill progresses, more so the better the deal. Whether they accept or refuse, the merchant&#x27;s disposition goes up or down by the `iBarterSuccessDisposition` or `iBarterFailDisposition` game setting, while the player is talking to them. This is how the barter window works, since it opens from a conversation. Outside a conversation with the merchant, their disposition doesn&#x27;t change.</span>
+<span class="add">+-- When the merchant accepts, the items change hands, and the gold moves between the player&#x27;s inventory and the merchant&#x27;s barter gold. The player&#x27;s items go into the merchant&#x27;s inventory. Items that a merchant restocks don&#x27;t run out, so the merchant keeps them.</span>
+<span class="ctx"> -- If the player sells an item that they stole from the merchant, the merchant takes it back instead, and nothing else happens.</span>
+<span class="ctx"> -- This throws an error when the barter window would refuse the offer: without items, or when the player or the merchant can&#x27;t pay. The offer is made at the end of the frame. If an earlier change in the frame moved the items or spent the gold, nothing happens. It shows no message and plays no sound.</span>
+<span class="ctx"> -- @function [parent=#PLAYER] barter</span>
+<span class="ctx"> -- @param openmw.core#GameObject player</span>
+<span class="ctx"> -- @param openmw.core#GameObject merchant</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -1066,6 +1066,75 @@ testing.registerGlobalTest(&#x27;bartering&#x27;, function()</span>
+<span class="ctx">     merchant:remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;bartering with the goods a merchant owns&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    removeGold(player)</span>
+<span class="add">+    -- Only NPCs can own things.</span>
+<span class="add">+    local merchant = world.createObject(world.createRecord(types.NPC.createRecordDraft({</span>
+<span class="add">+        template = types.NPC.record(player),</span>
+<span class="add">+        isAutocalc = false,</span>
+<span class="add">+        servicesOffered = { Weapon = true, Misc = true },</span>
+<span class="add">+    })).id)</span>
+<span class="add">+    merchant:addScript(&#x27;idle.lua&#x27;)</span>
+<span class="add">+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))</span>
+<span class="add">+    local function createWeapon(name)</span>
+<span class="add">+        return world.createRecord(types.Weapon.createRecordDraft({</span>
+<span class="add">+            template = types.Weapon.record(&#x27;basic_dagger1h&#x27;),</span>
+<span class="add">+            name = name,</span>
+<span class="add">+            value = 10,</span>
+<span class="add">+        })).id</span>
+<span class="add">+    end</span>
+<span class="add">+    local stored = createWeapon(&quot;Dagger in the merchant&#x27;s chest&quot;)</span>
+<span class="add">+    local displayed = createWeapon(&quot;Dagger on the merchant&#x27;s table&quot;)</span>
+<span class="add">+    -- An NPC would wear a weapon, and merchants don&#x27;t sell what they wear.</span>
+<span class="add">+    local carried = world.createRecord(types.Miscellaneous.createRecordDraft({ name = &#x27;Trinket&#x27;, value = 5 })).id</span>
+<span class="add">+    world.createObject(carried, 1):moveInto(merchant)</span>
+<span class="add">+    local chest = world.createObject(world.createRecord(types.Container.createRecordDraft({</span>
+<span class="add">+        name = &quot;Merchant&#x27;s chest&quot;,</span>
+<span class="add">+        weight = 100,</span>
+<span class="add">+    })).id)</span>
+<span class="add">+    chest:teleport(player.cell, player.position + util.vector3(200, 500, 0))</span>
+<span class="add">+    world.createObject(stored, 3):moveInto(chest)</span>
+<span class="add">+    local onTable = world.createObject(displayed, 2)</span>
+<span class="add">+    onTable:teleport(player.cell, player.position + util.vector3(-200, 500, 0))</span>
+<span class="add">+    world.createObject(&#x27;gold_001&#x27;, 100):moveInto(player)</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    chest.owner.recordId = merchant.recordId</span>
+<span class="add">+    onTable.owner.recordId = merchant.recordId</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+</span>
+<span class="add">+    local goods = {}</span>
+<span class="add">+    for _, item in ipairs(types.Actor.getBarterItems(merchant)) do</span>
+<span class="add">+        goods[item.recordId] = item</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expect(goods[carried] ~= nil, &#x27;The merchant should sell what they carry&#x27;)</span>
+<span class="add">+    testing.expect(goods[stored] ~= nil, &#x27;The merchant should sell what is in their chest&#x27;)</span>
+<span class="add">+    testing.expect(goods[displayed] ~= nil, &#x27;The merchant should sell their items that lie in the world&#x27;)</span>
+<span class="add">+    testing.expectEqual(goods[&#x27;gold_001&#x27;], nil, &#x27;The merchant should not sell gold&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local setup = { buy = { { item = goods[stored], count = 2 }, { item = goods[displayed] } } }</span>
+<span class="add">+    local accepted = waitForOutcome(function(callback)</span>
+<span class="add">+        types.Player.barter(player, merchant, setup, callback)</span>
+<span class="add">+    end)</span>
+<span class="add">+    testing.expectEqual(accepted, true, &#x27;A merchant should accept their own offer&#x27;)</span>
+<span class="add">+    local playerInventory = types.Actor.inventory(player)</span>
+<span class="add">+    testing.expectEqual(playerInventory:countOf(stored), 2, &#x27;The player should get the items from the chest&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Container.inventory(chest):countOf(stored), 1, &#x27;The chest should keep the rest&#x27;)</span>
+<span class="add">+    testing.expectEqual(playerInventory:countOf(displayed), 2, &#x27;The player should get the items from the table&#x27;)</span>
+<span class="add">+    testing.expectEqual(onTable.count, 0, &#x27;The items should leave the table&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    chest.owner.recordId = nil</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.getBarterOffer, player, merchant, setup), false,</span>
+<span class="add">+        &#x27;Items in a chest that the merchant no longer owns should not be for sale&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    playerInventory:find(stored):remove()</span>
+<span class="add">+    playerInventory:find(displayed):remove()</span>
+<span class="add">+    removeGold(player)</span>
+<span class="add">+    chest:remove()</span>
+<span class="add">+    merchant:remove()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;items added to an inventory&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     local weapon = world.createRecord(types.Weapon.createRecordDraft({</span>
+</pre></div>

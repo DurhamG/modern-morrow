@@ -1,0 +1,183 @@
+<div class="file"><div class="path">apps/openmw/mwlua/luamanagerimp.hpp</div><pre>
+<span class="hunk">@@ -5,6 +5,7 @@</span>
+<span class="ctx"> #include &lt;map&gt;</span>
+<span class="ctx"> #include &lt;optional&gt;</span>
+<span class="ctx"> #include &lt;set&gt;</span>
+<span class="add">+#include &lt;thread&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;components/lua/inputactions.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/lua/luastate.hpp&gt;</span>
+<span class="hunk">@@ -206,6 +207,9 @@ namespace MWLua</span>
+<span class="ctx"> </span>
+<span class="ctx">         bool isSynchronizedUpdateRunning() const { return mRunningSynchronizedUpdates; }</span>
+<span class="ctx"> </span>
+<span class="add">+        // True on the thread that created the manager. Scripts also run on the Lua worker thread.</span>
+<span class="add">+        bool isMainThread() const { return std::this_thread::get_id() == mMainThreadId; }</span>
+<span class="add">+</span>
+<span class="ctx">     private:</span>
+<span class="ctx">         void initConfiguration(bool reload);</span>
+<span class="ctx">         LocalScripts* createLocalScripts(const MWWorld::Ptr&amp; ptr,</span>
+<span class="hunk">@@ -221,6 +225,7 @@ namespace MWLua</span>
+<span class="ctx">         bool mNewGameStarted = false;</span>
+<span class="ctx">         bool mReloadAllScriptsRequested = false;</span>
+<span class="ctx">         bool mRunningSynchronizedUpdates = false;</span>
+<span class="add">+        std::thread::id mMainThreadId = std::this_thread::get_id();</span>
+<span class="ctx">         LuaUtil::ScriptsConfiguration mConfiguration;</span>
+<span class="ctx">         LuaUtil::LuaState mLua;</span>
+<span class="ctx">         LuaUi::ResourceManager mUiResourceManager;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/uibindings.cpp</div><pre>
+<span class="hunk">@@ -11,6 +11,7 @@</span>
+<span class="ctx"> #include &lt;components/lua_ui/layers.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/lua_ui/registerscriptsettings.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/lua_ui/resources.hpp&gt;</span>
+<span class="add">+#include &lt;components/lua_ui/text.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/lua_ui/util.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;components/misc/finitevalues.hpp&gt;</span>
+<span class="hunk">@@ -393,6 +394,26 @@ namespace MWLua</span>
+<span class="ctx">             return luaManager-&gt;uiResourceManager()-&gt;findCursor(windowManager-&gt;getCurrentCursorName());</span>
+<span class="ctx">         };</span>
+<span class="ctx"> </span>
+<span class="add">+        api[&quot;measureText&quot;] = [luaManager = context.mLuaManager](</span>
+<span class="add">+                                 std::string_view text, const sol::optional&lt;sol::table&gt;&amp; options) -&gt; osg::Vec2f {</span>
+<span class="add">+            if (!luaManager-&gt;isMainThread())</span>
+<span class="add">+                throw std::runtime_error(</span>
+<span class="add">+                    &quot;ui.measureText can&#x27;t be used on the Lua worker thread. Call it from onFrame, an input handler, &quot;</span>
+<span class="add">+                    &quot;a UI event callback or a window&#x27;s show function.&quot;);</span>
+<span class="add">+            LuaUi::TextMeasureOptions measure;</span>
+<span class="add">+            if (options)</span>
+<span class="add">+            {</span>
+<span class="add">+                measure.mTextSize = options-&gt;get_or(&quot;textSize&quot;, measure.mTextSize);</span>
+<span class="add">+                measure.mMultiline = options-&gt;get_or(&quot;multiline&quot;, measure.mMultiline);</span>
+<span class="add">+                measure.mWordWrap = options-&gt;get_or(&quot;wordWrap&quot;, measure.mWordWrap);</span>
+<span class="add">+                measure.mWidth = options-&gt;get_or(&quot;width&quot;, measure.mWidth);</span>
+<span class="add">+            }</span>
+<span class="add">+            if (measure.mWordWrap &amp;&amp; measure.mWidth &lt;= 0)</span>
+<span class="add">+                throw std::runtime_error(&quot;ui.measureText needs a positive width to wrap the text&quot;);</span>
+<span class="add">+            const MyGUI::IntSize size = LuaUi::measureText(text, measure);</span>
+<span class="add">+            return osg::Vec2f(static_cast&lt;float&gt;(size.width), static_cast&lt;float&gt;(size.height));</span>
+<span class="add">+        };</span>
+<span class="add">+</span>
+<span class="ctx">         api[&quot;screenSize&quot;] = []() {</span>
+<span class="ctx">             return osg::Vec2f(</span>
+<span class="ctx">                 static_cast&lt;float&gt;(Settings::video().mResolutionX), static_cast&lt;float&gt;(Settings::video().mResolutionY));</span>
+</pre></div>
+<div class="file"><div class="path">components/lua_ui/text.cpp</div><pre>
+<span class="hunk">@@ -1,5 +1,9 @@</span>
+<span class="ctx"> #include &quot;text.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;algorithm&gt;</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;MyGUI_Gui.h&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> #include &quot;alignment.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace LuaUi</span>
+<span class="hunk">@@ -77,4 +81,22 @@ namespace LuaUi</span>
+<span class="ctx">     {</span>
+<span class="ctx">         return WidgetExtension::getContentSize();</span>
+<span class="ctx">     }</span>
+<span class="add">+</span>
+<span class="add">+    MyGUI::IntSize measureText(std::string_view text, const TextMeasureOptions&amp; options)</span>
+<span class="add">+    {</span>
+<span class="add">+        // A probe with the Text widget&#x27;s skin, so that it uses the same font and text layout.</span>
+<span class="add">+        const int width = options.mWordWrap ? std::max(options.mWidth, 1) : 1;</span>
+<span class="add">+        MyGUI::EditBox* probe = MyGUI::Gui::getInstance().createWidgetT(</span>
+<span class="add">+            MyGUI::EditBox::getClassTypeName(), &quot;LuaText&quot;, MyGUI::IntCoord(0, 0, width, 1), MyGUI::Align::Default, {})</span>
+<span class="add">+                                    -&gt;castType&lt;MyGUI::EditBox&gt;();</span>
+<span class="add">+        probe-&gt;setVisible(false);</span>
+<span class="add">+        probe-&gt;setEditStatic(true);</span>
+<span class="add">+        probe-&gt;setEditMultiLine(options.mMultiline || options.mWordWrap);</span>
+<span class="add">+        probe-&gt;setEditWordWrap(options.mWordWrap);</span>
+<span class="add">+        probe-&gt;setFontHeight(options.mTextSize);</span>
+<span class="add">+        probe-&gt;setCaption(MyGUI::UString(text));</span>
+<span class="add">+        const MyGUI::IntSize size = probe-&gt;getTextSize();</span>
+<span class="add">+        MyGUI::Gui::getInstance().destroyWidget(probe);</span>
+<span class="add">+        return size;</span>
+<span class="add">+    }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">components/lua_ui/text.hpp</div><pre>
+<span class="hunk">@@ -1,6 +1,7 @@</span>
+<span class="ctx"> #ifndef OPENMW_LUAUI_TEXT</span>
+<span class="ctx"> #define OPENMW_LUAUI_TEXT</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;string_view&gt;</span>
+<span class="ctx"> #include &lt;vector&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;MyGUI_EditBox.h&gt;</span>
+<span class="hunk">@@ -29,6 +30,19 @@ namespace LuaUi</span>
+<span class="ctx">         MyGUI::IntCoord getTextRegion() const override;</span>
+<span class="ctx">         MyGUI::IntSize getViewSize() const override;</span>
+<span class="ctx">     };</span>
+<span class="add">+</span>
+<span class="add">+    struct TextMeasureOptions</span>
+<span class="add">+    {</span>
+<span class="add">+        int mTextSize = 10;</span>
+<span class="add">+        bool mMultiline = false;</span>
+<span class="add">+        bool mWordWrap = false;</span>
+<span class="add">+        // The width to wrap the text at. Only used with mWordWrap.</span>
+<span class="add">+        int mWidth = 0;</span>
+<span class="add">+    };</span>
+<span class="add">+</span>
+<span class="add">+    // The size that a Text widget with these properties gives the text. Uses MyGUI widgets, so it must be called</span>
+<span class="add">+    // from the main thread.</span>
+<span class="add">+    MyGUI::IntSize measureText(std::string_view text, const TextMeasureOptions&amp; options);</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="ctx"> #endif // OPENMW_LUAUI_TEXT</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/ui.lua</div><pre>
+<span class="hunk">@@ -125,6 +125,25 @@</span>
+<span class="ctx"> -- @function [parent=#ui] screenSize</span>
+<span class="ctx"> -- @return openmw.util#Vector2</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Measures text the way a `Text` widget with the same properties lays it out.</span>
+<span class="add">+-- The size is in the units of the layer the text will be shown on, so it can be used to place widgets next to the text, or to wrap and cut text yourself.</span>
+<span class="add">+-- MyGUI color codes such as `#FF0000` take no room.</span>
+<span class="add">+-- Only available on the main thread: in `onFrame`, input handlers, UI event callbacks and the show and hide functions of `I.UI.registerWindow`.</span>
+<span class="add">+-- It raises an error in other places, such as in `onUpdate` or event handlers, which may run on the Lua worker thread.</span>
+<span class="add">+-- @function [parent=#ui] measureText</span>
+<span class="add">+-- @param #string text</span>
+<span class="add">+-- @param #table options (optional) A table with these optional fields:</span>
+<span class="add">+--</span>
+<span class="add">+--   * `textSize` - the text size, as the `Text` widget&#x27;s `textSize` property. 10 by default.</span>
+<span class="add">+--   * `multiline` - as the `Text` widget&#x27;s `multiline` property. False by default.</span>
+<span class="add">+--   * `wordWrap` - as the `Text` widget&#x27;s `wordWrap` property. False by default. Needs `width`.</span>
+<span class="add">+--   * `width` - the width to wrap the text at.</span>
+<span class="add">+-- @return openmw.util#Vector2 The width and height of the text.</span>
+<span class="add">+-- @usage local size = ui.measureText(&#x27;Fireball&#x27;, { textSize = 18 })</span>
+<span class="add">+-- @usage -- The height of a paragraph wrapped at 400 units</span>
+<span class="add">+-- local height = ui.measureText(description, { textSize = 16, wordWrap = true, width = 400 }).y</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Converts a given table of tables into an @{openmw.ui#Content}</span>
+<span class="ctx"> -- @function [parent=#ui] content</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/player.lua</div><pre>
+<span class="hunk">@@ -195,6 +195,22 @@ testing.registerLocalTest(&#x27;UI layer with a fixed height&#x27;, function()</span>
+<span class="ctx">         &#x27;A height that is not positive should be an error&#x27;)</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerLocalTest(&#x27;measure text&#x27;, function()</span>
+<span class="add">+    local short = ui.measureText(&#x27;Hi&#x27;, { textSize = 16 })</span>
+<span class="add">+    local long = ui.measureText(&#x27;Hello there, outlander&#x27;, { textSize = 16 })</span>
+<span class="add">+    testing.expectGreaterThan(short.x, 0, &#x27;Text should have a width&#x27;)</span>
+<span class="add">+    testing.expectGreaterThan(long.x, short.x, &#x27;Longer text should be wider&#x27;)</span>
+<span class="add">+    testing.expectEqual(long.y, short.y, &#x27;One line of text should have the same height&#x27;)</span>
+<span class="add">+    testing.expectGreaterThan(ui.measureText(&#x27;Hi&#x27;, { textSize = 32 }).x, short.x, &#x27;Bigger text should be wider&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local wrapped = ui.measureText(&#x27;Hello there, outlander&#x27;, { textSize = 16, wordWrap = true, width = long.x / 2 })</span>
+<span class="add">+    testing.expectGreaterThan(wrapped.y, long.y, &#x27;Wrapped text should take more lines&#x27;)</span>
+<span class="add">+    testing.expectLessOrEqual(wrapped.x, long.x / 2, &#x27;Wrapped text should fit the width&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    local ok = pcall(ui.measureText, &#x27;Hi&#x27;, { wordWrap = true })</span>
+<span class="add">+    testing.expectEqual(ok, false, &#x27;Wrapping without a width should be an error&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerLocalTest(&#x27;findPath&#x27;,</span>
+<span class="ctx">     function()</span>
+<span class="ctx">         local src = util.vector3(4096, 4096, 1745)</span>
+</pre></div>

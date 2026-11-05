@@ -1,0 +1,227 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -3,6 +3,7 @@</span>
+<span class="ctx"> #include &lt;algorithm&gt;</span>
+<span class="ctx"> #include &lt;optional&gt;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;components/esm/attr.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadappa.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadbsgn.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadcrea.hpp&gt;</span>
+<span class="hunk">@@ -761,6 +762,77 @@ namespace MWLua</span>
+<span class="ctx">               };</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    static std::vector&lt;ESM::RefId&gt; toLevelUpAttributes(const MWMechanics::NpcStats&amp; stats, const sol::table&amp; table)</span>
+<span class="add">+    {</span>
+<span class="add">+        std::vector&lt;ESM::RefId&gt; result;</span>
+<span class="add">+        const MWWorld::Store&lt;ESM::Attribute&gt;&amp; store = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Attribute&gt;();</span>
+<span class="add">+        for (size_t i = 1; i &lt;= table.size(); ++i)</span>
+<span class="add">+        {</span>
+<span class="add">+            const std::string_view text = LuaUtil::cast&lt;std::string_view&gt;(table[i]);</span>
+<span class="add">+            const ESM::RefId id = ESM::RefId::deserializeText(text);</span>
+<span class="add">+            if (!store.search(id))</span>
+<span class="add">+                throw std::runtime_error(&quot;Attribute &#x27;&quot; + std::string(text) + &quot;&#x27; does not exist&quot;);</span>
+<span class="add">+            if (std::find(result.begin(), result.end(), id) != result.end())</span>
+<span class="add">+                throw std::runtime_error(&quot;Attribute &#x27;&quot; + std::string(text) + &quot;&#x27; is chosen twice&quot;);</span>
+<span class="add">+            if (stats.getLevelUpAttributeIncrease(id) &lt;= 0)</span>
+<span class="add">+                throw std::runtime_error(&quot;Attribute &#x27;&quot; + std::string(text) + &quot;&#x27; can&#x27;t be raised any further&quot;);</span>
+<span class="add">+            result.push_back(id);</span>
+<span class="add">+        }</span>
+<span class="add">+        if (static_cast&lt;int&gt;(result.size()) != stats.getLevelUpAttributeCount())</span>
+<span class="add">+            throw std::runtime_error(</span>
+<span class="add">+                &quot;A level-up raises &quot; + std::to_string(stats.getLevelUpAttributeCount()) + &quot; attributes&quot;);</span>
+<span class="add">+        return result;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    // Whether a level-up can still raise the attributes that toLevelUpAttributes accepted.</span>
+<span class="add">+    static bool canLevelUpWith(const MWMechanics::NpcStats&amp; stats, const std::vector&lt;ESM::RefId&gt;&amp; chosen)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (static_cast&lt;int&gt;(chosen.size()) != stats.getLevelUpAttributeCount())</span>
+<span class="add">+            return false;</span>
+<span class="add">+        return std::all_of(chosen.begin(), chosen.end(),</span>
+<span class="add">+            [&amp;](const ESM::RefId&amp; id) { return stats.getLevelUpAttributeIncrease(id) &gt; 0; });</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    static void addLevelUpBindings(sol::table&amp; playerBindings, const Context&amp; context)</span>
+<span class="add">+    {</span>
+<span class="add">+        playerBindings[&quot;getLevelUpInfo&quot;] = [](sol::this_state thisState, const Object&amp; player) -&gt; sol::table {</span>
+<span class="add">+            verifyPlayer(player);</span>
+<span class="add">+            const MWWorld::Ptr ptr = player.ptr();</span>
+<span class="add">+            const MWMechanics::NpcStats&amp; stats = ptr.getClass().getNpcStats(ptr);</span>
+<span class="add">+            sol::table increases(thisState, sol::create);</span>
+<span class="add">+            for (const ESM::Attribute&amp; attribute : MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Attribute&gt;())</span>
+<span class="add">+                increases[attribute.mId.serializeText()] = stats.getLevelUpAttributeIncrease(attribute.mId);</span>
+<span class="add">+            sol::table result(thisState, sol::create);</span>
+<span class="add">+            result[&quot;isReady&quot;] = stats.isLevelUpReady();</span>
+<span class="add">+            result[&quot;level&quot;] = stats.getLevel() + 1;</span>
+<span class="add">+            result[&quot;description&quot;] = stats.getLevelUpDescription();</span>
+<span class="add">+            result[&quot;classImage&quot;] = stats.getLevelUpClassImage();</span>
+<span class="add">+            result[&quot;attributeCount&quot;] = stats.getLevelUpAttributeCount();</span>
+<span class="add">+            result[&quot;attributeIncreases&quot;] = increases;</span>
+<span class="add">+            return result;</span>
+<span class="add">+        };</span>
+<span class="add">+        playerBindings[&quot;levelUp&quot;] = [context](const Object&amp; player, const sol::table&amp; attributes) {</span>
+<span class="add">+            verifyPlayer(player);</span>
+<span class="add">+            if (!player.isGObject())</span>
+<span class="add">+                throw std::runtime_error(&quot;Only global scripts can level up the player&quot;);</span>
+<span class="add">+            const MWWorld::Ptr ptr = player.ptr();</span>
+<span class="add">+            std::vector&lt;ESM::RefId&gt; chosen = toLevelUpAttributes(ptr.getClass().getNpcStats(ptr), attributes);</span>
+<span class="add">+            context.mLuaManager-&gt;addAction(</span>
+<span class="add">+                [chosen = std::move(chosen)] {</span>
+<span class="add">+                    const MWWorld::Ptr levelled = MWMechanics::getPlayer();</span>
+<span class="add">+                    MWMechanics::NpcStats&amp; stats = levelled.getClass().getNpcStats(levelled);</span>
+<span class="add">+                    // An earlier level-up in the frame may have taken one of the attributes to 100.</span>
+<span class="add">+                    if (!canLevelUpWith(stats, chosen))</span>
+<span class="add">+                    {</span>
+<span class="add">+                        Log(Debug::Warning) &lt;&lt; &quot;The player didn&#x27;t level up: an attribute can&#x27;t be raised any further&quot;;</span>
+<span class="add">+                        return;</span>
+<span class="add">+                    }</span>
+<span class="add">+                    stats.levelUp(chosen);</span>
+<span class="add">+                },</span>
+<span class="add">+                &quot;LevelUpAction&quot;);</span>
+<span class="add">+        };</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void addJournalClassBindings(sol::state_view&amp; lua, const MWBase::Journal* journal)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         auto journalBindingsClass = lua.new_usertype&lt;MWBase::Journal&gt;(&quot;MWDialogue_Journal&quot;);</span>
+<span class="hunk">@@ -1237,6 +1309,7 @@ namespace MWLua</span>
+<span class="ctx">         addToolBindings(player, context);</span>
+<span class="ctx">         addEnchantingBindings(player, context);</span>
+<span class="ctx">         addAlchemyBindings(player, context);</span>
+<span class="add">+        addLevelUpBindings(player, context);</span>
+<span class="ctx"> </span>
+<span class="ctx">         player[&quot;birthSigns&quot;] = initBirthSignRecordBindings(context);</span>
+<span class="ctx">         player[&quot;getBirthSign&quot;] = [](const Object&amp; object) -&gt; std::string {</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1520,6 +1520,31 @@</span>
+<span class="ctx"> -- @param openmw.core#GameObject player</span>
+<span class="ctx"> -- @return #boolean</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- What the level-up window shows for the player&#x27;s next level.</span>
+<span class="add">+-- @function [parent=#PLAYER] getLevelUpInfo</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @return #LevelUpInfo</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- @type LevelUpInfo</span>
+<span class="add">+-- @field #boolean isReady Whether the player&#x27;s skill increases since the last level-up are enough for the next one: the level&#x27;s `progress` has reached the `iLevelUpTotal` game setting. The engine opens the level-up window after the player sleeps, when this is true.</span>
+<span class="add">+-- @field #number level The level that the player reaches.</span>
+<span class="add">+-- @field #string description The text that the level-up window shows for that level, from the `Level_Up_Level&lt;level&gt;` fallback value, or `Level_Up_Default` if there is none.</span>
+<span class="add">+-- @field #string classImage The name of the class picture that the level-up window shows, such as `&#x27;acrobat&#x27;`. The picture is `textures/levelup/&lt;name&gt;.dds`. The engine picks it from the skill increases of each specialization since the last level-up.</span>
+<span class="add">+-- @field #number attributeCount The number of attributes that the player raises: three, or fewer when fewer attributes are below 100.</span>
+<span class="add">+-- @field #map&lt;#string,#number&gt; attributeIncreases The points that each attribute gains if the player picks it, by attribute ID. They come from the skill increases of the skills that the attribute governs, through the `iLevelUp01Mult` to `iLevelUp10Mult` game settings, and stop at 100. An attribute that is at 100 already gains 0, and can&#x27;t be picked.</span>
+<span class="add">+</span>
+<span class="add">+---</span>
+<span class="add">+-- Level the player up, the way the level-up window does it (only in global scripts).</span>
+<span class="add">+-- Each chosen attribute gains the points in @{#LevelUpInfo}. Then the player gains a level, and their health grows by the `fLevelUpHealthEndMult` game setting times their Endurance. The level&#x27;s `progress` drops by `iLevelUpTotal`, and the skill increases start over.</span>
+<span class="add">+-- The player must choose as many different attributes as @{#LevelUpInfo} says, and each must be below 100. Otherwise this throws an error.</span>
+<span class="add">+-- This doesn&#x27;t check whether a level-up is ready, because the level-up window doesn&#x27;t either when an mwscript opens it. The change happens at the end of the frame. The engine checks the attributes again then, and skips the level-up with a warning in the log if an earlier level-up in the frame took one of them to 100.</span>
+<span class="add">+-- @function [parent=#PLAYER] levelUp</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param #list&lt;#string&gt; attributes The IDs of the attributes to raise.</span>
+<span class="add">+-- @usage types.Player.levelUp(player, { &#x27;strength&#x27;, &#x27;endurance&#x27;, &#x27;agility&#x27; })</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Whether the player can rest or wait where they are now. The built-in rest menu checks the same conditions when it opens.</span>
+<span class="ctx"> -- The player can neither rest nor wait while underwater or with an enemy nearby. They can&#x27;t wait in the air either, unless they use a bed.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -840,6 +840,48 @@ testing.registerGlobalTest(&#x27;pickpocketing&#x27;, function()</span>
+<span class="ctx">     types.Player.setCrimeLevel(player, 0)</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;level up&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;prepare level up on self&#x27;)</span>
+<span class="add">+    local level = types.Actor.stats.level(player)</span>
+<span class="add">+    local oldLevel = level.current</span>
+<span class="add">+    local multiplier = core.getGMST(&#x27;iLevelUp10Mult&#x27;) or 1</span>
+<span class="add">+</span>
+<span class="add">+    local info = types.Player.getLevelUpInfo(player)</span>
+<span class="add">+    testing.expectEqual(info.isReady, true, &#x27;The player should be ready to level up&#x27;)</span>
+<span class="add">+    testing.expectEqual(info.level, oldLevel + 1, &#x27;The player should reach the next level&#x27;)</span>
+<span class="add">+    testing.expectEqual(info.attributeCount, 3, &#x27;The player should raise three attributes&#x27;)</span>
+<span class="add">+    testing.expectEqual(info.attributeIncreases.strength, multiplier, &#x27;Strength should gain its multiplier&#x27;)</span>
+<span class="add">+    testing.expectEqual(info.attributeIncreases.intelligence, 1, &#x27;Intelligence should stop at 100&#x27;)</span>
+<span class="add">+    testing.expectEqual(info.attributeIncreases.luck, 0, &#x27;Luck at 100 should gain nothing&#x27;)</span>
+<span class="add">+    testing.expectEqual(type(info.classImage), &#x27;string&#x27;, &#x27;The class picture should have a name&#x27;)</span>
+<span class="add">+    testing.expectEqual(type(info.description), &#x27;string&#x27;, &#x27;The level should have a text&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.levelUp, player, { &#x27;strength&#x27;, &#x27;intelligence&#x27; }), false,</span>
+<span class="add">+        &#x27;The player should not raise fewer than three attributes&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.levelUp, player, { &#x27;strength&#x27;, &#x27;strength&#x27;, &#x27;intelligence&#x27; }), false,</span>
+<span class="add">+        &#x27;The player should not raise an attribute twice&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.levelUp, player, { &#x27;strength&#x27;, &#x27;intelligence&#x27;, &#x27;luck&#x27; }), false,</span>
+<span class="add">+        &#x27;The player should not raise an attribute that is at 100&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    types.Player.levelUp(player, { &#x27;strength&#x27;, &#x27;intelligence&#x27;, &#x27;willpower&#x27; })</span>
+<span class="add">+    for _ = 1, 10 do</span>
+<span class="add">+        coroutine.yield()</span>
+<span class="add">+        if level.current &gt; oldLevel then</span>
+<span class="add">+            break</span>
+<span class="add">+        end</span>
+<span class="add">+    end</span>
+<span class="add">+    local attributes = types.Actor.stats.attributes</span>
+<span class="add">+    testing.expectEqual(level.current, oldLevel + 1, &#x27;The player should gain a level&#x27;)</span>
+<span class="add">+    testing.expectEqual(attributes.strength(player).base, 50 + multiplier, &#x27;Strength should gain its multiplier&#x27;)</span>
+<span class="add">+    testing.expectEqual(attributes.intelligence(player).base, 100, &#x27;Intelligence should stop at 100&#x27;)</span>
+<span class="add">+    testing.expectEqual(attributes.willpower(player).base, 51, &#x27;Willpower should gain one point&#x27;)</span>
+<span class="add">+    testing.expectEqual(level.skillIncreasesForAttribute.strength, 0, &#x27;The skill increases should start over&#x27;)</span>
+<span class="add">+    testing.expectEqual(types.Player.getLevelUpInfo(player).isReady, false, &#x27;The level-up should use up the progress&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    testing.runLocalTest(player, &#x27;restore level up on self&#x27;)</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;rest status&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     testing.expectEqual(types.Player.getRestStatus(player).canSleep, true,</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/player.lua</div><pre>
+<span class="hunk">@@ -562,6 +562,43 @@ testing.registerLocalTestStep(&#x27;restore skill on self&#x27;, function(skillId)</span>
+<span class="ctx">     coroutine.yield()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+local statsBeforeLevelUp = nil</span>
+<span class="add">+</span>
+<span class="add">+testing.registerLocalTestStep(&#x27;prepare level up on self&#x27;, function()</span>
+<span class="add">+    local level = types.Actor.stats.level(self)</span>
+<span class="add">+    local attributes = types.Actor.stats.attributes</span>
+<span class="add">+    statsBeforeLevelUp = {</span>
+<span class="add">+        level = level.current,</span>
+<span class="add">+        progress = level.progress,</span>
+<span class="add">+        health = types.Actor.stats.dynamic.health(self).base,</span>
+<span class="add">+        attributes = {},</span>
+<span class="add">+    }</span>
+<span class="add">+    for _, id in ipairs({ &#x27;strength&#x27;, &#x27;intelligence&#x27;, &#x27;willpower&#x27;, &#x27;luck&#x27; }) do</span>
+<span class="add">+        statsBeforeLevelUp.attributes[id] = attributes[id](self).base</span>
+<span class="add">+    end</span>
+<span class="add">+    level.progress = core.getGMST(&#x27;iLevelUpTotal&#x27;)</span>
+<span class="add">+    level.skillIncreasesForAttribute.strength = 10</span>
+<span class="add">+    level.skillIncreasesForAttribute.intelligence = 10</span>
+<span class="add">+    attributes.strength(self).base = 50</span>
+<span class="add">+    attributes.intelligence(self).base = 99</span>
+<span class="add">+    attributes.willpower(self).base = 50</span>
+<span class="add">+    attributes.luck(self).base = 100</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="add">+testing.registerLocalTestStep(&#x27;restore level up on self&#x27;, function()</span>
+<span class="add">+    local level = types.Actor.stats.level(self)</span>
+<span class="add">+    level.current = statsBeforeLevelUp.level</span>
+<span class="add">+    level.progress = statsBeforeLevelUp.progress</span>
+<span class="add">+    level.skillIncreasesForAttribute.strength = 0</span>
+<span class="add">+    level.skillIncreasesForAttribute.intelligence = 0</span>
+<span class="add">+    types.Actor.stats.dynamic.health(self).base = statsBeforeLevelUp.health</span>
+<span class="add">+    for id, value in pairs(statsBeforeLevelUp.attributes) do</span>
+<span class="add">+        types.Actor.stats.attributes[id](self).base = value</span>
+<span class="add">+    end</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerLocalTestStep(&#x27;rest status on self&#x27;, function()</span>
+<span class="ctx">     local status = types.Player.getRestStatus(self)</span>
+<span class="ctx">     testing.expectEqual(type(status.isUnderwater), &#x27;boolean&#x27;, &#x27;isUnderwater should be a boolean&#x27;)</span>
+</pre></div>

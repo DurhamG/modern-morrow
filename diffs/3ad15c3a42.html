@@ -1,0 +1,322 @@
+<div class="file"><div class="path">apps/openmw/mwgui/merchantrepair.cpp</div><pre>
+<span class="hunk">@@ -59,13 +59,8 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         for (MWWorld::ContainerStoreIterator iter(store.begin(categories)); iter != store.end(); ++iter)</span>
+<span class="ctx">         {</span>
+<span class="del">-            if (iter-&gt;getClass().hasItemHealth(*iter))</span>
+<span class="add">+            if (MWMechanics::canMerchantRepair(*iter))</span>
+<span class="ctx">             {</span>
+<span class="del">-                int maxDurability = iter-&gt;getClass().getItemMaxHealth(*iter);</span>
+<span class="del">-                int durability = iter-&gt;getClass().getItemHealth(*iter);</span>
+<span class="del">-                if (maxDurability &lt;= durability || maxDurability == 0)</span>
+<span class="del">-                    continue;</span>
+<span class="del">-</span>
+<span class="ctx">                 const int price = MWMechanics::getRepairPrice(mActor, *iter);</span>
+<span class="ctx"> </span>
+<span class="ctx">                 std::string name{ iter-&gt;getClass().getName(*iter) };</span>
+<span class="hunk">@@ -138,20 +133,10 @@ namespace MWGui</span>
+<span class="ctx">         if (price &gt; player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId))</span>
+<span class="ctx">             return;</span>
+<span class="ctx"> </span>
+<span class="del">-        // repair</span>
+<span class="del">-        MWWorld::Ptr item = *sender-&gt;getUserData&lt;MWWorld::Ptr&gt;();</span>
+<span class="del">-        item.getCellRef().setCharge(item.getClass().getItemMaxHealth(item));</span>
+<span class="del">-</span>
+<span class="del">-        player.getClass().getContainerStore(player).restack(item);</span>
+<span class="add">+        MWMechanics::repairItem(mActor, *sender-&gt;getUserData&lt;MWWorld::Ptr&gt;());</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;playSound(ESM::RefId::stringRefId(&quot;Repair&quot;));</span>
+<span class="ctx"> </span>
+<span class="del">-        player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, price);</span>
+<span class="del">-</span>
+<span class="del">-        // add gold to NPC trading gold pool</span>
+<span class="del">-        MWMechanics::CreatureStats&amp; actorStats = mActor.getClass().getCreatureStats(mActor);</span>
+<span class="del">-        actorStats.setGoldPool(actorStats.getGoldPool() + price);</span>
+<span class="del">-</span>
+<span class="ctx">         setPtr(mActor);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/spellbuyingwindow.cpp</div><pre>
+<span class="hunk">@@ -108,21 +108,8 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         for (const ESM::Spell* spell : merchantSpells)</span>
+<span class="ctx">         {</span>
+<span class="del">-            if (spell-&gt;mData.mType != ESM::Spell::ST_Spell)</span>
+<span class="del">-                continue; // don&#x27;t try to sell diseases, curses or powers</span>
+<span class="del">-</span>
+<span class="del">-            if (actor.getClass().isNpc())</span>
+<span class="del">-            {</span>
+<span class="del">-                const ESM::Race* race = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Race&gt;().find(</span>
+<span class="del">-                    actor.get&lt;ESM::NPC&gt;()-&gt;mBase-&gt;mRace);</span>
+<span class="del">-                if (race-&gt;mPowers.exists(spell-&gt;mId))</span>
+<span class="del">-                    continue;</span>
+<span class="del">-            }</span>
+<span class="del">-</span>
+<span class="del">-            if (playerHasSpell(spell-&gt;mId))</span>
+<span class="del">-                continue;</span>
+<span class="del">-</span>
+<span class="del">-            spellsToSort.push_back(spell);</span>
+<span class="add">+            if (MWMechanics::isSpellForSale(actor, *spell))</span>
+<span class="add">+                spellsToSort.push_back(spell);</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         std::stable_sort(spellsToSort.begin(), spellsToSort.end(), sortSpells);</span>
+<span class="hunk">@@ -159,12 +146,6 @@ namespace MWGui</span>
+<span class="ctx">         mSpellsView-&gt;setViewOffset(MyGUI::IntPoint(0, startOffset));</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    bool SpellBuyingWindow::playerHasSpell(const ESM::RefId&amp; id)</span>
+<span class="del">-    {</span>
+<span class="del">-        MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="del">-        return player.getClass().getCreatureStats(player).getSpells().hasSpell(id);</span>
+<span class="del">-    }</span>
+<span class="del">-</span>
+<span class="ctx">     void SpellBuyingWindow::onSpellButtonClick(MyGUI::Widget* sender)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         int price = *sender-&gt;getUserData&lt;int&gt;();</span>
+<span class="hunk">@@ -173,17 +154,10 @@ namespace MWGui</span>
+<span class="ctx">         if (price &gt; player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId))</span>
+<span class="ctx">             return;</span>
+<span class="ctx"> </span>
+<span class="del">-        MWMechanics::CreatureStats&amp; stats = player.getClass().getCreatureStats(player);</span>
+<span class="del">-        MWMechanics::Spells&amp; spells = stats.getSpells();</span>
+<span class="ctx">         auto spell = mSpellsWidgetMap.find(sender);</span>
+<span class="ctx">         assert(spell != mSpellsWidgetMap.end());</span>
+<span class="ctx"> </span>
+<span class="del">-        spells.add(spell-&gt;second);</span>
+<span class="del">-        player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, price);</span>
+<span class="del">-</span>
+<span class="del">-        // add gold to NPC trading gold pool</span>
+<span class="del">-        MWMechanics::CreatureStats&amp; npcStats = mPtr.getClass().getCreatureStats(mPtr);</span>
+<span class="del">-        npcStats.setGoldPool(npcStats.getGoldPool() + price);</span>
+<span class="add">+        MWMechanics::buySpell(mPtr, *MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Spell&gt;().find(spell-&gt;second));</span>
+<span class="ctx"> </span>
+<span class="ctx">         setPtr(mPtr, mSpellsView-&gt;getViewOffset().top);</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/spellbuyingwindow.hpp</div><pre>
+<span class="hunk">@@ -53,8 +53,6 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         void onReferenceUnavailable() override;</span>
+<span class="ctx"> </span>
+<span class="del">-        bool playerHasSpell(const ESM::RefId&amp; id);</span>
+<span class="del">-</span>
+<span class="ctx">     private:</span>
+<span class="ctx">         static bool sortSpells(const ESM::Spell* left, const ESM::Spell* right);</span>
+<span class="ctx">         bool onControllerButtonEvent(const SDL_ControllerButtonEvent&amp; arg) override;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/trainingwindow.cpp</div><pre>
+<span class="hunk">@@ -5,8 +5,6 @@</span>
+<span class="ctx"> #include &lt;MyGUI_TextIterator.h&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="del">-#include &quot;../mwbase/luamanager.hpp&quot;</span>
+<span class="del">-#include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -147,20 +145,12 @@ namespace MWGui</span>
+<span class="ctx">                 return;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        // increase skill</span>
+<span class="del">-        MWBase::Environment::get().getLuaManager()-&gt;skillLevelUp(player, skill-&gt;mId, &quot;trainer&quot;);</span>
+<span class="del">-</span>
+<span class="del">-        // remove gold</span>
+<span class="del">-        player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, price);</span>
+<span class="del">-</span>
+<span class="del">-        // add gold to NPC trading gold pool</span>
+<span class="del">-        MWMechanics::NpcStats&amp; npcStats = mPtr.getClass().getNpcStats(mPtr);</span>
+<span class="del">-        npcStats.setGoldPool(npcStats.getGoldPool() + price);</span>
+<span class="add">+        MWMechanics::trainSkill(mPtr, skill-&gt;mId);</span>
+<span class="ctx"> </span>
+<span class="ctx">         setVisible(false);</span>
+<span class="ctx">         mProgressBar.setVisible(true);</span>
+<span class="del">-        mProgressBar.setProgress(0, 2);</span>
+<span class="del">-        mTimeAdvancer.run(2);</span>
+<span class="add">+        mProgressBar.setProgress(0, MWMechanics::sTrainingHours);</span>
+<span class="add">+        mTimeAdvancer.run(MWMechanics::sTrainingHours);</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;fadeScreenOut(0.2f);</span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;fadeScreenIn(0.2f, false, 0.2f);</span>
+<span class="hunk">@@ -175,9 +165,7 @@ namespace MWGui</span>
+<span class="ctx">     {</span>
+<span class="ctx">         mProgressBar.setVisible(false);</span>
+<span class="ctx"> </span>
+<span class="del">-        // advance time</span>
+<span class="del">-        MWBase::Environment::get().getMechanicsManager()-&gt;rest(2, false);</span>
+<span class="del">-        MWBase::Environment::get().getWorld()-&gt;advanceTime(2);</span>
+<span class="add">+        MWMechanics::passTrainingTime();</span>
+<span class="ctx"> </span>
+<span class="ctx">         // go back to game mode</span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(GM_Training);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/types/actor.cpp</div><pre>
+<span class="hunk">@@ -469,11 +469,7 @@ namespace MWLua</span>
+<span class="ctx">             if (!merchantPtr.getClass().isActor())</span>
+<span class="ctx">                 throw std::runtime_error(&quot;Actor expected&quot;);</span>
+<span class="ctx">             const MWWorld::Ptr itemPtr = item.ptr();</span>
+<span class="del">-            // The merchant repair window lists only weapons and armor that have lost some condition.</span>
+<span class="del">-            const int repairable = MWWorld::ContainerStore::Type_Weapon | MWWorld::ContainerStore::Type_Armor;</span>
+<span class="del">-            if (!(MWWorld::ContainerStore::getType(itemPtr) &amp; repairable) || !itemPtr.getClass().hasItemHealth(itemPtr)</span>
+<span class="del">-                || itemPtr.getClass().getItemMaxHealth(itemPtr) == 0</span>
+<span class="del">-                || itemPtr.getClass().getItemHealth(itemPtr) &gt;= itemPtr.getClass().getItemMaxHealth(itemPtr))</span>
+<span class="add">+            if (!MWMechanics::canMerchantRepair(itemPtr))</span>
+<span class="ctx">                 throw std::runtime_error(&quot;The item must be a weapon or a piece of armor that has lost some condition&quot;);</span>
+<span class="ctx">             return MWMechanics::getRepairPrice(merchantPtr, itemPtr);</span>
+<span class="ctx">         };</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/services.cpp</div><pre>
+<span class="hunk">@@ -2,19 +2,28 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;algorithm&gt;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;components/esm3/loadarmo.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadgmst.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadnpc.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadrace.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadskil.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadspel.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadweap.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/settings/values.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/luamanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="add">+#include &quot;../mwworld/containerstore.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/esmstore.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/ptr.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;actorutil.hpp&quot;</span>
+<span class="ctx"> #include &quot;npcstats.hpp&quot;</span>
+<span class="add">+#include &quot;spells.hpp&quot;</span>
+<span class="ctx"> #include &quot;spellutil.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> namespace MWMechanics</span>
+<span class="hunk">@@ -26,6 +35,16 @@ namespace MWMechanics</span>
+<span class="ctx">             return MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::GameSetting&gt;();</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="add">+        void payMerchant(const MWWorld::Ptr&amp; merchant, int price)</span>
+<span class="add">+        {</span>
+<span class="add">+            const MWWorld::Ptr player = getPlayer();</span>
+<span class="add">+            player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, price);</span>
+<span class="add">+</span>
+<span class="add">+            // add gold to NPC trading gold pool</span>
+<span class="add">+            CreatureStats&amp; merchantStats = merchant.getClass().getCreatureStats(merchant);</span>
+<span class="add">+            merchantStats.setGoldPool(merchantStats.getGoldPool() + price);</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="ctx">         // Retrieve the base skill value if the setting &#x27;training skills based on base skill&#x27; is set;</span>
+<span class="ctx">         // otherwise returns the modified skill</span>
+<span class="ctx">         float getSkillForTraining(const NpcStats&amp; stats, ESM::RefId id)</span>
+<span class="hunk">@@ -124,4 +143,72 @@ namespace MWMechanics</span>
+<span class="ctx"> </span>
+<span class="ctx">         return MWBase::Environment::get().getMechanicsManager()-&gt;getBarterOffer(merchant, x, true);</span>
+<span class="ctx">     }</span>
+<span class="add">+</span>
+<span class="add">+    bool isSpellForSale(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (spell.mData.mType != ESM::Spell::ST_Spell)</span>
+<span class="add">+            return false; // don&#x27;t try to sell diseases, curses or powers</span>
+<span class="add">+</span>
+<span class="add">+        if (!merchant.getClass().getCreatureStats(merchant).getSpells().hasSpell(&amp;spell))</span>
+<span class="add">+            return false;</span>
+<span class="add">+</span>
+<span class="add">+        if (merchant.getClass().isNpc())</span>
+<span class="add">+        {</span>
+<span class="add">+            const ESM::Race* race = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Race&gt;().find(</span>
+<span class="add">+                merchant.get&lt;ESM::NPC&gt;()-&gt;mBase-&gt;mRace);</span>
+<span class="add">+            if (race-&gt;mPowers.exists(spell.mId))</span>
+<span class="add">+                return false;</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        const MWWorld::Ptr player = getPlayer();</span>
+<span class="add">+        return !player.getClass().getCreatureStats(player).getSpells().hasSpell(spell.mId);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    bool canMerchantRepair(const MWWorld::Ptr&amp; item)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (item.getType() != ESM::Weapon::sRecordId &amp;&amp; item.getType() != ESM::Armor::sRecordId)</span>
+<span class="add">+            return false;</span>
+<span class="add">+        if (!item.getClass().hasItemHealth(item))</span>
+<span class="add">+            return false;</span>
+<span class="add">+        const int maxDurability = item.getClass().getItemMaxHealth(item);</span>
+<span class="add">+        return maxDurability != 0 &amp;&amp; item.getClass().getItemHealth(item) &lt; maxDurability;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void trainSkill(const MWWorld::Ptr&amp; trainer, ESM::RefId skill)</span>
+<span class="add">+    {</span>
+<span class="add">+        const int price = getTrainingPrice(trainer, skill);</span>
+<span class="add">+</span>
+<span class="add">+        // increase skill</span>
+<span class="add">+        MWBase::Environment::get().getLuaManager()-&gt;skillLevelUp(getPlayer(), skill, &quot;trainer&quot;);</span>
+<span class="add">+</span>
+<span class="add">+        payMerchant(trainer, price);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void passTrainingTime()</span>
+<span class="add">+    {</span>
+<span class="add">+        MWBase::Environment::get().getMechanicsManager()-&gt;rest(sTrainingHours, false);</span>
+<span class="add">+        MWBase::Environment::get().getWorld()-&gt;advanceTime(sTrainingHours);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void buySpell(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell)</span>
+<span class="add">+    {</span>
+<span class="add">+        const int price = getSpellPrice(merchant, spell);</span>
+<span class="add">+</span>
+<span class="add">+        const MWWorld::Ptr player = getPlayer();</span>
+<span class="add">+        player.getClass().getCreatureStats(player).getSpells().add(&amp;spell);</span>
+<span class="add">+</span>
+<span class="add">+        payMerchant(merchant, price);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void repairItem(const MWWorld::Ptr&amp; merchant, const MWWorld::Ptr&amp; item)</span>
+<span class="add">+    {</span>
+<span class="add">+        const int price = getRepairPrice(merchant, item);</span>
+<span class="add">+</span>
+<span class="add">+        item.getCellRef().setCharge(item.getClass().getItemMaxHealth(item));</span>
+<span class="add">+</span>
+<span class="add">+        const MWWorld::Ptr player = getPlayer();</span>
+<span class="add">+        player.getClass().getContainerStore(player).restack(item);</span>
+<span class="add">+</span>
+<span class="add">+        payMerchant(merchant, price);</span>
+<span class="add">+    }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/services.hpp</div><pre>
+<span class="hunk">@@ -42,6 +42,29 @@ namespace MWMechanics</span>
+<span class="ctx"> </span>
+<span class="ctx">     /// The gold @a merchant asks to restore @a item to full condition.</span>
+<span class="ctx">     int getRepairPrice(const MWWorld::Ptr&amp; merchant, const MWWorld::Ptr&amp; item);</span>
+<span class="add">+</span>
+<span class="add">+    /// Whether @a merchant offers to teach the player @a spell. Merchants teach the spells they know, except</span>
+<span class="add">+    /// the ones the player knows already, their race&#x27;s powers, and anything that isn&#x27;t a spell, such as a disease.</span>
+<span class="add">+    bool isSpellForSale(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell);</span>
+<span class="add">+</span>
+<span class="add">+    /// Whether a merchant can repair @a item: a weapon or a piece of armor that has lost some of its condition.</span>
+<span class="add">+    bool canMerchantRepair(const MWWorld::Ptr&amp; item);</span>
+<span class="add">+</span>
+<span class="add">+    /// The hours that pass while a trainer raises one of the player&#x27;s skills.</span>
+<span class="add">+    static constexpr int sTrainingHours = 2;</span>
+<span class="add">+</span>
+<span class="add">+    /// Raises the player&#x27;s @a skill by one point and makes the player pay @a trainer for it.</span>
+<span class="add">+    /// This does not pass the time that training takes. passTrainingTime does that.</span>
+<span class="add">+    void trainSkill(const MWWorld::Ptr&amp; trainer, ESM::RefId skill);</span>
+<span class="add">+</span>
+<span class="add">+    /// Passes the sTrainingHours that training takes. The player and other actors wait, but don&#x27;t sleep.</span>
+<span class="add">+    void passTrainingTime();</span>
+<span class="add">+</span>
+<span class="add">+    /// Teaches the player @a spell and makes the player pay @a merchant for it.</span>
+<span class="add">+    void buySpell(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell);</span>
+<span class="add">+</span>
+<span class="add">+    /// Restores @a item, which the player carries, to full condition and makes the player pay @a merchant for it.</span>
+<span class="add">+    void repairItem(const MWWorld::Ptr&amp; merchant, const MWWorld::Ptr&amp; item);</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="ctx"> #endif</span>
+</pre></div>

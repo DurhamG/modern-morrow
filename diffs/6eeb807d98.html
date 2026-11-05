@@ -1,0 +1,344 @@
+<div class="file"><div class="path">apps/openmw/mwgui/alchemywindow.cpp</div><pre>
+<span class="hunk">@@ -127,34 +127,7 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     void AlchemyWindow::createPotions(int count)</span>
+<span class="ctx">     {</span>
+<span class="del">-        MWMechanics::Alchemy::Result result = mAlchemy-&gt;create(mNameEdit-&gt;getCaption(), count);</span>
+<span class="del">-        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();</span>
+<span class="del">-</span>
+<span class="del">-        switch (result)</span>
+<span class="del">-        {</span>
+<span class="del">-            case MWMechanics::Alchemy::Result_NoName:</span>
+<span class="del">-                winMgr-&gt;messageBox(&quot;#{sNotifyMessage37}&quot;);</span>
+<span class="del">-                break;</span>
+<span class="del">-            case MWMechanics::Alchemy::Result_NoMortarAndPestle:</span>
+<span class="del">-                winMgr-&gt;messageBox(&quot;#{sNotifyMessage45}&quot;);</span>
+<span class="del">-                break;</span>
+<span class="del">-            case MWMechanics::Alchemy::Result_LessThanTwoIngredients:</span>
+<span class="del">-                winMgr-&gt;messageBox(&quot;#{sNotifyMessage6a}&quot;);</span>
+<span class="del">-                break;</span>
+<span class="del">-            case MWMechanics::Alchemy::Result_Success:</span>
+<span class="del">-                winMgr-&gt;playSound(ESM::RefId::stringRefId(&quot;potion success&quot;));</span>
+<span class="del">-                if (count == 1)</span>
+<span class="del">-                    winMgr-&gt;messageBox(&quot;#{sPotionSuccess}&quot;);</span>
+<span class="del">-                else</span>
+<span class="del">-                    winMgr-&gt;messageBox(</span>
+<span class="del">-                        &quot;#{sPotionSuccess} &quot; + mNameEdit-&gt;getCaption().asUTF8() + &quot; (&quot; + std::to_string(count) + &quot;)&quot;);</span>
+<span class="del">-                break;</span>
+<span class="del">-            case MWMechanics::Alchemy::Result_NoEffects:</span>
+<span class="del">-            case MWMechanics::Alchemy::Result_RandomFailure:</span>
+<span class="del">-                winMgr-&gt;messageBox(&quot;#{sNotifyMessage8}&quot;);</span>
+<span class="del">-                winMgr-&gt;playSound(ESM::RefId::stringRefId(&quot;potion fail&quot;));</span>
+<span class="del">-                break;</span>
+<span class="del">-        }</span>
+<span class="add">+        mAlchemy-&gt;create(mNameEdit-&gt;getCaption(), count);</span>
+<span class="ctx"> </span>
+<span class="ctx">         // remove ingredient slots that have been fully used up</span>
+<span class="ctx">         for (size_t i = 0; i &lt; mIngredients.size(); ++i)</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/enchantingdialog.cpp</div><pre>
+<span class="hunk">@@ -7,19 +7,14 @@</span>
+<span class="ctx"> #include &lt;MyGUI_ScrollView.h&gt;</span>
+<span class="ctx"> #include &lt;MyGUI_UString.h&gt;</span>
+<span class="ctx"> </span>
+<span class="del">-#include &lt;components/misc/strings/format.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/settings/values.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/widgets/list.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="del">-#include &lt;components/esm3/loadgmst.hpp&gt;</span>
+<span class="del">-</span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="del">-#include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/containerstore.hpp&quot;</span>
+<span class="del">-#include &quot;../mwworld/esmstore.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwmechanics/actorutil.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -332,35 +327,17 @@ namespace MWGui</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         // check if the player is attempting to use a soulstone or item that was stolen from this actor</span>
+<span class="del">-        const MWWorld::Ptr stolen = mEnchanting.getStolenItem();</span>
+<span class="del">-        if (!stolen.isEmpty())</span>
+<span class="add">+        if (mEnchanting.confiscateStolenItem())</span>
+<span class="ctx">         {</span>
+<span class="del">-            std::string msg = MWBase::Environment::get()</span>
+<span class="del">-                                  .getESMStore()</span>
+<span class="del">-                                  -&gt;get&lt;ESM::GameSetting&gt;()</span>
+<span class="del">-                                  .find(&quot;sNotifyMessage49&quot;)</span>
+<span class="del">-                                  -&gt;mValue.getString();</span>
+<span class="del">-            msg = Misc::StringUtils::format(msg, stolen.getClass().getName(stolen));</span>
+<span class="del">-            windowManager-&gt;messageBox(msg);</span>
+<span class="del">-</span>
+<span class="del">-            MWBase::Environment::get().getMechanicsManager()-&gt;confiscateStolenItemToOwner(</span>
+<span class="del">-                MWMechanics::getPlayer(), stolen, mPtr, 1);</span>
+<span class="del">-</span>
+<span class="ctx">             windowManager-&gt;removeGuiMode(GM_Enchanting);</span>
+<span class="ctx">             windowManager-&gt;exitCurrentGuiMode();</span>
+<span class="ctx">             return;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="ctx">         if (mEnchanting.create())</span>
+<span class="del">-        {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;playSound(ESM::RefId::stringRefId(&quot;enchant success&quot;));</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sEnchantmentMenu12}&quot;);</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(GM_Enchanting);</span>
+<span class="del">-        }</span>
+<span class="ctx">         else</span>
+<span class="ctx">         {</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;playSound(ESM::RefId::stringRefId(&quot;enchant fail&quot;));</span>
+<span class="del">-            MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage34}&quot;);</span>
+<span class="ctx">             if (!mEnchanting.getGem().isEmpty() &amp;&amp; !mEnchanting.getGem().getCellRef().getCount())</span>
+<span class="ctx">             {</span>
+<span class="ctx">                 setSoulGem(MWWorld::Ptr());</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/spellcreationdialog.cpp</div><pre>
+<span class="hunk">@@ -646,8 +646,6 @@ namespace MWGui</span>
+<span class="ctx">                 return;</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        MWBase::Environment::get().getWindowManager()-&gt;playSound(ESM::RefId::stringRefId(&quot;Mysticism Hit&quot;));</span>
+<span class="del">-</span>
+<span class="ctx">         MWMechanics::buyCustomSpell(mPtr, mSpell);</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(GM_SpellCreation);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -711,11 +711,8 @@ namespace MWLua</span>
+<span class="ctx">                               reportOutcome(context, callback, false);</span>
+<span class="ctx">                               return;</span>
+<span class="ctx">                           }</span>
+<span class="del">-                          const MWWorld::Ptr stolen = enchanting-&gt;getStolenItem();</span>
+<span class="del">-                          if (!stolen.isEmpty())</span>
+<span class="add">+                          if (enchanting-&gt;confiscateStolenItem())</span>
+<span class="ctx">                           {</span>
+<span class="del">-                              MWBase::Environment::get().getMechanicsManager()-&gt;confiscateStolenItemToOwner(</span>
+<span class="del">-                                  MWMechanics::getPlayer(), stolen, setup.mEnchanter-&gt;ptr(), 1);</span>
+<span class="ctx">                               reportOutcome(context, callback, false);</span>
+<span class="ctx">                               return;</span>
+<span class="ctx">                           }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/alchemy.cpp</div><pre>
+<span class="hunk">@@ -16,6 +16,7 @@</span>
+<span class="ctx"> #include &lt;components/esm3/loadskil.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="hunk">@@ -543,6 +544,39 @@ MWMechanics::Alchemy::Result MWMechanics::Alchemy::getReadyStatus() const</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="ctx"> MWMechanics::Alchemy::Result MWMechanics::Alchemy::create(const std::string&amp; name, int&amp; count)</span>
+<span class="add">+{</span>
+<span class="add">+    const Result result = brew(name, count);</span>
+<span class="add">+    MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();</span>
+<span class="add">+</span>
+<span class="add">+    switch (result)</span>
+<span class="add">+    {</span>
+<span class="add">+        case Result_NoName:</span>
+<span class="add">+            winMgr-&gt;messageBox(&quot;#{sNotifyMessage37}&quot;);</span>
+<span class="add">+            break;</span>
+<span class="add">+        case Result_NoMortarAndPestle:</span>
+<span class="add">+            winMgr-&gt;messageBox(&quot;#{sNotifyMessage45}&quot;);</span>
+<span class="add">+            break;</span>
+<span class="add">+        case Result_LessThanTwoIngredients:</span>
+<span class="add">+            winMgr-&gt;messageBox(&quot;#{sNotifyMessage6a}&quot;);</span>
+<span class="add">+            break;</span>
+<span class="add">+        case Result_Success:</span>
+<span class="add">+            winMgr-&gt;playSound(ESM::RefId::stringRefId(&quot;potion success&quot;));</span>
+<span class="add">+            if (count == 1)</span>
+<span class="add">+                winMgr-&gt;messageBox(&quot;#{sPotionSuccess}&quot;);</span>
+<span class="add">+            else</span>
+<span class="add">+                winMgr-&gt;messageBox(&quot;#{sPotionSuccess} &quot; + mPotionName + &quot; (&quot; + std::to_string(count) + &quot;)&quot;);</span>
+<span class="add">+            break;</span>
+<span class="add">+        case Result_NoEffects:</span>
+<span class="add">+        case Result_RandomFailure:</span>
+<span class="add">+            winMgr-&gt;messageBox(&quot;#{sNotifyMessage8}&quot;);</span>
+<span class="add">+            winMgr-&gt;playSound(ESM::RefId::stringRefId(&quot;potion fail&quot;));</span>
+<span class="add">+            break;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    return result;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+MWMechanics::Alchemy::Result MWMechanics::Alchemy::brew(const std::string&amp; name, int&amp; count)</span>
+<span class="ctx"> {</span>
+<span class="ctx">     setPotionName(name);</span>
+<span class="ctx">     Result readyStatus = getReadyStatus();</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/alchemy.hpp</div><pre>
+<span class="hunk">@@ -72,6 +72,9 @@ namespace MWMechanics</span>
+<span class="ctx">         ///&lt; Try to create a potion from the ingredients, place it in the inventory of the alchemist and</span>
+<span class="ctx">         /// adjust the skills of the alchemist accordingly.</span>
+<span class="ctx"> </span>
+<span class="add">+        Result brew(const std::string&amp; name, int&amp; count);</span>
+<span class="add">+        ///&lt; Create, without sounds or messages.</span>
+<span class="add">+</span>
+<span class="ctx">         float getAlchemyFactor() const;</span>
+<span class="ctx"> </span>
+<span class="ctx">         int countIngredients() const;</span>
+<span class="hunk">@@ -137,8 +140,10 @@ namespace MWMechanics</span>
+<span class="ctx"> </span>
+<span class="ctx">         Result create(const std::string&amp; name, int&amp; count);</span>
+<span class="ctx">         ///&lt; Try to create potions from the ingredients, place them in the inventory of the alchemist and</span>
+<span class="del">-        /// adjust the skills of the alchemist accordingly.</span>
+<span class="add">+        /// adjust the skills of the alchemist accordingly. Plays the sound and shows the message that the alchemy</span>
+<span class="add">+        /// window plays and shows for the result.</span>
+<span class="ctx">         /// \param name must not be an empty string, or Result_NoName is returned</span>
+<span class="add">+        /// \param count The number of potions to try. On success, it becomes the number of potions that worked.</span>
+<span class="ctx"> </span>
+<span class="ctx">         static std::vector&lt;std::string&gt; effectsDescription(const MWWorld::ConstPtr&amp; ptr, const float alchemySKill);</span>
+<span class="ctx">     };</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/enchanting.cpp</div><pre>
+<span class="hunk">@@ -6,9 +6,11 @@</span>
+<span class="ctx"> #include &lt;components/esm3/loadbook.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadclot.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadcrea.hpp&gt;</span>
+<span class="add">+#include &lt;components/esm3/loadgmst.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadmgef.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadweap.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/misc/rng.hpp&gt;</span>
+<span class="add">+#include &lt;components/misc/strings/format.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/settings/values.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="hunk">@@ -17,6 +19,7 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;actorutil.hpp&quot;</span>
+<span class="hunk">@@ -111,6 +114,25 @@ namespace MWMechanics</span>
+<span class="ctx">         return {};</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    bool Enchanting::confiscateStolenItem() const</span>
+<span class="add">+    {</span>
+<span class="add">+        const MWWorld::Ptr stolen = getStolenItem();</span>
+<span class="add">+        if (stolen.isEmpty())</span>
+<span class="add">+            return false;</span>
+<span class="add">+</span>
+<span class="add">+        const std::string&amp; message = MWBase::Environment::get()</span>
+<span class="add">+                                         .getESMStore()</span>
+<span class="add">+                                         -&gt;get&lt;ESM::GameSetting&gt;()</span>
+<span class="add">+                                         .find(&quot;sNotifyMessage49&quot;)</span>
+<span class="add">+                                         -&gt;mValue.getString();</span>
+<span class="add">+        MWBase::Environment::get().getWindowManager()-&gt;messageBox(</span>
+<span class="add">+            Misc::StringUtils::format(message, stolen.getClass().getName(stolen)));</span>
+<span class="add">+</span>
+<span class="add">+        MWBase::Environment::get().getMechanicsManager()-&gt;confiscateStolenItemToOwner(</span>
+<span class="add">+            getPlayer(), stolen, mEnchanter, 1);</span>
+<span class="add">+        return true;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     bool Enchanting::create()</span>
+<span class="ctx">     {</span>
+<span class="ctx">         const MWWorld::Ptr&amp; player = getPlayer();</span>
+<span class="hunk">@@ -132,7 +154,11 @@ namespace MWMechanics</span>
+<span class="ctx">         {</span>
+<span class="ctx">             auto&amp; prng = MWBase::Environment::get().getWorld()-&gt;getPrng();</span>
+<span class="ctx">             if (getEnchantChance() &lt;= (Misc::Rng::roll0to99(prng)))</span>
+<span class="add">+            {</span>
+<span class="add">+                MWBase::Environment::get().getWindowManager()-&gt;playSound(ESM::RefId::stringRefId(&quot;enchant fail&quot;));</span>
+<span class="add">+                MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage34}&quot;);</span>
+<span class="ctx">                 return false;</span>
+<span class="add">+            }</span>
+<span class="ctx"> </span>
+<span class="ctx">             mEnchanter.getClass().skillUsageSucceeded(</span>
+<span class="ctx">                 mEnchanter, ESM::Skill::Enchant, ESM::Skill::Enchant_CreateMagicItem);</span>
+<span class="hunk">@@ -163,6 +189,8 @@ namespace MWMechanics</span>
+<span class="ctx">         store.remove(mOldItemPtr, count);</span>
+<span class="ctx">         store.add(newItemId, count);</span>
+<span class="ctx"> </span>
+<span class="add">+        MWBase::Environment::get().getWindowManager()-&gt;playSound(ESM::RefId::stringRefId(&quot;enchant success&quot;));</span>
+<span class="add">+        MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sEnchantmentMenu12}&quot;);</span>
+<span class="ctx">         return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/enchanting.hpp</div><pre>
+<span class="hunk">@@ -66,7 +66,13 @@ namespace MWMechanics</span>
+<span class="ctx">         /// The item or the soul gem, if any, that the player stole from the enchanter. The enchanter takes it back</span>
+<span class="ctx">         /// rather than enchant with it. This is always empty when the player enchants an item themself.</span>
+<span class="ctx">         MWWorld::Ptr getStolenItem() const;</span>
+<span class="del">-        bool create(); // Return true if created, false if failed.</span>
+<span class="add">+        /// Lets the enchanter take back the item or the soul gem that the player stole from them, with the message</span>
+<span class="add">+        /// that the enchanting window shows.</span>
+<span class="add">+        /// @return Whether there was such an item.</span>
+<span class="add">+        bool confiscateStolenItem() const;</span>
+<span class="add">+        /// Enchants the item, with the sound and the message that the enchanting window plays and shows.</span>
+<span class="add">+        /// @return Whether the item was enchanted.</span>
+<span class="add">+        bool create();</span>
+<span class="ctx">         /// The cast types that the item can be enchanted with, as ESM::Enchantment::Type values, in the order that</span>
+<span class="ctx">         /// the enchanting window steps through them. A constant effect needs a soul of at least the</span>
+<span class="ctx">         /// iSoulAmountForConstantEffect game setting. This is empty when there is no item.</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/spellmaking.cpp</div><pre>
+<span class="hunk">@@ -9,6 +9,7 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/containerstore.hpp&quot;</span>
+<span class="hunk">@@ -184,6 +185,8 @@ namespace MWMechanics</span>
+<span class="ctx"> </span>
+<span class="ctx">     const ESM::Spell* buyCustomSpell(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell)</span>
+<span class="ctx">     {</span>
+<span class="add">+        MWBase::Environment::get().getWindowManager()-&gt;playSound(ESM::RefId::stringRefId(&quot;Mysticism Hit&quot;));</span>
+<span class="add">+</span>
+<span class="ctx">         const int price = getCustomSpellPrice(merchant, spell.mEffects);</span>
+<span class="ctx">         const MWWorld::Ptr player = getPlayer();</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/spellmaking.hpp</div><pre>
+<span class="hunk">@@ -93,7 +93,8 @@ namespace MWMechanics</span>
+<span class="ctx">     /// checks.</span>
+<span class="ctx">     SpellmakingProblem getSpellmakingProblem(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell);</span>
+<span class="ctx"> </span>
+<span class="del">-    /// Makes the player pay @a merchant, adds @a spell to the game and teaches it to the player.</span>
+<span class="add">+    /// Makes the player pay @a merchant, adds @a spell to the game and teaches it to the player, with the sound that</span>
+<span class="add">+    /// the spellmaking window plays.</span>
+<span class="ctx">     /// @return The new spell record.</span>
+<span class="ctx">     const ESM::Spell* buyCustomSpell(const MWWorld::Ptr&amp; merchant, const ESM::Spell&amp; spell);</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1905,8 +1905,9 @@</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Enchant an item, the way the enchanting window does it (only in global scripts).</span>
+<span class="ctx"> -- The soul gem is used up, except for Azura&#x27;s Star, which comes back empty. If the player enchants the item themself, they succeed with the chance in @{#EnchantingInfo}, and their Enchant skill progresses when they do. If an enchanter does it, the player pays the price, and the gold goes to the enchanter&#x27;s barter gold. When enchanting works, the item is replaced by an enchanted copy with the new name. A stack of thrown weapons or ammunition is enchanted together, as far as the soul&#x27;s strength goes.</span>
+<span class="add">+-- If the player stole the item or the soul gem from the enchanter, the enchanter takes it back instead, and nothing else happens. The enchanting window also ends the conversation then.</span>
+<span class="add">+-- The engine plays the sound and shows the message that the enchanting window would.</span>
+<span class="add">+-- This throws an error like @{#PLAYER.getEnchantingInfo}, and when the enchanting window would refuse: without effects, a name, a soul gem or an item, when the effects need more points than the item holds, or when the player can&#x27;t pay.</span>
+<span class="ctx"> -- This doesn&#x27;t check whether the enchanter offers enchanting as a service. The enchanting happens at the end of the frame. If an earlier change in the frame used up the item or the soul gem, emptied the soul gem, or spent the gold, nothing happens.</span>
+<span class="ctx"> -- @function [parent=#PLAYER] enchantItem</span>
+<span class="ctx"> -- @param openmw.core#GameObject player</span>
+<span class="hunk">@@ -1954,7 +1955,8 @@</span>
+<span class="ctx"> -- Buy a spell of the player&#x27;s own from a merchant, the way the spellmaking window does it (only in global scripts).</span>
+<span class="ctx"> -- The player pays the price in @{#SpellmakingInfo}, and the gold goes to the merchant&#x27;s barter gold. Then the engine creates a new spell record, and the player learns it.</span>
+<span class="ctx"> -- This throws an error like @{#PLAYER.getSpellmakingInfo}, and when the spellmaking window would refuse: without effects or a name, or when the player can&#x27;t pay.</span>
+<span class="add">+-- The engine plays the sound that the spellmaking window would.</span>
+<span class="add">+-- This doesn&#x27;t check whether the merchant offers spellmaking as a service. The spell is made at the end of the frame. If an earlier change in the frame spent the gold, nothing happens.</span>
+<span class="ctx"> -- @function [parent=#PLAYER] makeSpell</span>
+<span class="ctx"> -- @param openmw.core#GameObject player</span>
+<span class="ctx"> -- @param #SpellmakingSetup setup</span>
+<span class="hunk">@@ -2011,7 +2013,8 @@</span>
+<span class="ctx"> -- Brew potions, the way the alchemy window does it (only in global scripts).</span>
+<span class="ctx"> -- Each potion uses up one of each ingredient, whether it works or not. A potion works if the player&#x27;s Alchemy skill, Intelligence and Luck beat a roll. Its strength comes from those and the apparatus. The player&#x27;s Alchemy skill progresses for each potion that works.</span>
+<span class="ctx"> -- If the ingredients share no effects, brewing fails and uses them up, as in the alchemy window.</span>
+<span class="add">+-- The engine plays the sound and shows the message that the alchemy window would.</span>
+<span class="add">+-- This throws an error without a mortar and pestle, two ingredients or a name.</span>
+<span class="ctx"> -- Brewing happens at the end of the frame, and makes at most as many potions as the ingredients allow. If an earlier change in the frame used up the ingredients or the apparatus, nothing happens.</span>
+<span class="ctx"> -- @function [parent=#PLAYER] brewPotion</span>
+<span class="ctx"> -- @param openmw.core#GameObject player</span>
+</pre></div>

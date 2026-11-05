@@ -1,0 +1,155 @@
+<div class="file"><div class="path">apps/openmw/mwbase/luamanager.hpp</div><pre>
+<span class="hunk">@@ -95,6 +95,8 @@ namespace MWBase</span>
+<span class="ctx">             std::string_view startKey, std::string_view stopKey)</span>
+<span class="ctx">             = 0;</span>
+<span class="ctx">         virtual void jailTimeServed(const MWWorld::Ptr&amp; actor, int days) = 0;</span>
+<span class="add">+        // Tells the player&#x27;s scripts that @a hoursPassed of a rest of @a hours have passed.</span>
+<span class="add">+        virtual void restProgress(int hoursPassed, int hours) = 0;</span>
+<span class="ctx">         virtual void skillLevelUp(const MWWorld::Ptr&amp; actor, ESM::RefId skillId, std::string_view source) = 0;</span>
+<span class="ctx">         virtual void skillUse(const MWWorld::Ptr&amp; actor, ESM::RefId skillId, int useType, float scale) = 0;</span>
+<span class="ctx">         virtual void onHit(const MWWorld::Ptr&amp; attacker, const MWWorld::Ptr&amp; victim, const MWWorld::Ptr&amp; weapon,</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/waitdialog.cpp</div><pre>
+<span class="hunk">@@ -11,6 +11,7 @@</span>
+<span class="ctx"> #include &lt;components/widgets/box.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/luamanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/statemanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="hunk">@@ -266,6 +267,7 @@ namespace MWGui</span>
+<span class="ctx">         mProgressBar.setProgress(cur, total);</span>
+<span class="ctx">         MWBase::Environment::get().getMechanicsManager()-&gt;rest(1, mSleeping);</span>
+<span class="ctx">         MWBase::Environment::get().getWorld()-&gt;advanceTime(1);</span>
+<span class="add">+        MWBase::Environment::get().getLuaManager()-&gt;restProgress(cur, total);</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWWorld::Ptr player = MWBase::Environment::get().getWorld()-&gt;getPlayerPtr();</span>
+<span class="ctx">         if (player.getClass().getCreatureStats(player).isDead())</span>
+<span class="hunk">@@ -337,6 +339,7 @@ namespace MWGui</span>
+<span class="ctx">         {</span>
+<span class="ctx">             mProgressBar.setVisible(true);</span>
+<span class="ctx">             mTimeAdvancer.run(mHours, mInterruptAt);</span>
+<span class="add">+            MWBase::Environment::get().getLuaManager()-&gt;restProgress(0, mHours);</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/luamanagerimp.cpp</div><pre>
+<span class="hunk">@@ -587,6 +587,18 @@ namespace MWLua</span>
+<span class="ctx">         });</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+    void LuaManager::restProgress(int hoursPassed, int hours)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (mPlayer.isEmpty())</span>
+<span class="add">+            return;</span>
+<span class="add">+        mLua.protectedCall([&amp;](LuaUtil::LuaView&amp; view) {</span>
+<span class="add">+            sol::table data = view.newTable();</span>
+<span class="add">+            data[&quot;hoursPassed&quot;] = hoursPassed;</span>
+<span class="add">+            data[&quot;hours&quot;] = hours;</span>
+<span class="add">+            sendLocalEvent(mPlayer, &quot;RestProgress&quot;, data);</span>
+<span class="add">+        });</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     void LuaManager::applyMagicEffects(ESM::RefId id, const MWWorld::Ptr&amp; caster, ESM::RefNum item,</span>
+<span class="ctx">         const MWWorld::Ptr&amp; target, const std::vector&lt;ESM::IndexedENAMstruct&gt;&amp; effects, bool ignoreReflect,</span>
+<span class="ctx">         bool ignoreSpellAbsorption, bool stackable, bool isReflect)</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwlua/luamanagerimp.hpp</div><pre>
+<span class="hunk">@@ -135,6 +135,7 @@ namespace MWLua</span>
+<span class="ctx">         void actorDied(const MWWorld::Ptr&amp; actor) override;</span>
+<span class="ctx">         void onDialogueResponse(</span>
+<span class="ctx">             const MWWorld::Ptr&amp; actor, const ESM::DialInfo&amp; info, const ESM::Dialogue&amp; record) override;</span>
+<span class="add">+        void restProgress(int hoursPassed, int hours) override;</span>
+<span class="ctx">         void applyMagicEffects(ESM::RefId id, const MWWorld::Ptr&amp; caster, ESM::RefNum item, const MWWorld::Ptr&amp; target,</span>
+<span class="ctx">             const std::vector&lt;ESM::IndexedENAMstruct&gt;&amp; effects, bool ignoreReflect, bool ignoreSpellAbsorption,</span>
+<span class="ctx">             bool stackable, bool isReflect) override;</span>
+</pre></div>
+<div class="file"><div class="path">docs/source/reference/lua-scripting/events.rst</div><pre>
+<span class="hunk">@@ -190,6 +190,24 @@ and ``arg`` (for example in the mode ``Book`` the argument is the book the playe</span>
+<span class="ctx">         end</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="add">+**RestProgress**</span>
+<span class="add">+</span>
+<span class="add">+This event is sent to the player&#x27;s local script while the player rests or waits, whether the engine&#x27;s rest menu or ``types.Player.rest`` started the rest.</span>
+<span class="add">+It comes once when the hours start to pass, at the time the engine shows its progress bar, and again after each hour.</span>
+<span class="add">+A Lua replacement of the ``WaitDialogProgressBar`` window can draw the progress from it.</span>
+<span class="add">+It has the following fields:</span>
+<span class="add">+</span>
+<span class="add">+- ``hoursPassed``: The hours of the rest that have passed, from 0.</span>
+<span class="add">+- ``hours``: The length of the rest in hours.</span>
+<span class="add">+</span>
+<span class="add">+.. code-block:: Lua</span>
+<span class="add">+</span>
+<span class="add">+    eventHandlers = {</span>
+<span class="add">+        RestProgress = function(data)</span>
+<span class="add">+            print(data.hoursPassed .. &#x27; of &#x27; .. data.hours .. &#x27; hours have passed&#x27;)</span>
+<span class="add">+        end</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx"> **AddUiMode**</span>
+<span class="ctx"> </span>
+<span class="ctx"> Equivalent to ``I.UI.addMode``, but can be sent from another object or global script.</span>
+</pre></div>
+<div class="file"><div class="path">files/data/scripts/omw/ui.lua</div><pre>
+<span class="hunk">@@ -309,7 +309,7 @@ return {</span>
+<span class="ctx">         --</span>
+<span class="ctx">         -- The `Rest` mode has two windows: `WaitDialog`, where the player picks the hours, and `WaitDialogProgressBar`,</span>
+<span class="ctx">         -- which the engine shows instead while the hours pass. The interface shows the replacements of both when the</span>
+<span class="del">-        -- rest menu opens.</span>
+<span class="add">+        -- rest menu opens. The `RestProgress` event tells when the hours start to pass, and how many have passed.</span>
+<span class="ctx">         -- @function [parent=#UI] registerWindow</span>
+<span class="ctx">         -- @param #string windowName</span>
+<span class="ctx">         -- @param #function showFn Callback that will be called when the window should become visible.</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1785,7 +1785,7 @@</span>
+<span class="ctx"> -- The rest menu must be open, as the engine opens it, as the `ShowRestMenu` mwscript function opens it, or as `I.UI.addMode(&#x27;Rest&#x27;, { target = bed })` opens it. When the menu opens, the engine decides whether the player sleeps or waits there, as @{#PLAYER.getRestStatus} says, and it closes the menu where the player can&#x27;t rest at all.</span>
+<span class="ctx"> -- The engine then rests as the menu does. It saves the game first, if autosaves are on, and fades the screen out. It shows its progress bar while one hour passes every 1/60 of a second. Each hour heals the player if they sleep, and lets the other actors rest. While the player sleeps, the `GetPCSleep` mwscript function is true.</span>
+<span class="ctx"> -- A sleep outdoors may be interrupted by a creature from the region&#x27;s sleep list. An mwscript may also wake the player up with `WakeUpPC`. The rest stops early too if the player dies. When the rest stops, the menu closes. After a sleep that ran its course, the engine opens the level-up menu if a level-up is ready.</span>
+<span class="add">+-- The rest starts at the end of the frame. While the hours pass, the player&#x27;s local scripts get the `RestProgress` event.</span>
+<span class="ctx"> -- @function [parent=#PLAYER] rest</span>
+<span class="ctx"> -- @param openmw.core#GameObject player</span>
+<span class="ctx"> -- @param #number hours The hours to rest, at least 1. The rest menu offers 1 to 24, or @{#PLAYERRestStatus}.hoursUntilHealed.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/player.lua</div><pre>
+<span class="hunk">@@ -895,6 +895,7 @@ testing.registerLocalTestStep(&#x27;rest status on self&#x27;, function()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="ctx"> local restFinished = nil</span>
+<span class="add">+local restProgress = {}</span>
+<span class="ctx"> </span>
+<span class="ctx"> testing.registerLocalTestStep(&#x27;rest in rest menu on self&#x27;, function(hours)</span>
+<span class="ctx">     -- The test steps stop while the rest menu pauses the game, so this asks for the rest in the same frame as it</span>
+<span class="hunk">@@ -906,6 +907,7 @@ testing.registerLocalTestStep(&#x27;rest in rest menu on self&#x27;, function(hours)</span>
+<span class="ctx">     testing.expect(restWindows.WaitDialog and restWindows.WaitDialogProgressBar,</span>
+<span class="ctx">         &#x27;The rest menu should have the wait dialog and the progress bar&#x27;)</span>
+<span class="ctx">     restFinished = nil</span>
+<span class="add">+    restProgress = {}</span>
+<span class="ctx">     I.UI.addMode(&#x27;Rest&#x27;)</span>
+<span class="ctx">     core.sendGlobalEvent(&#x27;restForTest&#x27;, hours)</span>
+<span class="ctx">     for _ = 1, 600 do</span>
+<span class="hunk">@@ -915,6 +917,9 @@ testing.registerLocalTestStep(&#x27;rest in rest menu on self&#x27;, function(hours)</span>
+<span class="ctx">         end</span>
+<span class="ctx">     end</span>
+<span class="ctx">     testing.expectEqual(restFinished, true, &#x27;The rest should last all its hours&#x27;)</span>
+<span class="add">+    testing.expectEqual(#restProgress, hours + 1, &#x27;The player should hear when the hours start and after each hour&#x27;)</span>
+<span class="add">+    testing.expectEqual(restProgress[#restProgress].hoursPassed, hours, &#x27;The last event should come after all hours&#x27;)</span>
+<span class="add">+    testing.expectEqual(restProgress[#restProgress].hours, hours, &#x27;The events should tell the length of the rest&#x27;)</span>
+<span class="ctx">     testing.expectEqual(I.UI.getMode(), nil, &#x27;The rest menu should close when the rest stops&#x27;)</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -922,6 +927,10 @@ testing.localEventHandlers.restForTestStopped = function(finished)</span>
+<span class="ctx">     restFinished = finished</span>
+<span class="ctx"> end</span>
+<span class="ctx"> </span>
+<span class="add">+testing.localEventHandlers.RestProgress = function(data)</span>
+<span class="add">+    restProgress[#restProgress + 1] = data</span>
+<span class="add">+end</span>
+<span class="add">+</span>
+<span class="ctx"> local addedItems = {}</span>
+<span class="ctx"> </span>
+<span class="ctx"> testing.registerLocalTestStep(&#x27;check added items on self&#x27;, function(data)</span>
+</pre></div>

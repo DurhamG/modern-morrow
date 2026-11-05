@@ -1,0 +1,24 @@
+<div class="file"><div class="path">apps/openmw/mwmechanics/mechanicsmanagerimp.cpp</div><pre>
+<span class="hunk">@@ -460,9 +460,19 @@ namespace MWMechanics</span>
+<span class="ctx">     {</span>
+<span class="ctx">         MWBase::World* world = MWBase::Environment::get().getWorld();</span>
+<span class="ctx"> </span>
+<span class="del">-        const ESM::Class* ptr = world-&gt;getStore().insert(value);</span>
+<span class="del">-</span>
+<span class="ctx">         ESM::NPC player = *world-&gt;getPlayerPtr().get&lt;ESM::NPC&gt;()-&gt;mBase;</span>
+<span class="add">+</span>
+<span class="add">+        // A class that the player made up before has a generated ID. Replace it, so that no unused class is left.</span>
+<span class="add">+        const ESM::Class* ptr;</span>
+<span class="add">+        if (player.mClass.is&lt;ESM::GeneratedRefId&gt;())</span>
+<span class="add">+        {</span>
+<span class="add">+            ESM::Class record = value;</span>
+<span class="add">+            record.mId = player.mClass;</span>
+<span class="add">+            ptr = world-&gt;getStore().overrideRecord(record);</span>
+<span class="add">+        }</span>
+<span class="add">+        else</span>
+<span class="add">+            ptr = world-&gt;getStore().insert(value);</span>
+<span class="add">+</span>
+<span class="ctx">         player.mClass = ptr-&gt;mId;</span>
+<span class="ctx"> </span>
+<span class="ctx">         world-&gt;getStore().insert(player);</span>
+</pre></div>

@@ -1,0 +1,58 @@
+<div class="file"><div class="path">apps/openmw/mwbase/mechanicsmanager.hpp</div><pre>
+<span class="hunk">@@ -146,6 +146,7 @@ namespace MWBase</span>
+<span class="ctx">         virtual void actorKilled(const MWWorld::Ptr&amp; victim, const MWWorld::Ptr&amp; attacker) = 0;</span>
+<span class="ctx"> </span>
+<span class="ctx">         /// Utility to check if taking this item is illegal and calling commitCrime if so</span>
+<span class="add">+        /// Taking an item from a corpse is never illegal.</span>
+<span class="ctx">         /// @param container The container the item is in; may be empty for an item in the world</span>
+<span class="ctx">         virtual void itemTaken(const MWWorld::Ptr&amp; ptr, const MWWorld::Ptr&amp; item, const MWWorld::Ptr&amp; container,</span>
+<span class="ctx">             int count, bool alarm = true)</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/containeritemmodel.cpp</div><pre>
+<span class="hunk">@@ -259,10 +259,6 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         MWWorld::Ptr target = mItemSources[0].first;</span>
+<span class="ctx"> </span>
+<span class="del">-        // Looting a dead corpse is considered OK</span>
+<span class="del">-        if (target.getClass().isActor() &amp;&amp; target.getClass().getCreatureStats(target).isDead())</span>
+<span class="del">-            return true;</span>
+<span class="del">-</span>
+<span class="ctx">         MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="ctx">         MWBase::Environment::get().getMechanicsManager()-&gt;itemTaken(player, item, target, count);</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/inventoryitemmodel.cpp</div><pre>
+<span class="hunk">@@ -3,7 +3,6 @@</span>
+<span class="ctx"> #include &lt;sstream&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwmechanics/actorutil.hpp&quot;</span>
+<span class="del">-#include &quot;../mwmechanics/creaturestats.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/containerstore.hpp&quot;</span>
+<span class="hunk">@@ -133,10 +132,6 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">     bool InventoryItemModel::onTakeItem(const MWWorld::Ptr&amp; item, int count)</span>
+<span class="ctx">     {</span>
+<span class="del">-        // Looting a dead corpse is considered OK</span>
+<span class="del">-        if (mActor.getClass().isActor() &amp;&amp; mActor.getClass().getCreatureStats(mActor).isDead())</span>
+<span class="del">-            return true;</span>
+<span class="del">-</span>
+<span class="ctx">         MWWorld::Ptr player = MWMechanics::getPlayer();</span>
+<span class="ctx">         MWBase::Environment::get().getMechanicsManager()-&gt;itemTaken(player, item, mActor, count);</span>
+<span class="ctx"> </span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/mechanicsmanagerimp.cpp</div><pre>
+<span class="hunk">@@ -1082,6 +1082,11 @@ namespace MWMechanics</span>
+<span class="ctx">         if (ptr != getPlayer())</span>
+<span class="ctx">             return;</span>
+<span class="ctx"> </span>
+<span class="add">+        // Looting a corpse is never a crime</span>
+<span class="add">+        if (!container.isEmpty() &amp;&amp; container.getClass().isActor()</span>
+<span class="add">+            &amp;&amp; container.getClass().getCreatureStats(container).isDead())</span>
+<span class="add">+            return;</span>
+<span class="add">+</span>
+<span class="ctx">         MWWorld::Ptr victim;</span>
+<span class="ctx"> </span>
+<span class="ctx">         bool isAllowed = true;</span>
+</pre></div>

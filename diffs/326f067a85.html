@@ -1,0 +1,99 @@
+<div class="file"><div class="path">apps/openmw/mwlua/types/player.cpp</div><pre>
+<span class="hunk">@@ -43,6 +43,7 @@</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/services.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/spellmaking.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwmechanics/spellutil.hpp&quot;</span>
+<span class="add">+#include &quot;apps/openmw/mwworld/actiontake.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/containerstore.hpp&quot;</span>
+<span class="ctx"> #include &quot;apps/openmw/mwworld/esmstore.hpp&quot;</span>
+<span class="hunk">@@ -291,6 +292,23 @@ namespace MWLua</span>
+<span class="ctx">                       },</span>
+<span class="ctx">                       &quot;TakeItemAction&quot;);</span>
+<span class="ctx">               };</span>
+<span class="add">+        playerBindings[&quot;pickUpItem&quot;] = [context](const Object&amp; player, const Object&amp; item) {</span>
+<span class="add">+            verifyTaker(player);</span>
+<span class="add">+            const MWWorld::Ptr itemPtr = item.ptr();</span>
+<span class="add">+            if (!itemPtr.getClass().isItem(itemPtr))</span>
+<span class="add">+                throw std::runtime_error(&quot;Item expected&quot;);</span>
+<span class="add">+            if (!itemPtr.isInCell() || itemPtr.getCellRef().getCount() &lt;= 0 || !itemPtr.getRefData().isEnabled())</span>
+<span class="add">+                throw std::runtime_error(&quot;The item must lie in the world&quot;);</span>
+<span class="add">+            context.mLuaManager-&gt;addAction(</span>
+<span class="add">+                [item = Object(itemPtr)] {</span>
+<span class="add">+                    const MWWorld::Ptr taken = item.ptr();</span>
+<span class="add">+                    // An earlier action may have taken the item or moved it.</span>
+<span class="add">+                    if (!taken.isInCell() || taken.getCellRef().getCount() &lt;= 0)</span>
+<span class="add">+                        return;</span>
+<span class="add">+                    MWWorld::takeFromWorld(MWMechanics::getPlayer(), taken);</span>
+<span class="add">+                },</span>
+<span class="add">+                &quot;PickUpItemAction&quot;);</span>
+<span class="add">+        };</span>
+<span class="ctx">         playerBindings[&quot;dropItem&quot;] = [context](const Object&amp; player, const Object&amp; item, sol::optional&lt;int&gt; count) {</span>
+<span class="ctx">             verifyPlayer(player);</span>
+<span class="ctx">             if (!player.isGObject())</span>
+</pre></div>
+<div class="file"><div class="path">files/lua_api/openmw/types.lua</div><pre>
+<span class="hunk">@@ -1556,6 +1556,16 @@</span>
+<span class="ctx"> --     types.Player.takeItem(player, chest, item)</span>
+<span class="ctx"> -- end</span>
+<span class="ctx"> </span>
+<span class="add">+---</span>
+<span class="add">+-- Pick up an item that lies in the world, the way activating it does, or the Take button of the book and scroll windows (only in global scripts).</span>
+<span class="add">+-- The whole stack moves into the player&#x27;s inventory, and leaves the world. When @{#PLAYER.isAllowedToUse} is false for the item, taking it is theft: the item is recorded as stolen, and the crime is reported to anyone who sees it.</span>
+<span class="add">+-- Unlike activation, this doesn&#x27;t run the item&#x27;s activation handlers or its mwscript&#x27;s `OnActivate`, and it plays no sound.</span>
+<span class="add">+-- The change happens at the end of the frame. If an earlier change in the frame took or moved the item, nothing happens.</span>
+<span class="add">+-- @function [parent=#PLAYER] pickUpItem</span>
+<span class="add">+-- @param openmw.core#GameObject player</span>
+<span class="add">+-- @param openmw.core#GameObject item An enabled item in a cell.</span>
+<span class="add">+-- @usage types.Player.pickUpItem(player, book)</span>
+<span class="add">+</span>
+<span class="ctx"> ---</span>
+<span class="ctx"> -- Drop items from the player&#x27;s inventory into the world, the way the inventory does it (only in global scripts).</span>
+<span class="ctx"> -- The items land where the crosshair points, if there is a flat surface there within reach, and at the player&#x27;s feet otherwise. This is where the inventory drops an item with a controller.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/global.lua</div><pre>
+<span class="hunk">@@ -1203,6 +1203,43 @@ testing.registerGlobalTest(&#x27;taking items from containers&#x27;, function()</span>
+<span class="ctx">     chest:remove()</span>
+<span class="ctx"> end)</span>
+<span class="ctx"> </span>
+<span class="add">+testing.registerGlobalTest(&#x27;picking up items&#x27;, function()</span>
+<span class="add">+    local player = initPlayer()</span>
+<span class="add">+    local owner = world.createRecord(types.NPC.createRecordDraft({</span>
+<span class="add">+        template = types.NPC.record(player),</span>
+<span class="add">+        name = &#x27;Item owner&#x27;,</span>
+<span class="add">+    }))</span>
+<span class="add">+    local weapon = world.createRecord(types.Weapon.createRecordDraft({</span>
+<span class="add">+        template = types.Weapon.record(&#x27;basic_dagger1h&#x27;),</span>
+<span class="add">+        name = &#x27;Dagger on the floor&#x27;,</span>
+<span class="add">+    }))</span>
+<span class="add">+    local item = world.createObject(weapon.id, 2)</span>
+<span class="add">+    item:teleport(player.cell, player.position + util.vector3(0, 100, 0))</span>
+<span class="add">+    coroutine.yield()</span>
+<span class="add">+    item.owner.recordId = owner.id</span>
+<span class="add">+    testing.expectEqual(types.Player.isAllowedToUse(player, item), false,</span>
+<span class="add">+        &#x27;The player should not be allowed to take an owned item&#x27;)</span>
+<span class="add">+    testing.expectEqual(pcall(types.Player.pickUpItem, player, world.createObject(&#x27;basic_dagger1h&#x27;)), false,</span>
+<span class="add">+        &#x27;The player should not pick up an item that is in no cell&#x27;)</span>
+<span class="add">+</span>
+<span class="add">+    types.Player.pickUpItem(player, item)</span>
+<span class="add">+    local inventory = types.Actor.inventory(player)</span>
+<span class="add">+    for _ = 1, 10 do</span>
+<span class="add">+        coroutine.yield()</span>
+<span class="add">+        if inventory:countOf(weapon.id) &gt; 0 then</span>
+<span class="add">+            break</span>
+<span class="add">+        end</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expectEqual(inventory:countOf(weapon.id), 2, &#x27;The player should pick up the whole stack&#x27;)</span>
+<span class="add">+    for _, object in ipairs(player.cell:getAll(types.Weapon)) do</span>
+<span class="add">+        testing.expect(object.recordId ~= weapon.id or object.count == 0, &#x27;The item should leave the world&#x27;)</span>
+<span class="add">+    end</span>
+<span class="add">+    local owners = types.Item.getStolenFrom(inventory:find(weapon.id))</span>
+<span class="add">+    testing.expectEqual(#owners, 1, &#x27;Picking up an owned item should be theft&#x27;)</span>
+<span class="add">+    testing.expectEqual(owners[1].recordId, owner.id, &#x27;The item should be stolen from its owner&#x27;)</span>
+<span class="add">+    inventory:find(weapon.id):remove()</span>
+<span class="add">+end)</span>
+<span class="add">+</span>
+<span class="ctx"> testing.registerGlobalTest(&#x27;dropping items&#x27;, function()</span>
+<span class="ctx">     local player = initPlayer()</span>
+<span class="ctx">     local weapon = world.createRecord(types.Weapon.createRecordDraft({</span>
+</pre></div>

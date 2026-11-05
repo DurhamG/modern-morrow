@@ -1,0 +1,20 @@
+<div class="file"><div class="path">apps/openmw/mwlua/uibindings.cpp</div><pre>
+<span class="hunk">@@ -150,9 +150,14 @@ namespace MWLua</span>
+<span class="ctx">                   luaManager-&gt;addUIMessage(message, mode);</span>
+<span class="ctx">               };</span>
+<span class="ctx"> </span>
+<span class="del">-        api[&quot;_showInteractiveMessage&quot;] = [windowManager](std::string_view message, sol::optional&lt;sol::table&gt;) {</span>
+<span class="del">-            windowManager-&gt;interactiveMessageBox(message, { &quot;#{Interface:OK}&quot; });</span>
+<span class="del">-        };</span>
+<span class="add">+        api[&quot;_showInteractiveMessage&quot;]</span>
+<span class="add">+            = [windowManager, luaManager = context.mLuaManager](std::string_view message, sol::optional&lt;sol::table&gt;) {</span>
+<span class="add">+                  luaManager-&gt;addAction(</span>
+<span class="add">+                      [windowManager, message = std::string(message)] {</span>
+<span class="add">+                          windowManager-&gt;interactiveMessageBox(message, { &quot;#{Interface:OK}&quot; });</span>
+<span class="add">+                      },</span>
+<span class="add">+                      &quot;Show interactive message&quot;);</span>
+<span class="add">+              };</span>
+<span class="ctx">         api[&quot;CONSOLE_COLOR&quot;] = LuaUtil::makeStrictReadOnly(LuaUtil::tableFromPairs&lt;std::string, Misc::Color&gt;(lua,</span>
+<span class="ctx">             {</span>
+<span class="ctx">                 { &quot;Default&quot;, Misc::Color::fromHex(MWBase::WindowManager::sConsoleColor_Default.substr(1)) },</span>
+</pre></div>

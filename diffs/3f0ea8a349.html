@@ -1,0 +1,175 @@
+<div class="file"><div class="path">apps/openmw/mwgui/container.cpp</div><pre>
+<span class="hunk">@@ -7,18 +7,14 @@</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="del">-#include &quot;../mwbase/scriptmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/windowmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/inventorystore.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="del">-#include &quot;../mwmechanics/aipackage.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/actorutil.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/creaturestats.hpp&quot;</span>
+<span class="del">-#include &quot;../mwmechanics/summoning.hpp&quot;</span>
+<span class="del">-</span>
+<span class="del">-#include &quot;../mwscript/interpretercontext.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;containeritemmodel.hpp&quot;</span>
+<span class="ctx"> #include &quot;countdialog.hpp&quot;</span>
+<span class="hunk">@@ -300,55 +296,8 @@ namespace MWGui</span>
+<span class="ctx">             MWWorld::Ptr ptr = mPtr;</span>
+<span class="ctx">             onTakeAllButtonClicked(mTakeButton);</span>
+<span class="ctx"> </span>
+<span class="del">-            if (ptr.getClass().isPersistent(ptr))</span>
+<span class="add">+            if (!MWMechanics::disposeCorpse(ptr))</span>
+<span class="ctx">                 MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sDisposeCorpseFail}&quot;);</span>
+<span class="del">-            else</span>
+<span class="del">-            {</span>
+<span class="del">-                MWMechanics::CreatureStats&amp; creatureStats = ptr.getClass().getCreatureStats(ptr);</span>
+<span class="del">-</span>
+<span class="del">-                // If we dispose corpse before end of death animation, we should update death counter counter manually.</span>
+<span class="del">-                // Also we should run actor&#x27;s script - it may react on actor&#x27;s death.</span>
+<span class="del">-                if (creatureStats.isDead() &amp;&amp; !creatureStats.isDeathAnimationFinished())</span>
+<span class="del">-                {</span>
+<span class="del">-                    creatureStats.setDeathAnimationFinished(true);</span>
+<span class="del">-                    MWBase::Environment::get().getMechanicsManager()-&gt;notifyDied(ptr);</span>
+<span class="del">-</span>
+<span class="del">-                    const ESM::RefId&amp; script = ptr.getClass().getScript(ptr);</span>
+<span class="del">-                    if (!script.empty() &amp;&amp; MWBase::Environment::get().getWorld()-&gt;getScriptsEnabled()</span>
+<span class="del">-                        &amp;&amp; ptr.getRefData().isLocalScriptEnabled())</span>
+<span class="del">-                    {</span>
+<span class="del">-                        MWScript::InterpreterContext interpreterContext(&amp;ptr.getRefData().getLocals(), ptr);</span>
+<span class="del">-                        MWBase::Environment::get().getScriptManager()-&gt;run(script, interpreterContext);</span>
+<span class="del">-                    }</span>
+<span class="del">-</span>
+<span class="del">-                    // Clean up summoned creatures as well</span>
+<span class="del">-                    auto&amp; creatureMap = creatureStats.getSummonedCreatureMap();</span>
+<span class="del">-                    for (const auto&amp; creature : creatureMap)</span>
+<span class="del">-                        MWBase::Environment::get().getMechanicsManager()-&gt;cleanupSummonedCreature(creature.second);</span>
+<span class="del">-                    creatureMap.clear();</span>
+<span class="del">-</span>
+<span class="del">-                    // Check if we are a summon and inform our master we&#x27;ve bit the dust</span>
+<span class="del">-                    for (const auto&amp; package : creatureStats.getAiSequence())</span>
+<span class="del">-                    {</span>
+<span class="del">-                        if (package-&gt;followTargetThroughDoors() &amp;&amp; !package-&gt;getTarget().isEmpty())</span>
+<span class="del">-                        {</span>
+<span class="del">-                            const auto&amp; summoner = package-&gt;getTarget();</span>
+<span class="del">-                            auto&amp; summons = summoner.getClass().getCreatureStats(summoner).getSummonedCreatureMap();</span>
+<span class="del">-                            auto it = std::find_if(summons.begin(), summons.end(),</span>
+<span class="del">-                                [&amp;](const auto&amp; entry) { return entry.second == ptr.getCellRef().getRefNum(); });</span>
+<span class="del">-                            if (it != summons.end())</span>
+<span class="del">-                            {</span>
+<span class="del">-                                auto summon = *it;</span>
+<span class="del">-                                summons.erase(it);</span>
+<span class="del">-                                MWMechanics::purgeSummonEffect(summoner, summon);</span>
+<span class="del">-                                break;</span>
+<span class="del">-                            }</span>
+<span class="del">-                        }</span>
+<span class="del">-                    }</span>
+<span class="del">-                }</span>
+<span class="del">-</span>
+<span class="del">-                MWBase::Environment::get().getWorld()-&gt;deleteObject(ptr);</span>
+<span class="del">-            }</span>
+<span class="ctx"> </span>
+<span class="ctx">             mPtr = MWWorld::Ptr();</span>
+<span class="ctx">         }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/actorutil.cpp</div><pre>
+<span class="hunk">@@ -1,13 +1,21 @@</span>
+<span class="ctx"> #include &quot;actorutil.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwbase/environment.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/mechanicsmanager.hpp&quot;</span>
+<span class="add">+#include &quot;../mwbase/scriptmanager.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwbase/world.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &quot;../mwworld/class.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwworld/player.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &quot;../mwmechanics/aipackage.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/creaturestats.hpp&quot;</span>
+<span class="ctx"> #include &quot;../mwmechanics/magiceffects.hpp&quot;</span>
+<span class="add">+#include &quot;../mwmechanics/summoning.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+#include &quot;../mwscript/interpretercontext.hpp&quot;</span>
+<span class="add">+</span>
+<span class="add">+#include &lt;algorithm&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;components/esm3/loadmgef.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -41,4 +49,56 @@ namespace MWMechanics</span>
+<span class="ctx">         return (magicEffects.getOrDefault(ESM::MagicEffect::Invisibility).getMagnitude() &gt; 0)</span>
+<span class="ctx">             || (magicEffects.getOrDefault(ESM::MagicEffect::Chameleon).getMagnitude() &gt;= 75);</span>
+<span class="ctx">     }</span>
+<span class="add">+</span>
+<span class="add">+    bool disposeCorpse(const MWWorld::Ptr&amp; actor)</span>
+<span class="add">+    {</span>
+<span class="add">+        if (actor.getClass().isPersistent(actor))</span>
+<span class="add">+            return false;</span>
+<span class="add">+</span>
+<span class="add">+        CreatureStats&amp; creatureStats = actor.getClass().getCreatureStats(actor);</span>
+<span class="add">+</span>
+<span class="add">+        // If we dispose corpse before end of death animation, we should update death counter counter manually.</span>
+<span class="add">+        // Also we should run actor&#x27;s script - it may react on actor&#x27;s death.</span>
+<span class="add">+        if (creatureStats.isDead() &amp;&amp; !creatureStats.isDeathAnimationFinished())</span>
+<span class="add">+        {</span>
+<span class="add">+            creatureStats.setDeathAnimationFinished(true);</span>
+<span class="add">+            MWBase::Environment::get().getMechanicsManager()-&gt;notifyDied(actor);</span>
+<span class="add">+</span>
+<span class="add">+            const ESM::RefId&amp; script = actor.getClass().getScript(actor);</span>
+<span class="add">+            if (!script.empty() &amp;&amp; MWBase::Environment::get().getWorld()-&gt;getScriptsEnabled()</span>
+<span class="add">+                &amp;&amp; actor.getRefData().isLocalScriptEnabled())</span>
+<span class="add">+            {</span>
+<span class="add">+                MWScript::InterpreterContext interpreterContext(&amp;actor.getRefData().getLocals(), actor);</span>
+<span class="add">+                MWBase::Environment::get().getScriptManager()-&gt;run(script, interpreterContext);</span>
+<span class="add">+            }</span>
+<span class="add">+</span>
+<span class="add">+            // Clean up summoned creatures as well</span>
+<span class="add">+            auto&amp; creatureMap = creatureStats.getSummonedCreatureMap();</span>
+<span class="add">+            for (const auto&amp; creature : creatureMap)</span>
+<span class="add">+                MWBase::Environment::get().getMechanicsManager()-&gt;cleanupSummonedCreature(creature.second);</span>
+<span class="add">+            creatureMap.clear();</span>
+<span class="add">+</span>
+<span class="add">+            // Check if we are a summon and inform our master we&#x27;ve bit the dust</span>
+<span class="add">+            for (const auto&amp; package : creatureStats.getAiSequence())</span>
+<span class="add">+            {</span>
+<span class="add">+                if (package-&gt;followTargetThroughDoors() &amp;&amp; !package-&gt;getTarget().isEmpty())</span>
+<span class="add">+                {</span>
+<span class="add">+                    const auto&amp; summoner = package-&gt;getTarget();</span>
+<span class="add">+                    auto&amp; summons = summoner.getClass().getCreatureStats(summoner).getSummonedCreatureMap();</span>
+<span class="add">+                    auto it = std::find_if(summons.begin(), summons.end(),</span>
+<span class="add">+                        [&amp;](const auto&amp; entry) { return entry.second == actor.getCellRef().getRefNum(); });</span>
+<span class="add">+                    if (it != summons.end())</span>
+<span class="add">+                    {</span>
+<span class="add">+                        auto summon = *it;</span>
+<span class="add">+                        summons.erase(it);</span>
+<span class="add">+                        purgeSummonEffect(summoner, summon);</span>
+<span class="add">+                        break;</span>
+<span class="add">+                    }</span>
+<span class="add">+                }</span>
+<span class="add">+            }</span>
+<span class="add">+        }</span>
+<span class="add">+</span>
+<span class="add">+        MWBase::Environment::get().getWorld()-&gt;deleteObject(actor);</span>
+<span class="add">+        return true;</span>
+<span class="add">+    }</span>
+<span class="ctx"> }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/actorutil.hpp</div><pre>
+<span class="hunk">@@ -13,6 +13,12 @@ namespace MWMechanics</span>
+<span class="ctx">     bool canActorMoveByZAxis(const MWWorld::Ptr&amp; actor);</span>
+<span class="ctx">     bool hasWaterWalking(const MWWorld::Ptr&amp; actor);</span>
+<span class="ctx">     bool isTargetMagicallyHidden(const MWWorld::Ptr&amp; actor);</span>
+<span class="add">+</span>
+<span class="add">+    /// Removes the corpse of @a actor from the world, as the container window&#x27;s Dispose of Corpse button does. If the</span>
+<span class="add">+    /// death animation is still playing, the death is counted, the actor&#x27;s script runs and the actor&#x27;s summons</span>
+<span class="add">+    /// vanish, as they would when the animation ends.</span>
+<span class="add">+    /// @return false, and does nothing, if the actor is persistent. The corpses of such actors stay.</span>
+<span class="add">+    bool disposeCorpse(const MWWorld::Ptr&amp; actor);</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="ctx"> #endif</span>
+</pre></div>

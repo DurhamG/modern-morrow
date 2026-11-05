@@ -1,0 +1,109 @@
+<div class="file"><div class="path">apps/openmw/mwmechanics/enchanting.cpp</div><pre>
+<span class="hunk">@@ -1,5 +1,7 @@</span>
+<span class="ctx"> #include &quot;enchanting.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;algorithm&gt;</span>
+<span class="add">+</span>
+<span class="ctx"> #include &lt;components/esm3/loadarmo.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadbook.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadclot.hpp&gt;</span>
+<span class="hunk">@@ -164,10 +166,10 @@ namespace MWMechanics</span>
+<span class="ctx">         return true;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    void Enchanting::nextCastStyle()</span>
+<span class="add">+    std::vector&lt;int&gt; Enchanting::getCastStyles() const</span>
+<span class="ctx">     {</span>
+<span class="ctx">         if (itemEmpty())</span>
+<span class="del">-            return;</span>
+<span class="add">+            return {};</span>
+<span class="ctx"> </span>
+<span class="ctx">         const bool powerfulSoul = getGemCharge() &gt;= MWBase::Environment::get()</span>
+<span class="ctx">                                                         .getESMStore()</span>
+<span class="hunk">@@ -176,47 +178,38 @@ namespace MWMechanics</span>
+<span class="ctx">                                                         -&gt;mValue.getInteger();</span>
+<span class="ctx">         if ((mObjectType == ESM::Armor::sRecordId) || (mObjectType == ESM::Clothing::sRecordId))</span>
+<span class="ctx">         { // Armor or Clothing</span>
+<span class="del">-            switch (mCastStyle)</span>
+<span class="del">-            {</span>
+<span class="del">-                case ESM::Enchantment::WhenUsed:</span>
+<span class="del">-                    if (powerfulSoul)</span>
+<span class="del">-                        mCastStyle = ESM::Enchantment::ConstantEffect;</span>
+<span class="del">-                    return;</span>
+<span class="del">-                default: // takes care of Constant effect too</span>
+<span class="del">-                    mCastStyle = ESM::Enchantment::WhenUsed;</span>
+<span class="del">-                    return;</span>
+<span class="del">-            }</span>
+<span class="add">+            if (powerfulSoul)</span>
+<span class="add">+                return { ESM::Enchantment::WhenUsed, ESM::Enchantment::ConstantEffect };</span>
+<span class="add">+            return { ESM::Enchantment::WhenUsed };</span>
+<span class="ctx">         }</span>
+<span class="ctx">         else if (!mWeaponType.empty())</span>
+<span class="ctx">         { // Weapon</span>
+<span class="ctx">             ESM::WeaponType::Class weapclass = MWMechanics::getWeaponType(mWeaponType)-&gt;mWeaponClass;</span>
+<span class="del">-            switch (mCastStyle)</span>
+<span class="del">-            {</span>
+<span class="del">-                case ESM::Enchantment::WhenStrikes:</span>
+<span class="del">-                    if (weapclass == ESM::WeaponType::Melee || weapclass == ESM::WeaponType::Ranged)</span>
+<span class="del">-                        mCastStyle = ESM::Enchantment::WhenUsed;</span>
+<span class="del">-                    return;</span>
+<span class="del">-                case ESM::Enchantment::WhenUsed:</span>
+<span class="del">-                    if (powerfulSoul &amp;&amp; weapclass != ESM::WeaponType::Ammo &amp;&amp; weapclass != ESM::WeaponType::Thrown)</span>
+<span class="del">-                        mCastStyle = ESM::Enchantment::ConstantEffect;</span>
+<span class="del">-                    else if (weapclass != ESM::WeaponType::Ranged)</span>
+<span class="del">-                        mCastStyle = ESM::Enchantment::WhenStrikes;</span>
+<span class="del">-                    return;</span>
+<span class="del">-                default: // takes care of Constant effect too</span>
+<span class="del">-                    mCastStyle = ESM::Enchantment::WhenUsed;</span>
+<span class="del">-                    if (weapclass != ESM::WeaponType::Ranged)</span>
+<span class="del">-                        mCastStyle = ESM::Enchantment::WhenStrikes;</span>
+<span class="del">-                    return;</span>
+<span class="del">-            }</span>
+<span class="add">+            std::vector&lt;int&gt; styles;</span>
+<span class="add">+            if (weapclass != ESM::WeaponType::Ranged)</span>
+<span class="add">+                styles.push_back(ESM::Enchantment::WhenStrikes);</span>
+<span class="add">+            if (weapclass == ESM::WeaponType::Melee || weapclass == ESM::WeaponType::Ranged)</span>
+<span class="add">+                styles.push_back(ESM::Enchantment::WhenUsed);</span>
+<span class="add">+            if (powerfulSoul &amp;&amp; weapclass != ESM::WeaponType::Ammo &amp;&amp; weapclass != ESM::WeaponType::Thrown)</span>
+<span class="add">+                styles.push_back(ESM::Enchantment::ConstantEffect);</span>
+<span class="add">+            return styles;</span>
+<span class="ctx">         }</span>
+<span class="del">-        else if (mObjectType == ESM::Book::sRecordId)</span>
+<span class="del">-        { // Scroll or Book</span>
+<span class="del">-            mCastStyle = ESM::Enchantment::CastOnce;</span>
+<span class="add">+</span>
+<span class="add">+        // Scrolls, and anything else</span>
+<span class="add">+        return { ESM::Enchantment::CastOnce };</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    void Enchanting::nextCastStyle()</span>
+<span class="add">+    {</span>
+<span class="add">+        const std::vector&lt;int&gt; styles = getCastStyles();</span>
+<span class="add">+        if (styles.empty())</span>
+<span class="ctx">             return;</span>
+<span class="del">-        }</span>
+<span class="ctx"> </span>
+<span class="del">-        // Fail case</span>
+<span class="del">-        mCastStyle = ESM::Enchantment::CastOnce;</span>
+<span class="add">+        // Step to the next cast type, or back to the first one when there is no next one.</span>
+<span class="add">+        auto next = std::find(styles.begin(), styles.end(), mCastStyle);</span>
+<span class="add">+        if (next != styles.end())</span>
+<span class="add">+            ++next;</span>
+<span class="add">+        mCastStyle = next == styles.end() ? styles.front() : *next;</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     /*</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/enchanting.hpp</div><pre>
+<span class="hunk">@@ -67,6 +67,10 @@ namespace MWMechanics</span>
+<span class="ctx">         /// rather than enchant with it. This is always empty when the player enchants an item themself.</span>
+<span class="ctx">         MWWorld::Ptr getStolenItem() const;</span>
+<span class="ctx">         bool create(); // Return true if created, false if failed.</span>
+<span class="add">+        /// The cast types that the item can be enchanted with, as ESM::Enchantment::Type values, in the order that</span>
+<span class="add">+        /// the enchanting window steps through them. A constant effect needs a soul of at least the</span>
+<span class="add">+        /// iSoulAmountForConstantEffect game setting. This is empty when there is no item.</span>
+<span class="add">+        std::vector&lt;int&gt; getCastStyles() const;</span>
+<span class="ctx">         void nextCastStyle(); // Set enchant type to next possible type (for mOldItemPtr object)</span>
+<span class="ctx">         int getCastStyle() const;</span>
+<span class="ctx">         float getEnchantPoints(bool precise = true) const;</span>
+</pre></div>

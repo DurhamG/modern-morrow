@@ -1,0 +1,415 @@
+<div class="file"><div class="path">apps/openmw/mwgui/levelupdialog.cpp</div><pre>
+<span class="hunk">@@ -7,7 +7,6 @@</span>
+<span class="ctx"> #include &lt;MyGUI_TextBox.h&gt;</span>
+<span class="ctx"> #include &lt;MyGUI_UString.h&gt;</span>
+<span class="ctx"> </span>
+<span class="del">-#include &lt;components/fallback/fallback.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/settings/values.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/widgets/box.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -175,35 +174,22 @@ namespace MWGui</span>
+<span class="ctx">         const MWMechanics::CreatureStats&amp; creatureStats = player.getClass().getCreatureStats(player);</span>
+<span class="ctx">         const MWMechanics::NpcStats&amp; pcStats = player.getClass().getNpcStats(player);</span>
+<span class="ctx"> </span>
+<span class="del">-        setClassImage(mClassImage,</span>
+<span class="del">-            ESM::RefId::stringRefId(</span>
+<span class="del">-                getLevelupClassImage(pcStats.getSkillIncreasesForSpecialization(ESM::Class::Specialization::Combat),</span>
+<span class="del">-                    pcStats.getSkillIncreasesForSpecialization(ESM::Class::Specialization::Magic),</span>
+<span class="del">-                    pcStats.getSkillIncreasesForSpecialization(ESM::Class::Specialization::Stealth))));</span>
+<span class="add">+        setClassImage(mClassImage, ESM::RefId::stringRefId(pcStats.getLevelUpClassImage()));</span>
+<span class="ctx"> </span>
+<span class="ctx">         int level = creatureStats.getLevel() + 1;</span>
+<span class="ctx">         mLevelText-&gt;setCaptionWithReplacing(&quot;#{sLevelUpMenu1} &quot; + MyGUI::utility::toString(level));</span>
+<span class="ctx"> </span>
+<span class="del">-        std::string_view levelupdescription;</span>
+<span class="del">-        levelupdescription = Fallback::Map::getString(&quot;Level_Up_Level&quot; + MyGUI::utility::toString(level));</span>
+<span class="add">+        mLevelDescription-&gt;setCaption(MyGUI::UString(pcStats.getLevelUpDescription()));</span>
+<span class="ctx"> </span>
+<span class="del">-        if (levelupdescription.empty())</span>
+<span class="del">-            levelupdescription = Fallback::Map::getString(&quot;Level_Up_Default&quot;);</span>
+<span class="del">-</span>
+<span class="del">-        mLevelDescription-&gt;setCaption(MyGUI::UString(levelupdescription));</span>
+<span class="del">-</span>
+<span class="del">-        unsigned int availableAttributes = 0;</span>
+<span class="ctx">         for (const ESM::Attribute&amp; attribute : MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Attribute&gt;())</span>
+<span class="ctx">         {</span>
+<span class="ctx">             const auto&amp; widgets = mAttributeWidgets[attribute.mId];</span>
+<span class="del">-            if (pcStats.getAttribute(attribute.mId).getBase() &lt; 100)</span>
+<span class="add">+            const int mult = pcStats.getLevelUpAttributeIncrease(attribute.mId);</span>
+<span class="add">+            if (mult &gt; 0)</span>
+<span class="ctx">             {</span>
+<span class="ctx">                 widgets.mButton-&gt;setEnabled(true);</span>
+<span class="ctx">                 widgets.mValue-&gt;setEnabled(true);</span>
+<span class="del">-                availableAttributes++;</span>
+<span class="ctx"> </span>
+<span class="del">-                int mult = pcStats.getLevelupAttributeMultiplier(attribute.mId);</span>
+<span class="del">-                mult = std::min(mult, static_cast&lt;int&gt;(100 - pcStats.getAttribute(attribute.mId).getBase()));</span>
+<span class="ctx">                 if (mult &lt;= 1)</span>
+<span class="ctx">                     widgets.mMultiplier-&gt;setCaption({});</span>
+<span class="ctx">                 else</span>
+<span class="hunk">@@ -218,7 +204,7 @@ namespace MWGui</span>
+<span class="ctx">             }</span>
+<span class="ctx">         }</span>
+<span class="ctx"> </span>
+<span class="del">-        mCoinCount = std::min(sMaxCoins, availableAttributes);</span>
+<span class="add">+        mCoinCount = static_cast&lt;unsigned int&gt;(pcStats.getLevelUpAttributeCount());</span>
+<span class="ctx"> </span>
+<span class="ctx">         mSpentAttributes.clear();</span>
+<span class="ctx">         resetCoins();</span>
+<span class="hunk">@@ -247,19 +233,7 @@ namespace MWGui</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;messageBox(&quot;#{sNotifyMessage36}&quot;);</span>
+<span class="ctx">         else</span>
+<span class="ctx">         {</span>
+<span class="del">-            // increase attributes</span>
+<span class="del">-            for (unsigned int i = 0; i &lt; mCoinCount; ++i)</span>
+<span class="del">-            {</span>
+<span class="del">-                MWMechanics::AttributeValue attribute = pcStats.getAttribute(mSpentAttributes[i]);</span>
+<span class="del">-                attribute.setBase(attribute.getBase() + pcStats.getLevelupAttributeMultiplier(mSpentAttributes[i]));</span>
+<span class="del">-</span>
+<span class="del">-                if (attribute.getBase() &gt;= 100)</span>
+<span class="del">-                    attribute.setBase(100);</span>
+<span class="del">-                pcStats.setAttribute(mSpentAttributes[i], attribute);</span>
+<span class="del">-            }</span>
+<span class="del">-</span>
+<span class="del">-            pcStats.levelUp();</span>
+<span class="del">-</span>
+<span class="add">+            pcStats.levelUp(mSpentAttributes);</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;removeGuiMode(GM_Levelup);</span>
+<span class="ctx">         }</span>
+<span class="ctx">     }</span>
+<span class="hunk">@@ -281,106 +255,6 @@ namespace MWGui</span>
+<span class="ctx">         assignCoins();</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="del">-    std::string_view LevelupDialog::getLevelupClassImage(</span>
+<span class="del">-        const int combatIncreases, const int magicIncreases, const int stealthIncreases)</span>
+<span class="del">-    {</span>
+<span class="del">-        std::string_view ret = &quot;acrobat&quot;;</span>
+<span class="del">-</span>
+<span class="del">-        int total = combatIncreases + magicIncreases + stealthIncreases;</span>
+<span class="del">-        if (total == 0)</span>
+<span class="del">-            return ret;</span>
+<span class="del">-</span>
+<span class="del">-        int combatFraction = static_cast&lt;int&gt;(static_cast&lt;float&gt;(combatIncreases) / total * 10.f);</span>
+<span class="del">-        int magicFraction = static_cast&lt;int&gt;(static_cast&lt;float&gt;(magicIncreases) / total * 10.f);</span>
+<span class="del">-        int stealthFraction = static_cast&lt;int&gt;(static_cast&lt;float&gt;(stealthIncreases) / total * 10.f);</span>
+<span class="del">-</span>
+<span class="del">-        if (combatFraction &gt; 7)</span>
+<span class="del">-            ret = &quot;warrior&quot;;</span>
+<span class="del">-        else if (magicFraction &gt; 7)</span>
+<span class="del">-            ret = &quot;mage&quot;;</span>
+<span class="del">-        else if (stealthFraction &gt; 7)</span>
+<span class="del">-            ret = &quot;thief&quot;;</span>
+<span class="del">-</span>
+<span class="del">-        switch (combatFraction)</span>
+<span class="del">-        {</span>
+<span class="del">-            case 7:</span>
+<span class="del">-                ret = &quot;warrior&quot;;</span>
+<span class="del">-                break;</span>
+<span class="del">-            case 6:</span>
+<span class="del">-                if (stealthFraction == 1)</span>
+<span class="del">-                    ret = &quot;barbarian&quot;;</span>
+<span class="del">-                else if (stealthFraction == 3)</span>
+<span class="del">-                    ret = &quot;crusader&quot;;</span>
+<span class="del">-                else</span>
+<span class="del">-                    ret = &quot;knight&quot;;</span>
+<span class="del">-                break;</span>
+<span class="del">-            case 5:</span>
+<span class="del">-                if (stealthFraction == 3)</span>
+<span class="del">-                    ret = &quot;scout&quot;;</span>
+<span class="del">-                else</span>
+<span class="del">-                    ret = &quot;archer&quot;;</span>
+<span class="del">-                break;</span>
+<span class="del">-            case 4:</span>
+<span class="del">-                ret = &quot;rogue&quot;;</span>
+<span class="del">-                break;</span>
+<span class="del">-            default:</span>
+<span class="del">-                break;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        switch (magicFraction)</span>
+<span class="del">-        {</span>
+<span class="del">-            case 7:</span>
+<span class="del">-                ret = &quot;mage&quot;;</span>
+<span class="del">-                break;</span>
+<span class="del">-            case 6:</span>
+<span class="del">-                if (combatFraction == 2)</span>
+<span class="del">-                    ret = &quot;sorcerer&quot;;</span>
+<span class="del">-                else if (combatIncreases == 3)</span>
+<span class="del">-                    ret = &quot;healer&quot;;</span>
+<span class="del">-                else</span>
+<span class="del">-                    ret = &quot;battlemage&quot;;</span>
+<span class="del">-                break;</span>
+<span class="del">-            case 5:</span>
+<span class="del">-                ret = &quot;witchhunter&quot;;</span>
+<span class="del">-                break;</span>
+<span class="del">-            case 4:</span>
+<span class="del">-                ret = &quot;spellsword&quot;;</span>
+<span class="del">-                // In vanilla there&#x27;s also code for &quot;nightblade&quot;, however it seems to be unreachable.</span>
+<span class="del">-                break;</span>
+<span class="del">-            default:</span>
+<span class="del">-                break;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        switch (stealthFraction)</span>
+<span class="del">-        {</span>
+<span class="del">-            case 7:</span>
+<span class="del">-                ret = &quot;thief&quot;;</span>
+<span class="del">-                break;</span>
+<span class="del">-            case 6:</span>
+<span class="del">-                if (magicFraction == 1)</span>
+<span class="del">-                    ret = &quot;agent&quot;;</span>
+<span class="del">-                else if (magicIncreases == 3)</span>
+<span class="del">-                    ret = &quot;assassin&quot;;</span>
+<span class="del">-                else</span>
+<span class="del">-                    ret = &quot;acrobat&quot;;</span>
+<span class="del">-                break;</span>
+<span class="del">-            case 5:</span>
+<span class="del">-                if (magicIncreases == 3)</span>
+<span class="del">-                    ret = &quot;monk&quot;;</span>
+<span class="del">-                else</span>
+<span class="del">-                    ret = &quot;pilgrim&quot;;</span>
+<span class="del">-                break;</span>
+<span class="del">-            case 3:</span>
+<span class="del">-                if (magicFraction == 3)</span>
+<span class="del">-                    ret = &quot;bard&quot;;</span>
+<span class="del">-                break;</span>
+<span class="del">-            default:</span>
+<span class="del">-                break;</span>
+<span class="del">-        }</span>
+<span class="del">-</span>
+<span class="del">-        return ret;</span>
+<span class="del">-    }</span>
+<span class="del">-</span>
+<span class="ctx">     bool LevelupDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent&amp; arg)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         if (arg.button == SDL_CONTROLLER_BUTTON_A)</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/levelupdialog.hpp</div><pre>
+<span class="hunk">@@ -48,9 +48,6 @@ namespace MWGui</span>
+<span class="ctx"> </span>
+<span class="ctx">         void setAttributeValues();</span>
+<span class="ctx"> </span>
+<span class="del">-        std::string_view getLevelupClassImage(</span>
+<span class="del">-            const int combatIncreases, const int magicIncreases, const int stealthIncreases);</span>
+<span class="del">-</span>
+<span class="ctx">         bool onControllerButtonEvent(const SDL_ControllerButtonEvent&amp; arg) override;</span>
+<span class="ctx">         std::vector&lt;MyGUI::Button*&gt; mAttributeButtons;</span>
+<span class="ctx">         size_t mControllerFocus = 0;</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/waitdialog.cpp</div><pre>
+<span class="hunk">@@ -274,9 +274,7 @@ namespace MWGui</span>
+<span class="ctx">         const MWMechanics::NpcStats&amp; pcstats = player.getClass().getNpcStats(player);</span>
+<span class="ctx"> </span>
+<span class="ctx">         // trigger levelup if possible</span>
+<span class="del">-        const MWWorld::Store&lt;ESM::GameSetting&gt;&amp; gmst</span>
+<span class="del">-            = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::GameSetting&gt;();</span>
+<span class="del">-        if (mSleeping &amp;&amp; pcstats.getLevelProgress() &gt;= gmst.find(&quot;iLevelUpTotal&quot;)-&gt;mValue.getInteger())</span>
+<span class="add">+        if (mSleeping &amp;&amp; pcstats.isLevelUpReady())</span>
+<span class="ctx">         {</span>
+<span class="ctx">             MWBase::Environment::get().getWindowManager()-&gt;pushGuiMode(GM_Levelup);</span>
+<span class="ctx">         }</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/npcstats.cpp</div><pre>
+<span class="hunk">@@ -1,12 +1,15 @@</span>
+<span class="ctx"> #include &quot;npcstats.hpp&quot;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;algorithm&gt;</span>
+<span class="ctx"> #include &lt;cassert&gt;</span>
+<span class="ctx"> #include &lt;format&gt;</span>
+<span class="ctx"> </span>
+<span class="add">+#include &lt;components/esm/attr.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadclas.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadfact.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/loadgmst.hpp&gt;</span>
+<span class="ctx"> #include &lt;components/esm3/npcstats.hpp&gt;</span>
+<span class="add">+#include &lt;components/fallback/fallback.hpp&gt;</span>
+<span class="ctx"> </span>
+<span class="ctx"> #include &lt;MyGUI_TextIterator.h&gt;</span>
+<span class="ctx"> </span>
+<span class="hunk">@@ -221,8 +224,152 @@ void MWMechanics::NpcStats::setLevelProgress(int progress)</span>
+<span class="ctx">     mLevelProgress = progress;</span>
+<span class="ctx"> }</span>
+<span class="ctx"> </span>
+<span class="del">-void MWMechanics::NpcStats::levelUp()</span>
+<span class="add">+bool MWMechanics::NpcStats::isLevelUpReady() const</span>
+<span class="ctx"> {</span>
+<span class="add">+    const MWWorld::Store&lt;ESM::GameSetting&gt;&amp; gmst = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::GameSetting&gt;();</span>
+<span class="add">+    return mLevelProgress &gt;= gmst.find(&quot;iLevelUpTotal&quot;)-&gt;mValue.getInteger();</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+int MWMechanics::NpcStats::getLevelUpAttributeCount() const</span>
+<span class="add">+{</span>
+<span class="add">+    constexpr int maxAttributes = 3;</span>
+<span class="add">+    int count = 0;</span>
+<span class="add">+    for (const ESM::Attribute&amp; attribute : MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::Attribute&gt;())</span>
+<span class="add">+    {</span>
+<span class="add">+        if (getLevelUpAttributeIncrease(attribute.mId) &gt; 0)</span>
+<span class="add">+            ++count;</span>
+<span class="add">+    }</span>
+<span class="add">+    return std::min(maxAttributes, count);</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+int MWMechanics::NpcStats::getLevelUpAttributeIncrease(ESM::RefId attribute) const</span>
+<span class="add">+{</span>
+<span class="add">+    const float base = getAttribute(attribute).getBase();</span>
+<span class="add">+    if (base &gt;= 100)</span>
+<span class="add">+        return 0;</span>
+<span class="add">+    return std::max(1, std::min(getLevelupAttributeMultiplier(attribute), static_cast&lt;int&gt;(100 - base)));</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+std::string_view MWMechanics::NpcStats::getLevelUpClassImage() const</span>
+<span class="add">+{</span>
+<span class="add">+    const int combatIncreases = getSkillIncreasesForSpecialization(ESM::Class::Specialization::Combat);</span>
+<span class="add">+    const int magicIncreases = getSkillIncreasesForSpecialization(ESM::Class::Specialization::Magic);</span>
+<span class="add">+    const int stealthIncreases = getSkillIncreasesForSpecialization(ESM::Class::Specialization::Stealth);</span>
+<span class="add">+</span>
+<span class="add">+    std::string_view ret = &quot;acrobat&quot;;</span>
+<span class="add">+</span>
+<span class="add">+    int total = combatIncreases + magicIncreases + stealthIncreases;</span>
+<span class="add">+    if (total == 0)</span>
+<span class="add">+        return ret;</span>
+<span class="add">+</span>
+<span class="add">+    int combatFraction = static_cast&lt;int&gt;(static_cast&lt;float&gt;(combatIncreases) / total * 10.f);</span>
+<span class="add">+    int magicFraction = static_cast&lt;int&gt;(static_cast&lt;float&gt;(magicIncreases) / total * 10.f);</span>
+<span class="add">+    int stealthFraction = static_cast&lt;int&gt;(static_cast&lt;float&gt;(stealthIncreases) / total * 10.f);</span>
+<span class="add">+</span>
+<span class="add">+    if (combatFraction &gt; 7)</span>
+<span class="add">+        ret = &quot;warrior&quot;;</span>
+<span class="add">+    else if (magicFraction &gt; 7)</span>
+<span class="add">+        ret = &quot;mage&quot;;</span>
+<span class="add">+    else if (stealthFraction &gt; 7)</span>
+<span class="add">+        ret = &quot;thief&quot;;</span>
+<span class="add">+</span>
+<span class="add">+    switch (combatFraction)</span>
+<span class="add">+    {</span>
+<span class="add">+        case 7:</span>
+<span class="add">+            ret = &quot;warrior&quot;;</span>
+<span class="add">+            break;</span>
+<span class="add">+        case 6:</span>
+<span class="add">+            if (stealthFraction == 1)</span>
+<span class="add">+                ret = &quot;barbarian&quot;;</span>
+<span class="add">+            else if (stealthFraction == 3)</span>
+<span class="add">+                ret = &quot;crusader&quot;;</span>
+<span class="add">+            else</span>
+<span class="add">+                ret = &quot;knight&quot;;</span>
+<span class="add">+            break;</span>
+<span class="add">+        case 5:</span>
+<span class="add">+            if (stealthFraction == 3)</span>
+<span class="add">+                ret = &quot;scout&quot;;</span>
+<span class="add">+            else</span>
+<span class="add">+                ret = &quot;archer&quot;;</span>
+<span class="add">+            break;</span>
+<span class="add">+        case 4:</span>
+<span class="add">+            ret = &quot;rogue&quot;;</span>
+<span class="add">+            break;</span>
+<span class="add">+        default:</span>
+<span class="add">+            break;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    switch (magicFraction)</span>
+<span class="add">+    {</span>
+<span class="add">+        case 7:</span>
+<span class="add">+            ret = &quot;mage&quot;;</span>
+<span class="add">+            break;</span>
+<span class="add">+        case 6:</span>
+<span class="add">+            if (combatFraction == 2)</span>
+<span class="add">+                ret = &quot;sorcerer&quot;;</span>
+<span class="add">+            else if (combatIncreases == 3)</span>
+<span class="add">+                ret = &quot;healer&quot;;</span>
+<span class="add">+            else</span>
+<span class="add">+                ret = &quot;battlemage&quot;;</span>
+<span class="add">+            break;</span>
+<span class="add">+        case 5:</span>
+<span class="add">+            ret = &quot;witchhunter&quot;;</span>
+<span class="add">+            break;</span>
+<span class="add">+        case 4:</span>
+<span class="add">+            ret = &quot;spellsword&quot;;</span>
+<span class="add">+            // In vanilla there&#x27;s also code for &quot;nightblade&quot;, however it seems to be unreachable.</span>
+<span class="add">+            break;</span>
+<span class="add">+        default:</span>
+<span class="add">+            break;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    switch (stealthFraction)</span>
+<span class="add">+    {</span>
+<span class="add">+        case 7:</span>
+<span class="add">+            ret = &quot;thief&quot;;</span>
+<span class="add">+            break;</span>
+<span class="add">+        case 6:</span>
+<span class="add">+            if (magicFraction == 1)</span>
+<span class="add">+                ret = &quot;agent&quot;;</span>
+<span class="add">+            else if (magicIncreases == 3)</span>
+<span class="add">+                ret = &quot;assassin&quot;;</span>
+<span class="add">+            else</span>
+<span class="add">+                ret = &quot;acrobat&quot;;</span>
+<span class="add">+            break;</span>
+<span class="add">+        case 5:</span>
+<span class="add">+            if (magicIncreases == 3)</span>
+<span class="add">+                ret = &quot;monk&quot;;</span>
+<span class="add">+            else</span>
+<span class="add">+                ret = &quot;pilgrim&quot;;</span>
+<span class="add">+            break;</span>
+<span class="add">+        case 3:</span>
+<span class="add">+            if (magicFraction == 3)</span>
+<span class="add">+                ret = &quot;bard&quot;;</span>
+<span class="add">+            break;</span>
+<span class="add">+        default:</span>
+<span class="add">+            break;</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="add">+    return ret;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+std::string_view MWMechanics::NpcStats::getLevelUpDescription() const</span>
+<span class="add">+{</span>
+<span class="add">+    const std::string_view description = Fallback::Map::getString(std::format(&quot;Level_Up_Level{}&quot;, getLevel() + 1));</span>
+<span class="add">+    if (description.empty())</span>
+<span class="add">+        return Fallback::Map::getString(&quot;Level_Up_Default&quot;);</span>
+<span class="add">+    return description;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+void MWMechanics::NpcStats::levelUp(const std::vector&lt;ESM::RefId&gt;&amp; attributes)</span>
+<span class="add">+{</span>
+<span class="add">+    for (const ESM::RefId&amp; id : attributes)</span>
+<span class="add">+    {</span>
+<span class="add">+        AttributeValue attribute = getAttribute(id);</span>
+<span class="add">+        attribute.setBase(std::min(100.f, attribute.getBase() + getLevelupAttributeMultiplier(id)));</span>
+<span class="add">+        setAttribute(id, attribute);</span>
+<span class="add">+    }</span>
+<span class="add">+</span>
+<span class="ctx">     const MWWorld::Store&lt;ESM::GameSetting&gt;&amp; gmst = MWBase::Environment::get().getESMStore()-&gt;get&lt;ESM::GameSetting&gt;();</span>
+<span class="ctx"> </span>
+<span class="ctx">     mLevelProgress -= gmst.find(&quot;iLevelUpTotal&quot;)-&gt;mValue.getInteger();</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwmechanics/npcstats.hpp</div><pre>
+<span class="hunk">@@ -97,7 +97,27 @@ namespace MWMechanics</span>
+<span class="ctx">         int getSkillIncreasesForSpecialization(ESM::Class::Specialization spec) const;</span>
+<span class="ctx">         void setSkillIncreasesForSpecialization(ESM::Class::Specialization spec, int increases);</span>
+<span class="ctx"> </span>
+<span class="del">-        void levelUp();</span>
+<span class="add">+        /// Whether the skill increases since the last level-up are enough for the next one.</span>
+<span class="add">+        bool isLevelUpReady() const;</span>
+<span class="add">+</span>
+<span class="add">+        /// The number of attributes that the player raises at a level-up: three, or fewer when fewer attributes</span>
+<span class="add">+        /// are below 100.</span>
+<span class="add">+        int getLevelUpAttributeCount() const;</span>
+<span class="add">+</span>
+<span class="add">+        /// The points that @a attribute gains when the player picks it at a level-up. They come from the skill</span>
+<span class="add">+        /// increases that the attribute governs, and stop at 100. It is 0 for an attribute that is at 100 already.</span>
+<span class="add">+        int getLevelUpAttributeIncrease(ESM::RefId attribute) const;</span>
+<span class="add">+</span>
+<span class="add">+        /// The name of the class picture that the level-up window shows, such as &quot;acrobat&quot;. It depends on the skill</span>
+<span class="add">+        /// increases of each specialization since the last level-up.</span>
+<span class="add">+        std::string_view getLevelUpClassImage() const;</span>
+<span class="add">+</span>
+<span class="add">+        /// The text that the level-up window shows for the next level.</span>
+<span class="add">+        std::string_view getLevelUpDescription() const;</span>
+<span class="add">+</span>
+<span class="add">+        /// Raises @a attributes by their level-up multipliers, up to 100, and gains a level. Health grows with</span>
+<span class="add">+        /// Endurance, and the level progress and skill increases start over.</span>
+<span class="add">+        void levelUp(const std::vector&lt;ESM::RefId&gt;&amp; attributes);</span>
+<span class="ctx"> </span>
+<span class="ctx">         void updateHealth();</span>
+<span class="ctx">         ///&lt; Calculate health based on endurance and strength.</span>
+</pre></div>

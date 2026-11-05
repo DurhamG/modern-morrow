@@ -1,0 +1,97 @@
+<div class="file"><div class="path">apps/openmw/mwgui/waitdialog.cpp</div><pre>
+<span class="hunk">@@ -32,8 +32,9 @@</span>
+<span class="ctx"> namespace MWGui</span>
+<span class="ctx"> {</span>
+<span class="ctx"> </span>
+<span class="del">-    WaitDialogProgressBar::WaitDialogProgressBar()</span>
+<span class="add">+    WaitDialogProgressBar::WaitDialogProgressBar(std::string_view luaId)</span>
+<span class="ctx">         : WindowBase(&quot;openmw_wait_dialog_progressbar.layout&quot;)</span>
+<span class="add">+        , mLuaId(luaId)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         getWidget(mProgressBar, &quot;ProgressBar&quot;);</span>
+<span class="ctx">         getWidget(mProgressText, &quot;ProgressText&quot;);</span>
+<span class="hunk">@@ -60,7 +61,7 @@ namespace MWGui</span>
+<span class="ctx">         , mManualHours(1)</span>
+<span class="ctx">         , mFadeTimeRemaining(0)</span>
+<span class="ctx">         , mInterruptAt(-1)</span>
+<span class="del">-        , mProgressBar()</span>
+<span class="add">+        , mProgressBar(&quot;WaitDialogProgressBar&quot;)</span>
+<span class="ctx">     {</span>
+<span class="ctx">         getWidget(mDateTimeText, &quot;DateTimeText&quot;);</span>
+<span class="ctx">         getWidget(mRestText, &quot;RestText&quot;);</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/waitdialog.hpp</div><pre>
+<span class="hunk">@@ -13,15 +13,19 @@ namespace MWGui</span>
+<span class="ctx">     class WaitDialogProgressBar : public WindowBase</span>
+<span class="ctx">     {</span>
+<span class="ctx">     public:</span>
+<span class="del">-        WaitDialogProgressBar();</span>
+<span class="add">+        /// @param luaId The name that Lua scripts know the window by, or empty if they can&#x27;t replace it.</span>
+<span class="add">+        explicit WaitDialogProgressBar(std::string_view luaId = {});</span>
+<span class="ctx"> </span>
+<span class="ctx">         void onOpen() override;</span>
+<span class="ctx"> </span>
+<span class="ctx">         void setProgress(int cur, int total);</span>
+<span class="ctx"> </span>
+<span class="add">+        std::string_view getWindowIdForLua() const override { return mLuaId; }</span>
+<span class="add">+</span>
+<span class="ctx">     protected:</span>
+<span class="ctx">         MyGUI::ProgressBar* mProgressBar;</span>
+<span class="ctx">         MyGUI::TextBox* mProgressText;</span>
+<span class="add">+        std::string_view mLuaId;</span>
+<span class="ctx">     };</span>
+<span class="ctx"> </span>
+<span class="ctx">     class WaitDialog : public WindowBase</span>
+</pre></div>
+<div class="file"><div class="path">apps/openmw/mwgui/windowmanagerimp.cpp</div><pre>
+<span class="hunk">@@ -594,6 +594,9 @@ namespace MWGui</span>
+<span class="ctx">             if (!id.empty())</span>
+<span class="ctx">                 mLuaIdToWindow.emplace(id, window.get());</span>
+<span class="ctx">         }</span>
+<span class="add">+        // The progress bar of the rest belongs to the wait dialog, so it isn&#x27;t one of mWindows.</span>
+<span class="add">+        WindowBase* restProgressBar = mWaitDialog-&gt;getProgressBar();</span>
+<span class="add">+        mLuaIdToWindow.emplace(restProgressBar-&gt;getWindowIdForLua(), restProgressBar);</span>
+<span class="ctx">     }</span>
+<span class="ctx"> </span>
+<span class="ctx">     void WindowManager::setNewGame(bool newgame)</span>
+<span class="hunk">@@ -2111,10 +2114,9 @@ namespace MWGui</span>
+<span class="ctx">         mPlayerBounty = -1;</span>
+<span class="ctx"> </span>
+<span class="ctx">         for (const auto&amp; window : mWindows)</span>
+<span class="del">-        {</span>
+<span class="ctx">             window-&gt;clear();</span>
+<span class="add">+        for (const auto&amp; [id, window] : mLuaIdToWindow)</span>
+<span class="ctx">             window-&gt;setDisabledByLua(false);</span>
+<span class="del">-        }</span>
+<span class="ctx"> </span>
+<span class="ctx">         if (mLocalMapRender)</span>
+<span class="ctx">             mLocalMapRender-&gt;clear();</span>
+</pre></div>
+<div class="file"><div class="path">files/data/scripts/omw/ui.lua</div><pre>
+<span class="hunk">@@ -306,6 +306,10 @@ return {</span>
+<span class="ctx">         -- The engine&#x27;s review window sends the player back to a step and expects the step to return to the review. A</span>
+<span class="ctx">         -- replacement of a step that opened from the review, which the `oldMode` of the `UiModeChanged` event shows,</span>
+<span class="ctx">         -- should open `ChargenClassReview` again when the player is done.</span>
+<span class="add">+        --</span>
+<span class="add">+        -- The `Rest` mode has two windows: `WaitDialog`, where the player picks the hours, and `WaitDialogProgressBar`,</span>
+<span class="add">+        -- which the engine shows instead while the hours pass. The interface shows the replacements of both when the</span>
+<span class="add">+        -- rest menu opens.</span>
+<span class="ctx">         -- @function [parent=#UI] registerWindow</span>
+<span class="ctx">         -- @param #string windowName</span>
+<span class="ctx">         -- @param #function showFn Callback that will be called when the window should become visible.</span>
+</pre></div>
+<div class="file"><div class="path">scripts/data/integration_tests/test_lua_api/player.lua</div><pre>
+<span class="hunk">@@ -899,6 +899,12 @@ local restFinished = nil</span>
+<span class="ctx"> testing.registerLocalTestStep(&#x27;rest in rest menu on self&#x27;, function(hours)</span>
+<span class="ctx">     -- The test steps stop while the rest menu pauses the game, so this asks for the rest in the same frame as it</span>
+<span class="ctx">     -- opens the menu. The global script gets the event in the next frame, when the menu is open.</span>
+<span class="add">+    local restWindows = {}</span>
+<span class="add">+    for _, window in pairs(I.UI.getWindowsForMode(&#x27;Rest&#x27;)) do</span>
+<span class="add">+        restWindows[window] = true</span>
+<span class="add">+    end</span>
+<span class="add">+    testing.expect(restWindows.WaitDialog and restWindows.WaitDialogProgressBar,</span>
+<span class="add">+        &#x27;The rest menu should have the wait dialog and the progress bar&#x27;)</span>
+<span class="ctx">     restFinished = nil</span>
+<span class="ctx">     I.UI.addMode(&#x27;Rest&#x27;)</span>
+<span class="ctx">     core.sendGlobalEvent(&#x27;restForTest&#x27;, hours)</span>
+</pre></div>
