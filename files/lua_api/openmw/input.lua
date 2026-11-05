@@ -89,6 +89,22 @@
 -- end
 
 ---
+-- The texture that the engine shows for a controller button, such as in the hints of its own menus.
+-- It follows the type of the controller that is in use: for example, A is a cross on a PlayStation controller, and the shoulder buttons are LB and RB on an Xbox controller.
+-- With no controller, or one of another type, it is the generic icon.
+-- @function [parent=#input] getControllerButtonIcon
+-- @param #number buttonId Button index (see @{openmw.input#CONTROLLER_BUTTON})
+-- @return #string A texture path, or nil if the engine has no icon for the button, such as for the Guide button
+-- @usage local icon = ui.texture { path = input.getControllerButtonIcon(input.CONTROLLER_BUTTON.A) }
+
+---
+-- The texture that the engine shows for a controller stick or trigger, which follows the type of the controller like @{#input.getControllerButtonIcon}.
+-- Both axes of a stick have the same icon.
+-- @function [parent=#input] getControllerAxisIcon
+-- @param #number axisId Axis index (see @{openmw.input#CONTROLLER_AXIS})
+-- @return #string A texture path, or nil if the engine has no icon for the axis, such as for the deprecated axes that follow an action
+
+---
 -- Is `Shift` key pressed.
 -- @function [parent=#input] isShiftPressed
 -- @return #boolean

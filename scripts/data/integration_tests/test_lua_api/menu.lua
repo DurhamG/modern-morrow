@@ -85,6 +85,20 @@ testing.registerMenuTest('load while teleporting', function()
     menu.deleteGame(' - 1', 'load_while_teleporting.omwsave')
 end)
 
+testing.registerMenuTest('controller button icons', function()
+    -- The tests run without a controller, so the engine shows its generic icons.
+    testing.expectEqual(input.getControllerButtonIcon(input.CONTROLLER_BUTTON.A), 'textures/omw_steam_button_a.dds',
+        'A should have the generic icon')
+    testing.expectEqual(input.getControllerButtonIcon(input.CONTROLLER_BUTTON.Guide), nil,
+        'The Guide button should have no icon')
+    testing.expectEqual(input.getControllerAxisIcon(input.CONTROLLER_AXIS.TriggerLeft),
+        'textures/omw_steam_button_l2.dds', 'The left trigger should have the generic icon')
+    testing.expectEqual(input.getControllerAxisIcon(input.CONTROLLER_AXIS.LeftY),
+        input.getControllerAxisIcon(input.CONTROLLER_AXIS.LeftX), 'Both axes of a stick should have the same icon')
+    testing.expectEqual(input.getControllerAxisIcon(input.CONTROLLER_AXIS.MoveForwardBackward), nil,
+        'An axis that follows an action should have no icon')
+end)
+
 testing.registerMenuTest('controller button bindings', function()
     testing.expectEqual(input.isControllerButtonBound(input.CONTROLLER_BUTTON.A), true,
         'A should be bound to Activate by default')
