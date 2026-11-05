@@ -444,6 +444,16 @@ namespace MWWorld
         bool canPlaceObject(float cursorX, float cursorY) override;
         ///< @return true if it is possible to place on object at specified cursor location
 
+        MWWorld::Ptr dropObjectFromPlayer(
+            const MWWorld::Ptr& object, float cursorX, float cursorY, int amount, bool copy = true) override;
+        ///< Drop an object that the player carries into the gameworld, the way the inventory does.
+        /// The object lands at the specified cursor position if there is a flat surface there within reach, and at
+        /// the player's feet otherwise. Dropping breaks the player's invisibility and clears the object's owner.
+        /// @param object
+        /// @param cursor X (relative 0-1)
+        /// @param cursor Y (relative 0-1)
+        /// @param number of objects to drop
+
         void processChangedSettings(const Settings::CategorySettingVector& settings) override;
 
         bool isFlying(const MWWorld::Ptr& ptr) const override;

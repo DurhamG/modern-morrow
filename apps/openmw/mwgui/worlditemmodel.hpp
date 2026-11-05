@@ -6,8 +6,6 @@
 #include <apps/openmw/mwbase/environment.hpp>
 #include <apps/openmw/mwbase/world.hpp>
 
-#include <components/esm/refid.hpp>
-
 #include <MyGUI_InputManager.h>
 #include <MyGUI_RenderManager.h>
 
@@ -20,19 +18,8 @@ namespace MWGui
     {
         MWWorld::Ptr dropItemImpl(const ItemStack& item, int count, bool copy)
         {
-            MWBase::World& world = *MWBase::Environment::get().getWorld();
-
-            const MWWorld::Ptr player = world.getPlayerPtr();
-
-            world.breakInvisibility(player);
-
-            const MWWorld::Ptr dropped = world.canPlaceObject(mCursorX, mCursorY)
-                ? world.placeObject(item.mBase, mCursorX, mCursorY, count, copy)
-                : world.dropObjectOnGround(player, item.mBase, count, copy);
-
-            dropped.getCellRef().setOwner(ESM::RefId());
-
-            return dropped;
+            return MWBase::Environment::get().getWorld()->dropObjectFromPlayer(
+                item.mBase, mCursorX, mCursorY, count, copy);
         }
 
     public:

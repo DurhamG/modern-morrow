@@ -1960,6 +1960,20 @@ namespace MWWorld
             return false;
     }
 
+    MWWorld::Ptr World::dropObjectFromPlayer(const Ptr& object, float cursorX, float cursorY, int amount, bool copy)
+    {
+        const Ptr player = getPlayerPtr();
+
+        breakInvisibility(player);
+
+        const Ptr dropped = canPlaceObject(cursorX, cursorY) ? placeObject(object, cursorX, cursorY, amount, copy)
+                                                             : dropObjectOnGround(player, object, amount, copy);
+
+        dropped.getCellRef().setOwner(ESM::RefId());
+
+        return dropped;
+    }
+
     Ptr World::copyObjectToCell(const ConstPtr& object, CellStore* cell, ESM::Position pos, int count, bool adjustPos)
     {
         if (!cell)
