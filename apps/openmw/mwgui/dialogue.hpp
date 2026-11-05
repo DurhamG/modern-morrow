@@ -1,6 +1,7 @@
 #ifndef MWGUI_DIALOGE_H
 #define MWGUI_DIALOGE_H
 
+#include <list>
 #include <memory>
 
 #include "referenceinterface.hpp"

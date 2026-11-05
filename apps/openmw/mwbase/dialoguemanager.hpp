@@ -1,13 +1,14 @@
 #ifndef GAME_MWBASE_DIALOGUEMANAGER_H
 #define GAME_MWBASE_DIALOGUEMANAGER_H
 
-#include <list>
 #include <map>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <cstdint>
+
+#include <components/esm/refid.hpp>
 
 namespace Loading
 {
@@ -18,7 +19,6 @@ namespace ESM
 {
     class ESMReader;
     class ESMWriter;
-    class RefId;
     struct DialInfo;
     struct Dialogue;
 }
@@ -52,6 +52,16 @@ namespace MWBase
             const ESM::DialInfo* mInfo = nullptr;
             /// A message that the game showed during the conversation, such as a journal update
             bool mIsMessage = false;
+        };
+
+        /// A topic that the player can ask the actor about
+        struct AvailableTopic
+        {
+            ESM::RefId mId;
+            /// The name of the topic as the dialogue window lists it
+            std::string mName;
+            /// TopicType flags
+            int mFlags;
         };
 
         DialogueManager() {}
@@ -112,8 +122,9 @@ namespace MWBase
             Enchanting = 7
         };
 
-        virtual std::list<std::string> getAvailableTopics() = 0;
-        virtual int getTopicFlag(const ESM::RefId&) const = 0;
+        /// The topics that the player can ask about, sorted by name. They are worked out again after each step of the
+        /// conversation.
+        virtual const std::vector<AvailableTopic>& getAvailableTopics() const = 0;
 
         virtual bool checkServiceRefused(ServiceType service = ServiceType::Any) = 0;
 

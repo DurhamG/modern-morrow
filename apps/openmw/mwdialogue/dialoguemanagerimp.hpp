@@ -61,6 +61,8 @@ namespace MWDialogue
 
         std::vector<TranscriptEntry> mTranscript;
 
+        std::vector<AvailableTopic> mAvailableTopics;
+
         int mOriginalDisposition;
         int mCurrentDisposition;
         int mPermanentDispositionChange;
@@ -70,6 +72,7 @@ namespace MWDialogue
         void addTopicsFromText(const std::string& text);
 
         void updateActorKnownTopics();
+        void updateAvailableTopics();
         void updateGlobals();
 
         std::optional<Interpreter::Program> compile(const std::string& cmd, const MWWorld::Ptr& actor);
@@ -101,8 +104,7 @@ namespace MWDialogue
 
         void executeScript(const std::string& script, const MWWorld::Ptr& actor) override;
 
-        std::list<std::string> getAvailableTopics() override;
-        int getTopicFlag(const ESM::RefId& topicId) const override;
+        const std::vector<AvailableTopic>& getAvailableTopics() const override;
 
         bool inJournal(const ESM::RefId& topicId, const ESM::RefId& infoId) const override;
 

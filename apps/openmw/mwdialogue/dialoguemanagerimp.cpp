@@ -80,6 +80,7 @@ namespace MWDialogue
         mKeywordSearch.clear();
         mKeywordSearchInitialized = false;
         mTranscript.clear();
+        mAvailableTopics.clear();
     }
 
     void DialogueManager::addTopic(const ESM::RefId& topic)
@@ -187,6 +188,7 @@ namespace MWDialogue
                     mLastTopic = dialogue.mId;
 
                     addTopicsFromText(info->mResponse);
+                    updateAvailableTopics();
 
                     return true;
                 }
@@ -198,6 +200,7 @@ namespace MWDialogue
     void DialogueManager::endDialogue()
     {
         mTranscript.clear();
+        mAvailableTopics.clear();
     }
 
     const std::vector<MWBase::DialogueManager::TranscriptEntry>& DialogueManager::getTranscript() const
@@ -427,30 +430,29 @@ namespace MWDialogue
         }
     }
 
-    std::list<std::string> DialogueManager::getAvailableTopics()
+    void DialogueManager::updateAvailableTopics()
     {
         updateActorKnownTopics();
 
-        std::list<std::string> keywordList;
+        mAvailableTopics.clear();
         const auto& store = MWBase::Environment::get().getESMStore()->get<ESM::Dialogue>();
         for (const auto& [topic, topicInfo] : mActorKnownTopics)
         {
             // does the player know the topic?
             if (mKnownTopics.contains(topic))
-                keywordList.push_back(store.find(topic)->mStringId);
+                mAvailableTopics.push_back({ topic, store.find(topic)->mStringId, topicInfo.mFlags });
         }
 
         // sort again, because the previous sort was case-sensitive
-        keywordList.sort(Misc::StringUtils::ciLess);
-        return keywordList;
+        std::stable_sort(mAvailableTopics.begin(), mAvailableTopics.end(),
+            [](const AvailableTopic& left, const AvailableTopic& right) {
+                return Misc::StringUtils::ciLess(left.mName, right.mName);
+            });
     }
 
-    int DialogueManager::getTopicFlag(const ESM::RefId& topicId) const
+    const std::vector<MWBase::DialogueManager::AvailableTopic>& DialogueManager::getAvailableTopics() const
     {
-        auto known = mActorKnownTopics.find(topicId);
-        if (known != mActorKnownTopics.end())
-            return known->second.mFlags;
-        return 0;
+        return mAvailableTopics;
     }
 
     void DialogueManager::keywordSelected(std::string_view keyword)
@@ -461,6 +463,7 @@ namespace MWDialogue
             if (dialogue && dialogue->mType == ESM::Dialogue::Topic)
             {
                 executeTopic(dialogue->mId);
+                updateAvailableTopics();
             }
         }
     }
@@ -534,7 +537,7 @@ namespace MWDialogue
             }
         }
 
-        updateActorKnownTopics();
+        updateAvailableTopics();
     }
 
     void DialogueManager::addChoice(std::string_view text, int choice)
@@ -607,6 +610,7 @@ namespace MWDialogue
         }
 
         executeTopic(ESM::RefId::stringRefId(text + (success ? " Success" : " Fail")));
+        updateAvailableTopics();
     }
 
     void DialogueManager::applyBarterDispositionChange(const MWWorld::Ptr& merchant, int delta)
@@ -645,6 +649,7 @@ namespace MWDialogue
             addResponse(gmsts.find("sServiceRefusal")->mValue.getString(), *info, dialogue);
 
             executeScript(info->mResultScript, mActor);
+            updateAvailableTopics();
             return true;
         }
         return false;

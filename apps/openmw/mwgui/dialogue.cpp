@@ -1,5 +1,7 @@
 #include "dialogue.hpp"
 
+#include <algorithm>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_ProgressBar.h>
 #include <MyGUI_ScrollBar.h>
@@ -811,9 +813,12 @@ namespace MWGui
         if (!Settings::gui().mColorTopicEnable)
             return;
 
+        const auto& topics = MWBase::Environment::get().getDialogueManager()->getAvailableTopics();
         for (const std::string& keyword : mKeywords)
         {
-            int flag = MWBase::Environment::get().getDialogueManager()->getTopicFlag(ESM::RefId::stringRefId(keyword));
+            const auto topic = std::find_if(
+                topics.begin(), topics.end(), [&](const auto& available) { return available.mName == keyword; });
+            const int flag = topic != topics.end() ? topic->mFlags : 0;
             MyGUI::Button* button = mTopicsList->getItemWidget(keyword);
             const auto oldCaption = button->getCaption();
             const MyGUI::IntSize oldSize = button->getSize();
@@ -844,8 +849,11 @@ namespace MWGui
 
     void DialogueWindow::updateTopics()
     {
+        std::list<std::string> keywords;
+        for (const auto& topic : MWBase::Environment::get().getDialogueManager()->getAvailableTopics())
+            keywords.push_back(topic.mName);
         // Topic formatting needs to be updated regardless of whether the topic list has changed
-        if (!setKeywords(MWBase::Environment::get().getDialogueManager()->getAvailableTopics()))
+        if (!setKeywords(keywords))
         {
             updateTopicFormat();
             if (mTranscriptSize != MWBase::Environment::get().getDialogueManager()->getTranscript().size())
