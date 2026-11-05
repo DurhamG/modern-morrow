@@ -219,9 +219,15 @@ namespace MWGui
             for (size_t i = 0; i < mAttributeButtons.size(); i++)
                 mAttributeButtons[i]->setStateSelected(i == 0);
         }
+    }
 
-        // Play LevelUp Music
-        MWBase::Environment::get().getSoundManager()->streamMusic(MWSound::triumphMusic, MWSound::MusicType::Normal);
+    void LevelupDialog::setVisible(bool visible)
+    {
+        WindowBase::setVisible(visible);
+        // A window that Lua replaced is never shown, so onOpen doesn't run for it. The level-up music still plays.
+        if (visible)
+            MWBase::Environment::get().getSoundManager()->streamMusic(
+                MWSound::triumphMusic, MWSound::MusicType::Normal);
     }
 
     void LevelupDialog::onOkButtonClicked(MyGUI::Widget* /*sender*/)
