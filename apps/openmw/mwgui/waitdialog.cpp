@@ -24,6 +24,7 @@
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/npcstats.hpp"
+#include "../mwmechanics/resting.hpp"
 
 #include <format>
 
@@ -87,28 +88,21 @@ namespace MWGui
 
     void WaitDialog::setPtr(const MWWorld::Ptr& ptr)
     {
-        const int restFlags = MWBase::Environment::get().getWorld()->canRest();
+        const MWMechanics::RestConditions conditions = MWMechanics::getRestConditions(ptr);
 
-        const bool underwater = (restFlags & MWBase::World::Rest_PlayerIsUnderwater) != 0;
-        // Resting in air is allowed if you're using a bed
-        const bool inAir = ptr.isEmpty() && (restFlags & MWBase::World::Rest_PlayerIsInAir) != 0;
-        const bool enemiesNearby = (restFlags & MWBase::World::Rest_EnemiesAreNearby) != 0;
-        const bool solidGround = !underwater && !inAir;
-
-        if (!solidGround || enemiesNearby)
+        if (!conditions.canWait())
         {
-            if (!solidGround)
+            if (!conditions.mOnSolidGround)
                 MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage1}");
 
-            if (enemiesNearby)
+            if (conditions.mEnemiesNearby)
                 MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage2}");
 
             MWBase::Environment::get().getWindowManager()->popGuiMode();
             return;
         }
 
-        const bool canSleep = !ptr.isEmpty() || (restFlags & MWBase::World::Rest_CanSleep) != 0;
-        setCanRest(canSleep);
+        setCanRest(conditions.mCanSleep);
 
         if (mUntilHealedButton->getVisible())
             MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mUntilHealedButton);
