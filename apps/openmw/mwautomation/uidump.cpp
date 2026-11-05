@@ -1,6 +1,7 @@
 #include "uidump.hpp"
 
 #include <cctype>
+#include <cmath>
 #include <string_view>
 
 #include <MyGUI_Gui.h>
@@ -53,6 +54,8 @@ namespace MWAutomation
             }
             if (!widget->getVisible())
                 node.set("hidden", true);
+            if (widget->getAlpha() < 1.f)
+                node.set("alpha", std::round(widget->getAlpha() * 100) / 100);
             if (!widget->getInheritedEnabled())
                 node.set("disabled", true);
             if (widget == context.mKeyFocus)
