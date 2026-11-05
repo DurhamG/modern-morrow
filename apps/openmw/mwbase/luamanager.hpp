@@ -77,6 +77,7 @@ namespace MWBase
         virtual void objectRemovedFromScene(const MWWorld::Ptr& ptr) = 0;
         virtual void objectTeleported(const MWWorld::Ptr& ptr) = 0;
         virtual void itemConsumed(const MWWorld::Ptr& consumable, const MWWorld::Ptr& actor) = 0;
+        virtual void itemAdded(const MWWorld::Ptr& container, const MWWorld::Ptr& item, int count) = 0;
         virtual void objectDropped(const MWWorld::Ptr& object, const MWWorld::Ptr& actor, const osg::Vec3f& position,
             const osg::Quat& rotation)
             = 0;

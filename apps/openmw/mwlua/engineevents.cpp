@@ -84,6 +84,16 @@ namespace MWLua
                 scripts->onConsume(LObject(consumable));
         }
 
+        void operator()(const OnItemAdded& event) const
+        {
+            MWWorld::Ptr container = getPtr(event.mContainer);
+            MWWorld::Ptr item = getPtr(event.mItem);
+            if (container.isEmpty() || item.isEmpty())
+                return;
+            if (auto* scripts = getLocalScripts(container))
+                scripts->onItemAdded(LObject(item), event.mCount);
+        }
+
         void operator()(const OnDropped& event) const
         {
             MWWorld::Ptr obj = getPtr(event.mObject);

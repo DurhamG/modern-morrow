@@ -987,6 +987,19 @@ testing.registerGlobalTest('bartering', function()
     merchant:remove()
 end)
 
+testing.registerGlobalTest('items added to an inventory', function()
+    local player = initPlayer()
+    local weapon = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        name = 'Added dagger',
+    }))
+    world.createObject(weapon.id, 2):moveInto(player)
+    coroutine.yield()
+    coroutine.yield()
+    testing.runLocalTest(player, 'check added items on self', { recordId = weapon.id, count = 2 })
+    types.Actor.inventory(player):find(weapon.id):remove()
+end)
+
 testing.registerGlobalTest('taking items from containers', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({

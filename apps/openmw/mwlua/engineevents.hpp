@@ -50,6 +50,12 @@ namespace MWLua
             ESM::RefNum mActor;
             ESM::RefNum mConsumable;
         };
+        struct OnItemAdded
+        {
+            ESM::RefNum mContainer;
+            ESM::RefNum mItem;
+            int mCount;
+        };
         struct OnNewExterior
         {
             MWWorld::CellStore& mCell;
@@ -101,8 +107,9 @@ namespace MWLua
             osg::Vec3f mPosition;
             LuaUtil::TransformQ mRotation;
         };
-        using Event = std::variant<OnActive, OnInactive, OnConsume, OnActivate, OnUseItem, OnNewExterior, OnTeleported,
-            OnAnimationTextKey, OnAnimationEnded, OnSkillUse, OnSkillLevelUp, OnJailTimeServed, OnDropped, OnPlaced>;
+        using Event = std::variant<OnActive, OnInactive, OnConsume, OnItemAdded, OnActivate, OnUseItem, OnNewExterior,
+            OnTeleported, OnAnimationTextKey, OnAnimationEnded, OnSkillUse, OnSkillLevelUp, OnJailTimeServed, OnDropped,
+            OnPlaced>;
 
         void clear() { mQueue.clear(); }
         void addToQueue(Event e) { mQueue.push_back(std::move(e)); }

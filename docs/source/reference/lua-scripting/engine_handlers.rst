@@ -103,6 +103,14 @@ Engine handler is a function defined by a script, that can be called by the engi
     - | Called on an actor when they consume an item (e.g. a potion).
       | Similarly to onActivated, the item has already been removed
       | from the actor's inventory, and the count was set to zero.
+  * - onItemAdded(item, count)
+    - | Called on an actor or a container when items go into its inventory,
+      | such as when the player picks something up, buys it or takes it
+      | from a container, or when a script adds it. ``item`` is the stack
+      | that the items went into, which may have held some of them already,
+      | and ``count`` is how many were added. It is not called for the items
+      | that an actor or a container starts with or restocks.
+      | It is called in the next update, so the item may have moved since.
 
 **Only menu scripts and local scripts attached to a player**
 

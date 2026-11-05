@@ -870,6 +870,20 @@ testing.localEventHandlers.restForTestStopped = function(finished)
     restFinished = finished
 end
 
+local addedItems = {}
+
+testing.registerLocalTestStep('check added items on self', function(data)
+    local found = nil
+    for _, added in ipairs(addedItems) do
+        if added.item.recordId == data.recordId then
+            found = added
+        end
+    end
+    testing.expect(found ~= nil, 'onItemAdded should report the item')
+    testing.expectEqual(found and found.count, data.count, 'onItemAdded should report how many items were added')
+    addedItems = {}
+end)
+
 testing.registerLocalTestStep('character creation on self', function()
     -- The player's own scripts may create the character. Character creation is over, so that is what stops them.
     local ok, err = pcall(types.Player.setCharGenName, self, 'Lua Hero')
@@ -880,6 +894,9 @@ end)
 return {
     engineHandlers = {
         onFrame = testing.updateLocal,
+        onItemAdded = function(item, count)
+            addedItems[#addedItems + 1] = { item = item, count = count }
+        end,
     },
     eventHandlers = testing.localEventHandlers,
 }

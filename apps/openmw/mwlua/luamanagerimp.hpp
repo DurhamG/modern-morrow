@@ -95,6 +95,11 @@ namespace MWLua
         {
             mEngineEvents.addToQueue(EngineEvents::OnConsume{ getId(actor), getId(consumable) });
         }
+        void itemAdded(const MWWorld::Ptr& container, const MWWorld::Ptr& item, int count) override
+        {
+            if (container.getRefData().getLuaScripts())
+                mEngineEvents.addToQueue(EngineEvents::OnItemAdded{ getId(container), getId(item), count });
+        }
         void objectActivated(const MWWorld::Ptr& object, const MWWorld::Ptr& actor) override
         {
             mEngineEvents.addToQueue(EngineEvents::OnActivate{ getId(actor), getId(object) });

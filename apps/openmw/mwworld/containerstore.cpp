@@ -13,6 +13,7 @@
 #include <components/sceneutil/positionattitudetransform.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
@@ -461,6 +462,9 @@ MWWorld::ContainerStoreIterator MWWorld::ContainerStore::add(
         if (contPtr == player)
             item.getRefData().getLocals().setVarByInt(script, "onpcadd", 1);
     }
+
+    if (!contPtr.isEmpty())
+        MWBase::Environment::get().getLuaManager()->itemAdded(contPtr, item, count);
 
     // we should not fire event for InventoryStore yet - it has some custom logic
     if (mListener && typeid(*this) == typeid(ContainerStore))
