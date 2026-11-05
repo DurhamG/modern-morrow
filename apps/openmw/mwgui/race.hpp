@@ -83,8 +83,6 @@ namespace MWGui
         void updatePreview();
         void recountParts();
 
-        void getBodyParts(int part, std::vector<ESM::RefId>& out);
-
         std::vector<ESM::RefId> mAvailableHeads;
         std::vector<ESM::RefId> mAvailableHairs;
 

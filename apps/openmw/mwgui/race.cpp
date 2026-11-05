@@ -17,6 +17,7 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
+#include "../mwmechanics/chargen.hpp"
 #include "../mwrender/characterpreview.hpp"
 #include "../mwrender/renderingmanager.hpp"
 #include "../mwworld/esmstore.hpp"
@@ -322,32 +323,11 @@ namespace MWGui
         eventDone(this);
     }
 
-    void RaceDialog::getBodyParts(int part, std::vector<ESM::RefId>& out)
-    {
-        out.clear();
-        const MWWorld::Store<ESM::BodyPart>& store = MWBase::Environment::get().getESMStore()->get<ESM::BodyPart>();
-
-        for (const ESM::BodyPart& bodypart : store)
-        {
-            if (bodypart.mData.mFlags & ESM::BodyPart::BPF_NotPlayable)
-                continue;
-            if (bodypart.mData.mType != ESM::BodyPart::MT_Skin)
-                continue;
-            if (bodypart.mData.mPart != static_cast<ESM::BodyPart::MeshPart>(part))
-                continue;
-            if (mGenderIndex != (bodypart.mData.mFlags & ESM::BodyPart::BPF_Female))
-                continue;
-            if (ESM::isFirstPersonBodyPart(bodypart))
-                continue;
-            if (bodypart.mRace == mCurrentRaceId)
-                out.push_back(bodypart.mId);
-        }
-    }
-
     void RaceDialog::recountParts()
     {
-        getBodyParts(ESM::BodyPart::MP_Hair, mAvailableHairs);
-        getBodyParts(ESM::BodyPart::MP_Head, mAvailableHeads);
+        const bool isMale = mGenderIndex == 0;
+        mAvailableHairs = MWMechanics::getChargenBodyParts(ESM::BodyPart::MP_Hair, mCurrentRaceId, isMale);
+        mAvailableHeads = MWMechanics::getChargenBodyParts(ESM::BodyPart::MP_Head, mCurrentRaceId, isMale);
 
         mFaceIndex = 0;
         mHairIndex = 0;

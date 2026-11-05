@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <components/esm/refid.hpp>
+#include <components/esm3/loadbody.hpp>
 #include <components/vfs/pathutil.hpp>
 
 namespace MWMechanics
@@ -30,6 +31,10 @@ namespace MWMechanics
     /// The class that the answers to the class questions lead to. The arguments count the answers that the player
     /// chose for each specialization.
     ESM::RefId getGeneratedClass(unsigned combat, unsigned magic, unsigned stealth);
+
+    /// The heads or the hairs that the player may choose for a race and a gender in character creation. These are the
+    /// playable skin body parts of that race and gender, except the ones for the first person view.
+    std::vector<ESM::RefId> getChargenBodyParts(ESM::BodyPart::MeshPart part, const ESM::RefId& race, bool isMale);
 }
 
 #endif

@@ -5,6 +5,9 @@
 #include <components/esm3/loadclas.hpp>
 #include <components/fallback/fallback.hpp>
 
+#include "../mwbase/environment.hpp"
+#include "../mwworld/esmstore.hpp"
+
 namespace MWMechanics
 {
     std::vector<ClassQuestion> getClassQuestions()
@@ -118,5 +121,28 @@ namespace MWMechanics
             }
         }
         return ESM::RefId::stringRefId(className);
+    }
+
+    std::vector<ESM::RefId> getChargenBodyParts(ESM::BodyPart::MeshPart part, const ESM::RefId& race, bool isMale)
+    {
+        std::vector<ESM::RefId> result;
+        const MWWorld::Store<ESM::BodyPart>& store = MWBase::Environment::get().getESMStore()->get<ESM::BodyPart>();
+
+        for (const ESM::BodyPart& bodypart : store)
+        {
+            if (bodypart.mData.mFlags & ESM::BodyPart::BPF_NotPlayable)
+                continue;
+            if (bodypart.mData.mType != ESM::BodyPart::MT_Skin)
+                continue;
+            if (bodypart.mData.mPart != part)
+                continue;
+            if (isMale == ((bodypart.mData.mFlags & ESM::BodyPart::BPF_Female) != 0))
+                continue;
+            if (ESM::isFirstPersonBodyPart(bodypart))
+                continue;
+            if (bodypart.mRace == race)
+                result.push_back(bodypart.mId);
+        }
+        return result;
     }
 }
