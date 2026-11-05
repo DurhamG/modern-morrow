@@ -1,8 +1,5 @@
 #include "pickpocketitemmodel.hpp"
 
-#include <components/esm3/loadskil.hpp>
-#include <components/misc/rng.hpp>
-
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/pickpocket.hpp"
@@ -10,9 +7,7 @@
 #include "../mwworld/class.hpp"
 
 #include "../mwbase/environment.hpp"
-#include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
-#include "../mwbase/world.hpp"
 
 namespace MWGui
 {
@@ -22,18 +17,16 @@ namespace MWGui
         : mActor(actor)
         , mPickpocketDetected(false)
     {
-        MWWorld::Ptr player = MWMechanics::getPlayer();
         mSourceModel = std::move(sourceModel);
-        float chance = player.getClass().getSkill(player, ESM::Skill::Sneak);
 
         mSourceModel->update();
         // build list of items that player is unable to find when attempts to pickpocket.
         if (hideItems)
         {
-            auto& prng = MWBase::Environment::get().getWorld()->getPrng();
+            const MWMechanics::Pickpocket pickpocket(MWMechanics::getPlayer(), mActor);
             for (size_t i = 0; i < mSourceModel->getItemCount(); ++i)
             {
-                if (Misc::Rng::roll0to99(prng) > chance)
+                if (!pickpocket.noticesItem())
                     mHiddenItems.push_back(mSourceModel->getItem(static_cast<ModelIndex>(i)));
             }
         }
@@ -62,16 +55,12 @@ namespace MWGui
     {
         mSourceModel->update();
         mItems.clear();
+        const MWMechanics::Pickpocket pickpocket(MWMechanics::getPlayer(), mActor);
         for (size_t i = 0; i < mSourceModel->getItemCount(); ++i)
         {
             const ItemStack& item = mSourceModel->getItem(static_cast<ModelIndex>(i));
-
-            // Bound items may not be stolen
-            if (item.mFlags & ItemStack::Flag_Bound)
-                continue;
-
             if (std::find(mHiddenItems.begin(), mHiddenItems.end(), item) == mHiddenItems.end()
-                && item.mType != ItemStack::Type_Equipped)
+                && pickpocket.canSteal(item.mBase))
                 mItems.push_back(item);
         }
     }
@@ -90,12 +79,10 @@ namespace MWGui
             || mPickpocketDetected)
             return;
 
-        MWWorld::Ptr player = MWMechanics::getPlayer();
-        MWMechanics::Pickpocket pickpocket(player, mActor);
+        MWMechanics::Pickpocket pickpocket(MWMechanics::getPlayer(), mActor);
         if (pickpocket.finish())
         {
-            MWBase::Environment::get().getMechanicsManager()->commitCrime(
-                player, mActor, MWBase::MechanicsManager::OT_Pickpocket, ESM::RefId(), 0, true);
+            pickpocket.commitCrime();
             mPickpocketDetected = true;
             MWBase::Environment::get().getWindowManager()->removeGuiMode(MWGui::GM_Container);
         }
@@ -106,31 +93,21 @@ namespace MWGui
         if (mActor.getClass().getCreatureStats(mActor).getKnockedDown())
             return mSourceModel->onTakeItem(item, count);
 
-        bool success = stealItem(item, count);
-        if (success)
-        {
-            MWWorld::Ptr player = MWMechanics::getPlayer();
-            MWBase::Environment::get().getMechanicsManager()->itemTaken(player, item, mActor, count, false);
-        }
-
-        return success;
+        return stealItem(item, count);
     }
 
     bool PickpocketItemModel::stealItem(const MWWorld::Ptr& item, int count)
     {
-        MWWorld::Ptr player = MWMechanics::getPlayer();
-        MWMechanics::Pickpocket pickpocket(player, mActor);
+        MWMechanics::Pickpocket pickpocket(MWMechanics::getPlayer(), mActor);
         if (pickpocket.pick(item, count))
         {
-            MWBase::Environment::get().getMechanicsManager()->commitCrime(
-                player, mActor, MWBase::MechanicsManager::OT_Pickpocket, ESM::RefId(), 0, true);
+            pickpocket.commitCrime();
             mPickpocketDetected = true;
             MWBase::Environment::get().getWindowManager()->removeGuiMode(MWGui::GM_Container);
             return false;
         }
-        else
-            player.getClass().skillUsageSucceeded(player, ESM::Skill::Sneak, ESM::Skill::Sneak_PickPocket);
 
+        pickpocket.recordTheft(item, count);
         return true;
     }
 }

@@ -4,8 +4,10 @@
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
+#include "../mwworld/inventorystore.hpp"
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/world.hpp"
 
 #include "npcstats.hpp"
@@ -60,6 +62,19 @@ namespace MWMechanics
         }
     }
 
+    bool Pickpocket::canSteal(const MWWorld::Ptr& item) const
+    {
+        if (MWBase::Environment::get().getMechanicsManager()->isBoundItem(item))
+            return false;
+        return !mVictim.getClass().getInventoryStore(mVictim).isEquipped(item);
+    }
+
+    bool Pickpocket::noticesItem() const
+    {
+        const float sneak = mThief.getClass().getSkill(mThief, ESM::Skill::Sneak);
+        return Misc::Rng::roll0to99(MWBase::Environment::get().getWorld()->getPrng()) <= sneak;
+    }
+
     bool Pickpocket::pick(const MWWorld::Ptr& item, int count)
     {
         float stackValue = static_cast<float>(item.getClass().getValue(item) * count);
@@ -78,4 +93,15 @@ namespace MWMechanics
         return getDetected(0.f);
     }
 
+    void Pickpocket::commitCrime() const
+    {
+        MWBase::Environment::get().getMechanicsManager()->commitCrime(
+            mThief, mVictim, MWBase::MechanicsManager::OT_Pickpocket, ESM::RefId(), 0, true);
+    }
+
+    void Pickpocket::recordTheft(const MWWorld::Ptr& item, int count) const
+    {
+        mThief.getClass().skillUsageSucceeded(mThief, ESM::Skill::Sneak, ESM::Skill::Sneak_PickPocket);
+        MWBase::Environment::get().getMechanicsManager()->itemTaken(mThief, item, mVictim, count, false);
+    }
 }
