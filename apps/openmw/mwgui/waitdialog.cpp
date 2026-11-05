@@ -153,11 +153,6 @@ namespace MWGui
             mProgressBar.setVisible(false);
         }
 
-        if (!MWBase::Environment::get().getWindowManager()->getRestEnabled())
-        {
-            MWBase::Environment::get().getWindowManager()->popGuiMode();
-        }
-
         onHourSliderChangedPosition(mHourSlider, 0);
         mHourSlider->setScrollPosition(0);
 
@@ -168,6 +163,15 @@ namespace MWGui
         std::string dateTimeText = std::format(
             "{} {} (#{{Calendar:day}} {}) {}", currentDate.mDay, month, timeManager.getTimeStamp().getDay(), timeOfDay);
         mDateTimeText->setCaptionWithReplacing(dateTimeText);
+    }
+
+    void WaitDialog::setVisible(bool visible)
+    {
+        WindowBase::setVisible(visible);
+        // A window that Lua replaced is never shown, so onOpen doesn't run for it. The rest menu still closes when
+        // resting is off, such as during character creation.
+        if (visible && !mTimeAdvancer.isRunning() && !MWBase::Environment::get().getWindowManager()->getRestEnabled())
+            MWBase::Environment::get().getWindowManager()->popGuiMode();
     }
 
     void WaitDialog::onUntilHealedButtonClicked(MyGUI::Widget* /*sender*/)

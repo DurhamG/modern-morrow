@@ -37,6 +37,8 @@ namespace MWGui
 
         void onOpen() override;
 
+        void setVisible(bool visible) override;
+
         bool exit() override;
 
         void clear() override;
