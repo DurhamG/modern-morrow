@@ -3,6 +3,7 @@ local util = require('openmw.util')
 local self = require('openmw.self')
 local core = require('openmw.core')
 local ambient = require('openmw.ambient')
+local input = require('openmw.input')
 
 local MODE = ui._getAllUiModes()
 local WINDOW = ui._getAllWindowIds()
@@ -11,12 +12,14 @@ local replacedWindows = {}
 local hiddenWindows = {}
 local modeStack = {}
 
+local inputCapturedByWindows = false
+
 local modePause = {}
 for _, mode in pairs(MODE) do
     modePause[mode] = true
 end
 
-local function registerWindow(window, showFn, hideFn)
+local function registerWindow(window, showFn, hideFn, options)
     if not WINDOW[window] then
         error('At the moment it is only possible to override existing windows. Window "'..
               tostring(window)..'" not found.')
@@ -25,7 +28,12 @@ local function registerWindow(window, showFn, hideFn)
     if replacedWindows[window] then
         replacedWindows[window].hideFn()
     end
-    replacedWindows[window] = {showFn = showFn, hideFn = hideFn, visible = false}
+    replacedWindows[window] = {
+        showFn = showFn,
+        hideFn = hideFn,
+        visible = false,
+        capturesInput = options ~= nil and options.capturesInput == true,
+    }
     hiddenWindows[window] = nil
 end
 
@@ -123,6 +131,14 @@ local function onUiModeChanged(changedByLua, arg)
             end
         end
     end
+    local shouldCaptureInput = false
+    for _, state in pairs(replacedWindows) do
+        shouldCaptureInput = shouldCaptureInput or (state.visible and state.capturesInput)
+    end
+    if shouldCaptureInput ~= inputCapturedByWindows then
+        input.setGuiInputCaptured(shouldCaptureInput)
+        inputCapturedByWindows = shouldCaptureInput
+    end
     local shouldPause = false
     for _, m in pairs(modeStack) do
         shouldPause = shouldPause or modePause[m]
@@ -171,7 +187,7 @@ return {
     interface = {
         --- Interface version
         -- @field [parent=#UI] #number version
-        version = 3,
+        version = 4,
 
         --- All available UI modes.
         -- Use `view(I.UI.MODE)` in `luap` console mode to see the list.
@@ -189,6 +205,10 @@ return {
         -- @param #string windowName
         -- @param #function showFn Callback that will be called when the window should become visible
         -- @param #function hideFn Callback that will be called when the window should be hidden
+        -- @param #table options (optional) A table with these optional fields:
+        --
+        --   * `capturesInput` - if true, the engine leaves the controller and the keyboard to Lua while this window is shown.
+        --     It sets @{openmw_input#(input).setGuiInputCaptured} when the window is shown, and clears it when no shown window captures the input.
         registerWindow = registerWindow,
 
         --- Returns windows that can be shown in given mode.
