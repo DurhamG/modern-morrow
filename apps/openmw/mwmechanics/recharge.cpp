@@ -1,5 +1,6 @@
 #include "recharge.hpp"
 
+#include <components/debug/debuglog.hpp>
 #include <components/esm3/loadcrea.hpp>
 #include <components/esm3/loadench.hpp>
 #include <components/misc/rng.hpp>
@@ -34,6 +35,25 @@ namespace MWMechanics
 
         item.getCellRef().setEnchantmentCharge(std::min(charge + fMagicItemRechargePerSecond * duration, maxCharge));
         return true;
+    }
+
+    bool canRecharge(const MWWorld::ConstPtr& item)
+    {
+        const ESM::RefId& enchantmentId = item.getClass().getEnchantment(item);
+        if (enchantmentId.empty())
+            return false;
+
+        const ESM::Enchantment* enchantment
+            = MWBase::Environment::get().getESMStore()->get<ESM::Enchantment>().search(enchantmentId);
+        if (!enchantment)
+        {
+            Log(Debug::Warning) << "Warning: Can't find enchantment '" << enchantmentId << "' on item "
+                                << item.getCellRef().getRefId();
+            return false;
+        }
+
+        const float charge = item.getCellRef().getEnchantmentCharge();
+        return charge != -1 && charge < getEnchantmentCharge(*enchantment);
     }
 
     bool rechargeItem(const MWWorld::Ptr& item, const MWWorld::Ptr& gem)

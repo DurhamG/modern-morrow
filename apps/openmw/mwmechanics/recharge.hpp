@@ -10,6 +10,8 @@ namespace MWMechanics
 
     bool rechargeItem(const MWWorld::Ptr& item, const MWWorld::Ptr& gem);
 
+    /// Whether a soul gem can restore charge to @a item: an enchanted item that has lost some of its charge.
+    bool canRecharge(const MWWorld::ConstPtr& item);
 }
 
 #endif

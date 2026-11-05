@@ -1,6 +1,5 @@
 #include "sortfilteritemmodel.hpp"
 
-#include <components/debug/debuglog.hpp>
 #include <components/esm3/loadalch.hpp>
 #include <components/esm3/loadappa.hpp>
 #include <components/esm3/loadarmo.hpp>
@@ -25,7 +24,7 @@
 #include "../mwworld/esmstore.hpp"
 
 #include "../mwmechanics/alchemy.hpp"
-#include "../mwmechanics/spellutil.hpp"
+#include "../mwmechanics/recharge.hpp"
 
 namespace
 {
@@ -298,25 +297,8 @@ namespace MWGui
                 || (base.getType() != ESM::Weapon::sRecordId && base.getType() != ESM::Armor::sRecordId)))
             return false;
 
-        if (mFilter & Filter_OnlyRechargable)
-        {
-            if (!(item.mFlags & ItemStack::Flag_Enchanted))
-                return false;
-
-            const ESM::RefId& enchId = base.getClass().getEnchantment(base);
-            const ESM::Enchantment* ench
-                = MWBase::Environment::get().getESMStore()->get<ESM::Enchantment>().search(enchId);
-            if (!ench)
-            {
-                Log(Debug::Warning) << "Warning: Can't find enchantment '" << enchId << "' on item "
-                                    << base.getCellRef().getRefId();
-                return false;
-            }
-
-            if (base.getCellRef().getEnchantmentCharge() == -1
-                || base.getCellRef().getEnchantmentCharge() >= MWMechanics::getEnchantmentCharge(*ench))
-                return false;
-        }
+        if ((mFilter & Filter_OnlyRechargable) && !MWMechanics::canRecharge(base))
+            return false;
 
         if ((mFilter & Filter_OnlyAlchemyTools))
         {
