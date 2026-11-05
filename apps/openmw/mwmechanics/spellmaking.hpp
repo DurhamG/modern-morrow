@@ -23,13 +23,18 @@ namespace MWMechanics
     /// The most effects that a spell or an enchantment that the player makes can have.
     static constexpr std::size_t sMaxCustomEffects = 8;
 
-    /// The highest magnitude that the player can give an effect of their own spell or enchantment.
+    /// The lowest and the highest magnitude that the player can give an effect of their own spell or enchantment.
+    static constexpr int sMinCustomMagnitude = 1;
     static constexpr int sMaxCustomMagnitude = 100;
 
-    /// The longest duration, in seconds, that the player can give an effect of their own spell or enchantment.
+    /// The shortest and the longest duration, in seconds, that the player can give an effect of their own spell or
+    /// enchantment.
+    static constexpr int sMinCustomDuration = 1;
     static constexpr int sMaxCustomDuration = 1440;
 
-    /// The largest area, in feet, that the player can give an effect of their own spell or enchantment.
+    /// The smallest and the largest area, in feet, that the player can give an effect of their own spell or
+    /// enchantment.
+    static constexpr int sMinCustomArea = 0;
     static constexpr int sMaxCustomArea = 50;
 
     /// What the player makes from magic effects of their own choosing.

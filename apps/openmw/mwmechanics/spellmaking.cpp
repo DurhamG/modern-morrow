@@ -124,15 +124,16 @@ namespace MWMechanics
                 return CustomEffectProblem::RangeNotAllowed;
 
             if (!(flags & ESM::MagicEffect::NoMagnitude)
-                && (params.mMagnMin < 1 || params.mMagnMax < params.mMagnMin || params.mMagnMax > sMaxCustomMagnitude))
+                && (params.mMagnMin < sMinCustomMagnitude || params.mMagnMax < params.mMagnMin
+                    || params.mMagnMax > sMaxCustomMagnitude))
                 return CustomEffectProblem::InvalidParameters;
             if (!(flags & ESM::MagicEffect::NoDuration) && !isConstant
-                && (params.mDuration < 1 || params.mDuration > sMaxCustomDuration))
+                && (params.mDuration < sMinCustomDuration || params.mDuration > sMaxCustomDuration))
                 return CustomEffectProblem::InvalidParameters;
-            if (params.mArea < 0 || params.mArea > sMaxCustomArea)
+            if (params.mArea < sMinCustomArea || params.mArea > sMaxCustomArea)
                 return CustomEffectProblem::InvalidParameters;
-            // The effect editor hides the area of an effect on self, and sets it to 0.
-            if (params.mRange == ESM::RT_Self && params.mArea != 0)
+            // The effect editor hides the area of an effect on self, and sets it to the smallest area.
+            if (params.mRange == ESM::RT_Self && params.mArea != sMinCustomArea)
                 return CustomEffectProblem::InvalidParameters;
         }
 

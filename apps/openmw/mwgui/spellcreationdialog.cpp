@@ -139,10 +139,10 @@ namespace MWGui
             mEffect.mRange = ESM::RT_Touch;
         if (!allowTouch)
             mEffect.mRange = ESM::RT_Target;
-        mEffect.mMagnMin = 1;
-        mEffect.mMagnMax = 1;
-        mEffect.mDuration = 1;
-        mEffect.mArea = 0;
+        mEffect.mMagnMin = MWMechanics::sMinCustomMagnitude;
+        mEffect.mMagnMax = MWMechanics::sMinCustomMagnitude;
+        mEffect.mDuration = MWMechanics::sMinCustomDuration;
+        mEffect.mArea = MWMechanics::sMinCustomArea;
         mEffect.mSkill = ESM::RefId();
         mEffect.mAttribute = ESM::RefId();
         eventEffectAdded(mEffect);
