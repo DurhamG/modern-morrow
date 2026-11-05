@@ -1146,6 +1146,9 @@ namespace MWLua
                     for (const auto& [item, count] : setup.mBought)
                         moveBarterItem(item.ptr(), count, buyer, false);
                     MWMechanics::payBarterBalance(trader, gold);
+                    MWBase::DialogueManager* dialogue = MWBase::Environment::get().getDialogueManager();
+                    if (dialogue->getActor() == trader)
+                        dialogue->tradeCompleted();
                     reportOutcome(context, callback, true);
                 },
                 "BarterAction");
