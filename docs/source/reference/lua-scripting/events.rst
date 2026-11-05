@@ -208,6 +208,25 @@ It has the following fields:
         end
     }
 
+**JailProgress**
+
+This event is sent to the player's local script while the player serves a jail term.
+It comes once when the term starts, at the time the engine shows the ``JailScreen`` window, and again at each step of its progress bar.
+The days pass, and the player's skills change, when the term ends.
+A Lua replacement of the ``JailScreen`` window can draw the progress from it.
+It has the following fields:
+
+- ``days``: The length of the term in days.
+- ``progress``: How much of the term has passed, from 0 to 1.
+
+.. code-block:: Lua
+
+    eventHandlers = {
+        JailProgress = function(data)
+            print(string.format('%d days in jail, %d%% served', data.days, math.floor(data.progress * 100)))
+        end
+    }
+
 **AddUiMode**
 
 Equivalent to ``I.UI.addMode``, but can be sent from another object or global script.

@@ -64,14 +64,16 @@ namespace MWGui
 
             setVisible(true);
             mTimeAdvancer.run(100);
+            MWBase::Environment::get().getLuaManager()->jailProgress(mDays, 0.f);
         }
     }
 
-    void JailScreen::onJailProgressChanged(int cur, int /*total*/)
+    void JailScreen::onJailProgressChanged(int cur, int total)
     {
         mProgressBar->setScrollPosition(0);
         mProgressBar->setTrackSize(
             static_cast<int>(cur / (float)(mProgressBar->getScrollRange()) * mProgressBar->getLineSize()));
+        MWBase::Environment::get().getLuaManager()->jailProgress(mDays, static_cast<float>(cur) / total);
     }
 
     void JailScreen::onJailFinished()

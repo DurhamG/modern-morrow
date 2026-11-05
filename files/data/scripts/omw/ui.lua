@@ -310,6 +310,8 @@ return {
         -- The `Rest` mode has two windows: `WaitDialog`, where the player picks the hours, and `WaitDialogProgressBar`,
         -- which the engine shows instead while the hours pass. The interface shows the replacements of both when the
         -- rest menu opens. The `RestProgress` event tells when the hours start to pass, and how many have passed.
+        -- Likewise, the `JailProgress` event tells a replacement of `JailScreen` the length of the jail term and how
+        -- much of it has passed.
         -- @function [parent=#UI] registerWindow
         -- @param #string windowName
         -- @param #function showFn Callback that will be called when the window should become visible.
