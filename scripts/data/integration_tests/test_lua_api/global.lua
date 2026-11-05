@@ -277,6 +277,40 @@ testing.registerGlobalTest('spell success chance', function()
     testing.runLocalTest(player, 'spell success chance on self', { spell = spell.id, power = power.id })
 end)
 
+testing.registerGlobalTest('spell school', function()
+    local player = initPlayer()
+    local costly = findCostlyEffect()
+    local free = nil
+    for _, effect in ipairs(core.magic.effects.records) do
+        if effect.school ~= nil and effect.school ~= costly.school and effect.baseCost == 0 then
+            free = effect
+            break
+        end
+    end
+    testing.expect(free ~= nil, 'Expected an effect of another school')
+    local spell = world.createRecord(core.magic.spells.createRecordDraft({
+        name = 'Test spell with two schools',
+        type = core.magic.SPELL_TYPE.Spell,
+        cost = 5,
+        isAutocalc = false,
+        effects = {
+            { id = costly.id, range = core.magic.RANGE.Self, magnitudeMin = 10, magnitudeMax = 10, duration = 10 },
+            { id = free.id, range = core.magic.RANGE.Self, magnitudeMin = 10, magnitudeMax = 10, duration = 10 },
+        },
+    }))
+
+    testing.runLocalTest(player, 'set skill on self', { skill = costly.school, value = 100 })
+    testing.runLocalTest(player, 'set skill on self', { skill = free.school, value = 5 })
+    testing.expectEqual(core.magic.spells.getSchool(spell, player), free.school,
+        'The school with the weakest skill should decide')
+    testing.runLocalTest(player, 'set skill on self', { skill = costly.school, value = 5 })
+    testing.runLocalTest(player, 'set skill on self', { skill = free.school, value = 100 })
+    testing.expectEqual(core.magic.spells.getSchool(spell.id, player), costly.school,
+        'The costly effect should decide when its skill is weak')
+    testing.runLocalTest(player, 'restore skill on self', costly.school)
+    testing.runLocalTest(player, 'restore skill on self', free.school)
+end)
+
 testing.registerGlobalTest('enchantment cast cost', function()
     local player = initPlayer()
     local effect = findCostlyEffect()

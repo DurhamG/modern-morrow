@@ -260,6 +260,12 @@ namespace MWLua
         spells["createRecordDraft"] = tableToSpell;
         spells["getCost"]
             = [](const sol::object& spellOrId) -> int { return MWMechanics::calcSpellCost(*toSpell(spellOrId)); };
+        spells["getSchool"] = [](const sol::object& spellOrId, const Object& actor) -> ESM::RefId {
+            const MWWorld::Ptr& ptr = actor.ptr();
+            if (!ptr.getClass().isActor())
+                throw std::runtime_error("Actor expected");
+            return MWMechanics::getSpellSchool(toSpell(spellOrId), ptr);
+        };
         magicApi["spells"] = LuaUtil::makeReadOnly(spells);
 
         // Enchantment store

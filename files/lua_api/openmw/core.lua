@@ -705,6 +705,15 @@
 -- @return #number
 -- @usage local cost = core.magic.spells.getCost('fireball')
 
+---
+-- The magic school whose skill decides the actor's chance to cast the spell, and which casting it trains.
+-- For each of the spell's effects, the engine takes twice the actor's skill in the effect's school and subtracts the effect's cost. The effect with the lowest result decides the school.
+-- @function [parent=#Spells] getSchool
+-- @param #any spellOrId A @{#Spell} or string record ID.
+-- @param #GameObject actor The actor who casts it.
+-- @return #string The skill ID of the school (see @{openmw.core#SKILL}), or nil for a spell without effects.
+-- @usage local school = core.magic.spells.getSchool('fireball', self)
+
 --- List of all @{#Spell}s.
 -- @field [parent=#Spells] #list<#Spell> records A read-only list of all @{#Spell} records in the world database, may be indexed by recordId.
 -- Implements [iterables#List](iterables.html#List) of #Spell.
