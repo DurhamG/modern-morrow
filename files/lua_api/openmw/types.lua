@@ -954,6 +954,13 @@
 -- @return #number
 
 ---
+-- Whether this is a bound item, one that a spell such as Bound Dagger summons.
+-- The engine counts an item as bound when its record id is named by one of the `sMagicBound*ID` game settings. Bound items can't be dropped, sold, stolen, or moved into another container.
+-- @function [parent=#Item] isBound
+-- @param openmw.core#GameObject item
+-- @return #boolean
+
+---
 -- The equipment slots that this item can go in, as the engine lists them. See @{#Actor.EQUIPMENT_SLOT}.
 -- The list is empty for items that can't be equipped, such as potions, and for lights that can't be carried.
 -- A ring lists both ring slots. When an actor equips an item, the engine puts it in the first of its slots that is free.

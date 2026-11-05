@@ -951,6 +951,14 @@ testing.registerGlobalTest('item sounds', function()
     testing.expectEqual(pcall(types.Item.getUpSound, world.players[1]), false, 'The player should not be an item')
 end)
 
+testing.registerGlobalTest('bound items', function()
+    local bound = world.createObject(core.getGMST('sMagicBoundDaggerID'))
+    testing.expectEqual(types.Item.isBound(bound), true, 'The item that sMagicBoundDaggerID names should be bound')
+    testing.expectEqual(types.Item.isBound(world.createObject('basic_dagger1h')), false,
+        'An ordinary dagger should not be bound')
+    testing.expectEqual(pcall(types.Item.isBound, world.players[1]), false, 'The player should not be an item')
+end)
+
 testing.registerGlobalTest('stolen items', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({
