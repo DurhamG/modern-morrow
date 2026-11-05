@@ -135,6 +135,7 @@ namespace MWLua
         void actorDied(const MWWorld::Ptr& actor) override;
         void onDialogueResponse(
             const MWWorld::Ptr& actor, const ESM::DialInfo& info, const ESM::Dialogue& record) override;
+        void restProgress(int hoursPassed, int hours) override;
         void applyMagicEffects(ESM::RefId id, const MWWorld::Ptr& caster, ESM::RefNum item, const MWWorld::Ptr& target,
             const std::vector<ESM::IndexedENAMstruct>& effects, bool ignoreReflect, bool ignoreSpellAbsorption,
             bool stackable, bool isReflect) override;

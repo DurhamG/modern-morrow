@@ -895,6 +895,7 @@ testing.registerLocalTestStep('rest status on self', function()
 end)
 
 local restFinished = nil
+local restProgress = {}
 
 testing.registerLocalTestStep('rest in rest menu on self', function(hours)
     -- The test steps stop while the rest menu pauses the game, so this asks for the rest in the same frame as it
@@ -906,6 +907,7 @@ testing.registerLocalTestStep('rest in rest menu on self', function(hours)
     testing.expect(restWindows.WaitDialog and restWindows.WaitDialogProgressBar,
         'The rest menu should have the wait dialog and the progress bar')
     restFinished = nil
+    restProgress = {}
     I.UI.addMode('Rest')
     core.sendGlobalEvent('restForTest', hours)
     for _ = 1, 600 do
@@ -915,11 +917,18 @@ testing.registerLocalTestStep('rest in rest menu on self', function(hours)
         end
     end
     testing.expectEqual(restFinished, true, 'The rest should last all its hours')
+    testing.expectEqual(#restProgress, hours + 1, 'The player should hear when the hours start and after each hour')
+    testing.expectEqual(restProgress[#restProgress].hoursPassed, hours, 'The last event should come after all hours')
+    testing.expectEqual(restProgress[#restProgress].hours, hours, 'The events should tell the length of the rest')
     testing.expectEqual(I.UI.getMode(), nil, 'The rest menu should close when the rest stops')
 end)
 
 testing.localEventHandlers.restForTestStopped = function(finished)
     restFinished = finished
+end
+
+testing.localEventHandlers.RestProgress = function(data)
+    restProgress[#restProgress + 1] = data
 end
 
 local addedItems = {}

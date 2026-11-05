@@ -1785,7 +1785,7 @@
 -- The rest menu must be open, as the engine opens it, as the `ShowRestMenu` mwscript function opens it, or as `I.UI.addMode('Rest', { target = bed })` opens it. When the menu opens, the engine decides whether the player sleeps or waits there, as @{#PLAYER.getRestStatus} says, and it closes the menu where the player can't rest at all.
 -- The engine then rests as the menu does. It saves the game first, if autosaves are on, and fades the screen out. It shows its progress bar while one hour passes every 1/60 of a second. Each hour heals the player if they sleep, and lets the other actors rest. While the player sleeps, the `GetPCSleep` mwscript function is true.
 -- A sleep outdoors may be interrupted by a creature from the region's sleep list. An mwscript may also wake the player up with `WakeUpPC`. The rest stops early too if the player dies. When the rest stops, the menu closes. After a sleep that ran its course, the engine opens the level-up menu if a level-up is ready.
--- The rest starts at the end of the frame.
+-- The rest starts at the end of the frame. While the hours pass, the player's local scripts get the `RestProgress` event.
 -- @function [parent=#PLAYER] rest
 -- @param openmw.core#GameObject player
 -- @param #number hours The hours to rest, at least 1. The rest menu offers 1 to 24, or @{#PLAYERRestStatus}.hoursUntilHealed.

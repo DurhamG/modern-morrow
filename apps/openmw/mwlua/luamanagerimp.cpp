@@ -587,6 +587,18 @@ namespace MWLua
         });
     }
 
+    void LuaManager::restProgress(int hoursPassed, int hours)
+    {
+        if (mPlayer.isEmpty())
+            return;
+        mLua.protectedCall([&](LuaUtil::LuaView& view) {
+            sol::table data = view.newTable();
+            data["hoursPassed"] = hoursPassed;
+            data["hours"] = hours;
+            sendLocalEvent(mPlayer, "RestProgress", data);
+        });
+    }
+
     void LuaManager::applyMagicEffects(ESM::RefId id, const MWWorld::Ptr& caster, ESM::RefNum item,
         const MWWorld::Ptr& target, const std::vector<ESM::IndexedENAMstruct>& effects, bool ignoreReflect,
         bool ignoreSpellAbsorption, bool stackable, bool isReflect)

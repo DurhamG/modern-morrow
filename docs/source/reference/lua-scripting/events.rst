@@ -190,6 +190,24 @@ and ``arg`` (for example in the mode ``Book`` the argument is the book the playe
         end
     }
 
+**RestProgress**
+
+This event is sent to the player's local script while the player rests or waits, whether the engine's rest menu or ``types.Player.rest`` started the rest.
+It comes once when the hours start to pass, at the time the engine shows its progress bar, and again after each hour.
+A Lua replacement of the ``WaitDialogProgressBar`` window can draw the progress from it.
+It has the following fields:
+
+- ``hoursPassed``: The hours of the rest that have passed, from 0.
+- ``hours``: The length of the rest in hours.
+
+.. code-block:: Lua
+
+    eventHandlers = {
+        RestProgress = function(data)
+            print(data.hoursPassed .. ' of ' .. data.hours .. ' hours have passed')
+        end
+    }
+
 **AddUiMode**
 
 Equivalent to ``I.UI.addMode``, but can be sent from another object or global script.

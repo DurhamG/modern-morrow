@@ -95,6 +95,8 @@ namespace MWBase
             std::string_view startKey, std::string_view stopKey)
             = 0;
         virtual void jailTimeServed(const MWWorld::Ptr& actor, int days) = 0;
+        // Tells the player's scripts that @a hoursPassed of a rest of @a hours have passed.
+        virtual void restProgress(int hoursPassed, int hours) = 0;
         virtual void skillLevelUp(const MWWorld::Ptr& actor, ESM::RefId skillId, std::string_view source) = 0;
         virtual void skillUse(const MWWorld::Ptr& actor, ESM::RefId skillId, int useType, float scale) = 0;
         virtual void onHit(const MWWorld::Ptr& attacker, const MWWorld::Ptr& victim, const MWWorld::Ptr& weapon,

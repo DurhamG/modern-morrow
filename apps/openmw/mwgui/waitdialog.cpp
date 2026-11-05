@@ -11,6 +11,7 @@
 #include <components/widgets/box.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/statemanager.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -266,6 +267,7 @@ namespace MWGui
         mProgressBar.setProgress(cur, total);
         MWBase::Environment::get().getMechanicsManager()->rest(1, mSleeping);
         MWBase::Environment::get().getWorld()->advanceTime(1);
+        MWBase::Environment::get().getLuaManager()->restProgress(cur, total);
 
         MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
         if (player.getClass().getCreatureStats(player).isDead())
@@ -337,6 +339,7 @@ namespace MWGui
         {
             mProgressBar.setVisible(true);
             mTimeAdvancer.run(mHours, mInterruptAt);
+            MWBase::Environment::get().getLuaManager()->restProgress(0, mHours);
         }
     }
 
