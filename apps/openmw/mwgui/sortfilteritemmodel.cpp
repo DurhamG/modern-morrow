@@ -24,6 +24,7 @@
 #include "../mwworld/esmstore.hpp"
 
 #include "../mwmechanics/alchemy.hpp"
+#include "../mwmechanics/enchanting.hpp"
 #include "../mwmechanics/recharge.hpp"
 
 namespace
@@ -275,13 +276,7 @@ namespace MWGui
             return false;
         if ((mFilter & Filter_OnlyRepairTools) && (base.getType() != ESM::Repair::sRecordId))
             return false;
-        if ((mFilter & Filter_OnlyEnchantable)
-            && (item.mFlags & ItemStack::Flag_Enchanted
-                || (base.getType() != ESM::Armor::sRecordId && base.getType() != ESM::Clothing::sRecordId
-                    && base.getType() != ESM::Weapon::sRecordId && base.getType() != ESM::Book::sRecordId)))
-            return false;
-        if ((mFilter & Filter_OnlyEnchantable) && base.getType() == ESM::Book::sRecordId
-            && !base.get<ESM::Book>()->mBase->mData.mIsScroll)
+        if ((mFilter & Filter_OnlyEnchantable) && !MWMechanics::Enchanting::canEnchant(base))
             return false;
 
         if ((mFilter & Filter_OnlyUsableItems))

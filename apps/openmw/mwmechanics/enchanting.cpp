@@ -1,7 +1,11 @@
 #include "enchanting.hpp"
 
+#include <components/esm3/loadarmo.hpp>
+#include <components/esm3/loadbook.hpp>
+#include <components/esm3/loadclot.hpp>
 #include <components/esm3/loadcrea.hpp>
 #include <components/esm3/loadmgef.hpp>
+#include <components/esm3/loadweap.hpp>
 #include <components/misc/rng.hpp>
 #include <components/settings/values.hpp>
 
@@ -20,6 +24,16 @@
 
 namespace MWMechanics
 {
+    bool Enchanting::canEnchant(const MWWorld::ConstPtr& item)
+    {
+        if (!item.getClass().getEnchantment(item).empty())
+            return false;
+        const unsigned int type = item.getType();
+        if (type == ESM::Book::sRecordId)
+            return item.get<ESM::Book>()->mBase->mData.mIsScroll != 0;
+        return type == ESM::Armor::sRecordId || type == ESM::Clothing::sRecordId || type == ESM::Weapon::sRecordId;
+    }
+
     Enchanting::Enchanting()
         : mCastStyle(ESM::Enchantment::CastOnce)
         , mSelfEnchanting(false)
@@ -58,6 +72,41 @@ namespace MWMechanics
     void Enchanting::setSoulGem(const MWWorld::Ptr& soulGem)
     {
         mSoulGemPtr = soulGem;
+    }
+
+    Enchanting::Problem Enchanting::getProblem() const
+    {
+        if (mEffectList.mList.empty())
+            return Problem::NoEffects;
+        if (mNewItemName.empty())
+            return Problem::NoName;
+        if (soulEmpty())
+            return Problem::NoSoulGem;
+        if (itemEmpty())
+            return Problem::NoItem;
+        if (static_cast<int>(getEnchantPoints(false)) > getMaxEnchantValue())
+            return Problem::TooManyPoints;
+        if (!mSelfEnchanting)
+        {
+            const MWWorld::Ptr player = getPlayer();
+            const int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
+            if (getEnchantPrice() > playerGold)
+                return Problem::NotEnoughGold;
+        }
+        return Problem::None;
+    }
+
+    MWWorld::Ptr Enchanting::getStolenItem() const
+    {
+        if (mSelfEnchanting)
+            return {};
+        MWBase::MechanicsManager* mechanics = MWBase::Environment::get().getMechanicsManager();
+        for (const MWWorld::Ptr& item : { mOldItemPtr, mSoulGemPtr })
+        {
+            if (mechanics->isItemStolenFrom(item.getCellRef().getRefId(), mEnchanter))
+                return item;
+        }
+        return {};
     }
 
     bool Enchanting::create()

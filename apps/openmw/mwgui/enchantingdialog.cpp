@@ -303,72 +303,52 @@ namespace MWGui
 
     void EnchantingDialog::onBuyButtonClicked(MyGUI::Widget* /*sender*/)
     {
-        if (mEffects.size() <= 0)
-        {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sEnchantmentMenu11}");
-            return;
-        }
-
-        if (mName->getCaption().empty())
-        {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage10}");
-            return;
-        }
-
-        if (mEnchanting.soulEmpty())
-        {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage52}");
-            return;
-        }
-
-        if (mEnchanting.itemEmpty())
-        {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage11}");
-            return;
-        }
-
-        if (static_cast<int>(mEnchanting.getEnchantPoints(false)) > mEnchanting.getMaxEnchantValue())
-        {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage29}");
-            return;
-        }
-
         mEnchanting.setNewItemName(mName->getCaption());
         mEnchanting.setEffect(mEffectList);
 
-        MWWorld::Ptr player = MWMechanics::getPlayer();
-        int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
-        if (mPtr != player && mEnchanting.getEnchantPrice() > playerGold)
+        MWBase::WindowManager* windowManager = MWBase::Environment::get().getWindowManager();
+        switch (mEnchanting.getProblem())
         {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage18}");
-            return;
+            case MWMechanics::Enchanting::Problem::None:
+                break;
+            case MWMechanics::Enchanting::Problem::NoEffects:
+                windowManager->messageBox("#{sEnchantmentMenu11}");
+                return;
+            case MWMechanics::Enchanting::Problem::NoName:
+                windowManager->messageBox("#{sNotifyMessage10}");
+                return;
+            case MWMechanics::Enchanting::Problem::NoSoulGem:
+                windowManager->messageBox("#{sNotifyMessage52}");
+                return;
+            case MWMechanics::Enchanting::Problem::NoItem:
+                windowManager->messageBox("#{sNotifyMessage11}");
+                return;
+            case MWMechanics::Enchanting::Problem::TooManyPoints:
+                windowManager->messageBox("#{sNotifyMessage29}");
+                return;
+            case MWMechanics::Enchanting::Problem::NotEnoughGold:
+                windowManager->messageBox("#{sNotifyMessage18}");
+                return;
         }
 
         // check if the player is attempting to use a soulstone or item that was stolen from this actor
-        if (mPtr != player)
+        const MWWorld::Ptr stolen = mEnchanting.getStolenItem();
+        if (!stolen.isEmpty())
         {
-            for (int i = 0; i < 2; ++i)
-            {
-                MWWorld::Ptr item = (i == 0) ? mEnchanting.getOldItem() : mEnchanting.getGem();
-                if (MWBase::Environment::get().getMechanicsManager()->isItemStolenFrom(
-                        item.getCellRef().getRefId(), mPtr))
-                {
-                    std::string msg = MWBase::Environment::get()
-                                          .getESMStore()
-                                          ->get<ESM::GameSetting>()
-                                          .find("sNotifyMessage49")
-                                          ->mValue.getString();
-                    msg = Misc::StringUtils::format(msg, item.getClass().getName(item));
-                    MWBase::Environment::get().getWindowManager()->messageBox(msg);
+            std::string msg = MWBase::Environment::get()
+                                  .getESMStore()
+                                  ->get<ESM::GameSetting>()
+                                  .find("sNotifyMessage49")
+                                  ->mValue.getString();
+            msg = Misc::StringUtils::format(msg, stolen.getClass().getName(stolen));
+            windowManager->messageBox(msg);
 
-                    MWBase::Environment::get().getMechanicsManager()->confiscateStolenItemToOwner(
-                        player, item, mPtr, 1);
+            MWBase::Environment::get().getMechanicsManager()->confiscateStolenItemToOwner(
+                MWMechanics::getPlayer(), stolen, mPtr, 1);
 
-                    MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Enchanting);
-                    MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
-                    return;
-                }
-            }
+            windowManager->removeGuiMode(GM_Enchanting);
+            windowManager->exitCurrentGuiMode();
+            return;
         }
 
         if (mEnchanting.create())
