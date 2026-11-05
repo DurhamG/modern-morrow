@@ -97,7 +97,27 @@ namespace MWMechanics
         int getSkillIncreasesForSpecialization(ESM::Class::Specialization spec) const;
         void setSkillIncreasesForSpecialization(ESM::Class::Specialization spec, int increases);
 
-        void levelUp();
+        /// Whether the skill increases since the last level-up are enough for the next one.
+        bool isLevelUpReady() const;
+
+        /// The number of attributes that the player raises at a level-up: three, or fewer when fewer attributes
+        /// are below 100.
+        int getLevelUpAttributeCount() const;
+
+        /// The points that @a attribute gains when the player picks it at a level-up. They come from the skill
+        /// increases that the attribute governs, and stop at 100. It is 0 for an attribute that is at 100 already.
+        int getLevelUpAttributeIncrease(ESM::RefId attribute) const;
+
+        /// The name of the class picture that the level-up window shows, such as "acrobat". It depends on the skill
+        /// increases of each specialization since the last level-up.
+        std::string_view getLevelUpClassImage() const;
+
+        /// The text that the level-up window shows for the next level.
+        std::string_view getLevelUpDescription() const;
+
+        /// Raises @a attributes by their level-up multipliers, up to 100, and gains a level. Health grows with
+        /// Endurance, and the level progress and skill increases start over.
+        void levelUp(const std::vector<ESM::RefId>& attributes);
 
         void updateHealth();
         ///< Calculate health based on endurance and strength.

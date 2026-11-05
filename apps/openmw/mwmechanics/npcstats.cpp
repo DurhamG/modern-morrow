@@ -1,12 +1,15 @@
 #include "npcstats.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <format>
 
+#include <components/esm/attr.hpp>
 #include <components/esm3/loadclas.hpp>
 #include <components/esm3/loadfact.hpp>
 #include <components/esm3/loadgmst.hpp>
 #include <components/esm3/npcstats.hpp>
+#include <components/fallback/fallback.hpp>
 
 #include <MyGUI_TextIterator.h>
 
@@ -221,8 +224,152 @@ void MWMechanics::NpcStats::setLevelProgress(int progress)
     mLevelProgress = progress;
 }
 
-void MWMechanics::NpcStats::levelUp()
+bool MWMechanics::NpcStats::isLevelUpReady() const
 {
+    const MWWorld::Store<ESM::GameSetting>& gmst = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
+    return mLevelProgress >= gmst.find("iLevelUpTotal")->mValue.getInteger();
+}
+
+int MWMechanics::NpcStats::getLevelUpAttributeCount() const
+{
+    constexpr int maxAttributes = 3;
+    int count = 0;
+    for (const ESM::Attribute& attribute : MWBase::Environment::get().getESMStore()->get<ESM::Attribute>())
+    {
+        if (getLevelUpAttributeIncrease(attribute.mId) > 0)
+            ++count;
+    }
+    return std::min(maxAttributes, count);
+}
+
+int MWMechanics::NpcStats::getLevelUpAttributeIncrease(ESM::RefId attribute) const
+{
+    const float base = getAttribute(attribute).getBase();
+    if (base >= 100)
+        return 0;
+    return std::max(1, std::min(getLevelupAttributeMultiplier(attribute), static_cast<int>(100 - base)));
+}
+
+std::string_view MWMechanics::NpcStats::getLevelUpClassImage() const
+{
+    const int combatIncreases = getSkillIncreasesForSpecialization(ESM::Class::Specialization::Combat);
+    const int magicIncreases = getSkillIncreasesForSpecialization(ESM::Class::Specialization::Magic);
+    const int stealthIncreases = getSkillIncreasesForSpecialization(ESM::Class::Specialization::Stealth);
+
+    std::string_view ret = "acrobat";
+
+    int total = combatIncreases + magicIncreases + stealthIncreases;
+    if (total == 0)
+        return ret;
+
+    int combatFraction = static_cast<int>(static_cast<float>(combatIncreases) / total * 10.f);
+    int magicFraction = static_cast<int>(static_cast<float>(magicIncreases) / total * 10.f);
+    int stealthFraction = static_cast<int>(static_cast<float>(stealthIncreases) / total * 10.f);
+
+    if (combatFraction > 7)
+        ret = "warrior";
+    else if (magicFraction > 7)
+        ret = "mage";
+    else if (stealthFraction > 7)
+        ret = "thief";
+
+    switch (combatFraction)
+    {
+        case 7:
+            ret = "warrior";
+            break;
+        case 6:
+            if (stealthFraction == 1)
+                ret = "barbarian";
+            else if (stealthFraction == 3)
+                ret = "crusader";
+            else
+                ret = "knight";
+            break;
+        case 5:
+            if (stealthFraction == 3)
+                ret = "scout";
+            else
+                ret = "archer";
+            break;
+        case 4:
+            ret = "rogue";
+            break;
+        default:
+            break;
+    }
+
+    switch (magicFraction)
+    {
+        case 7:
+            ret = "mage";
+            break;
+        case 6:
+            if (combatFraction == 2)
+                ret = "sorcerer";
+            else if (combatIncreases == 3)
+                ret = "healer";
+            else
+                ret = "battlemage";
+            break;
+        case 5:
+            ret = "witchhunter";
+            break;
+        case 4:
+            ret = "spellsword";
+            // In vanilla there's also code for "nightblade", however it seems to be unreachable.
+            break;
+        default:
+            break;
+    }
+
+    switch (stealthFraction)
+    {
+        case 7:
+            ret = "thief";
+            break;
+        case 6:
+            if (magicFraction == 1)
+                ret = "agent";
+            else if (magicIncreases == 3)
+                ret = "assassin";
+            else
+                ret = "acrobat";
+            break;
+        case 5:
+            if (magicIncreases == 3)
+                ret = "monk";
+            else
+                ret = "pilgrim";
+            break;
+        case 3:
+            if (magicFraction == 3)
+                ret = "bard";
+            break;
+        default:
+            break;
+    }
+
+    return ret;
+}
+
+std::string_view MWMechanics::NpcStats::getLevelUpDescription() const
+{
+    const std::string_view description = Fallback::Map::getString(std::format("Level_Up_Level{}", getLevel() + 1));
+    if (description.empty())
+        return Fallback::Map::getString("Level_Up_Default");
+    return description;
+}
+
+void MWMechanics::NpcStats::levelUp(const std::vector<ESM::RefId>& attributes)
+{
+    for (const ESM::RefId& id : attributes)
+    {
+        AttributeValue attribute = getAttribute(id);
+        attribute.setBase(std::min(100.f, attribute.getBase() + getLevelupAttributeMultiplier(id)));
+        setAttribute(id, attribute);
+    }
+
     const MWWorld::Store<ESM::GameSetting>& gmst = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
 
     mLevelProgress -= gmst.find("iLevelUpTotal")->mValue.getInteger();
