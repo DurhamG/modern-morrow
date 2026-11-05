@@ -1,4 +1,5 @@
 local testing = require('testing_util')
+local async = require('openmw.async')
 local self = require('openmw.self')
 local util = require('openmw.util')
 local core = require('openmw.core')
@@ -181,6 +182,32 @@ testing.registerLocalTest('GUI input capture applies only in menus', function()
         coroutine.yield()
     end
     I.UI.setPauseOnMode(I.UI.MODE.Interface, true)
+end)
+
+testing.registerLocalTest('Lua answers an interactive message', function()
+    local asked = nil
+    local answered = false
+    I.UI.registerInteractiveMessageHandler(function(message, buttons, answer)
+        asked = { message = message, buttons = buttons }
+        -- The test itself doesn't run while the game is paused, so a real time timer answers.
+        async:newUnsavableRealTimeTimer(0.1, function()
+            asked.paused = core.isWorldPaused()
+            asked.inputCaptured = input.isGuiInputCaptured()
+            answer(1)
+            answered = true
+        end)
+    end)
+    I.UI.showInteractiveMessage('Test message')
+    while not answered do
+        coroutine.yield()
+    end
+    I.UI.registerInteractiveMessageHandler(nil)
+
+    testing.expectEqual(asked.message, 'Test message')
+    testing.expectThat(asked.buttons, matchers.equalTo({ 'OK' }))
+    testing.expectEqual(asked.paused, true, 'The game should be paused while the message waits for an answer')
+    testing.expectEqual(asked.inputCaptured, true, 'The menu input should be captured until the answer')
+    testing.expectEqual(input.isGuiInputCaptured(), false, 'The answer should release the menu input')
 end)
 
 testing.registerLocalTest('UI layer with a fixed height', function()

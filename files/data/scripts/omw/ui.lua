@@ -12,7 +12,10 @@ local replacedWindows = {}
 local hiddenWindows = {}
 local modeStack = {}
 
-local inputCapturedByWindows = false
+local inputCapturedByInterface = false
+
+local interactiveMessageHandler = nil
+local waitingMessageId = nil
 
 local modePause = {}
 for _, mode in pairs(MODE) do
@@ -35,6 +38,47 @@ local function registerWindow(window, showFn, hideFn, options)
         capturesInput = options ~= nil and options.capturesInput == true,
     }
     hiddenWindows[window] = nil
+end
+
+local function updateInputCapture()
+    local shouldCaptureInput = waitingMessageId ~= nil
+    for _, state in pairs(replacedWindows) do
+        shouldCaptureInput = shouldCaptureInput or (state.visible and state.capturesInput)
+    end
+    if shouldCaptureInput ~= inputCapturedByInterface then
+        input.setGuiInputCaptured(shouldCaptureInput)
+        inputCapturedByInterface = shouldCaptureInput
+    end
+end
+
+local function registerInteractiveMessageHandler(handler)
+    interactiveMessageHandler = handler
+    ui._setLuaAnswersInteractiveMessages(handler ~= nil)
+    if handler == nil and waitingMessageId ~= nil then
+        -- The engine shows the waiting message in its own box now.
+        waitingMessageId = nil
+        updateInputCapture()
+    end
+end
+
+local function onInteractiveMessage(id, message, buttons)
+    if interactiveMessageHandler == nil then
+        return
+    end
+    waitingMessageId = id
+    updateInputCapture()
+    local function answer(button)
+        if waitingMessageId ~= id then
+            return
+        end
+        if type(button) ~= 'number' or button % 1 ~= 0 or button < 1 or button > #buttons then
+            error('Invalid button index: ' .. tostring(button))
+        end
+        waitingMessageId = nil
+        ui._answerInteractiveMessage(id, button - 1)
+        updateInputCapture()
+    end
+    interactiveMessageHandler(message, buttons, answer)
 end
 
 local function updateHidden(mode, options)
@@ -131,14 +175,7 @@ local function onUiModeChanged(changedByLua, arg)
             end
         end
     end
-    local shouldCaptureInput = false
-    for _, state in pairs(replacedWindows) do
-        shouldCaptureInput = shouldCaptureInput or (state.visible and state.capturesInput)
-    end
-    if shouldCaptureInput ~= inputCapturedByWindows then
-        input.setGuiInputCaptured(shouldCaptureInput)
-        inputCapturedByWindows = shouldCaptureInput
-    end
+    updateInputCapture()
     local shouldPause = false
     for _, m in pairs(modeStack) do
         shouldPause = shouldPause or modePause[m]
@@ -187,7 +224,7 @@ return {
     interface = {
         --- Interface version
         -- @field [parent=#UI] #number version
-        version = 4,
+        version = 5,
 
         --- All available UI modes.
         -- Use `view(I.UI.MODE)` in `luap` console mode to see the list.
@@ -279,7 +316,32 @@ return {
         -- @function [parent=#UI] showInteractiveMessage
         -- @param #string message Message to display
         -- @param #table options Options (none yet)
-        showInteractiveMessage = ui._showInteractiveMessage
+        showInteractiveMessage = ui._showInteractiveMessage,
+
+        ---
+        -- Show and answer the interactive message boxes, the messages with buttons that the player must answer,
+        -- instead of the engine. Use it to draw these messages in the style of a mod's own menus.
+        --
+        -- These messages come from game scripts (`MessageBox` with buttons), the soul gem and companion questions,
+        -- the question after the player's death, and `showInteractiveMessage`. A few messages stop the whole game
+        -- until they are answered, and Lua doesn't run then. The engine still shows those, for example the warnings
+        -- of the settings menu and the warning about missing content files when a save is loaded.
+        --
+        -- While a message waits for its answer, the game is paused and can't be saved, as it is while the engine's box
+        -- is shown. Until the answer, the interface also captures the menu input with
+        -- @{openmw_input#(input).setGuiInputCaptured}, so that the keyboard and the controller only reach Lua.
+        --
+        -- If a new message arrives before the handler answered the last one, the new message replaces it. The handler
+        -- is called again, and should show the new message instead of the old one. The old `answer` function then
+        -- does nothing. Registering a new handler replaces the previous one.
+        -- @function [parent=#UI] registerInteractiveMessageHandler
+        -- @param #function handler A function `handler(message, buttons, answer)`, or nil to let the engine show the
+        -- messages again. `message` is the text of the message, and `buttons` is a list of button labels. Call
+        -- `answer(index)` with the 1-based index of the button the player chose.
+        -- @usage I.UI.registerInteractiveMessageHandler(function(message, buttons, answer)
+        --     -- Show the message, and call answer(i) when the player picks buttons[i].
+        -- end)
+        registerInteractiveMessageHandler = registerInteractiveMessageHandler,
 
         -- TODO
         -- registerHudElement = function(name, showFn, hideFn) end,
@@ -288,6 +350,7 @@ return {
     },
     engineHandlers = {
         _onUiModeChanged = onUiModeChanged,
+        _onInteractiveMessage = onInteractiveMessage,
     },
     eventHandlers = {
         UiModeChanged = onUiModeChangedEvent,
