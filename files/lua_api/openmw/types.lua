@@ -109,6 +109,15 @@
 -- @return #number
 
 ---
+-- The services that an actor offers in a conversation, in the order the Dialogue window lists them above the topics.
+-- They are `'persuasion'` for NPCs, `'barter'`, `'spells'`, `'travel'`, `'spellmaking'`, `'enchanting'`, `'training'` and `'repair'` for the services in the actor's record, or in their class for an NPC whose stats are worked out automatically, and `'companionShare'` for a companion, whose script sets the local variable `companion`.
+-- The game settings `sPersuasion`, `sBarter`, `sSpells`, `sTravel`, `sSpellmakingMenuTitle`, `sEnchanting`, `sServiceTrainingTitle`, `sRepair` and `sCompanionShare` name them in the Dialogue window.
+-- @function [parent=#Actor] getDialogueServices
+-- @param openmw.core#GameObject actor
+-- @return #list<#string>
+-- @usage for _, service in ipairs(types.Actor.getDialogueServices(actor)) do print(service) end
+
+---
 -- Check if the given actor is dead (health reached 0, so death process started).
 -- @function [parent=#Actor] isDead
 -- @param openmw.core#GameObject actor
@@ -2034,6 +2043,20 @@
 -- end))
 
 ---
+-- Ask the actor for one of the services in @{#Actor.getDialogueServices}, the way clicking it in the Dialogue window does (only in global and player scripts).
+-- The actor can refuse with a line from the `Service Refusal` topic, whose conditions can depend on the service. The line's dialogue script runs.
+-- Otherwise the service's mode opens on top of the dialogue mode, with the actor as its target, such as `'Barter'` for `'barter'` and `'Companion'` for `'companionShare'`. Companions don't refuse.
+-- This throws an error outside a conversation, if the actor doesn't offer the service, for `'persuasion'`, which has @{#PLAYER.persuadeDialogueActor} instead, while the player must answer a question, and after a script ended the conversation with `Goodbye`.
+-- The actor answers at the end of the frame.
+-- @function [parent=#PLAYER] requestDialogueService
+-- @param openmw.core#GameObject player
+-- @param #string service One of the services in @{#Actor.getDialogueServices}.
+-- @param openmw.async#Callback callback A function that receives a @{#PLAYERDialogueOutcome} with `accepted` (optional).
+-- @usage types.Player.requestDialogueService(self, 'barter', async:callback(function(outcome)
+--     if not outcome.accepted then print(outcome.lines[1].text) end
+-- end))
+
+---
 -- What a step of the conversation led to.
 -- If the conversation changed before the end of the frame so that the step could no longer be taken, `lines` is empty.
 -- @type PLAYERDialogueOutcome
@@ -2043,6 +2066,7 @@
 -- @field #boolean mustSayGoodbye Whether the step's dialogue script ended the conversation with `Goodbye`.
 -- @field #boolean success Only for @{#PLAYER.persuadeDialogueActor}: whether the attempt succeeded. Nil if the player couldn't try by the end of the frame.
 -- @field #number disposition Only for @{#PLAYER.persuadeDialogueActor}: the actor's disposition after the attempt, as @{#NPC.getDisposition} gives it. Nil if the player couldn't try by the end of the frame.
+-- @field #boolean accepted Only for @{#PLAYER.requestDialogueService}: true if the service's mode opened, false if the actor refused. Nil if the player couldn't ask by the end of the frame.
 
 ---
 -- End the conversation and leave the dialogue mode, the way the Goodbye button of the Dialogue window does (only in global and player scripts).

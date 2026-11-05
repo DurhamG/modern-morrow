@@ -325,6 +325,8 @@ testing.registerLocalTest('Dialogue outside a conversation', function()
         'The player should not be able to persuade anyone')
     testing.expectEqual(pcall(types.Player.canPersuadeDialogueActor, self, 'flatter'), false,
         'An unknown way to persuade should be an error')
+    testing.expectEqual(pcall(types.Player.requestDialogueService, self, 'barter'), false,
+        'The player should not be able to ask for a service')
 
     local shown = types.Player.findTopicLinks(self, 'Ask about @Balmora# in Balmora.')
     testing.expectEqual(shown.text, 'Ask about Balmora in Balmora.', 'The link marks should be removed')

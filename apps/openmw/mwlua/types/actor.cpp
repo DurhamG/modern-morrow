@@ -20,6 +20,7 @@
 #include "apps/openmw/mwworld/inventorystore.hpp"
 #include "apps/openmw/mwworld/worldmodel.hpp"
 
+#include "../conversationbindings.hpp"
 #include "../localscripts.hpp"
 #include "../luamanagerimp.hpp"
 #include "../magicbindings.hpp"
@@ -502,6 +503,7 @@ namespace MWLua
                 throw std::runtime_error("Actor expected");
             return MWMechanics::getTravelHours(ptr, getTravelDestination(ptr, destination));
         };
+        addDialogueServiceBindings(actor);
 
         actor["_onHit"] = [context](const SelfObject& self, const sol::table& options) {
             sol::optional<sol::table> damageLua = options.get<sol::optional<sol::table>>("damage");

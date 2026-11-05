@@ -794,6 +794,33 @@ testing.registerGlobalTest('spellmaking', function()
     merchant:remove()
 end)
 
+testing.registerGlobalTest('dialogue services', function()
+    local player = initPlayer()
+    local npcRecord = world.createRecord(types.NPC.createRecordDraft({
+        template = types.NPC.record(player),
+        isAutocalc = false,
+        servicesOffered = { Barter = true, Training = true, Spells = true },
+    }))
+    local npc = world.createObject(npcRecord.id)
+    testing.expectEqual(table.concat(types.Actor.getDialogueServices(npc), ' '), 'persuasion barter spells training',
+        'An NPC should offer persuasion and the services in their record, in the order of the Dialogue window')
+
+    local creatureRecord = world.createRecord(types.Creature.createRecordDraft({
+        template = types.Creature.record('landracer'),
+        servicesOffered = { Repair = true },
+    }))
+    local creature = world.createObject(creatureRecord.id)
+    testing.expectEqual(table.concat(types.Actor.getDialogueServices(creature), ' '), 'repair',
+        'A creature should not offer persuasion')
+
+    local item = world.createObject('basic_dagger1h')
+    testing.expectEqual(pcall(types.Actor.getDialogueServices, item), false, 'Only actors should offer services')
+
+    item:remove()
+    creature:remove()
+    npc:remove()
+end)
+
 testing.registerGlobalTest('stolen items', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({

@@ -1,6 +1,7 @@
 #include "conversationbindings.hpp"
 
 #include <algorithm>
+#include <array>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -15,6 +16,8 @@
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwdialogue/keywordsearch.hpp"
+#include "../mwmechanics/services.hpp"
+#include "../mwworld/class.hpp"
 #include "../mwworld/worldmodel.hpp"
 
 #include "context.hpp"
@@ -149,6 +152,40 @@ namespace MWLua
             if (type == "bribe1000")
                 return MWBase::MechanicsManager::PT_Bribe1000;
             throw std::runtime_error("Unknown persuasion type: " + std::string(type));
+        }
+
+        using DialogueService = MWMechanics::DialogueService;
+
+        constexpr std::array<std::pair<DialogueService, std::string_view>, 9> sServiceNames = { {
+            { DialogueService::Persuasion, "persuasion" },
+            { DialogueService::Barter, "barter" },
+            { DialogueService::Spells, "spells" },
+            { DialogueService::Travel, "travel" },
+            { DialogueService::Spellmaking, "spellmaking" },
+            { DialogueService::Enchanting, "enchanting" },
+            { DialogueService::Training, "training" },
+            { DialogueService::Repair, "repair" },
+            { DialogueService::CompanionShare, "companionShare" },
+        } };
+
+        std::string_view getServiceName(DialogueService service)
+        {
+            for (const auto& [value, name] : sServiceNames)
+            {
+                if (value == service)
+                    return name;
+            }
+            throw std::logic_error("Unknown dialogue service");
+        }
+
+        DialogueService parseService(std::string_view service)
+        {
+            for (const auto& [value, name] : sServiceNames)
+            {
+                if (name == service)
+                    return value;
+            }
+            throw std::runtime_error("Unknown dialogue service: " + std::string(service));
         }
 
         std::optional<LuaUtil::Callback> toCallback(const sol::optional<sol::table>& callback)
@@ -324,5 +361,37 @@ namespace MWLua
                       },
                       "PersuadeDialogueActorAction");
               };
+
+        player["requestDialogueService"]
+            = [context](const Object& object, std::string_view service, const sol::optional<sol::table>& callback) {
+                  verifySpeaker(object);
+                  verifyNoQuestion();
+                  const DialogueService requested = parseService(service);
+                  if (requested == DialogueService::Persuasion)
+                      throw std::runtime_error("Persuasion has no window to open, use persuadeDialogueActor");
+                  const std::vector<DialogueService> offered
+                      = MWMechanics::getDialogueServices(getDialogueManager().getActor());
+                  if (std::find(offered.begin(), offered.end(), requested) == offered.end())
+                      throw std::runtime_error("The actor doesn't offer the service " + std::string(service));
+                  queueStep(
+                      context, callback,
+                      [requested](MWBase::DialogueManager& dialogueManager, sol::table& outcome) {
+                          outcome["accepted"] = dialogueManager.requestService(requested);
+                      },
+                      "RequestDialogueServiceAction");
+              };
+    }
+
+    void addDialogueServiceBindings(sol::table& actor)
+    {
+        actor["getDialogueServices"] = [](sol::this_state thisState, const Object& object) {
+            const MWWorld::Ptr ptr = object.ptr();
+            if (!ptr.getClass().isActor())
+                throw std::runtime_error("Actor expected");
+            sol::table result(thisState, sol::create);
+            for (DialogueService service : MWMechanics::getDialogueServices(ptr))
+                result.add(getServiceName(service));
+            return result;
+        };
     }
 }
