@@ -197,6 +197,15 @@ namespace MWLua
         }
     }
 
+    // Whether removing spells from an actor also removes them from the actor's base record. Otherwise the save
+    // doesn't keep the removal of a spell from the base record, which comes back when the game is loaded. Only the
+    // player's base record can change, like in the spell window, because other actors share theirs with every actor
+    // made from the same record.
+    static bool changesBaseSpells(const MWWorld::Ptr& actor)
+    {
+        return actor == MWMechanics::getPlayer();
+    }
+
     static const ESM::Enchantment* toEnchantment(const sol::object& enchantmentOrId)
     {
         if (enchantmentOrId.is<ESM::Enchantment>())
@@ -709,7 +718,7 @@ namespace MWLua
             context.mLuaManager->addAction([obj = spells.mActor.object(), spell = toSpell(spellOrId)]() {
                 const MWWorld::Ptr& ptr = obj.ptr();
                 if (ptr.getClass().isActor())
-                    ptr.getClass().getCreatureStats(ptr).getSpells().remove(spell, false);
+                    ptr.getClass().getCreatureStats(ptr).getSpells().remove(spell, changesBaseSpells(ptr));
             });
         };
 
@@ -720,7 +729,7 @@ namespace MWLua
             context.mLuaManager->addAction([obj = spells.mActor.object()]() {
                 const MWWorld::Ptr& ptr = obj.ptr();
                 if (ptr.getClass().isActor())
-                    ptr.getClass().getCreatureStats(ptr).getSpells().clear();
+                    ptr.getClass().getCreatureStats(ptr).getSpells().clear(changesBaseSpells(ptr));
             });
         };
 

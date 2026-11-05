@@ -68,6 +68,23 @@ testing.registerMenuTest('save and load', function()
     testing.expectThat(menu.getAllSaves(), matchers.equalTo({}))
 end)
 
+testing.registerMenuTest('removed spells stay removed after loading', function()
+    menu.newGame()
+    coroutine.yield()
+
+    testing.runGlobalTest('removed spells stay removed - remove')
+
+    menu.saveGame('removed spells')
+    coroutine.yield()
+
+    menu.loadGame(' - 1', 'removed_spells.omwsave')
+    coroutine.yield()
+
+    testing.runGlobalTest('removed spells stay removed - check')
+
+    menu.deleteGame(' - 1', 'removed_spells.omwsave')
+end)
+
 testing.registerMenuTest('load while teleporting', function()
     menu.newGame()
     coroutine.yield()

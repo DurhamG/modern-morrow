@@ -509,6 +509,31 @@ testing.registerGlobalTest('buying spells and repairs', function()
     merchant:remove()
 end)
 
+testing.registerGlobalTestStep('removed spells stay removed - remove', function()
+    local player = world.players[1]
+    local merchant = world.createObject('landracer')
+    merchant:addScript('idle.lua')
+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    local spell = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 7, isAutocalc = false })
+    types.Actor.spells(merchant):add(spell)
+    world.createObject('gold_001', types.Actor.getSpellPrice(merchant, spell)):moveInto(player)
+    coroutine.yield()
+    -- A bought spell goes into the player's base record.
+    types.Player.buySpell(player, merchant, spell)
+    coroutine.yield()
+    testing.expect(types.Actor.spells(player)[spell.id] ~= nil, 'The player should learn the spell')
+    types.Actor.spells(player):remove(spell)
+    coroutine.yield()
+    testing.expect(types.Actor.spells(player)[spell.id] == nil, 'The spell should be removed')
+    merchant:remove()
+end)
+
+testing.registerGlobalTestStep('removed spells stay removed - check', function()
+    for _, spell in pairs(types.Actor.spells(world.players[1])) do
+        testing.expectNotEqual(spell.name, 'Test spell', 'The removed spell should not come back after loading')
+    end
+end)
+
 testing.registerGlobalTest('travel', function()
     local player = initPlayer()
     local merchant = world.createObject('landracer')

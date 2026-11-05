@@ -524,12 +524,15 @@
 
 ---
 -- Remove spell (only in global scripts or on self).
+-- For the player, this also removes the spell from the player's base record, like deleting it in the spell window, so it stays removed after a saved game is loaded.
+-- Other actors share their base record with every actor made from it. For them, a spell from the base record comes back when a saved game is loaded.
 -- @function [parent=#ActorSpells] remove
 -- @param self
 -- @param #any spellOrId @{openmw.core#Spell} or string spell id
 
 ---
 -- Remove all spells (only in global scripts or on self).
+-- Like @{#ActorSpells.remove}, this also empties the player's base record, but not that of other actors.
 -- @function [parent=#ActorSpells] clear
 -- @param self
 
