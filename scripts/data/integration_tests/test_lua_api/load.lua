@@ -60,6 +60,14 @@ return {
                 type = content.apparatuses.TYPE.MortarPestle,
                 quality = 1,
             }
+            content.factions.records.omw_test_faction = {
+                name = 'Test faction',
+                skills = { 'longblade', 'axe', 'spear' },
+                ranks = {
+                    { name = 'Novice', primarySkillValue = 10, favouredSkillValue = 5 },
+                    { name = 'Expert', primarySkillValue = 60, favouredSkillValue = 40 },
+                },
+            }
             -- Races and a class for the character creation tests
             content.spells.records.omw_chargen_power = { name = 'Chargen power', type = content.spells.TYPE.Power }
             content.races.records.omw_chargen_race = {

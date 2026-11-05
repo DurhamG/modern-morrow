@@ -1221,6 +1221,24 @@ testing.registerGlobalTest('pickpocketing', function()
     types.Player.setCrimeLevel(player, 0)
 end)
 
+testing.registerGlobalTest('faction rank skills', function()
+    local player = initPlayer()
+    local faction = 'omw_test_faction'
+    testing.runLocalTest(player, 'set skill on self', { skill = 'longblade', value = 70 })
+    testing.runLocalTest(player, 'set skill on self', { skill = 'axe', value = 50 })
+    testing.runLocalTest(player, 'set skill on self', { skill = 'spear', value = 30 })
+    testing.expectEqual(types.NPC.hasSkillsForRank(player, faction, 1), true, 'The player should be skilled enough')
+    testing.expectEqual(types.NPC.hasSkillsForRank(player, faction, 2), false,
+        'The third favoured skill should be too low')
+    testing.runLocalTest(player, 'set skill on self', { skill = 'spear', value = 45 })
+    testing.expectEqual(types.NPC.hasSkillsForRank(player, faction, 2), true,
+        'All the favoured skills should be high enough')
+    testing.expectEqual(pcall(types.NPC.hasSkillsForRank, player, faction, 3), false, 'Rank 3 should not exist')
+    for _, skill in ipairs({ 'longblade', 'axe', 'spear' }) do
+        testing.runLocalTest(player, 'restore skill on self', skill)
+    end
+end)
+
 testing.registerGlobalTest('level up', function()
     local player = initPlayer()
     testing.runLocalTest(player, 'prepare level up on self')

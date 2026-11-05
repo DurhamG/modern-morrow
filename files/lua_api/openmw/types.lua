@@ -1179,6 +1179,18 @@
 -- print(NPC.getFactionRank(player, "mages guild");
 
 ---
+-- Whether the NPC's skills are high enough for a rank in a faction, as the engine checks before an NPC promotes the player.
+-- The engine sorts the base values of the NPC's skills among the faction's favoured skills. The highest must reach the rank's `primarySkillValue`, and the next two must reach its `favouredSkillValue`.
+-- The rank's attribute values are a separate requirement, which this doesn't check. A faction without favoured skills has no skill requirement.
+-- @function [parent=#NPC] hasSkillsForRank
+-- @param openmw.core#GameObject actor NPC object
+-- @param #string faction Faction ID
+-- @param #number rank Rank index (from 1).
+-- @return #boolean
+-- @usage local nextRank = types.NPC.getFactionRank(self, 'mages guild') + 1
+-- local skilled = types.NPC.hasSkillsForRank(self, 'mages guild', nextRank)
+
+---
 -- Set rank of given NPC in given faction.
 -- Throws an exception if there is no such faction, target rank does not exist or actor is not a member of given faction.
 -- For NPCs faction also should be an NPC's primary faction.

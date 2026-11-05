@@ -371,6 +371,19 @@ namespace MWLua
             return 0;
         };
 
+        npc["hasSkillsForRank"] = [](const Object& actor, std::string_view faction, int rank) -> bool {
+            const MWWorld::Ptr ptr = actor.ptr();
+            if (!ptr.getClass().isNpc())
+                throw std::runtime_error("NPC expected");
+            ESM::RefId factionId = parseFactionId(faction);
+            const ESM::Faction* factionPtr
+                = MWBase::Environment::get().getESMStore()->get<ESM::Faction>().find(factionId);
+            if (rank <= 0 || rank > static_cast<int>(getValidRanksCount(factionPtr)))
+                throw std::runtime_error("Requested rank does not exist");
+            return ptr.getClass().getNpcStats(ptr).hasSkillsForRank(
+                factionId, static_cast<int>(LuaUtil::fromLuaIndex(rank)));
+        };
+
         npc["setFactionRank"] = [](Object& actor, std::string_view faction, int value) {
             if (actor.isLObject() && !actor.isSelfObject())
                 throw std::runtime_error("Local scripts can modify only self");
