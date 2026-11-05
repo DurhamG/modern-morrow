@@ -1878,6 +1878,7 @@
 -- @field #number charge The strength of the soul in the soul gem, which becomes the item's charge.
 -- @field #number castCost The charge that one use of the enchantment costs, after the player's Enchant skill lowers it. A constant effect costs nothing.
 -- @field #number chance The chance, from 0 to 100, that the player enchants the item themself, from their Enchant skill, Intelligence, Luck and fatigue, and from the enchantment points. An enchanter never fails, so this is 100 with an enchanter.
+-- @field #boolean showChance Whether the enchanting window shows the chance. It does when the player enchants the item themself and the `show enchant chance` setting of the `Game` section is on.
 -- @field #number price The gold that the enchanter asks, adjusted by the enchanter's offer the same way as @{#Actor.getBuyingPrice}. It is 0 without an enchanter.
 -- @field #number type The cast type that enchanting would use, an @{openmw.core#EnchantmentType}.
 -- @field #list<#number> types The cast types that the item can take, in the order that the enchanting window steps through them. A constant effect needs a soul of at least the `iSoulAmountForConstantEffect` game setting. Empty without an item.

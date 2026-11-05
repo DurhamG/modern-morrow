@@ -755,6 +755,7 @@ namespace MWLua
             result["castCost"] = enchanting.getEffectiveCastCost();
             // An enchanter never fails. Only the player's own attempts roll against the chance.
             result["chance"] = selfEnchanting ? std::clamp(enchanting.getEnchantChance(), 0, 100) : 100;
+            result["showChance"] = selfEnchanting && Settings::game().mShowEnchantChance;
             result["price"] = selfEnchanting ? 0 : enchanting.getEnchantPrice();
             result["type"] = enchanting.getCastStyle();
             sol::table types(thisState, sol::create);

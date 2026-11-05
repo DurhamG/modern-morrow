@@ -780,6 +780,7 @@ testing.registerGlobalTest('enchanting', function()
     testing.expectGreaterOrEqual(info.maxPoints, info.points, 'The effect should fit in the dagger')
     testing.expectEqual(info.charge, 400, 'The charge should be the strength of the soul')
     testing.expectEqual(info.price, 0, 'Enchanting an item yourself should cost nothing')
+    testing.expectEqual(type(info.showChance), 'boolean', 'The info should tell whether the window shows the chance')
     testing.expectEqual(info.problem, nil, 'Nothing should stop the player from enchanting the dagger')
     testing.expectEqual(types.Player.getEnchantingInfo(player, { item = item, soulGem = gem }).problem, 'noEffects',
         'Enchanting should need an effect')
@@ -793,6 +794,7 @@ testing.registerGlobalTest('enchanting', function()
     setup.name = 'Enchanted dagger'
     info = types.Player.getEnchantingInfo(player, setup)
     testing.expectEqual(info.chance, 100, 'An enchanter should never fail')
+    testing.expectEqual(info.showChance, false, 'The window should not show the chance of an enchanter')
     testing.expectGreaterThan(info.price, 0, 'An enchanter should ask for gold')
     testing.expectEqual(info.problem, 'notEnoughGold', 'The player should not have the gold for the enchanter')
     testing.expectEqual(pcall(types.Player.enchantItem, player, setup), false,
