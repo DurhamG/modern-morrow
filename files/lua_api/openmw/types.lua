@@ -2599,6 +2599,14 @@
 -- @param #BookRecord book A Lua table with the fields of a BookRecord, with an optional field `template` that accepts a @{#BookRecord} as a base.
 -- @return #BookRecord A strongly typed Book record.
 
+---
+-- Replace the variables in a book's text, the way the engine does before it shows a book or a scroll.
+-- A variable starts with `%` or `^`. The engine replaces the player's name, race, class and bounty (`%PCName`, `%PCRace`, `%PCClass`, `%PCCrimeLevel`), the name of the player's cell (`%Cell`), the keys bound to actions (such as `%ActionActivate`), and the values of mwscript global variables. Anything else stays as it is.
+-- @function [parent=#Book] substituteVariables
+-- @param #string text Such as a @{#BookRecord}'s `text`.
+-- @return #string
+-- @usage local text = types.Book.substituteVariables(types.Book.record(book).text)
+
 --- @{#Clothing} functions
 -- @field [parent=#types] #Clothing Clothing
 

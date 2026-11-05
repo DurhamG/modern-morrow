@@ -4,12 +4,16 @@
 
 #include <components/esm3/loadbook.hpp>
 #include <components/esm3/loadskil.hpp>
+#include <components/interpreter/defines.hpp>
 #include <components/lua/luastate.hpp>
 #include <components/lua/util.hpp>
 #include <components/misc/finitevalues.hpp>
 #include <components/misc/resourcehelpers.hpp>
 #include <components/misc/strings/algorithm.hpp>
 #include <components/misc/strings/lower.hpp>
+
+#include "../../mwscript/interpretercontext.hpp"
+#include "../../mwworld/ptr.hpp"
 
 namespace sol
 {
@@ -110,6 +114,11 @@ namespace MWLua
     {
         sol::state_view lua = context.sol();
         book["createRecordDraft"] = tableToBook;
+        book["substituteVariables"] = [](std::string_view text) -> std::string {
+            // Books have no actor and no local variables.
+            MWScript::InterpreterContext interpreterContext(nullptr, MWWorld::Ptr());
+            return Interpreter::fixDefinesBook(text, interpreterContext);
+        };
 
         addRecordFunctionBinding<ESM::Book>(book, context);
         addUserType<ESM::Book>(lua, "ESM3_Book");

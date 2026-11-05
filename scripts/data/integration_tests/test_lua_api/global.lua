@@ -528,6 +528,15 @@ testing.registerGlobalTest('skill books', function()
     book:remove()
 end)
 
+testing.registerGlobalTest('book text variables', function()
+    local player = initPlayer()
+    local name = types.NPC.record(player).name
+    testing.expectEqual(types.Book.substituteVariables('Greetings, %PCName.'), 'Greetings, ' .. name .. '.',
+        "The player's name should replace %PCName")
+    testing.expectEqual(types.Book.substituteVariables('Half: 50% off'), 'Half: 50% off',
+        'Text without a variable should stay as it is')
+end)
+
 testing.registerGlobalTest('buying spells and repairs', function()
     local player = initPlayer()
     removeGold(player)
