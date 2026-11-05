@@ -1,13 +1,11 @@
 #include "charactercreation.hpp"
 
 #include <array>
-#include <format>
 #include <string_view>
 
 #include <MyGUI_ITexture.h>
 
 #include <components/debug/debuglog.hpp>
-#include <components/fallback/fallback.hpp>
 #include <components/misc/resourcehelpers.hpp>
 #include <components/misc/rng.hpp>
 
@@ -18,6 +16,7 @@
 #include "../mwbase/world.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
+#include "../mwmechanics/chargen.hpp"
 #include "../mwmechanics/creaturestats.hpp"
 
 #include "../mwworld/class.hpp"
@@ -65,17 +64,14 @@ namespace
         }
     }
 
-    Step generateClassSteps(int number)
+    Step generateClassSteps(unsigned number)
     {
-        number++;
+        const MWMechanics::ClassQuestion question = MWMechanics::getClassQuestions().at(number);
 
         const std::array<Response, 3> responses = {
-            Response{ Fallback::Map::getString(std::format("Question_{}_AnswerOne", number)),
-                ESM::Class::Specialization::Combat },
-            Response{ Fallback::Map::getString(std::format("Question_{}_AnswerTwo", number)),
-                ESM::Class::Specialization::Magic },
-            Response{ Fallback::Map::getString(std::format("Question_{}_AnswerThree", number)),
-                ESM::Class::Specialization::Stealth },
+            Response{ question.mAnswers[ESM::Class::Combat], ESM::Class::Specialization::Combat },
+            Response{ question.mAnswers[ESM::Class::Magic], ESM::Class::Specialization::Magic },
+            Response{ question.mAnswers[ESM::Class::Stealth], ESM::Class::Specialization::Stealth },
         };
 
         // randomize order in which responses are displayed
@@ -83,9 +79,9 @@ namespace
         const std::array<std::size_t, 3> indices = getIndices(order);
 
         return Step{
-            .mQuestion = Fallback::Map::getString(std::format("Question_{}_Question", number)),
+            .mQuestion = question.mQuestion,
             .mResponses = { responses[indices[0]], responses[indices[1]], responses[indices[2]] },
-            .mSound = VFS::Path::Normalized(std::format("vo/misc/chargen qa{}.wav", number)),
+            .mSound = question.mSound,
         };
     }
 }
@@ -512,101 +508,10 @@ namespace MWGui
 
     void CharacterCreation::showClassQuestionDialog()
     {
-        if (mGenerateClassStep == 10)
+        if (mGenerateClassStep == MWMechanics::sClassQuestionCount)
         {
-            unsigned combat = mGenerateClassSpecializations[0];
-            unsigned magic = mGenerateClassSpecializations[1];
-            unsigned stealth = mGenerateClassSpecializations[2];
-            std::string_view className;
-            if (combat > 7)
-            {
-                className = "Warrior";
-            }
-            else if (magic > 7)
-            {
-                className = "Mage";
-            }
-            else if (stealth > 7)
-            {
-                className = "Thief";
-            }
-            else
-            {
-                switch (combat)
-                {
-                    case 4:
-                        className = "Rogue";
-                        break;
-                    case 5:
-                        if (stealth == 3)
-                            className = "Scout";
-                        else
-                            className = "Archer";
-                        break;
-                    case 6:
-                        if (stealth == 1)
-                            className = "Barbarian";
-                        else if (stealth == 3)
-                            className = "Crusader";
-                        else
-                            className = "Knight";
-                        break;
-                    case 7:
-                        className = "Warrior";
-                        break;
-                    default:
-                        switch (magic)
-                        {
-                            case 4:
-                                className = "Spellsword";
-                                break;
-                            case 5:
-                                className = "Witchhunter";
-                                break;
-                            case 6:
-                                if (combat == 2)
-                                    className = "Sorcerer";
-                                else if (combat == 3)
-                                    className = "Healer";
-                                else
-                                    className = "Battlemage";
-                                break;
-                            case 7:
-                                className = "Mage";
-                                break;
-                            default:
-                                switch (stealth)
-                                {
-                                    case 3:
-                                        if (magic == 3)
-                                            className = "Bard"; // unreachable
-                                        else
-                                            className = "Warrior";
-                                        break;
-                                    case 5:
-                                        if (magic == 3)
-                                            className = "Monk";
-                                        else
-                                            className = "Pilgrim";
-                                        break;
-                                    case 6:
-                                        if (magic == 1)
-                                            className = "Agent";
-                                        else if (magic == 3)
-                                            className = "Assassin";
-                                        else
-                                            className = "Acrobat";
-                                        break;
-                                    case 7:
-                                        className = "Thief";
-                                        break;
-                                    default:
-                                        className = "Warrior";
-                                }
-                        }
-                }
-            }
-            mGenerateClass = ESM::RefId::stringRefId(className);
+            mGenerateClass = MWMechanics::getGeneratedClass(
+                mGenerateClassSpecializations[0], mGenerateClassSpecializations[1], mGenerateClassSpecializations[2]);
 
             mGenerateClassQuestionDialog->setVisible(false);
             mGenerateClassResultDialog->setClassId(mGenerateClass);
@@ -614,7 +519,7 @@ namespace MWGui
             return;
         }
 
-        if (mGenerateClassStep > 10)
+        if (mGenerateClassStep > MWMechanics::sClassQuestionCount)
         {
             MWBase::Environment::get().getWindowManager()->popGuiMode();
             MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Class);
