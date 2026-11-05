@@ -62,6 +62,19 @@ namespace MWLua
             return result;
         };
 
+        item["getUpSound"] = [](const Object& object) -> ESM::RefId {
+            const MWWorld::Ptr& ptr = object.ptr();
+            if (!ptr.getClass().isItem(ptr))
+                throw std::runtime_error("Item expected");
+            return ptr.getClass().getUpSoundId(ptr);
+        };
+        item["getDownSound"] = [](const Object& object) -> ESM::RefId {
+            const MWWorld::Ptr& ptr = object.ptr();
+            if (!ptr.getClass().isItem(ptr))
+                throw std::runtime_error("Item expected");
+            return ptr.getClass().getDownSoundId(ptr);
+        };
+
         addItemDataBindings(item, context);
         item["levelledItems"] = addLevelledItemBindings(context);
     }

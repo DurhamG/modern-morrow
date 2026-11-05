@@ -861,6 +861,17 @@ testing.registerGlobalTest('dialogue services', function()
     npc:remove()
 end)
 
+testing.registerGlobalTest('item sounds', function()
+    local gold = world.createObject('gold_001', 10)
+    testing.expectEqual(types.Item.getUpSound(gold), 'item gold up', 'Gold should have its own pick-up sound')
+    testing.expectEqual(types.Item.getDownSound(gold), 'item gold down', 'Gold should have its own put-down sound')
+    local misc = world.createRecord(types.Miscellaneous.createRecordDraft({ name = 'Test trinket' }))
+    local trinket = world.createObject(misc.id, 1)
+    testing.expectEqual(types.Item.getUpSound(trinket), 'item misc up', 'Wrong pick-up sound for a trinket')
+    testing.expectEqual(types.Item.getDownSound(trinket), 'item misc down', 'Wrong put-down sound for a trinket')
+    testing.expectEqual(pcall(types.Item.getUpSound, world.players[1]), false, 'The player should not be an item')
+end)
+
 testing.registerGlobalTest('stolen items', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({

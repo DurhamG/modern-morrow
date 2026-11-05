@@ -952,6 +952,23 @@
 -- end
 
 ---
+-- The id of the sound that the engine plays when the player picks this item up, such as `item gold up` for gold.
+-- The engine plays it when the player takes the item from the world or from a container, and when the player picks it up with the mouse in the inventory.
+-- Play it with @{openmw_ambient#(ambient).playSound} or @{openmw_core#Sound.playSound3d}.
+-- @function [parent=#Item] getUpSound
+-- @param openmw.core#GameObject item
+-- @return #string A sound record id
+-- @usage ambient.playSound(types.Item.getUpSound(item))
+
+---
+-- The id of the sound that the engine plays when the player puts this item down, such as `item gold down` for gold.
+-- The engine plays it when the player drops the item, equips or uses it from the inventory, or puts it into a container.
+-- @function [parent=#Item] getDownSound
+-- @param openmw.core#GameObject item
+-- @return #string A sound record id
+-- @usage ambient.playSound(types.Item.getDownSound(item))
+
+---
 -- Who the player has stolen this item from. An empty list means the item isn't stolen.
 -- The engine counts stolen items by record, not by object: once the player steals one item, every item with the same record id counts as stolen.
 -- Guards confiscate stolen items, and a merchant refuses to buy items that were stolen from them.
