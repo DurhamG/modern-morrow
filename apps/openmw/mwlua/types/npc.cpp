@@ -4,6 +4,8 @@
 #include "modelproperty.hpp"
 #include "servicesoffered.hpp"
 
+#include <tuple>
+
 #include <components/esm3/loadfact.hpp>
 #include <components/esm3/loadnpc.hpp>
 #include <components/esm3/loadskil.hpp>
@@ -320,10 +322,14 @@ namespace MWLua
 
         npc["getTrainingSkills"] = [](sol::this_state thisState, const Object& trainer) {
             verifyNpc(trainer.ptr().getClass());
-            sol::table result(thisState, sol::create);
+            sol::table skills(thisState, sol::create);
+            sol::table values(thisState, sol::create);
             for (const ESM::RefId& skill : MWMechanics::getTrainingSkills(trainer.ptr()))
-                result.add(skill.serializeText());
-            return result;
+            {
+                skills.add(skill.serializeText());
+                values.add(MWMechanics::getTrainerSkill(trainer.ptr(), skill));
+            }
+            return std::make_tuple(skills, values);
         };
 
         npc["getTrainingPrice"] = [](const Object& trainer, std::string_view skill) -> int {

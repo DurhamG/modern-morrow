@@ -417,7 +417,7 @@ testing.registerGlobalTest('training', function()
     trainer:teleport(player.cell, player.position + util.vector3(0, 500, 0))
     coroutine.yield()
 
-    local skills = types.NPC.getTrainingSkills(trainer)
+    local skills, values = types.NPC.getTrainingSkills(trainer)
     testing.expectEqual(#skills, 3, 'A trainer should teach three skills')
     local function trainerSkill(id)
         return types.NPC.stats.skills[id](trainer).modified
@@ -425,6 +425,7 @@ testing.registerGlobalTest('training', function()
     local taught = {}
     for i, id in ipairs(skills) do
         taught[id] = true
+        testing.expectEqual(values[i], trainerSkill(id), "The trainer's modified skill should count")
         if i > 1 then
             testing.expectGreaterOrEqual(trainerSkill(skills[i - 1]), trainerSkill(id),
                 'The skills should come best first')

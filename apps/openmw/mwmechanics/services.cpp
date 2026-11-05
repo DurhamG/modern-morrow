@@ -118,13 +118,18 @@ namespace MWMechanics
         return result;
     }
 
+    float getTrainerSkill(const MWWorld::Ptr& trainer, ESM::RefId skill)
+    {
+        return getSkillForTraining(trainer.getClass().getNpcStats(trainer), skill);
+    }
+
     TrainingRefusal getTrainingRefusal(const MWWorld::Ptr& trainer, ESM::RefId skill)
     {
         const MWWorld::Ptr player = getPlayer();
         const NpcStats& playerStats = player.getClass().getNpcStats(player);
         const float playerSkill = playerStats.getSkill(skill).getBase();
 
-        if (getSkillForTraining(trainer.getClass().getNpcStats(trainer), skill) <= playerSkill)
+        if (getTrainerSkill(trainer, skill) <= playerSkill)
             return TrainingRefusal::TrainerSkillTooLow;
 
         // You can not train a skill above its governing attribute

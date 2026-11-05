@@ -1349,6 +1349,11 @@
 -- @function [parent=#NPC] getTrainingSkills
 -- @param openmw.core#GameObject trainer
 -- @return #list<#string> Skill IDs, such as `'longblade'`.
+-- @return #list<#number> The trainer's value of each skill, in the same order, base or modified as the setting says. @{#NPC.canTrain} compares the player's skill with this value.
+-- @usage local skills, values = types.NPC.getTrainingSkills(trainer)
+-- for i, skillId in ipairs(skills) do
+--     print(skillId, values[i])
+-- end
 
 ---
 -- The gold a trainer asks to raise one of the player's skills by one point.

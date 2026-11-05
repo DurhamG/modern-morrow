@@ -22,6 +22,10 @@ namespace MWMechanics
     /// The skills @a trainer teaches: their three best skills, best first.
     std::vector<ESM::RefId> getTrainingSkills(const MWWorld::Ptr& trainer);
 
+    /// The value of @a trainer's @a skill that training compares: the base value when the setting "trainers training
+    /// skills based on base skill" is on, and the modified value otherwise.
+    float getTrainerSkill(const MWWorld::Ptr& trainer, ESM::RefId skill);
+
     /// The reason a trainer can't raise one of the player's skills.
     enum class TrainingRefusal
     {
