@@ -171,6 +171,7 @@ namespace MWGui
 
         int price = static_cast<int>(pcStats.getSkill(skill->mId).getBase()
             * store.get<ESM::GameSetting>().find("iTrainingMod")->mValue.getInteger());
+        price = std::max(1, price);
         price = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mPtr, price, true);
 
         if (price > player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId))
