@@ -1295,6 +1295,7 @@
 ---
 -- @type TravelDestination
 -- @field #string cellId ID of the Destination cell for this TravelDestination, Can be used with @{openmw_world#(world).getCellById}.
+-- @field #string cellName The name of the destination as the travel window shows it: the cell's name, or for an exterior cell without a name, its region's name.
 -- @field openmw.util#Vector3 position Destination position for this TravelDestination.
 -- @field openmw.util#Transform rotation Destination rotation for this TravelDestination.
 

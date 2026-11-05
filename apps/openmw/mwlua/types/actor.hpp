@@ -12,6 +12,7 @@
 #include <components/resource/resourcesystem.hpp>
 
 #include "apps/openmw/mwbase/environment.hpp"
+#include "apps/openmw/mwmechanics/services.hpp"
 #include "apps/openmw/mwworld/esmstore.hpp"
 
 #include "../context.hpp"
@@ -65,6 +66,7 @@ namespace MWLua
                     travelDest["rotation"] = LuaUtil::asTransform(Misc::Convert::makeOsgQuat(dest.mPos.rot));
                     travelDest["position"] = dest.mPos.asVec3();
                     travelDest["cellId"] = cellId.serializeText();
+                    travelDest["cellName"] = MWMechanics::getTravelDestinationName(dest);
 
                     travelDests[index] = LuaUtil::makeReadOnly(travelDest);
                     index++;
