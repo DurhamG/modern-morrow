@@ -27,6 +27,7 @@
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/magiceffects.hpp"
 #include "../mwmechanics/services.hpp"
+#include "../mwmechanics/spellmaking.hpp"
 #include "../mwmechanics/spellutil.hpp"
 #include "../mwworld/class.hpp"
 #include "../mwworld/datetimemanager.hpp"
@@ -244,6 +245,18 @@ namespace MWLua
                     { "CastOnStrike", ESM::Enchantment::Type::WhenStrikes },
                     { "CastOnUse", ESM::Enchantment::Type::WhenUsed },
                     { "ConstantEffect", ESM::Enchantment::Type::ConstantEffect },
+                }));
+
+        magicApi["CUSTOM_EFFECT_LIMITS"]
+            = LuaUtil::makeStrictReadOnly(LuaUtil::tableFromPairs<std::string_view, int>(state,
+                {
+                    { "maxEffects", static_cast<int>(MWMechanics::sMaxCustomEffects) },
+                    { "minMagnitude", MWMechanics::sMinCustomMagnitude },
+                    { "maxMagnitude", MWMechanics::sMaxCustomMagnitude },
+                    { "minDuration", MWMechanics::sMinCustomDuration },
+                    { "maxDuration", MWMechanics::sMaxCustomDuration },
+                    { "minArea", MWMechanics::sMinCustomArea },
+                    { "maxArea", MWMechanics::sMaxCustomArea },
                 }));
 
         sol::table effect(state, sol::create);

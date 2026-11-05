@@ -542,6 +542,25 @@
 -- @field #number Target Ranged spell
 
 
+--- The limits that the spellmaking and enchanting windows set on the effects of a spell or an enchantment that the
+-- player makes. Lua's spellmaking and enchanting functions, such as `types.Player.makeSpell`, keep to them too.
+-- @field [parent=#Magic] #CustomEffectLimits CUSTOM_EFFECT_LIMITS
+
+--- `core.magic.CUSTOM_EFFECT_LIMITS`
+-- The magnitude limits don't apply to an effect without a magnitude, and the duration limits don't apply to an
+-- effect without a duration or to a constant effect. An effect on self always has the smallest area.
+-- A new effect in the windows' effect editor starts with the smallest magnitude, duration and area, and the first
+-- range of self, touch and target that it allows.
+-- @type CustomEffectLimits
+-- @field #number maxEffects The most effects that a spell or an enchantment can have (8)
+-- @field #number minMagnitude The smallest magnitude (1)
+-- @field #number maxMagnitude The largest magnitude (100)
+-- @field #number minDuration The shortest duration, in seconds (1)
+-- @field #number maxDuration The longest duration, in seconds (1440)
+-- @field #number minArea The smallest area, in feet (0)
+-- @field #number maxArea The largest area, in feet (50)
+
+
 --- Possible @{#MagicEffectId} values
 -- @field [parent=#Magic] #MagicEffectId EFFECT_TYPE
 

@@ -926,7 +926,17 @@ testing.registerGlobalTest('spellmaking', function()
     testing.expectEqual(types.Player.getSpellmakingInfo(player, { merchant = merchant, name = 'Empty' }).problem,
         'noEffects', 'The spell should need an effect')
 
-    local tooStrong = { id = effect.id, range = core.magic.RANGE.Target, magnitudeMin = 1, magnitudeMax = 101 }
+    local limits = core.magic.CUSTOM_EFFECT_LIMITS
+    testing.expectEqual(limits.maxEffects, 8, 'A spell should have at most 8 effects')
+    testing.expectEqual(limits.minMagnitude, 1, 'The magnitude should be at least 1')
+    testing.expectEqual(limits.maxDuration, 1440, 'The duration should be at most 1440 seconds')
+    testing.expectEqual(limits.minArea, 0, 'The area should be at least 0')
+    local tooStrong = {
+        id = effect.id,
+        range = core.magic.RANGE.Target,
+        magnitudeMin = 1,
+        magnitudeMax = limits.maxMagnitude + 1,
+    }
     local strong = { merchant = merchant, effects = { tooStrong } }
     testing.expectEqual(pcall(types.Player.getSpellmakingInfo, player, strong), false,
         'The magnitude should be at most 100')
