@@ -492,6 +492,44 @@ testing.registerLocalTestStep('enchantment cast cost on self', function(enchantm
         'Each point of Enchant above 10 should lower the cost by one percent')
 end)
 
+testing.registerLocalTestStep('training checks on self', function(data)
+    local trainer = data.trainer
+    local skillId = data.skill
+    local trainerSkill = types.NPC.stats.skills[skillId](trainer).modified
+    testing.expectGreaterThan(trainerSkill, 1, 'The test needs a trainer who is good at the skill')
+
+    local skill = types.NPC.stats.skills[skillId](self)
+    local attribute = types.Actor.stats.attributes[core.stats.Skill.record(skillId).attribute](self)
+    local oldSkill = skill.base
+    local oldAttribute = attribute.base
+
+    skill.base = trainerSkill - 1
+    attribute.base = 200
+    coroutine.yield()
+    testing.expectEqual(types.NPC.canTrain(trainer, skillId), true,
+        'The trainer should teach a skill they are better at')
+    local price = types.NPC.getTrainingPrice(trainer, skillId)
+    testing.expectGreaterThan(price, 0, 'Training should cost gold')
+
+    skill.base = trainerSkill
+    coroutine.yield()
+    local ok, reason = types.NPC.canTrain(trainer, skillId)
+    testing.expectEqual(ok, false, 'The trainer should not teach a skill the player is as good at')
+    testing.expectEqual(reason, 'trainerSkillTooLow')
+    testing.expectGreaterOrEqual(types.NPC.getTrainingPrice(trainer, skillId), price,
+        'Training a higher skill should not cost less')
+
+    skill.base = trainerSkill - 1
+    attribute.base = attribute.base - (attribute.modified - skill.base)
+    coroutine.yield()
+    ok, reason = types.NPC.canTrain(trainer, skillId)
+    testing.expectEqual(ok, false, 'The player should not train a skill up to its attribute')
+    testing.expectEqual(reason, 'attributeTooLow')
+
+    skill.base = oldSkill
+    attribute.base = oldAttribute
+end)
+
 testing.registerLocalTestStep('rest status on self', function()
     local status = types.Player.getRestStatus(self)
     testing.expectEqual(type(status.isUnderwater), 'boolean', 'isUnderwater should be a boolean')

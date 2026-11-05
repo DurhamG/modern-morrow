@@ -56,6 +56,24 @@
 -- @return #number
 
 ---
+-- The gold a merchant asks to teach the player a spell.
+-- This is the price that the spell buying window shows. It is the spell's cost times the `fSpellValueMult` game setting, adjusted by the merchant's offer the same way as @{#Actor.getBuyingPrice}.
+-- @function [parent=#Actor] getSpellPrice
+-- @param openmw.core#GameObject merchant The actor who sells the spell.
+-- @param #any spellOrId A @{openmw.core#Spell} or string record ID.
+-- @return #number
+-- @usage local price = types.Actor.getSpellPrice(merchant, 'fireball')
+
+---
+-- The gold a merchant asks to restore an item to full condition.
+-- This is the price that the merchant repair window shows. It grows with the condition the item has lost. Each lost point of condition costs less on an item that is worth less gold than its maximum condition, so the price also grows with the item's value, until the value reaches the maximum condition. It is adjusted by the `fRepairMult` game setting and by the merchant's offer the same way as @{#Actor.getBuyingPrice}.
+-- The merchant repair window lists only weapons and pieces of armor that have lost some condition. For any other item, this throws an error.
+-- @function [parent=#Actor] getRepairPrice
+-- @param openmw.core#GameObject merchant The actor who repairs the item.
+-- @param openmw.core#GameObject item A weapon or a piece of armor that has lost some condition.
+-- @return #number
+
+---
 -- Check if the given actor is dead (health reached 0, so death process started).
 -- @function [parent=#Actor] isDead
 -- @param openmw.core#GameObject actor
@@ -1216,6 +1234,32 @@
 -- @param openmw.core#GameObject object
 -- @param openmw.core#GameObject player The player that you want to modify the disposition for.
 -- @param #number value Base disposition modification value
+
+---
+-- The skills an NPC can train the player in: their three best skills, best first.
+-- When the setting "trainers training skills based on base skill" is on, the trainer's base skills count. Otherwise their modified skills do.
+-- @function [parent=#NPC] getTrainingSkills
+-- @param openmw.core#GameObject trainer
+-- @return #list<#string> Skill IDs, such as `'longblade'`.
+
+---
+-- The gold a trainer asks to raise one of the player's skills by one point.
+-- This is the price that the training window shows. It is the player's base skill times the `iTrainingMod` game setting, adjusted by the trainer's offer the same way as @{#Actor.getBuyingPrice}.
+-- @function [parent=#NPC] getTrainingPrice
+-- @param openmw.core#GameObject trainer
+-- @param #string skillId
+-- @return #number
+
+---
+-- Whether a trainer can raise one of the player's skills by one point, by the training window's rules.
+-- The player can't train a skill that is already as high as the trainer's, counted as in @{#NPC.getTrainingSkills}. Nor can they train a skill that is as high as the modified value of the attribute that governs it.
+-- This does not check whether the player can pay @{#NPC.getTrainingPrice}, or whether the skill is one of @{#NPC.getTrainingSkills}.
+-- @function [parent=#NPC] canTrain
+-- @param openmw.core#GameObject trainer
+-- @param #string skillId
+-- @return #boolean `true` if the trainer can raise the skill.
+-- @return #boolean, #string `false` plus the reason: `'trainerSkillTooLow'` or `'attributeTooLow'`.
+-- @usage local ok, reason = types.NPC.canTrain(trainer, 'longblade')
 
 --- @{#Classes}: Class Data
 -- @field [parent=#NPC] #Classes classes

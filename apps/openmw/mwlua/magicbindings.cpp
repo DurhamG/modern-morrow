@@ -26,6 +26,7 @@
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/magiceffects.hpp"
+#include "../mwmechanics/services.hpp"
 #include "../mwmechanics/spellutil.hpp"
 #include "../mwworld/class.hpp"
 #include "../mwworld/datetimemanager.hpp"
@@ -624,6 +625,13 @@ namespace MWLua
                 else
                     stats.getSpells().setSelectedSpell(ESM::RefId());
             });
+        };
+
+        actor["getSpellPrice"] = [](const Object& merchant, const sol::object& spellOrId) -> int {
+            const MWWorld::Ptr ptr = merchant.ptr();
+            if (!ptr.getClass().isActor())
+                throw std::runtime_error("Actor expected");
+            return MWMechanics::getSpellPrice(ptr, *toSpell(spellOrId));
         };
 
         // #(types.Actor.spells(o))

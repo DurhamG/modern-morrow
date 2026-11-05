@@ -274,6 +274,70 @@ testing.registerGlobalTest('barter prices', function()
     merchant:remove()
 end)
 
+testing.registerGlobalTest('service prices', function()
+    local player = initPlayer()
+    local merchant = world.createObject('landracer')
+    merchant:addScript('idle.lua')
+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+
+    local spell = createTestSpell({ type = core.magic.SPELL_TYPE.Spell, cost = 7, isAutocalc = false })
+    local spellValueMult = core.getGMST('fSpellValueMult')
+    testing.expectEqual(types.Actor.getSpellPrice(merchant, spell), math.max(1, math.floor(7 * spellValueMult)),
+        'A creature should sell a spell for its cost times fSpellValueMult')
+    testing.expectEqual(types.Actor.getSpellPrice(merchant, spell.id), types.Actor.getSpellPrice(merchant, spell),
+        'getSpellPrice should accept a record id')
+
+    local record = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        value = 100,
+        health = 40,
+    }))
+    local item = world.createObject(record.id, 1)
+    types.Item.itemData(item).condition = 30
+    coroutine.yield()
+    -- An item worth more than its condition costs fRepairMult per point of condition lost.
+    local repairPrice = math.max(1, math.floor(10 * core.getGMST('fRepairMult')))
+    testing.expectEqual(types.Actor.getRepairPrice(merchant, item), repairPrice,
+        'A creature should repair an item for the condition it lost')
+    types.Item.itemData(item).condition = 40
+    coroutine.yield()
+    testing.expectEqual(pcall(types.Actor.getRepairPrice, merchant, item), false,
+        'A merchant should have no repair price for an item in full condition')
+
+    item:remove()
+    merchant:remove()
+end)
+
+testing.registerGlobalTest('training', function()
+    local player = initPlayer()
+    local trainer = world.createObject(types.NPC.record(player).id)
+    trainer:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    coroutine.yield()
+
+    local skills = types.NPC.getTrainingSkills(trainer)
+    testing.expectEqual(#skills, 3, 'A trainer should teach three skills')
+    local function trainerSkill(id)
+        return types.NPC.stats.skills[id](trainer).modified
+    end
+    local taught = {}
+    for i, id in ipairs(skills) do
+        taught[id] = true
+        if i > 1 then
+            testing.expectGreaterOrEqual(trainerSkill(skills[i - 1]), trainerSkill(id),
+                'The skills should come best first')
+        end
+    end
+    for _, skill in ipairs(core.stats.Skill.records) do
+        if not taught[skill.id] then
+            testing.expectGreaterOrEqual(trainerSkill(skills[3]), trainerSkill(skill.id),
+                'A trainer should teach their best skills')
+        end
+    end
+
+    testing.runLocalTest(player, 'training checks on self', { trainer = trainer, skill = skills[1] })
+    trainer:remove()
+end)
+
 testing.registerGlobalTest('stolen items', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({

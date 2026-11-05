@@ -15,6 +15,7 @@
 #include "apps/openmw/mwmechanics/barter.hpp"
 #include "apps/openmw/mwmechanics/creaturestats.hpp"
 #include "apps/openmw/mwmechanics/drawstate.hpp"
+#include "apps/openmw/mwmechanics/services.hpp"
 #include "apps/openmw/mwworld/class.hpp"
 #include "apps/openmw/mwworld/inventorystore.hpp"
 #include "apps/openmw/mwworld/worldmodel.hpp"
@@ -462,6 +463,19 @@ namespace MWLua
         actor["getSellingPrice"]
             = [getBarterPrice](const Object& merchant, const Object& item, sol::optional<int> count) -> int {
             return getBarterPrice(merchant, item, count, false);
+        };
+        actor["getRepairPrice"] = [](const Object& merchant, const Object& item) -> int {
+            const MWWorld::Ptr merchantPtr = merchant.ptr();
+            if (!merchantPtr.getClass().isActor())
+                throw std::runtime_error("Actor expected");
+            const MWWorld::Ptr itemPtr = item.ptr();
+            // The merchant repair window lists only weapons and armor that have lost some condition.
+            const int repairable = MWWorld::ContainerStore::Type_Weapon | MWWorld::ContainerStore::Type_Armor;
+            if (!(MWWorld::ContainerStore::getType(itemPtr) & repairable) || !itemPtr.getClass().hasItemHealth(itemPtr)
+                || itemPtr.getClass().getItemMaxHealth(itemPtr) == 0
+                || itemPtr.getClass().getItemHealth(itemPtr) >= itemPtr.getClass().getItemMaxHealth(itemPtr))
+                throw std::runtime_error("The item must be a weapon or a piece of armor that has lost some condition");
+            return MWMechanics::getRepairPrice(merchantPtr, itemPtr);
         };
 
         actor["_onHit"] = [context](const SelfObject& self, const sol::table& options) {

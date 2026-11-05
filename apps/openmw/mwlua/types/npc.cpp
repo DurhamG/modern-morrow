@@ -6,6 +6,7 @@
 
 #include <components/esm3/loadfact.hpp>
 #include <components/esm3/loadnpc.hpp>
+#include <components/esm3/loadskil.hpp>
 #include <components/lua/luastate.hpp>
 #include <components/lua/util.hpp>
 #include <components/misc/resourcehelpers.hpp>
@@ -14,6 +15,7 @@
 #include "apps/openmw/mwbase/mechanicsmanager.hpp"
 #include "apps/openmw/mwbase/world.hpp"
 #include "apps/openmw/mwmechanics/npcstats.hpp"
+#include "apps/openmw/mwmechanics/services.hpp"
 #include "apps/openmw/mwworld/class.hpp"
 #include "apps/openmw/mwworld/esmstore.hpp"
 
@@ -185,6 +187,15 @@ namespace
         return id;
     }
 
+    ESM::RefId parseSkillId(std::string_view skill)
+    {
+        ESM::RefId id = ESM::RefId::deserializeText(skill);
+        const MWWorld::ESMStore* store = MWBase::Environment::get().getESMStore();
+        if (!store->get<ESM::Skill>().search(id))
+            throw std::runtime_error("Skill '" + std::string(skill) + "' does not exist");
+        return id;
+    }
+
     void verifyPlayer(const MWLua::Object& o)
     {
         if (o.ptr() != MWBase::Environment::get().getWorld()->getPlayerPtr())
@@ -305,6 +316,36 @@ namespace MWLua
             verifyNpc(cls);
             auto& stats = cls.getNpcStats(o.ptr());
             stats.setBaseDisposition(stats.getBaseDisposition() + value);
+        };
+
+        npc["getTrainingSkills"] = [](sol::this_state thisState, const Object& trainer) {
+            verifyNpc(trainer.ptr().getClass());
+            sol::table result(thisState, sol::create);
+            for (const ESM::RefId& skill : MWMechanics::getTrainingSkills(trainer.ptr()))
+                result.add(skill.serializeText());
+            return result;
+        };
+
+        npc["getTrainingPrice"] = [](const Object& trainer, std::string_view skill) -> int {
+            verifyNpc(trainer.ptr().getClass());
+            return MWMechanics::getTrainingPrice(trainer.ptr(), parseSkillId(skill));
+        };
+
+        npc["canTrain"] = [](const Object& trainer, std::string_view skill) {
+            verifyNpc(trainer.ptr().getClass());
+            sol::optional<std::string_view> reason;
+            switch (MWMechanics::getTrainingRefusal(trainer.ptr(), parseSkillId(skill)))
+            {
+                case MWMechanics::TrainingRefusal::None:
+                    break;
+                case MWMechanics::TrainingRefusal::TrainerSkillTooLow:
+                    reason = "trainerSkillTooLow";
+                    break;
+                case MWMechanics::TrainingRefusal::AttributeTooLow:
+                    reason = "attributeTooLow";
+                    break;
+            }
+            return std::make_tuple(!reason.has_value(), reason);
         };
 
         npc["createRecordDraft"] = tableToNPC;
