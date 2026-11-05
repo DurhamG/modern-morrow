@@ -342,17 +342,12 @@ namespace MWGui
 
     bool DialogueWindow::exit()
     {
-        if ((MWBase::Environment::get().getDialogueManager()->isInChoice()))
-        {
+        if (!MWBase::Environment::get().getDialogueManager()->goodbyeSelected())
             return false;
-        }
-        else
-        {
-            resetReference();
-            MWBase::Environment::get().getDialogueManager()->goodbyeSelected();
-            mTopicsList->scrollToTop();
-            return true;
-        }
+
+        resetReference();
+        mTopicsList->scrollToTop();
+        return true;
     }
 
     void DialogueWindow::onWindowResize(MyGUI::Window* sender)
@@ -726,9 +721,6 @@ namespace MWGui
 
     void DialogueWindow::onTopicActivated(const std::string& topicId)
     {
-        if (mGoodbye)
-            return;
-
         MWBase::Environment::get().getDialogueManager()->keywordSelected(topicId);
         updateTopics();
     }
@@ -746,7 +738,8 @@ namespace MWGui
 
     void DialogueWindow::onGoodbyeActivated()
     {
-        MWBase::Environment::get().getDialogueManager()->goodbyeSelected();
+        if (!MWBase::Environment::get().getDialogueManager()->goodbyeSelected())
+            return;
         MWBase::Environment::get().getWindowManager()->removeGuiMode(MWGui::GM_Dialogue);
         resetReference();
     }

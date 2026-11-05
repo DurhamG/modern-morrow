@@ -122,9 +122,9 @@ namespace MWDialogue
         bool say(const MWWorld::Ptr& actor, const ESM::RefId& topic) override;
 
         // calbacks for the GUI
-        void keywordSelected(std::string_view keyword) override;
-        void goodbyeSelected() override;
-        void questionAnswered(int answer) override;
+        bool keywordSelected(std::string_view keyword) override;
+        bool goodbyeSelected() override;
+        bool questionAnswered(int answer) override;
 
         void persuade(int type) override;
 

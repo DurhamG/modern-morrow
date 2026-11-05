@@ -455,17 +455,22 @@ namespace MWDialogue
         return mAvailableTopics;
     }
 
-    void DialogueManager::keywordSelected(std::string_view keyword)
+    bool DialogueManager::keywordSelected(std::string_view keyword)
     {
-        if (!mIsInChoice)
-        {
-            const ESM::Dialogue* dialogue = searchDialogue(ESM::RefId::stringRefId(keyword));
-            if (dialogue && dialogue->mType == ESM::Dialogue::Topic)
-            {
-                executeTopic(dialogue->mId);
-                updateAvailableTopics();
-            }
-        }
+        if (mIsInChoice || mGoodbye)
+            return false;
+
+        const ESM::RefId topicId = ESM::RefId::stringRefId(keyword);
+        const auto topic = std::find_if(mAvailableTopics.begin(), mAvailableTopics.end(),
+            [&](const AvailableTopic& available) { return available.mId == topicId; });
+        if (topic == mAvailableTopics.end())
+            return false;
+
+        // Use the record's own id. Copy it, because updating the topics replaces the list.
+        const ESM::RefId dialogueId = topic->mId;
+        executeTopic(dialogueId);
+        updateAvailableTopics();
+        return true;
     }
 
     bool DialogueManager::isInChoice() const
@@ -473,8 +478,11 @@ namespace MWDialogue
         return mIsInChoice;
     }
 
-    void DialogueManager::goodbyeSelected()
+    bool DialogueManager::goodbyeSelected()
     {
+        if (mIsInChoice && !mGoodbye)
+            return false;
+
         // Apply disposition change to NPC's base disposition if we **think** we need to change something
         if ((mPermanentDispositionChange || mOriginalDisposition != mCurrentDisposition) && mActor.getClass().isNpc())
         {
@@ -494,10 +502,15 @@ namespace MWDialogue
         mPermanentDispositionChange = 0;
         mOriginalDisposition = 0;
         mCurrentDisposition = 0;
+        return true;
     }
 
-    void DialogueManager::questionAnswered(int answer)
+    bool DialogueManager::questionAnswered(int answer)
     {
+        const auto isAnswer = [&](const std::pair<std::string, int>& choice) { return choice.second == answer; };
+        if (!mIsInChoice || std::none_of(mChoices.begin(), mChoices.end(), isAnswer))
+            return false;
+
         mChoice = answer;
 
         const ESM::Dialogue* dialogue = searchDialogue(mLastTopic);
@@ -538,6 +551,7 @@ namespace MWDialogue
         }
 
         updateAvailableTopics();
+        return true;
     }
 
     void DialogueManager::addChoice(std::string_view text, int choice)

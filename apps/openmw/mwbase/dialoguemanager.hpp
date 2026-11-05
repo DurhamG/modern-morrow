@@ -100,9 +100,15 @@ namespace MWBase
 
         virtual bool say(const MWWorld::Ptr& actor, const ESM::RefId& topic) = 0;
 
-        virtual void keywordSelected(std::string_view keyword) = 0;
-        virtual void goodbyeSelected() = 0;
-        virtual void questionAnswered(int answer) = 0;
+        /// Asks the actor about one of the available topics. Does nothing and returns false if the topic isn't
+        /// available, or while the player must answer a choice or say goodbye.
+        virtual bool keywordSelected(std::string_view keyword) = 0;
+        /// Ends the conversation from the dialogue manager's side. Does nothing and returns false while the player must
+        /// answer a choice, unless a script has ended the conversation with Goodbye.
+        virtual bool goodbyeSelected() = 0;
+        /// Answers the current choice. Does nothing and returns false if the player isn't in a choice or the answer
+        /// isn't one of the choices.
+        virtual bool questionAnswered(int answer) = 0;
 
         enum TopicType
         {
