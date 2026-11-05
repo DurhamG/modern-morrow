@@ -918,7 +918,10 @@ namespace MWGui
 
             // If the active window is no longer visible, find the next visible window.
             if (!state.mWindows[activeIndex]->isVisible())
+            {
                 cycleActiveControllerWindow(true);
+                activeIndex = std::clamp<size_t>(mActiveControllerWindows[mode], 0, state.mWindows.size() - 1);
+            }
 
             return state.mWindows[activeIndex];
         }
