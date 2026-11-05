@@ -27,6 +27,7 @@
 #include "../mwmechanics/resting.hpp"
 
 #include <format>
+#include <utility>
 
 namespace MWGui
 {
@@ -115,8 +116,12 @@ namespace MWGui
         bool canExit = !mTimeAdvancer.isRunning(); // Only exit if not currently waiting
         if (canExit)
         {
+            // Closing the menu also ends a rest that a script asked for, even if it hasn't started yet.
+            std::function<void(bool)> onStopped = std::exchange(mOnStopped, nullptr);
             clear();
             stopWaiting();
+            if (onStopped)
+                onStopped(false);
         }
         return canExit;
     }
@@ -128,6 +133,8 @@ namespace MWGui
         mManualHours = 1;
         mFadeTimeRemaining = 0;
         mInterruptAt = -1;
+        mRequestedHours = 0;
+        mOnStopped = nullptr;
         mTimeAdvancer.stop();
     }
 
@@ -173,8 +180,19 @@ namespace MWGui
         startWaiting(mManualHours);
     }
 
+    void WaitDialog::requestWaiting(int hoursToWait, std::function<void(bool)> onStopped)
+    {
+        mRequestedHours = hoursToWait;
+        mOnStopped = std::move(onStopped);
+    }
+
     void WaitDialog::startWaiting(int hoursToWait)
     {
+        // A button press takes the place of a rest that a script asked for, if that rest hasn't started yet.
+        if (mOnStopped)
+            std::exchange(mOnStopped, nullptr)(false);
+        mRequestedHours = 0;
+
         if (Settings::saves().mAutosave) // autosaves when enabled
             MWBase::Environment::get().getStateManager()->quickSave("Autosave");
 
@@ -262,7 +280,7 @@ namespace MWGui
 
     void WaitDialog::onWaitingFinished()
     {
-        stopWaiting();
+        stopWaiting(true);
 
         MWWorld::Ptr player = MWMechanics::getPlayer();
         const MWMechanics::NpcStats& pcstats = player.getClass().getNpcStats(player);
@@ -299,6 +317,14 @@ namespace MWGui
 
     void WaitDialog::onFrame(float dt)
     {
+        // A rest that a script asked for starts here, outside the script's update, because it may save the game.
+        if (mRequestedHours > 0)
+        {
+            std::function<void(bool)> onStopped = std::move(mOnStopped);
+            startWaiting(mRequestedHours);
+            mOnStopped = std::move(onStopped);
+        }
+
         mTimeAdvancer.onFrame(dt);
 
         if (mFadeTimeRemaining <= 0)
@@ -361,12 +387,14 @@ namespace MWGui
         return true;
     }
 
-    void WaitDialog::stopWaiting()
+    void WaitDialog::stopWaiting(bool finished)
     {
         MWBase::Environment::get().getWindowManager()->fadeScreenIn(0.2f);
         mProgressBar.setVisible(false);
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Rest);
         mTimeAdvancer.stop();
+        if (mOnStopped)
+            std::exchange(mOnStopped, nullptr)(finished);
     }
 
     void WaitDialog::wakeUp()

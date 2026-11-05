@@ -1034,6 +1034,22 @@ testing.registerGlobalTest('rest status', function()
     testing.runLocalTest(player, 'rest status on self')
 end)
 
+testing.registerGlobalTest('resting', function()
+    local player = initPlayer()
+    testing.expectEqual(pcall(types.Player.rest, player, 2), false, 'The player should rest only in the rest menu')
+    local time = core.getGameTime()
+    testing.runLocalTest(player, 'rest in rest menu on self', 2)
+    testing.expectGreaterOrEqual(core.getGameTime() - time, 2 * 3600, 'Two hours should pass')
+end)
+
+-- The rest menu pauses the game, and with it the tests, so the player's test step asks for the rest with an event.
+testing.globalEventHandlers.restForTest = function(hours)
+    local player = world.players[1]
+    types.Player.rest(player, hours, async:callback(function(finished)
+        player:sendEvent('restForTestStopped', finished)
+    end))
+end
+
 testing.registerGlobalTest('UTF-8 characters', function()
     testing.expectEqual(utf8.codepoint("😀"), 0x1F600)
 

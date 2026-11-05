@@ -312,6 +312,7 @@ namespace MWGui
 
         bool getPlayerSleeping() override;
         void wakeUpPlayer() override;
+        bool startResting(int hours, std::function<void(bool)> onStopped) override;
 
         void updatePlayer() override;
 

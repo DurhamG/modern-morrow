@@ -25,6 +25,7 @@
 #include "apps/openmw/mwbase/inputmanager.hpp"
 #include "apps/openmw/mwbase/journal.hpp"
 #include "apps/openmw/mwbase/mechanicsmanager.hpp"
+#include "apps/openmw/mwbase/windowmanager.hpp"
 #include "apps/openmw/mwbase/world.hpp"
 #include "apps/openmw/mwmechanics/actorutil.hpp"
 #include "apps/openmw/mwmechanics/alchemy.hpp"
@@ -35,6 +36,7 @@
 #include "apps/openmw/mwmechanics/pickpocket.hpp"
 #include "apps/openmw/mwmechanics/recharge.hpp"
 #include "apps/openmw/mwmechanics/repair.hpp"
+#include "apps/openmw/mwmechanics/resting.hpp"
 #include "apps/openmw/mwmechanics/services.hpp"
 #include "apps/openmw/mwmechanics/spellmaking.hpp"
 #include "apps/openmw/mwmechanics/spellutil.hpp"
@@ -1548,15 +1550,36 @@ namespace MWLua
         player["isCharGenFinished"] = [](const Object&) -> bool {
             return MWBase::Environment::get().getWorld()->getGlobalFloat(MWWorld::Globals::sCharGenState) == -1;
         };
-        player["getRestStatus"] = [](sol::this_state thisState, const Object& object) {
+        player["getRestStatus"] = [](sol::this_state thisState, const Object& object, sol::optional<Object> bed) {
             verifyPlayer(object);
             const int flags = MWBase::Environment::get().getWorld()->canRest();
+            const MWMechanics::RestConditions conditions
+                = MWMechanics::getRestConditions(bed ? bed->ptr() : MWWorld::Ptr());
             sol::table result(thisState, sol::create);
             result["isUnderwater"] = (flags & MWBase::World::Rest_PlayerIsUnderwater) != 0;
             result["isInAir"] = (flags & MWBase::World::Rest_PlayerIsInAir) != 0;
             result["isEnemyNearby"] = (flags & MWBase::World::Rest_EnemiesAreNearby) != 0;
-            result["canSleep"] = (flags & MWBase::World::Rest_CanSleep) != 0;
+            result["canWait"] = conditions.canWait();
+            result["canSleep"] = conditions.mCanSleep;
+            result["hoursUntilHealed"] = MWBase::Environment::get().getMechanicsManager()->getHoursToRest();
             return result;
+        };
+        player["rest"] = [context](const Object& object, int hours, sol::optional<sol::table> callback) {
+            verifyPlayer(object);
+            if (!object.isGObject())
+                throw std::runtime_error("Only global scripts can make the player rest");
+            if (hours < 1)
+                throw std::runtime_error("The player must rest for at least one hour");
+            if (MWBase::Environment::get().getWindowManager()->getMode() != MWGui::GM_Rest)
+                throw std::runtime_error("The rest menu must be open");
+            context.mLuaManager->addAction(
+                [context, hours, callback = toCallback(callback)] {
+                    // The rest menu may have closed, or started a rest itself, since the script asked.
+                    if (!MWBase::Environment::get().getWindowManager()->startResting(
+                            hours, [context, callback](bool finished) { reportOutcome(context, callback, finished); }))
+                        reportOutcome(context, callback, false);
+                },
+                "RestAction");
         };
 
         player["OFFENSE_TYPE"]

@@ -1850,6 +1850,14 @@ namespace MWGui
         mWaitDialog->wakeUp();
     }
 
+    bool WindowManager::startResting(int hours, std::function<void(bool)> onStopped)
+    {
+        if (getMode() != GM_Rest || mWaitDialog->isWaiting())
+            return false;
+        mWaitDialog->requestWaiting(hours, std::move(onStopped));
+        return true;
+    }
+
     void WindowManager::addVisitedLocation(const std::string& name, int x, int y)
     {
         mMap->addVisitedLocation(name, x, y);

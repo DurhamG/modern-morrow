@@ -1556,20 +1556,35 @@
 ---
 -- Whether the player can rest or wait where they are now. The built-in rest menu checks the same conditions when it opens.
 -- The player can neither rest nor wait while underwater or with an enemy nearby. They can't wait in the air either, unless they use a bed.
--- When waiting is allowed, the player can sleep, and so heal, only where `canSleep` is true or in a bed. Anywhere else they can only wait.
+-- When waiting is allowed, the player can sleep, and so heal, only where the cell allows it or in a bed. Anywhere else they can only wait.
 -- @function [parent=#PLAYER] getRestStatus
 -- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject bed The bed that the player uses, as the `ShowRestMenu` mwscript function passes it to the rest menu (optional).
 -- @return #PLAYERRestStatus
--- @usage local status = types.Player.getRestStatus(self)
--- local canWait = not status.isUnderwater and not status.isInAir and not status.isEnemyNearby
--- local canSleep = canWait and status.canSleep
+-- @usage local status = types.Player.getRestStatus(self, bed)
+-- if status.canWait then
+--     print(status.canSleep and 'Rest' or 'Wait')
+-- end
 
 ---
 -- @type PLAYERRestStatus
 -- @field #boolean isUnderwater The player is underwater or walking on water.
 -- @field #boolean isInAir The player is falling, jumping, flying or levitating.
 -- @field #boolean isEnemyNearby An actor nearby is fighting the player or is hostile to them.
--- @field #boolean canSleep The cell allows sleeping and the player isn't a werewolf.
+-- @field #boolean canWait The player can rest or wait: they are neither underwater nor in the air without a bed, and no enemy is nearby. Otherwise the rest menu closes as soon as it opens.
+-- @field #boolean canSleep The player would sleep, and so heal, rather than wait: they use a bed, or the cell allows sleeping and the player isn't a werewolf.
+-- @field #number hoursUntilHealed The hours of sleep that restore the player's health and magicka, at least 1. The rest menu's "Until Healed" button rests this long. It shows the button only when the player can sleep and lacks some health or magicka.
+
+---
+-- Rest or wait for some hours in the rest menu, the way its buttons do (only in global scripts).
+-- The rest menu must be open, as the engine opens it, as the `ShowRestMenu` mwscript function opens it, or as `I.UI.addMode('Rest', { target = bed })` opens it. When the menu opens, the engine decides whether the player sleeps or waits there, as @{#PLAYER.getRestStatus} says, and it closes the menu where the player can't rest at all.
+-- The engine then rests as the menu does. It saves the game first, if autosaves are on, and fades the screen out. It shows its progress bar while one hour passes every 1/60 of a second. Each hour heals the player if they sleep, and lets the other actors rest. While the player sleeps, the `GetPCSleep` mwscript function is true.
+-- A sleep outdoors may be interrupted by a creature from the region's sleep list. An mwscript may also wake the player up with `WakeUpPC`. The rest stops early too if the player dies. When the rest stops, the menu closes. After a sleep that ran its course, the engine opens the level-up menu if a level-up is ready.
+-- The rest starts at the end of the frame.
+-- @function [parent=#PLAYER] rest
+-- @param openmw.core#GameObject player
+-- @param #number hours The hours to rest, at least 1. The rest menu offers 1 to 24, or @{#PLAYERRestStatus}.hoursUntilHealed.
+-- @param openmw.async#Callback callback A function that receives `true` if the rest lasted all the hours and `false` if it stopped early (optional). It also receives `false` if the rest never started, because the rest menu closed or a rest had begun already by the end of the frame.
 
 ---
 -- Buy training in a skill from a trainer, the way the training window does it (only in global scripts).

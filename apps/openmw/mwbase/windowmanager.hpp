@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <functional>
 #include <map>
 #include <memory>
 #include <set>
@@ -288,6 +289,13 @@ namespace MWBase
 
         virtual bool getPlayerSleeping() = 0;
         virtual void wakeUpPlayer() = 0;
+
+        /// Starts to rest or wait for @a hours in the rest menu, as its buttons do, on the next update of the menu.
+        /// When the rest stops, @a onStopped receives whether it lasted all the hours. It receives false if the menu
+        /// closes, or one of its buttons starts another rest, before this rest starts.
+        /// @return false when the rest menu isn't the current menu, or when the player is resting already. Then
+        /// @a onStopped is never called.
+        virtual bool startResting(int hours, std::function<void(bool)> onStopped) = 0;
 
         virtual void showSoulgemDialog(MWWorld::Ptr item) = 0;
 

@@ -5,6 +5,8 @@
 #include "windowbase.hpp"
 #include <components/esm/refid.hpp>
 
+#include <functional>
+
 namespace MWGui
 {
 
@@ -40,6 +42,14 @@ namespace MWGui
 
         bool getSleeping() { return mTimeAdvancer.isRunning() && mSleeping; }
         void wakeUp();
+
+        /// Whether the player is resting or waiting, from when the screen fades out until the rest stops.
+        bool isWaiting() const { return mTimeAdvancer.isRunning() || mFadeTimeRemaining > 0 || mRequestedHours > 0; }
+
+        /// Rests or waits for @a hoursToWait, as the window's buttons do, from the next frame on. When the rest stops,
+        /// @a onStopped receives whether it lasted all the hours. It receives false if the window closes, or one of its
+        /// buttons starts another rest, before this one starts.
+        void requestWaiting(int hoursToWait, std::function<void(bool)> onStopped);
         void autosave();
 
         WindowBase* getProgressBar() { return &mProgressBar; }
@@ -68,6 +78,9 @@ namespace MWGui
 
         WaitDialogProgressBar mProgressBar;
 
+        int mRequestedHours = 0;
+        std::function<void(bool)> mOnStopped;
+
         void onUntilHealedButtonClicked(MyGUI::Widget* sender);
         void onWaitButtonClicked(MyGUI::Widget* sender);
         void onCancelButtonClicked(MyGUI::Widget* sender);
@@ -81,7 +94,7 @@ namespace MWGui
         void setCanRest(bool canRest);
 
         void startWaiting(int hoursToWait);
-        void stopWaiting();
+        void stopWaiting(bool finished = false);
     };
 
 }

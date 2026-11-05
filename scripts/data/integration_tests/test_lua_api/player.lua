@@ -7,6 +7,7 @@ local types = require('openmw.types')
 local nearby = require('openmw.nearby')
 local camera = require('openmw.camera')
 local matchers = require('matchers')
+local I = require('openmw.interfaces')
 
 types.Player.setControlSwitch(self, types.Player.CONTROL_SWITCH.Controls, false)
 types.Player.setControlSwitch(self, types.Player.CONTROL_SWITCH.Fighting, false)
@@ -605,7 +606,31 @@ testing.registerLocalTestStep('rest status on self', function()
     testing.expectEqual(type(status.isInAir), 'boolean', 'isInAir should be a boolean')
     testing.expectEqual(status.isEnemyNearby, false, 'There should be no enemies near the player')
     testing.expectEqual(status.canSleep, true, 'The player should be able to sleep in an exterior cell')
+    testing.expectEqual(status.canWait, true, 'The player should be able to wait on the ground')
+    testing.expectGreaterOrEqual(status.hoursUntilHealed, 1, 'Healing should take at least one hour')
 end)
+
+local restFinished = nil
+
+testing.registerLocalTestStep('rest in rest menu on self', function(hours)
+    -- The test steps stop while the rest menu pauses the game, so this asks for the rest in the same frame as it
+    -- opens the menu. The global script gets the event in the next frame, when the menu is open.
+    restFinished = nil
+    I.UI.addMode('Rest')
+    core.sendGlobalEvent('restForTest', hours)
+    for _ = 1, 600 do
+        coroutine.yield()
+        if restFinished ~= nil then
+            break
+        end
+    end
+    testing.expectEqual(restFinished, true, 'The rest should last all its hours')
+    testing.expectEqual(I.UI.getMode(), nil, 'The rest menu should close when the rest stops')
+end)
+
+testing.localEventHandlers.restForTestStopped = function(finished)
+    restFinished = finished
+end
 
 return {
     engineHandlers = {
