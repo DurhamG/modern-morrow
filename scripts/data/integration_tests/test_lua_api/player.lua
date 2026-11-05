@@ -314,6 +314,11 @@ testing.registerLocalTest('Dialogue outside a conversation', function()
     testing.expectThat(types.Player.getDialogueTranscript(self), matchers.equalTo({}), 'There should be no lines')
     testing.expectThat(types.Player.getDialogueChoices(self), matchers.equalTo({}), 'There should be no choices')
     testing.expectEqual(types.Player.mustSayGoodbye(self), false, 'Nothing should ask the player to leave')
+    testing.expectEqual(pcall(types.Player.askDialogueTopic, self, 'background'), false,
+        'The player should not be able to ask about a topic')
+    testing.expectEqual(pcall(types.Player.answerDialogueChoice, self, 1), false,
+        'The player should not be able to answer a question')
+    testing.expectEqual(pcall(types.Player.sayGoodbye, self), false, 'The player should not be able to say goodbye')
 end)
 
 testing.registerLocalTest('findPath',

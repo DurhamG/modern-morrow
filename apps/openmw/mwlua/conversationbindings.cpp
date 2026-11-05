@@ -1,16 +1,22 @@
 #include "conversationbindings.hpp"
 
+#include <algorithm>
+#include <optional>
 #include <stdexcept>
+#include <string>
 
 #include <components/esm3/loaddial.hpp>
 #include <components/esm3/loadinfo.hpp>
+#include <components/lua/luastate.hpp>
 
 #include "../mwbase/dialoguemanager.hpp"
 #include "../mwbase/environment.hpp"
+#include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwworld/worldmodel.hpp"
 
 #include "context.hpp"
+#include "luamanagerimp.hpp"
 #include "object.hpp"
 
 namespace MWLua
@@ -107,6 +113,65 @@ namespace MWLua
         {
             return isInDialogue() && getDialogueManager().isGoodbye();
         }
+
+        // Talking runs dialogue scripts, which can change anything, so local scripts may only talk for their own player
+        void verifySpeaker(const Object& player)
+        {
+            verifyPlayer(player);
+            if (player.isLObject() && !player.isSelfObject())
+                throw std::runtime_error("Only player and global scripts can talk for the player");
+            if (!isInDialogue())
+                throw std::runtime_error("The player isn't talking to anyone");
+        }
+
+        void verifyNoQuestion()
+        {
+            if (getDialogueManager().isGoodbye())
+                throw std::runtime_error("The conversation is over, the player can only say goodbye");
+            if (getDialogueManager().isInChoice())
+                throw std::runtime_error("The player must answer the question first");
+        }
+
+        std::optional<LuaUtil::Callback> toCallback(const sol::optional<sol::table>& callback)
+        {
+            if (!callback)
+                return std::nullopt;
+            return LuaUtil::Callback::fromLua(*callback);
+        }
+
+        // Gives the lines that an action added, and the state of the conversation after it, to the script's callback
+        void reportOutcome(const Context& context, const std::optional<LuaUtil::Callback>& callback, size_t firstLine)
+        {
+            if (!callback)
+                return;
+            sol::state_view lua = context.mLua->unsafeState();
+            sol::table lines(lua, sol::create);
+            const std::vector<DialogueManager::TranscriptEntry>& transcript = getDialogueManager().getTranscript();
+            for (size_t i = firstLine; i < transcript.size(); ++i)
+                lines.add(makeTranscriptEntry(lua, transcript[i]));
+            sol::table outcome(lua, sol::create);
+            outcome["lines"] = lines;
+            outcome["topics"] = makeTopics(lua);
+            outcome["choices"] = makeChoices(lua);
+            outcome["mustSayGoodbye"] = mustSayGoodbye();
+            context.mLuaManager->queueCallback(*callback, sol::main_object(lua, sol::in_place, outcome));
+        }
+
+        // Runs a step of the conversation at the end of the frame, if the player is still talking by then
+        template <class Step>
+        void queueStep(
+            const Context& context, const sol::optional<sol::table>& callback, Step step, std::string_view name)
+        {
+            context.mLuaManager->addAction(
+                [context, callback = toCallback(callback), step = std::move(step)] {
+                    MWBase::DialogueManager& dialogueManager = *MWBase::Environment::get().getDialogueManager();
+                    const size_t firstLine = dialogueManager.getTranscript().size();
+                    if (isInDialogue())
+                        step(dialogueManager);
+                    reportOutcome(context, callback, firstLine);
+                },
+                name);
+        }
     }
 
     void addConversationBindings(sol::table& player, const Context& context)
@@ -141,6 +206,47 @@ namespace MWLua
         player["mustSayGoodbye"] = [](const Object& object) {
             verifyPlayer(object);
             return mustSayGoodbye();
+        };
+
+        player["askDialogueTopic"] = [context](const Object& object, std::string_view topicId,
+                                         const sol::optional<sol::table>& callback) {
+            verifySpeaker(object);
+            verifyNoQuestion();
+            const ESM::RefId id = ESM::RefId::deserializeText(topicId);
+            const std::vector<DialogueManager::AvailableTopic>& topics = getDialogueManager().getAvailableTopics();
+            const auto topic = std::find_if(topics.begin(), topics.end(),
+                [&](const DialogueManager::AvailableTopic& available) { return available.mId == id; });
+            if (topic == topics.end())
+                throw std::runtime_error("The actor doesn't offer the topic " + id.toDebugString());
+            queueStep(
+                context, callback,
+                [name = topic->mName](
+                    MWBase::DialogueManager& dialogueManager) { dialogueManager.keywordSelected(name); },
+                "AskDialogueTopicAction");
+        };
+        player["answerDialogueChoice"] = [context](const Object& object, int answer,
+                                             const sol::optional<sol::table>& callback) {
+            verifySpeaker(object);
+            const std::vector<std::pair<std::string, int>>& choices = getDialogueManager().getChoices();
+            const auto isAnswer = [&](const std::pair<std::string, int>& choice) { return choice.second == answer; };
+            if (!getDialogueManager().isInChoice() || std::none_of(choices.begin(), choices.end(), isAnswer))
+                throw std::runtime_error("The player can't give the answer " + std::to_string(answer));
+            queueStep(
+                context, callback,
+                [answer](MWBase::DialogueManager& dialogueManager) { dialogueManager.questionAnswered(answer); },
+                "AnswerDialogueChoiceAction");
+        };
+        player["sayGoodbye"] = [context](const Object& object) {
+            verifySpeaker(object);
+            if (getDialogueManager().isInChoice() && !getDialogueManager().isGoodbye())
+                throw std::runtime_error("The player must answer the question first");
+            queueStep(
+                context, sol::nullopt,
+                [](MWBase::DialogueManager& dialogueManager) {
+                    if (dialogueManager.goodbyeSelected())
+                        MWBase::Environment::get().getWindowManager()->removeGuiMode(MWGui::GM_Dialogue);
+                },
+                "SayGoodbyeAction");
         };
     }
 }

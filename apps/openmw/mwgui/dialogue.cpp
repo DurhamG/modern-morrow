@@ -508,6 +508,7 @@ namespace MWGui
         {
             MWBase::Environment::get().getDialogueManager()->endDialogue();
             mTranscriptSize = 0;
+            resetReference();
         }
     }
 
@@ -778,9 +779,11 @@ namespace MWGui
         updateDisposition();
         deleteLater();
 
+        // A Lua script may have taken a step in the conversation. Its new lines can come with new topics and services.
         const MWBase::DialogueManager* dialogueManager = MWBase::Environment::get().getDialogueManager();
-        if (mTranscriptSize != dialogueManager->getTranscript().size() || mChoices != dialogueManager->getChoices()
-            || mGoodbye != dialogueManager->isGoodbye())
+        if (mTranscriptSize != dialogueManager->getTranscript().size())
+            updateTopics();
+        else if (mChoices != dialogueManager->getChoices() || mGoodbye != dialogueManager->isGoodbye())
             updateHistory();
     }
 

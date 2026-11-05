@@ -1961,6 +1961,47 @@
 -- @return #boolean
 
 ---
+-- Ask the actor about one of the topics in @{#PLAYER.getDialogueTopics}, the way clicking it in the Dialogue window does (only in global and player scripts).
+-- The actor answers with the first of the topic's lines whose conditions match, and the line's dialogue script runs. The answer goes into the journal.
+-- If the actor doesn't like the player enough to answer, they say a line from the `Info Refusal` topic instead.
+-- This throws an error outside a conversation, if the actor doesn't offer the topic, while the player must answer a question, and after a script ended the conversation with `Goodbye`.
+-- The actor answers at the end of the frame.
+-- @function [parent=#PLAYER] askDialogueTopic
+-- @param openmw.core#GameObject player
+-- @param #string topicId The `id` of one of the @{#PLAYERDialogueTopic}s.
+-- @param openmw.async#Callback callback A function that receives a @{#PLAYERDialogueOutcome} (optional).
+-- @usage types.Player.askDialogueTopic(self, 'background', async:callback(function(outcome)
+--     for _, line in ipairs(outcome.lines) do print(line.text) end
+-- end))
+
+---
+-- Answer the question that a dialogue script asked with `Choice`, the way clicking an answer in the Dialogue window does (only in global and player scripts).
+-- The actor replies to the answer, and the reply's dialogue script runs. That script can ask another question.
+-- This throws an error if the player has no question to answer, or if `answer` isn't one of @{#PLAYER.getDialogueChoices}.
+-- The actor replies at the end of the frame.
+-- @function [parent=#PLAYER] answerDialogueChoice
+-- @param openmw.core#GameObject player
+-- @param #number answer The `answer` of one of the @{#PLAYERDialogueChoice}s.
+-- @param openmw.async#Callback callback A function that receives a @{#PLAYERDialogueOutcome} (optional).
+
+---
+-- What a step of the conversation led to.
+-- If the conversation changed before the end of the frame so that the step could no longer be taken, `lines` is empty.
+-- @type PLAYERDialogueOutcome
+-- @field #list<#PLAYERDialogueLine> lines The lines that the step added to the transcript, such as the actor's answer and the message that the journal was updated.
+-- @field #list<#PLAYERDialogueTopic> topics The topics after the step, as @{#PLAYER.getDialogueTopics} gives them.
+-- @field #list<#PLAYERDialogueChoice> choices The answers to the question that the step's dialogue script asked, if any.
+-- @field #boolean mustSayGoodbye Whether the step's dialogue script ended the conversation with `Goodbye`.
+
+---
+-- End the conversation and leave the dialogue mode, the way the Goodbye button of the Dialogue window does (only in global and player scripts).
+-- The changes to the actor's disposition from persuasion during the conversation become permanent.
+-- This throws an error outside a conversation, and while the player must answer a question, unless a script ended the conversation with `Goodbye`.
+-- The conversation ends at the end of the frame.
+-- @function [parent=#PLAYER] sayGoodbye
+-- @param openmw.core#GameObject player
+
+---
 -- Returns @{#PlayerJournal}, which contains the read-only access to journal text data accumulated by the player.
 -- Not the same as @{openmw_core#Dialogue.journal} which holds raw game records: with placeholders for dynamic variables and no player-specific info.
 -- @function [parent=#PLAYER] journal
