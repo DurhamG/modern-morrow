@@ -4,7 +4,10 @@
 #include <optional>
 
 #include <components/esm3/loadbsgn.hpp>
+#include <components/esm3/loadcrea.hpp>
 #include <components/esm3/loadfact.hpp>
+#include <components/esm3/loadmisc.hpp>
+#include <components/esm3/loadrepa.hpp>
 #include <components/esm3/loadskil.hpp>
 #include <components/lua/util.hpp>
 
@@ -20,6 +23,8 @@
 #include "apps/openmw/mwmechanics/actorutil.hpp"
 #include "apps/openmw/mwmechanics/npcstats.hpp"
 #include "apps/openmw/mwmechanics/pickpocket.hpp"
+#include "apps/openmw/mwmechanics/recharge.hpp"
+#include "apps/openmw/mwmechanics/repair.hpp"
 #include "apps/openmw/mwmechanics/services.hpp"
 #include "apps/openmw/mwworld/class.hpp"
 #include "apps/openmw/mwworld/containerstore.hpp"
@@ -339,6 +344,85 @@ namespace MWLua
                       },
                       "FinishPickpocketingAction");
               };
+    }
+
+    // Using a tool changes the items in the player's inventory, which only global scripts can do.
+    static void verifyCrafter(const Object& player)
+    {
+        verifyPlayer(player);
+        if (!player.isGObject())
+            throw std::runtime_error("Only global scripts can change the player's items");
+    }
+
+    static void verifyFilledSoulGem(const MWWorld::Ptr& gem)
+    {
+        const ESM::RefId& soul = gem.getCellRef().getSoul();
+        if (gem.getType() != ESM::Miscellaneous::sRecordId || soul.empty()
+            || !MWBase::Environment::get().getESMStore()->get<ESM::Creature>().search(soul))
+            throw std::runtime_error("A soul gem with a soul expected");
+    }
+
+    static void addToolBindings(sol::table& playerBindings, const Context& context)
+    {
+        playerBindings["getRepairChance"] = [](const Object& player) -> int {
+            verifyPlayer(player);
+            return MWMechanics::getRepairChance();
+        };
+        playerBindings["getRechargeChance"] = [](const Object& player) -> int {
+            verifyPlayer(player);
+            return MWMechanics::getRechargeChance();
+        };
+        playerBindings["repairItem"] = [context](const Object& player, const Object& item, const Object& tool,
+                                           sol::optional<sol::table> callback) {
+            verifyCrafter(player);
+            const MWWorld::Ptr itemPtr = item.ptr();
+            const MWWorld::Ptr toolPtr = tool.ptr();
+            verifyIsIn(itemPtr, player.ptr());
+            verifyIsIn(toolPtr, player.ptr());
+            if (toolPtr.getType() != ESM::Repair::sRecordId)
+                throw std::runtime_error("Repair tool expected");
+            if (!MWMechanics::canMerchantRepair(itemPtr))
+                throw std::runtime_error("The item must be a weapon or a piece of armor that has lost some condition");
+            context.mLuaManager->addAction(
+                [context, item = Object(itemPtr), tool = Object(toolPtr), callback = toCallback(callback)] {
+                    const MWWorld::Ptr repaired = item.ptr();
+                    const MWWorld::Ptr used = tool.ptr();
+                    // An earlier action may have used up the tool or repaired the item.
+                    if (used.getCellRef().getCount() <= 0 || !MWMechanics::canMerchantRepair(repaired))
+                    {
+                        reportOutcome(context, callback, false);
+                        return;
+                    }
+                    MWMechanics::Repair repair;
+                    repair.setTool(used);
+                    reportOutcome(context, callback, repair.repair(repaired));
+                },
+                "RepairItemAction");
+        };
+        playerBindings["rechargeItem"] = [context](const Object& player, const Object& item, const Object& soulGem,
+                                             sol::optional<sol::table> callback) {
+            verifyCrafter(player);
+            const MWWorld::Ptr itemPtr = item.ptr();
+            const MWWorld::Ptr gemPtr = soulGem.ptr();
+            verifyIsIn(itemPtr, player.ptr());
+            verifyIsIn(gemPtr, player.ptr());
+            verifyFilledSoulGem(gemPtr);
+            if (!MWMechanics::canRecharge(itemPtr))
+                throw std::runtime_error("The item must be an enchanted item that has lost some charge");
+            context.mLuaManager->addAction(
+                [context, item = Object(itemPtr), soulGem = Object(gemPtr), callback = toCallback(callback)] {
+                    const MWWorld::Ptr recharged = item.ptr();
+                    const MWWorld::Ptr used = soulGem.ptr();
+                    // An earlier action may have used up the soul gem or recharged the item.
+                    if (used.getCellRef().getCount() <= 0 || !MWMechanics::canRecharge(recharged))
+                    {
+                        reportOutcome(context, callback, false);
+                        return;
+                    }
+                    reportOutcome(context, callback, MWMechanics::rechargeItem(recharged, used));
+                },
+                "RechargeItemAction");
+        };
     }
 
     void addJournalClassBindings(sol::state_view& lua, const MWBase::Journal* journal)
@@ -814,6 +898,7 @@ namespace MWLua
                 static_cast<MWBase::MechanicsManager::OffenseType>(type), factionId, arg, victimAware);
         };
         addTakingBindings(player, context);
+        addToolBindings(player, context);
 
         player["birthSigns"] = initBirthSignRecordBindings(context);
         player["getBirthSign"] = [](const Object& object) -> std::string {

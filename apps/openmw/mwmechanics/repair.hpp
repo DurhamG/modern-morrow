@@ -5,6 +5,9 @@
 
 namespace MWMechanics
 {
+    /// The chance, from 0 to 100, that one use of a repair tool restores some of an item's condition.
+    /// It depends on the player, not on the tool.
+    int getRepairChance();
 
     class Repair
     {
@@ -12,7 +15,9 @@ namespace MWMechanics
         void setTool(const MWWorld::Ptr& tool) { mTool = tool; }
         MWWorld::Ptr getTool() { return mTool; }
 
-        void repair(const MWWorld::Ptr& itemToRepair);
+        /// Use the tool once on @a itemToRepair, which the player carries.
+        /// @return Whether the item regained some condition.
+        bool repair(const MWWorld::Ptr& itemToRepair);
 
     private:
         MWWorld::Ptr mTool;

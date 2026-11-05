@@ -46,6 +46,8 @@ return {
             for _, id in ipairs({ 'gold_001', 'gold_005', 'gold_010', 'gold_025', 'gold_100' }) do
                 content.miscs.records[id] = { name = 'Gold', value = 1 }
             end
+            content.repairs.records.OMW_Test_RepairTool = { name = 'Test hammer', maxCondition = 10, quality = 1 }
+            content.miscs.records.OMW_Test_SoulGem = { name = 'Test soul gem', value = 10 }
         end
     }
 }

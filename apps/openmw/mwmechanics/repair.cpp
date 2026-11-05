@@ -1,5 +1,8 @@
 #include "repair.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 #include <components/misc/rng.hpp>
 #include <components/misc/strings/format.hpp>
 
@@ -16,8 +19,29 @@
 
 namespace MWMechanics
 {
+    namespace
+    {
+        // A use of a repair tool succeeds when a roll from 0 to 99 is at most this.
+        float getRepairSkillTerm(const MWWorld::Ptr& player)
+        {
+            const CreatureStats& stats = player.getClass().getCreatureStats(player);
 
-    void Repair::repair(const MWWorld::Ptr& itemToRepair)
+            float fatigueTerm = stats.getFatigueTerm();
+            float pcStrength = stats.getAttribute(ESM::Attribute::Strength).getModified();
+            float pcLuck = stats.getAttribute(ESM::Attribute::Luck).getModified();
+            float armorerSkill = player.getClass().getSkill(player, ESM::Skill::Armorer);
+
+            return (0.1f * pcStrength + 0.1f * pcLuck + armorerSkill) * fatigueTerm;
+        }
+    }
+
+    int getRepairChance()
+    {
+        const float x = getRepairSkillTerm(getPlayer());
+        return static_cast<int>(std::clamp(std::floor(x) + 1, 0.f, 100.f));
+    }
+
+    bool Repair::repair(const MWWorld::Ptr& itemToRepair)
     {
         MWWorld::Ptr player = getPlayer();
         MWWorld::LiveCellRef<ESM::Repair>* ref = mTool.get<ESM::Repair>();
@@ -32,13 +56,6 @@ namespace MWMechanics
         uses -= std::min(uses, 1);
         mTool.getCellRef().setCharge(uses);
 
-        MWMechanics::CreatureStats& stats = player.getClass().getCreatureStats(player);
-
-        float fatigueTerm = stats.getFatigueTerm();
-        float pcStrength = stats.getAttribute(ESM::Attribute::Strength).getModified();
-        float pcLuck = stats.getAttribute(ESM::Attribute::Luck).getModified();
-        float armorerSkill = player.getClass().getSkill(player, ESM::Skill::Armorer);
-
         float fRepairAmountMult = MWBase::Environment::get()
                                       .getESMStore()
                                       ->get<ESM::GameSetting>()
@@ -47,11 +64,12 @@ namespace MWMechanics
 
         float toolQuality = ref->mBase->mData.mQuality;
 
-        float x = (0.1f * pcStrength + 0.1f * pcLuck + armorerSkill) * fatigueTerm;
+        float x = getRepairSkillTerm(player);
 
         auto& prng = MWBase::Environment::get().getWorld()->getPrng();
         int roll = Misc::Rng::roll0to99(prng);
-        if (roll <= x)
+        const bool repaired = roll <= x;
+        if (repaired)
         {
             int y = static_cast<int>(fRepairAmountMult * toolQuality * roll);
             y = std::max(1, y);
@@ -110,6 +128,8 @@ namespace MWMechanics
                 }
             }
         }
+
+        return repaired;
     }
 
 }

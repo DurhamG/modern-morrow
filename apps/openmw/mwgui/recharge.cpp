@@ -134,9 +134,10 @@ namespace MWGui
     void Recharge::onItemClicked(MyGUI::Widget* /*sender*/, const MWWorld::Ptr& item)
     {
         MWWorld::Ptr gem = *mGemIcon->getUserData<MWWorld::Ptr>();
-        if (!MWMechanics::rechargeItem(item, gem))
+        if (!gem.getCellRef().getCount())
             return;
 
+        MWMechanics::rechargeItem(item, gem);
         updateView();
     }
 

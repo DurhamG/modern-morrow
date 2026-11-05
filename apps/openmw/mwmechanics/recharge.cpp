@@ -1,5 +1,8 @@
 #include "recharge.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 #include <components/debug/debuglog.hpp>
 #include <components/esm3/loadcrea.hpp>
 #include <components/esm3/loadench.hpp>
@@ -20,6 +23,28 @@
 
 namespace MWMechanics
 {
+    namespace
+    {
+        // Recharging succeeds when a roll from 0 to 99 is below this.
+        float getRechargeSkillTerm(const MWWorld::Ptr& player)
+        {
+            const CreatureStats& stats = player.getClass().getCreatureStats(player);
+
+            float luckTerm = 0.1f * stats.getAttribute(ESM::Attribute::Luck).getModified();
+            if (luckTerm < 1 || luckTerm > 10)
+                luckTerm = 1;
+
+            float intelligenceTerm = 0.2f * stats.getAttribute(ESM::Attribute::Intelligence).getModified();
+
+            if (intelligenceTerm > 20)
+                intelligenceTerm = 20;
+            if (intelligenceTerm < 1)
+                intelligenceTerm = 1;
+
+            return (player.getClass().getSkill(player, ESM::Skill::Enchant) + intelligenceTerm + luckTerm)
+                * stats.getFatigueTerm();
+        }
+    }
 
     bool rechargeItem(const MWWorld::Ptr& item, const float maxCharge, const float duration)
     {
@@ -35,6 +60,12 @@ namespace MWMechanics
 
         item.getCellRef().setEnchantmentCharge(std::min(charge + fMagicItemRechargePerSecond * duration, maxCharge));
         return true;
+    }
+
+    int getRechargeChance()
+    {
+        const float x = getRechargeSkillTerm(getPlayer());
+        return static_cast<int>(std::clamp(std::ceil(x), 0.f, 100.f));
     }
 
     bool canRecharge(const MWWorld::ConstPtr& item)
@@ -62,26 +93,14 @@ namespace MWMechanics
             return false;
 
         MWWorld::Ptr player = MWMechanics::getPlayer();
-        MWMechanics::CreatureStats& stats = player.getClass().getCreatureStats(player);
 
         MWBase::Environment::get().getWorld()->breakInvisibility(player);
 
-        float luckTerm = 0.1f * stats.getAttribute(ESM::Attribute::Luck).getModified();
-        if (luckTerm < 1 || luckTerm > 10)
-            luckTerm = 1;
-
-        float intelligenceTerm = 0.2f * stats.getAttribute(ESM::Attribute::Intelligence).getModified();
-
-        if (intelligenceTerm > 20)
-            intelligenceTerm = 20;
-        if (intelligenceTerm < 1)
-            intelligenceTerm = 1;
-
-        float x = (player.getClass().getSkill(player, ESM::Skill::Enchant) + intelligenceTerm + luckTerm)
-            * stats.getFatigueTerm();
+        float x = getRechargeSkillTerm(player);
         auto& prng = MWBase::Environment::get().getWorld()->getPrng();
         int roll = Misc::Rng::roll0to99(prng);
-        if (roll < x)
+        const bool recharged = roll < x;
+        if (recharged)
         {
             const ESM::RefId& soul = gem.getCellRef().getSoul();
             const ESM::Creature* creature = MWBase::Environment::get().getESMStore()->get<ESM::Creature>().find(soul);
@@ -124,7 +143,7 @@ namespace MWMechanics
                 player.getClass().getContainerStore(player).add(soulGemAzura, 1);
         }
 
-        return true;
+        return recharged;
     }
 
 }

@@ -501,6 +501,77 @@ local function waitForOutcome(start)
     return result
 end
 
+testing.registerGlobalTest('repairing and recharging', function()
+    local player = initPlayer()
+    local inventory = types.Actor.inventory(player)
+    local soul = world.createRecord(types.Creature.createRecordDraft({
+        template = types.Creature.record('landracer'),
+        soulValue = 100,
+    }))
+    local enchantment = world.createRecord(core.magic.enchantments.createRecordDraft({
+        type = core.magic.ENCHANTMENT_TYPE.CastOnUse,
+        cost = 5,
+        charge = 100,
+        isAutocalc = false,
+        effects = {
+            { id = findCostlyEffect().id, range = core.magic.RANGE.Self, magnitudeMin = 1, magnitudeMax = 1 },
+        },
+    }))
+    local record = world.createRecord(types.Weapon.createRecordDraft({
+        template = types.Weapon.record('basic_dagger1h'),
+        health = 40,
+        enchant = enchantment.id,
+    }))
+    world.createObject(record.id, 1):moveInto(player)
+    world.createObject('OMW_Test_RepairTool', 1):moveInto(player)
+    world.createObject('OMW_Test_SoulGem', 1):moveInto(player)
+    coroutine.yield()
+    local item = inventory:find(record.id)
+    local tool = inventory:find('OMW_Test_RepairTool')
+    local gem = inventory:find('OMW_Test_SoulGem')
+    types.Item.itemData(item).condition = 10
+    types.Item.itemData(item).enchantmentCharge = 10
+    types.Item.itemData(gem).soul = soul.id
+    testing.runLocalTest(player, 'set skill on self', { skill = 'armorer', value = 100 })
+    testing.runLocalTest(player, 'set skill on self', { skill = 'enchant', value = 100 })
+
+    local repairChance = types.Player.getRepairChance(player)
+    testing.expectGreaterThan(repairChance, 0, 'A player with 100 Armorer should be able to repair')
+    testing.expectLessOrEqual(repairChance, 100, 'The chance should be at most 100')
+    testing.expectEqual(pcall(types.Player.repairItem, player, item, gem), false,
+        'The player should not repair with something that is not a repair tool')
+    local repaired = waitForOutcome(function(callback)
+        types.Player.repairItem(player, item, tool, callback)
+    end)
+    testing.expect(repaired ~= nil, 'The callback should receive whether the item was repaired')
+    if repaired then
+        testing.expectGreaterThan(types.Item.itemData(item).condition, 10, 'A repair should restore some condition')
+    else
+        testing.expectEqual(types.Item.itemData(item).condition, 10, 'A failed repair should restore nothing')
+    end
+    testing.expectEqual(types.Item.itemData(tool).condition, 9, 'Each repair should use the tool once')
+
+    local rechargeChance = types.Player.getRechargeChance(player)
+    testing.expectGreaterThan(rechargeChance, 0, 'A player with 100 Enchant should be able to recharge')
+    testing.expectLessOrEqual(rechargeChance, 100, 'The chance should be at most 100')
+    local recharged = waitForOutcome(function(callback)
+        types.Player.rechargeItem(player, item, gem, callback)
+    end)
+    testing.expect(recharged ~= nil, 'The callback should receive whether the item was recharged')
+    if recharged then
+        testing.expectGreaterOrEqual(types.Item.itemData(item).enchantmentCharge, 10,
+            'Recharging should not take charge away')
+    else
+        testing.expectEqual(types.Item.itemData(item).enchantmentCharge, 10, 'A failed recharge should restore nothing')
+    end
+    testing.expectEqual(inventory:countOf('OMW_Test_SoulGem'), 0, 'Recharging should use up the soul gem')
+
+    testing.runLocalTest(player, 'restore skill on self', 'armorer')
+    testing.runLocalTest(player, 'restore skill on self', 'enchant')
+    item:remove()
+    tool:remove()
+end)
+
 testing.registerGlobalTest('stolen items', function()
     local player = initPlayer()
     local owner = world.createRecord(types.NPC.createRecordDraft({

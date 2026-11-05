@@ -1570,6 +1570,42 @@
 -- @param openmw.core#GameObject item
 
 ---
+-- The chance, from 0 to 100, that one use of a repair tool restores some of an item's condition.
+-- It takes the player's Armorer skill, Strength, Luck and fatigue into account. It doesn't depend on the tool or the item.
+-- @function [parent=#PLAYER] getRepairChance
+-- @param openmw.core#GameObject player
+-- @return #number
+
+---
+-- Use a repair tool once on an item, the way the repair window does it (only in global scripts).
+-- The tool loses one use, and is removed when it has none left. With the chance of @{#PLAYER.getRepairChance}, the item regains some condition. The amount is random, and grows with the tool's quality and the `fRepairAmountMult` game setting. Then the player's Armorer skill progresses, and the item's mwscript sees `OnPCRepair`.
+-- The engine plays the sound and shows the message that the repair window would. The item and the tool must be in the player's inventory, and the item must be a weapon or a piece of armor that has lost some condition. Otherwise this throws an error.
+-- The repair happens at the end of the frame. If an earlier change in the frame used up the tool, or left the item in full condition, nothing happens.
+-- @function [parent=#PLAYER] repairItem
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject item
+-- @param openmw.core#GameObject tool A repair tool.
+-- @param openmw.async#Callback callback A function that receives `true` if the item regained some condition and `false` otherwise, including when nothing happened (optional).
+
+---
+-- The chance, from 0 to 100, that a soul gem restores some of an item's charge.
+-- It takes the player's Enchant skill, Intelligence, Luck and fatigue into account. It doesn't depend on the soul gem or the item.
+-- @function [parent=#PLAYER] getRechargeChance
+-- @param openmw.core#GameObject player
+-- @return #number
+
+---
+-- Use a soul gem to recharge an enchanted item, the way the recharge window does it (only in global scripts).
+-- The soul gem is used up, except for Azura's Star, which comes back empty. With the chance of @{#PLAYER.getRechargeChance}, the item regains some charge, up to the strength of the soul. Either way, the player's Enchant skill progresses.
+-- The engine plays the sound that the recharge window would. The item and the soul gem must be in the player's inventory, the soul gem must hold a soul, and the item must have lost some of its charge. Otherwise this throws an error.
+-- The recharge happens at the end of the frame. If an earlier change in the frame used up the soul gem, or left the item fully charged, nothing happens.
+-- @function [parent=#PLAYER] rechargeItem
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject item An enchanted item.
+-- @param openmw.core#GameObject soulGem
+-- @param openmw.async#Callback callback A function that receives `true` if the item regained some charge and `false` otherwise, including when nothing happened (optional).
+
+---
 -- Travel with a merchant to one of their travel destinations, the way the travel window does it (only in global scripts).
 -- The player pays @{#Actor.getTravelPrice}, and the gold goes to the merchant's barter gold. Then @{#Actor.getTravelHours} pass, while the player and other actors sleep. Last, the player and their followers move to the destination, and `GetPCTraveling` reports the trip to mwscripts for a frame.
 -- The player must have enough gold. Otherwise this throws an error.
