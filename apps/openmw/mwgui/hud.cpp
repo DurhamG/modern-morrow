@@ -734,6 +734,36 @@ namespace MWGui
         return widget->getInheritedVisible();
     }
 
+    bool HUD::isElementWanted(std::string_view elementId) const
+    {
+        if (!mMainWidget->getInheritedVisible())
+            return false;
+        switch (findElement(elementId))
+        {
+            case Element::DynamicStats:
+                return mHmsVisible;
+            case Element::EnemyHealth:
+                return mEnemyHealthTimer >= 0;
+            case Element::Weapon:
+                return mWeaponVisible;
+            case Element::Spell:
+                return mSpellVisible;
+            case Element::WeaponSpellName:
+                return mWeaponSpellTimer > 0 && (mWeaponVisible || mSpellVisible);
+            case Element::Sneak:
+                return mSneakVisible;
+            case Element::ActiveEffects:
+                return mEffectVisible;
+            case Element::Minimap:
+                return mMapVisible;
+            case Element::CellName:
+                return mCellNameTimer > 0 && mMapVisible;
+            case Element::DrowningBar:
+                return mDrowningBarVisible;
+        }
+        return false;
+    }
+
     void HUD::updateElementVisibility(Element element)
     {
         switch (element)

@@ -177,6 +177,8 @@ namespace MWLua
         };
         api["_isHudElementVisible"]
             = [windowManager](std::string_view element) { return windowManager->isHudElementVisible(element); };
+        api["_isHudElementWanted"]
+            = [windowManager](std::string_view element) { return windowManager->isHudElementWanted(element); };
         api["_getHudEnemy"] = [windowManager]() -> std::tuple<sol::optional<LObject>, float> {
             float secondsLeft = 0;
             const MWWorld::Ptr enemy = windowManager->getHudEnemy(secondsLeft);

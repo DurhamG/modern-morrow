@@ -2828,6 +2828,11 @@ namespace MWGui
         return mHud->isElementVisible(elementId);
     }
 
+    bool WindowManager::isHudElementWanted(std::string_view elementId) const
+    {
+        return mHud->isElementWanted(elementId);
+    }
+
     MWWorld::Ptr WindowManager::getHudEnemy(float& secondsLeft) const
     {
         return mHud->getEnemy(secondsLeft);

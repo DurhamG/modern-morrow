@@ -279,7 +279,7 @@ return {
     interface = {
         --- Interface version
         -- @field [parent=#UI] #number version
-        version = 9,
+        version = 10,
 
         --- All available UI modes.
         -- Use `view(I.UI.MODE)` in `luap` console mode to see the list.
@@ -420,6 +420,22 @@ return {
         -- @param #string element One of @{#UI.HUD_ELEMENT}
         -- @return #boolean
         isHudElementVisible = function(element) return ui._isHudElementVisible(element) end,
+
+        ---
+        -- Returns whether the engine would show the given HUD element now, if Lua hadn't hidden it with
+        -- @{#UI.setHudElementVisibility}. A mod that draws its own element in its place can follow the engine's rules
+        -- with it: for example, the sneak indicator shows while the player sneaks unseen, the breath meter while they
+        -- are under water, and the cell name for a few seconds after the player enters a cell. It is false for every
+        -- element while the whole HUD is hidden.
+        -- @function [parent=#UI] isHudElementWanted
+        -- @param #string element One of @{#UI.HUD_ELEMENT}
+        -- @return #boolean
+        isHudElementWanted = function(element)
+            if not HUD_ELEMENT[element] then
+                error('HUD element "' .. tostring(element) .. '" not found.')
+            end
+            return ui._isHudElementWanted(element)
+        end,
 
         ---
         -- Returns the actor whose health the engine's enemy health bar shows, while the engine shows the bar.

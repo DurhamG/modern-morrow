@@ -172,6 +172,9 @@ testing.registerLocalTest('Lua hides a HUD element', function()
     coroutine.yield()
     testing.expectEqual(I.UI.isHudElementVisible(minimap), false, 'Lua should hide the minimap')
     testing.expectEqual(I.UI.isHudElementVisible(weapon), true, 'The other elements should stay visible')
+    testing.expectEqual(I.UI.isHudElementWanted(minimap), true, 'The engine would still show the minimap')
+    testing.expectEqual(I.UI.isHudElementWanted(I.UI.HUD_ELEMENT.Sneak), false,
+        'The engine would not show the sneak indicator while the player does not sneak')
 
     -- Opening and closing a menu makes the engine show the minimap again, unless Lua hid it.
     I.UI.setPauseOnMode(I.UI.MODE.Interface, false)

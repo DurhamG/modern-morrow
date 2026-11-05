@@ -439,6 +439,7 @@ namespace MWBase
         virtual std::vector<std::string_view> getAllowedWindowIds(MWGui::GuiMode mode) const = 0;
         virtual void setHudElementDisabledByLua(std::string_view elementId, bool disabled) = 0;
         virtual bool isHudElementVisible(std::string_view elementId) const = 0;
+        virtual bool isHudElementWanted(std::string_view elementId) const = 0;
         /// The actor whose health the HUD's enemy health bar shows, or an empty Ptr while the engine doesn't show it.
         /// @param secondsLeft Receives the time until the engine hides the bar.
         virtual MWWorld::Ptr getHudEnemy(float& secondsLeft) const = 0;

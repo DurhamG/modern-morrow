@@ -92,6 +92,8 @@ namespace MWGui
         /// While an element is disabled by Lua, it stays hidden when the engine would show it.
         void setElementDisabledByLua(std::string_view elementId, bool disabled);
         bool isElementVisible(std::string_view elementId) const;
+        /// Whether the engine would show an element if Lua hadn't disabled it.
+        bool isElementWanted(std::string_view elementId) const;
 
     private:
         MyGUI::ProgressBar *mHealth = nullptr, *mMagicka = nullptr, *mStamina = nullptr, *mEnemyHealth = nullptr,

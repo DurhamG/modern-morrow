@@ -425,6 +425,7 @@ namespace MWGui
         std::vector<std::string_view> getAllowedWindowIds(GuiMode mode) const override;
         void setHudElementDisabledByLua(std::string_view elementId, bool disabled) override;
         bool isHudElementVisible(std::string_view elementId) const override;
+        bool isHudElementWanted(std::string_view elementId) const override;
         MWWorld::Ptr getHudEnemy(float& secondsLeft) const override;
         std::vector<std::string_view> getAllHudElementIds() const override;
 
