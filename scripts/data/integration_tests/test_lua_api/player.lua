@@ -191,6 +191,38 @@ testing.registerLocalTest('Lua hides a HUD element', function()
     testing.expectEqual(I.UI.isHudElementVisible(minimap), true, 'The engine should show the minimap again')
 end)
 
+testing.registerLocalTest('Lua window replacement sees the requested windows', function()
+    local shown = nil
+    I.UI.registerWindow('Map', function(_, windows)
+        shown = { windows = windows }
+    end, function() end)
+    I.UI.setPauseOnMode(I.UI.MODE.Interface, false)
+
+    I.UI.setMode(I.UI.MODE.Interface, { windows = { 'Map' } })
+    while shown == nil do
+        coroutine.yield()
+    end
+    testing.expectEqual(shown.windows and #shown.windows, 1, 'The replacement should get the requested windows')
+    testing.expectEqual(shown.windows and shown.windows[1], 'Map', 'The replacement should get the map window')
+
+    I.UI.setMode()
+    while I.UI.getMode() ~= nil do
+        coroutine.yield()
+    end
+    shown = nil
+    I.UI.setMode(I.UI.MODE.Interface)
+    while shown == nil do
+        coroutine.yield()
+    end
+    testing.expectEqual(shown.windows, nil, 'A mode opened without a list of windows should give nil')
+
+    I.UI.setMode()
+    while I.UI.getMode() ~= nil do
+        coroutine.yield()
+    end
+    I.UI.setPauseOnMode(I.UI.MODE.Interface, true)
+end)
+
 testing.registerLocalTest('GUI input capture applies only in menus', function()
     input.setGuiInputCaptured(true)
     testing.expectEqual(input.isGuiInputCaptured(), false, 'The capture should have no effect outside menus')

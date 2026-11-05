@@ -12,6 +12,8 @@ local HUD_ELEMENT = ui._getAllHudElements()
 
 local replacedWindows = {}
 local hiddenWindows = {}
+-- The windows that the last I.UI.setMode or I.UI.addMode asked for, or nil if it didn't ask for any
+local requestedWindows = nil
 local modeStack = {}
 
 local inputCapturedByInterface = false
@@ -106,6 +108,13 @@ local function showInteractiveMessage(message, options)
 end
 
 local function updateHidden(mode, options)
+    requestedWindows = nil
+    if options and options.windows then
+        requestedWindows = {}
+        for _, w in pairs(options.windows) do
+            requestedWindows[#requestedWindows + 1] = w
+        end
+    end
     local toHide = {}
     if options and options.windows then
         for _, w in pairs(ui._getAllowedWindows(mode)) do
@@ -194,7 +203,7 @@ local function onUiModeChanged(changedByLua, arg)
         for _, w in pairs(ui._getAllowedWindows(mode)) do
             local state = replacedWindows[w]
             if state and not hiddenWindows[w] then
-                state.showFn(arg)
+                state.showFn(arg, requestedWindows)
                 state.visible = true
             end
         end
@@ -255,7 +264,7 @@ return {
     interface = {
         --- Interface version
         -- @field [parent=#UI] #number version
-        version = 6,
+        version = 7,
 
         --- All available UI modes.
         -- Use `view(I.UI.MODE)` in `luap` console mode to see the list.
@@ -299,7 +308,11 @@ return {
         -- should open `ChargenClassReview` again when the player is done.
         -- @function [parent=#UI] registerWindow
         -- @param #string windowName
-        -- @param #function showFn Callback that will be called when the window should become visible
+        -- @param #function showFn Callback that will be called when the window should become visible.
+        -- Its first argument is the mode's target, if any. Its second argument is the list of windows that
+        -- @{#UI.setMode} or @{#UI.addMode} asked for with the `windows` option, or nil when the mode opened without such
+        -- a list, such as when the player opened it. A script that replaces several windows of a mode can use it to
+        -- tell a request for one of them from the player opening the whole mode.
         -- @param #function hideFn Callback that will be called when the window should be hidden
         -- @param #table options (optional) A table with these optional fields:
         --
