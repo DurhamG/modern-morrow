@@ -1,8 +1,13 @@
 #ifndef MWLUA_PLAYERSCRIPTS_H
 #define MWLUA_PLAYERSCRIPTS_H
 
+#include <string>
+#include <string_view>
+#include <vector>
+
 #include <SDL_events.h>
 
+#include <components/lua/util.hpp>
 #include <components/sdlutil/events.hpp>
 
 #include "../mwbase/luamanager.hpp"
@@ -21,7 +26,7 @@ namespace MWLua
             , mInputProcessor(this)
         {
             registerEngineHandlers({ &mConsoleCommandHandlers, &mOnFrameHandlers, &mQuestUpdate,
-                &mViewportResizedHandlers, &mUiModeChanged });
+                &mViewportResizedHandlers, &mUiModeChanged, &mInteractiveMessageRequested });
         }
 
         void processInputEvent(const MWBase::LuaManager::InputEvent& event)
@@ -50,6 +55,14 @@ namespace MWLua
                 callEngineHandlers(mUiModeChanged, byLuaAction, LObject(arg));
         }
 
+        void interactiveMessageRequested(int id, std::string_view message, const std::vector<std::string>& buttons)
+        {
+            sol::table buttonTable(mLua.unsafeState(), sol::create);
+            for (std::size_t i = 0; i < buttons.size(); ++i)
+                buttonTable[LuaUtil::toLuaIndex(i)] = buttons[i];
+            callEngineHandlers(mInteractiveMessageRequested, id, message, buttonTable);
+        }
+
     private:
         friend class MWLua::InputProcessor<PlayerScripts>;
         InputProcessor<PlayerScripts> mInputProcessor;
@@ -58,6 +71,7 @@ namespace MWLua
         EngineHandlerList mQuestUpdate{ "onQuestUpdate" };
         EngineHandlerList mViewportResizedHandlers{ "onViewportResized" };
         EngineHandlerList mUiModeChanged{ "_onUiModeChanged" };
+        EngineHandlerList mInteractiveMessageRequested{ "_onInteractiveMessage" };
     };
 
 }

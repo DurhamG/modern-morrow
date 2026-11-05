@@ -125,6 +125,7 @@ namespace MWLua
         void objectTeleported(const MWWorld::Ptr& ptr) override;
         void questUpdated(const ESM::RefId& questId, int stage) override;
         void uiModeChanged(const MWWorld::Ptr& arg) override;
+        void interactiveMessageRequested(int id, std::string message, std::vector<std::string> buttons) override;
         void viewportResized(int width, int height) override;
         void actorDied(const MWWorld::Ptr& actor) override;
         void onDialogueResponse(
@@ -279,6 +280,15 @@ namespace MWLua
         std::vector<std::pair<std::string, MWGui::ShowInDialogueMode>> mUIMessages;
         std::vector<std::pair<std::string, Misc::Color>> mInGameConsoleMessages;
         std::optional<ObjectId> mDelayedUiModeChangedArg;
+
+        struct InteractiveMessageRequest
+        {
+            int mId;
+            std::string mMessage;
+            std::vector<std::string> mButtons;
+        };
+        // A new request replaces an earlier one, so only the latest one is sent to the scripts.
+        std::optional<InteractiveMessageRequest> mInteractiveMessageRequest;
 
         LuaUtil::LuaStorage mGlobalStorage;
         LuaUtil::LuaStorage mPlayerStorage;

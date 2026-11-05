@@ -280,6 +280,9 @@ namespace MWGui
         int readPressedButton() override; ///< returns the index of the pressed button or -1 if no button was pressed
                                           ///< (->MessageBoxmanager->InteractiveMessageBox)
 
+        void setLuaAnswersInteractiveMessages(bool answers) override;
+        void answerInteractiveMessage(int id, int button) override;
+
         void update(float duration);
 
         void updateMouseEmulationCursor();

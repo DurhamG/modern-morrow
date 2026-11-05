@@ -2,6 +2,9 @@
 #define MWGUI_MESSAGE_BOX_H
 
 #include <memory>
+#include <optional>
+#include <string>
+#include <vector>
 
 #include "windowbase.hpp"
 
@@ -25,9 +28,21 @@ namespace MWGui
         void onFrame(float frameDuration);
         void createMessageBox(std::string_view message, bool stat = false);
         void removeStaticMessageBox();
+        /// @param luaCanAnswer Whether the player's Lua scripts may show and answer this box, if they answer
+        /// interactive message boxes. A caller that waits for the answer in a loop that doesn't run Lua must pass
+        /// false.
         bool createInteractiveMessageBox(std::string_view message, const std::vector<std::string>& buttons,
-            bool immediate = false, int defaultFocus = -1);
-        bool isInteractiveMessageBox();
+            bool immediate = false, int defaultFocus = -1, bool luaCanAnswer = true);
+        bool isInteractiveMessageBox() const;
+
+        /// While set, the manager doesn't show the interactive message boxes that Lua can answer. It sends each one
+        /// to the player's Lua scripts instead. They show it in their own way, and answer with
+        /// answerInteractiveMessage.
+        void setLuaAnswersInteractiveMessages(bool answers);
+
+        /// Presses the button with the given index in the interactive message box that was sent to Lua with the
+        /// given id. Does nothing if that box is no longer waiting for an answer.
+        void answerInteractiveMessage(int id, int button);
 
         std::size_t getMessagesCount();
 
@@ -61,8 +76,22 @@ namespace MWGui
         const std::vector<std::unique_ptr<MessageBox>>& getActiveMessageBoxes() const;
 
     private:
+        /// An interactive message box that was sent to the player's Lua scripts instead of being shown.
+        struct LuaInteractiveMessage
+        {
+            int mId;
+            std::string mMessage;
+            std::vector<std::string> mButtons;
+            bool mImmediate;
+            int mDefaultFocus;
+            int mButtonPressed = -1;
+        };
+
         std::vector<std::unique_ptr<MessageBox>> mMessageBoxes;
         std::unique_ptr<InteractiveMessageBox> mInterMessageBoxe;
+        std::optional<LuaInteractiveMessage> mLuaInteractiveMessage;
+        int mLastLuaInteractiveMessageId = 0;
+        bool mLuaAnswersInteractiveMessages = false;
         MessageBox* mStaticMessageBox;
         float mMessageBoxSpeed;
         int mLastButtonPressed;

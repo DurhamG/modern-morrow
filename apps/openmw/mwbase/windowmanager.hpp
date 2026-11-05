@@ -268,6 +268,12 @@ namespace MWBase
         /// (->MessageBoxmanager->InteractiveMessageBox)
         virtual int readPressedButton() = 0;
 
+        /// While set, interactive message boxes that don't block go to the player's Lua scripts instead of being
+        /// shown, and the scripts answer them with answerInteractiveMessage.
+        virtual void setLuaAnswersInteractiveMessages(bool answers) = 0;
+        /// Presses a button in the interactive message box that was sent to Lua with the given id.
+        virtual void answerInteractiveMessage(int id, int button) = 0;
+
         virtual void updateConsoleObjectPtr(const MWWorld::Ptr& currentPtr, const MWWorld::Ptr& newPtr) = 0;
 
         /**

@@ -788,7 +788,9 @@ namespace MWGui
     void WindowManager::interactiveMessageBox(
         std::string_view message, const std::vector<std::string>& buttons, bool block, int defaultFocus)
     {
-        mMessageBoxManager->createInteractiveMessageBox(message, buttons, block, defaultFocus);
+        // The loop below that waits for a blocking box's answer doesn't run Lua, so Lua can't answer that box.
+        const bool luaCanAnswer = !block;
+        mMessageBoxManager->createInteractiveMessageBox(message, buttons, block, defaultFocus, luaCanAnswer);
         updateVisible();
 
         if (block)
@@ -857,6 +859,16 @@ namespace MWGui
     int WindowManager::readPressedButton()
     {
         return mMessageBoxManager->readPressedButton();
+    }
+
+    void WindowManager::setLuaAnswersInteractiveMessages(bool answers)
+    {
+        mMessageBoxManager->setLuaAnswersInteractiveMessages(answers);
+    }
+
+    void WindowManager::answerInteractiveMessage(int id, int button)
+    {
+        mMessageBoxManager->answerInteractiveMessage(id, button);
     }
 
     std::string_view WindowManager::getGameSettingString(std::string_view id, std::string_view defaultValue)
@@ -1029,7 +1041,7 @@ namespace MWGui
         // Make sure message boxes are always in front
         // This is an awful workaround for a series of awfully interwoven issues that couldn't be worked around
         // in a better way because of an impressive number of even more awfully interwoven issues.
-        if (mMessageBoxManager && mMessageBoxManager->isInteractiveMessageBox()
+        if (mMessageBoxManager && mMessageBoxManager->getInteractiveMessageBox() != nullptr
             && mCurrentModals.back() != mMessageBoxManager->getInteractiveMessageBox())
         {
             std::vector<WindowModal*>::iterator found = std::find(
@@ -2146,7 +2158,7 @@ namespace MWGui
 
     bool WindowManager::isSavingAllowed() const
     {
-        return !MyGUI::InputManager::getInstance().isModalAny()
+        return !MyGUI::InputManager::getInstance().isModalAny() && !isInteractiveMessageBoxActive()
             && !isConsoleMode()
             // TODO: remove this, once we have properly serialized the state of open windows
             && (!isGuiMode() || (mGuiModes.size() == 1 && (getMode() == GM_MainMenu || getMode() == GM_Rest)));

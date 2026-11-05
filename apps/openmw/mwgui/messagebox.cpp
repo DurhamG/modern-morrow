@@ -1,5 +1,7 @@
 #include "messagebox.hpp"
 
+#include <stdexcept>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
 #include <MyGUI_LanguageManager.h>
@@ -12,6 +14,7 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
 namespace MWGui
@@ -36,11 +39,7 @@ namespace MWGui
 
     void MessageBoxManager::clear()
     {
-        if (mInterMessageBoxe)
-        {
-            mInterMessageBoxe->setVisible(false);
-            mInterMessageBoxe.reset();
-        }
+        resetInteractiveMessageBox();
 
         mMessageBoxes.clear();
         mStaticMessageBox = nullptr;
@@ -55,6 +54,7 @@ namespace MWGui
             mInterMessageBoxe->setVisible(false);
             mInterMessageBoxe.reset();
         }
+        mLuaInteractiveMessage.reset();
     }
 
     void MessageBoxManager::setLastButtonPressed(int index)
@@ -89,6 +89,14 @@ namespace MWGui
             mLastButtonPressed = mInterMessageBoxe->readPressedButton();
             mInterMessageBoxe->setVisible(false);
             mInterMessageBoxe.reset();
+            MWBase::Environment::get().getInputManager()->changeInputMode(
+                MWBase::Environment::get().getWindowManager()->isGuiMode());
+        }
+
+        if (mLuaInteractiveMessage && mLuaInteractiveMessage->mButtonPressed != -1)
+        {
+            mLastButtonPressed = mLuaInteractiveMessage->mButtonPressed;
+            mLuaInteractiveMessage.reset();
             MWBase::Environment::get().getInputManager()->changeInputMode(
                 MWBase::Environment::get().getWindowManager()->isGuiMode());
         }
@@ -127,25 +135,79 @@ namespace MWGui
         mStaticMessageBox = nullptr;
     }
 
-    bool MessageBoxManager::createInteractiveMessageBox(
-        std::string_view message, const std::vector<std::string>& buttons, bool immediate, int defaultFocus)
+    bool MessageBoxManager::createInteractiveMessageBox(std::string_view message,
+        const std::vector<std::string>& buttons, bool immediate, int defaultFocus, bool luaCanAnswer)
     {
-        if (mInterMessageBoxe != nullptr)
+        if (isInteractiveMessageBox())
         {
             Log(Debug::Warning) << "Warning: replacing an interactive message box that was not answered yet";
-            mInterMessageBoxe->setVisible(false);
+            if (mInterMessageBoxe != nullptr)
+                mInterMessageBoxe->setVisible(false);
         }
 
-        mInterMessageBoxe
-            = std::make_unique<InteractiveMessageBox>(*this, std::string{ message }, buttons, immediate, defaultFocus);
+        if (luaCanAnswer && mLuaAnswersInteractiveMessages)
+        {
+            mInterMessageBoxe.reset();
+            const int id = ++mLastLuaInteractiveMessageId;
+            mLuaInteractiveMessage
+                = LuaInteractiveMessage{ id, std::string{ message }, buttons, immediate, defaultFocus };
+
+            // Lua can't look up #{...} tags, so it gets the text that the box would show.
+            MyGUI::LanguageManager& languageManager = MyGUI::LanguageManager::getInstance();
+            std::vector<std::string> buttonLabels;
+            for (const std::string& button : buttons)
+                buttonLabels.push_back(languageManager.replaceTags(MyGUI::UString(button)).asUTF8());
+            MWBase::Environment::get().getLuaManager()->interactiveMessageRequested(
+                id, languageManager.replaceTags(MyGUI::UString(message)).asUTF8(), std::move(buttonLabels));
+        }
+        else
+        {
+            mInterMessageBoxe = std::make_unique<InteractiveMessageBox>(
+                *this, std::string{ message }, buttons, immediate, defaultFocus);
+            mLuaInteractiveMessage.reset();
+        }
         mLastButtonPressed = -1;
 
         return true;
     }
 
-    bool MessageBoxManager::isInteractiveMessageBox()
+    bool MessageBoxManager::isInteractiveMessageBox() const
     {
-        return mInterMessageBoxe != nullptr;
+        return mInterMessageBoxe != nullptr || mLuaInteractiveMessage.has_value();
+    }
+
+    void MessageBoxManager::setLuaAnswersInteractiveMessages(bool answers)
+    {
+        mLuaAnswersInteractiveMessages = answers;
+        if (answers || !mLuaInteractiveMessage || mLuaInteractiveMessage->mButtonPressed != -1)
+            return;
+
+        // Nothing in Lua will answer the waiting message any more, so the manager shows it instead.
+        const LuaInteractiveMessage& waiting = *mLuaInteractiveMessage;
+        mInterMessageBoxe = std::make_unique<InteractiveMessageBox>(
+            *this, waiting.mMessage, waiting.mButtons, waiting.mImmediate, waiting.mDefaultFocus);
+        mLuaInteractiveMessage.reset();
+    }
+
+    void MessageBoxManager::answerInteractiveMessage(int id, int button)
+    {
+        if (!mLuaInteractiveMessage || mLuaInteractiveMessage->mId != id
+            || mLuaInteractiveMessage->mButtonPressed != -1)
+            return;
+        if (button < 0 || static_cast<std::size_t>(button) >= mLuaInteractiveMessage->mButtons.size())
+            throw std::runtime_error("Invalid button index " + std::to_string(button));
+
+        // The same steps as InteractiveMessageBox::buttonActivated. Unless the message is immediate, onFrame
+        // publishes the answer and removes the message, as it does for the box.
+        mLuaInteractiveMessage->mButtonPressed = button;
+        const bool immediate = mLuaInteractiveMessage->mImmediate;
+        onButtonPressed(button);
+        if (!immediate)
+            return;
+
+        setLastButtonPressed(button);
+        MWBase::Environment::get().getInputManager()->changeInputMode(
+            MWBase::Environment::get().getWindowManager()->isGuiMode());
     }
 
     bool MessageBoxManager::removeMessageBox(MessageBox* msgbox)

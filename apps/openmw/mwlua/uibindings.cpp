@@ -158,6 +158,19 @@ namespace MWLua
                       },
                       "Show interactive message");
               };
+        if (!menu)
+        {
+            api["_setLuaAnswersInteractiveMessages"] = [windowManager, luaManager = context.mLuaManager](bool answers) {
+                luaManager->addAction(
+                    [windowManager, answers] { windowManager->setLuaAnswersInteractiveMessages(answers); },
+                    "Set whether Lua answers interactive messages");
+            };
+            api["_answerInteractiveMessage"] = [windowManager, luaManager = context.mLuaManager](int id, int button) {
+                luaManager->addAction(
+                    [windowManager, id, button] { windowManager->answerInteractiveMessage(id, button); },
+                    "Answer interactive message");
+            };
+        }
         api["CONSOLE_COLOR"] = LuaUtil::makeStrictReadOnly(LuaUtil::tableFromPairs<std::string, Misc::Color>(lua,
             {
                 { "Default", Misc::Color::fromHex(MWBase::WindowManager::sConsoleColor_Default.substr(1)) },
