@@ -319,6 +319,10 @@ testing.registerLocalTest('Dialogue outside a conversation', function()
     testing.expectEqual(pcall(types.Player.answerDialogueChoice, self, 1), false,
         'The player should not be able to answer a question')
     testing.expectEqual(pcall(types.Player.sayGoodbye, self), false, 'The player should not be able to say goodbye')
+
+    local shown = types.Player.findTopicLinks(self, 'Ask about @Balmora# in Balmora.')
+    testing.expectEqual(shown.text, 'Ask about Balmora in Balmora.', 'The link marks should be removed')
+    testing.expectThat(shown.links, matchers.equalTo({}), 'No topic should be available to link to')
 end)
 
 testing.registerLocalTest('findPath',

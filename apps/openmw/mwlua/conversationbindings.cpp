@@ -13,6 +13,7 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
+#include "../mwdialogue/keywordsearch.hpp"
 #include "../mwworld/worldmodel.hpp"
 
 #include "context.hpp"
@@ -206,6 +207,33 @@ namespace MWLua
         player["mustSayGoodbye"] = [](const Object& object) {
             verifyPlayer(object);
             return mustSayGoodbye();
+        };
+        player["findTopicLinks"] = [](sol::this_state thisState, const Object& object, std::string_view text) {
+            verifyPlayer(object);
+            const DialogueManager& dialogueManager = getDialogueManager();
+            const MWDialogue::KeywordSearch::DisplayText displayText
+                = dialogueManager.getAvailableTopicSearch().getDisplayText(
+                    std::string(text), MWBase::Environment::get().getWindowManager()->getTranslationDataStorage());
+            const std::vector<DialogueManager::AvailableTopic>& topics = dialogueManager.getAvailableTopics();
+            sol::table links(thisState, sol::create);
+            for (const MWDialogue::KeywordSearch::Link& link : displayText.mLinks)
+            {
+                // Like the Dialogue window, only link to the topics that the player can ask about
+                const ESM::RefId id = ESM::RefId::stringRefId(link.mTopicId);
+                const auto topic = std::find_if(topics.begin(), topics.end(),
+                    [&](const DialogueManager::AvailableTopic& available) { return available.mId == id; });
+                if (topic == topics.end() || link.mBegin == link.mEnd)
+                    continue;
+                sol::table entry(thisState, sol::create);
+                entry["first"] = link.mBegin + 1;
+                entry["last"] = link.mEnd;
+                entry["topicId"] = topic->mId.serializeText();
+                links.add(entry);
+            }
+            sol::table result(thisState, sol::create);
+            result["text"] = displayText.mText;
+            result["links"] = links;
+            return result;
         };
 
         player["askDialogueTopic"] = [context](const Object& object, std::string_view topicId,

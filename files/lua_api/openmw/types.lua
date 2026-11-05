@@ -1934,7 +1934,7 @@
 
 ---
 -- @type PLAYERDialogueLine
--- @field #string text The text. Variables such as `%PCName` are filled in. Links to topics are still marked as `@topic#`.
+-- @field #string text The text. Variables such as `%PCName` are filled in. Links to topics are still marked as `@topic#`. @{#PLAYER.findTopicLinks} gives the text to show and its links.
 -- @field #string title The header above the line, such as the name of the topic the player asked about. Nil for greetings, answers to choices and messages.
 -- @field #boolean isMessage True for a message that the game showed during the conversation, such as "Your journal has been updated".
 -- @field #string type The type of the dialogue record the line came from, as in the `DialogueResponse` event, such as `'greeting'` or `'topic'`. Nil for messages and for the merchant's reply to a finished trade.
@@ -1959,6 +1959,30 @@
 -- @function [parent=#PLAYER] mustSayGoodbye
 -- @param openmw.core#GameObject player
 -- @return #boolean
+
+---
+-- Find the links to topics in the text of a @{#PLAYERDialogueLine}, the way the Dialogue window does when it shows the line.
+-- A word or phrase that names an available topic is a link. So is a part of the text that the line marks as a link with `@topic#`, if that topic is available. The marks are removed from the text.
+-- The topics change during the conversation, so a line can gain or lose links. Outside a conversation, no topic is available, and the result has only the text without its marks.
+-- @function [parent=#PLAYER] findTopicLinks
+-- @param openmw.core#GameObject player
+-- @param #string text
+-- @return #PLAYERDialogueText
+-- @usage local shown = types.Player.findTopicLinks(self, line.text)
+-- for _, link in ipairs(shown.links) do
+--     print(shown.text:sub(link.first, link.last), 'links to', link.topicId)
+-- end
+
+---
+-- @type PLAYERDialogueText
+-- @field #string text The text to show.
+-- @field #list<#PLAYERDialogueLink> links The links in the text, in the order they appear.
+
+---
+-- @type PLAYERDialogueLink
+-- @field #number first The position of the first byte of the link in the text to show.
+-- @field #number last The position of the last byte of the link in the text to show.
+-- @field #string topicId The record ID of the topic, as @{#PLAYERDialogueTopic} gives it.
 
 ---
 -- Ask the actor about one of the topics in @{#PLAYER.getDialogueTopics}, the way clicking it in the Dialogue window does (only in global and player scripts).
