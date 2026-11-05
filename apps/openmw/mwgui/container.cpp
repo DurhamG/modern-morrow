@@ -7,18 +7,14 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
-#include "../mwbase/scriptmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/inventorystore.hpp"
 
-#include "../mwmechanics/aipackage.hpp"
+#include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
-#include "../mwmechanics/summoning.hpp"
-
-#include "../mwscript/interpretercontext.hpp"
 
 #include "containeritemmodel.hpp"
 #include "countdialog.hpp"
@@ -300,55 +296,8 @@ namespace MWGui
             MWWorld::Ptr ptr = mPtr;
             onTakeAllButtonClicked(mTakeButton);
 
-            if (ptr.getClass().isPersistent(ptr))
+            if (!MWMechanics::disposeCorpse(ptr))
                 MWBase::Environment::get().getWindowManager()->messageBox("#{sDisposeCorpseFail}");
-            else
-            {
-                MWMechanics::CreatureStats& creatureStats = ptr.getClass().getCreatureStats(ptr);
-
-                // If we dispose corpse before end of death animation, we should update death counter counter manually.
-                // Also we should run actor's script - it may react on actor's death.
-                if (creatureStats.isDead() && !creatureStats.isDeathAnimationFinished())
-                {
-                    creatureStats.setDeathAnimationFinished(true);
-                    MWBase::Environment::get().getMechanicsManager()->notifyDied(ptr);
-
-                    const ESM::RefId& script = ptr.getClass().getScript(ptr);
-                    if (!script.empty() && MWBase::Environment::get().getWorld()->getScriptsEnabled()
-                        && ptr.getRefData().isLocalScriptEnabled())
-                    {
-                        MWScript::InterpreterContext interpreterContext(&ptr.getRefData().getLocals(), ptr);
-                        MWBase::Environment::get().getScriptManager()->run(script, interpreterContext);
-                    }
-
-                    // Clean up summoned creatures as well
-                    auto& creatureMap = creatureStats.getSummonedCreatureMap();
-                    for (const auto& creature : creatureMap)
-                        MWBase::Environment::get().getMechanicsManager()->cleanupSummonedCreature(creature.second);
-                    creatureMap.clear();
-
-                    // Check if we are a summon and inform our master we've bit the dust
-                    for (const auto& package : creatureStats.getAiSequence())
-                    {
-                        if (package->followTargetThroughDoors() && !package->getTarget().isEmpty())
-                        {
-                            const auto& summoner = package->getTarget();
-                            auto& summons = summoner.getClass().getCreatureStats(summoner).getSummonedCreatureMap();
-                            auto it = std::find_if(summons.begin(), summons.end(),
-                                [&](const auto& entry) { return entry.second == ptr.getCellRef().getRefNum(); });
-                            if (it != summons.end())
-                            {
-                                auto summon = *it;
-                                summons.erase(it);
-                                MWMechanics::purgeSummonEffect(summoner, summon);
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                MWBase::Environment::get().getWorld()->deleteObject(ptr);
-            }
 
             mPtr = MWWorld::Ptr();
         }
