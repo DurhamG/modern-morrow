@@ -18,6 +18,29 @@ The engine changes fall into five groups:
 
 The rest of this note goes through each group. It ends with what a mod could already do today, and an order to do the work in.
 
+## What building it showed (November 2026)
+
+In November 2026 we tried this plan for real. The result is a local branch, not pushed anywhere: `full` in the worktree `D:\Code\openmw-upstreaming`. It has 177 engine commits on top of upstream, grouped into 60 small planned merge requests in 7 milestones. On top of those, the whole Modern Morrow UI is rebuilt as a Lua mod in `modern-morrow/`. Every engine commit builds on its own, and upstream's tests pass, with 54 new integration tests. The mod's screens were checked in the game with a gamepad. The full write-up is `upstreaming-notes/summary.md` in that worktree. It covers the merge requests, the bug fixes found on the way, and the open design questions.
+
+The plan held up. These are the places where it was wrong or incomplete:
+
+- **Phase 1 wasn't all simple getters.** The item value after condition, and the barter price with its 75% cap, lived in private helpers inside the trade window. They needed a refactor first, like the phase 2 work. Two items weren't needed at all: the time left on a power (`canUsePower` already exists) and the UI scale factor (layer sizes give it).
+- **Upstream removed `mwmechanics/trading.cpp` in 2024** and moved haggling into the trade window. Moving it back out for Lua goes against that cleanup, so the merge request has to explain why.
+- **Phase 5 is much smaller than planned.** The count and yes/no dialogs don't need a way for Lua to answer C++. Every caller sits in a window that Lua replaces whole, such as the inventory, magic or the main menu. Only script message boxes with buttons need one.
+- **A Lua main menu belongs in a menu script.** Player scripts get no input while the main menu is open. Menu scripts still lack several things, such as disabled windows that survive loading a game.
+- **Dialogue and character creation needed refactors first.** The conversation's history, its rules and the topic links lived in the dialogue window. The character creation windows were rebuilt from scratch every time the UI refreshed, so a Lua mod couldn't replace them.
+- **Porting the screens found about 30 more small gaps.** Examples:
+  - an item's equipment slots and sounds;
+  - dropping or picking up an item by the engine's rules;
+  - a merchant's goods in the containers they own;
+  - who gave a journal entry and where, which needs save format 42;
+  - plain messages that Lua can draw;
+  - rest and jail progress.
+
+  These became milestone 7, with 77 commits. They are small, but they are real work. A full UI needs them.
+- **The work was bigger in commits than estimated, but not in lines.** It came to about 10,400 lines added and 1,950 removed, including docs and tests. That sits inside the estimate below. But it is 60 merge requests rather than 20 to 30, because each one was kept to a single purpose.
+- **Some things still have no Lua path**, and the mod leaves them to the engine or out entirely: the map and its fog of war, the race preview's 3D head, the settings window, tooltips and keyboard focus.
+
 ## How the fork works today, and why a mod can't copy it
 
 Each Modern Morrow screen is a C++ "panel" class. The old MyGUI window stays alive as the model, invisible, and the panel draws over it on its own layer. The panel performs actions by calling the old window's private handlers, such as `TradeWindow::onOfferButtonClicked` or `AlchemyWindow::onCreateButtonClicked`. Many panels are declared friends of their window for exactly this reason. A barter panel, for example, writes the window's private haggle balance directly. The fork adds no Lua bindings at all.
@@ -91,8 +114,8 @@ Dialogue and character creation are the hard blockers. Lua can't drive them at a
 
 Lua UI covers most of what the panels draw. It has text, rectangles, images from any data-file path (including item and spell icons), flex layout and new layers placed anywhere among the built-in ones. The gaps are:
 
-- **Text measurement.** The panels wrap and lay out text using font metrics, for example in `ControllerUi::wrapText`. Lua can't measure text or read back an element's size after layout.
-- **Scrolling.** There's no scroll view. A mod can offset children inside a fixed parent if MyGUI clips them, but nobody has tested that.
+- **Text measurement.** The panels wrap and lay out text using font metrics, for example in `ControllerUi::wrapText`. Lua can't measure text or read back an element's size after layout. *Built in the attempt:* `ui.measureText` lays the text out with a hidden widget that uses the Text widget's skin, so the size matches what the widget draws. It only works on the main thread.
+- **Scrolling.** There's no scroll view. A mod can offset children inside a fixed parent if MyGUI clips them, but nobody has tested that. *Tested in the attempt:* MyGUI does clip them, so no new API is needed.
 - **A fixed-height layer.** The fork adds a `Height` property to `ScalingLayer`. It gives a canvas that is always 720 units tall and as wide as the screen's aspect ratio. This makes TV and handheld scaling come out right. It would be a small generic change: an option on `ui.layers.insertAfter` and a `ui` call to read the scale.
 - **Map textures and fog of war.** The local and world maps are render targets, not files, so Lua can't show them. The fork keeps the built-in map window and only adds stick panning, tab switching and full-screen fitting. A mod could do the same if the controller changes went upstream into the built-in map window. Otherwise Lua would need the map textures, the explored cells and the markers.
 - **The race preview.** Character creation shows a rendered 3D head. Lua would need a way to show that render target.
@@ -232,6 +255,8 @@ These are design-led too, but they are widget work that also helps upstream's ow
 
 1. **The mechanism for a Lua dialog that answers C++ code.** This is the design piece.
 2. **The count dialog**, **the yes/no dialog** and **script message boxes with buttons**, one merge request each, at 50–100 lines.
+
+   *The attempt showed that only script message boxes need this.* The count and yes/no dialogs are only opened by windows that a mod replaces whole, so the mod draws its own.
 3. **Per-element HUD control.** This is either upstream's planned `registerHudElement` or per-element visibility.
 4. **Window IDs for the main menu and the loading screen.**
 
