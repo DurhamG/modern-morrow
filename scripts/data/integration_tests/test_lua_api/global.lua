@@ -840,6 +840,48 @@ testing.registerGlobalTest('pickpocketing', function()
     types.Player.setCrimeLevel(player, 0)
 end)
 
+testing.registerGlobalTest('level up', function()
+    local player = initPlayer()
+    testing.runLocalTest(player, 'prepare level up on self')
+    local level = types.Actor.stats.level(player)
+    local oldLevel = level.current
+    local multiplier = core.getGMST('iLevelUp10Mult') or 1
+
+    local info = types.Player.getLevelUpInfo(player)
+    testing.expectEqual(info.isReady, true, 'The player should be ready to level up')
+    testing.expectEqual(info.level, oldLevel + 1, 'The player should reach the next level')
+    testing.expectEqual(info.attributeCount, 3, 'The player should raise three attributes')
+    testing.expectEqual(info.attributeIncreases.strength, multiplier, 'Strength should gain its multiplier')
+    testing.expectEqual(info.attributeIncreases.intelligence, 1, 'Intelligence should stop at 100')
+    testing.expectEqual(info.attributeIncreases.luck, 0, 'Luck at 100 should gain nothing')
+    testing.expectEqual(type(info.classImage), 'string', 'The class picture should have a name')
+    testing.expectEqual(type(info.description), 'string', 'The level should have a text')
+
+    testing.expectEqual(pcall(types.Player.levelUp, player, { 'strength', 'intelligence' }), false,
+        'The player should not raise fewer than three attributes')
+    testing.expectEqual(pcall(types.Player.levelUp, player, { 'strength', 'strength', 'intelligence' }), false,
+        'The player should not raise an attribute twice')
+    testing.expectEqual(pcall(types.Player.levelUp, player, { 'strength', 'intelligence', 'luck' }), false,
+        'The player should not raise an attribute that is at 100')
+
+    types.Player.levelUp(player, { 'strength', 'intelligence', 'willpower' })
+    for _ = 1, 10 do
+        coroutine.yield()
+        if level.current > oldLevel then
+            break
+        end
+    end
+    local attributes = types.Actor.stats.attributes
+    testing.expectEqual(level.current, oldLevel + 1, 'The player should gain a level')
+    testing.expectEqual(attributes.strength(player).base, 50 + multiplier, 'Strength should gain its multiplier')
+    testing.expectEqual(attributes.intelligence(player).base, 100, 'Intelligence should stop at 100')
+    testing.expectEqual(attributes.willpower(player).base, 51, 'Willpower should gain one point')
+    testing.expectEqual(level.skillIncreasesForAttribute.strength, 0, 'The skill increases should start over')
+    testing.expectEqual(types.Player.getLevelUpInfo(player).isReady, false, 'The level-up should use up the progress')
+
+    testing.runLocalTest(player, 'restore level up on self')
+end)
+
 testing.registerGlobalTest('rest status', function()
     local player = initPlayer()
     testing.expectEqual(types.Player.getRestStatus(player).canSleep, true,

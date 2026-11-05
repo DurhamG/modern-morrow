@@ -562,6 +562,43 @@ testing.registerLocalTestStep('restore skill on self', function(skillId)
     coroutine.yield()
 end)
 
+local statsBeforeLevelUp = nil
+
+testing.registerLocalTestStep('prepare level up on self', function()
+    local level = types.Actor.stats.level(self)
+    local attributes = types.Actor.stats.attributes
+    statsBeforeLevelUp = {
+        level = level.current,
+        progress = level.progress,
+        health = types.Actor.stats.dynamic.health(self).base,
+        attributes = {},
+    }
+    for _, id in ipairs({ 'strength', 'intelligence', 'willpower', 'luck' }) do
+        statsBeforeLevelUp.attributes[id] = attributes[id](self).base
+    end
+    level.progress = core.getGMST('iLevelUpTotal')
+    level.skillIncreasesForAttribute.strength = 10
+    level.skillIncreasesForAttribute.intelligence = 10
+    attributes.strength(self).base = 50
+    attributes.intelligence(self).base = 99
+    attributes.willpower(self).base = 50
+    attributes.luck(self).base = 100
+    coroutine.yield()
+end)
+
+testing.registerLocalTestStep('restore level up on self', function()
+    local level = types.Actor.stats.level(self)
+    level.current = statsBeforeLevelUp.level
+    level.progress = statsBeforeLevelUp.progress
+    level.skillIncreasesForAttribute.strength = 0
+    level.skillIncreasesForAttribute.intelligence = 0
+    types.Actor.stats.dynamic.health(self).base = statsBeforeLevelUp.health
+    for id, value in pairs(statsBeforeLevelUp.attributes) do
+        types.Actor.stats.attributes[id](self).base = value
+    end
+    coroutine.yield()
+end)
+
 testing.registerLocalTestStep('rest status on self', function()
     local status = types.Player.getRestStatus(self)
     testing.expectEqual(type(status.isUnderwater), 'boolean', 'isUnderwater should be a boolean')

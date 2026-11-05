@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <optional>
 
+#include <components/esm/attr.hpp>
 #include <components/esm3/loadappa.hpp>
 #include <components/esm3/loadbsgn.hpp>
 #include <components/esm3/loadcrea.hpp>
@@ -761,6 +762,77 @@ namespace MWLua
               };
     }
 
+    static std::vector<ESM::RefId> toLevelUpAttributes(const MWMechanics::NpcStats& stats, const sol::table& table)
+    {
+        std::vector<ESM::RefId> result;
+        const MWWorld::Store<ESM::Attribute>& store = MWBase::Environment::get().getESMStore()->get<ESM::Attribute>();
+        for (size_t i = 1; i <= table.size(); ++i)
+        {
+            const std::string_view text = LuaUtil::cast<std::string_view>(table[i]);
+            const ESM::RefId id = ESM::RefId::deserializeText(text);
+            if (!store.search(id))
+                throw std::runtime_error("Attribute '" + std::string(text) + "' does not exist");
+            if (std::find(result.begin(), result.end(), id) != result.end())
+                throw std::runtime_error("Attribute '" + std::string(text) + "' is chosen twice");
+            if (stats.getLevelUpAttributeIncrease(id) <= 0)
+                throw std::runtime_error("Attribute '" + std::string(text) + "' can't be raised any further");
+            result.push_back(id);
+        }
+        if (static_cast<int>(result.size()) != stats.getLevelUpAttributeCount())
+            throw std::runtime_error(
+                "A level-up raises " + std::to_string(stats.getLevelUpAttributeCount()) + " attributes");
+        return result;
+    }
+
+    // Whether a level-up can still raise the attributes that toLevelUpAttributes accepted.
+    static bool canLevelUpWith(const MWMechanics::NpcStats& stats, const std::vector<ESM::RefId>& chosen)
+    {
+        if (static_cast<int>(chosen.size()) != stats.getLevelUpAttributeCount())
+            return false;
+        return std::all_of(chosen.begin(), chosen.end(),
+            [&](const ESM::RefId& id) { return stats.getLevelUpAttributeIncrease(id) > 0; });
+    }
+
+    static void addLevelUpBindings(sol::table& playerBindings, const Context& context)
+    {
+        playerBindings["getLevelUpInfo"] = [](sol::this_state thisState, const Object& player) -> sol::table {
+            verifyPlayer(player);
+            const MWWorld::Ptr ptr = player.ptr();
+            const MWMechanics::NpcStats& stats = ptr.getClass().getNpcStats(ptr);
+            sol::table increases(thisState, sol::create);
+            for (const ESM::Attribute& attribute : MWBase::Environment::get().getESMStore()->get<ESM::Attribute>())
+                increases[attribute.mId.serializeText()] = stats.getLevelUpAttributeIncrease(attribute.mId);
+            sol::table result(thisState, sol::create);
+            result["isReady"] = stats.isLevelUpReady();
+            result["level"] = stats.getLevel() + 1;
+            result["description"] = stats.getLevelUpDescription();
+            result["classImage"] = stats.getLevelUpClassImage();
+            result["attributeCount"] = stats.getLevelUpAttributeCount();
+            result["attributeIncreases"] = increases;
+            return result;
+        };
+        playerBindings["levelUp"] = [context](const Object& player, const sol::table& attributes) {
+            verifyPlayer(player);
+            if (!player.isGObject())
+                throw std::runtime_error("Only global scripts can level up the player");
+            const MWWorld::Ptr ptr = player.ptr();
+            std::vector<ESM::RefId> chosen = toLevelUpAttributes(ptr.getClass().getNpcStats(ptr), attributes);
+            context.mLuaManager->addAction(
+                [chosen = std::move(chosen)] {
+                    const MWWorld::Ptr levelled = MWMechanics::getPlayer();
+                    MWMechanics::NpcStats& stats = levelled.getClass().getNpcStats(levelled);
+                    // An earlier level-up in the frame may have taken one of the attributes to 100.
+                    if (!canLevelUpWith(stats, chosen))
+                    {
+                        Log(Debug::Warning) << "The player didn't level up: an attribute can't be raised any further";
+                        return;
+                    }
+                    stats.levelUp(chosen);
+                },
+                "LevelUpAction");
+        };
+    }
+
     void addJournalClassBindings(sol::state_view& lua, const MWBase::Journal* journal)
     {
         auto journalBindingsClass = lua.new_usertype<MWBase::Journal>("MWDialogue_Journal");
@@ -1237,6 +1309,7 @@ namespace MWLua
         addToolBindings(player, context);
         addEnchantingBindings(player, context);
         addAlchemyBindings(player, context);
+        addLevelUpBindings(player, context);
 
         player["birthSigns"] = initBirthSignRecordBindings(context);
         player["getBirthSign"] = [](const Object& object) -> std::string {

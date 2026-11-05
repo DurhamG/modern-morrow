@@ -1521,6 +1521,31 @@
 -- @return #boolean
 
 ---
+-- What the level-up window shows for the player's next level.
+-- @function [parent=#PLAYER] getLevelUpInfo
+-- @param openmw.core#GameObject player
+-- @return #LevelUpInfo
+
+---
+-- @type LevelUpInfo
+-- @field #boolean isReady Whether the player's skill increases since the last level-up are enough for the next one: the level's `progress` has reached the `iLevelUpTotal` game setting. The engine opens the level-up window after the player sleeps, when this is true.
+-- @field #number level The level that the player reaches.
+-- @field #string description The text that the level-up window shows for that level, from the `Level_Up_Level<level>` fallback value, or `Level_Up_Default` if there is none.
+-- @field #string classImage The name of the class picture that the level-up window shows, such as `'acrobat'`. The picture is `textures/levelup/<name>.dds`. The engine picks it from the skill increases of each specialization since the last level-up.
+-- @field #number attributeCount The number of attributes that the player raises: three, or fewer when fewer attributes are below 100.
+-- @field #map<#string,#number> attributeIncreases The points that each attribute gains if the player picks it, by attribute ID. They come from the skill increases of the skills that the attribute governs, through the `iLevelUp01Mult` to `iLevelUp10Mult` game settings, and stop at 100. An attribute that is at 100 already gains 0, and can't be picked.
+
+---
+-- Level the player up, the way the level-up window does it (only in global scripts).
+-- Each chosen attribute gains the points in @{#LevelUpInfo}. Then the player gains a level, and their health grows by the `fLevelUpHealthEndMult` game setting times their Endurance. The level's `progress` drops by `iLevelUpTotal`, and the skill increases start over.
+-- The player must choose as many different attributes as @{#LevelUpInfo} says, and each must be below 100. Otherwise this throws an error.
+-- This doesn't check whether a level-up is ready, because the level-up window doesn't either when an mwscript opens it. The change happens at the end of the frame. The engine checks the attributes again then, and skips the level-up with a warning in the log if an earlier level-up in the frame took one of them to 100.
+-- @function [parent=#PLAYER] levelUp
+-- @param openmw.core#GameObject player
+-- @param #list<#string> attributes The IDs of the attributes to raise.
+-- @usage types.Player.levelUp(player, { 'strength', 'endurance', 'agility' })
+
+---
 -- Whether the player can rest or wait where they are now. The built-in rest menu checks the same conditions when it opens.
 -- The player can neither rest nor wait while underwater or with an enemy nearby. They can't wait in the air either, unless they use a bed.
 -- When waiting is allowed, the player can sleep, and so heal, only where `canSleep` is true or in a bed. Anywhere else they can only wait.
