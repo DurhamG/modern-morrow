@@ -1,6 +1,8 @@
 #include "magiceffects.hpp"
 
 #include <cmath>
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
 
 #include <components/esm/attr.hpp>
@@ -212,6 +214,115 @@ namespace MWMechanics
             spellLine += ' ';
             spellLine += attribute->mName;
         }
+        return spellLine;
+    }
+
+    std::string describeSpellEffect(const ESM::ENAMstruct& effect, bool isConstant, bool noTarget, bool noMagnitude)
+    {
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+
+        const ESM::MagicEffect* magicEffect = store.get<ESM::MagicEffect>().find(effect.mEffectID);
+        const ESM::Attribute* attribute = store.get<ESM::Attribute>().search(effect.mAttribute);
+        const ESM::Skill* skill = store.get<ESM::Skill>().search(effect.mSkill);
+
+        auto windowManager = MWBase::Environment::get().getWindowManager();
+
+        std::string_view pt = windowManager->getGameSettingString("spoint", {});
+        std::string_view pts = windowManager->getGameSettingString("spoints", {});
+        std::string_view pct = windowManager->getGameSettingString("spercent", {});
+        std::string_view ft = windowManager->getGameSettingString("sfeet", {});
+        std::string_view lvl = windowManager->getGameSettingString("sLevel", {});
+        std::string_view lvls = windowManager->getGameSettingString("sLevels", {});
+        std::string to = " " + std::string{ windowManager->getGameSettingString("sTo", {}) } + " ";
+        std::string sec = " " + std::string{ windowManager->getGameSettingString("ssecond", {}) };
+        std::string secs = " " + std::string{ windowManager->getGameSettingString("sseconds", {}) };
+
+        std::string spellLine = getMagicEffectString(*magicEffect, attribute, skill);
+
+        if ((effect.mMagnMin || effect.mMagnMax) && !noMagnitude)
+        {
+            ESM::MagicEffect::MagnitudeDisplayType displayType = magicEffect->getMagnitudeDisplayType();
+            if (displayType == ESM::MagicEffect::MDT_TimesInt)
+            {
+                std::string_view timesInt = windowManager->getGameSettingString("sXTimesINT", {});
+                std::stringstream formatter;
+
+                formatter << std::fixed << std::setprecision(1) << " " << (effect.mMagnMin / 10.0f);
+                if (effect.mMagnMin != effect.mMagnMax)
+                    formatter << to << (effect.mMagnMax / 10.0f);
+                formatter << timesInt;
+
+                spellLine += formatter.str();
+            }
+            else if (displayType != ESM::MagicEffect::MDT_None)
+            {
+                spellLine += " " + std::to_string(effect.mMagnMin);
+                if (effect.mMagnMin != effect.mMagnMax)
+                    spellLine += to + std::to_string(effect.mMagnMax);
+
+                if (displayType == ESM::MagicEffect::MDT_Percentage)
+                    spellLine += pct;
+                else if (displayType == ESM::MagicEffect::MDT_Feet)
+                {
+                    spellLine += ' ';
+                    spellLine += ft;
+                }
+                else if (displayType == ESM::MagicEffect::MDT_Level)
+                {
+                    spellLine += ' ';
+                    if (effect.mMagnMin == effect.mMagnMax && std::abs(effect.mMagnMin) == 1)
+                        spellLine += lvl;
+                    else
+                        spellLine += lvls;
+                }
+                else // ESM::MagicEffect::MDT_Points
+                {
+                    spellLine += ' ';
+                    if (effect.mMagnMin == effect.mMagnMax && std::abs(effect.mMagnMin) == 1)
+                        spellLine += pt;
+                    else
+                        spellLine += pts;
+                }
+            }
+        }
+
+        // constant effects have no duration and no target
+        if (!isConstant)
+        {
+            int duration = effect.mDuration;
+            if (!(magicEffect->mData.mFlags & ESM::MagicEffect::AppliedOnce))
+                duration = std::max(1, duration);
+
+            if (duration > 0 && !(magicEffect->mData.mFlags & ESM::MagicEffect::NoDuration))
+            {
+                spellLine += ' ';
+                spellLine += windowManager->getGameSettingString("sfor", {});
+                spellLine += ' ' + std::to_string(duration) + ((duration == 1) ? sec : secs);
+            }
+
+            if (effect.mArea > 0)
+            {
+                spellLine += ' ';
+                spellLine += windowManager->getGameSettingString("sin", {});
+                spellLine += ' ' + std::to_string(effect.mArea) + ' ';
+                spellLine += windowManager->getGameSettingString("sfootarea", {});
+            }
+
+            // potions have no target
+            if (!noTarget)
+            {
+                spellLine += ' ';
+                spellLine += windowManager->getGameSettingString("sonword", {});
+                spellLine += ' ';
+                if (effect.mRange == ESM::RT_Self)
+                    spellLine += windowManager->getGameSettingString("sRangeSelf", {});
+                else if (effect.mRange == ESM::RT_Touch)
+                    spellLine += windowManager->getGameSettingString("sRangeTouch", {});
+                else if (effect.mRange == ESM::RT_Target)
+                    spellLine += windowManager->getGameSettingString("sRangeTarget", {});
+            }
+        }
+
         return spellLine;
     }
 }

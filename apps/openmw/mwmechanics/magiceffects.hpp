@@ -114,6 +114,15 @@ namespace MWMechanics
 
     std::string getMagicEffectString(
         const ESM::MagicEffect& effect, const ESM::Attribute* attribute, const ESM::Skill* skill);
+
+    /// Describes a spell effect the way spell tooltips do, such as "Fortify Strength 10 pts for 30 secs on Self".
+    /// It leaves out a magnitude of 0, an area of 0, and the parts that the effect doesn't have, such as the magnitude
+    /// of Water Walking. A duration below 1 second shows as 1 second, except for an effect that is applied once, which
+    /// leaves out a duration of 0.
+    /// @param isConstant Leaves out the duration, the area and the range, as for a constant effect enchantment.
+    /// @param noTarget Leaves out the range, as for a potion, whose effects apply to whoever drinks it.
+    /// @param noMagnitude Leaves out the magnitude, as for an ingredient.
+    std::string describeSpellEffect(const ESM::ENAMstruct& effect, bool isConstant, bool noTarget, bool noMagnitude);
 }
 
 #endif
