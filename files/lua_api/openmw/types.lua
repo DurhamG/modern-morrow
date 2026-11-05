@@ -1381,6 +1381,24 @@
 -- @return #boolean
 
 ---
+-- Whether the player can rest or wait where they are now. The built-in rest menu checks the same conditions when it opens.
+-- The player can neither rest nor wait while underwater or with an enemy nearby. They can't wait in the air either, unless they use a bed.
+-- When waiting is allowed, the player can sleep, and so heal, only where `canSleep` is true or in a bed. Anywhere else they can only wait.
+-- @function [parent=#PLAYER] getRestStatus
+-- @param openmw.core#GameObject player
+-- @return #PLAYERRestStatus
+-- @usage local status = types.Player.getRestStatus(self)
+-- local canWait = not status.isUnderwater and not status.isInAir and not status.isEnemyNearby
+-- local canSleep = canWait and status.canSleep
+
+---
+-- @type PLAYERRestStatus
+-- @field #boolean isUnderwater The player is underwater or walking on water.
+-- @field #boolean isInAir The player is falling, jumping, flying or levitating.
+-- @field #boolean isEnemyNearby An actor nearby is fighting the player or is hostile to them.
+-- @field #boolean canSleep The cell allows sleeping and the player isn't a werewolf.
+
+---
 -- Whether teleportation for this player is enabled.
 -- @function [parent=#PLAYER] isTeleportingEnabled
 -- @param openmw.core#GameObject player

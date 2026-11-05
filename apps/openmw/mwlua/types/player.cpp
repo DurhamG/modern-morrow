@@ -438,6 +438,16 @@ namespace MWLua
         player["isCharGenFinished"] = [](const Object&) -> bool {
             return MWBase::Environment::get().getWorld()->getGlobalFloat(MWWorld::Globals::sCharGenState) == -1;
         };
+        player["getRestStatus"] = [](sol::this_state thisState, const Object& object) {
+            verifyPlayer(object);
+            const int flags = MWBase::Environment::get().getWorld()->canRest();
+            sol::table result(thisState, sol::create);
+            result["isUnderwater"] = (flags & MWBase::World::Rest_PlayerIsUnderwater) != 0;
+            result["isInAir"] = (flags & MWBase::World::Rest_PlayerIsInAir) != 0;
+            result["isEnemyNearby"] = (flags & MWBase::World::Rest_EnemiesAreNearby) != 0;
+            result["canSleep"] = (flags & MWBase::World::Rest_CanSleep) != 0;
+            return result;
+        };
 
         player["OFFENSE_TYPE"]
             = LuaUtil::makeStrictReadOnly(LuaUtil::tableFromPairs<std::string_view, int>(context.sol(),

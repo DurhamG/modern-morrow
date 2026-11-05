@@ -492,6 +492,14 @@ testing.registerLocalTestStep('enchantment cast cost on self', function(enchantm
         'Each point of Enchant above 10 should lower the cost by one percent')
 end)
 
+testing.registerLocalTestStep('rest status on self', function()
+    local status = types.Player.getRestStatus(self)
+    testing.expectEqual(type(status.isUnderwater), 'boolean', 'isUnderwater should be a boolean')
+    testing.expectEqual(type(status.isInAir), 'boolean', 'isInAir should be a boolean')
+    testing.expectEqual(status.isEnemyNearby, false, 'There should be no enemies near the player')
+    testing.expectEqual(status.canSleep, true, 'The player should be able to sleep in an exterior cell')
+end)
+
 return {
     engineHandlers = {
         onFrame = testing.updateLocal,

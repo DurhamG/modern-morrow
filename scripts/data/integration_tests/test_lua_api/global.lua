@@ -309,6 +309,13 @@ testing.registerGlobalTest('stolen items', function()
     stolen:remove()
 end)
 
+testing.registerGlobalTest('rest status', function()
+    local player = initPlayer()
+    testing.expectEqual(types.Player.getRestStatus(player).canSleep, true,
+        'The player should be able to sleep in an exterior cell')
+    testing.runLocalTest(player, 'rest status on self')
+end)
+
 testing.registerGlobalTest('UTF-8 characters', function()
     testing.expectEqual(utf8.codepoint("😀"), 0x1F600)
 
