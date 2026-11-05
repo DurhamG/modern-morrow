@@ -33,6 +33,9 @@ namespace MWGui
 
         bool exit() override { return false; }
 
+        // The info box shows the class questions of character creation
+        std::string_view getWindowIdForLua() const override { return "ChargenClassGenerate"; }
+
         // Events
         typedef MyGUI::delegates::MultiDelegate<int> EventHandle_Int;
 
@@ -68,6 +71,8 @@ namespace MWGui
             Class_Back = 3
         };
         ClassChoiceDialog();
+
+        std::string_view getWindowIdForLua() const override { return "ChargenClass"; }
     };
 
     class GenerateClassResultDialog : public WindowModal
@@ -119,6 +124,8 @@ namespace MWGui
         void onOpen() override;
 
         bool exit() override { return false; }
+
+        std::string_view getWindowIdForLua() const override { return "ChargenClassPick"; }
 
         // Events
         typedef MyGUI::delegates::MultiDelegate<> EventHandle_Void;
@@ -294,6 +301,8 @@ namespace MWGui
         bool exit() override { return false; }
 
         void clear() override;
+
+        std::string_view getWindowIdForLua() const override { return "ChargenClassCreate"; }
 
         std::string getName() const;
         std::string getDescription() const;

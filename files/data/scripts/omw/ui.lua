@@ -288,6 +288,15 @@ return {
         -- is started or loaded, there are no player scripts, so the engine shows its own main menu. While the main menu
         -- is open, player scripts get no input events such as `onKeyPress` or `onControllerButtonPress`, so the
         -- replacement has to rely on the events of its own UI elements, such as `mouseClick`.
+        --
+        -- Each step of character creation has a window with the name of its mode: `ChargenName`, `ChargenRace`,
+        -- `ChargenClass`, `ChargenClassGenerate`, `ChargenClassPick`, `ChargenClassCreate` and `ChargenBirth`. The
+        -- window of the `ChargenClassReview` mode is `ChargenReview`. A replacement of `ChargenClassGenerate` replaces
+        -- both the class questions and the window that shows the resulting class. A replacement closes its mode itself
+        -- when the player is done with the step. Escape doesn't close it, just as it doesn't close the engine's window.
+        -- The engine's review window sends the player back to a step and expects the step to return to the review. A
+        -- replacement of a step that opened from the review, which the `oldMode` of the `UiModeChanged` event shows,
+        -- should open `ChargenClassReview` again when the player is done.
         -- @function [parent=#UI] registerWindow
         -- @param #string windowName
         -- @param #function showFn Callback that will be called when the window should become visible

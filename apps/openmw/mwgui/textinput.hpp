@@ -19,6 +19,8 @@ namespace MWGui
 
         bool exit() override { return false; }
 
+        std::string_view getWindowIdForLua() const override { return "ChargenName"; }
+
         /** Event : Dialog finished, OK button clicked.\n
             signature : void method()\n
         */

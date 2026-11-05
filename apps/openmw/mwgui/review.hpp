@@ -28,6 +28,8 @@ namespace MWGui
 
         bool exit() override { return false; }
 
+        std::string_view getWindowIdForLua() const override { return "ChargenReview"; }
+
         void setPlayerName(const std::string& name);
         void setRace(const ESM::RefId& raceId);
         void setClass(const ESM::Class& playerClass);

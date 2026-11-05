@@ -42,6 +42,8 @@ namespace MWGui
 
         bool exit() override { return false; }
 
+        std::string_view getWindowIdForLua() const override { return "ChargenRace"; }
+
         // Events
         typedef MyGUI::delegates::MultiDelegate<> EventHandle_Void;
 

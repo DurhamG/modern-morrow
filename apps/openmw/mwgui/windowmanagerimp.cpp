@@ -799,6 +799,10 @@ namespace MWGui
         {
             if (!window->exit())
             {
+                // A modal window that can't be closed doesn't let the player open the main menu either. Keep it that
+                // way when a Lua mod shows its own window in its place.
+                if (window->isDisabledByLua() && dynamic_cast<WindowModal*>(window) != nullptr)
+                    return;
                 // unable to exit window, but give access to main menu
                 if (!MyGUI::InputManager::getInstance().isModalAny() && getMode() != GM_MainMenu)
                     pushGuiMode(GM_MainMenu);

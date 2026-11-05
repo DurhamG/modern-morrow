@@ -234,6 +234,42 @@ testing.registerLocalTest('Lua replaces the main menu', function()
     testing.expectEqual(shown, false, 'The replacement should be hidden when the main menu closes')
 end)
 
+testing.registerLocalTest('Lua replaces a character creation window', function()
+    testing.expectThat(I.UI.getWindowsForMode(I.UI.MODE.ChargenRace), matchers.equalTo({ ChargenRace = 'ChargenRace' }))
+    testing.expectThat(I.UI.getWindowsForMode(I.UI.MODE.ChargenClassReview),
+        matchers.equalTo({ ChargenReview = 'ChargenReview' }))
+
+    I.UI.setPauseOnMode(I.UI.MODE.ChargenBirth, false)
+    I.UI.setMode(I.UI.MODE.ChargenBirth)
+    while I.UI.getMode() ~= I.UI.MODE.ChargenBirth do
+        coroutine.yield()
+    end
+    testing.expectEqual(ui._isWindowVisible(I.UI.WINDOW.ChargenBirth), true, "The engine's window should be shown")
+    I.UI.setMode()
+    while I.UI.getMode() ~= nil do
+        coroutine.yield()
+    end
+    I.UI.setPauseOnMode(I.UI.MODE.ChargenBirth, true)
+    testing.expectEqual(ui._isWindowVisible(I.UI.WINDOW.ChargenBirth), false, "The engine's window should be hidden")
+
+    local shown = false
+    I.UI.registerWindow(I.UI.WINDOW.ChargenName, function() shown = true end, function() shown = false end)
+    I.UI.setPauseOnMode(I.UI.MODE.ChargenName, false)
+    I.UI.setMode(I.UI.MODE.ChargenName)
+    while I.UI.getMode() ~= I.UI.MODE.ChargenName do
+        coroutine.yield()
+    end
+    testing.expectEqual(shown, true, 'The replacement should be shown with its mode')
+    testing.expectEqual(ui._isWindowVisible(I.UI.WINDOW.ChargenName), false, "The engine's window should stay hidden")
+
+    I.UI.setMode()
+    while I.UI.getMode() ~= nil do
+        coroutine.yield()
+    end
+    I.UI.setPauseOnMode(I.UI.MODE.ChargenName, true)
+    testing.expectEqual(shown, false, 'The replacement should be hidden when its mode closes')
+end)
+
 testing.registerLocalTest('Lua answers an interactive message', function()
     local asked = nil
     local answered = false

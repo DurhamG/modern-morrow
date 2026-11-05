@@ -641,7 +641,9 @@ namespace MWGui
         buttons.emplace_back(step.mResponses[2].mAnswer);
         mGenerateClassQuestionDialog->setButtons(buttons);
 
-        MWBase::Environment::get().getSoundManager()->say(Misc::ResourceHelpers::correctSoundPath(step.mSound));
+        // A Lua mod that replaces the questions asks them in its own way
+        if (!mGenerateClassQuestionDialog->isDisabledByLua())
+            MWBase::Environment::get().getSoundManager()->say(Misc::ResourceHelpers::correctSoundPath(step.mSound));
     }
 
     void CharacterCreation::selectGeneratedClass()
