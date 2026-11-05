@@ -12,11 +12,8 @@
 #include <components/settings/values.hpp>
 #include <components/widgets/list.hpp>
 
-#include <components/esm3/loadgmst.hpp>
-
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
-#include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
 #include "../mwworld/class.hpp"
@@ -25,7 +22,7 @@
 #include "../mwworld/store.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
-#include "../mwmechanics/creaturestats.hpp"
+#include "../mwmechanics/spellmaking.hpp"
 #include "../mwmechanics/spellutil.hpp"
 
 #include "class.hpp"
@@ -94,6 +91,11 @@ namespace MWGui
         mDurationSlider->eventScrollChangePosition += MyGUI::newDelegate(this, &EditEffectDialog::onDurationChanged);
         mAreaSlider->eventScrollChangePosition += MyGUI::newDelegate(this, &EditEffectDialog::onAreaChanged);
 
+        mMagnitudeMinSlider->setScrollRange(MWMechanics::sMaxCustomMagnitude);
+        mMagnitudeMaxSlider->setScrollRange(MWMechanics::sMaxCustomMagnitude);
+        mDurationSlider->setScrollRange(MWMechanics::sMaxCustomDuration);
+        mAreaSlider->setScrollRange(MWMechanics::sMaxCustomArea + 1);
+
         if (Settings::gui().mControllerMenus)
         {
             mControllerButtons.mA = "#{Interface:Select}";
@@ -124,8 +126,8 @@ namespace MWGui
 
     void EditEffectDialog::newEffect(const ESM::MagicEffect* effect)
     {
-        bool allowSelf = (effect->mData.mFlags & ESM::MagicEffect::CastSelf) != 0 || mConstantEffect;
-        bool allowTouch = (effect->mData.mFlags & ESM::MagicEffect::CastTouch) && !mConstantEffect;
+        bool allowSelf = MWMechanics::isCustomEffectRangeAllowed(*effect, ESM::RT_Self, mConstantEffect);
+        bool allowTouch = MWMechanics::isCustomEffectRangeAllowed(*effect, ESM::RT_Touch, mConstantEffect);
 
         setMagicEffect(effect);
         mEditing = false;
@@ -282,9 +284,9 @@ namespace MWGui
         // cycle through range types until we find something that's allowed
         // does not handle the case where nothing is allowed (this should be prevented before opening the Add Effect
         // dialog)
-        bool allowSelf = (mMagicEffect->mData.mFlags & ESM::MagicEffect::CastSelf) != 0 || mConstantEffect;
-        bool allowTouch = (mMagicEffect->mData.mFlags & ESM::MagicEffect::CastTouch) && !mConstantEffect;
-        bool allowTarget = (mMagicEffect->mData.mFlags & ESM::MagicEffect::CastTarget) && !mConstantEffect;
+        bool allowSelf = MWMechanics::isCustomEffectRangeAllowed(*mMagicEffect, ESM::RT_Self, mConstantEffect);
+        bool allowTouch = MWMechanics::isCustomEffectRangeAllowed(*mMagicEffect, ESM::RT_Touch, mConstantEffect);
+        bool allowTarget = MWMechanics::isCustomEffectRangeAllowed(*mMagicEffect, ESM::RT_Target, mConstantEffect);
         if (mEffect.mRange == ESM::RT_Self && !allowSelf)
             mEffect.mRange = (mEffect.mRange + 1) % 3;
         if (mEffect.mRange == ESM::RT_Touch && !allowTouch)
@@ -624,49 +626,29 @@ namespace MWGui
 
     void SpellCreationDialog::onBuyButtonClicked(MyGUI::Widget* /*sender*/)
     {
-        if (mEffects.size() <= 0)
-        {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage30}");
-            return;
-        }
-
-        if (mNameEdit->getCaption().empty())
-        {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage10}");
-            return;
-        }
-
-        if (mMagickaCost->getCaption() == "0")
-        {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sEnchantmentMenu8}");
-            return;
-        }
-
-        MWWorld::Ptr player = MWMechanics::getPlayer();
-        int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
-
-        int price = MyGUI::utility::parseInt(mPriceLabel->getCaption());
-        if (price > playerGold)
-        {
-            MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage18}");
-            return;
-        }
-
         mSpell.mName = mNameEdit->getCaption();
 
-        player.getClass().getContainerStore(player).remove(MWWorld::ContainerStore::sGoldId, price);
-
-        // add gold to NPC trading gold pool
-        MWMechanics::CreatureStats& npcStats = mPtr.getClass().getCreatureStats(mPtr);
-        npcStats.setGoldPool(npcStats.getGoldPool() + price);
+        switch (MWMechanics::getSpellmakingProblem(mPtr, mSpell))
+        {
+            case MWMechanics::SpellmakingProblem::None:
+                break;
+            case MWMechanics::SpellmakingProblem::NoEffects:
+                MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage30}");
+                return;
+            case MWMechanics::SpellmakingProblem::NoName:
+                MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage10}");
+                return;
+            case MWMechanics::SpellmakingProblem::NoCost:
+                MWBase::Environment::get().getWindowManager()->messageBox("#{sEnchantmentMenu8}");
+                return;
+            case MWMechanics::SpellmakingProblem::NotEnoughGold:
+                MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage18}");
+                return;
+        }
 
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Mysticism Hit"));
 
-        const ESM::Spell* spell = MWBase::Environment::get().getESMStore()->insert(mSpell);
-
-        MWMechanics::CreatureStats& stats = player.getClass().getCreatureStats(player);
-        MWMechanics::Spells& spells = stats.getSpells();
-        spells.add(spell->mId);
+        MWMechanics::buyCustomSpell(mPtr, mSpell);
 
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_SpellCreation);
     }
@@ -693,6 +675,10 @@ namespace MWGui
 
     void SpellCreationDialog::notifyEffectsChanged()
     {
+        ESM::EffectList effects;
+        effects.populate(mEffects);
+        mSpell = MWMechanics::makeCustomSpell(mSpell.mName, effects);
+
         if (mEffects.empty())
         {
             mMagickaCost->setCaption("0");
@@ -701,32 +687,9 @@ namespace MWGui
             return;
         }
 
-        float y = 0;
+        mMagickaCost->setCaption(MyGUI::utility::toString(mSpell.mData.mCost));
 
-        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
-
-        for (const ESM::ENAMstruct& effect : mEffects)
-        {
-            y += std::max(
-                1.f, MWMechanics::calcEffectCost(effect, nullptr, MWMechanics::EffectCostMethod::PlayerSpell));
-
-            if (effect.mRange == ESM::RT_Target)
-                y *= 1.5;
-        }
-
-        mSpell.mEffects.populate(mEffects);
-        mSpell.mData.mCost = int(y);
-        mSpell.mData.mType = ESM::Spell::ST_Spell;
-        mSpell.mData.mFlags = 0;
-
-        mMagickaCost->setCaption(MyGUI::utility::toString(int(y)));
-
-        float fSpellMakingValueMult = store.get<ESM::GameSetting>().find("fSpellMakingValueMult")->mValue.getFloat();
-
-        int price = std::max(1, static_cast<int>(y * fSpellMakingValueMult));
-        price = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mPtr, price, true);
-
-        mPriceLabel->setCaption(MyGUI::utility::toString(int(price)));
+        mPriceLabel->setCaption(MyGUI::utility::toString(MWMechanics::getCustomSpellPrice(mPtr, mSpell.mEffects)));
 
         float chance = MWMechanics::calcSpellBaseSuccessChance(&mSpell, MWMechanics::getPlayer(), nullptr);
 
@@ -773,34 +736,8 @@ namespace MWGui
     void EffectEditorBase::startEditing()
     {
         // get the list of magic effects that are known to the player
-
-        MWWorld::Ptr player = MWMechanics::getPlayer();
-        MWMechanics::CreatureStats& stats = player.getClass().getCreatureStats(player);
-        MWMechanics::Spells& spells = stats.getSpells();
-
-        std::vector<const ESM::MagicEffect*> knownEffects;
-
-        for (const ESM::Spell* spell : spells)
-        {
-            // only normal spells count
-            if (spell->mData.mType != ESM::Spell::ST_Spell)
-                continue;
-
-            for (const ESM::IndexedENAMstruct& effectInfo : spell->mEffects.mList)
-            {
-                const ESM::MagicEffect* effect = MWBase::Environment::get().getESMStore()->get<ESM::MagicEffect>().find(
-                    effectInfo.mData.mEffectID);
-
-                // skip effects that do not allow spellmaking/enchanting
-                int requiredFlags
-                    = (mType == Spellmaking) ? ESM::MagicEffect::AllowSpellmaking : ESM::MagicEffect::AllowEnchanting;
-                if (!(effect->mData.mFlags & requiredFlags))
-                    continue;
-
-                if (std::find(knownEffects.begin(), knownEffects.end(), effect) == knownEffects.end())
-                    knownEffects.push_back(effect);
-            }
-        }
+        std::vector<const ESM::MagicEffect*> knownEffects = MWMechanics::getCustomMagicEffects(MWMechanics::getPlayer(),
+            mType == Spellmaking ? MWMechanics::CustomMagic::Spell : MWMechanics::CustomMagic::Enchantment);
 
         std::sort(knownEffects.begin(), knownEffects.end(), sortMagicEffects);
 
@@ -882,7 +819,7 @@ namespace MWGui
 
     void EffectEditorBase::onAvailableEffectClicked(MyGUI::Widget* sender)
     {
-        if (mEffects.size() >= 8)
+        if (mEffects.size() >= MWMechanics::sMaxCustomEffects)
         {
             MWBase::Environment::get().getWindowManager()->messageBox("#{sNotifyMessage28}");
             return;
@@ -894,9 +831,9 @@ namespace MWGui
         const ESM::MagicEffect* effect
             = MWBase::Environment::get().getESMStore()->get<ESM::MagicEffect>().find(mSelectedKnownEffectId);
 
-        bool allowSelf = (effect->mData.mFlags & ESM::MagicEffect::CastSelf) != 0 || mConstantEffect;
-        bool allowTouch = (effect->mData.mFlags & ESM::MagicEffect::CastTouch) && !mConstantEffect;
-        bool allowTarget = (effect->mData.mFlags & ESM::MagicEffect::CastTarget) && !mConstantEffect;
+        bool allowSelf = MWMechanics::isCustomEffectRangeAllowed(*effect, ESM::RT_Self, mConstantEffect);
+        bool allowTouch = MWMechanics::isCustomEffectRangeAllowed(*effect, ESM::RT_Touch, mConstantEffect);
+        bool allowTarget = MWMechanics::isCustomEffectRangeAllowed(*effect, ESM::RT_Target, mConstantEffect);
 
         if (!allowSelf && !allowTouch && !allowTarget)
             return; // TODO: Show an error message popup?
