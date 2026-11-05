@@ -51,6 +51,10 @@ namespace MWGui
         // Fill in the window of a step before the window manager shows it
         void prepareDialog(GuiMode id);
 
+        // Close the mode of a step that a Lua window showed, and open the step that the engine's window would open
+        // next. Returns false for a mode that isn't such a step.
+        bool finishStep(GuiMode mode);
+
         void setAttribute(ESM::RefId id, const MWMechanics::AttributeValue& value) override;
         void setValue(std::string_view id, const MWMechanics::DynamicStat<float>& value) override;
         void setValue(ESM::RefId id, const MWMechanics::SkillValue& value) override;

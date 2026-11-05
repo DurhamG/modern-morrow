@@ -1613,6 +1613,12 @@ namespace MWGui
         MWBase::Environment::get().getLuaManager()->uiModeChanged(MWWorld::Ptr());
     }
 
+    void WindowManager::finishCharGenStep(GuiMode mode)
+    {
+        if (getMode() != mode || !mCharGen || !mCharGen->finishStep(mode))
+            Log(Debug::Warning) << "Can't finish a character creation step that isn't open";
+    }
+
     void WindowManager::goToJail(int days)
     {
         pushGuiMode(MWGui::GM_Jail);

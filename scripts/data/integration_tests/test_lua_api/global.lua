@@ -1530,6 +1530,10 @@ testing.registerGlobalTest('character creation', function()
         'The race should be playable')
     testing.expectEqual(pcall(types.Player.setCharGenBirthSign, player, 'omw_no_such_sign'), false,
         'The birth sign should exist')
+    testing.expectEqual(pcall(types.Player.finishCharGenStep, player, 'Interface'), false,
+        'Only a character creation step should be finished')
+    testing.expectEqual(pcall(types.Player.finishCharGenStep, player, 'ChargenName'), true,
+        'A step should be finished during character creation')
     types.Player.setCharGenName(player, 'Lua Hero')
     types.Player.setCharGenRace(player, { race = 'omw_chargen_race', isMale = false })
     types.Player.setCharGenClass(player, 'omw_chargen_class')

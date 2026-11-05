@@ -309,6 +309,8 @@ namespace MWGui
 
         void executeInConsole(const std::filesystem::path& path) override;
 
+        void finishCharGenStep(MWGui::GuiMode mode) override;
+
         void enableRest() override { mRestAllowed = true; }
         bool getRestEnabled() override;
 

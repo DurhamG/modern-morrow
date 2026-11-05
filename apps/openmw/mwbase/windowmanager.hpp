@@ -294,6 +294,10 @@ namespace MWBase
 
         virtual void executeInConsole(const std::filesystem::path& path) = 0;
 
+        /// Ends the character creation step of @a mode, which must be the current mode, as the engine's window of the
+        /// step does when the player is done with it.
+        virtual void finishCharGenStep(MWGui::GuiMode mode) = 0;
+
         virtual void enableRest() = 0;
         virtual bool getRestEnabled() = 0;
         virtual bool getJournalAllowed() = 0;

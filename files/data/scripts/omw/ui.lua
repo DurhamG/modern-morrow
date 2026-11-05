@@ -316,11 +316,11 @@ return {
         -- Each step of character creation has a window with the name of its mode: `ChargenName`, `ChargenRace`,
         -- `ChargenClass`, `ChargenClassGenerate`, `ChargenClassPick`, `ChargenClassCreate` and `ChargenBirth`. The
         -- window of the `ChargenClassReview` mode is `ChargenReview`. A replacement of `ChargenClassGenerate` replaces
-        -- both the class questions and the window that shows the resulting class. A replacement closes its mode itself
-        -- when the player is done with the step. Escape doesn't close it, just as it doesn't close the engine's window.
-        -- The engine's review window sends the player back to a step and expects the step to return to the review. A
-        -- replacement of a step that opened from the review, which the `oldMode` of the `UiModeChanged` event shows,
-        -- should open `ChargenClassReview` again when the player is done.
+        -- both the class questions and the window that shows the resulting class. When the player is done with a
+        -- step, its replacement calls `types.Player.finishCharGenStep`, which closes the mode and opens the step that
+        -- the engine's window would open next, such as the review again when the player came from it. The replacements
+        -- of `ChargenClass` and `ChargenReview` open the next mode themselves. Escape doesn't close a step, just as it
+        -- doesn't close the engine's window.
         --
         -- The `Rest` mode has two windows: `WaitDialog`, where the player picks the hours, and `WaitDialogProgressBar`,
         -- which the engine shows instead while the hours pass. The interface shows the replacements of both when the

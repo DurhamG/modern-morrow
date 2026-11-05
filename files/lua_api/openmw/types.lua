@@ -1679,6 +1679,22 @@
 -- @param #string name The player's name, which can't be empty
 
 ---
+-- End a step of character creation that a Lua window shows, and go on as the engine's window of the step would when
+-- the player is done with it. The step's mode closes. If the player came to the step from the review window, the
+-- review opens again. If the player has been through the step before, the next step opens. Otherwise the game's
+-- scripts open the next step, as they do in the original game. The order of the steps is name, race, class, birth sign
+-- and review.
+-- The change happens at the end of the frame. If the step's mode isn't the current mode then, nothing happens, with a
+-- warning in the log. Like the `setCharGen` functions, it works only until character creation is finished, and only in
+-- the player's own scripts and in global scripts. Set the step's choice before, such as with
+-- @{#PLAYER.setCharGenName}.
+-- @function [parent=#PLAYER] finishCharGenStep
+-- @param openmw.core#GameObject player
+-- @param #string mode The step's mode: `ChargenName`, `ChargenRace`, `ChargenClassGenerate`, `ChargenClassPick`, `ChargenClassCreate` or `ChargenBirth`.
+-- @usage types.Player.setCharGenName(self, name)
+-- types.Player.finishCharGenStep(self, 'ChargenName')
+
+---
 -- Choose the player's race, gender, head and hair during character creation, as the race window does. Like the window,
 -- this rebuilds the player's attributes, skills and spells: the race sets the attributes and the skill bonuses, and adds
 -- its powers. The change happens at the end of the frame.

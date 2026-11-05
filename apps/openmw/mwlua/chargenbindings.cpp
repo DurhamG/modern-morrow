@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <map>
 #include <stdexcept>
 #include <string>
 
@@ -84,6 +85,24 @@ namespace MWLua
             return result;
         }
 
+        // The modes of the character creation steps that have a step after them.
+        MWGui::GuiMode toCharGenStep(std::string_view mode)
+        {
+            static const std::map<std::string_view, MWGui::GuiMode> steps{
+                { "ChargenName", MWGui::GM_Name },
+                { "ChargenRace", MWGui::GM_Race },
+                { "ChargenClassGenerate", MWGui::GM_ClassGenerate },
+                { "ChargenClassPick", MWGui::GM_ClassPick },
+                { "ChargenClassCreate", MWGui::GM_ClassCreate },
+                { "ChargenBirth", MWGui::GM_Birth },
+            };
+            const auto it = steps.find(mode);
+            if (it == steps.end())
+                throw std::runtime_error(
+                    "'" + std::string(mode) + "' is not a mode of a character creation step with a step after it");
+            return it->second;
+        }
+
         unsigned toAnswerCount(const sol::table& answers, std::string_view specialization)
         {
             const sol::object value = answers.get<sol::object>(specialization);
@@ -158,6 +177,14 @@ namespace MWLua
             context.mLuaManager->addAction(
                 [signId] { MWBase::Environment::get().getMechanicsManager()->setPlayerBirthsign(signId); },
                 "SetCharGenBirthSignAction");
+        };
+
+        player["finishCharGenStep"] = [context](const Object& object, std::string_view mode) {
+            verifyCreator(object);
+            const MWGui::GuiMode step = toCharGenStep(mode);
+            context.mLuaManager->addAction(
+                [step] { MWBase::Environment::get().getWindowManager()->finishCharGenStep(step); },
+                "FinishCharGenStepAction");
         };
 
         player["getCharGenHeads"] = [](sol::this_state thisState, const sol::object& raceOrId, bool isMale) {

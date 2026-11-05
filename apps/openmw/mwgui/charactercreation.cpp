@@ -562,6 +562,29 @@ namespace MWGui
 
     CharacterCreation::~CharacterCreation() = default;
 
+    bool CharacterCreation::finishStep(GuiMode mode)
+    {
+        switch (mode)
+        {
+            case GM_Name:
+                handleDialogDone(CSE_NameChosen, GM_Race);
+                return true;
+            case GM_Race:
+                handleDialogDone(CSE_RaceChosen, GM_Class);
+                return true;
+            case GM_ClassGenerate:
+            case GM_ClassPick:
+            case GM_ClassCreate:
+                handleDialogDone(CSE_ClassChosen, GM_Birth);
+                return true;
+            case GM_Birth:
+                handleDialogDone(CSE_BirthSignChosen, GM_Review);
+                return true;
+            default:
+                return false;
+        }
+    }
+
     void CharacterCreation::handleDialogDone(CSE currentStage, int nextMode)
     {
         MWBase::Environment::get().getWindowManager()->popGuiMode();
