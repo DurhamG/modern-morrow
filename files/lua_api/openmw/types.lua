@@ -36,6 +36,26 @@
 -- @param #number amount
 
 ---
+-- The gold a merchant asks to take the player to one of their travel destinations.
+-- This is the price that the travel window shows. A guild guide, who works from an interior, asks the `fMagesGuildTravel` game setting. Other merchants ask for the distance from the player divided by the `fTravelMult` game setting.
+-- Each follower who would come along pays the same as the player. Then the merchant's disposition, and the Mercantile, Personality and Luck of the player and the merchant, change the total, as they do for anything the merchant sells.
+-- @function [parent=#Actor] getTravelPrice
+-- @param openmw.core#GameObject merchant
+-- @param #number destination The index of the destination in the merchant record's `travelDestinations`.
+-- @return #number
+-- @usage for i, destination in ipairs(types.NPC.record(merchant).travelDestinations) do
+--     print(destination.cellId, types.Actor.getTravelPrice(merchant, i))
+-- end
+
+---
+-- The hours that pass on a trip with a merchant to one of their travel destinations.
+-- A trip with a guild guide, who works from an interior, takes no time. Other trips take the distance from the player divided by the `fTravelTimeMult` game setting.
+-- @function [parent=#Actor] getTravelHours
+-- @param openmw.core#GameObject merchant
+-- @param #number destination The index of the destination in the merchant record's `travelDestinations`.
+-- @return #number
+
+---
 -- Check if the given actor is dead (health reached 0, so death process started).
 -- @function [parent=#Actor] isDead
 -- @param openmw.core#GameObject actor
@@ -1323,6 +1343,16 @@
 -- @function [parent=#PLAYER] isCharGenFinished
 -- @param openmw.core#GameObject player
 -- @return #boolean
+
+---
+-- Travel with a merchant to one of their travel destinations, the way the travel window does it (only in global scripts).
+-- The player pays @{#Actor.getTravelPrice}, and the gold goes to the merchant's barter gold. Then @{#Actor.getTravelHours} pass, while the player and other actors sleep. Last, the player and their followers move to the destination, and `GetPCTraveling` reports the trip to mwscripts for a frame.
+-- The player must have enough gold. Otherwise this throws an error.
+-- This doesn't check whether the merchant offers travel as a service. The trip happens at the end of the frame, after the other changes that scripts made in it. The engine checks the gold again then, and skips the trip if the player can no longer pay.
+-- @function [parent=#PLAYER] buyTravel
+-- @param openmw.core#GameObject player
+-- @param openmw.core#GameObject merchant
+-- @param #number destination The index of the destination in the merchant record's `travelDestinations`.
 
 ---
 -- Whether teleportation for this player is enabled.

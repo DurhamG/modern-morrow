@@ -437,6 +437,23 @@ testing.registerGlobalTest('openmw.util math conventions', function()
     testing.expectEqualWithDelta(roundTrip.y, 0, 1e-5, 'inverse round-trip y')
 end)
 
+testing.registerGlobalTest('travel', function()
+    local player = initPlayer()
+    local merchant = world.createObject('landracer')
+    merchant:addScript('idle.lua')
+    merchant:teleport(player.cell, player.position + util.vector3(0, 500, 0))
+    coroutine.yield()
+    -- The example suite has no merchant with travel destinations, and Lua can't add them to a record.
+    testing.expectEqual(#types.Creature.record(merchant).travelDestinations, 0, 'The creature should not offer travel')
+    testing.expectEqual(pcall(types.Actor.getTravelPrice, merchant, 1), false,
+        'A merchant should have no price for a destination they do not offer')
+    testing.expectEqual(pcall(types.Actor.getTravelHours, merchant, 1), false,
+        'A merchant should have no travel time for a destination they do not offer')
+    testing.expectEqual(pcall(types.Player.buyTravel, player, merchant, 1), false,
+        'The player should not travel to a destination the merchant does not offer')
+    merchant:remove()
+end)
+
 testing.registerGlobalTest('load script generated static', function()
     local record = types.Static.records.OMW_Generated_Static
     testing.expectNotEqual(record, nil, 'OMW_Generated_Static should have been generated')

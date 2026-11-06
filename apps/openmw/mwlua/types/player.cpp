@@ -1,5 +1,6 @@
 #include "types.hpp"
 
+#include <components/debug/debuglog.hpp>
 #include <components/esm3/loadbsgn.hpp>
 #include <components/esm3/loadfact.hpp>
 #include <components/lua/util.hpp>
@@ -13,7 +14,9 @@
 #include "apps/openmw/mwbase/mechanicsmanager.hpp"
 #include "apps/openmw/mwbase/world.hpp"
 #include "apps/openmw/mwmechanics/npcstats.hpp"
+#include "apps/openmw/mwmechanics/services.hpp"
 #include "apps/openmw/mwworld/class.hpp"
+#include "apps/openmw/mwworld/containerstore.hpp"
 #include "apps/openmw/mwworld/esmstore.hpp"
 #include "apps/openmw/mwworld/globals.hpp"
 #include "apps/openmw/mwworld/player.hpp"
@@ -123,6 +126,26 @@ namespace MWLua
     {
         if (!cls.isNpc())
             throw std::runtime_error("The argument must be a NPC!");
+    }
+
+    static void verifyActor(const MWWorld::Class& cls)
+    {
+        if (!cls.isActor())
+            throw std::runtime_error("Actor expected");
+    }
+
+    // Buying a service changes the merchant as well as the player, so only global scripts can do it.
+    static void verifyBuyer(const Object& player)
+    {
+        verifyPlayer(player);
+        if (!player.isGObject())
+            throw std::runtime_error("Only global scripts can buy services");
+    }
+
+    static bool canPay(int price)
+    {
+        const MWWorld::Ptr ptr = MWBase::Environment::get().getWorld()->getPlayerPtr();
+        return price <= ptr.getClass().getContainerStore(ptr).count(MWWorld::ContainerStore::sGoldId);
     }
 
     void addJournalClassBindings(sol::state_view& lua, const MWBase::Journal* journal)
@@ -435,6 +458,27 @@ namespace MWLua
             if (amount == 0)
                 MWBase::Environment::get().getWorld()->getPlayer().recordCrimeId();
         };
+        player["buyTravel"] = [context](const Object& buyer, const Object& merchant, int64_t destination) {
+            verifyBuyer(buyer);
+            const MWWorld::Ptr merchantPtr = merchant.ptr();
+            verifyActor(merchantPtr.getClass());
+            const ESM::Transport::Dest& dest = getTravelDestination(merchantPtr, destination);
+            if (!canPay(MWMechanics::getTravelPrice(merchantPtr, dest)))
+                throw std::runtime_error("The player doesn't have enough gold");
+            // The trip moves the player, so it must wait until the other queued actions are done.
+            context.mLuaManager->addTeleportPlayerAction([merchant = Object(merchantPtr), dest] {
+                const MWWorld::Ptr ptr = merchant.ptr();
+                const int price = MWMechanics::getTravelPrice(ptr, dest);
+                // An earlier action may have spent the gold.
+                if (!canPay(price))
+                {
+                    Log(Debug::Warning) << "The player didn't travel: The player doesn't have enough gold";
+                    return;
+                }
+                MWMechanics::travel(ptr, dest, price);
+            });
+        };
+
         player["isCharGenFinished"] = [](const Object&) -> bool {
             return MWBase::Environment::get().getWorld()->getGlobalFloat(MWWorld::Globals::sCharGenState) == -1;
         };

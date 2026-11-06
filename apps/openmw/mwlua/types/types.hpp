@@ -4,6 +4,7 @@
 #include <sol/sol.hpp>
 
 #include <components/esm/defs.hpp>
+#include <components/esm3/transport.hpp>
 #include <components/lua/luastate.hpp>
 
 #include "../context.hpp"
@@ -26,6 +27,10 @@ namespace MWLua
     sol::table getPackageToTypeTable(lua_State* state);
 
     sol::table initTypesPackage(const Context& context);
+
+    // The destination at a Lua index in the merchant record's list of travel destinations. Throws an error if there
+    // is none.
+    const ESM::Transport::Dest& getTravelDestination(const MWWorld::Ptr& merchant, int64_t index);
 
     // used in initTypesPackage
     void addActivatorBindings(sol::table activator, const Context& context);
