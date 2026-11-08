@@ -47,7 +47,15 @@ jobs:
         name: ${{ needs.Linux.outputs.appimage }}
         path: linux
 
-    - name: Make a draft release
+    # The update script from CI/linux/appimage is a file of the release too.
+    - uses: actions/checkout@v6
+      with:
+        path: source
+        sparse-checkout: CI/linux/appimage
+
+    # The first run for a tag makes a draft. Once the release is published, a run for the same tag, such as after the
+    # tag is moved, replaces its files and keeps it published.
+    - name: Make or update the release
       uses: softprops/action-gh-release@v2
       with:
         draft: true
@@ -56,3 +64,4 @@ jobs:
           windows/*.exe
           windows/*.zip
           linux/*.AppImage
+          source/CI/linux/appimage/ModernMorrow-AutoUpdate.sh
