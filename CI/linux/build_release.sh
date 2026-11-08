@@ -23,7 +23,7 @@ export OPENMW_LOCAL_INSTALL=1
 export CI_OPENMW_USE_VCPKG=true
 
 dnf install -y epel-release
-dnf install -y git binutils gcc-toolset-13 cmake unzip pkg-config p7zip p7zip-plugins pipx xz file \
+dnf install -y git binutils gcc-toolset-13 cmake unzip pkg-config p7zip p7zip-plugins python3-pip xz file \
     mesa-libGL-devel libxkbcommon-devel mesa-libEGL-devel fontconfig openal-soft
 
 # The newer compiler comes from a toolset that its own script turns on. The script reads unset variables.
