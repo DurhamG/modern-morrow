@@ -37,6 +37,7 @@ namespace MWGui
     {
         if (mDialog != nullptr)
             mDialog->hide();
+        WindowModal::onClose();
     }
 
     void ConfirmationDialog::askForConfirmation(const std::string& message)
