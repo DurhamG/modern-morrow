@@ -1163,6 +1163,8 @@ namespace MWGui
 
         mHud->onFrame(frameDuration);
 
+        mLoadingScreen->updateSaveNotice(frameDuration);
+
         mPostProcessorHud->onFrame(frameDuration);
 
         if (mCharGen)

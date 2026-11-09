@@ -70,10 +70,16 @@ namespace MWGui
         if (mPanel == nullptr || !mPanel->getVisible())
             return;
         const std::size_t range = mProgressBar->getScrollRange();
-        // An important label, such as "Your journal has been updated", goes in the middle of the screen.
+        // Only saving gives an important label. It goes in a corner, so that it gets in the way of play as little as it
+        // can. Other loading goes near the bottom, or in the middle when there are messages at the bottom.
+        using ControllerUi::ProgressPlacement;
+        ProgressPlacement placement = ProgressPlacement::Bottom;
+        if (mImportantLabel)
+            placement = ProgressPlacement::BottomRight;
+        else if (MWBase::Environment::get().getWindowManager()->getMessagesCount() > 0)
+            placement = ProgressPlacement::Middle;
         ControllerUi::drawProgressPanel(mPanel, ControllerUi::escaped(mPanelLabel),
-            range > 1 ? static_cast<float>(mProgress) / (range - 1) : 0.f,
-            MWBase::Environment::get().getWindowManager()->getMessagesCount() == 0);
+            range > 1 ? static_cast<float>(mProgress) / (range - 1) : 0.f, placement);
     }
 
     void LoadingScreen::findSplashScreens()
@@ -174,6 +180,8 @@ namespace MWGui
         if (mNestedLoadingCount++ > 0 && mMainWidget->getVisible())
             return;
 
+        mSaveNoticeTime = 0;
+
         mLoadingOnTime = mTimer.time_m();
 
         // Assign dummy bounding sphere callback to avoid the bounding sphere of the entire scene being recomputed after
@@ -204,18 +212,17 @@ namespace MWGui
         if (--mNestedLoadingCount > 0)
             return;
 
-        if (mLastRenderTime < mLoadingOnTime)
+        // In controller menus mode, the panel stays in its corner for a moment after an important label, which only
+        // saving gives, so that a save too quick to draw the panel still shows that it happened.
+        const bool saveNotice = mImportantLabel && mPanel != nullptr;
+        if (mLastRenderTime < mLoadingOnTime && mImportantLabel && !saveNotice)
         {
             // the loading was so fast that we didn't show loading screen at all
             // we may still want to show the label if the caller requested it
-            if (mImportantLabel)
-            {
-                MWBase::Environment::get().getWindowManager()->messageBox(mLoadingText->getCaption());
-                mImportantLabel = false;
-            }
+            MWBase::Environment::get().getWindowManager()->messageBox(mLoadingText->getCaption());
         }
-        else
-            mImportantLabel = false; // label was already shown on loading screen
+        if (!saveNotice)
+            mImportantLabel = false;
 
         mViewer->getSceneData()->setComputeBoundingSphereCallback(nullptr);
         mViewer->getSceneData()->dirtyBound();
@@ -230,6 +237,27 @@ namespace MWGui
 
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Loading);
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_LoadingWallpaper);
+
+        if (saveNotice)
+        {
+            mSaveNoticeTime = 1.5f;
+            mProgress = mProgressBar->getScrollRange();
+            mPanel->setVisible(true);
+            drawPanel();
+        }
+    }
+
+    void LoadingScreen::updateSaveNotice(float duration)
+    {
+        if (mSaveNoticeTime <= 0)
+            return;
+        mSaveNoticeTime -= duration;
+        if (mSaveNoticeTime > 0)
+            return;
+        mSaveNoticeTime = 0;
+        mImportantLabel = false;
+        if (mNestedLoadingCount == 0)
+            mPanel->setVisible(false);
     }
 
     void LoadingScreen::changeWallpaper()

@@ -96,9 +96,18 @@ namespace MWGui
         /// Clears a panel's widget and sizes it to its layer, for drawing the panel again.
         void clearPanel(MyGUI::Widget* root);
 
-        /// Draws a label and a progress bar on a small panel of their own, such as while resting. The panel is in the
-        /// middle of the root, or near its bottom.
-        void drawProgressPanel(MyGUI::Widget* root, const std::string& label, float fraction, bool atBottom = false);
+        /// Where drawProgressPanel puts its panel.
+        enum class ProgressPlacement
+        {
+            Middle,
+            Bottom,
+            /// A smaller panel in the bottom right corner, for something brief during play, such as saving.
+            BottomRight,
+        };
+
+        /// Draws a label and a progress bar on a small panel of their own, such as while resting.
+        void drawProgressPanel(MyGUI::Widget* root, const std::string& label, float fraction,
+            ProgressPlacement placement = ProgressPlacement::Middle);
 
         /// Escapes text, such as an item name, that can contain characters MyGUI reads as colour codes.
         std::string escaped(std::string_view text);

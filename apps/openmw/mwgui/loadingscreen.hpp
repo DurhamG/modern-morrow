@@ -48,6 +48,9 @@ namespace MWGui
 
         double getTargetFrameRate() const;
 
+        /// Hides the notice that a save happened, once it has shown for long enough.
+        void updateSaveNotice(float duration);
+
     private:
         void findSplashScreens();
         bool needToDrawLoadingScreen();
@@ -87,6 +90,8 @@ namespace MWGui
         // the small loading box.
         MyGUI::Widget* mPanel = nullptr;
         std::string mPanelLabel;
+        // How much longer, in seconds, the panel stays after a save, to show that the save happened.
+        float mSaveNoticeTime = 0;
         void drawPanel();
 
         osg::ref_ptr<osg::Texture2D> mTexture;

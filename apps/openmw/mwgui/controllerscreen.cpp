@@ -137,23 +137,33 @@ namespace MWGui
                 MyGUI::Gui::getInstance().destroyWidget(root->getChildAt(0));
         }
 
-        void drawProgressPanel(MyGUI::Widget* root, const std::string& label, float fraction, bool atBottom)
+        void drawProgressPanel(
+            MyGUI::Widget* root, const std::string& label, float fraction, ProgressPlacement placement)
         {
             clearPanel(root);
             const MyGUI::IntSize size = root->getSize();
-            constexpr int h = 96;
+            const bool corner = placement == ProgressPlacement::BottomRight;
+            const int h = corner ? 68 : 96;
+            const int padding = corner ? 18 : 24;
+            const int barHeight = corner ? 6 : 10;
             MyGUI::TextBox* text = addText(root, 0, 0, size.width, 30, label, sFontNormal, sBrightColour);
-            const int w = std::clamp(text->getTextSize().width + 48, 420, size.width - 2 * sMargin);
-            const int x = (size.width - w) / 2;
-            const int y = atBottom ? size.height - h - sMargin : (size.height - h) / 2;
+            const int w
+                = std::clamp(text->getTextSize().width + 2 * padding, corner ? 260 : 420, size.width - 2 * sMargin);
             MyGUI::Gui::getInstance().destroyWidget(text);
+            int x = (size.width - w) / 2;
+            int y = (size.height - h) / 2;
+            if (placement != ProgressPlacement::Middle)
+                y = size.height - h - sMargin;
+            if (corner)
+                x = size.width - w - sMargin;
             addRect(root, x, y, w, h, MyGUI::Colour::parse("#0d0b08"));
             addRect(root, x, y, w, 1, sAccentColour, 0.6f);
-            addText(root, x + 24, y + 14, w - 48, 30, label, sFontNormal, sBrightColour);
-            addRect(root, x + 24, y + 58, w - 48, 10, MyGUI::Colour::Black, 0.6f);
-            const int filled = static_cast<int>((w - 48) * std::clamp(fraction, 0.f, 1.f));
+            addText(root, x + padding, y + (corner ? 8 : 14), w - 2 * padding, 30, label, sFontNormal, sBrightColour);
+            const int barY = y + h - padding - barHeight + (corner ? 4 : 0);
+            addRect(root, x + padding, barY, w - 2 * padding, barHeight, MyGUI::Colour::Black, 0.6f);
+            const int filled = static_cast<int>((w - 2 * padding) * std::clamp(fraction, 0.f, 1.f));
             if (filled > 0)
-                addRect(root, x + 24, y + 58, filled, 10, sAccentColour);
+                addRect(root, x + padding, barY, filled, barHeight, sAccentColour);
         }
 
         std::string escaped(std::string_view text)
