@@ -24,6 +24,8 @@ file(GLOB UNITTEST_SRC_FILES
 
     mwscript/testscripts.cpp
 
+    mwstate/testquicksavemanager.cpp
+
     mwsound/testheadcache.cpp
     mwsound/testwarmqueue.cpp
 )

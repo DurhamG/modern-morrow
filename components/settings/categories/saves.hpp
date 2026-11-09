@@ -21,6 +21,7 @@ namespace Settings
         SettingValue<std::string> mCharacter{ mIndex, "Saves", "character" };
         SettingValue<bool> mAutosave{ mIndex, "Saves", "autosave" };
         SettingValue<int> mMaxQuicksaves{ mIndex, "Saves", "max quicksaves", makeMaxSanitizerInt(1) };
+        SettingValue<bool> mQuicksaveHistory{ mIndex, "Saves", "quicksave history" };
     };
 }
 

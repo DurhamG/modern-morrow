@@ -36,6 +36,9 @@ namespace MWState
 
         void writeScreenshot(std::vector<char>& imageData) const;
 
+        /// The current character's saves with the given description, such as "Quicksave".
+        std::vector<const Slot*> findSaves(std::string_view description);
+
         std::map<int, int> buildContentFileIndexMap(const ESM::ESMReader& reader) const;
 
     public:

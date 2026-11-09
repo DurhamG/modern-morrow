@@ -377,6 +377,31 @@ void MWState::StateManager::quickSave(std::string name)
         return;
     }
 
+    if (Settings::saves().mQuicksaveHistory)
+    {
+        // Each quicksave is a new save, and older ones thin out once it is written.
+        const std::size_t count = findSaves(name).size();
+        saveGame(name, nullptr);
+        if (findSaves(name).size() <= count)
+            return;
+        std::vector<std::filesystem::path> paths;
+        for (const Slot* slot : findQuickSavesToDelete(findSaves(name)))
+            paths.push_back(slot->mPath);
+        // Deleting a save moves the others in memory, so each is found again by its file.
+        for (const std::filesystem::path& path : paths)
+        {
+            for (const Slot* slot : findSaves(name))
+            {
+                if (slot->mPath == path)
+                {
+                    deleteGame(getCurrentCharacter(), slot);
+                    break;
+                }
+            }
+        }
+        return;
+    }
+
     Character* currentCharacter = getCurrentCharacter(); // Get current character
     QuickSaveManager saveFinder(name, Settings::saves().mMaxQuicksaves);
 
@@ -392,6 +417,20 @@ void MWState::StateManager::quickSave(std::string name)
     // Once all the saves have been visited, the save finder can tell us which
     // one to replace (or create)
     saveGame(name, saveFinder.getNextQuickSaveSlot());
+}
+
+std::vector<const MWState::Slot*> MWState::StateManager::findSaves(std::string_view description)
+{
+    std::vector<const Slot*> saves;
+    if (const Character* character = getCurrentCharacter())
+    {
+        for (const Slot& slot : *character)
+        {
+            if (slot.mProfile.mDescription == description)
+                saves.push_back(&slot);
+        }
+    }
+    return saves;
 }
 
 void MWState::StateManager::loadGame(const std::filesystem::path& filepath)
