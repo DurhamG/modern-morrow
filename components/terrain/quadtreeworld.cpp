@@ -501,6 +501,8 @@ namespace Terrain
         const float detailDistance = ownDetail != nullptr ? ownDetail->mDetailDistance : 0.f;
         bool needsUpdate = true;
         osg::Vec3f viewPoint = viewer ? nv.getViewPoint() : nv.getEyePoint();
+        if (ownDetail != nullptr && ownDetail->mSelectionPoint.has_value())
+            viewPoint = *ownDetail->mSelectionPoint;
         ViewData* vd = mViewDataMap->getViewData(viewer, viewPoint, mActiveGrid, needsUpdate, ownDetail == nullptr);
         if (needsUpdate)
         {
@@ -569,6 +571,18 @@ namespace Terrain
     void QuadTreeWorld::preload(View* view, const osg::Vec3f& viewPoint, const osg::Vec4i& grid,
         std::atomic<bool>& abort, Loading::Reporter& reporter)
     {
+        preloadView(view, viewPoint, grid, mViewDistance, 0.f, abort, &reporter);
+    }
+
+    void QuadTreeWorld::preloadForCamera(View* view, const osg::Vec3f& viewPoint, const osg::Vec4i& grid,
+        float viewDistance, float detailDistance, std::atomic<bool>& abort)
+    {
+        preloadView(view, viewPoint, grid, viewDistance, detailDistance, abort, nullptr);
+    }
+
+    void QuadTreeWorld::preloadView(View* view, const osg::Vec3f& viewPoint, const osg::Vec4i& grid, float viewDistance,
+        float detailDistance, std::atomic<bool>& abort, Loading::Reporter* reporter)
+    {
         ensureQuadTreeBuilt();
         const float cellWorldSize = mStorage->getCellWorldSize(mWorldspace);
 
@@ -576,16 +590,19 @@ namespace Terrain
         vd->setViewPoint(viewPoint);
         vd->setActiveGrid(grid);
 
-        DefaultLodCallback lodCallback(mLodFactor, mMinSize, mViewDistance, grid, static_cast<int>(cellWorldSize));
+        DefaultLodCallback lodCallback(
+            mLodFactor, mMinSize, viewDistance, grid, static_cast<int>(cellWorldSize), 0.f, detailDistance);
         mRootNode->traverseNodes(vd, viewPoint, &lodCallback);
 
-        reporter.addTotal(vd->getNumEntries());
+        if (reporter != nullptr)
+            reporter->addTotal(vd->getNumEntries());
 
         for (unsigned int i = 0, n = vd->getNumEntries(); i < n && !abort; ++i)
         {
             ViewDataEntry& entry = vd->getEntry(i);
-            loadRenderingNode(entry, vd, cellWorldSize, grid, true);
-            reporter.addProgress(1);
+            loadRenderingNode(entry, vd, cellWorldSize, grid, true, detailDistance);
+            if (reporter != nullptr)
+                reporter->addProgress(1);
         }
     }
 

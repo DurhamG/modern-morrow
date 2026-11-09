@@ -8,6 +8,9 @@
 #include <mutex>
 
 #include <osg/Referenced>
+#include <osg/Vec3f>
+
+#include <optional>
 
 #include <components/esm/refid.hpp>
 
@@ -35,6 +38,10 @@ namespace Terrain
         /// When above zero, everything in view gets the detail it would have at this distance from the camera,
         /// however near or far it is. Then the detail doesn't change as the camera moves, and nothing pops in or out.
         float mDetailDistance = 0.f;
+        /// When set, the terrain picks its pieces around this point instead of the camera's position. A camera can
+        /// keep drawing the pieces it has while QuadTreeWorld::preloadForCamera builds the ones for a new point in the
+        /// background, then move the point there.
+        std::optional<osg::Vec3f> mSelectionPoint;
 
         /// Returns the choices a camera makes, or nullptr when it makes none.
         static const CameraDetail* get(const osg::Camera* camera);
@@ -74,6 +81,12 @@ namespace Terrain
         std::unique_ptr<View> createView() override;
         void preload(View* view, const osg::Vec3f& eyePoint, const osg::Vec4i& cellgrid, std::atomic<bool>& abort,
             Loading::Reporter& reporter) override;
+
+        /// Builds the pieces that a camera with its own detail would draw from a point, so that drawing them later
+        /// finds them ready. Safe to call from a background thread. The view comes from createView(), and the grid is
+        /// getActiveGrid() at the time.
+        void preloadForCamera(View* view, const osg::Vec3f& viewPoint, const osg::Vec4i& grid, float viewDistance,
+            float detailDistance, std::atomic<bool>& abort);
         void rebuildViews() override;
 
         void reportStats(unsigned int frameNumber, osg::Stats* stats) override;
@@ -113,6 +126,8 @@ namespace Terrain
         void ensureQuadTreeBuilt();
         void loadRenderingNode(ViewDataEntry& entry, ViewData* vd, float cellWorldSize, const osg::Vec4i& gridbounds,
             bool compile, float detailDistance = 0.f);
+        void preloadView(View* view, const osg::Vec3f& viewPoint, const osg::Vec4i& grid, float viewDistance,
+            float detailDistance, std::atomic<bool>& abort, Loading::Reporter* reporter);
 
         osg::ref_ptr<RootNode> mRootNode;
 
