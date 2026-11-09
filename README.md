@@ -9,6 +9,8 @@ Morrowind's menus were made for a mouse on a small monitor. They are grids of ic
 
 **Modern Morrow was vibe coded.** A person directed the work, played the game, and reviewed every screen in screenshots and in play. Claude wrote nearly all of the code, the tests and the design notes. It is an experiment, and it has not been reviewed by the OpenMW developers. Expect rough edges.
 
+We talked with the OpenMW developers about bringing this work into OpenMW itself. The best way to do that would be as a mod, built on OpenMW's Lua scripting, but Lua can't yet replace the user interface as completely as this fork does. Until it can, Modern Morrow stays a separate fork.
+
 Screenshots
 -----------
 
@@ -46,7 +48,7 @@ Everything on the stats screen can be highlighted to read what it is and what it
 
 ![The local map in 3D over Balmora, with the explored town in view and the fog of war around it](ui-rework/screenshots/map-3d.jpg)
 
-Clicking the right stick turns the local map into a 3D view of the world, seen from above at an angle. The right stick pans it anywhere you've been, and the d-pad zooms from a few streets to a whole region. Land you haven't explored stays hidden under the fog of war, as it does on the flat map. Indoors, the ceilings are cut away so you look down into the rooms. Doors, your pins, and the things detection spells reveal are marked, and X places a pin at the crosshair.
+The local map is a 3D view of the world, seen from above at an angle. The right stick pans it anywhere you've been, and the d-pad zooms from a few streets to a whole region. Land you haven't explored stays hidden under the fog of war, as it does on the flat map. Indoors, the ceilings are cut away so you look down into the rooms. Doors, your pins, and the things detection spells reveal are marked, and X places a pin at the crosshair.
 
 ### Journal
 
@@ -127,7 +129,7 @@ Other improvements
 - **Straight back into your game.** Starting the game loads your newest save, skipping the logo video and the main menu. To start a new character or load another save, use New Game or Load in the pause menu. With no saves yet, the main menu shows as usual.
 - **The AppImage sets itself up.** Started with no options, the Linux AppImage runs the setup wizard the first time, then starts the game, and goes straight into the game after that. So a Steam shortcut to it needs no launch options.
 - **The Steam Deck can keep the game up to date.** An optional script downloads the newest AppImage each time the game starts, so updating doesn't need a trip to Desktop Mode.
-- **Pins on the map.** On the local map, X drops a red pin where you stand, or where the left stick moves a crosshair. Pins outdoors show on the world map too, and the d-pad zooms both maps.
+- **Pins on the map.** On the local map, X drops a red pin at the crosshair in the middle of the view, which starts on you. Pins outdoors show on the world map too, and the d-pad zooms both maps.
 - **The tutorial talks about the controller.** On a controller, Morrowind's tutorial messages use the text the game was written with for the Xbox, such as "The LEFT THUMBSTICK moves you", instead of key names and mouse clicks.
 
 Trying it
