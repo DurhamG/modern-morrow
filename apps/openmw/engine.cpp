@@ -561,6 +561,13 @@ void OMW::Engine::createWindow()
 
     SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, Settings::video().mMinimizeOnFocusLoss ? "1" : "0");
 
+    // When a text box takes keyboard focus, SDL shows the system's on-screen keyboard. On a Steam Deck, that is Steam's
+    // keyboard. Controller menus draw their own keyboard where a controller needs to type, such as for a character's
+    // name. Their screens also focus text boxes they don't type in, such as the save name, and Steam's keyboard then
+    // opens and closes at once, which can leave Steam holding some of the controller's buttons.
+    if (Settings::gui().mControllerMenus)
+        SDL_SetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD, "0");
+
     checkSDLError(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8));
     checkSDLError(SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8));
     checkSDLError(SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8));
