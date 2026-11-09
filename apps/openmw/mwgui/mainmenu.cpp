@@ -340,7 +340,8 @@ namespace MWGui
 
         std::vector<std::string> buttons;
 
-        // The pause menu in controller menus mode has no Return or New, since B returns to the game.
+        // The pause menu in controller menus mode has no Return, since B returns to the game. It has New after Load,
+        // because the game can start straight into a save, without the main menu.
         const bool pauseMenu = usePauseMenu();
         if (state == MWBase::StateManager::State_Running && !pauseMenu)
             buttons.emplace_back("return");
@@ -356,6 +357,9 @@ namespace MWGui
         if (MWBase::Environment::get().getStateManager()->characterBegin()
             != MWBase::Environment::get().getStateManager()->characterEnd())
             buttons.emplace_back("loadgame");
+
+        if (pauseMenu)
+            buttons.emplace_back("newgame");
 
         buttons.emplace_back("options");
 

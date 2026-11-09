@@ -53,3 +53,13 @@ Saves Settings
    The autosave waits for a moment when no menu is open and the player isn't in combat.
    Time spent in menus doesn't count, and any save or load starts the count again.
    0 turns it off.
+
+.. omw-setting::
+   :title: load newest save
+   :type: boolean
+   :range: true, false
+   :default: true
+
+   Whether the game starts straight into the newest save, without the logos or the main menu.
+   With no saves, the main menu shows as usual.
+   A save or ``--skip-menu`` given on the command line comes first.

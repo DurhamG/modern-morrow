@@ -34,6 +34,8 @@ namespace MWGui
                 return "#{Interface:PauseSave}";
             if (item == "loadgame")
                 return "#{Interface:PauseLoad}";
+            if (item == "newgame")
+                return "#{Interface:PauseNewGame}";
             if (item == "options")
                 return "#{Interface:PauseOptions}";
             return "#{Interface:PauseExit}";

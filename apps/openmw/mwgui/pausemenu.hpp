@@ -15,8 +15,9 @@ namespace MyGUI
 
 namespace MWGui
 {
-    /// The menu the start button opens during a game, in controller menus mode. It lists Save, Load, Options and
-    /// Exit over a darkened view of the game, in the style of the other controller screens. B returns to the game.
+    /// The menu the start button opens during a game, in controller menus mode. It lists Save, Load, New Game,
+    /// Options and Exit over a darkened view of the game, in the style of the other controller screens. B returns to
+    /// the game.
     /// The main menu still opens the save dialog, the options and the exit confirmation, and this menu asks it to.
     class PauseMenu
     {

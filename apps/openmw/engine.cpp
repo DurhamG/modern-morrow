@@ -772,6 +772,12 @@ void OMW::Engine::prepareEngine()
     mStateManager = std::make_unique<MWState::StateManager>(mCfgMgr.getUserDataPath() / "saves", mContentFiles);
     mEnvironment.setStateManager(*mStateManager);
 
+    // The game can start straight into the newest save, as if it had been given on the command line. Characters are
+    // sorted with the newest save first, and each character's saves too.
+    if (mSaveGameFile.empty() && !mSkipMenu && Settings::saves().mLoadNewestSave
+        && mStateManager->characterBegin() != mStateManager->characterEnd())
+        mSaveGameFile = mStateManager->characterBegin()->begin()->mPath;
+
     const bool stereoEnabled = Settings::stereo().mStereoEnabled || osg::DisplaySettings::instance().get()->getStereo();
     mStereoManager = std::make_unique<Stereo::Manager>(
         mViewer, stereoEnabled, Settings::camera().mNearClip, Settings::camera().mViewingDistance);
@@ -938,7 +944,8 @@ void OMW::Engine::prepareEngine()
     auto dataLoading = std::async(std::launch::async,
         [&] { mWorld->loadData(mFileCollections, mContentFiles, mGroundcoverFiles, mEncoder.get(), &asyncListener); });
 
-    if (!mSkipMenu)
+    // The company logo plays before the main menu, but not before going straight into a game.
+    if (!mSkipMenu && mSaveGameFile.empty())
     {
         std::string_view logo = Fallback::Map::getString("Movies_Company_Logo");
         if (!logo.empty())

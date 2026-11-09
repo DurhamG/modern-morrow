@@ -23,6 +23,7 @@ namespace Settings
         SettingValue<int> mMaxQuicksaves{ mIndex, "Saves", "max quicksaves", makeMaxSanitizerInt(1) };
         SettingValue<bool> mQuicksaveHistory{ mIndex, "Saves", "quicksave history" };
         SettingValue<int> mAutosaveInterval{ mIndex, "Saves", "autosave interval", makeMaxSanitizerInt(0) };
+        SettingValue<bool> mLoadNewestSave{ mIndex, "Saves", "load newest save" };
     };
 }
 
