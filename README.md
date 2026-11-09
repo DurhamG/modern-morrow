@@ -116,7 +116,7 @@ Other improvements
 - **The Steam Controller works without Steam.** The release builds run the game on SDL3, the newest version of the library that reads controllers, through SDL's sdl2-compat layer. SDL3 recognizes newer controllers, such as the 2026 Steam Controller, without Steam Input. With OpenMW's SDL2, that controller only works when Steam starts the game.
 - **The game fills the screen.** It starts in windowed fullscreen at the screen's own resolution, such as a Steam Deck's 1280x800 or a TV's, instead of in an 800x600 window.
 - **Better settings out of the box.** Several of OpenMW's optional settings are on by default. None of them change the game's rules:
-  - Distant terrain, with round fog and the far land fading into the sky, so hills no longer end at a hard edge.
+  - Softer fog at the edge of view: the fog is round, and the far land fades into the sky, so hills no longer end at a hard edge.
   - The water shader, for reflective water.
   - Smoother distant textures (linear mipmaps), so no line shows where a floor turns blurrier.
   - Attacks always use the weapon's most powerful swing: chop, slash or thrust. Otherwise, the direction you move as you attack picks the swing.
