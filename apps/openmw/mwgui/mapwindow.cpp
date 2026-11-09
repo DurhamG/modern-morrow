@@ -971,64 +971,37 @@ namespace MWGui
         return marker;
     }
 
-    MyGUI::IntPoint MapWindow::getPlayerOnMap() const
-    {
-        return mCompass->getPosition() + MyGUI::IntPoint{ 16, 16 };
-    }
-
-    MyGUI::IntPoint MapWindow::getCrosshairPosition() const
-    {
-        // The local map's event box covers the whole map, so its position is the map's top left corner.
-        return mEventBoxLocal->getAbsolutePosition() + (mCrosshairShown ? mCrosshairOnMap : getPlayerOnMap());
-    }
-
     void MapWindow::updateCrosshair()
     {
         const bool active = mCrosshair != nullptr && mActiveCell != nullptr && mControllerGuide->getVisible()
-            && !Settings::map().mGlobal;
+            && !Settings::map().mGlobal && mMap3DStarted;
         mGuideMark->setVisible(active);
         mGuideZoom->setVisible(mControllerGuide->getVisible());
-        // The left stick moves the crosshair here, rather than the mouse pointer.
         if (mCrosshair != nullptr)
-            mDisableGamepadCursor = !Settings::map().mGlobal;
-
-        if (active && mCrosshairShown && !mMap3DShown)
         {
-            // Panning the view away from the crosshair takes it along, at the view's edge.
-            const MyGUI::IntPoint offset = mLocalMap->getViewOffset();
-            const MyGUI::IntSize view = mLocalMap->getSize();
-            mCrosshairOnMap.left = std::clamp(mCrosshairOnMap.left, -offset.left, view.width - offset.left);
-            mCrosshairOnMap.top = std::clamp(mCrosshairOnMap.top, -offset.top, view.height - offset.top);
+            // The sticks work the 3D view here, rather than the mouse pointer.
+            mDisableGamepadCursor = !Settings::map().mGlobal;
+            // The crosshair stays in the middle of the 3D view, and the right stick pans the view under it.
+            mCrosshair->setVisible(active);
         }
-        // In the 3D view, the crosshair stays in the middle, and the right stick pans the view under it.
-        if (mCrosshair != nullptr)
-            mCrosshair->setVisible(active && (mCrosshairShown || mMap3DShown));
 
         MyGUI::Widget* pin = nullptr;
         if (active)
         {
-            const MyGUI::IntPoint center = mMap3DShown ? mMap3DImage->getAbsolutePosition()
-                    + MyGUI::IntPoint(mMap3DImage->getWidth() / 2, mMap3DImage->getHeight() / 2)
-                                                       : getCrosshairPosition();
+            const MyGUI::IntPoint center = mMap3DImage->getAbsolutePosition()
+                + MyGUI::IntPoint(mMap3DImage->getWidth() / 2, mMap3DImage->getHeight() / 2);
             const MyGUI::IntPoint inWindow = center - mCrosshair->getParent()->getAbsolutePosition();
             mCrosshair->setPosition(
                 inWindow.left - mCrosshair->getWidth() / 2, inWindow.top - mCrosshair->getHeight() / 2);
 
-            // The nearest pin within the crosshair's reach. While the crosshair is hidden, X works on the player's
-            // position, so that is where the pin is looked for.
+            // The nearest pin within the crosshair's reach.
             const int reach = mCrosshair->getWidth() / 2;
             int nearest = reach * reach + 1;
-            std::vector<MyGUI::Widget*> pins;
-            if (mMap3DShown)
+            for (const Map3DMarker& marker : mMap3DPins)
             {
-                for (const Map3DMarker& marker : mMap3DPins)
-                    if (marker.mWidget->getVisible())
-                        pins.push_back(marker.mWidget);
-            }
-            else
-                pins = mCustomMarkerWidgets;
-            for (MyGUI::Widget* widget : pins)
-            {
+                MyGUI::Widget* widget = marker.mWidget;
+                if (!widget->getVisible())
+                    continue;
                 const MyGUI::IntCoord coord = widget->getAbsoluteCoord();
                 const int dx = coord.left + coord.width / 2 - center.left;
                 const int dy = coord.top + coord.height / 2 - center.top;
@@ -1066,7 +1039,7 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         if (mPinAtCrosshair == nullptr)
         {
-            mCustomMarkers.addMarker(mMap3DShown ? getMap3DPinAtCenter() : getMarkerAt(getCrosshairPosition()));
+            mCustomMarkers.addMarker(getMap3DPinAtCenter());
             return;
         }
 
@@ -1154,9 +1127,6 @@ namespace MWGui
 
             if (zoomOut)
                 mNeedDoorMarkersUpdate = true;
-            // The crosshair keeps its place on the map, which grows or shrinks around the map's top left corner.
-            mCrosshairOnMap = MyGUI::IntPoint(static_cast<int>(std::round(mCrosshairOnMap.left * speedDiff)),
-                static_cast<int>(std::round(mCrosshairOnMap.top * speedDiff)));
         }
         zoomAround(speedDiff, focus);
         return true;
@@ -1166,18 +1136,12 @@ namespace MWGui
     {
         // Each press zooms by about as much as three turns of the mouse wheel.
         constexpr float step = 1.25f;
-        // The zoom keeps the crosshair still when it shows, or else the player when in view, or else the middle of
-        // the view.
-        const bool global = Settings::map().mGlobal;
-        const MyGUI::ScrollView* map = global ? mGlobalMap : mLocalMap;
-        MyGUI::IntPoint focus(map->getWidth() / 2, map->getHeight() / 2);
+        // The zoom keeps the player still when in view, or else the middle of the view.
+        MyGUI::IntPoint focus(mGlobalMap->getWidth() / 2, mGlobalMap->getHeight() / 2);
         const MyGUI::IntPoint player
-            = (global ? mPlayerArrowGlobal->getPosition() + MyGUI::IntPoint{ 16, 16 } : getPlayerOnMap())
-            + map->getViewOffset();
-        if (!global && mCrosshairShown)
-            focus = mCrosshairOnMap + map->getViewOffset();
-        else if (player.left >= 0 && player.top >= 0 && player.left <= map->getWidth()
-            && player.top <= map->getHeight())
+            = mPlayerArrowGlobal->getPosition() + MyGUI::IntPoint{ 16, 16 } + mGlobalMap->getViewOffset();
+        if (player.left >= 0 && player.top >= 0 && player.left <= mGlobalMap->getWidth()
+            && player.top <= mGlobalMap->getHeight())
             focus = player;
         if (zoomMap(zoomIn ? step : 1.f / step, focus))
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
@@ -1358,14 +1322,8 @@ namespace MWGui
         if (Settings::gui().mControllerMenus && !Settings::map().mGlobal
             && MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() == this)
         {
-            if (mMap3DShown)
+            if (mMap3DStarted)
                 updateMap3D(dt);
-            else
-            {
-                panLocalMapWithStick(dt);
-                if (mCrosshair != nullptr)
-                    moveCrosshairWithStick(dt);
-            }
         }
         updateCrosshair();
     }
@@ -1523,8 +1481,6 @@ namespace MWGui
     void MapWindow::centerView()
     {
         LocalMapBase::centerView();
-        // The crosshair hides, so X marks the player's position again.
-        mCrosshairShown = false;
         // set the view offset so that player is in the center
         MyGUI::IntSize viewsize = mGlobalMap->getSize();
         MyGUI::IntPoint pos = mPlayerArrowGlobal->getPosition() + MyGUI::IntPoint{ 16, 16 };
@@ -1633,7 +1589,7 @@ namespace MWGui
         NoDrop::setAlpha(alpha);
         // can't allow showing map with partial transparency, as the fog of war will also go transparent
         // and reveal parts of the map you shouldn't be able to see
-        mLocalMap->setVisible(!mGlobalMap->getVisible() && alpha == 1 && !mMap3DShown);
+        mLocalMap->setVisible(!mGlobalMap->getVisible() && alpha == 1 && !mMap3DStarted);
     }
 
     void MapWindow::customMarkerCreated(MyGUI::Widget* marker)
@@ -1672,16 +1628,11 @@ namespace MWGui
             if (toWorld)
                 stopMap3D();
             onWorldButtonClicked(mButton);
-            if (!toWorld && mMap3DShown)
+            if (!toWorld)
                 startMap3D();
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK && !Settings::map().mGlobal)
-        {
-            setMap3DShown(!mMap3DShown);
-            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
-        }
-        else if (mMap3DShown)
+        else if (mMap3DStarted)
         {
             if (arg.button == SDL_CONTROLLER_BUTTON_X)
                 togglePinAtCrosshair();
@@ -1705,8 +1656,6 @@ namespace MWGui
             centerView();
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
-            togglePinAtCrosshair();
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
             zoomWithController(arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP);
 
@@ -1715,109 +1664,11 @@ namespace MWGui
 
     bool MapWindow::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
     {
-        // On the local map, the right stick pans and the left stick moves the crosshair. onFrame does both by reading
-        // the sticks' positions.
+        // On the local map, the right stick pans the 3D view, which onFrame does by reading the stick's position. The
+        // left stick does nothing there, rather than move the mouse pointer.
         if (arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY)
-            return mCrosshair != nullptr && !Settings::map().mGlobal;
+            return !Settings::map().mGlobal;
         return arg.axis == SDL_CONTROLLER_AXIS_RIGHTX || arg.axis == SDL_CONTROLLER_AXIS_RIGHTY;
-    }
-
-    void MapWindow::moveCrosshairWithStick(float dt)
-    {
-        // How far the crosshair moves per second with the stick pushed all the way, as a fraction of the map's height.
-        constexpr float moveSpeed = 0.5f;
-
-        const MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
-        const float x = stickResponse(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_LEFTX));
-        const float y = stickResponse(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_LEFTY));
-        if (x == 0.f && y == 0.f)
-        {
-            mCrosshairRemainder = {};
-            return;
-        }
-
-        const MyGUI::IntSize view = mLocalMap->getSize();
-        MyGUI::IntPoint offset = mLocalMap->getViewOffset();
-        if (!mCrosshairShown)
-        {
-            // The crosshair appears on the player, or in the middle of the view when the player is out of it.
-            mCrosshairShown = true;
-            mCrosshairOnMap = getPlayerOnMap();
-            const MyGUI::IntPoint onScreen = mCrosshairOnMap + offset;
-            if (onScreen.left < 0 || onScreen.top < 0 || onScreen.left > view.width || onScreen.top > view.height)
-                mCrosshairOnMap = MyGUI::IntPoint(view.width / 2, view.height / 2) - offset;
-        }
-
-        const float distance = moveSpeed * static_cast<float>(view.height) * dt;
-        mCrosshairRemainder.left += x * distance;
-        mCrosshairRemainder.top += y * distance;
-        const int dx = static_cast<int>(mCrosshairRemainder.left);
-        const int dy = static_cast<int>(mCrosshairRemainder.top);
-        mCrosshairRemainder.left -= static_cast<float>(dx);
-        mCrosshairRemainder.top -= static_cast<float>(dy);
-        const MyGUI::IntSize canvas = mLocalMap->getCanvasSize();
-        mCrosshairOnMap.left = std::clamp(mCrosshairOnMap.left + dx, 0, canvas.width);
-        mCrosshairOnMap.top = std::clamp(mCrosshairOnMap.top + dy, 0, canvas.height);
-
-        // Near the edge of the view, the view scrolls with the crosshair, as far as the map's edges let it.
-        const int margin = view.height / 10;
-        const MyGUI::IntPoint onScreen = mCrosshairOnMap + offset;
-        if (onScreen.left < margin)
-            offset.left = margin - mCrosshairOnMap.left;
-        else if (onScreen.left > view.width - margin)
-            offset.left = view.width - margin - mCrosshairOnMap.left;
-        if (onScreen.top < margin)
-            offset.top = margin - mCrosshairOnMap.top;
-        else if (onScreen.top > view.height - margin)
-            offset.top = view.height - margin - mCrosshairOnMap.top;
-        if (offset != mLocalMap->getViewOffset())
-        {
-            mNeedDoorMarkersUpdate = true;
-            mLocalMap->setViewOffset(offset);
-        }
-    }
-
-    void MapWindow::panLocalMapWithStick(float dt)
-    {
-        // How far the map pans per second with the stick pushed all the way, as a fraction of the map's height.
-        constexpr float panSpeed = 1.f;
-
-        const MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
-        const float x = stickResponse(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTX));
-        const float y = stickResponse(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTY));
-        if (x == 0.f && y == 0.f)
-        {
-            mStickPanRemainder = {};
-            return;
-        }
-
-        // Pushing the stick right moves the view right, so the map itself moves left.
-        const float distance = panSpeed * static_cast<float>(mLocalMap->getHeight()) * dt;
-        mStickPanRemainder.left -= x * distance;
-        mStickPanRemainder.top -= y * distance;
-        const int dx = static_cast<int>(mStickPanRemainder.left);
-        const int dy = static_cast<int>(mStickPanRemainder.top);
-        mStickPanRemainder.left -= static_cast<float>(dx);
-        mStickPanRemainder.top -= static_cast<float>(dy);
-        shiftMap(dx, dy);
-    }
-
-    void MapWindow::shiftMap(int dx, int dy)
-    {
-        if (dx == 0 && dy == 0)
-            return;
-
-        if (!Settings::map().mGlobal)
-        {
-            mNeedDoorMarkersUpdate = true;
-            mLocalMap->setViewOffset(
-                MyGUI::IntPoint(mLocalMap->getViewOffset().left + dx, mLocalMap->getViewOffset().top + dy));
-        }
-        else
-        {
-            mGlobalMap->setViewOffset(
-                MyGUI::IntPoint(mGlobalMap->getViewOffset().left + dx, mGlobalMap->getViewOffset().top + dy));
-        }
     }
 
     void MapWindow::setActiveControllerWindow(bool active)
@@ -1845,36 +1696,22 @@ namespace MWGui
                 fitGlobalMapToView();
                 layoutControllerGuide();
                 drawControllerTabs();
-                // The crosshair stays hidden until the left stick moves it, so X marks the player's position.
-                mCrosshairShown = false;
             }
             else if (mControllerTabs != nullptr)
                 mControllerTabs->setVisible(false);
         }
+        // In controller menus mode, the local map is the 3D view. It draws only while the Local tab shows.
         if (!active)
             stopMap3D();
-        else if (mMap3DShown && !Settings::map().mGlobal)
+        else if (!Settings::map().mGlobal)
             startMap3D();
 
         WindowBase::setActiveControllerWindow(active);
     }
 
-    void MapWindow::setMap3DShown(bool shown)
-    {
-        if (shown == mMap3DShown)
-            return;
-        mMap3DShown = shown;
-        if (shown)
-            startMap3D();
-        else
-        {
-            stopMap3D();
-            mLocalMap->setVisible(!Settings::map().mGlobal);
-        }
-    }
-
     void MapWindow::stopMap3D()
     {
+        mMap3DStarted = false;
         if (mMap3D != nullptr)
             mMap3D->setShown(false);
         if (mMap3DImage != nullptr)
@@ -1883,6 +1720,8 @@ namespace MWGui
 
     void MapWindow::startMap3D()
     {
+        if (mActiveCell == nullptr)
+            return;
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
 
         // The picture has a pixel for each pixel of the screen that the map covers.
@@ -1940,6 +1779,7 @@ namespace MWGui
         createMap3DMagicMarkers();
 
         mMap3D->setShown(true);
+        mMap3DStarted = true;
         updateMap3D(0.f);
     }
 

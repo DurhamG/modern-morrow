@@ -288,7 +288,7 @@ namespace MWGui
         /// Zooms the map that shows by a factor, within its limits, keeping a point of the view still. The point is
         /// from the view's top left corner. Returns false when the zoom was already at its limit.
         bool zoomMap(float factor, MyGUI::IntPoint focus);
-        /// Zooms in or out by a step, for the d-pad.
+        /// Zooms the world map in or out by a step, for the d-pad.
         void zoomWithController(bool zoomIn);
         void zoomAround(float speedDiff, MyGUI::IntPoint cursor);
         void updateGlobalMap();
@@ -303,8 +303,6 @@ namespace MWGui
         float getMarkerSize(size_t agregatedWeight) const;
         void resizeGlobalMap();
         void fitGlobalMapToView();
-        void shiftMap(int dx, int dy);
-        void panLocalMapWithStick(float dt);
         void updateWorldToggleCaptions();
         void layoutControllerGuide();
         void drawControllerTabs();
@@ -314,13 +312,7 @@ namespace MWGui
 
         /// The marker that would go at a point on the local map, in screen coordinates, without a note.
         ESM::CustomMarker getMarkerAt(MyGUI::IntPoint point) const;
-        /// Where the player's arrow is, from the local map's top left corner.
-        MyGUI::IntPoint getPlayerOnMap() const;
-        /// Where the crosshair is on the local map, in screen coordinates. While it is hidden, it is on the player.
-        MyGUI::IntPoint getCrosshairPosition() const;
-        /// Moves the crosshair with the left stick, showing it if it was hidden.
-        void moveCrosshairWithStick(float dt);
-        /// Shows the crosshair and its button hint on the local map, and finds the pin under the crosshair.
+        /// Shows the crosshair and its button hint in the middle of the 3D view, and finds the pin under the crosshair.
         void updateCrosshair();
         /// Places a pin at the crosshair, or removes the pin under it.
         void togglePinAtCrosshair();
@@ -328,12 +320,9 @@ namespace MWGui
         void createGlobalMapPins();
         /// Moves the global map's pins to where their positions are at the global map's zoom.
         void placeGlobalMapPins();
-        /// Switches the local map between the flat map and the 3D view.
-        void setMap3DShown(bool shown);
         /// Shows the 3D view and starts drawing it, pointed at the player, with the fog of war as it is now.
         void startMap3D();
-        /// Hides the 3D view and stops drawing it, so it costs nothing while the map is closed. The local map stays
-        /// set to the 3D view, for the next time it opens.
+        /// Hides the 3D view and stops drawing it, so it costs nothing while the map is closed or shows the World tab.
         void stopMap3D();
         /// Pans the 3D view with the right stick, and draws it from its new place.
         void updateMap3D(float dt);
@@ -373,18 +362,10 @@ namespace MWGui
         // Where the tabs end, on the canvas 720 units tall that the tab bar uses
         static constexpr int sTabsBottom = 95;
         MyGUI::IntPoint mLastDragPos;
-        // The part of a pixel that the stick moved the local map by, carried over to the next frame.
-        MyGUI::FloatPoint mStickPanRemainder;
 
-        // In controller menus mode, a crosshair on the local map, which the left stick moves. X places a pin there, or
-        // removes the pin under it, and a hint above the others says which. The crosshair is hidden until the left
-        // stick moves, and X then works on the player's position.
+        // In controller menus mode, a crosshair in the middle of the 3D view. X places a pin there, or removes the pin
+        // under it, and a hint above the others says which.
         MyGUI::Widget* mCrosshair = nullptr;
-        bool mCrosshairShown = false;
-        // Where the crosshair is, from the local map's top left corner.
-        MyGUI::IntPoint mCrosshairOnMap;
-        // The part of a pixel that the stick moved the crosshair by, carried over to the next frame.
-        MyGUI::FloatPoint mCrosshairRemainder;
         MyGUI::Widget* mGuideMark = nullptr;
         // The hint that the d-pad zooms, on both maps.
         MyGUI::Widget* mGuideZoom = nullptr;
@@ -394,15 +375,15 @@ namespace MWGui
         // The pin under the crosshair, one of mCustomMarkerWidgets, or nullptr.
         MyGUI::Widget* mPinAtCrosshair = nullptr;
 
-        // The 3D view of the local map, in controller menus mode. Clicking the right stick switches to it from the
-        // flat map. The right stick pans it, the d-pad zooms it and Y points it at the player again.
+        // In controller menus mode, the local map is a 3D view. The right stick pans it, the d-pad zooms it and Y
+        // points it at the player again.
         std::unique_ptr<MWRender::Map3D> mMap3D;
         std::unique_ptr<MyGUI::ITexture> mMap3DTexture;
         MyGUI::ImageBox* mMap3DImage = nullptr;
         // The player's arrow, on top of the 3D view.
         MyGUI::ImageBox* mMap3DPlayer = nullptr;
-        // Whether the local map is set to the 3D view rather than the flat map.
-        bool mMap3DShown = false;
+        // Whether the 3D view is drawing, which it does while the Local tab shows.
+        bool mMap3DStarted = false;
         // The point on the ground that the 3D view looks at, and how far away the camera is, in world units.
         osg::Vec3f mMap3DFocus;
         float mMap3DDistance = 11718.75f;
