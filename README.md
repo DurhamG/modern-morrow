@@ -42,6 +42,12 @@ The Active tab shows what's affecting you, how long each effect has left and whe
 
 Everything on the stats screen can be highlighted to read what it is and what it does. Each attribute tile shows the bonus it would get at the next level up.
 
+### Map
+
+![The local map in 3D over Balmora, with the explored town in view and the fog of war around it](ui-rework/screenshots/map-3d.jpg)
+
+Clicking the right stick turns the local map into a 3D view of the world, seen from above at an angle. The right stick pans it anywhere you've been, and the d-pad zooms from a few streets to a whole region. Land you haven't explored stays hidden under the fog of war, as it does on the flat map. Indoors, the ceilings are cut away so you look down into the rooms. Doors, your pins, and the things detection spells reveal are marked, and X places a pin at the crosshair.
+
 ### Journal
 
 ![The journal, with quests in progress and finished, and the details of one](ui-rework/screenshots/journal.jpg)
