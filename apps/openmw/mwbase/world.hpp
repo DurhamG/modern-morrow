@@ -123,7 +123,7 @@ namespace MWBase
         struct DoorMarker
         {
             std::string name;
-            float x, y; // world position
+            float x, y, z; // world position
             ESM::RefId dest;
         };
 

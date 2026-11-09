@@ -1866,6 +1866,7 @@ namespace MWWorld
 
                 newMarker.x = pos.pos[0];
                 newMarker.y = pos.pos[1];
+                newMarker.z = pos.pos[2];
                 mOut.push_back(std::move(newMarker));
             }
             return true;

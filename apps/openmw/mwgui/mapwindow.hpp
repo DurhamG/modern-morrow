@@ -5,6 +5,7 @@
 #include <memory>
 #include <optional>
 
+#include <osg/Image>
 #include <osg/Vec2f>
 #include <osg/Vec3f>
 
@@ -340,6 +341,23 @@ namespace MWGui
         void centerMap3D();
         /// Makes the 3D view's fog of war again when the view has moved far, or hides it when it is turned off.
         void updateMap3DFog(const MWWorld::CellStore& cell);
+        /// A marker's size in the 3D view, from a size on the canvas 720 units tall that the hints use.
+        int getMap3DMarkerSize(int canvasSize) const;
+        /// The height of the ground at a place outdoors, or the player's height indoors.
+        float getMap3DGroundHeight(float x, float y) const;
+        /// Draws the pins on the 3D view again, as when they change.
+        void createMap3DPins();
+        /// Draws the markers of detected creatures, keys and enchanted items, and of the Mark spell's place.
+        void createMap3DMagicMarkers();
+        /// Outdoors, adds the doors of a few more of the visited cells near the view, nearest first. Looking up a
+        /// cell's doors can load it, so a few each frame keeps the view smooth. Indoors, adds the cell's doors.
+        void addMap3DDoors();
+        /// Moves the 3D view's markers to where their places show in the picture.
+        void placeMap3DMarkers();
+        /// The pin that X places in the 3D view, at the point the view looks at.
+        ESM::CustomMarker getMap3DPinAtCenter() const;
+        /// Whether the fog of war leaves a place in the 3D view to see.
+        bool isMap3DExplored(const osg::Vec3f& position) const;
 
         MyGUI::ScrollView* mGlobalMap;
         std::unique_ptr<MyGUI::ITexture> mGlobalMapTexture;
@@ -388,10 +406,28 @@ namespace MWGui
         // The point on the ground that the 3D view looks at, and how far away the camera is, in world units.
         osg::Vec3f mMap3DFocus;
         float mMap3DDistance = 7500.f;
+        // A marker on the 3D view: its widget, a child of the view's image, and its place in the world.
+        struct Map3DMarker
+        {
+            MyGUI::Widget* mWidget;
+            osg::Vec3f mPosition;
+        };
+        std::vector<Map3DMarker> mMap3DPins;
+        std::vector<Map3DMarker> mMap3DDoors;
+        std::vector<Map3DMarker> mMap3DMagicMarkers;
+        // The cell, or the worldspace outdoors, that the door markers belong to, and the exterior cells whose doors
+        // they include.
+        ESM::RefId mMap3DDoorsSpace;
+        std::set<std::pair<int, int>> mMap3DDoorCells;
+
         // Whether the 3D view shows the fog of war, and the cell in the middle of the square of cells it has the fog
         // of. Without a cell, the fog is made again on the next frame.
         bool mMap3DFogShown = false;
         std::optional<std::pair<int, int>> mMap3DFogCenter;
+        // The fog of war the 3D view shows: 255 where unexplored, with its south west corner and its size in the world.
+        osg::ref_ptr<osg::Image> mMap3DFogImage;
+        osg::Vec2f mMap3DFogSouthWest;
+        float mMap3DFogSize = 0.f;
 
         // The pins in exterior cells, drawn on the global map, with their positions in the world.
         std::vector<std::pair<MyGUI::Widget*, osg::Vec2f>> mGlobalMapPins;

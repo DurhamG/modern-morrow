@@ -985,14 +985,14 @@ namespace MWGui
     void MapWindow::updateCrosshair()
     {
         const bool active = mCrosshair != nullptr && mActiveCell != nullptr && mControllerGuide->getVisible()
-            && !Settings::map().mGlobal && !mMap3DShown;
+            && !Settings::map().mGlobal;
         mGuideMark->setVisible(active);
         mGuideZoom->setVisible(mControllerGuide->getVisible());
         // The left stick moves the crosshair here, rather than the mouse pointer.
         if (mCrosshair != nullptr)
             mDisableGamepadCursor = !Settings::map().mGlobal;
 
-        if (active && mCrosshairShown)
+        if (active && mCrosshairShown && !mMap3DShown)
         {
             // Panning the view away from the crosshair takes it along, at the view's edge.
             const MyGUI::IntPoint offset = mLocalMap->getViewOffset();
@@ -1000,13 +1000,16 @@ namespace MWGui
             mCrosshairOnMap.left = std::clamp(mCrosshairOnMap.left, -offset.left, view.width - offset.left);
             mCrosshairOnMap.top = std::clamp(mCrosshairOnMap.top, -offset.top, view.height - offset.top);
         }
+        // In the 3D view, the crosshair stays in the middle, and the right stick pans the view under it.
         if (mCrosshair != nullptr)
-            mCrosshair->setVisible(active && mCrosshairShown);
+            mCrosshair->setVisible(active && (mCrosshairShown || mMap3DShown));
 
         MyGUI::Widget* pin = nullptr;
         if (active)
         {
-            const MyGUI::IntPoint center = getCrosshairPosition();
+            const MyGUI::IntPoint center = mMap3DShown ? mMap3DImage->getAbsolutePosition()
+                    + MyGUI::IntPoint(mMap3DImage->getWidth() / 2, mMap3DImage->getHeight() / 2)
+                                                       : getCrosshairPosition();
             const MyGUI::IntPoint inWindow = center - mCrosshair->getParent()->getAbsolutePosition();
             mCrosshair->setPosition(
                 inWindow.left - mCrosshair->getWidth() / 2, inWindow.top - mCrosshair->getHeight() / 2);
@@ -1015,7 +1018,16 @@ namespace MWGui
             // position, so that is where the pin is looked for.
             const int reach = mCrosshair->getWidth() / 2;
             int nearest = reach * reach + 1;
-            for (MyGUI::Widget* widget : mCustomMarkerWidgets)
+            std::vector<MyGUI::Widget*> pins;
+            if (mMap3DShown)
+            {
+                for (const Map3DMarker& marker : mMap3DPins)
+                    if (marker.mWidget->getVisible())
+                        pins.push_back(marker.mWidget);
+            }
+            else
+                pins = mCustomMarkerWidgets;
+            for (MyGUI::Widget* widget : pins)
             {
                 const MyGUI::IntCoord coord = widget->getAbsoluteCoord();
                 const int dx = coord.left + coord.width / 2 - center.left;
@@ -1054,7 +1066,7 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         if (mPinAtCrosshair == nullptr)
         {
-            mCustomMarkers.addMarker(getMarkerAt(getCrosshairPosition()));
+            mCustomMarkers.addMarker(mMap3DShown ? getMap3DPinAtCenter() : getMarkerAt(getCrosshairPosition()));
             return;
         }
 
@@ -1420,6 +1432,7 @@ namespace MWGui
         mPinAtCrosshair = nullptr;
         LocalMapBase::updateCustomMarkers();
         createGlobalMapPins();
+        createMap3DPins();
 
         for (auto& [widgetPair, ignore] : mGlobalMapMarkers)
             setGlobalMapMarkerTooltip(widgetPair.widget, static_cast<int>(widgetPair.position.x()),
@@ -1571,6 +1584,17 @@ namespace MWGui
         for (const auto& [widget, position] : mGlobalMapPins)
             MyGUI::Gui::getInstance().destroyWidget(widget);
         mGlobalMapPins.clear();
+
+        // A new game or a loaded one has its own pins, doors and magic.
+        for (std::vector<Map3DMarker>* markers : { &mMap3DPins, &mMap3DDoors, &mMap3DMagicMarkers })
+        {
+            for (const Map3DMarker& marker : *markers)
+                MyGUI::Gui::getInstance().destroyWidget(marker.mWidget);
+            markers->clear();
+        }
+        mMap3DDoorCells.clear();
+        mMap3DDoorsSpace = ESM::RefId();
+        mPinAtCrosshair = nullptr;
     }
 
     void MapWindow::write(ESM::ESMWriter& writer, Loading::Listener& progress)
@@ -1659,8 +1683,9 @@ namespace MWGui
         }
         else if (mMap3DShown)
         {
-            // Pins don't work in the 3D view yet.
-            if (arg.button == SDL_CONTROLLER_BUTTON_Y)
+            if (arg.button == SDL_CONTROLLER_BUTTON_X)
+                togglePinAtCrosshair();
+            else if (arg.button == SDL_CONTROLLER_BUTTON_Y)
             {
                 centerMap3D();
                 MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
@@ -1879,12 +1904,15 @@ namespace MWGui
             mMap3DImage
                 = mLocalMap->getParent()->createWidget<MyGUI::ImageBox>("ImageBox", coord, MyGUI::Align::Stretch);
             mMap3DImage->setNeedMouseFocus(false);
-            for (MyGUI::Widget* hint : { mControllerGuide, mGuideZoom, mGuideMark })
+            for (MyGUI::Widget* hint : { mControllerGuide, mGuideZoom, mGuideMark, mCrosshair })
                 hint->setDepth(-1);
+            // The player's arrow goes in front of the markers, and the pins in front of the doors.
+            const int arrowSize = getMap3DMarkerSize(24);
             mMap3DPlayer = mMap3DImage->createWidget<MyGUI::ImageBox>(
-                "RotatingSkin", MyGUI::IntCoord(0, 0, 32, 32), MyGUI::Align::Default);
+                "RotatingSkin", MyGUI::IntCoord(0, 0, arrowSize, arrowSize), MyGUI::Align::Default);
             mMap3DPlayer->setImageTexture("textures\\compass.dds");
             mMap3DPlayer->setNeedMouseFocus(false);
+            mMap3DPlayer->setDepth(-2);
         }
         mMap3DImage->setCoord(coord);
         mMap3DImage->setRenderItemTexture(mMap3DTexture.get());
@@ -1895,8 +1923,213 @@ namespace MWGui
         centerMap3D();
         // The fog of war may have changed since the view last showed.
         mMap3DFogCenter.reset();
+
+        // The doors stay from one showing to the next, while the player stays in the same cell or worldspace.
+        const ESM::RefId doorsSpace = mActiveCell->isExterior() ? mActiveCell->getWorldSpace() : mActiveCell->getId();
+        if (doorsSpace != mMap3DDoorsSpace)
+        {
+            for (const Map3DMarker& marker : mMap3DDoors)
+                MyGUI::Gui::getInstance().destroyWidget(marker.mWidget);
+            mMap3DDoors.clear();
+            mMap3DDoorCells.clear();
+            mMap3DDoorsSpace = doorsSpace;
+        }
+        createMap3DPins();
+        createMap3DMagicMarkers();
+
         mMap3D->setShown(true);
         updateMap3D(0.f);
+    }
+
+    int MapWindow::getMap3DMarkerSize(int canvasSize) const
+    {
+        const float scale = MyGUI::RenderManager::getInstance().getViewSize().height / 720.f;
+        return std::max(4, static_cast<int>(std::round(canvasSize * scale)));
+    }
+
+    float MapWindow::getMap3DGroundHeight(float x, float y) const
+    {
+        MWBase::World* world = MWBase::Environment::get().getWorld();
+        if (mActiveCell->isExterior())
+            return world->getTerrainHeightAt(osg::Vec3f(x, y, 0.f), mActiveCell->getWorldSpace());
+        return world->getPlayerPtr().getRefData().getPosition().pos[2];
+    }
+
+    void MapWindow::createMap3DPins()
+    {
+        for (const Map3DMarker& marker : mMap3DPins)
+        {
+            if (marker.mWidget == mPinAtCrosshair)
+                mPinAtCrosshair = nullptr;
+            MyGUI::Gui::getInstance().destroyWidget(marker.mWidget);
+        }
+        mMap3DPins.clear();
+        if (mMap3DImage == nullptr || mActiveCell == nullptr)
+            return;
+
+        const int size = getMap3DMarkerSize(16);
+        for (const auto& [cellId, marker] : mCustomMarkers)
+        {
+            // Outdoors, the view shows the pins of every exterior cell, since it can look anywhere. Indoors, it shows
+            // the pins of the player's cell.
+            if (mActiveCell->isExterior() ? !cellId.is<ESM::ESM3ExteriorCellRefId>() : cellId != mActiveCell->getId())
+                continue;
+            MarkerWidget* widget = mMap3DImage->createWidget<MarkerWidget>(
+                "CustomMarkerButton", MyGUI::IntCoord(0, 0, size, size), MyGUI::Align::Default);
+            widget->setDepth(-1);
+            widget->setNormalColour(MyGUI::Colour(0.6f, 0.6f, 0.6f));
+            widget->setHoverColour(MyGUI::Colour::White);
+            widget->setUserData(marker);
+            widget->setNeedMouseFocus(false);
+            mMap3DPins.push_back({ widget,
+                osg::Vec3f(marker.mWorldX, marker.mWorldY, getMap3DGroundHeight(marker.mWorldX, marker.mWorldY)) });
+        }
+    }
+
+    void MapWindow::createMap3DMagicMarkers()
+    {
+        for (const Map3DMarker& marker : mMap3DMagicMarkers)
+            MyGUI::Gui::getInstance().destroyWidget(marker.mWidget);
+        mMap3DMagicMarkers.clear();
+
+        const int size = getMap3DMarkerSize(10);
+        const auto addMarker = [&](const osg::Vec3f& position, std::string_view texture) {
+            MyGUI::ImageBox* widget = mMap3DImage->createWidget<MyGUI::ImageBox>(
+                "ImageBox", MyGUI::IntCoord(0, 0, size, size), MyGUI::Align::Default);
+            widget->setImageTexture(texture);
+            widget->setNeedMouseFocus(false);
+            mMap3DMagicMarkers.push_back({ widget, position });
+        };
+
+        // The game is paused while the map shows, so these don't move until it opens again.
+        MWBase::World* world = MWBase::Environment::get().getWorld();
+        constexpr std::pair<MWBase::World::DetectionType, std::string_view> detections[] = {
+            { MWBase::World::Detect_Creature, "textures\\detect_animal_icon.dds" },
+            { MWBase::World::Detect_Key, "textures\\detect_key_icon.dds" },
+            { MWBase::World::Detect_Enchantment, "textures\\detect_enchantment_icon.dds" },
+        };
+        for (const auto& [type, texture] : detections)
+        {
+            std::vector<MWWorld::Ptr> detected;
+            world->listDetectedReferences(world->getPlayerPtr(), detected, type);
+            for (const MWWorld::Ptr& ptr : detected)
+                addMarker(ptr.getRefData().getPosition().asVec3(), texture);
+        }
+
+        MWWorld::CellStore* markedCell = nullptr;
+        ESM::Position markedPosition;
+        world->getPlayer().getMarkedPosition(markedCell, markedPosition);
+        if (markedCell != nullptr && markedCell->getCell()->getWorldSpace() == mActiveCell->getWorldSpace())
+            addMarker(markedPosition.asVec3(), "textures\\menu_map_smark.dds");
+    }
+
+    void MapWindow::addMap3DDoors()
+    {
+        MWBase::World* world = MWBase::Environment::get().getWorld();
+        MWWorld::WorldModel* worldModel = MWBase::Environment::get().getWorldModel();
+        const int size = getMap3DMarkerSize(9);
+        const MyGUI::Colour colour
+            = MyGUI::Colour::parse(MyGUI::LanguageManager::getInstance().replaceTags("#{fontcolour=normal}"));
+        const auto addDoors = [&](MWWorld::CellStore& cell) {
+            std::vector<MWBase::World::DoorMarker> doors;
+            world->getDoorMarkers(cell, doors);
+            for (const MWBase::World::DoorMarker& door : doors)
+            {
+                MarkerWidget* widget = mMap3DImage->createWidget<MarkerWidget>(
+                    "MarkerButton", MyGUI::IntCoord(0, 0, size, size), MyGUI::Align::Default);
+                widget->setNormalColour(colour);
+                widget->setNeedMouseFocus(false);
+                mMap3DDoors.push_back({ widget, osg::Vec3f(door.x, door.y, door.z) });
+            }
+        };
+
+        if (!mActiveCell->isExterior())
+        {
+            if (mMap3DDoorCells.empty())
+            {
+                mMap3DDoorCells.emplace(0, 0);
+                addDoors(worldModel->getInterior(mActiveCell->getNameId()));
+            }
+            return;
+        }
+
+        // The cells in view, and a little past its edges.
+        const float mapCellSize = static_cast<float>(cellSize);
+        const int focusX = static_cast<int>(std::floor(mMap3DFocus.x() / mapCellSize));
+        const int focusY = static_cast<int>(std::floor(mMap3DFocus.y() / mapCellSize));
+        const int reach = std::clamp(static_cast<int>(mMap3DDistance * 2.f / mapCellSize) + 1, 1, 16);
+        std::vector<std::pair<int, int>> cells;
+        for (int x = focusX - reach; x <= focusX + reach; ++x)
+            for (int y = focusY - reach; y <= focusY + reach; ++y)
+                if (!mMap3DDoorCells.contains({ x, y }))
+                    cells.emplace_back(x, y);
+        std::sort(cells.begin(), cells.end(), [&](const auto& a, const auto& b) {
+            const int distanceA = (a.first - focusX) * (a.first - focusX) + (a.second - focusY) * (a.second - focusY);
+            const int distanceB = (b.first - focusX) * (b.first - focusX) + (b.second - focusY) * (b.second - focusY);
+            return distanceA < distanceB;
+        });
+
+        constexpr int loadsPerFrame = 2;
+        int loads = 0;
+        for (const auto& [x, y] : cells)
+        {
+            const ESM::ExteriorCellLocation location(x, y, mActiveCell->getWorldSpace());
+            MWWorld::CellStore& cell = worldModel->getExterior(location, false);
+            // As on the flat map, the doors show in the cells the player has been to.
+            const bool loaded = cell.getState() == MWWorld::CellStore::State_Loaded;
+            if (!loaded && cell.getFog() == nullptr)
+                continue;
+            if (!loaded && loads++ == loadsPerFrame)
+                break;
+            mMap3DDoorCells.emplace(x, y);
+            addDoors(worldModel->getExterior(location));
+        }
+    }
+
+    void MapWindow::placeMap3DMarkers()
+    {
+        const MyGUI::IntSize size = mMap3DImage->getSize();
+        for (const std::vector<Map3DMarker>* markers : { &mMap3DPins, &mMap3DDoors, &mMap3DMagicMarkers })
+        {
+            // The doors hide under the fog of war, as the places around them do. The player's own pins, and what
+            // magic shows, stay in sight.
+            const bool hideInFog = markers == &mMap3DDoors;
+            for (const Map3DMarker& marker : *markers)
+            {
+                osg::Vec2f picture;
+                const bool inView = mMap3D->worldToPicture(marker.mPosition, picture) && picture.x() >= 0.f
+                    && picture.x() <= 1.f && picture.y() >= 0.f && picture.y() <= 1.f
+                    && (!hideInFog || isMap3DExplored(marker.mPosition));
+                marker.mWidget->setVisible(inView);
+                if (inView)
+                    marker.mWidget->setPosition(
+                        static_cast<int>(picture.x() * size.width) - marker.mWidget->getWidth() / 2,
+                        static_cast<int>(picture.y() * size.height) - marker.mWidget->getHeight() / 2);
+            }
+        }
+    }
+
+    bool MapWindow::isMap3DExplored(const osg::Vec3f& position) const
+    {
+        if (!mMap3DFogShown || mMap3DFogImage == nullptr)
+            return true;
+        const int s = static_cast<int>((position.x() - mMap3DFogSouthWest.x()) / mMap3DFogSize * mMap3DFogImage->s());
+        const int t = static_cast<int>((position.y() - mMap3DFogSouthWest.y()) / mMap3DFogSize * mMap3DFogImage->t());
+        if (s < 0 || t < 0 || s >= mMap3DFogImage->s() || t >= mMap3DFogImage->t())
+            return false;
+        // Where the fog becomes solid in the view, a little way into the soft edge of what was explored.
+        return *mMap3DFogImage->data(s, t) < 128;
+    }
+
+    ESM::CustomMarker MapWindow::getMap3DPinAtCenter() const
+    {
+        ESM::CustomMarker marker;
+        marker.mWorldX = mMap3DFocus.x();
+        marker.mWorldY = mMap3DFocus.y();
+        const float mapCellSize = static_cast<float>(cellSize);
+        marker.mCell = getCellIdInWorldSpace(*mActiveCell, static_cast<int>(std::floor(mMap3DFocus.x() / mapCellSize)),
+            static_cast<int>(std::floor(mMap3DFocus.y() / mapCellSize)));
+        return marker;
     }
 
     void MapWindow::centerMap3D()
@@ -1934,8 +2167,11 @@ namespace MWGui
         mMap3DFogShown = true;
         const int westX = focusCell.first - fogCells / 2;
         const int southY = focusCell.second - fogCells / 2;
-        mMap3D->setFog(mLocalMapRender->makeExteriorFogImage(westX, southY, fogCells, cell.getCell()->getWorldSpace()),
-            osg::Vec2f(westX * fogCellSize, southY * fogCellSize), fogCells * fogCellSize);
+        mMap3DFogImage
+            = mLocalMapRender->makeExteriorFogImage(westX, southY, fogCells, cell.getCell()->getWorldSpace());
+        mMap3DFogSouthWest = osg::Vec2f(westX * fogCellSize, southY * fogCellSize);
+        mMap3DFogSize = fogCells * fogCellSize;
+        mMap3D->setFog(mMap3DFogImage, mMap3DFogSouthWest, mMap3DFogSize);
     }
 
     void MapWindow::updateMap3D(float dt)
@@ -1959,6 +2195,8 @@ namespace MWGui
             mMap3DFocus.z() = world->getTerrainHeightAt(mMap3DFocus, cell.getCell()->getWorldSpace());
         updateMap3DFog(cell);
         mMap3D->setView(mMap3DFocus, mMap3DDistance);
+        addMap3DDoors();
+        placeMap3DMarkers();
 
         // The player's arrow points the way the player faces. The view looks north, as the flat map does.
         const ESM::Position& position = player.getRefData().getPosition();
@@ -1969,10 +2207,11 @@ namespace MWGui
         if (inView)
         {
             const MyGUI::IntSize size = mMap3DImage->getSize();
+            const int half = mMap3DPlayer->getWidth() / 2;
             mMap3DPlayer->setPosition(
-                static_cast<int>(picture.x() * size.width) - 16, static_cast<int>(picture.y() * size.height) - 16);
+                static_cast<int>(picture.x() * size.width) - half, static_cast<int>(picture.y() * size.height) - half);
             MyGUI::RotatingSkin* arrow = mMap3DPlayer->getSubWidgetMain()->castType<MyGUI::RotatingSkin>();
-            arrow->setCenter(MyGUI::IntPoint(16, 16));
+            arrow->setCenter(MyGUI::IntPoint(half, half));
             arrow->setAngle(position.rot[2]);
         }
     }
