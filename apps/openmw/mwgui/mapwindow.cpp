@@ -30,6 +30,8 @@
 
 #include "../mwrender/globalmap.hpp"
 #include "../mwrender/localmap.hpp"
+#include "../mwrender/map3d.hpp"
+#include "../mwrender/renderingmanager.hpp"
 
 #include "confirmationdialog.hpp"
 #include "controllerscreen.hpp"
@@ -983,7 +985,7 @@ namespace MWGui
     void MapWindow::updateCrosshair()
     {
         const bool active = mCrosshair != nullptr && mActiveCell != nullptr && mControllerGuide->getVisible()
-            && !Settings::map().mGlobal;
+            && !Settings::map().mGlobal && !mMap3DShown;
         mGuideMark->setVisible(active);
         mGuideZoom->setVisible(mControllerGuide->getVisible());
         // The left stick moves the crosshair here, rather than the mouse pointer.
@@ -1344,9 +1346,14 @@ namespace MWGui
         if (Settings::gui().mControllerMenus && !Settings::map().mGlobal
             && MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() == this)
         {
-            panLocalMapWithStick(dt);
-            if (mCrosshair != nullptr)
-                moveCrosshairWithStick(dt);
+            if (mMap3DShown)
+                updateMap3D(dt);
+            else
+            {
+                panLocalMapWithStick(dt);
+                if (mCrosshair != nullptr)
+                    moveCrosshairWithStick(dt);
+            }
         }
         updateCrosshair();
     }
@@ -1597,7 +1604,7 @@ namespace MWGui
         NoDrop::setAlpha(alpha);
         // can't allow showing map with partial transparency, as the fog of war will also go transparent
         // and reveal parts of the map you shouldn't be able to see
-        mLocalMap->setVisible(!mGlobalMap->getVisible() && alpha == 1);
+        mLocalMap->setVisible(!mGlobalMap->getVisible() && alpha == 1 && !mMap3DShown);
     }
 
     void MapWindow::customMarkerCreated(MyGUI::Widget* marker)
@@ -1631,8 +1638,30 @@ namespace MWGui
         {
             // The shoulder buttons switch between the Local and World tabs. There are only two, so either one
             // switches to the other.
+            setMap3DShown(false);
             onWorldButtonClicked(mButton);
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK && !Settings::map().mGlobal)
+        {
+            setMap3DShown(!mMap3DShown);
+            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        }
+        else if (mMap3DShown)
+        {
+            // Pins don't work in the 3D view yet.
+            if (arg.button == SDL_CONTROLLER_BUTTON_Y)
+            {
+                centerMap3D();
+                MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+            }
+            else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+            {
+                constexpr float step = 1.25f;
+                const float zoomed = mMap3DDistance * (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP ? 1.f / step : step);
+                mMap3DDistance = std::clamp(zoomed, 6000.f, 100000.f);
+                MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+            }
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_Y)
         {
@@ -1785,8 +1814,108 @@ namespace MWGui
             else if (mControllerTabs != nullptr)
                 mControllerTabs->setVisible(false);
         }
+        if (!active)
+            setMap3DShown(false);
 
         WindowBase::setActiveControllerWindow(active);
+    }
+
+    void MapWindow::setMap3DShown(bool shown)
+    {
+        if (shown == mMap3DShown)
+            return;
+        mMap3DShown = shown;
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+
+        if (!shown)
+        {
+            if (mMap3D != nullptr)
+                mMap3D->setShown(false);
+            if (mMap3DImage != nullptr)
+                mMap3DImage->setVisible(false);
+            mLocalMap->setVisible(!Settings::map().mGlobal);
+            return;
+        }
+
+        // The picture has a pixel for each pixel of the screen that the map covers.
+        const MyGUI::IntCoord coord = mLocalMap->getCoord();
+        const float scale = winMgr->getScalingFactor();
+        const int width = std::max(1, static_cast<int>(std::round(coord.width * scale)));
+        const int height = std::max(1, static_cast<int>(std::round(coord.height * scale)));
+        if (mMap3D == nullptr || mMap3D->getWidth() != width || mMap3D->getHeight() != height)
+        {
+            if (mMap3DImage != nullptr)
+                mMap3DImage->setRenderItemTexture(nullptr);
+            mMap3DTexture.reset();
+            mMap3D.reset();
+            mMap3D = MWBase::Environment::get().getWorld()->getRenderingManager()->createMap3D(width, height);
+            mMap3DTexture = mMap3D->makeGuiTexture();
+        }
+
+        if (mMap3DImage == nullptr)
+        {
+            // The view covers the map's other widgets, except the button hints, which move in front of it.
+            mMap3DImage
+                = mLocalMap->getParent()->createWidget<MyGUI::ImageBox>("ImageBox", coord, MyGUI::Align::Stretch);
+            mMap3DImage->setNeedMouseFocus(false);
+            for (MyGUI::Widget* hint : { mControllerGuide, mGuideZoom, mGuideMark })
+                hint->setDepth(-1);
+            mMap3DPlayer = mMap3DImage->createWidget<MyGUI::ImageBox>(
+                "RotatingSkin", MyGUI::IntCoord(0, 0, 32, 32), MyGUI::Align::Default);
+            mMap3DPlayer->setImageTexture("textures\\compass.dds");
+            mMap3DPlayer->setNeedMouseFocus(false);
+        }
+        mMap3DImage->setCoord(coord);
+        mMap3DImage->setRenderItemTexture(mMap3DTexture.get());
+        mMap3DImage->getSubWidgetMain()->_setUVSet(MyGUI::FloatRect(0.f, 1.f, 1.f, 0.f));
+        mMap3DImage->setVisible(true);
+        mLocalMap->setVisible(false);
+
+        centerMap3D();
+        mMap3D->setShown(true);
+        updateMap3D(0.f);
+    }
+
+    void MapWindow::centerMap3D()
+    {
+        mMap3DFocus = MWBase::Environment::get().getWorld()->getPlayerPtr().getRefData().getPosition().asVec3();
+    }
+
+    void MapWindow::updateMap3D(float dt)
+    {
+        if (mMap3D == nullptr)
+            return;
+        MWBase::World* world = MWBase::Environment::get().getWorld();
+        const MWWorld::Ptr player = world->getPlayerPtr();
+
+        // The right stick moves the point the camera looks at, faster when the camera is farther away. Pushing the
+        // stick up moves north, which is the top of the view.
+        const MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
+        const float x = stickResponse(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTX));
+        const float y = stickResponse(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTY));
+        mMap3DFocus.x() += x * mMap3DDistance * dt;
+        mMap3DFocus.y() -= y * mMap3DDistance * dt;
+
+        // Outdoors, the camera looks at the ground under the point. Indoors, it stays at the player's height.
+        if (player.getCell()->isExterior())
+            mMap3DFocus.z() = world->getTerrainHeightAt(mMap3DFocus, player.getCell()->getCell()->getWorldSpace());
+        mMap3D->setView(mMap3DFocus, mMap3DDistance);
+
+        // The player's arrow points the way the player faces. The view looks north, as the flat map does.
+        const ESM::Position& position = player.getRefData().getPosition();
+        osg::Vec2f picture;
+        const bool inView = mMap3D->worldToPicture(position.asVec3(), picture) && picture.x() >= 0.f
+            && picture.x() <= 1.f && picture.y() >= 0.f && picture.y() <= 1.f;
+        mMap3DPlayer->setVisible(inView);
+        if (inView)
+        {
+            const MyGUI::IntSize size = mMap3DImage->getSize();
+            mMap3DPlayer->setPosition(
+                static_cast<int>(picture.x() * size.width) - 16, static_cast<int>(picture.y() * size.height) - 16);
+            MyGUI::RotatingSkin* arrow = mMap3DPlayer->getSubWidgetMain()->castType<MyGUI::RotatingSkin>();
+            arrow->setCenter(MyGUI::IntPoint(16, 16));
+            arrow->setAngle(position.rot[2]);
+        }
     }
 
     void MapWindow::drawControllerTabs()

@@ -6,6 +6,7 @@
 #include <optional>
 
 #include <osg/Vec2f>
+#include <osg/Vec3f>
 
 #include <MyGUI_ITexture.h>
 
@@ -18,6 +19,7 @@ namespace MWRender
 {
     class GlobalMap;
     class LocalMap;
+    class Map3D;
 }
 
 namespace ESM
@@ -324,6 +326,12 @@ namespace MWGui
         void createGlobalMapPins();
         /// Moves the global map's pins to where their positions are at the global map's zoom.
         void placeGlobalMapPins();
+        /// Switches the local map between the flat map and the 3D view.
+        void setMap3DShown(bool shown);
+        /// Pans the 3D view with the right stick, and draws it from its new place.
+        void updateMap3D(float dt);
+        /// Points the 3D view at the player.
+        void centerMap3D();
 
         MyGUI::ScrollView* mGlobalMap;
         std::unique_ptr<MyGUI::ITexture> mGlobalMapTexture;
@@ -359,6 +367,18 @@ namespace MWGui
         bool mGuideMarkRemoves = false;
         // The pin under the crosshair, one of mCustomMarkerWidgets, or nullptr.
         MyGUI::Widget* mPinAtCrosshair = nullptr;
+
+        // The 3D view of the local map, in controller menus mode. Clicking the right stick switches to it from the
+        // flat map. The right stick pans it, the d-pad zooms it and Y points it at the player again.
+        std::unique_ptr<MWRender::Map3D> mMap3D;
+        std::unique_ptr<MyGUI::ITexture> mMap3DTexture;
+        MyGUI::ImageBox* mMap3DImage = nullptr;
+        // The player's arrow, on top of the 3D view.
+        MyGUI::ImageBox* mMap3DPlayer = nullptr;
+        bool mMap3DShown = false;
+        // The point on the ground that the 3D view looks at, and how far away the camera is, in world units.
+        osg::Vec3f mMap3DFocus;
+        float mMap3DDistance = 7500.f;
 
         // The pins in exterior cells, drawn on the global map, with their positions in the world.
         std::vector<std::pair<MyGUI::Widget*, osg::Vec2f>> mGlobalMapPins;

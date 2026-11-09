@@ -79,6 +79,7 @@
 #include "fogmanager.hpp"
 #include "groundcover.hpp"
 #include "localmap.hpp"
+#include "map3d.hpp"
 #include "navmesh.hpp"
 #include "npcanimation.hpp"
 #include "objectpaging.hpp"
@@ -471,6 +472,11 @@ namespace MWRender
     std::unique_ptr<LocalMap> RenderingManager::createLocalMap()
     {
         return std::make_unique<LocalMap>(mRootNode);
+    }
+
+    std::unique_ptr<Map3D> RenderingManager::createMap3D(int width, int height)
+    {
+        return std::make_unique<Map3D>(mRootNode, width, height);
     }
 
     const std::shared_ptr<SceneUtil::WorkQueue>& RenderingManager::getWorkQueue() const
