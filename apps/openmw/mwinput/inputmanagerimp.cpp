@@ -41,6 +41,7 @@ namespace MWInput
         mInputWrapper->setKeyboardEventCallback(mKeyboardManager.get());
         mInputWrapper->setMouseEventCallback(mMouseManager.get());
         mInputWrapper->setControllerEventCallback(mControllerManager.get());
+        mKeyboardManager->setControllerManager(mControllerManager.get());
         mInputWrapper->setSensorEventCallback(mSensorManager.get());
     }
 

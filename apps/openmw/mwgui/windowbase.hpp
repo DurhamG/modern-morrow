@@ -83,6 +83,10 @@ namespace MWGui
         virtual ControllerButtons* getControllerButtons() { return &mControllerButtons; }
         MyGUI::Widget* getControllerScrollWidget() { return mControllerScrollWidget; }
         bool isGamepadCursorAllowed() { return !mDisableGamepadCursor; }
+
+        /// Whether the window takes typed text, such as a name. In controller menus mode, keys otherwise stand in for
+        /// controller buttons.
+        virtual bool takesTypedText() const { return false; }
         virtual bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) { return true; }
         virtual bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) { return false; }
         virtual void setActiveControllerWindow(bool active) { mActiveControllerWindow = active; }

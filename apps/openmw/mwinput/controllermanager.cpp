@@ -1,5 +1,9 @@
 #include "controllermanager.hpp"
 
+#include <algorithm>
+#include <iterator>
+#include <utility>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_InputManager.h>
 
@@ -21,6 +25,31 @@
 #include "actions.hpp"
 #include "bindingsmanager.hpp"
 #include "mousemanager.hpp"
+
+namespace
+{
+    // The keys that stand in for controller buttons in controller menus mode. The arrow keys are the d-pad, Enter and
+    // Space are A, Escape and Backspace are B, and X and Y are themselves. Q and E are the shoulder buttons, which
+    // switch a screen's own tabs, and F and R are the sticks' clicks. Tab and Shift+Tab stand in for the triggers, and
+    // W, A, S and D for the right stick, which pans the map and scrolls long text.
+    constexpr std::pair<SDL_Scancode, SDL_GameControllerButton> sKeyButtons[] = {
+        { SDL_SCANCODE_UP, SDL_CONTROLLER_BUTTON_DPAD_UP },
+        { SDL_SCANCODE_DOWN, SDL_CONTROLLER_BUTTON_DPAD_DOWN },
+        { SDL_SCANCODE_LEFT, SDL_CONTROLLER_BUTTON_DPAD_LEFT },
+        { SDL_SCANCODE_RIGHT, SDL_CONTROLLER_BUTTON_DPAD_RIGHT },
+        { SDL_SCANCODE_RETURN, SDL_CONTROLLER_BUTTON_A },
+        { SDL_SCANCODE_KP_ENTER, SDL_CONTROLLER_BUTTON_A },
+        { SDL_SCANCODE_SPACE, SDL_CONTROLLER_BUTTON_A },
+        { SDL_SCANCODE_ESCAPE, SDL_CONTROLLER_BUTTON_B },
+        { SDL_SCANCODE_BACKSPACE, SDL_CONTROLLER_BUTTON_B },
+        { SDL_SCANCODE_X, SDL_CONTROLLER_BUTTON_X },
+        { SDL_SCANCODE_Y, SDL_CONTROLLER_BUTTON_Y },
+        { SDL_SCANCODE_Q, SDL_CONTROLLER_BUTTON_LEFTSHOULDER },
+        { SDL_SCANCODE_E, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER },
+        { SDL_SCANCODE_F, SDL_CONTROLLER_BUTTON_LEFTSTICK },
+        { SDL_SCANCODE_R, SDL_CONTROLLER_BUTTON_RIGHTSTICK },
+    };
+}
 
 namespace MWInput
 {
@@ -446,18 +475,89 @@ namespace MWInput
     {
         SDL_GameController* cntrl = mBindingsManager->getControllerOrNull();
         constexpr float axisMaxAbsoluteValue = 32768;
+        float value = 0;
         if (cntrl != nullptr)
-            return SDL_GameControllerGetAxis(cntrl, axis) / axisMaxAbsoluteValue;
-        return 0;
+            value = SDL_GameControllerGetAxis(cntrl, axis) / axisMaxAbsoluteValue;
+        if (value != 0 || (axis != SDL_CONTROLLER_AXIS_RIGHTX && axis != SDL_CONTROLLER_AXIS_RIGHTY)
+            || !keysStandInForButtons())
+            return value;
+
+        const auto held = [&](SDL_Scancode key) { return isKeyHeld(key) ? 1.f : 0.f; };
+        if (axis == SDL_CONTROLLER_AXIS_RIGHTX)
+            return held(SDL_SCANCODE_D) - held(SDL_SCANCODE_A);
+        return held(SDL_SCANCODE_S) - held(SDL_SCANCODE_W);
     }
 
     bool ControllerManager::isButtonPressed(SDL_GameControllerButton button) const
     {
         SDL_GameController* cntrl = mBindingsManager->getControllerOrNull();
-        if (cntrl)
-            return SDL_GameControllerGetButton(cntrl, button) > 0;
-        else
+        if (cntrl != nullptr && SDL_GameControllerGetButton(cntrl, button) > 0)
+            return true;
+        if (!keysStandInForButtons())
             return false;
+        for (const auto& [key, keyButton] : sKeyButtons)
+            if (keyButton == button && isKeyHeld(key))
+                return true;
+        return false;
+    }
+
+    bool ControllerManager::keysStandInForButtons() const
+    {
+        if (!Settings::gui().mControllerMenus || mBindingsManager->isDetectingBindingState())
+            return false;
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (!winMgr->isGuiMode() || winMgr->isConsoleMode())
+            return false;
+        MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
+        return topWin != nullptr && topWin->isVisible() && !topWin->takesTypedText();
+    }
+
+    void ControllerManager::keyReleased(const SDL_KeyboardEvent& arg)
+    {
+        mHeldKeys.erase(arg.keysym.scancode);
+    }
+
+    bool ControllerManager::keyToMenuButton(const SDL_KeyboardEvent& arg)
+    {
+        const SDL_Scancode key = arg.keysym.scancode;
+        mHeldKeys.insert(key);
+        if (!keysStandInForButtons())
+        {
+            // A menu that takes typing, such as for a name, gets the keys as they are, except Escape, which still goes
+            // back.
+            MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+            MWGui::WindowBase* topWin = Settings::gui().mControllerMenus && winMgr->isGuiMode()
+                ? winMgr->getActiveControllerWindow()
+                : nullptr;
+            if (key != SDL_SCANCODE_ESCAPE || topWin == nullptr || !topWin->isVisible() || !topWin->takesTypedText())
+                return false;
+        }
+
+        if (key == SDL_SCANCODE_TAB)
+        {
+            if (!arg.repeat)
+                MWBase::Environment::get().getWindowManager()->cycleActiveControllerWindow(
+                    (arg.keysym.mod & KMOD_SHIFT) == 0);
+            return true;
+        }
+
+        const auto found = std::find_if(std::begin(sKeyButtons), std::end(sKeyButtons),
+            [&](const auto& keyButton) { return keyButton.first == key; });
+        if (found == std::end(sKeyButtons))
+            return false;
+        // A held key repeats through isButtonPressed, as a held button does, so the key's own repeats are left out.
+        if (arg.repeat)
+            return true;
+
+        // The menu works as it does for a controller, which hides the mouse pointer.
+        mJoystickLastUsed = true;
+        SDL_ControllerButtonEvent event{};
+        event.type = SDL_CONTROLLERBUTTONDOWN;
+        event.timestamp = arg.timestamp;
+        event.button = static_cast<Uint8>(found->second);
+        event.state = SDL_PRESSED;
+        gamepadToGuiControl(event);
+        return true;
     }
 
     void ControllerManager::enableGyroSensor()

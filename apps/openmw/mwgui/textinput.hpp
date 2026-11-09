@@ -32,6 +32,7 @@ namespace MWGui
         void onOkClicked(MyGUI::Widget* sender);
         void onTextAccepted(MyGUI::EditBox* sender);
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+        bool takesTypedText() const override { return true; }
 
     private:
         MyGUI::EditBox* mTextEdit;

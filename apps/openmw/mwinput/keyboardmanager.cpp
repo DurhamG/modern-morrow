@@ -13,6 +13,7 @@
 
 #include "actions.hpp"
 #include "bindingsmanager.hpp"
+#include "controllermanager.hpp"
 
 namespace MWInput
 {
@@ -31,6 +32,10 @@ namespace MWInput
 
     void KeyboardManager::keyPressed(const SDL_KeyboardEvent& arg)
     {
+        // In controller menus mode, keys stand in for controller buttons while a menu shows.
+        if (mControllerManager != nullptr && mControllerManager->keyToMenuButton(arg))
+            return;
+
         // HACK: to make default keybinding for the console work without printing an extra "^" upon closing
         // This assumes that SDL_TextInput events always come *after* the key event
         // (which is somewhat reasonable, and hopefully true for all SDL platforms)
@@ -70,6 +75,9 @@ namespace MWInput
 
     void KeyboardManager::keyReleased(const SDL_KeyboardEvent& arg)
     {
+        if (mControllerManager != nullptr)
+            mControllerManager->keyReleased(arg);
+
         MWBase::Environment::get().getInputManager()->setJoystickLastUsed(false);
         auto kc = SDLUtil::sdlKeyToMyGUI(arg.keysym.sym);
 
