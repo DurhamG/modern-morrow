@@ -11,6 +11,7 @@
 namespace osg
 {
     class Group;
+    class Image;
     class Node;
 }
 
@@ -22,6 +23,7 @@ namespace MyGUI
 namespace MWRender
 {
     class Map3DRenderToTexture;
+    class Map3DFogPass;
 
     /// Draws the world around a point on the ground, seen from above at an angle, into a texture. It draws every frame
     /// while it is shown. It draws the same scene as the game's own view. Cells far from the player show the way
@@ -39,6 +41,11 @@ namespace MWRender
         /// Looks at a point on the ground from a distance, in world units.
         void setView(const osg::Vec3f& focus, float distance);
 
+        /// Darkens the parts of the view that the player hasn't explored. The image has one channel, 255 where
+        /// unexplored and 0 where explored. It covers a square of the world, size units across, with its first row and
+        /// column at the south west corner. Places outside it count as unexplored. With nullptr, nothing is darkened.
+        void setFog(osg::Image* image, const osg::Vec2f& southWest, float size);
+
         int getWidth() const { return mWidth; }
         int getHeight() const { return mHeight; }
 
@@ -52,6 +59,7 @@ namespace MWRender
     private:
         osg::ref_ptr<osg::Group> mRoot;
         osg::ref_ptr<Map3DRenderToTexture> mRtt;
+        osg::ref_ptr<Map3DFogPass> mFogPass;
         int mWidth;
         int mHeight;
     };

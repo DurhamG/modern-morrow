@@ -8,6 +8,8 @@
 #include <vector>
 
 #include <MyGUI_Types.h>
+
+#include <components/esm/refid.hpp>
 #include <osg/BoundingBox>
 #include <osg/Quat>
 #include <osg/ref_ptr>
@@ -113,6 +115,11 @@ namespace MWRender
         osg::Group* getRoot();
 
         MyGUI::IntRect getInteriorGrid() const;
+
+        /// Makes an image of which parts of a square of exterior cells the player has explored, with one channel: 255
+        /// where unexplored and 0 where explored. Each cell is sFogOfWarResolution pixels across. The first row and
+        /// column are at the south west corner of the cell at westX, southY.
+        osg::ref_ptr<osg::Image> makeExteriorFogImage(int westX, int southY, int cells, ESM::RefId worldspace) const;
 
     private:
         osg::ref_ptr<osg::Group> mRoot;

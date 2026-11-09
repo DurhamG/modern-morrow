@@ -4,8 +4,11 @@
 #include <cmath>
 #include <stdexcept>
 
+#include <osg/Geometry>
 #include <osg/Group>
 #include <osg/PolygonMode>
+#include <osg/Program>
+#include <osg/Shader>
 #include <osg/Texture2D>
 #include <osg/Uniform>
 
@@ -66,6 +69,10 @@ namespace MWRender
             mDetail->mDetailDistance = distance;
         }
 
+        /// Turns a point of the picture, from -1 to 1 across and up with the depth buffer's depth, into a world
+        /// position.
+        osg::Matrixd getPictureToWorld() const { return osg::Matrixd::inverse(mViewMatrix * mProjectionMatrix); }
+
         bool worldToPicture(const osg::Vec3f& position, osg::Vec2f& picture) const
         {
             const osg::Vec4d clip = osg::Vec4d(position, 1.0) * mViewMatrix * mPlainProjection;
@@ -86,6 +93,7 @@ namespace MWRender
             // The camera's own position decides the terrain's detail, rather than the player's.
             camera->setReferenceFrame(osg::Camera::ABSOLUTE_RF);
             camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT, osg::Camera::PIXEL_BUFFER_RTT);
+            // The same colour as the fog of war, so the unexplored land and the empty space around it look alike.
             camera->setClearColor(osg::Vec4(0.03f, 0.03f, 0.04f, 1.f));
             camera->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
             camera->setRenderOrder(osg::Camera::PRE_RENDER);
@@ -143,6 +151,146 @@ namespace MWRender
         osg::ref_ptr<osg::Uniform> mProjectionUniform;
     };
 
+    namespace
+    {
+        constexpr char sFogVertexShader[] = R"GLSL(
+            #version 120
+            varying vec2 uv;
+            void main()
+            {
+                gl_Position = vec4(gl_Vertex.xy, 0.0, 1.0);
+                uv = gl_MultiTexCoord0.xy;
+            }
+        )GLSL";
+
+        // Works out where each pixel of the 3D view is in the world from its depth, then looks up how explored that
+        // place is. Unexplored places take the colour of the empty background, so nothing of them shows. The mask is
+        // soft at the edge of what was explored, and the fog becomes solid a short way into that soft edge.
+        constexpr char sFogFragmentShader[] = R"GLSL(
+            #version 120
+            uniform sampler2D sceneColor;
+            uniform sampler2D sceneDepth;
+            uniform sampler2D fog;
+            uniform mat4 pictureToWorld;
+            uniform bool reversedDepth;
+            uniform bool fogShown;
+            uniform vec2 fogSouthWest;
+            uniform float fogSize;
+            const vec3 fogColor = vec3(0.03, 0.03, 0.04);
+            varying vec2 uv;
+            void main()
+            {
+                vec4 color = texture2D(sceneColor, uv);
+                float depth = texture2D(sceneDepth, uv).r;
+                bool background = reversedDepth ? depth <= 0.0 : depth >= 1.0;
+                if (!fogShown || background)
+                {
+                    gl_FragColor = vec4(color.rgb, 1.0);
+                    return;
+                }
+                float ndcDepth = reversedDepth ? depth : depth * 2.0 - 1.0;
+                vec4 world = pictureToWorld * vec4(uv * 2.0 - 1.0, ndcDepth, 1.0);
+                world /= world.w;
+                float unexplored = texture2D(fog, (world.xy - fogSouthWest) / fogSize).r;
+                float hidden = smoothstep(0.35, 0.75, unexplored);
+                gl_FragColor = vec4(mix(color.rgb, fogColor, hidden), 1.0);
+            }
+        )GLSL";
+    }
+
+    /// Draws the 3D view's picture again into a texture of its own, darkening what the player hasn't explored. It
+    /// draws after the 3D view, every frame while the view shows.
+    class Map3DFogPass : public SceneUtil::RTTNode
+    {
+    public:
+        Map3DFogPass(Map3DRenderToTexture* scene, int width, int height)
+            : RTTNode(width, height, 0, false, 1, StereoAwareness::Unaware, false)
+            , mScene(scene)
+            , mPictureToWorld(new osg::Uniform("pictureToWorld", osg::Matrixf()))
+            , mFogShown(new osg::Uniform("fogShown", false))
+            , mFogSouthWest(new osg::Uniform("fogSouthWest", osg::Vec2f()))
+            , mFogSize(new osg::Uniform("fogSize", 1.f))
+            , mFogTexture(new osg::Texture2D)
+        {
+            setNodeMask(0);
+            mFogTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+            mFogTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+            mFogTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_BORDER);
+            mFogTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_BORDER);
+            mFogTexture->setBorderColor(osg::Vec4d(1.0, 1.0, 1.0, 1.0));
+            mFogTexture->setResizeNonPowerOfTwoHint(false);
+        }
+
+        void setFog(osg::Image* image, const osg::Vec2f& southWest, float size)
+        {
+            mFogShown->set(image != nullptr);
+            if (image == nullptr)
+                return;
+            mFogTexture->setImage(image);
+            mFogSouthWest->set(southWest);
+            mFogSize->set(size);
+        }
+
+        void setDefaults(osg::Camera* camera) override
+        {
+            camera->setReferenceFrame(osg::Camera::ABSOLUTE_RF);
+            camera->setProjectionMatrix(osg::Matrix::identity());
+            camera->setViewMatrix(osg::Matrix::identity());
+            camera->setComputeNearFarMode(osg::Camera::DO_NOT_COMPUTE_NEAR_FAR);
+            camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT, osg::Camera::PIXEL_BUFFER_RTT);
+            camera->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            camera->setNodeMask(Mask_RenderToTexture);
+
+            // The pass reads the depth as it is, one value per pixel.
+            osg::Texture* sceneDepth = mScene->getDepthTexture(nullptr);
+            sceneDepth->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+            sceneDepth->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
+
+            // One quad covers the whole picture.
+            osg::ref_ptr<osg::Geometry> quad = osg::createTexturedQuadGeometry(
+                osg::Vec3(-1.f, -1.f, 0.f), osg::Vec3(2.f, 0.f, 0.f), osg::Vec3(0.f, 2.f, 0.f));
+            quad->setCullingActive(false);
+            camera->addChild(quad);
+
+            const osg::StateAttribute::GLModeValue force
+                = osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE | osg::StateAttribute::PROTECTED;
+            const osg::StateAttribute::GLModeValue forceOff
+                = osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE | osg::StateAttribute::PROTECTED;
+            osg::StateSet* stateset = camera->getOrCreateStateSet();
+            osg::ref_ptr<osg::Program> program = new osg::Program;
+            program->addShader(new osg::Shader(osg::Shader::VERTEX, sFogVertexShader));
+            program->addShader(new osg::Shader(osg::Shader::FRAGMENT, sFogFragmentShader));
+            stateset->setAttributeAndModes(program, force);
+            stateset->setMode(GL_DEPTH_TEST, forceOff);
+            stateset->setMode(GL_BLEND, forceOff);
+            stateset->setMode(GL_CULL_FACE, forceOff);
+            stateset->setTextureAttributeAndModes(0, mScene->getColorTexture(nullptr), force);
+            stateset->setTextureAttributeAndModes(1, sceneDepth, force);
+            stateset->setTextureAttributeAndModes(2, mFogTexture, force);
+            stateset->addUniform(new osg::Uniform("sceneColor", 0));
+            stateset->addUniform(new osg::Uniform("sceneDepth", 1));
+            stateset->addUniform(new osg::Uniform("fog", 2));
+            stateset->addUniform(new osg::Uniform("reversedDepth", SceneUtil::AutoDepth::isReversed()));
+            stateset->addUniform(mPictureToWorld);
+            stateset->addUniform(mFogShown);
+            stateset->addUniform(mFogSouthWest);
+            stateset->addUniform(mFogSize);
+        }
+
+        void apply(osg::Camera* camera) override
+        {
+            mPictureToWorld->set(static_cast<osg::Matrixf>(mScene->getPictureToWorld()));
+        }
+
+    private:
+        osg::ref_ptr<Map3DRenderToTexture> mScene;
+        osg::ref_ptr<osg::Uniform> mPictureToWorld;
+        osg::ref_ptr<osg::Uniform> mFogShown;
+        osg::ref_ptr<osg::Uniform> mFogSouthWest;
+        osg::ref_ptr<osg::Uniform> mFogSize;
+        osg::ref_ptr<osg::Texture2D> mFogTexture;
+    };
+
     Map3D::Map3D(osg::Group* root, int width, int height)
         : mRoot(root)
         , mWidth(width)
@@ -155,16 +303,25 @@ namespace MWRender
 
         mRtt = new Map3DRenderToTexture(find.mFoundNode, width, height);
         mRoot->addChild(mRtt);
+        mFogPass = new Map3DFogPass(mRtt, width, height);
+        mRoot->addChild(mFogPass);
     }
 
     Map3D::~Map3D()
     {
+        mRoot->removeChild(mFogPass);
         mRoot->removeChild(mRtt);
     }
 
     void Map3D::setShown(bool shown)
     {
         mRtt->setNodeMask(shown ? Mask_RenderToTexture : 0);
+        mFogPass->setNodeMask(shown ? Mask_RenderToTexture : 0);
+    }
+
+    void Map3D::setFog(osg::Image* image, const osg::Vec2f& southWest, float size)
+    {
+        mFogPass->setFog(image, southWest, size);
     }
 
     void Map3D::setView(const osg::Vec3f& focus, float distance)
@@ -175,7 +332,7 @@ namespace MWRender
     std::unique_ptr<MyGUI::ITexture> Map3D::makeGuiTexture() const
     {
         return std::make_unique<MyGUIPlatform::OSGTexture>(
-            static_cast<osg::Texture2D*>(mRtt->getColorTexture(nullptr)));
+            static_cast<osg::Texture2D*>(mFogPass->getColorTexture(nullptr)));
     }
 
     bool Map3D::worldToPicture(const osg::Vec3f& position, osg::Vec2f& picture) const

@@ -257,6 +257,7 @@ namespace MWGui
         void ensureGlobalMapLoaded();
 
         void onOpen() override;
+        void onClose() override;
 
         void onFrame(float dt) override;
 
@@ -328,10 +329,17 @@ namespace MWGui
         void placeGlobalMapPins();
         /// Switches the local map between the flat map and the 3D view.
         void setMap3DShown(bool shown);
+        /// Shows the 3D view and starts drawing it, pointed at the player, with the fog of war as it is now.
+        void startMap3D();
+        /// Hides the 3D view and stops drawing it, so it costs nothing while the map is closed. The local map stays
+        /// set to the 3D view, for the next time it opens.
+        void stopMap3D();
         /// Pans the 3D view with the right stick, and draws it from its new place.
         void updateMap3D(float dt);
         /// Points the 3D view at the player.
         void centerMap3D();
+        /// Makes the 3D view's fog of war again when the view has moved far, or hides it when it is turned off.
+        void updateMap3DFog(const MWWorld::CellStore& cell);
 
         MyGUI::ScrollView* mGlobalMap;
         std::unique_ptr<MyGUI::ITexture> mGlobalMapTexture;
@@ -375,10 +383,15 @@ namespace MWGui
         MyGUI::ImageBox* mMap3DImage = nullptr;
         // The player's arrow, on top of the 3D view.
         MyGUI::ImageBox* mMap3DPlayer = nullptr;
+        // Whether the local map is set to the 3D view rather than the flat map.
         bool mMap3DShown = false;
         // The point on the ground that the 3D view looks at, and how far away the camera is, in world units.
         osg::Vec3f mMap3DFocus;
         float mMap3DDistance = 7500.f;
+        // Whether the 3D view shows the fog of war, and the cell in the middle of the square of cells it has the fog
+        // of. Without a cell, the fog is made again on the next frame.
+        bool mMap3DFogShown = false;
+        std::optional<std::pair<int, int>> mMap3DFogCenter;
 
         // The pins in exterior cells, drawn on the global map, with their positions in the world.
         std::vector<std::pair<MyGUI::Widget*, osg::Vec2f>> mGlobalMapPins;

@@ -1485,6 +1485,11 @@ namespace MWGui
         globalMapUpdatePlayer();
     }
 
+    void MapWindow::onClose()
+    {
+        stopMap3D();
+    }
+
     void MapWindow::globalMapUpdatePlayer()
     {
         // For interiors, position is set by WindowManager via setGlobalMapPlayerPosition
@@ -1638,8 +1643,13 @@ namespace MWGui
         {
             // The shoulder buttons switch between the Local and World tabs. There are only two, so either one
             // switches to the other.
-            setMap3DShown(false);
+            // The 3D view stops on the World tab, and starts again on the Local tab.
+            const bool toWorld = !Settings::map().mGlobal;
+            if (toWorld)
+                stopMap3D();
             onWorldButtonClicked(mButton);
+            if (!toWorld && mMap3DShown)
+                startMap3D();
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK && !Settings::map().mGlobal)
@@ -1815,7 +1825,9 @@ namespace MWGui
                 mControllerTabs->setVisible(false);
         }
         if (!active)
-            setMap3DShown(false);
+            stopMap3D();
+        else if (mMap3DShown && !Settings::map().mGlobal)
+            startMap3D();
 
         WindowBase::setActiveControllerWindow(active);
     }
@@ -1825,17 +1837,26 @@ namespace MWGui
         if (shown == mMap3DShown)
             return;
         mMap3DShown = shown;
-        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
-
-        if (!shown)
+        if (shown)
+            startMap3D();
+        else
         {
-            if (mMap3D != nullptr)
-                mMap3D->setShown(false);
-            if (mMap3DImage != nullptr)
-                mMap3DImage->setVisible(false);
+            stopMap3D();
             mLocalMap->setVisible(!Settings::map().mGlobal);
-            return;
         }
+    }
+
+    void MapWindow::stopMap3D()
+    {
+        if (mMap3D != nullptr)
+            mMap3D->setShown(false);
+        if (mMap3DImage != nullptr)
+            mMap3DImage->setVisible(false);
+    }
+
+    void MapWindow::startMap3D()
+    {
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
 
         // The picture has a pixel for each pixel of the screen that the map covers.
         const MyGUI::IntCoord coord = mLocalMap->getCoord();
@@ -1872,6 +1893,8 @@ namespace MWGui
         mLocalMap->setVisible(false);
 
         centerMap3D();
+        // The fog of war may have changed since the view last showed.
+        mMap3DFogCenter.reset();
         mMap3D->setShown(true);
         updateMap3D(0.f);
     }
@@ -1879,6 +1902,40 @@ namespace MWGui
     void MapWindow::centerMap3D()
     {
         mMap3DFocus = MWBase::Environment::get().getWorld()->getPlayerPtr().getRefData().getPosition().asVec3();
+    }
+
+    void MapWindow::updateMap3DFog(const MWWorld::CellStore& cell)
+    {
+        // Interiors show no fog of war in the 3D view yet. The console's ToggleFogOfWar turns it off, as on the flat
+        // map.
+        const bool fogShown = cell.isExterior() && mFogOfWarToggled && mFogOfWarEnabled;
+        if (!fogShown)
+        {
+            if (mMap3DFogShown)
+                mMap3D->setFog(nullptr, osg::Vec2f(), 0.f);
+            mMap3DFogShown = false;
+            mMap3DFogCenter.reset();
+            return;
+        }
+
+        // The fog of war covers a square of cells around the point, wider than the view when zoomed all the way out.
+        // It is made again once the point moves far enough that the view could reach the square's edge.
+        constexpr int fogCells = 64;
+        constexpr int fogMargin = 16;
+        const float fogCellSize = static_cast<float>(Constants::CellSizeInUnits);
+        const std::pair<int, int> focusCell(static_cast<int>(std::floor(mMap3DFocus.x() / fogCellSize)),
+            static_cast<int>(std::floor(mMap3DFocus.y() / fogCellSize)));
+        if (mMap3DFogShown && mMap3DFogCenter.has_value()
+            && std::abs(focusCell.first - mMap3DFogCenter->first) <= fogMargin
+            && std::abs(focusCell.second - mMap3DFogCenter->second) <= fogMargin)
+            return;
+
+        mMap3DFogCenter = focusCell;
+        mMap3DFogShown = true;
+        const int westX = focusCell.first - fogCells / 2;
+        const int southY = focusCell.second - fogCells / 2;
+        mMap3D->setFog(mLocalMapRender->makeExteriorFogImage(westX, southY, fogCells, cell.getCell()->getWorldSpace()),
+            osg::Vec2f(westX * fogCellSize, southY * fogCellSize), fogCells * fogCellSize);
     }
 
     void MapWindow::updateMap3D(float dt)
@@ -1897,8 +1954,10 @@ namespace MWGui
         mMap3DFocus.y() -= y * mMap3DDistance * dt;
 
         // Outdoors, the camera looks at the ground under the point. Indoors, it stays at the player's height.
-        if (player.getCell()->isExterior())
-            mMap3DFocus.z() = world->getTerrainHeightAt(mMap3DFocus, player.getCell()->getCell()->getWorldSpace());
+        const MWWorld::CellStore& cell = *player.getCell();
+        if (cell.isExterior())
+            mMap3DFocus.z() = world->getTerrainHeightAt(mMap3DFocus, cell.getCell()->getWorldSpace());
+        updateMap3DFog(cell);
         mMap3D->setView(mMap3DFocus, mMap3DDistance);
 
         // The player's arrow points the way the player faces. The view looks north, as the flat map does.
