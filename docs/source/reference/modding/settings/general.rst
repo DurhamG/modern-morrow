@@ -48,7 +48,7 @@ General
    :title: texture mipmap
    :type: string
    :range: none, nearest, linear
-   :default: nearest
+   :default: linear
 
    Set the texture mipmap type to control the method mipmaps are created.
    Mipmapping reduces processing power needed during minification by pre-generating a series of smaller textures.

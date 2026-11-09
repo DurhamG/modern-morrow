@@ -14,7 +14,7 @@ Water Settings
    :title: shader
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-info:`In Game > Options > Video > Water`
 
    This setting enables or disables the water shader, which results in much more realistic looking water surfaces,

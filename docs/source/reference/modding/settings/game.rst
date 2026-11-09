@@ -30,7 +30,7 @@ Game Settings
    :title: show projectile damage
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-success:`Launcher > Settings > Interface`
 
    If this setting is true, the damage bonus of arrows and bolts will show on their tooltip.
@@ -39,7 +39,7 @@ Game Settings
    :title: show melee info
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-success:`Launcher > Settings > Interface`
 
    If this setting is true, the reach and speed of weapons will show on their tooltip.
@@ -48,7 +48,7 @@ Game Settings
    :title: show enchant chance
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-success:`Launcher > Settings > Interface`
 
    Whether or not the chance of success will be displayed in the enchanting menu.
@@ -57,7 +57,7 @@ Game Settings
    :title: best attack
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-info:`In Game > Options > Prefs`
 
    If this setting is true, the player character will always use the most powerful attack when striking with a weapon
@@ -143,7 +143,7 @@ Game Settings
    :title: show effect duration
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-success:`Launcher > Settings > Interface`
 
    Show the remaining duration of magic effects and lights if this setting is true.
@@ -163,7 +163,7 @@ Game Settings
    :title: prevent merchant equipping
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-success:`Launcher > Settings > Gameplay`
 
    Prevent merchants from equipping items that are sold to them.
@@ -361,7 +361,7 @@ Game Settings
    :title: swim upward correction
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-success:`Launcher > Settings > Gameplay`
 
    Makes player swim a bit upward from the line of sight. Applies only in third person mode. Intended to make simpler swimming without diving.
