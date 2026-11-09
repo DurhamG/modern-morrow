@@ -281,7 +281,12 @@ namespace MWGui
         void onWorldButtonClicked(MyGUI::Widget* sender);
         void onMapDoubleClicked(MyGUI::Widget* sender);
         void onMapZoomed(MyGUI::Widget* sender, int rel);
-        void zoomOnCursor(float speedDiff);
+        /// Zooms the map that shows by a factor, within its limits, keeping a point of the view still. The point is
+        /// from the view's top left corner. Returns false when the zoom was already at its limit.
+        bool zoomMap(float factor, MyGUI::IntPoint focus);
+        /// Zooms in or out by a step, for the d-pad.
+        void zoomWithController(bool zoomIn);
+        void zoomAround(float speedDiff, MyGUI::IntPoint cursor);
         void updateGlobalMap();
         void onCustomMarkerDoubleClicked(MyGUI::Widget* sender);
         void onNoteEditOk();
@@ -347,6 +352,8 @@ namespace MWGui
         // The part of a pixel that the stick moved the crosshair by, carried over to the next frame.
         MyGUI::FloatPoint mCrosshairRemainder;
         MyGUI::Widget* mGuideMark = nullptr;
+        // The hint that the d-pad zooms, on both maps.
+        MyGUI::Widget* mGuideZoom = nullptr;
         MyGUI::TextBox* mGuideMarkText = nullptr;
         // Whether the pin hint says X removes a pin, rather than places one.
         bool mGuideMarkRemoves = false;

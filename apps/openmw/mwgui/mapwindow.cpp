@@ -839,6 +839,12 @@ namespace MWGui
             MWBase::Environment::get().getInputManager()->getControllerButtonIcon(SDL_CONTROLLER_BUTTON_Y));
         mControllerGuide->setVisible(false);
 
+        getWidget(mGuideZoom, "GuideZoom");
+        getWidget(guideImage, "GuideZoomImage");
+        guideImage->setImageTexture(
+            MWBase::Environment::get().getInputManager()->getControllerButtonIcon(SDL_CONTROLLER_BUTTON_DPAD_UP));
+        mGuideZoom->setVisible(false);
+
         getWidget(mGuideMark, "GuideMark");
         getWidget(mGuideMarkText, "GuideMarkText");
         getWidget(guideImage, "GuideMarkImage");
@@ -979,6 +985,7 @@ namespace MWGui
         const bool active = mCrosshair != nullptr && mActiveCell != nullptr && mControllerGuide->getVisible()
             && !Settings::map().mGlobal;
         mGuideMark->setVisible(active);
+        mGuideZoom->setVisible(mControllerGuide->getVisible());
         // The left stick moves the crosshair here, rather than the mouse pointer.
         if (mCrosshair != nullptr)
             mDisableGamepadCursor = !Settings::map().mGlobal;
@@ -1092,16 +1099,18 @@ namespace MWGui
 
     void MapWindow::onMapZoomed(MyGUI::Widget* /*sender*/, int rel)
     {
+        const MyGUI::ScrollView* map = Settings::map().mGlobal ? mGlobalMap : mLocalMap;
+        zoomMap(rel < 0 ? 1.f / speed : speed,
+            MyGUI::InputManager::getInstance().getMousePosition() - map->getAbsolutePosition());
+    }
+
+    bool MapWindow::zoomMap(float factor, MyGUI::IntPoint focus)
+    {
         const int localWidgetSize = Settings::map().mLocalMapWidgetSize;
-        const bool zoomOut = rel < 0;
-        const bool zoomIn = !zoomOut;
-        const float speedDiff = zoomOut ? 1.f / speed : speed;
+        const bool zoomOut = factor < 1.f;
 
-        const float currentMinLocalMapZoom
-            = std::max({ (float(Settings::map().mGlobalMapCellSize) * 4.f) / float(localWidgetSize),
-                float(mLocalMap->getWidth()) / (localWidgetSize * (mGrid.width() + 1)),
-                float(mLocalMap->getHeight()) / (localWidgetSize * (mGrid.height() + 1)) });
-
+        // Each zoom stops at its limits: 4 times the normal size, and small enough to show the whole map.
+        float speedDiff = factor;
         if (Settings::map().mGlobal)
         {
             const float currentGlobalZoom = mGlobalMapZoom;
@@ -1109,47 +1118,60 @@ namespace MWGui
                 = std::min(float(mGlobalMap->getWidth()) / float(mGlobalMapRender->getWidth()),
                     float(mGlobalMap->getHeight()) / float(mGlobalMapRender->getHeight()));
 
-            mGlobalMapZoom *= speedDiff;
-
-            if (zoomIn && mGlobalMapZoom > 4.f)
-            {
-                mGlobalMapZoom = currentGlobalZoom;
-                return;
-            }
-
-            if (zoomOut && mGlobalMapZoom < currentMinGlobalMapZoom)
-            {
-                mGlobalMapZoom = currentGlobalZoom;
-                return;
-            }
+            mGlobalMapZoom = std::clamp(mGlobalMapZoom * factor, std::min(currentMinGlobalMapZoom, currentGlobalZoom),
+                std::max(4.f, currentGlobalZoom));
+            if (mGlobalMapZoom == currentGlobalZoom)
+                return false;
+            speedDiff = mGlobalMapZoom / currentGlobalZoom;
         }
         else
         {
-            auto const currentLocalZoom = mLocalMapZoom;
-            mLocalMapZoom *= speedDiff;
+            const float currentMinLocalMapZoom
+                = std::max({ (float(Settings::map().mGlobalMapCellSize) * 4.f) / float(localWidgetSize),
+                    float(mLocalMap->getWidth()) / (localWidgetSize * (mGrid.width() + 1)),
+                    float(mLocalMap->getHeight()) / (localWidgetSize * (mGrid.height() + 1)) });
 
-            if (zoomIn && mLocalMapZoom > 4.0f)
-            {
-                mLocalMapZoom = currentLocalZoom;
-                return;
-            }
-
-            if (zoomOut && mLocalMapZoom < currentMinLocalMapZoom)
-            {
-                mLocalMapZoom = currentLocalZoom;
-                return;
-            }
+            const float currentLocalZoom = mLocalMapZoom;
+            mLocalMapZoom = std::clamp(mLocalMapZoom * factor, std::min(currentMinLocalMapZoom, currentLocalZoom),
+                std::max(4.f, currentLocalZoom));
+            if (mLocalMapZoom == currentLocalZoom)
+                return false;
+            speedDiff = mLocalMapZoom / currentLocalZoom;
 
             if (zoomOut)
                 mNeedDoorMarkersUpdate = true;
+            // The crosshair keeps its place on the map, which grows or shrinks around the map's top left corner.
+            mCrosshairOnMap = MyGUI::IntPoint(static_cast<int>(std::round(mCrosshairOnMap.left * speedDiff)),
+                static_cast<int>(std::round(mCrosshairOnMap.top * speedDiff)));
         }
-        zoomOnCursor(speedDiff);
+        zoomAround(speedDiff, focus);
+        return true;
     }
 
-    void MapWindow::zoomOnCursor(float speedDiff)
+    void MapWindow::zoomWithController(bool zoomIn)
+    {
+        // Each press zooms by about as much as three turns of the mouse wheel.
+        constexpr float step = 1.25f;
+        // The zoom keeps the crosshair still when it shows, or else the player when in view, or else the middle of
+        // the view.
+        const bool global = Settings::map().mGlobal;
+        const MyGUI::ScrollView* map = global ? mGlobalMap : mLocalMap;
+        MyGUI::IntPoint focus(map->getWidth() / 2, map->getHeight() / 2);
+        const MyGUI::IntPoint player
+            = (global ? mPlayerArrowGlobal->getPosition() + MyGUI::IntPoint{ 16, 16 } : getPlayerOnMap())
+            + map->getViewOffset();
+        if (!global && mCrosshairShown)
+            focus = mCrosshairOnMap + map->getViewOffset();
+        else if (player.left >= 0 && player.top >= 0 && player.left <= map->getWidth()
+            && player.top <= map->getHeight())
+            focus = player;
+        if (zoomMap(zoomIn ? step : 1.f / step, focus))
+            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+    }
+
+    void MapWindow::zoomAround(float speedDiff, MyGUI::IntPoint cursor)
     {
         auto map = Settings::map().mGlobal ? mGlobalMap : mLocalMap;
-        auto cursor = MyGUI::InputManager::getInstance().getMousePosition() - map->getAbsolutePosition();
         auto centerView = map->getViewOffset() - cursor;
 
         Settings::map().mGlobal ? updateGlobalMap() : updateLocalMap();
@@ -1619,14 +1641,8 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_X)
             togglePinAtCrosshair();
-        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
-            shiftMap(0, 100);
-        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
-            shiftMap(0, -100);
-        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
-            shiftMap(100, 0);
-        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
-            shiftMap(-100, 0);
+        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+            zoomWithController(arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP);
 
         return true;
     }
@@ -1822,15 +1838,23 @@ namespace MWGui
         mControllerGuide->setCoord(scaled(32), client->getHeight() - scaled(24) - rowHeight, scaled(400), rowHeight);
         mControllerGuide->castType<Gui::VBox>()->notifyChildrenSizeChanged();
 
-        // The pin hint goes above the others, styled the same.
-        getWidget(image, "GuideMarkImage");
-        mGuideMark->setProperty("Spacing", std::to_string(scaled(8)));
-        image->setSize(glyphSize, glyphSize);
-        mGuideMarkText->setFontHeight(scaled(18));
-        mGuideMarkText->setTextColour(MyGUI::Colour::parse("#dfc99f"));
-        mGuideMark->setCoord(
-            scaled(32), client->getHeight() - scaled(24) - 2 * rowHeight - scaled(4), scaled(400), rowHeight);
-        mGuideMark->castType<Gui::HBox>()->notifyChildrenSizeChanged();
+        // The zoom hint goes above the center hint, and the pin hint above that, styled the same.
+        const auto layoutRow = [&](MyGUI::Widget* row, const std::string& imageName, const std::string& textName,
+                                   int index) {
+            MyGUI::ImageBox* rowImage;
+            MyGUI::TextBox* rowText;
+            getWidget(rowImage, imageName);
+            getWidget(rowText, textName);
+            row->setProperty("Spacing", std::to_string(scaled(8)));
+            rowImage->setSize(glyphSize, glyphSize);
+            rowText->setFontHeight(scaled(18));
+            rowText->setTextColour(MyGUI::Colour::parse("#dfc99f"));
+            row->setCoord(scaled(32), client->getHeight() - scaled(24) - (index + 1) * rowHeight - index * scaled(4),
+                scaled(400), rowHeight);
+            row->castType<Gui::HBox>()->notifyChildrenSizeChanged();
+        };
+        layoutRow(mGuideZoom, "GuideZoomImage", "GuideZoomText", 1);
+        layoutRow(mGuideMark, "GuideMarkImage", "GuideMarkText", 2);
 
         // The crosshair is four short arms around a gap, so a pin in the middle of it still shows.
         if (mCrosshair != nullptr)
