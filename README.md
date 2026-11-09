@@ -107,6 +107,18 @@ Other improvements
 
 - **The Steam Controller works without Steam.** The release builds run the game on SDL3, the newest version of the library that reads controllers, through SDL's sdl2-compat layer. SDL3 recognizes newer controllers, such as the 2026 Steam Controller, without Steam Input. With OpenMW's SDL2, that controller only works when Steam starts the game.
 - **The game fills the screen.** It starts in windowed fullscreen at the screen's own resolution, such as a Steam Deck's 1280x800 or a TV's, instead of in an 800x600 window.
+- **Better settings out of the box.** Several of OpenMW's optional settings are on by default. None of them change the game's rules:
+  - Distant terrain, with round fog and the far land fading into the sky, so hills no longer end at a hard edge.
+  - The water shader, for reflective water.
+  - Smoother distant textures (linear mipmaps), so no line shows where a floor turns blurrier.
+  - Attacks always use the weapon's most powerful swing: chop, slash or thrust. Otherwise, the direction you move as you attack picks the swing.
+  - Weapon reach and speed, the damage bonus of arrows and bolts, the chance of an enchantment succeeding, and how long magic effects and lights have left all show on screen.
+  - In third person, swimming aims a little above where you look, so you don't dive by accident.
+  - Merchants don't put on the armour and clothing you sell them.
+
+  Each can be turned off in the launcher or in `settings.cfg`.
+- **Saving takes no thought.** Each quicksave is a new save, and older quicksaves thin out as you play: all of the last 10 stay, then fewer the older they get. The game also autosaves after 5 minutes of play without a save, once you're out of menus and combat.
+- **Straight back into your game.** Starting the game loads your newest save, skipping the logo video and the main menu. To start a new character or load another save, use New Game or Load in the pause menu. With no saves yet, the main menu shows as usual.
 - **The AppImage sets itself up.** Started with no options, the Linux AppImage runs the setup wizard the first time, then starts the game, and goes straight into the game after that. So a Steam shortcut to it needs no launch options.
 - **The Steam Deck can keep the game up to date.** An optional script downloads the newest AppImage each time the game starts, so updating doesn't need a trip to Desktop Mode.
 - **Pins on the map.** On the local map, X drops a red pin where you stand, or where the left stick moves a crosshair. Pins outdoors show on the world map too, and the d-pad zooms both maps.
