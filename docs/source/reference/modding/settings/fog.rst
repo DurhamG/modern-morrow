@@ -117,7 +117,7 @@ Fog Settings
    :title: radial fog
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-success:`Launcher > Settings > Visuals > Fog`
 
    By default, the fog becomes thicker proportionally to your distance from the clipping plane set at the clipping distance, which causes distortion at the edges of the screen.
@@ -136,7 +136,7 @@ Fog Settings
    :title: sky blending
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-success:`Launcher > Settings > Visuals > Fog`
 
    Whether to use blending with the sky for everything that is close to the clipping plane.

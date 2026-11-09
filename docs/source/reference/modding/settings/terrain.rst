@@ -5,7 +5,7 @@ Terrain Settings
    :title: distant terrain
    :type: boolean
    :range: true, false
-   :default: false
+   :default: true
    :location: :bdg-success:`Launcher > Settings > Visuals > Terrain`
 
    Controls whether the engine will use paging (chunking) and LOD algorithms to load the terrain of the entire world at all times.
