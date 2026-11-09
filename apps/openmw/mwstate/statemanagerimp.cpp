@@ -38,6 +38,7 @@
 #include "../mwworld/datetimemanager.hpp"
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/globals.hpp"
+#include "../mwworld/player.hpp"
 #include "../mwworld/scene.hpp"
 #include "../mwworld/worldmodel.hpp"
 
@@ -63,6 +64,7 @@ void MWState::StateManager::cleanup(bool force)
 
         mCharacterManager.setCurrentCharacter(nullptr);
         mTimePlayed = 0;
+        mPlayedSinceSave = 0;
         mLastSavegame.clear();
 
         mState = State_NoGame;
@@ -339,6 +341,7 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
 
         Settings::saves().mCharacter.set(Files::pathToUnicodeString(slot->mPath.parent_path().filename()));
         mLastSavegame = slot->mPath;
+        mPlayedSinceSave = 0;
 
         const auto finish = std::chrono::steady_clock::now();
 
@@ -824,6 +827,30 @@ void MWState::StateManager::update(float duration)
         loadGame(character, mLoadRequest->second);
         mLoadRequest = std::nullopt;
     }
+
+    updateTimedAutosave(duration);
+}
+
+void MWState::StateManager::updateTimedAutosave(float duration)
+{
+    const int interval = Settings::saves().mAutosaveInterval;
+    MWBase::WindowManager& windowManager = *MWBase::Environment::get().getWindowManager();
+    if (mState != State_Running || interval <= 0 || windowManager.isGuiMode())
+        return;
+    mPlayedSinceSave += duration;
+    if (mPlayedSinceSave < interval * 60.0)
+        return;
+
+    // The same checks as quicksave, without its message when saving isn't allowed, and none during combat.
+    MWBase::World& world = *MWBase::Environment::get().getWorld();
+    const MWWorld::Ptr player = world.getPlayerPtr();
+    if (world.getGlobalInt(MWWorld::Globals::sCharGenState) != -1 || !windowManager.isSavingAllowed()
+        || player.getClass().getCreatureStats(player).isDead() || world.getPlayer().isInCombat())
+        return;
+
+    // If the save fails, it waits for another interval rather than trying again on the next frame.
+    mPlayedSinceSave = 0;
+    quickSave("Autosave");
 }
 
 bool MWState::StateManager::confirmLoading(const std::vector<std::string_view>& missingFiles) const

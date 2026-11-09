@@ -42,3 +42,14 @@ Saves Settings
    Older ones keep one save every 5 minutes of play for the last hour, every 30 minutes for the last 6 hours,
    every 2 hours for the last day, and every 4 hours before that.
    Quicksaves and autosaves thin out separately, and saves made from the save menu are never deleted.
+
+.. omw-setting::
+   :title: autosave interval
+   :type: int
+   :range: >=0
+   :default: 5
+
+   Autosaves after this many minutes of play without a save.
+   The autosave waits for a moment when no menu is open and the player isn't in combat.
+   Time spent in menus doesn't count, and any save or load starts the count again.
+   0 turns it off.

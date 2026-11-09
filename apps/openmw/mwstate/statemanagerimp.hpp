@@ -26,6 +26,8 @@ namespace MWState
         State mState;
         CharacterManager mCharacterManager;
         double mTimePlayed;
+        // Seconds of play, outside menus, since the game was last saved or loaded.
+        double mPlayedSinceSave = 0;
         std::filesystem::path mLastSavegame;
 
         void cleanup(bool force = false);
@@ -35,6 +37,9 @@ namespace MWState
         bool confirmLoading(const std::vector<std::string_view>& missingFiles) const;
 
         void writeScreenshot(std::vector<char>& imageData) const;
+
+        /// Autosaves once the player has played for the autosave interval without saving.
+        void updateTimedAutosave(float duration);
 
         /// The current character's saves with the given description, such as "Quicksave".
         std::vector<const Slot*> findSaves(std::string_view description);
