@@ -2,6 +2,7 @@
 #define OPENMW_MWRENDER_MAP3D_H
 
 #include <memory>
+#include <optional>
 
 #include <osg/Matrix>
 #include <osg/Vec2f>
@@ -58,10 +59,15 @@ namespace MWRender
         /// Looks at a point on the ground from a distance, in world units.
         void setView(const osg::Vec3f& focus, float distance);
 
-        /// Darkens the parts of the view that the player hasn't explored. The image has one channel, 255 where
-        /// unexplored and 0 where explored. It covers a square of the world, size units across, with its first row and
-        /// column at the south west corner. Places outside it count as unexplored. With nullptr, nothing is darkened.
-        void setFog(osg::Image* image, const osg::Vec2f& southWest, float size);
+        /// Hides the parts of the view that the player hasn't explored. The image has one channel, 255 where
+        /// unexplored and 0 where explored. A place's texture coordinates come from its world position x, y as
+        /// dot(toU, (x, y, 1)) and dot(toV, (x, y, 1)). Places outside the image count as unexplored. With nullptr,
+        /// everything shows.
+        void setFog(osg::Image* image, const osg::Vec3f& toU, const osg::Vec3f& toV);
+
+        /// Indoors, the view cuts away everything above a height, so the rooms show from above, and builds no distant
+        /// land. Without a height, the view is outdoors.
+        void setIndoors(std::optional<float> ceiling);
 
         int getWidth() const { return mWidth; }
         int getHeight() const { return mHeight; }
@@ -88,6 +94,7 @@ namespace MWRender
         std::shared_ptr<Map3DPreload> mPreload;
         int mWidth;
         int mHeight;
+        bool mIndoors = false;
     };
 }
 

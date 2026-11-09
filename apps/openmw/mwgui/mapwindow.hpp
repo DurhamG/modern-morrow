@@ -405,7 +405,9 @@ namespace MWGui
         bool mMap3DShown = false;
         // The point on the ground that the 3D view looks at, and how far away the camera is, in world units.
         osg::Vec3f mMap3DFocus;
-        float mMap3DDistance = 7500.f;
+        float mMap3DDistance = 11718.75f;
+        // Rooms are small, so indoors the view has a zoom of its own.
+        float mMap3DInteriorDistance = 2000.f;
         // A marker on the 3D view: its widget, a child of the view's image, and its place in the world.
         struct Map3DMarker
         {
@@ -424,10 +426,12 @@ namespace MWGui
         // of. Without a cell, the fog is made again on the next frame.
         bool mMap3DFogShown = false;
         std::optional<std::pair<int, int>> mMap3DFogCenter;
-        // The fog of war the 3D view shows: 255 where unexplored, with its south west corner and its size in the world.
+        // The fog of war the 3D view shows, as LocalMap::FogImage describes it.
         osg::ref_ptr<osg::Image> mMap3DFogImage;
-        osg::Vec2f mMap3DFogSouthWest;
-        float mMap3DFogSize = 0.f;
+        osg::Vec3f mMap3DFogToU;
+        osg::Vec3f mMap3DFogToV;
+        // Indoors, the height above which the 3D view cuts everything away.
+        std::optional<float> mMap3DCeiling;
 
         // The pins in exterior cells, drawn on the global map, with their positions in the world.
         std::vector<std::pair<MyGUI::Widget*, osg::Vec2f>> mGlobalMapPins;

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <stdexcept>
 
+#include <osg/ClipNode>
 #include <osg/Geometry>
 #include <osg/Group>
 #include <osg/PolygonMode>
@@ -46,9 +47,23 @@ namespace MWRender
             , mAspect(static_cast<double>(width) / height)
             , mDetail(new Terrain::CameraDetail)
             , mProjectionUniform(new osg::Uniform("projectionMatrix", osg::Matrixf()))
+            , mClipNode(new osg::ClipNode)
+            , mClipPlane(new osg::ClipPlane(0))
         {
             setNodeMask(0);
             setDepthBufferInternalFormat(GL_DEPTH24_STENCIL8);
+            // The shaders write the clip position that the plane needs, as they do for the water's reflection.
+            mClipNode->addClipPlane(mClipPlane);
+            mClipNode->setCullingActive(false);
+            mClipNode->addChild(mSceneRoot);
+        }
+
+        /// Cuts away everything above a height, or nothing.
+        void setCeiling(std::optional<float> ceiling)
+        {
+            mCeiling = ceiling;
+            if (ceiling.has_value())
+                mClipPlane->setClipPlane(osg::Plane(0.0, 0.0, -1.0, *ceiling));
         }
 
         void setView(const osg::Vec3f& focus, float distance)
@@ -142,11 +157,14 @@ namespace MWRender
             SceneUtil::ShadowManager::instance().disableShadowsForStateSet(*stateset);
             SceneUtil::configureStateSetSunOverride(&light, stateset);
 
-            camera->addChild(mSceneRoot);
+            camera->addChild(mClipNode);
         }
 
         void apply(osg::Camera* camera) override
         {
+            camera->getOrCreateStateSet()->setMode(GL_CLIP_PLANE0,
+                (mCeiling.has_value() ? osg::StateAttribute::ON : osg::StateAttribute::OFF)
+                    | osg::StateAttribute::OVERRIDE);
             camera->setViewMatrix(mViewMatrix);
             camera->setProjectionMatrix(mProjectionMatrix);
             mProjectionUniform->set(static_cast<osg::Matrixf>(mProjectionMatrix));
@@ -166,6 +184,9 @@ namespace MWRender
         osg::Vec3f mWantedPoint;
         float mWantedViewDistance = 0.f;
         float mWantedDetailDistance = 0.f;
+        osg::ref_ptr<osg::ClipNode> mClipNode;
+        osg::ref_ptr<osg::ClipPlane> mClipPlane;
+        std::optional<float> mCeiling;
     };
 
     /// Builds the pieces of land for one place and zoom of the 3D view, on a background thread.
@@ -224,8 +245,8 @@ namespace MWRender
             uniform mat4 pictureToWorld;
             uniform bool reversedDepth;
             uniform bool fogShown;
-            uniform vec2 fogSouthWest;
-            uniform float fogSize;
+            uniform vec3 fogToU;
+            uniform vec3 fogToV;
             const vec3 fogColor = vec3(0.03, 0.03, 0.04);
             varying vec2 uv;
             void main()
@@ -233,15 +254,23 @@ namespace MWRender
                 vec4 color = texture2D(sceneColor, uv);
                 float depth = texture2D(sceneDepth, uv).r;
                 bool background = reversedDepth ? depth <= 0.0 : depth >= 1.0;
-                if (!fogShown || background)
+                if (!fogShown)
                 {
                     gl_FragColor = vec4(color.rgb, 1.0);
+                    return;
+                }
+                // Nothing solid is there, so there is no place to look up. Water draws without depth, so this hides
+                // water with nothing under it, such as the water around a cave.
+                if (background)
+                {
+                    gl_FragColor = vec4(fogColor, 1.0);
                     return;
                 }
                 float ndcDepth = reversedDepth ? depth : depth * 2.0 - 1.0;
                 vec4 world = pictureToWorld * vec4(uv * 2.0 - 1.0, ndcDepth, 1.0);
                 world /= world.w;
-                float unexplored = texture2D(fog, (world.xy - fogSouthWest) / fogSize).r;
+                vec3 place = vec3(world.xy, 1.0);
+                float unexplored = texture2D(fog, vec2(dot(fogToU, place), dot(fogToV, place))).r;
                 float hidden = smoothstep(0.35, 0.75, unexplored);
                 gl_FragColor = vec4(mix(color.rgb, fogColor, hidden), 1.0);
             }
@@ -258,8 +287,8 @@ namespace MWRender
             , mScene(scene)
             , mPictureToWorld(new osg::Uniform("pictureToWorld", osg::Matrixf()))
             , mFogShown(new osg::Uniform("fogShown", false))
-            , mFogSouthWest(new osg::Uniform("fogSouthWest", osg::Vec2f()))
-            , mFogSize(new osg::Uniform("fogSize", 1.f))
+            , mFogToU(new osg::Uniform("fogToU", osg::Vec3f()))
+            , mFogToV(new osg::Uniform("fogToV", osg::Vec3f()))
             , mFogTexture(new osg::Texture2D)
         {
             setNodeMask(0);
@@ -271,14 +300,14 @@ namespace MWRender
             mFogTexture->setResizeNonPowerOfTwoHint(false);
         }
 
-        void setFog(osg::Image* image, const osg::Vec2f& southWest, float size)
+        void setFog(osg::Image* image, const osg::Vec3f& toU, const osg::Vec3f& toV)
         {
             mFogShown->set(image != nullptr);
             if (image == nullptr)
                 return;
             mFogTexture->setImage(image);
-            mFogSouthWest->set(southWest);
-            mFogSize->set(size);
+            mFogToU->set(toU);
+            mFogToV->set(toV);
         }
 
         void setDefaults(osg::Camera* camera) override
@@ -323,8 +352,8 @@ namespace MWRender
             stateset->addUniform(new osg::Uniform("reversedDepth", SceneUtil::AutoDepth::isReversed()));
             stateset->addUniform(mPictureToWorld);
             stateset->addUniform(mFogShown);
-            stateset->addUniform(mFogSouthWest);
-            stateset->addUniform(mFogSize);
+            stateset->addUniform(mFogToU);
+            stateset->addUniform(mFogToV);
         }
 
         void apply(osg::Camera* camera) override
@@ -336,8 +365,8 @@ namespace MWRender
         osg::ref_ptr<Map3DRenderToTexture> mScene;
         osg::ref_ptr<osg::Uniform> mPictureToWorld;
         osg::ref_ptr<osg::Uniform> mFogShown;
-        osg::ref_ptr<osg::Uniform> mFogSouthWest;
-        osg::ref_ptr<osg::Uniform> mFogSize;
+        osg::ref_ptr<osg::Uniform> mFogToU;
+        osg::ref_ptr<osg::Uniform> mFogToV;
         osg::ref_ptr<osg::Texture2D> mFogTexture;
     };
 
@@ -386,15 +415,25 @@ namespace MWRender
             mRtt->getDetail().mSelectionPoint.reset();
     }
 
-    void Map3D::setFog(osg::Image* image, const osg::Vec2f& southWest, float size)
+    void Map3D::setFog(osg::Image* image, const osg::Vec3f& toU, const osg::Vec3f& toV)
     {
-        mFogPass->setFog(image, southWest, size);
+        mFogPass->setFog(image, toU, toV);
     }
 
     void Map3D::setView(const osg::Vec3f& focus, float distance)
     {
         mRtt->setView(focus, distance);
-        updateTerrainPieces();
+        if (!mIndoors)
+            updateTerrainPieces();
+    }
+
+    void Map3D::setIndoors(std::optional<float> ceiling)
+    {
+        mRtt->setCeiling(ceiling);
+        // Outdoors again, the first frame builds what it draws, since the pieces it had are for another place.
+        if (mIndoors && !ceiling.has_value())
+            mRtt->getDetail().mSelectionPoint.reset();
+        mIndoors = ceiling.has_value();
     }
 
     void Map3D::updateTerrainPieces()

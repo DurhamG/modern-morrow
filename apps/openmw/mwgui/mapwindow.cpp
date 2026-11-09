@@ -1693,8 +1693,10 @@ namespace MWGui
             else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
             {
                 constexpr float step = 1.25f;
-                const float zoomed = mMap3DDistance * (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP ? 1.f / step : step);
-                mMap3DDistance = std::clamp(zoomed, 6000.f, 100000.f);
+                const bool exterior = mActiveCell == nullptr || mActiveCell->isExterior();
+                float& distance = exterior ? mMap3DDistance : mMap3DInteriorDistance;
+                const float zoomed = distance * (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP ? 1.f / step : step);
+                distance = exterior ? std::clamp(zoomed, 6000.f, 100000.f) : std::clamp(zoomed, 1000.f, 30000.f);
                 MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
             }
         }
@@ -2091,15 +2093,17 @@ namespace MWGui
         const MyGUI::IntSize size = mMap3DImage->getSize();
         for (const std::vector<Map3DMarker>* markers : { &mMap3DPins, &mMap3DDoors, &mMap3DMagicMarkers })
         {
-            // The doors hide under the fog of war, as the places around them do. The player's own pins, and what
-            // magic shows, stay in sight.
-            const bool hideInFog = markers == &mMap3DDoors;
+            // The doors hide under the fog of war, as the places around them do, and indoors above the cut, as the
+            // upper floors they lead from do. The player's own pins, and what magic shows, stay in sight.
+            const bool isDoor = markers == &mMap3DDoors;
             for (const Map3DMarker& marker : *markers)
             {
                 osg::Vec2f picture;
                 const bool inView = mMap3D->worldToPicture(marker.mPosition, picture) && picture.x() >= 0.f
                     && picture.x() <= 1.f && picture.y() >= 0.f && picture.y() <= 1.f
-                    && (!hideInFog || isMap3DExplored(marker.mPosition));
+                    && (!isDoor
+                        || (isMap3DExplored(marker.mPosition)
+                            && (!mMap3DCeiling.has_value() || marker.mPosition.z() < *mMap3DCeiling)));
                 marker.mWidget->setVisible(inView);
                 if (inView)
                     marker.mWidget->setPosition(
@@ -2113,8 +2117,9 @@ namespace MWGui
     {
         if (!mMap3DFogShown || mMap3DFogImage == nullptr)
             return true;
-        const int s = static_cast<int>((position.x() - mMap3DFogSouthWest.x()) / mMap3DFogSize * mMap3DFogImage->s());
-        const int t = static_cast<int>((position.y() - mMap3DFogSouthWest.y()) / mMap3DFogSize * mMap3DFogImage->t());
+        const osg::Vec3f place(position.x(), position.y(), 1.f);
+        const int s = static_cast<int>(std::floor((mMap3DFogToU * place) * mMap3DFogImage->s()));
+        const int t = static_cast<int>(std::floor((mMap3DFogToV * place) * mMap3DFogImage->t()));
         if (s < 0 || t < 0 || s >= mMap3DFogImage->s() || t >= mMap3DFogImage->t())
             return false;
         // Where the fog becomes solid in the view, a little way into the soft edge of what was explored.
@@ -2139,15 +2144,33 @@ namespace MWGui
 
     void MapWindow::updateMap3DFog(const MWWorld::CellStore& cell)
     {
-        // Interiors show no fog of war in the 3D view yet. The console's ToggleFogOfWar turns it off, as on the flat
-        // map.
-        const bool fogShown = cell.isExterior() && mFogOfWarToggled && mFogOfWarEnabled;
+        // The console's ToggleFogOfWar turns the fog off, as on the flat map.
+        const bool fogShown = mFogOfWarToggled && mFogOfWarEnabled;
         if (!fogShown)
         {
             if (mMap3DFogShown)
-                mMap3D->setFog(nullptr, osg::Vec2f(), 0.f);
+                mMap3D->setFog(nullptr, osg::Vec3f(), osg::Vec3f());
             mMap3DFogShown = false;
             mMap3DFogCenter.reset();
+            return;
+        }
+
+        const auto showFog = [&](const MWRender::LocalMap::FogImage& fog) {
+            mMap3DFogImage = fog.mImage;
+            mMap3DFogToU = fog.mToU;
+            mMap3DFogToV = fog.mToV;
+            mMap3DFogShown = fog.mImage != nullptr;
+            mMap3D->setFog(fog.mImage, fog.mToU, fog.mToV);
+        };
+
+        // Indoors, the fog covers the whole cell, and the player can't move while the map shows.
+        if (!cell.isExterior())
+        {
+            if (!mMap3DFogCenter.has_value())
+            {
+                mMap3DFogCenter = std::pair<int, int>(0, 0);
+                showFog(mLocalMapRender->makeInteriorFogImage());
+            }
             return;
         }
 
@@ -2158,20 +2181,14 @@ namespace MWGui
         const float fogCellSize = static_cast<float>(Constants::CellSizeInUnits);
         const std::pair<int, int> focusCell(static_cast<int>(std::floor(mMap3DFocus.x() / fogCellSize)),
             static_cast<int>(std::floor(mMap3DFocus.y() / fogCellSize)));
-        if (mMap3DFogShown && mMap3DFogCenter.has_value()
-            && std::abs(focusCell.first - mMap3DFogCenter->first) <= fogMargin
+        if (mMap3DFogCenter.has_value() && std::abs(focusCell.first - mMap3DFogCenter->first) <= fogMargin
             && std::abs(focusCell.second - mMap3DFogCenter->second) <= fogMargin)
             return;
 
         mMap3DFogCenter = focusCell;
-        mMap3DFogShown = true;
         const int westX = focusCell.first - fogCells / 2;
         const int southY = focusCell.second - fogCells / 2;
-        mMap3DFogImage
-            = mLocalMapRender->makeExteriorFogImage(westX, southY, fogCells, cell.getCell()->getWorldSpace());
-        mMap3DFogSouthWest = osg::Vec2f(westX * fogCellSize, southY * fogCellSize);
-        mMap3DFogSize = fogCells * fogCellSize;
-        mMap3D->setFog(mMap3DFogImage, mMap3DFogSouthWest, mMap3DFogSize);
+        showFog(mLocalMapRender->makeExteriorFogImage(westX, southY, fogCells, cell.getCell()->getWorldSpace()));
     }
 
     void MapWindow::updateMap3D(float dt)
@@ -2189,12 +2206,23 @@ namespace MWGui
         mMap3DFocus.x() += x * mMap3DDistance * dt;
         mMap3DFocus.y() -= y * mMap3DDistance * dt;
 
-        // Outdoors, the camera looks at the ground under the point. Indoors, it stays at the player's height.
+        // Outdoors, the camera looks at the ground under the point. Indoors, it stays at the height of the player's
+        // feet, and everything a little above the player's head is cut away, ceilings and upper floors included.
         const MWWorld::CellStore& cell = *player.getCell();
         if (cell.isExterior())
+        {
             mMap3DFocus.z() = world->getTerrainHeightAt(mMap3DFocus, cell.getCell()->getWorldSpace());
+            mMap3DCeiling.reset();
+        }
+        else
+        {
+            constexpr float headroom = 200.f;
+            mMap3DFocus.z() = player.getRefData().getPosition().pos[2];
+            mMap3DCeiling = mMap3DFocus.z() + headroom;
+        }
+        mMap3D->setIndoors(mMap3DCeiling);
         updateMap3DFog(cell);
-        mMap3D->setView(mMap3DFocus, mMap3DDistance);
+        mMap3D->setView(mMap3DFocus, cell.isExterior() ? mMap3DDistance : mMap3DInteriorDistance);
         addMap3DDoors();
         placeMap3DMarkers();
 

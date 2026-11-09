@@ -641,31 +641,41 @@ namespace MWRender
         return result;
     }
 
-    osg::ref_ptr<osg::Image> LocalMap::makeExteriorFogImage(
-        int westX, int southY, int cells, ESM::RefId worldspace) const
+    namespace
     {
-        const int size = cells * sFogOfWarResolution;
-        osg::ref_ptr<osg::Image> image = new osg::Image;
-        image->allocateImage(size, size, 1, GL_RED, GL_UNSIGNED_BYTE);
-        image->setInternalTextureFormat(GL_R8);
-        std::fill(image->data(), image->data() + static_cast<std::size_t>(size) * size, 255);
+        // Makes an image with one channel, unexplored everywhere, for a grid of segments.
+        osg::ref_ptr<osg::Image> makeUnexploredImage(int columns, int rows, int resolution)
+        {
+            osg::ref_ptr<osg::Image> image = new osg::Image;
+            image->allocateImage(columns * resolution, rows * resolution, 1, GL_RED, GL_UNSIGNED_BYTE);
+            image->setInternalTextureFormat(GL_R8);
+            std::fill(image->data(), image->data() + image->getTotalSizeInBytes(), 255);
+            return image;
+        }
 
-        // A cell's own fog keeps its fogginess in the alpha of 32 bit pixels, with the north edge first.
-        const auto copyCell = [&](int cellX, int cellY, const osg::Image& fog) {
-            const int column = cellX - westX;
-            const int row = cellY - southY;
-            if (column < 0 || row < 0 || column >= cells || row >= cells)
+        // Copies one segment's fog into its place in a grid image. A segment's own fog keeps its fogginess in the
+        // alpha of 32 bit pixels, with the north edge first, and the grid image's first row is at the south.
+        void copyFogSegment(osg::Image& image, int column, int row, const osg::Image& fog, int resolution)
+        {
+            if (column < 0 || row < 0 || (column + 1) * resolution > image.s() || (row + 1) * resolution > image.t())
                 return;
-            if (fog.s() != sFogOfWarResolution || fog.t() != sFogOfWarResolution || fog.getPixelSizeInBits() != 32)
+            if (fog.s() != resolution || fog.t() != resolution || fog.getPixelSizeInBits() != 32)
                 return;
             const std::uint32_t* source = reinterpret_cast<const std::uint32_t*>(fog.data());
-            for (int texV = 0; texV < sFogOfWarResolution; ++texV)
+            for (int texV = 0; texV < resolution; ++texV)
             {
-                unsigned char* target = image->data(
-                    column * sFogOfWarResolution, row * sFogOfWarResolution + sFogOfWarResolution - 1 - texV);
-                for (int texU = 0; texU < sFogOfWarResolution; ++texU)
-                    target[texU] = static_cast<unsigned char>(source[texV * sFogOfWarResolution + texU] >> 24);
+                unsigned char* target = image.data(column * resolution, row * resolution + resolution - 1 - texV);
+                for (int texU = 0; texU < resolution; ++texU)
+                    target[texU] = static_cast<unsigned char>(source[texV * resolution + texU] >> 24);
             }
+        }
+    }
+
+    LocalMap::FogImage LocalMap::makeExteriorFogImage(int westX, int southY, int cells, ESM::RefId worldspace) const
+    {
+        osg::ref_ptr<osg::Image> image = makeUnexploredImage(cells, cells, sFogOfWarResolution);
+        const auto copyCell = [&](int cellX, int cellY, const osg::Image& fog) {
+            copyFogSegment(*image, cellX - westX, cellY - southY, fog, sFogOfWarResolution);
         };
 
         // The cells the player left keep their fog in their saved state.
@@ -685,7 +695,29 @@ namespace MWRender
             if (segment.mFogOfWarImage != nullptr)
                 copyCell(position.first, position.second, *segment.mFogOfWarImage);
 
-        return image;
+        const float size = static_cast<float>(cells * mMapWorldSize);
+        return { image, osg::Vec3f(1.f / size, 0.f, -westX * mMapWorldSize / size),
+            osg::Vec3f(0.f, 1.f / size, -southY * mMapWorldSize / size) };
+    }
+
+    LocalMap::FogImage LocalMap::makeInteriorFogImage() const
+    {
+        if (!mInterior || mInteriorSegments.empty())
+            return {};
+        const auto [columns, rows] = divideIntoSegments(mBounds, mMapWorldSize);
+        osg::ref_ptr<osg::Image> image = makeUnexploredImage(columns, rows, sFogOfWarResolution);
+        for (const auto& [position, segment] : mInteriorSegments)
+            if (segment.mFogOfWarImage != nullptr)
+                copyFogSegment(*image, position.first, position.second, *segment.mFogOfWarImage, sFogOfWarResolution);
+
+        // The grid turns about mCenter by mAngle, as in worldToInteriorMapPosition, and starts at the bounds' corner.
+        const float cos = std::cos(mAngle);
+        const float sin = std::sin(mAngle);
+        const float width = static_cast<float>(columns * mMapWorldSize);
+        const float height = static_cast<float>(rows * mMapWorldSize);
+        const float offsetX = -cos * mCenter.x() + sin * mCenter.y() + mCenter.x() - mBounds.xMin();
+        const float offsetY = -sin * mCenter.x() - cos * mCenter.y() + mCenter.y() - mBounds.yMin();
+        return { image, osg::Vec3f(cos, -sin, offsetX) / width, osg::Vec3f(sin, cos, offsetY) / height };
     }
 
     MyGUI::IntRect LocalMap::getInteriorGrid() const
