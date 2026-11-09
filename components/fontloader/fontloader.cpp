@@ -1,6 +1,8 @@
 #include "fontloader.hpp"
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <format>
 #include <stdexcept>
 #include <string_view>
@@ -227,10 +229,13 @@ namespace
 namespace Gui
 {
 
-    FontLoader::FontLoader(ToUTF8::FromType encoding, const VFS::Manager* vfs, float scalingFactor, bool exportFonts)
+    FontLoader::FontLoader(ToUTF8::FromType encoding, const VFS::Manager* vfs, float scalingFactor, bool exportFonts,
+        bool preferTrueType, float glyphScale)
         : mVFS(vfs)
         , mScalingFactor(scalingFactor)
         , mExportFonts(exportFonts)
+        , mPreferTrueType(preferTrueType)
+        , mGlyphScale(glyphScale)
     {
         if (encoding == ToUTF8::WINDOWS_1252)
             mEncoding = ToUTF8::CP437;
@@ -253,22 +258,20 @@ namespace Gui
         const std::string_view defaultFont = Fallback::Map::getString("Fonts_Font_0");
         const std::string_view scrollFont = Fallback::Map::getString("Fonts_Font_2");
 
-        loadFont(defaultFontId, defaultFont);
-        loadFont(scrollFontId, scrollFont);
-        // We need to use a TrueType monospace font to display debug texts properly.
-        loadFont(monoFontId, "DejaVuLGCSansMono");
-
-        // Use our TrueType fonts as a fallback.
-        if (!MyGUI::ResourceManager::getInstance().isExist(defaultFontId.mValue)
+        // Use our TrueType fonts as a fallback, and in place of bitmap fonts when TrueType fonts are preferred.
+        if (!loadFont(defaultFontId, defaultFont, !mPreferTrueType)
             && !Misc::StringUtils::ciEqual(defaultFont, "MysticCards"))
             loadFont(defaultFontId, "MysticCards");
 
-        if (!MyGUI::ResourceManager::getInstance().isExist(scrollFontId.mValue)
+        if (!loadFont(scrollFontId, scrollFont, !mPreferTrueType)
             && !Misc::StringUtils::ciEqual(scrollFont, "DemonicLetters"))
             loadFont(scrollFontId, "DemonicLetters");
+
+        // We need to use a TrueType monospace font to display debug texts properly.
+        loadFont(monoFontId, "DejaVuLGCSansMono");
     }
 
-    void FontLoader::loadFont(FontId fontId, std::string_view fileName)
+    bool FontLoader::loadFont(FontId fontId, std::string_view fileName, bool allowBitmap)
     {
         constexpr VFS::Path::NormalizedView fonts("fonts");
 
@@ -277,8 +280,13 @@ namespace Gui
 
         if (const Files::IStreamPtr stream = mVFS->find(fntPath))
         {
-            loadBitmapFont(fontId, fntPath, *stream);
-            return;
+            if (allowBitmap)
+            {
+                loadBitmapFont(fontId, fntPath, *stream);
+                return true;
+            }
+            Log(Debug::Info) << "Using a TrueType font in place of the bitmap font " << fntPath;
+            return false;
         }
 
         constexpr VFS::Path::ExtensionView omwfont("omwfont");
@@ -286,14 +294,19 @@ namespace Gui
 
         if (const Files::IStreamPtr stream = mVFS->find(omwfontPath))
         {
-            loadTrueTypeFont(fontId, omwfontPath, *stream);
-            return;
+            // The debug texts in the monospace font are drawn at the font size, so its glyphs need no extra size.
+            constexpr FontId monoFontId{ "MonoFont" };
+            const bool mono = fontId.mValue == monoFontId.mValue;
+            loadTrueTypeFont(fontId, omwfontPath, *stream, mono ? 0.f : mGlyphScale);
+            return MyGUI::ResourceManager::getInstance().isExist(fontId.mValue);
         }
 
         Log(Debug::Error) << "Font '" << fileName << "' is not found.";
+        return false;
     }
 
-    void FontLoader::loadTrueTypeFont(FontId fontId, const VFS::Path::Normalized& path, std::istream& stream)
+    void FontLoader::loadTrueTypeFont(
+        FontId fontId, const VFS::Path::Normalized& path, std::istream& stream, float glyphScale)
     {
         Log(Debug::Info) << "Loading TrueType font file " << path;
 
@@ -357,7 +370,11 @@ namespace Gui
         else
             resolution = MyGUI::utility::parseInt(resolutionNode->findAttribute("value"));
 
-        resolutionNode->setAttribute("value", MyGUI::utility::toString(resolution * std::ceil(mScalingFactor)));
+        // The font files ask for about 72 pixels per inch, one pixel for each point of the font size. The scale
+        // multiplies that.
+        const float scale = std::max(std::ceil(mScalingFactor), glyphScale);
+        resolutionNode->setAttribute(
+            "value", MyGUI::utility::toString(static_cast<int>(std::round(resolution * scale))));
 
         MyGUI::xml::ElementPtr sizeNode = resourceNode->createChild("Property");
         sizeNode->addAttribute("key", "Size");

@@ -229,9 +229,15 @@ namespace MWGui
 
         MyGUI::LanguageManager::getInstance().eventRequestTag = MyGUI::newDelegate(this, &WindowManager::onRetrieveTag);
 
-        // Load fonts
-        mFontLoader
-            = std::make_unique<Gui::FontLoader>(encoding, resourceSystem->getVFS(), mScalingFactor, exportFonts);
+        // Load fonts. The controller screens scale a canvas 720 units tall to the screen's height, and draw text up to
+        // 26 units tall on it. Their fonts get glyphs the size of their large text, 22 units, so the text stays sharp
+        // on a big screen. Morrowind's own fonts are bitmaps, which blur when drawn that large, so the screens use the
+        // TrueType copies of them that come with OpenMW.
+        const bool controllerMenus = Settings::gui().mControllerMenus;
+        const float glyphScale
+            = controllerMenus ? 22.f * static_cast<float>(dh) / 720.f / Settings::gui().mFontSize : 0.f;
+        mFontLoader = std::make_unique<Gui::FontLoader>(
+            encoding, resourceSystem->getVFS(), mScalingFactor, exportFonts, controllerMenus, glyphScale);
 
         // Register own widgets with MyGUI
         MyGUI::FactoryManager::getInstance().registerFactory<MWGui::Widgets::MWSkill>("Widget");
