@@ -19,8 +19,10 @@
 #include <components/sceneutil/rtt.hpp>
 #include <components/sceneutil/shadow.hpp>
 #include <components/sceneutil/visitor.hpp>
+#include <components/sceneutil/workqueue.hpp>
 #include <components/stereo/multiview.hpp>
 #include <components/terrain/quadtreeworld.hpp>
+#include <components/terrain/view.hpp>
 
 #include "util.hpp"
 #include "vismask.hpp"
@@ -64,10 +66,22 @@ namespace MWRender
             mProjectionMatrix = SceneUtil::AutoDepth::isReversed()
                 ? SceneUtil::getReversedZProjectionMatrixAsPerspective(sFieldOfView, mAspect, nearPlane, farPlane)
                 : mPlainProjection;
-            // Everything in view gets the detail of the point the camera looks at, so panning doesn't change it.
-            mDetail->mViewDistance = static_cast<float>(farPlane);
-            mDetail->mDetailDistance = distance;
+
+            // The pieces reach well past the top of the picture, so a short pan still finds them there. Everything
+            // in view gets the detail of the point the camera looks at, so panning doesn't change it.
+            mWantedPoint = osg::Vec3f(eye);
+            mWantedViewDistance = distance * 3.f + 8192.f;
+            mWantedDetailDistance = distance;
         }
+
+        /// The pieces of land the camera should draw from where it is now: around which point, how far out, and at
+        /// what detail.
+        const osg::Vec3f& getWantedPoint() const { return mWantedPoint; }
+        float getWantedViewDistance() const { return mWantedViewDistance; }
+        float getWantedDetailDistance() const { return mWantedDetailDistance; }
+
+        /// Which pieces of land the camera draws. Map3D changes it once the pieces are built.
+        Terrain::CameraDetail& getDetail() { return *mDetail; }
 
         /// Turns a point of the picture, from -1 to 1 across and up with the depth buffer's depth, into a world
         /// position.
@@ -149,6 +163,42 @@ namespace MWRender
         osg::Matrixd mPlainProjection;
         osg::ref_ptr<Terrain::CameraDetail> mDetail;
         osg::ref_ptr<osg::Uniform> mProjectionUniform;
+        osg::Vec3f mWantedPoint;
+        float mWantedViewDistance = 0.f;
+        float mWantedDetailDistance = 0.f;
+    };
+
+    /// Builds the pieces of land for one place and zoom of the 3D view, on a background thread.
+    class Map3DPreload : public SceneUtil::WorkItem
+    {
+    public:
+        Map3DPreload(Terrain::QuadTreeWorld* terrain, Terrain::View* view, const osg::Vec3f& point,
+            const osg::Vec4i& grid, float viewDistance, float detailDistance)
+            : mPoint(point)
+            , mViewDistance(viewDistance)
+            , mDetailDistance(detailDistance)
+            , mTerrain(terrain)
+            , mView(view)
+            , mGrid(grid)
+        {
+        }
+
+        void doWork() override
+        {
+            mTerrain->preloadForCamera(mView, mPoint, mGrid, mViewDistance, mDetailDistance, mAbort);
+        }
+
+        void abort() override { mAbort = true; }
+
+        const osg::Vec3f mPoint;
+        const float mViewDistance;
+        const float mDetailDistance;
+
+    private:
+        Terrain::QuadTreeWorld* mTerrain;
+        Terrain::View* mView;
+        const osg::Vec4i mGrid;
+        std::atomic<bool> mAbort{ false };
     };
 
     namespace
@@ -291,11 +341,17 @@ namespace MWRender
         osg::ref_ptr<osg::Texture2D> mFogTexture;
     };
 
-    Map3D::Map3D(osg::Group* root, int width, int height)
+    Map3D::Map3D(osg::Group* root, Terrain::World* terrain, std::shared_ptr<SceneUtil::WorkQueue> workQueue, int width,
+        int height)
         : mRoot(root)
+        , mTerrain(dynamic_cast<Terrain::QuadTreeWorld*>(terrain))
+        , mWorkQueue(std::move(workQueue))
         , mWidth(width)
         , mHeight(height)
     {
+        if (mTerrain != nullptr)
+            mPreloadView = mTerrain->createView();
+
         SceneUtil::FindByNameVisitor find("Scene Root");
         mRoot->accept(find);
         if (find.mFoundNode == nullptr)
@@ -309,6 +365,13 @@ namespace MWRender
 
     Map3D::~Map3D()
     {
+        // The background thread uses the view this owns.
+        if (mPreload != nullptr)
+        {
+            mPreload->abort();
+            mPreload->waitTillDone();
+        }
+
         mRoot->removeChild(mFogPass);
         mRoot->removeChild(mRtt);
     }
@@ -317,6 +380,10 @@ namespace MWRender
     {
         mRtt->setNodeMask(shown ? Mask_RenderToTexture : 0);
         mFogPass->setNodeMask(shown ? Mask_RenderToTexture : 0);
+        // The view usually opens somewhere else, so its first frame builds the pieces it needs while it draws. Its old
+        // pieces would show the wrong place until the new ones are built.
+        if (shown)
+            mRtt->getDetail().mSelectionPoint.reset();
     }
 
     void Map3D::setFog(osg::Image* image, const osg::Vec2f& southWest, float size)
@@ -327,6 +394,44 @@ namespace MWRender
     void Map3D::setView(const osg::Vec3f& focus, float distance)
     {
         mRtt->setView(focus, distance);
+        updateTerrainPieces();
+    }
+
+    void Map3D::updateTerrainPieces()
+    {
+        Terrain::CameraDetail& detail = mRtt->getDetail();
+        const osg::Vec3f& point = mRtt->getWantedPoint();
+        const float viewDistance = mRtt->getWantedViewDistance();
+        const float detailDistance = mRtt->getWantedDetailDistance();
+
+        // Without distant terrain, or for the first frame, the camera builds what it draws as it draws.
+        if (mTerrain == nullptr || !detail.mSelectionPoint.has_value())
+        {
+            detail.mSelectionPoint = point;
+            detail.mViewDistance = viewDistance;
+            detail.mDetailDistance = detailDistance;
+            return;
+        }
+
+        if (mPreload != nullptr)
+        {
+            if (!mPreload->isDone())
+                return;
+            // The pieces are built, so drawing them now only finds them in the caches.
+            detail.mSelectionPoint = mPreload->mPoint;
+            detail.mViewDistance = mPreload->mViewDistance;
+            detail.mDetailDistance = mPreload->mDetailDistance;
+            mPreload.reset();
+        }
+
+        // The terrain picks its pieces again once the point moves this far, so smaller moves need no new pieces.
+        constexpr float moveBeforeUpdate = 150.f;
+        if ((*detail.mSelectionPoint - point).length2() < moveBeforeUpdate * moveBeforeUpdate
+            && detail.mViewDistance == viewDistance && detail.mDetailDistance == detailDistance)
+            return;
+        mPreload = std::make_shared<Map3DPreload>(
+            mTerrain, mPreloadView.get(), point, mTerrain->getActiveGrid(), viewDistance, detailDistance);
+        mWorkQueue->addWorkItem(mPreload);
     }
 
     std::unique_ptr<MyGUI::ITexture> Map3D::makeGuiTexture() const

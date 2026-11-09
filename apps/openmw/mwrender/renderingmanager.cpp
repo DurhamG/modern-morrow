@@ -476,7 +476,7 @@ namespace MWRender
 
     std::unique_ptr<Map3D> RenderingManager::createMap3D(int width, int height)
     {
-        return std::make_unique<Map3D>(mRootNode, width, height);
+        return std::make_unique<Map3D>(mRootNode, mTerrain, mWorkQueue, width, height);
     }
 
     const std::shared_ptr<SceneUtil::WorkQueue>& RenderingManager::getWorkQueue() const

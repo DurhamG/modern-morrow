@@ -20,19 +20,36 @@ namespace MyGUI
     class ITexture;
 }
 
+namespace SceneUtil
+{
+    class WorkQueue;
+}
+
+namespace Terrain
+{
+    class QuadTreeWorld;
+    class View;
+    class World;
+}
+
 namespace MWRender
 {
     class Map3DRenderToTexture;
     class Map3DFogPass;
+    class Map3DPreload;
 
     /// Draws the world around a point on the ground, seen from above at an angle, into a texture. It draws every frame
     /// while it is shown. It draws the same scene as the game's own view. Cells far from the player show the way
     /// distant land does: terrain, and merged copies of buildings and other objects that don't move.
+    ///
+    /// With distant terrain on, the pieces of land for a new place or zoom are built on a background thread. Until
+    /// they are ready, the view keeps drawing the pieces it has, so moving the view doesn't stall the game.
     class Map3D
     {
     public:
         /// The texture is width by height pixels.
-        Map3D(osg::Group* root, int width, int height);
+        Map3D(osg::Group* root, Terrain::World* terrain, std::shared_ptr<SceneUtil::WorkQueue> workQueue, int width,
+            int height);
         ~Map3D();
 
         /// Starts or stops drawing.
@@ -57,9 +74,18 @@ namespace MWRender
         bool worldToPicture(const osg::Vec3f& position, osg::Vec2f& picture) const;
 
     private:
+        /// Starts building the pieces for where the view is now, and switches to them once they are built.
+        void updateTerrainPieces();
+
         osg::ref_ptr<osg::Group> mRoot;
         osg::ref_ptr<Map3DRenderToTexture> mRtt;
         osg::ref_ptr<Map3DFogPass> mFogPass;
+        // The distant terrain, or nullptr when it is off and the view draws only the loaded cells.
+        Terrain::QuadTreeWorld* mTerrain = nullptr;
+        std::shared_ptr<SceneUtil::WorkQueue> mWorkQueue;
+        // The background thread's own record of which pieces it chose.
+        std::unique_ptr<Terrain::View> mPreloadView;
+        std::shared_ptr<Map3DPreload> mPreload;
         int mWidth;
         int mHeight;
     };
