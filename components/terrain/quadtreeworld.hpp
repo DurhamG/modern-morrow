@@ -7,6 +7,8 @@
 #include <memory>
 #include <mutex>
 
+#include <osg/Referenced>
+
 #include <components/esm/refid.hpp>
 
 namespace osg
@@ -16,8 +18,28 @@ namespace osg
     class Stats;
 }
 
+namespace osg
+{
+    class Camera;
+}
+
 namespace Terrain
 {
+    /// Lets a camera choose how far the terrain and the distant objects reach, in place of the view distance setting,
+    /// and how detailed they are. Set it as the camera's user data. Such a camera's choice of detail is kept apart from
+    /// other cameras', so it doesn't change what the game's own view draws.
+    class CameraDetail : public osg::Referenced
+    {
+    public:
+        float mViewDistance = 0.f;
+        /// When above zero, everything in view gets the detail it would have at this distance from the camera,
+        /// however near or far it is. Then the detail doesn't change as the camera moves, and nothing pops in or out.
+        float mDetailDistance = 0.f;
+
+        /// Returns the choices a camera makes, or nullptr when it makes none.
+        static const CameraDetail* get(const osg::Camera* camera);
+    };
+
     class RootNode;
     class ViewDataMap;
     class ViewData;
@@ -89,8 +111,8 @@ namespace Terrain
 
     private:
         void ensureQuadTreeBuilt();
-        void loadRenderingNode(
-            ViewDataEntry& entry, ViewData* vd, float cellWorldSize, const osg::Vec4i& gridbounds, bool compile);
+        void loadRenderingNode(ViewDataEntry& entry, ViewData* vd, float cellWorldSize, const osg::Vec4i& gridbounds,
+            bool compile, float detailDistance = 0.f);
 
         osg::ref_ptr<RootNode> mRootNode;
 

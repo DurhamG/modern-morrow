@@ -75,6 +75,11 @@ namespace Terrain
         unsigned int getWorldUpdateRevision() const { return mWorldUpdateRevision; }
         void setWorldUpdateRevision(int updateRevision) { mWorldUpdateRevision = updateRevision; }
 
+        /// Whether other cameras may copy this view's choice of detail. A camera with its own view distance keeps its
+        /// view to itself.
+        bool isShared() const { return mShared; }
+        void setShared(bool shared) { mShared = shared; }
+
         void buildNodeIndex();
 
         void removeNodeFromIndex(const QuadTreeNode* node);
@@ -89,6 +94,7 @@ namespace Terrain
         bool mHasViewPoint;
         osg::Vec4i mActiveGrid;
         unsigned int mWorldUpdateRevision;
+        bool mShared = true;
     };
 
     class ViewDataMap
@@ -105,8 +111,9 @@ namespace Terrain
         {
         }
 
-        ViewData* getViewData(
-            osg::Object* viewer, const osg::Vec3f& viewPoint, const osg::Vec4i& activeGrid, bool& needsUpdate);
+        /// Returns the view for a camera. With shared false, the view neither copies other views nor is copied by them.
+        ViewData* getViewData(osg::Object* viewer, const osg::Vec3f& viewPoint, const osg::Vec4i& activeGrid,
+            bool& needsUpdate, bool shared = true);
 
         ViewData* createOrReuseView();
         std::unique_ptr<ViewData> createIndependentView() const;

@@ -1,5 +1,6 @@
 #include "quadtreeworld.hpp"
 
+#include <osg/Camera>
 #include <osg/PolygonMode>
 #include <osg/ShapeDrawable>
 #include <osgUtil/CullVisitor>
@@ -41,13 +42,14 @@ namespace Terrain
     {
     public:
         DefaultLodCallback(float factor, float minSize, float viewDistance, const osg::Vec4i& grid, int cellSizeInUnits,
-            float distanceModifier = 0.f)
+            float distanceModifier = 0.f, float detailDistance = 0.f)
             : mFactor(factor)
             , mMinSize(minSize)
             , mViewDistance(viewDistance)
             , mActiveGrid(grid)
             , mDistanceModifier(distanceModifier)
             , mCellSizeInUnits(cellSizeInUnits)
+            , mDetailDistance(detailDistance)
         {
         }
 
@@ -71,8 +73,9 @@ namespace Terrain
             dist = std::max(0.f, dist + mDistanceModifier);
             if (dist > mViewDistance && !activeGrid) // for Scene<->ObjectPaging sync the activegrid must remain loaded
                 return StopTraversal;
+            const float detailDistance = mDetailDistance > 0.f ? mDetailDistance : dist;
             return getNativeLodLevel(node, mMinSize)
-                    <= convertDistanceToLodLevel(dist, mMinSize, mFactor, mCellSizeInUnits)
+                    <= convertDistanceToLodLevel(detailDistance, mMinSize, mFactor, mCellSizeInUnits)
                 ? StopTraversalAndUse
                 : Deeper;
         }
@@ -92,6 +95,7 @@ namespace Terrain
         osg::Vec4i mActiveGrid;
         float mDistanceModifier;
         int mCellSizeInUnits;
+        float mDetailDistance;
     };
 
     class RootNode : public QuadTreeNode
@@ -309,6 +313,13 @@ namespace Terrain
 
     QuadTreeWorld::~QuadTreeWorld() {}
 
+    const CameraDetail* CameraDetail::get(const osg::Camera* camera)
+    {
+        if (camera == nullptr)
+            return nullptr;
+        return dynamic_cast<const CameraDetail*>(camera->getUserData());
+    }
+
     /// get the level of vertex detail to render this node at, expressed relative to the native resolution of the vertex
     /// data set, NOT relative to mMinSize as is the case with node LODs.
     unsigned int getVertexLod(QuadTreeNode* node, int vertexLodMod)
@@ -364,8 +375,8 @@ namespace Terrain
         return lodFlags;
     }
 
-    void QuadTreeWorld::loadRenderingNode(
-        ViewDataEntry& entry, ViewData* vd, float cellWorldSize, const osg::Vec4i& gridbounds, bool compile)
+    void QuadTreeWorld::loadRenderingNode(ViewDataEntry& entry, ViewData* vd, float cellWorldSize,
+        const osg::Vec4i& gridbounds, bool compile, float detailDistance)
     {
         if (!vd->hasChanged() && entry.mRenderingNode)
             return;
@@ -394,11 +405,17 @@ namespace Terrain
             bool activeGrid = (center.x() > gridbounds.x() && center.y() > gridbounds.y() && center.x() < gridbounds.z()
                 && center.y() < gridbounds.w());
 
+            // With a fixed detail, each piece is made as if seen from straight above it at that distance. Then the
+            // distant objects leave out the same small objects wherever the piece is in view.
+            osg::Vec3f viewPoint = vd->getViewPoint();
+            if (detailDistance > 0.f)
+                viewPoint = osg::Vec3f(center.x() * cellWorldSize, center.y() * cellWorldSize, detailDistance);
+
             for (QuadTreeWorld::ChunkManager* m : mChunkManagers)
             {
                 osg::ref_ptr<osg::Node> n = m->getChunk(entry.mNode->getSize(), entry.mNode->getCenter(),
                     static_cast<unsigned char>(DefaultLodCallback::getNativeLodLevel(entry.mNode, mMinSize)),
-                    entry.mLodFlags, activeGrid, vd->getViewPoint(), compile);
+                    entry.mLodFlags, activeGrid, viewPoint, compile);
                 if (n)
                     pat->addChild(n);
             }
@@ -477,15 +494,19 @@ namespace Terrain
         if (!isCullVisitor && nv.getVisitorType() != osg::NodeVisitor::INTERSECTION_VISITOR)
             return;
 
-        osg::Object* viewer = isCullVisitor ? static_cast<osgUtil::CullVisitor*>(&nv)->getCurrentCamera() : nullptr;
+        osg::Camera* camera = isCullVisitor ? static_cast<osgUtil::CullVisitor*>(&nv)->getCurrentCamera() : nullptr;
+        osg::Object* viewer = camera;
+        const CameraDetail* ownDetail = CameraDetail::get(camera);
+        const float viewDistance = ownDetail != nullptr ? ownDetail->mViewDistance : mViewDistance;
+        const float detailDistance = ownDetail != nullptr ? ownDetail->mDetailDistance : 0.f;
         bool needsUpdate = true;
         osg::Vec3f viewPoint = viewer ? nv.getViewPoint() : nv.getEyePoint();
-        ViewData* vd = mViewDataMap->getViewData(viewer, viewPoint, mActiveGrid, needsUpdate);
+        ViewData* vd = mViewDataMap->getViewData(viewer, viewPoint, mActiveGrid, needsUpdate, ownDetail == nullptr);
         if (needsUpdate)
         {
             vd->reset();
             DefaultLodCallback lodCallback(
-                mLodFactor, mMinSize, mViewDistance, mActiveGrid, ESM::getCellSize(mWorldspace));
+                mLodFactor, mMinSize, viewDistance, mActiveGrid, ESM::getCellSize(mWorldspace), 0.f, detailDistance);
             mRootNode->traverseNodes(vd, viewPoint, &lodCallback);
         }
 
@@ -494,11 +515,12 @@ namespace Terrain
         for (unsigned int i = 0; i < vd->getNumEntries(); ++i)
         {
             ViewDataEntry& entry = vd->getEntry(i);
-            loadRenderingNode(entry, vd, cellWorldSize, mActiveGrid, false);
+            loadRenderingNode(entry, vd, cellWorldSize, mActiveGrid, false, detailDistance);
             entry.mRenderingNode->accept(nv);
         }
 
-        if (mHeightCullCallback && isCullVisitor)
+        // The water culling follows the game's own view, so a camera with its own detail leaves it alone.
+        if (mHeightCullCallback && isCullVisitor && ownDetail == nullptr)
             updateWaterCullingView(mHeightCullCallback, vd, static_cast<osgUtil::CullVisitor*>(&nv),
                 mStorage->getCellWorldSize(mWorldspace), !isGridEmpty());
 

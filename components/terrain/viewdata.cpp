@@ -127,7 +127,7 @@ namespace Terrain
     }
 
     ViewData* ViewDataMap::getViewData(
-        osg::Object* viewer, const osg::Vec3f& viewPoint, const osg::Vec4i& activeGrid, bool& needsUpdate)
+        osg::Object* viewer, const osg::Vec3f& viewPoint, const osg::Vec4i& activeGrid, bool& needsUpdate, bool shared)
     {
         ViewerMap::const_iterator found = mViewers.find(viewer);
         ViewData* vd = nullptr;
@@ -139,6 +139,11 @@ namespace Terrain
         else
             vd = found->second;
         needsUpdate = false;
+        if (vd->isShared() != shared)
+        {
+            vd->setShared(shared);
+            vd->clear();
+        }
 
         if (!(vd->suitableToUse(activeGrid)
                 && (vd->getViewPoint() - viewPoint).length2() < mReuseDistance * mReuseDistance
@@ -148,6 +153,8 @@ namespace Terrain
             const ViewData* mostSuitableView = nullptr;
             for (const ViewData* other : mUsedViews)
             {
+                if (!shared || !other->isShared())
+                    continue;
                 if (other->suitableToUse(activeGrid) && other->getWorldUpdateRevision() >= mWorldUpdateRevision)
                 {
                     float dist = (viewPoint - other->getViewPoint()).length2();
