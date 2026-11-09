@@ -1,6 +1,5 @@
 #include "pausemenu.hpp"
 
-#include <algorithm>
 
 #include <MyGUI_Gui.h>
 #include <MyGUI_ILayer.h>
@@ -145,7 +144,9 @@ namespace MWGui
         int dy = 0;
         if (!mHeldDirection.update(duration, dx, dy) || dy == 0)
             return;
-        const int focus = std::clamp(mFocus + dy, 0, static_cast<int>(mItems.size()) - 1);
+        // The list wraps around, so Exit, at the bottom, is one press up from the top.
+        const int count = static_cast<int>(mItems.size());
+        const int focus = ((mFocus + dy) % count + count) % count;
         if (focus == mFocus)
             return;
         mFocus = focus;
