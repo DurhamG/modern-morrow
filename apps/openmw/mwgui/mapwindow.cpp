@@ -58,6 +58,18 @@ namespace
         Global_ExploreOverlayLayer = 2,
         Global_MapLayer = 3
     };
+
+    // How far a stick moves something on the map, from -1 to 1, given how far the stick is pushed. Squaring the
+    // deflection gives finer control near the centre of the stick.
+    float stickResponse(float value)
+    {
+        constexpr float deadzone = 0.15f;
+        const float magnitude = std::abs(value);
+        if (magnitude < deadzone)
+            return 0.f;
+        const float scaled = (magnitude - deadzone) / (1.f - deadzone);
+        return std::copysign(scaled * scaled, value);
+    }
 }
 
 namespace MWGui
@@ -827,6 +839,21 @@ namespace MWGui
             MWBase::Environment::get().getInputManager()->getControllerButtonIcon(SDL_CONTROLLER_BUTTON_Y));
         mControllerGuide->setVisible(false);
 
+        getWidget(mGuideMark, "GuideMark");
+        getWidget(mGuideMarkText, "GuideMarkText");
+        getWidget(guideImage, "GuideMarkImage");
+        guideImage->setImageTexture(
+            MWBase::Environment::get().getInputManager()->getControllerButtonIcon(SDL_CONTROLLER_BUTTON_X));
+        mGuideMark->setVisible(false);
+        if (Settings::gui().mControllerMenus)
+        {
+            // It sits over the local map, beside it in the window, so it stays put as the map pans.
+            mCrosshair = mLocalMap->getParent()->createWidget<MyGUI::Widget>(
+                "", MyGUI::IntCoord(0, 0, 24, 24), MyGUI::Align::Default);
+            mCrosshair->setNeedMouseFocus(false);
+            mCrosshair->setVisible(false);
+        }
+
         const bool global = Settings::map().mGlobal;
 
         updateWorldToggleCaptions();
@@ -902,9 +929,16 @@ namespace MWGui
 
     void MapWindow::onMapDoubleClicked(MyGUI::Widget* /*sender*/)
     {
-        MyGUI::IntPoint clickedPos = MyGUI::InputManager::getInstance().getMousePosition();
+        mEditingMarker = getMarkerAt(MyGUI::InputManager::getInstance().getMousePosition());
 
-        MyGUI::IntPoint widgetPos = clickedPos - mEventBoxLocal->getAbsolutePosition();
+        mEditNoteDialog.setVisible(true);
+        mEditNoteDialog.showDeleteButton(false);
+        mEditNoteDialog.setText({});
+    }
+
+    ESM::CustomMarker MapWindow::getMarkerAt(MyGUI::IntPoint point) const
+    {
+        MyGUI::IntPoint widgetPos = point - mEventBoxLocal->getAbsolutePosition();
         auto mapWidgetSize = getWidgetSize();
         int x = int(widgetPos.left / float(mapWidgetSize)) + mGrid.left;
         int y = mGrid.bottom - int(widgetPos.top / float(mapWidgetSize));
@@ -922,15 +956,138 @@ namespace MWGui
             worldPos.y() = (y + (1.0f - nY)) * cellSize;
         }
 
-        mEditingMarker.mWorldX = worldPos.x();
-        mEditingMarker.mWorldY = worldPos.y();
-        ESM::RefId clickedId = getCellIdInWorldSpace(*mActiveCell, x, y);
+        ESM::CustomMarker marker;
+        marker.mWorldX = worldPos.x();
+        marker.mWorldY = worldPos.y();
+        marker.mCell = getCellIdInWorldSpace(*mActiveCell, x, y);
+        return marker;
+    }
 
-        mEditingMarker.mCell = clickedId;
+    MyGUI::IntPoint MapWindow::getPlayerOnMap() const
+    {
+        return mCompass->getPosition() + MyGUI::IntPoint{ 16, 16 };
+    }
 
-        mEditNoteDialog.setVisible(true);
-        mEditNoteDialog.showDeleteButton(false);
-        mEditNoteDialog.setText({});
+    MyGUI::IntPoint MapWindow::getCrosshairPosition() const
+    {
+        // The local map's event box covers the whole map, so its position is the map's top left corner.
+        return mEventBoxLocal->getAbsolutePosition() + (mCrosshairShown ? mCrosshairOnMap : getPlayerOnMap());
+    }
+
+    void MapWindow::updateCrosshair()
+    {
+        const bool active = mCrosshair != nullptr && mActiveCell != nullptr && mControllerGuide->getVisible()
+            && !Settings::map().mGlobal;
+        mGuideMark->setVisible(active);
+        // The left stick moves the crosshair here, rather than the mouse pointer.
+        if (mCrosshair != nullptr)
+            mDisableGamepadCursor = !Settings::map().mGlobal;
+
+        if (active && mCrosshairShown)
+        {
+            // Panning the view away from the crosshair takes it along, at the view's edge.
+            const MyGUI::IntPoint offset = mLocalMap->getViewOffset();
+            const MyGUI::IntSize view = mLocalMap->getSize();
+            mCrosshairOnMap.left = std::clamp(mCrosshairOnMap.left, -offset.left, view.width - offset.left);
+            mCrosshairOnMap.top = std::clamp(mCrosshairOnMap.top, -offset.top, view.height - offset.top);
+        }
+        if (mCrosshair != nullptr)
+            mCrosshair->setVisible(active && mCrosshairShown);
+
+        MyGUI::Widget* pin = nullptr;
+        if (active)
+        {
+            const MyGUI::IntPoint center = getCrosshairPosition();
+            const MyGUI::IntPoint inWindow = center - mCrosshair->getParent()->getAbsolutePosition();
+            mCrosshair->setPosition(
+                inWindow.left - mCrosshair->getWidth() / 2, inWindow.top - mCrosshair->getHeight() / 2);
+
+            // The nearest pin within the crosshair's reach. While the crosshair is hidden, X works on the player's
+            // position, so that is where the pin is looked for.
+            const int reach = mCrosshair->getWidth() / 2;
+            int nearest = reach * reach + 1;
+            for (MyGUI::Widget* widget : mCustomMarkerWidgets)
+            {
+                const MyGUI::IntCoord coord = widget->getAbsoluteCoord();
+                const int dx = coord.left + coord.width / 2 - center.left;
+                const int dy = coord.top + coord.height / 2 - center.top;
+                if (dx * dx + dy * dy < nearest)
+                {
+                    nearest = dx * dx + dy * dy;
+                    pin = widget;
+                }
+            }
+        }
+        if (pin != mPinAtCrosshair)
+        {
+            // The pin under the crosshair shows at full brightness, as one under the mouse does.
+            if (mPinAtCrosshair != nullptr)
+                mPinAtCrosshair->castType<MarkerWidget>()->setNormalColour(MyGUI::Colour(0.6f, 0.6f, 0.6f));
+            if (pin != nullptr)
+                pin->castType<MarkerWidget>()->setNormalColour(MyGUI::Colour::White);
+            mPinAtCrosshair = pin;
+        }
+
+        // The pins can be made again without the crosshair moving, as when one is removed, so the hint is checked on
+        // its own.
+        const bool canRemove = pin != nullptr;
+        if (canRemove == mGuideMarkRemoves)
+            return;
+        mGuideMarkRemoves = canRemove;
+        mGuideMarkText->setCaptionWithReplacing(canRemove ? "#{Interface:MapRemovePin}" : "#{Interface:MapPlacePin}");
+        mGuideMark->castType<Gui::HBox>()->notifyChildrenSizeChanged();
+    }
+
+    void MapWindow::togglePinAtCrosshair()
+    {
+        if (mCrosshair == nullptr || !mGuideMark->getVisible())
+            return;
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        if (mPinAtCrosshair == nullptr)
+        {
+            mCustomMarkers.addMarker(getMarkerAt(getCrosshairPosition()));
+            return;
+        }
+
+        mEditingMarker = *mPinAtCrosshair->getUserData<ESM::CustomMarker>();
+        // A pin with a note, which only a mouse can write, asks before it goes.
+        if (!mEditingMarker.mNote.empty())
+            onNoteEditDelete();
+        else
+            mCustomMarkers.deleteMarker(mEditingMarker);
+    }
+
+    void MapWindow::createGlobalMapPins()
+    {
+        for (const auto& [widget, position] : mGlobalMapPins)
+            MyGUI::Gui::getInstance().destroyWidget(widget);
+        mGlobalMapPins.clear();
+
+        for (const auto& [cell, marker] : mCustomMarkers)
+        {
+            // The global map only shows the exterior, so pins inside buildings and caves stay on their local maps.
+            if (!marker.mCell.is<ESM::ESM3ExteriorCellRefId>())
+                continue;
+            MyGUI::ImageBox* pin
+                = mGlobalMap->createWidget<MyGUI::ImageBox>("ImageBox", MyGUI::IntCoord(), MyGUI::Align::Default);
+            pin->setImageTexture("icons\\map_marker_red.dds");
+            pin->setNeedMouseFocus(false);
+            pin->setDepth(Global_CompassLayer);
+            mGlobalMapPins.emplace_back(pin, osg::Vec2f(marker.mWorldX, marker.mWorldY));
+        }
+        placeGlobalMapPins();
+    }
+
+    void MapWindow::placeGlobalMapPins()
+    {
+        // The same size as on the local map, whatever the zoom.
+        constexpr int size = 16;
+        for (const auto& [widget, position] : mGlobalMapPins)
+        {
+            float x, y;
+            worldPosToGlobalMapImageSpace(position.x(), position.y(), x, y);
+            widget->setCoord(static_cast<int>(x) - size / 2, static_cast<int>(y) - size / 2, size, size);
+        }
     }
 
     void MapWindow::onMapZoomed(MyGUI::Widget* /*sender*/, int rel)
@@ -1020,6 +1177,7 @@ namespace MWGui
                 createMarkerCoords(marker.position.x(), marker.position.y(), static_cast<float>(col.size())));
             marker.widget->setVisible(marker.widget->getHeight() >= 6);
         }
+        placeGlobalMapPins();
     }
 
     void MapWindow::onChangeScrollWindowCoord(MyGUI::Widget* sender)
@@ -1163,7 +1321,12 @@ namespace MWGui
 
         if (Settings::gui().mControllerMenus && !Settings::map().mGlobal
             && MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() == this)
+        {
             panLocalMapWithStick(dt);
+            if (mCrosshair != nullptr)
+                moveCrosshairWithStick(dt);
+        }
+        updateCrosshair();
     }
 
     void MapWindow::setGlobalMapMarkerTooltip(MyGUI::Widget* markerWidget, int x, int y)
@@ -1224,7 +1387,10 @@ namespace MWGui
 
     void MapWindow::updateCustomMarkers()
     {
+        // The local map's pins are made again below, so the one under the crosshair is found again.
+        mPinAtCrosshair = nullptr;
         LocalMapBase::updateCustomMarkers();
+        createGlobalMapPins();
 
         for (auto& [widgetPair, ignore] : mGlobalMapMarkers)
             setGlobalMapMarkerTooltip(widgetPair.widget, static_cast<int>(widgetPair.position.x()),
@@ -1310,6 +1476,8 @@ namespace MWGui
     void MapWindow::centerView()
     {
         LocalMapBase::centerView();
+        // The crosshair hides, so X marks the player's position again.
+        mCrosshairShown = false;
         // set the view offset so that player is in the center
         MyGUI::IntSize viewsize = mGlobalMap->getSize();
         MyGUI::IntPoint pos = mPlayerArrowGlobal->getPosition() + MyGUI::IntPoint{ 16, 16 };
@@ -1365,6 +1533,10 @@ namespace MWGui
             MyGUI::Gui::getInstance().destroyWidget(widgetPair.first.widget);
         mGlobalMapMarkers.clear();
         mGlobalMapMarkersByName.clear();
+
+        for (const auto& [widget, position] : mGlobalMapPins)
+            MyGUI::Gui::getInstance().destroyWidget(widget);
+        mGlobalMapPins.clear();
     }
 
     void MapWindow::write(ESM::ESMWriter& writer, Loading::Listener& progress)
@@ -1445,6 +1617,8 @@ namespace MWGui
             centerView();
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
+            togglePinAtCrosshair();
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
             shiftMap(0, 100);
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
@@ -1459,28 +1633,76 @@ namespace MWGui
 
     bool MapWindow::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
     {
-        // The right stick pans the local map, which onFrame does by reading the stick's position.
+        // On the local map, the right stick pans and the left stick moves the crosshair. onFrame does both by reading
+        // the sticks' positions.
+        if (arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY)
+            return mCrosshair != nullptr && !Settings::map().mGlobal;
         return arg.axis == SDL_CONTROLLER_AXIS_RIGHTX || arg.axis == SDL_CONTROLLER_AXIS_RIGHTY;
+    }
+
+    void MapWindow::moveCrosshairWithStick(float dt)
+    {
+        // How far the crosshair moves per second with the stick pushed all the way, as a fraction of the map's height.
+        constexpr float moveSpeed = 0.5f;
+
+        const MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
+        const float x = stickResponse(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_LEFTX));
+        const float y = stickResponse(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_LEFTY));
+        if (x == 0.f && y == 0.f)
+        {
+            mCrosshairRemainder = {};
+            return;
+        }
+
+        const MyGUI::IntSize view = mLocalMap->getSize();
+        MyGUI::IntPoint offset = mLocalMap->getViewOffset();
+        if (!mCrosshairShown)
+        {
+            // The crosshair appears on the player, or in the middle of the view when the player is out of it.
+            mCrosshairShown = true;
+            mCrosshairOnMap = getPlayerOnMap();
+            const MyGUI::IntPoint onScreen = mCrosshairOnMap + offset;
+            if (onScreen.left < 0 || onScreen.top < 0 || onScreen.left > view.width || onScreen.top > view.height)
+                mCrosshairOnMap = MyGUI::IntPoint(view.width / 2, view.height / 2) - offset;
+        }
+
+        const float distance = moveSpeed * static_cast<float>(view.height) * dt;
+        mCrosshairRemainder.left += x * distance;
+        mCrosshairRemainder.top += y * distance;
+        const int dx = static_cast<int>(mCrosshairRemainder.left);
+        const int dy = static_cast<int>(mCrosshairRemainder.top);
+        mCrosshairRemainder.left -= static_cast<float>(dx);
+        mCrosshairRemainder.top -= static_cast<float>(dy);
+        const MyGUI::IntSize canvas = mLocalMap->getCanvasSize();
+        mCrosshairOnMap.left = std::clamp(mCrosshairOnMap.left + dx, 0, canvas.width);
+        mCrosshairOnMap.top = std::clamp(mCrosshairOnMap.top + dy, 0, canvas.height);
+
+        // Near the edge of the view, the view scrolls with the crosshair, as far as the map's edges let it.
+        const int margin = view.height / 10;
+        const MyGUI::IntPoint onScreen = mCrosshairOnMap + offset;
+        if (onScreen.left < margin)
+            offset.left = margin - mCrosshairOnMap.left;
+        else if (onScreen.left > view.width - margin)
+            offset.left = view.width - margin - mCrosshairOnMap.left;
+        if (onScreen.top < margin)
+            offset.top = margin - mCrosshairOnMap.top;
+        else if (onScreen.top > view.height - margin)
+            offset.top = view.height - margin - mCrosshairOnMap.top;
+        if (offset != mLocalMap->getViewOffset())
+        {
+            mNeedDoorMarkersUpdate = true;
+            mLocalMap->setViewOffset(offset);
+        }
     }
 
     void MapWindow::panLocalMapWithStick(float dt)
     {
         // How far the map pans per second with the stick pushed all the way, as a fraction of the map's height.
         constexpr float panSpeed = 1.f;
-        constexpr float deadzone = 0.15f;
-
-        // Squaring the deflection gives finer control near the centre of the stick.
-        const auto response = [](float value) {
-            const float magnitude = std::abs(value);
-            if (magnitude < deadzone)
-                return 0.f;
-            const float scaled = (magnitude - deadzone) / (1.f - deadzone);
-            return std::copysign(scaled * scaled, value);
-        };
 
         const MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
-        const float x = response(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTX));
-        const float y = response(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTY));
+        const float x = stickResponse(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTX));
+        const float y = stickResponse(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTY));
         if (x == 0.f && y == 0.f)
         {
             mStickPanRemainder = {};
@@ -1541,6 +1763,8 @@ namespace MWGui
                 fitGlobalMapToView();
                 layoutControllerGuide();
                 drawControllerTabs();
+                // The crosshair stays hidden until the left stick moves it, so X marks the player's position.
+                mCrosshairShown = false;
             }
             else if (mControllerTabs != nullptr)
                 mControllerTabs->setVisible(false);
@@ -1597,6 +1821,33 @@ namespace MWGui
         MyGUI::Widget* client = mMainWidget->getClientWidget();
         mControllerGuide->setCoord(scaled(32), client->getHeight() - scaled(24) - rowHeight, scaled(400), rowHeight);
         mControllerGuide->castType<Gui::VBox>()->notifyChildrenSizeChanged();
+
+        // The pin hint goes above the others, styled the same.
+        getWidget(image, "GuideMarkImage");
+        mGuideMark->setProperty("Spacing", std::to_string(scaled(8)));
+        image->setSize(glyphSize, glyphSize);
+        mGuideMarkText->setFontHeight(scaled(18));
+        mGuideMarkText->setTextColour(MyGUI::Colour::parse("#dfc99f"));
+        mGuideMark->setCoord(
+            scaled(32), client->getHeight() - scaled(24) - 2 * rowHeight - scaled(4), scaled(400), rowHeight);
+        mGuideMark->castType<Gui::HBox>()->notifyChildrenSizeChanged();
+
+        // The crosshair is four short arms around a gap, so a pin in the middle of it still shows.
+        if (mCrosshair != nullptr)
+        {
+            while (mCrosshair->getChildCount() > 0)
+                MyGUI::Gui::getInstance().destroyWidget(mCrosshair->getChildAt(0));
+            const int size = scaled(28);
+            const int arm = scaled(9);
+            const int thickness = std::max(2, scaled(2));
+            const int middle = (size - thickness) / 2;
+            mCrosshair->setSize(size, size);
+            const MyGUI::Colour colour = MyGUI::Colour::parse("#dfc99f");
+            ControllerUi::addRect(mCrosshair, 0, middle, arm, thickness, colour);
+            ControllerUi::addRect(mCrosshair, size - arm, middle, arm, thickness, colour);
+            ControllerUi::addRect(mCrosshair, middle, 0, thickness, arm, colour);
+            ControllerUi::addRect(mCrosshair, middle, size - arm, thickness, arm, colour);
+        }
     }
 
     // -------------------------------------------------------------------

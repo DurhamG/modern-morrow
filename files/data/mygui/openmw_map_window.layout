@@ -65,5 +65,22 @@
             </Widget>
         </Widget>
 
+        <!-- The hint for placing a pin on the local map, above the other hints -->
+        <Widget type="HBox" position="8 160 200 24" align="Left Bottom" name="GuideMark">
+            <Property key="Padding" value="0"/>
+            <Property key="Spacing" value="4"/>
+            <Property key="NeedMouse" value="false"/>
+            <Widget type="ImageBox" skin="ImageBox" align="Center" position="0 0 24 24" name="GuideMarkImage">
+                <Property key="Colour" value="#ccb589"/>
+                <Property key="NeedMouse" value="false"/>
+            </Widget>
+            <Widget type="AutoSizedTextBox" skin="HeaderText" name="GuideMarkText">
+                <Property key="Caption" value="#{Interface:MapPlacePin}"/>
+                <Property key="TextShadow" value="true"/>
+                <Property key="TextShadowColour" value="0 0 0"/>
+                <Property key="NeedMouse" value="false"/>
+            </Widget>
+        </Widget>
+
     </Widget>
 </MyGUI>

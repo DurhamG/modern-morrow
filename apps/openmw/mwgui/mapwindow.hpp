@@ -303,6 +303,23 @@ namespace MWGui
         MyGUI::IntCoord createMarkerCoords(float x, float y, float agregatedWeight) const;
         MyGUI::Widget* createMarker(const std::string& name, float x, float y, float agregatedWeight);
 
+        /// The marker that would go at a point on the local map, in screen coordinates, without a note.
+        ESM::CustomMarker getMarkerAt(MyGUI::IntPoint point) const;
+        /// Where the player's arrow is, from the local map's top left corner.
+        MyGUI::IntPoint getPlayerOnMap() const;
+        /// Where the crosshair is on the local map, in screen coordinates. While it is hidden, it is on the player.
+        MyGUI::IntPoint getCrosshairPosition() const;
+        /// Moves the crosshair with the left stick, showing it if it was hidden.
+        void moveCrosshairWithStick(float dt);
+        /// Shows the crosshair and its button hint on the local map, and finds the pin under the crosshair.
+        void updateCrosshair();
+        /// Places a pin at the crosshair, or removes the pin under it.
+        void togglePinAtCrosshair();
+        /// Draws the pins that are in exterior cells on the global map, again.
+        void createGlobalMapPins();
+        /// Moves the global map's pins to where their positions are at the global map's zoom.
+        void placeGlobalMapPins();
+
         MyGUI::ScrollView* mGlobalMap;
         std::unique_ptr<MyGUI::ITexture> mGlobalMapTexture;
         std::unique_ptr<MyGUI::ITexture> mGlobalMapOverlayTexture;
@@ -319,6 +336,25 @@ namespace MWGui
         MyGUI::IntPoint mLastDragPos;
         // The part of a pixel that the stick moved the local map by, carried over to the next frame.
         MyGUI::FloatPoint mStickPanRemainder;
+
+        // In controller menus mode, a crosshair on the local map, which the left stick moves. X places a pin there, or
+        // removes the pin under it, and a hint above the others says which. The crosshair is hidden until the left
+        // stick moves, and X then works on the player's position.
+        MyGUI::Widget* mCrosshair = nullptr;
+        bool mCrosshairShown = false;
+        // Where the crosshair is, from the local map's top left corner.
+        MyGUI::IntPoint mCrosshairOnMap;
+        // The part of a pixel that the stick moved the crosshair by, carried over to the next frame.
+        MyGUI::FloatPoint mCrosshairRemainder;
+        MyGUI::Widget* mGuideMark = nullptr;
+        MyGUI::TextBox* mGuideMarkText = nullptr;
+        // Whether the pin hint says X removes a pin, rather than places one.
+        bool mGuideMarkRemoves = false;
+        // The pin under the crosshair, one of mCustomMarkerWidgets, or nullptr.
+        MyGUI::Widget* mPinAtCrosshair = nullptr;
+
+        // The pins in exterior cells, drawn on the global map, with their positions in the world.
+        std::vector<std::pair<MyGUI::Widget*, osg::Vec2f>> mGlobalMapPins;
 
         MyGUI::IntCoord mLastScrollWindowCoordinates;
 

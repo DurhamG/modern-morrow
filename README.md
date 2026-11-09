@@ -109,6 +109,7 @@ Other improvements
 - **The game fills the screen.** It starts in windowed fullscreen at the screen's own resolution, such as a Steam Deck's 1280x800 or a TV's, instead of in an 800x600 window.
 - **The AppImage sets itself up.** Started with no options, the Linux AppImage runs the setup wizard the first time, then starts the game, and goes straight into the game after that. So a Steam shortcut to it needs no launch options.
 - **The Steam Deck can keep the game up to date.** An optional script downloads the newest AppImage each time the game starts, so updating doesn't need a trip to Desktop Mode.
+- **Pins on the map.** On the local map, X drops a red pin where you stand, or where the left stick moves a crosshair. Pins outdoors show on the world map too.
 - **The tutorial talks about the controller.** On a controller, Morrowind's tutorial messages use the text the game was written with for the Xbox, such as "The LEFT THUMBSTICK moves you", instead of key names and mouse clicks.
 
 Trying it
