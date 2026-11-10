@@ -1,9 +1,13 @@
 #include <algorithm>
+#include <cinttypes>
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <optional>
 #include <span>
+#include <sstream>
+#include <string>
 
 #include <errno.h>
 #include <limits.h>
@@ -29,6 +33,9 @@
 #ifdef __linux__
 #include <sys/prctl.h>
 #include <sys/ucontext.h>
+#ifdef __GLIBC__
+#include <execinfo.h>
+#endif
 #ifndef PR_SET_PTRACER
 #define PR_SET_PTRACER 0x59616d61
 #endif
@@ -65,6 +72,9 @@ static struct
     int signum;
     pid_t pid;
     std::optional<siginfo_t> siginfo;
+    // The addresses the crashed thread would return to, newest first, for a report when no debugger is installed.
+    void* frames[64];
+    int frameCount;
 } crash_info;
 
 namespace
@@ -361,12 +371,63 @@ quit
         static constexpr char sCommandTemplate[] = "lldb --attach-pid %d --batch --source %s %s";
     };
 
-    void printProcessInfo(pid_t pid)
+    // Returns false when neither debugger could report on the process.
+    bool printProcessInfo(pid_t pid)
     {
-        if (printDebuggerInfo<Gdb>(pid))
+        return printDebuggerInfo<Gdb>(pid) || printDebuggerInfo<Lldb>(pid);
+    }
+
+    // Lists the addresses the crashed thread would return to, each with the file it is in and its offset in that
+    // file. The build's debug information can name the function at each one, such as with
+    // "addr2line -f -C -e <file> <offset>". An address is just after its call, so the offset one less points at the
+    // call itself.
+    void printBacktrace(pid_t pid)
+    {
+        if (crash_info.frameCount <= 0)
             return;
-        if (printDebuggerInfo<Lldb>(pid))
-            return;
+
+        struct Mapping
+        {
+            std::uintptr_t mStart;
+            std::uintptr_t mEnd;
+            std::uintptr_t mOffset;
+            std::string mPath;
+        };
+        std::vector<Mapping> mappings;
+        std::ifstream maps("/proc/" + std::to_string(pid) + "/maps");
+        std::string line;
+        while (std::getline(maps, line))
+        {
+            // Each line is "start-end permissions offset device inode path", where the path can be missing.
+            std::istringstream fields(line);
+            std::string range;
+            std::string permissions;
+            std::string offset;
+            std::string device;
+            std::string inode;
+            std::string path;
+            fields >> range >> permissions >> offset >> device >> inode;
+            std::getline(fields >> std::ws, path);
+            const std::size_t dash = range.find('-');
+            if (dash == std::string::npos || offset.empty())
+                continue;
+            mappings.push_back(Mapping{ std::stoull(range.substr(0, dash), nullptr, 16),
+                std::stoull(range.substr(dash + 1), nullptr, 16), std::stoull(offset, nullptr, 16), path });
+        }
+
+        printf("* Backtrace, without a debugger (address, file + offset)\n");
+        for (int i = 0; i < crash_info.frameCount; ++i)
+        {
+            const auto address = reinterpret_cast<std::uintptr_t>(crash_info.frames[i]);
+            const auto mapping = std::find_if(mappings.begin(), mappings.end(),
+                [&](const Mapping& m) { return address >= m.mStart && address < m.mEnd; });
+            if (mapping == mappings.end() || mapping->mPath.empty())
+                printf("#%-2d 0x%016" PRIxPTR "\n", i, address);
+            else
+                printf("#%-2d 0x%016" PRIxPTR " %s + 0x%" PRIxPTR "\n", i, address, mapping->mPath.c_str(),
+                    address - mapping->mStart + mapping->mOffset);
+        }
+        fflush(stdout);
     }
 }
 
@@ -424,6 +485,11 @@ static void crash_catcher(int signum, siginfo_t* siginfo, void* /*context*/)
         crash_info.siginfo = std::nullopt;
     else
         crash_info.siginfo = *siginfo;
+#if defined(__linux__) && defined(__GLIBC__)
+    // Recorded here, in the crashed thread, for the report to fall back on when no debugger is installed, as on a
+    // Steam Deck.
+    crash_info.frameCount = backtrace(crash_info.frames, static_cast<int>(std::size(crash_info.frames)));
+#endif
 
     const pid_t dbgPid = fork();
     /* Fork off to start a crash handler */
@@ -531,7 +597,8 @@ static void crash_catcher(int signum, siginfo_t* siginfo, void* /*context*/)
 
     if (crash_info.pid > 0)
     {
-        printProcessInfo(crash_info.pid);
+        if (!printProcessInfo(crash_info.pid))
+            printBacktrace(crash_info.pid);
         kill(crash_info.pid, SIGKILL);
     }
 
@@ -596,6 +663,13 @@ static void getExecPath(char** argv)
 static bool crashCatcherInstallHandlers(char** argv)
 {
     getExecPath(argv);
+
+#if defined(__linux__) && defined(__GLIBC__)
+    // The first backtrace loads the library that unwinds the stack, which allocates memory. A crash can come from
+    // corrupted memory, so that happens here rather than in the crash handler.
+    void* frame = nullptr;
+    backtrace(&frame, 1);
+#endif
 
     /* Set an alternate signal stack so SIGSEGVs caused by stack overflows
      * still run */
