@@ -100,12 +100,11 @@ namespace MWGui
         }
         mRoot->setSize(mRoot->getLayer()->getSize());
         mRoot->setVisible(true);
-        mFocus = 0;
-        mScroll = 0;
+        mList.reset();
+        mList.resetHeld();
         mYourItems = false;
         mYourTab = 0;
         mContainerFocus = 0;
-        mHeldDirection.reset();
         update();
     }
 
@@ -231,7 +230,7 @@ namespace MWGui
         {
             if (row.mItem < 0)
                 continue;
-            if (index++ == mFocus)
+            if (index++ == mList.getFocus())
                 return row.mItem;
         }
         return -1;
@@ -279,6 +278,8 @@ namespace MWGui
             // The inventory screen's tabs, switched with the shoulder buttons.
             int tx = x + 20;
             addGlyph(mRoot, tx, sPanelTop + 48, 20, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+            addPointerTarget(
+                mRoot, tx, sPanelTop + 44, 24, 28, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER); });
             tx += 28;
             for (int tab = 0; tab < sInventoryTabCount; ++tab)
             {
@@ -290,9 +291,18 @@ namespace MWGui
                 label->setTextAlign(MyGUI::Align::Center);
                 if (selected)
                     addRect(mRoot, tx + 6, sPanelTop + 68, labelW - 12, 2, sAccentColour);
+                else
+                    addPointerTarget(mRoot, tx, sPanelTop + 42, labelW, 30, nullptr, [this, tab] {
+                        mYourTab = tab;
+                        mList.reset();
+                        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+                        update();
+                    });
                 tx += labelW + 2;
             }
             addGlyph(mRoot, tx + 4, sPanelTop + 48, 20, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+            addPointerTarget(mRoot, tx + 4, sPanelTop + 44, 24, 28, nullptr,
+                [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
         }
         else if (isPickpocketing())
             warning = "#{Interface:LootPickpocketing}";
@@ -324,62 +334,23 @@ namespace MWGui
 
     void LootPanel::drawList(int x, int y, int w, int h, const std::vector<Row>& rows)
     {
-        int itemCount = 0;
+        std::vector<ControllerList::Row> listRows;
         for (const Row& row : rows)
-            itemCount += row.mItem >= 0 ? 1 : 0;
-        if (itemCount == 0)
-        {
-            addText(mRoot, x + 12, y + 4, w - 24, 30,
-                mYourItems ? "#{Interface:InventoryNoItems}" : "#{Interface:LootEmpty}", sFontNormal, sDimColour);
-            return;
-        }
-        mFocus = std::clamp(mFocus, 0, itemCount - 1);
-
-        // Scroll so the focused row is in view.
-        const int listBottom = y + h;
-        int focusRow = 0;
-        for (int i = 0, index = 0; i < static_cast<int>(rows.size()); ++i)
-        {
-            if (rows[i].mItem < 0)
-                continue;
-            if (index++ == mFocus)
-                focusRow = i;
-        }
-        const auto rowHeight = [&](int i) { return rows[i].mItem < 0 ? sHeaderRowHeight : sEntryHeight; };
-        if (focusRow < mScroll)
-            mScroll = focusRow > 0 && rows[focusRow - 1].mItem < 0 ? focusRow - 1 : focusRow;
-        while (true)
-        {
-            int bottomOfFocus = y;
-            for (int i = mScroll; i <= focusRow; ++i)
-                bottomOfFocus += rowHeight(i);
-            if (bottomOfFocus <= listBottom || mScroll >= focusRow)
-                break;
-            ++mScroll;
-        }
+            listRows.push_back({ row.mItem < 0 ? sHeaderRowHeight : sEntryHeight, row.mItem >= 0 });
 
         const MWWorld::Ptr actor = player();
         const float spare = actor.getClass().getCapacity(actor) - actor.getClass().getEncumbrance(actor);
         const bool stealing = isStealing();
-        int rowY = y;
-        int index = 0;
-        for (int i = 0; i < mScroll; ++i)
-            index += rows[i].mItem >= 0 ? 1 : 0;
-        for (int i = mScroll; i < static_cast<int>(rows.size()); ++i)
-        {
+        const auto drawRow = [&](std::size_t i, int rowY, bool focused) {
             const Row& row = rows[i];
-            if (rowY + rowHeight(i) > listBottom)
-                break;
             if (row.mItem < 0)
             {
                 addText(mRoot, x + 8, rowY, w - 16, 24, row.mHeader, sFontSmall, sBrightColour);
                 addRect(mRoot, x + 8, rowY + 23, w - 16, 1, sAccentColour, 0.25f);
-                rowY += sHeaderRowHeight;
-                continue;
+                return;
             }
             const ItemStack& item = mItems[row.mItem];
             const MWWorld::Ptr& ptr = item.mBase;
-            const bool focused = index == mFocus;
             const int rh = sEntryHeight - 2;
             if (focused)
             {
@@ -425,9 +396,13 @@ namespace MWGui
                 addText(mRoot, x + w - rightW - 8, rowY + 27, rightW, 20, "#{sWeight} " + formatNumber(itemWeight),
                     sFontSmall, !mYourItems && itemWeight > spare ? sWorseColour : sDimColour,
                     MyGUI::Align::Right | MyGUI::Align::VCenter);
-            rowY += sEntryHeight;
-            ++index;
-        }
+        };
+        // Pointing at an item shows its details, and clicking it takes it, or puts it in, as A does.
+        if (!mList.draw(
+                mRoot, x, y, w, h, listRows, drawRow, [this] { update(); },
+                [] { pressButton(SDL_CONTROLLER_BUTTON_A); }))
+            addText(mRoot, x + 12, y + 4, w - 24, 30,
+                mYourItems ? "#{Interface:InventoryNoItems}" : "#{Interface:LootEmpty}", sFontNormal, sDimColour);
     }
 
     void LootPanel::drawDetails(int x, int y, int w, int h, int item)
@@ -533,20 +508,14 @@ namespace MWGui
 
         if (MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() != &mWindow)
         {
-            mHeldDirection.reset();
+            mList.resetHeld();
             return;
         }
-        int dx = 0;
-        int dy = 0;
-        if (!mHeldDirection.update(duration, dx, dy) || dy == 0)
-            return;
         int itemCount = 0;
         for (const Row& row : buildRows())
             itemCount += row.mItem >= 0 ? 1 : 0;
-        if (itemCount == 0)
-            return;
-        mFocus = std::clamp(mFocus + dy, 0, itemCount - 1);
-        update();
+        if (mList.updateHeld(duration, itemCount))
+            update();
     }
 
     bool LootPanel::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
@@ -568,8 +537,7 @@ namespace MWGui
                 {
                     const int delta = arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER ? -1 : 1;
                     mYourTab = (mYourTab + delta + sInventoryTabCount) % sInventoryTabCount;
-                    mFocus = 0;
-                    mScroll = 0;
+                    mList.reset();
                     winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
                     update();
                     break;
@@ -663,15 +631,15 @@ namespace MWGui
         if (mYourItems)
         {
             mYourItems = false;
-            mFocus = mContainerFocus;
+            mList.reset();
+            mList.setFocus(mContainerFocus);
         }
         else
         {
             mYourItems = true;
-            mContainerFocus = mFocus;
-            mFocus = 0;
+            mContainerFocus = mList.getFocus();
+            mList.reset();
         }
-        mScroll = 0;
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         update();
     }

@@ -46,8 +46,7 @@ namespace MWGui
         ContainerWindow& mWindow;
         MyGUI::Widget* mRoot = nullptr;
         std::vector<ItemStack> mItems;
-        int mFocus = 0;
-        int mScroll = 0;
+        ControllerList mList;
 
         // Whether the panel shows the player's own items, to put into the container, under one of the inventory
         // screen's tabs. The selection in the container's items is kept for when the player comes back.
@@ -56,7 +55,6 @@ namespace MWGui
         int mContainerFocus = 0;
         std::string mShownState;
         float mRefreshTimer = 0.f;
-        HeldDirection mHeldDirection;
 
         void readItems();
         std::string currentState() const;

@@ -60,9 +60,8 @@ namespace MWGui
         }
         mRoot->setSize(mRoot->getLayer()->getSize());
         mRoot->setVisible(true);
-        mFocus = 0;
-        mScroll = 0;
-        mHeldDirection.reset();
+        mList.reset();
+        mList.resetHeld();
         update();
     }
 
@@ -117,25 +116,11 @@ namespace MWGui
 
     void ServicePanel::drawList(int x, int y, int w, int h)
     {
-        if (mEntries.empty())
-        {
-            addText(mRoot, x + 12, y + 4, w - 24, 30, mService.mEmpty, sFontNormal, sDimColour);
-            return;
-        }
         const int count = static_cast<int>(mEntries.size());
-        mFocus = std::clamp(mFocus, 0, count - 1);
-
-        // Scroll so the focused entry is in view.
-        const int visible = std::max(1, h / sEntryHeight);
-        mScroll = std::clamp(mScroll, std::max(0, mFocus - visible + 1), mFocus);
-        mScroll = std::min(mScroll, std::max(0, count - visible));
-
-        for (int i = mScroll; i < count && i < mScroll + visible; ++i)
-        {
+        const std::vector<ControllerList::Row> rows(mEntries.size(), ControllerList::Row{ sEntryHeight, true });
+        const auto drawRow = [&](std::size_t i, int rowY, bool focused) {
             const Entry& entry = mEntries[i];
-            const int rowY = y + (i - mScroll) * sEntryHeight;
             const int rh = sEntryHeight - 2;
-            const bool focused = i == mFocus;
             if (focused)
             {
                 addRect(mRoot, x, rowY, w, rh, sAccentColour, 0.16f);
@@ -160,16 +145,24 @@ namespace MWGui
             addText(mRoot, x + w - priceW - 8, rowY + 3, priceW, 26,
                 std::to_string(entry.mPrice) + " #{Interface:BarterGoldShort}", sFontNormal,
                 available ? sTextColour : sWorseColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
+        };
+        // Pointing at an entry focuses it, and clicking it picks it, as A does.
+        if (!mList.draw(
+                mRoot, x, y, w, h, rows, drawRow, [this] { draw(); }, [] { pressButton(SDL_CONTROLLER_BUTTON_A); }))
+        {
+            addText(mRoot, x + 12, y + 4, w - 24, 30, mService.mEmpty, sFontNormal, sDimColour);
+            return;
         }
 
         // A thin bar along the right edge shows where the list is scrolled to, when it doesn't fit.
+        const int visible = std::max(1, h / sEntryHeight);
         if (count > visible)
         {
             const int trackH = visible * sEntryHeight - 2;
             addRect(mRoot, x + w + 1, y, 2, trackH, sAccentColour, 0.12f);
             const int thumbH = std::max(16, trackH * visible / count);
-            addRect(
-                mRoot, x + w + 1, y + (trackH - thumbH) * mScroll / (count - visible), 2, thumbH, sAccentColour, 0.6f);
+            addRect(mRoot, x + w + 1, y + (trackH - thumbH) * mList.getScroll() / (count - visible), 2, thumbH,
+                sAccentColour, 0.6f);
         }
     }
 
@@ -181,9 +174,12 @@ namespace MWGui
         const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
             addGlyph(mRoot, hx, hintY + 1, 22, button);
             MyGUI::TextBox* text = addText(mRoot, hx + 30, hintY - 3, 200, 30, label, sFontNormal, sBrightColour);
+            // Clicking the hint presses its button.
+            addPointerTarget(mRoot, hx, hintY - 4, 30 + text->getTextSize().width + 8, 32, nullptr,
+                [button] { pressButton(button); });
             hx += 30 + text->getTextSize().width + 22;
         };
-        const Entry* entry = mEntries.empty() ? nullptr : &mEntries[mFocus];
+        const Entry* entry = mEntries.empty() ? nullptr : &mEntries[mList.getFocus()];
         if (entry != nullptr && entry->mUnavailable.empty())
             hint(SDL_CONTROLLER_BUTTON_A, mService.mAction);
         if (entry == nullptr)
@@ -248,13 +244,8 @@ namespace MWGui
     {
         if (mRoot == nullptr || !mRoot->getVisible())
             return;
-        int dx = 0;
-        int dy = 0;
-        if (mHeldDirection.update(duration, dx, dy) && dy != 0 && !mEntries.empty())
-        {
-            mFocus = std::clamp(mFocus + dy, 0, static_cast<int>(mEntries.size()) - 1);
+        if (mList.updateHeld(duration, static_cast<int>(mEntries.size())))
             draw();
-        }
     }
 
     bool ServicePanel::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
@@ -262,9 +253,9 @@ namespace MWGui
         switch (arg.button)
         {
             case SDL_CONTROLLER_BUTTON_A:
-                if (!mEntries.empty() && mEntries[mFocus].mUnavailable.empty())
+                if (!mEntries.empty() && mEntries[mList.getFocus()].mUnavailable.empty())
                 {
-                    mService.mChoose(mEntries[mFocus].mButton);
+                    mService.mChoose(mEntries[mList.getFocus()].mButton);
                     update();
                 }
                 break;

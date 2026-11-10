@@ -70,9 +70,7 @@ namespace MWGui
         Service mService;
         MyGUI::Widget* mRoot = nullptr;
         std::vector<Entry> mEntries;
-        int mFocus = 0;
-        int mScroll = 0;
-        HeldDirection mHeldDirection;
+        ControllerList mList;
 
         void draw();
         void drawList(int x, int y, int w, int h);

@@ -82,9 +82,8 @@ namespace MWGui
         if (mRoot == nullptr)
             return;
         mRoot->setVisible(true);
-        mFocus = 0;
-        mScroll = 0;
-        mHeldDirection.reset();
+        mList.reset();
+        mList.resetHeld();
         update();
     }
 
@@ -159,7 +158,7 @@ namespace MWGui
             const auto [valueB, mostB] = itemValues(b);
             return static_cast<float>(valueA) / std::max(1, mostA) < static_cast<float>(valueB) / std::max(1, mostB);
         });
-        mFocus = std::clamp(mFocus, 0, std::max(0, static_cast<int>(mItems.size()) - 1));
+        mList.setFocus(std::clamp(mList.getFocus(), 0, std::max(0, static_cast<int>(mItems.size()) - 1)));
 
         clearPanel(mRoot);
         const MyGUI::IntSize size = mRoot->getSize();
@@ -198,13 +197,9 @@ namespace MWGui
             return;
         }
 
-        const int visible = std::max(1, (listBottom - listTop) / sRowHeight);
-        mScroll = std::clamp(mScroll, std::max(0, mFocus - visible + 1), mFocus);
-        for (int i = mScroll; i < static_cast<int>(mItems.size()) && i < mScroll + visible; ++i)
-        {
+        const std::vector<ControllerList::Row> rows(mItems.size(), ControllerList::Row{ sRowHeight, true });
+        const auto drawRow = [&](std::size_t i, int rowY, bool focused) {
             const MWWorld::Ptr& item = mItems[i];
-            const int rowY = listTop + (i - mScroll) * sRowHeight;
-            const bool focused = i == mFocus;
             const int rx = x + 4;
             const int rw = w - 8;
             if (focused)
@@ -221,7 +216,11 @@ namespace MWGui
             addText(mRoot, textX, rowY + 4, textW, 26, std::to_string(value) + " / " + std::to_string(most),
                 sFontNormal, sTextColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
             drawBar(mRoot, textX, rowY + 38, textW, 6, value, most);
-        }
+        };
+        // Pointing at an item focuses it, and clicking it uses the tool on it, as A does.
+        mList.draw(
+            mRoot, x, listTop, w, listBottom - listTop, rows, drawRow, [this] { update(); },
+            [] { pressButton(SDL_CONTROLLER_BUTTON_A); });
     }
 
     void ToolPanel::drawTool(int x, int y, int w, int h)
@@ -280,7 +279,7 @@ namespace MWGui
         // The highlighted item, larger.
         if (!mItems.empty())
         {
-            const MWWorld::Ptr& item = mItems[mFocus];
+            const MWWorld::Ptr& item = mItems[mList.getFocus()];
             const auto [value, most] = itemValues(item);
             ry += 20;
             addRect(mRoot, x + 16, ry, w - 32, 1, sAccentColour, 0.2f);
@@ -310,16 +309,11 @@ namespace MWGui
         const WindowBase* window = mRepair != nullptr ? static_cast<WindowBase*>(mRepair) : mRecharge;
         if (MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() != window)
         {
-            mHeldDirection.reset();
+            mList.resetHeld();
             return;
         }
-        int dx = 0;
-        int dy = 0;
-        if (mHeldDirection.update(duration, dx, dy) && dy != 0)
-        {
-            mFocus = std::max(0, mFocus + dy);
+        if (mList.updateHeld(duration, static_cast<int>(mItems.size())))
             update();
-        }
     }
 
     bool ToolPanel::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
@@ -348,9 +342,10 @@ namespace MWGui
 
     void ToolPanel::useTool()
     {
-        if (mItems.empty() || mFocus >= static_cast<int>(mItems.size()))
+        const int focus = mList.getFocus();
+        if (mItems.empty() || focus >= static_cast<int>(mItems.size()))
             return;
-        const MWWorld::Ptr item = mItems[mFocus];
+        const MWWorld::Ptr item = mItems[focus];
         if (mRepair != nullptr)
             mRepair->onRepairItem(nullptr, item);
         else

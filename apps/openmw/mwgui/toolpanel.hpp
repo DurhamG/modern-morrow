@@ -44,9 +44,7 @@ namespace MWGui
         Recharge* mRecharge = nullptr;
         MyGUI::Widget* mRoot = nullptr;
         std::vector<MWWorld::Ptr> mItems;
-        int mFocus = 0;
-        int mScroll = 0;
-        HeldDirection mHeldDirection;
+        ControllerList mList;
 
         MWWorld::Ptr tool() const;
         std::vector<MWWorld::Ptr> tools() const;

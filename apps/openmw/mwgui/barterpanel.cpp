@@ -95,8 +95,7 @@ namespace MWGui
         mRoot->setSize(mRoot->getLayer()->getSize());
         mRoot->setVisible(true);
         mSelling = false;
-        mFocus = 0;
-        mScroll = 0;
+        mList.reset();
         mHeldDirection.reset();
         update();
     }
@@ -201,7 +200,7 @@ namespace MWGui
         {
             if (row.mEntry < 0)
                 continue;
-            if (index++ == mFocus)
+            if (index++ == mList.getFocus())
                 return row.mEntry;
         }
         return -1;
@@ -231,6 +230,8 @@ namespace MWGui
             MyGUI::Align::Right | MyGUI::Align::VCenter);
         int tx = x + 20;
         addGlyph(mRoot, tx, sPanelTop + 48, 20, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+        addPointerTarget(
+            mRoot, tx, sPanelTop + 44, 24, 28, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER); });
         tx += 28;
         for (const bool selling : { false, true })
         {
@@ -243,9 +244,17 @@ namespace MWGui
             label->setTextAlign(MyGUI::Align::Center);
             if (selected)
                 addRect(mRoot, tx + 6, sPanelTop + 68, labelW - 12, 2, sAccentColour);
+            else
+            {
+                // Either shoulder button switches to the other tab, so clicking that tab presses one.
+                addPointerTarget(mRoot, tx, sPanelTop + 42, labelW, 30, nullptr,
+                    [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
+            }
             tx += labelW + 4;
         }
         addGlyph(mRoot, tx + 2, sPanelTop + 48, 20, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+        addPointerTarget(
+            mRoot, tx + 2, sPanelTop + 44, 24, 28, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
         const int contentTop = sPanelTop + 82;
         addRect(mRoot, x + 20, contentTop - 6, w - 40, 1, sAccentColour, 0.2f);
 
@@ -257,60 +266,20 @@ namespace MWGui
 
     void BarterPanel::drawList(int x, int y, int w, int h, const std::vector<Row>& rows)
     {
-        int entryCount = 0;
+        std::vector<ControllerList::Row> listRows;
         for (const Row& row : rows)
-            entryCount += row.mEntry >= 0 ? 1 : 0;
-        if (entryCount == 0)
-        {
-            addText(mRoot, x + 12, y + 4, w - 24, 30,
-                mSelling ? "#{Interface:BarterNothingToSell}" : "#{Interface:BarterNothingForSale}", sFontNormal,
-                sDimColour);
-            return;
-        }
-        mFocus = std::clamp(mFocus, 0, entryCount - 1);
+            listRows.push_back({ row.mEntry < 0 ? sHeaderRowHeight : sEntryHeight, row.mEntry >= 0 });
 
-        // Scroll so the focused row is in view.
-        const int listBottom = y + h;
-        int focusRow = 0;
-        for (int i = 0, index = 0; i < static_cast<int>(rows.size()); ++i)
-        {
-            if (rows[i].mEntry < 0)
-                continue;
-            if (index++ == mFocus)
-                focusRow = i;
-        }
-        const auto rowHeight = [&](int i) { return rows[i].mEntry < 0 ? sHeaderRowHeight : sEntryHeight; };
-        if (focusRow < mScroll)
-            mScroll = focusRow > 0 && rows[focusRow - 1].mEntry < 0 ? focusRow - 1 : focusRow;
-        while (true)
-        {
-            int bottomOfFocus = y;
-            for (int i = mScroll; i <= focusRow; ++i)
-                bottomOfFocus += rowHeight(i);
-            if (bottomOfFocus <= listBottom || mScroll >= focusRow)
-                break;
-            ++mScroll;
-        }
-
-        int rowY = y;
-        int index = 0;
-        for (int i = 0; i < mScroll; ++i)
-            index += rows[i].mEntry >= 0 ? 1 : 0;
-        for (int i = mScroll; i < static_cast<int>(rows.size()); ++i)
-        {
+        const auto drawRow = [&](std::size_t i, int rowY, bool focused) {
             const Row& row = rows[i];
-            if (rowY + rowHeight(i) > listBottom)
-                break;
             if (row.mEntry < 0)
             {
                 addText(mRoot, x + 8, rowY, w - 16, 24, row.mHeader, sFontSmall, sBrightColour);
                 addRect(mRoot, x + 8, rowY + 23, w - 16, 1, sAccentColour, 0.25f);
-                rowY += sHeaderRowHeight;
-                continue;
+                return;
             }
             const Entry& entry = mEntries[row.mEntry];
             const MWWorld::Ptr& ptr = entry.mStack.mBase;
-            const bool focused = index == mFocus;
             const int rh = sEntryHeight - 2;
             if (entry.mInDeal > 0)
                 addRect(mRoot, x, rowY, w, rh, sNewColour, 0.08f);
@@ -351,9 +320,14 @@ namespace MWGui
             }
             addText(mRoot, x + w - rightW - 8, rowY + 27, rightW, 20, marker, sFontSmall, markerColour,
                 MyGUI::Align::Right | MyGUI::Align::VCenter);
-            rowY += sEntryHeight;
-            ++index;
-        }
+        };
+        // Pointing at an item focuses it. Clicking it puts it into the deal, or takes it out, as A does.
+        if (!mList.draw(
+                mRoot, x, y, w, h, listRows, drawRow, [this] { update(); },
+                [] { pressButton(SDL_CONTROLLER_BUTTON_A); }))
+            addText(mRoot, x + 12, y + 4, w - 24, 30,
+                mSelling ? "#{Interface:BarterNothingToSell}" : "#{Interface:BarterNothingForSale}", sFontNormal,
+                sDimColour);
     }
 
     void BarterPanel::drawDetails(int x, int y, int w, int h, int entryIndex)
@@ -418,6 +392,12 @@ namespace MWGui
             const int hy = firstRowY + text->getTop() * rowHeight;
             text->setPosition(textX + 30, hy - 3);
             addGlyph(mRoot, textX, hy + 1, 22, hints[i].first);
+            // Clicking a hint presses its button. The d-pad's hint and the right stick's hint stand for pushing left
+            // or right, so they can't be clicked.
+            const SDL_GameControllerButton button = hints[i].first;
+            if (button != SDL_CONTROLLER_BUTTON_DPAD_LEFT && button != SDL_CONTROLLER_BUTTON_RIGHTSTICK)
+                addPointerTarget(mRoot, textX, hy - 4, 30 + text->getTextSize().width + 8, 32, nullptr,
+                    [button] { pressButton(button); });
         }
 
         int dealTop = firstRowY - 12;
@@ -512,7 +492,7 @@ namespace MWGui
                 for (const Row& row : buildRows())
                     entryCount += row.mEntry >= 0 ? 1 : 0;
                 if (entryCount > 0)
-                    mFocus = std::clamp(mFocus + dy, 0, entryCount - 1);
+                    mList.setFocus(std::clamp(mList.getFocus() + dy, 0, entryCount - 1));
                 update();
             }
             else if (const int entry = focusedEntry(); entry >= 0)
@@ -585,8 +565,7 @@ namespace MWGui
     void BarterPanel::switchTab()
     {
         mSelling = !mSelling;
-        mFocus = 0;
-        mScroll = 0;
+        mList.reset();
         update();
     }
 
@@ -672,11 +651,11 @@ namespace MWGui
         if (groupStarts.size() < 2)
             return;
         auto next = std::find_if(
-            groupStarts.begin(), groupStarts.end(), [&](const auto& start) { return start.first > mFocus; });
+            groupStarts.begin(), groupStarts.end(), [&](const auto& start) { return start.first > mList.getFocus(); });
         if (next == groupStarts.end())
             next = groupStarts.begin();
-        mFocus = next->first;
-        mScroll = next->second;
+        mList.setFocus(next->first);
+        mList.setScroll(next->second);
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         update();
     }

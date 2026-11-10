@@ -60,8 +60,8 @@ namespace MWGui
         MyGUI::Widget* mRoot = nullptr;
         bool mSelling = false;
         std::vector<Entry> mEntries;
-        int mFocus = 0;
-        int mScroll = 0;
+        ControllerList mList;
+        // The d-pad moves through the list, and also changes how many of the focused item are in the deal.
         HeldDirection mHeldDirection;
         float mHaggleTimer = 0.f;
 

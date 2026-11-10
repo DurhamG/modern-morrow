@@ -47,9 +47,7 @@ namespace MWGui
         std::vector<ItemStack> mItems;
         // Whether the list shows the player's own items, to give to the companion
         bool mYourItems = false;
-        int mFocus = 0;
-        int mScroll = 0;
-        HeldDirection mHeldDirection;
+        ControllerList mList;
 
         void readItems();
         std::vector<Row> buildRows() const;
