@@ -9,6 +9,8 @@
 #include <MyGUI_ILayer.h>
 #include <MyGUI_LayerManager.h>
 
+#include <components/misc/strings/algorithm.hpp>
+
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -164,7 +166,9 @@ namespace MWGui
 
     std::vector<BarterPanel::Row> BarterPanel::buildRows() const
     {
-        // Items are grouped by kind, with the most valuable first in each group.
+        // Items are grouped by kind, with the most valuable first in each group. Items of the same value go by name,
+        // then by ID, so an item keeps its place when all of it goes into the deal. The entries list such an item
+        // last, since it's then only in the other side's items.
         std::vector<int> order(mEntries.size());
         for (std::size_t i = 0; i < order.size(); ++i)
             order[i] = static_cast<int>(i);
@@ -173,7 +177,15 @@ namespace MWGui
             const MWWorld::Ptr& right = mEntries[b].mStack.mBase;
             if (itemGroup(left) != itemGroup(right))
                 return itemGroup(left) < itemGroup(right);
-            return left.getClass().getValue(left) > right.getClass().getValue(right);
+            const int leftValue = left.getClass().getValue(left);
+            const int rightValue = right.getClass().getValue(right);
+            if (leftValue != rightValue)
+                return leftValue > rightValue;
+            const int byName = Misc::StringUtils::ciCompareLen(
+                left.getClass().getName(left), right.getClass().getName(right), std::string_view::npos);
+            if (byName != 0)
+                return byName < 0;
+            return left.getCellRef().getRefId() < right.getCellRef().getRefId();
         });
         int groups = 0;
         for (std::size_t i = 0; i < order.size(); ++i)
