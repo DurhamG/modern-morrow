@@ -145,14 +145,20 @@ namespace MWGui
         // key bindings and the scripts' pages, show this window instead.
         MyGUI::Widget* mPanel = nullptr;
         std::vector<MyGUI::Widget*> mPanelRows;
-        int mPanelFocus = 0;
-        int mPanelScroll = 0;
+        // The list's focus counts the settings only, not the headings among the rows.
+        ControllerList mList;
+        // Moves the focus up and down, and changes the focused setting with left and right.
         HeldDirection mHeldDirection;
         void collectPanelRows(MyGUI::Widget* widget);
+        int panelItemCount() const;
+        /// The row of a setting, counting settings only, or nullptr when there is no such setting.
+        MyGUI::Widget* panelRow(int item) const;
         bool panelShowsTab();
         void showPanelOrWindow();
         void drawPanel();
         void changePanelRow(int delta);
+        /// Sets a slider to the point along its bar that the mouse clicked.
+        void clickPanelSlider(int item, int barX, int barWidth);
         void activatePanelRow();
     };
 }

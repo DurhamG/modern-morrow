@@ -8,6 +8,7 @@
 #include <MyGUI_ComboBox.h>
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
+#include <MyGUI_InputManager.h>
 #include <MyGUI_LanguageManager.h>
 #include <MyGUI_LayerManager.h>
 #include <MyGUI_ListBox.h>
@@ -260,15 +261,10 @@ namespace MWGui
         int dy = 0;
         if (mPanel != nullptr && mPanel->getVisible() && mHeldDirection.update(duration, dx, dy))
         {
-            if (dy != 0 && !mPanelRows.empty())
+            if (dy != 0 && panelItemCount() > 0)
             {
-                // Headings are skipped.
-                int focus = mPanelFocus + dy;
-                while (focus >= 0 && focus < static_cast<int>(mPanelRows.size())
-                    && mPanelRows[focus]->isType<MyGUI::TabItem>())
-                    focus += dy;
-                if (focus >= 0 && focus < static_cast<int>(mPanelRows.size()))
-                    mPanelFocus = focus;
+                // The list's focus counts settings only, so it skips the headings.
+                mList.setFocus(std::clamp(mList.getFocus() + dy, 0, panelItemCount() - 1));
                 drawPanel();
             }
             else if (dx != 0)
@@ -307,6 +303,27 @@ namespace MWGui
         }
     }
 
+    int SettingsWindow::panelItemCount() const
+    {
+        int count = 0;
+        for (const MyGUI::Widget* row : mPanelRows)
+            count += row->isType<MyGUI::TabItem>() ? 0 : 1;
+        return count;
+    }
+
+    MyGUI::Widget* SettingsWindow::panelRow(int item) const
+    {
+        int index = 0;
+        for (MyGUI::Widget* row : mPanelRows)
+        {
+            if (row->isType<MyGUI::TabItem>())
+                continue;
+            if (index++ == item)
+                return row;
+        }
+        return nullptr;
+    }
+
     bool SettingsWindow::panelShowsTab()
     {
         mPanelRows.clear();
@@ -333,8 +350,7 @@ namespace MWGui
         if (MyGUI::Widget* client = mMainWidget->getClientWidget())
             client->setVisible(!panel);
         mPanel->setVisible(panel);
-        mPanelFocus = !mPanelRows.empty() && mPanelRows[0]->isType<MyGUI::TabItem>() ? 1 : 0;
-        mPanelScroll = 0;
+        mList.reset();
         mHeldDirection.reset();
         if (panel)
         {
@@ -360,32 +376,37 @@ namespace MWGui
             mPanel, sMargin, 6, size.width - 2 * sMargin, 40, "#{Interface:OptionsTitle}", sFontTitle, sBrightColour);
         drawTabRow(mPanel, size.width, captions, static_cast<int>(mSettingsTab->getIndexSelected()), {});
 
-        // A row for each setting, with its label on the left and its value on the right.
+        // A row for each setting, with its label on the left and its value on the right. The headings of a tab's own
+        // tabs are rows too, but the focus skips them.
         constexpr int rowH = 46;
         const int top = sContentTop;
         const int bottom = size.height - 64;
         const int x = sMargin;
         const int w = size.width - 2 * sMargin;
-        const int count = static_cast<int>(mPanelRows.size());
-        const int visible = std::max(1, (bottom - top) / rowH);
-        // The heading above the first row stays in view.
-        if (mPanelFocus == 1 && mPanelRows[0]->isType<MyGUI::TabItem>())
-            mPanelScroll = 0;
-        mPanelFocus = std::clamp(mPanelFocus, 0, std::max(0, count - 1));
-        mPanelScroll = std::clamp(mPanelScroll, std::max(0, mPanelFocus - visible + 1), mPanelFocus);
         const int valueW = std::min(460, w / 2);
-        for (int i = mPanelScroll; i < count && i < mPanelScroll + visible; ++i)
+        const int vx = x + w - valueW - 16;
+        std::vector<ControllerList::Row> rows;
+        // Each row's setting, counting settings only, or -1 for a heading.
+        std::vector<int> rowItems;
+        int itemCount = 0;
+        for (const MyGUI::Widget* row : mPanelRows)
         {
+            const bool heading = row->isType<MyGUI::TabItem>();
+            rows.push_back(ControllerList::Row{ rowH, !heading });
+            rowItems.push_back(heading ? -1 : itemCount++);
+        }
+        // Each setting drawn, and the top of its row. Its value's mouse areas are added once the list is drawn.
+        std::vector<std::pair<int, int>> drawnItems;
+        const auto drawRow = [&](std::size_t i, int ry, bool focused) {
             MyGUI::Widget* row = mPanelRows[i];
-            const int ry = top + (i - mPanelScroll) * rowH;
-            const bool focused = i == mPanelFocus;
             if (MyGUI::TabItem* heading = row->castType<MyGUI::TabItem>(false))
             {
                 addText(mPanel, x + 4, ry + 8, w - 8, rowH - 14, escaped(localised(heading->getCaption().asUTF8())),
                     sFontSmall, sDimColour);
                 addRect(mPanel, x + 4, ry + rowH - 8, w - 8, 1, sAccentColour, 0.25f);
-                continue;
+                return;
             }
+            drawnItems.emplace_back(rowItems[i], ry);
             addRect(mPanel, x, ry, w, rowH - 6, sPanelColour, 0.9f);
             if (focused)
             {
@@ -432,7 +453,6 @@ namespace MWGui
             addText(mPanel, x + 16, ry, w - valueW - 32, rowH - 6, escaped(label), sFontNormal,
                 focused ? sActiveColour : sBrightColour);
 
-            const int vx = x + w - valueW - 16;
             if (MyGUI::ScrollBar* slider = row->castType<MyGUI::ScrollBar>(false))
             {
                 const std::size_t range = slider->getScrollRange();
@@ -464,6 +484,47 @@ namespace MWGui
                 addText(mPanel, vx + 28, ry, valueW - 56, rowH - 6, escaped(value), sFontNormal, sTextColour,
                     MyGUI::Align::Center);
             }
+        };
+        // Pointing at a setting focuses it, and clicking it does what A does.
+        mList.draw(
+            mPanel, x, top, w, bottom - top, rows, drawRow, [this] { drawPanel(); },
+            [] { pressButton(SDL_CONTROLLER_BUTTON_A); });
+
+        // Some values have mouse areas of their own, on top of their rows. Clicking a slider's bar sets the slider to
+        // that point. Clicking an arrow beside the focused setting's value changes it, as left and right on the d-pad
+        // do.
+        const int barW = valueW - 70;
+        for (const std::pair<int, int>& drawn : drawnItems)
+        {
+            const int item = drawn.first;
+            const int ry = drawn.second;
+            const MyGUI::Widget* row = panelRow(item);
+            if (row == nullptr)
+                continue;
+            if (row->isType<MyGUI::ScrollBar>())
+            {
+                if (barW > 0)
+                    addPointerTarget(
+                        mPanel, vx, ry, barW, rowH - 6,
+                        [this, item] {
+                            if (mList.getFocus() == item)
+                                return;
+                            mList.setFocus(item);
+                            drawPanel();
+                        },
+                        [this, item, vx, barW] { clickPanelSlider(item, vx, barW); });
+            }
+            else if (!row->isType<MyGUI::Button>() && item == mList.getFocus())
+            {
+                addPointerTarget(mPanel, vx, ry, 28, rowH - 6, nullptr, [this, item] {
+                    mList.setFocus(item);
+                    changePanelRow(-1);
+                });
+                addPointerTarget(mPanel, vx + valueW - 28, ry, 28, rowH - 6, nullptr, [this, item] {
+                    mList.setFocus(item);
+                    changePanelRow(1);
+                });
+            }
         }
 
         // The button hints along the bottom.
@@ -472,7 +533,11 @@ namespace MWGui
         const auto hint = [&](SDL_GameControllerButton button, const std::string& caption) {
             addGlyph(mPanel, hx, hintY + 4, 22, button);
             MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 260, 30, caption, sFontNormal, sBrightColour);
-            hx += 30 + text->getTextSize().width + 22;
+            const int hintW = 30 + text->getTextSize().width;
+            // Clicking a button's hint presses it. The d-pad's hint stands for two directions, so it isn't one.
+            if (button != SDL_CONTROLLER_BUTTON_DPAD_LEFT)
+                addPointerTarget(mPanel, hx, hintY, hintW, 30, nullptr, [button] { pressButton(button); });
+            hx += hintW + 22;
         };
         hint(SDL_CONTROLLER_BUTTON_DPAD_LEFT, "#{Interface:OptionsChange}");
         hint(SDL_CONTROLLER_BUTTON_A, "#{Interface:Select}");
@@ -480,9 +545,9 @@ namespace MWGui
 
     void SettingsWindow::changePanelRow(int delta)
     {
-        if (mPanelRows.empty())
+        MyGUI::Widget* row = panelRow(mList.getFocus());
+        if (row == nullptr)
             return;
-        MyGUI::Widget* row = mPanelRows[mPanelFocus];
         // Each change goes through the same event as a click, so the window applies it as before.
         if (MyGUI::ScrollBar* slider = row->castType<MyGUI::ScrollBar>(false))
         {
@@ -520,11 +585,31 @@ namespace MWGui
         drawPanel();
     }
 
+    void SettingsWindow::clickPanelSlider(int item, int barX, int barWidth)
+    {
+        mList.setFocus(item);
+        MyGUI::Widget* row = panelRow(item);
+        MyGUI::ScrollBar* slider = row != nullptr ? row->castType<MyGUI::ScrollBar>(false) : nullptr;
+        if (slider == nullptr || barWidth <= 0)
+            return;
+        // The point clicked along the bar, from 0 at its left end to 1 at its right end.
+        const int mouseX = MyGUI::InputManager::getInstance().getMousePosition().left - mPanel->getAbsoluteLeft();
+        const float fraction = std::clamp(static_cast<float>(mouseX - barX) / barWidth, 0.f, 1.f);
+        const int range = static_cast<int>(slider->getScrollRange());
+        const int position
+            = std::clamp(static_cast<int>(std::lround(fraction * (range - 1))), 0, std::max(0, range - 1));
+        // The change goes through the same event as dragging the slider, so the window applies it as before.
+        slider->setScrollPosition(position);
+        slider->eventScrollChangePosition(slider, position);
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        drawPanel();
+    }
+
     void SettingsWindow::activatePanelRow()
     {
-        if (mPanelRows.empty())
+        MyGUI::Widget* row = panelRow(mList.getFocus());
+        if (row == nullptr)
             return;
-        MyGUI::Widget* row = mPanelRows[mPanelFocus];
         if (row->isType<MyGUI::Button>())
             row->eventMouseButtonClick(row);
         else if (MyGUI::ListBox* list = row->castType<MyGUI::ListBox>(false))
@@ -534,9 +619,9 @@ namespace MWGui
         }
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         // A setting can show or hide others, such as the shadow settings.
-        const int focus = mPanelFocus;
+        const int focus = mList.getFocus();
         showPanelOrWindow();
-        mPanelFocus = focus;
+        mList.setFocus(focus);
         drawPanel();
     }
 

@@ -78,10 +78,8 @@ namespace MWGui
         // In controller menus mode, a full screen panel shows the saves instead of this window. When saving, the
         // first entry is a new save with the name the dialog made up.
         MyGUI::Widget* mPanel = nullptr;
-        std::size_t mPanelFocus = 0;
-        int mPanelScroll = 0;
+        ControllerList mList;
         std::string mNewSaveName;
-        HeldDirection mHeldDirection;
         std::size_t panelEntryCount() const;
         void selectPanelEntry();
         void showPanel();

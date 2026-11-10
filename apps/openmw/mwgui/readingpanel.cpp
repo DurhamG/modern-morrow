@@ -84,13 +84,22 @@ namespace MWGui
             mPaper = textArea->getChildAt(0);
             mScrollMax = std::max(0, mPaper->getHeight() - textArea->getHeight());
         }
+        // The wheel scrolls the page.
+        addWheelTarget(mRoot, x + 12, pageY, w - 24, pageH, [this](int steps) {
+            mScroll = std::clamp(mScroll - steps * sWheelScrollStep, 0.f, static_cast<float>(mScrollMax));
+            place();
+        });
 
         int hx = x + 20;
         const int hintY = bottom - 42;
         const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
             addGlyph(mRoot, hx, hintY + 4, 22, button);
             MyGUI::TextBox* label_ = addText(mRoot, hx + 30, hintY, 200, 30, label, sFontNormal, sBrightColour);
-            hx += 30 + label_->getTextSize().width + 22;
+            const int hintW = 30 + label_->getTextSize().width;
+            // Clicking a button's hint presses it. The stick's hint only says that it scrolls, so it isn't one.
+            if (button != SDL_CONTROLLER_BUTTON_RIGHTSTICK)
+                addPointerTarget(mRoot, hx, hintY, hintW, 30, nullptr, [button] { pressButton(button); });
+            hx += hintW + 22;
         };
         if (canTake)
             hint(SDL_CONTROLLER_BUTTON_A, "#{Interface:Take}");

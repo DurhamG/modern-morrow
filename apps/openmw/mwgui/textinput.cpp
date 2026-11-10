@@ -206,6 +206,22 @@ namespace MWGui
                     caption = "#{Interface:KeyboardDone}";
                 addText(mPanel, kx, ky, keyW, sKeySize, caption, special ? sFontNormal : sFontLarge,
                     focused ? sActiveColour : sBrightColour, MyGUI::Align::Center);
+                // Pointing at a key focuses it, and clicking it types it, as A does.
+                addPointerTarget(
+                    mPanel, kx, ky, keyW, sKeySize,
+                    [this, row, column] {
+                        if (mKeyRow == row && mKeyColumn == column)
+                            return;
+                        mKeyRow = row;
+                        mKeyColumn = column;
+                        drawPanel();
+                    },
+                    [this, row, column] {
+                        mKeyRow = row;
+                        mKeyColumn = column;
+                        drawPanel();
+                        pressButton(SDL_CONTROLLER_BUTTON_A);
+                    });
             }
             ky += sKeySize + sKeyGap;
         }
@@ -216,7 +232,10 @@ namespace MWGui
         const auto hint = [&](SDL_GameControllerButton button, const std::string& caption) {
             addGlyph(mPanel, hx, hintY + 4, 22, button);
             MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 200, 30, caption, sFontNormal, sBrightColour);
-            hx += 30 + text->getTextSize().width + 22;
+            const int hintW = 30 + text->getTextSize().width;
+            // Clicking a hint presses its button.
+            addPointerTarget(mPanel, hx, hintY, hintW, 30, nullptr, [button] { pressButton(button); });
+            hx += hintW + 22;
         };
         hint(SDL_CONTROLLER_BUTTON_A, "#{Interface:KeyboardType}");
         hint(SDL_CONTROLLER_BUTTON_B, "#{Interface:KeyboardDelete}");

@@ -88,9 +88,8 @@ namespace MWGui
         if (mPanel == nullptr)
             return;
         ControllerUi::hideWindow(mMainWidget);
-        mPanelFocus = 0;
-        mPanelScroll = 0;
-        mHeldDirection.reset();
+        mList.reset();
+        mList.resetHeld();
         mPanel->setVisible(true);
         MyGUI::LayerManager::getInstance().upLayerItem(mPanel);
         drawPanel();
@@ -105,15 +104,16 @@ namespace MWGui
     {
         // When saving, the first entry is the new save, and the others overwrite the saves in the list.
         const std::size_t count = panelEntryCount();
-        mPanelFocus = count == 0 ? 0 : std::min(mPanelFocus, count - 1);
-        if (mSaving && mPanelFocus == 0)
+        const std::size_t focus = count == 0 ? 0 : std::min(static_cast<std::size_t>(mList.getFocus()), count - 1);
+        mList.setFocus(static_cast<int>(focus));
+        if (mSaving && focus == 0)
         {
             mSaveList->setIndexSelected(MyGUI::ITEM_NONE);
             onSlotSelected(mSaveList, MyGUI::ITEM_NONE);
             mSaveNameEdit->setCaption(MyGUI::UString(mNewSaveName));
             return;
         }
-        const std::size_t slot = mPanelFocus - (mSaving ? 1 : 0);
+        const std::size_t slot = focus - (mSaving ? 1 : 0);
         if (slot < mSaveList->getItemCount())
         {
             mSaveList->setIndexSelected(slot);
@@ -130,8 +130,7 @@ namespace MWGui
         index = wrap(index == MyGUI::ITEM_NONE ? 0 : index, count, delta);
         mCharacterSelection->setIndexSelected(index);
         onCharacterSelected(mCharacterSelection, index);
-        mPanelFocus = 0;
-        mPanelScroll = 0;
+        mList.reset();
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
     }
 
@@ -142,17 +141,11 @@ namespace MWGui
         // The confirmations that loading, saving over a save and deleting ask for take the controller meanwhile.
         if (MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() != this)
         {
-            mHeldDirection.reset();
+            mList.resetHeld();
             return;
         }
-        int dx = 0;
-        int dy = 0;
-        if (mHeldDirection.update(duration, dx, dy) && dy != 0 && panelEntryCount() > 0)
-        {
-            mPanelFocus = static_cast<std::size_t>(
-                std::clamp(static_cast<int>(mPanelFocus) + dy, 0, static_cast<int>(panelEntryCount()) - 1));
+        if (mList.updateHeld(duration, static_cast<int>(panelEntryCount())))
             drawPanel();
-        }
     }
 
     void SaveGameDialog::drawPanel()
@@ -180,16 +173,24 @@ namespace MWGui
         std::string characterName;
         if (character != MyGUI::ITEM_NONE && character < mCharacterSelection->getItemCount())
             characterName = mCharacterSelection->getItemNameAt(character).asUTF8();
+        // Clicking a shoulder button's glyph presses it.
         int cx = x + w - 24;
         if (!mSaving && mCharacterSelection->getItemCount() > 1)
         {
             addGlyph(mPanel, cx - 22, y + 20, 22, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+            addPointerTarget(
+                mPanel, cx - 26, y + 16, 30, 30, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
             cx -= 30;
         }
         MyGUI::TextBox* nameText = addText(mPanel, x + 24, y + 12, cx - x - 24, 36, escaped(characterName), sFontNormal,
             sTextColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
         if (!mSaving && mCharacterSelection->getItemCount() > 1)
-            addGlyph(mPanel, cx - nameText->getTextSize().width - 30, y + 20, 22, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+        {
+            const int gx = cx - nameText->getTextSize().width - 30;
+            addGlyph(mPanel, gx, y + 20, 22, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+            addPointerTarget(
+                mPanel, gx - 4, y + 16, 30, 30, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER); });
+        }
         const int contentTop = y + 64;
         addRect(mPanel, x + 24, contentTop - 8, w - 48, 1, sAccentColour, 0.2f);
 
@@ -199,15 +200,10 @@ namespace MWGui
         const int listW = static_cast<int>(w * 0.5f) - 16;
         const int listBottom = y + h - 56;
         const int count = static_cast<int>(panelEntryCount());
-        const int visible = std::max(1, (listBottom - contentTop) / entryH);
-        const int focus = static_cast<int>(mPanelFocus);
-        mPanelScroll = std::clamp(mPanelScroll, std::max(0, focus - visible + 1), std::max(0, focus));
-        if (count == 0)
-            addText(mPanel, listX + 12, contentTop, listW - 24, 30, "#{Interface:SavesNone}", sFontNormal, sDimColour);
-        for (int i = mPanelScroll; i < count && i < mPanelScroll + visible; ++i)
-        {
-            const int ry = contentTop + (i - mPanelScroll) * entryH;
-            const bool focused = i == focus;
+        const std::vector<ControllerList::Row> rows(
+            static_cast<std::size_t>(count), ControllerList::Row{ entryH, true });
+        const auto drawRow = [&](std::size_t row, int ry, bool focused) {
+            const int i = static_cast<int>(row);
             if (focused)
             {
                 addRect(mPanel, listX, ry, listW, entryH - 2, sAccentColour, 0.16f);
@@ -233,7 +229,16 @@ namespace MWGui
             addText(
                 mPanel, listX + 14, ry + 3, listW - 28, 26, name, sFontNormal, focused ? sActiveColour : sBrightColour);
             addText(mPanel, listX + 14, ry + 27, listW - 28, 20, subtitle, sFontSmall, sDimColour);
-        }
+        };
+        // Pointing at a save shows its details. Clicking it saves over it or loads it, as A does. The panel draws
+        // again first, so that A acts on the save that was clicked.
+        if (!mList.draw(
+                mPanel, listX, contentTop, listW, listBottom - contentTop, rows, drawRow, [this] { drawPanel(); },
+                [this] {
+                    drawPanel();
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                }))
+            addText(mPanel, listX + 12, contentTop, listW - 24, 30, "#{Interface:SavesNone}", sFontNormal, sDimColour);
 
         // The highlighted save's screenshot and details on the right.
         const int dx = x + static_cast<int>(w * 0.5f) + 16;
@@ -280,7 +285,10 @@ namespace MWGui
         const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
             addGlyph(mPanel, hx, hintY + 4, 22, button);
             MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 220, 30, label, sFontNormal, sBrightColour);
-            hx += 30 + text->getTextSize().width + 22;
+            const int hintW = 30 + text->getTextSize().width;
+            // Clicking a hint presses its button.
+            addPointerTarget(mPanel, hx, hintY, hintW, 30, nullptr, [button] { pressButton(button); });
+            hx += hintW + 22;
         };
         if (count > 0)
             hint(SDL_CONTROLLER_BUTTON_A, mSaving ? "#{Interface:SavesSave}" : "#{Interface:SavesLoad}");
@@ -316,8 +324,9 @@ namespace MWGui
     {
         MWBase::Environment::get().getStateManager()->deleteGame(mCurrentCharacter, mCurrentSlot);
         mSaveList->removeItemAt(mSaveList->getIndexSelected());
-        if (mPanelFocus > 0 && mPanelFocus >= mSaveList->getItemCount())
-            --mPanelFocus;
+        const int focus = mList.getFocus();
+        if (focus > 0 && static_cast<std::size_t>(focus) >= mSaveList->getItemCount())
+            mList.setFocus(focus - 1);
         onSlotSelected(mSaveList, mSaveList->getIndexSelected());
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSaveList);
 
