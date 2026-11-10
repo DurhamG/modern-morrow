@@ -16,6 +16,8 @@ namespace ESM
         ESM::RefId mTopic; // lower case id
         int32_t mState;
         unsigned char mFinished;
+        // Whether the player pinned the quest to the top of the journal
+        bool mPinned = false;
 
         void load(ESMReader& esm);
         void save(ESMWriter& esm) const;

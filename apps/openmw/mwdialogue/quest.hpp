@@ -15,6 +15,7 @@ namespace MWDialogue
     {
         int mIndex;
         bool mFinished;
+        bool mPinned = false;
 
     public:
         Quest();
@@ -33,6 +34,10 @@ namespace MWDialogue
 
         bool isFinished() const;
         void setFinished(bool finished);
+
+        /// Whether the player pinned the quest to the top of the journal.
+        bool isPinned() const { return mPinned; }
+        void setPinned(bool pinned) { mPinned = pinned; }
 
         bool addEntry(const JournalEntry& entry) override;
         ///< Add entry and adjust index accordingly. Returns true if the quest should be restarted.

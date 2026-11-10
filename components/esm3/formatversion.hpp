@@ -37,7 +37,8 @@ namespace ESM
     inline constexpr FormatVersion MaxNoRecentItemsFormatVersion = 41;
     inline constexpr FormatVersion MaxNoRecentSpellsFormatVersion = 41;
     inline constexpr FormatVersion MaxNoJournalSourceFormatVersion = 41;
-    inline constexpr FormatVersion CurrentSaveGameFormatVersion = 42;
+    inline constexpr FormatVersion MaxNoPinnedQuestsFormatVersion = 42;
+    inline constexpr FormatVersion CurrentSaveGameFormatVersion = 43;
 
     inline constexpr FormatVersion MinSupportedSaveGameFormatVersion = 5;
     inline constexpr FormatVersion OpenMW0_49MinSaveGameFormatVersion = 5;

@@ -90,6 +90,9 @@ namespace MWGui
             case SDL_CONTROLLER_BUTTON_B:
                 winMgr->exitCurrentGuiMode();
                 break;
+            case SDL_CONTROLLER_BUTTON_X:
+                togglePinned();
+                break;
             case SDL_CONTROLLER_BUTTON_Y:
                 nextGroup();
                 break;
@@ -121,6 +124,8 @@ namespace MWGui
 
     std::string JournalScreen::groupOf(const QuestLog::Quest& quest) const
     {
+        if (quest.mPinned)
+            return "#{Interface:JournalPinned}";
         if (quest.mFinished)
             return "#{Interface:JournalFinished}";
         switch (mTab)
@@ -139,12 +144,15 @@ namespace MWGui
 
     std::vector<int> JournalScreen::order() const
     {
-        // mQuests is already in order of the most recent activity. Quests in progress come first, and on the Places
-        // and Factions tabs they are grouped by name, with quests that have no place or faction after the rest.
+        // mQuests is already in order of the most recent activity. Pinned quests come first, then quests in
+        // progress. On the Places and Factions tabs, the quests in progress are grouped by name, with quests that have
+        // no place or faction after the rest.
         std::vector<int> result(mQuests.size());
         for (std::size_t i = 0; i < result.size(); ++i)
             result[i] = static_cast<int>(i);
         const auto groupKey = [&](const QuestLog::Quest& quest) -> std::pair<int, std::string> {
+            if (quest.mPinned)
+                return { -1, {} };
             if (quest.mFinished)
                 return { 2, {} };
             if (mTab == Tab::Places)
@@ -360,14 +368,21 @@ namespace MWGui
         mEntriesScrollMax = std::max(0, py - area->getHeight());
         mEntriesScroll = std::clamp(mEntriesScroll, 0.f, static_cast<float>(mEntriesScrollMax));
 
-        // The button hints along the bottom of the panel.
+        // The button hints along the bottom of the panel. Clicking a hint presses its button.
         int hx = innerX;
+        {
+            addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_X);
+            MyGUI::TextBox* label = addText(mContent, hx + 34, y + h - 44, 200, 34,
+                quest.mPinned ? "#{Interface:JournalUnpin}" : "#{Interface:JournalPin}", sFontNormal, sBrightColour);
+            addPointerTarget(mContent, hx, y + h - 44, 34 + label->getTextSize().width, 34, nullptr,
+                [] { pressButton(SDL_CONTROLLER_BUTTON_X); });
+            hx += 34 + label->getTextSize().width + 24;
+        }
         if (groups)
         {
             addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_Y);
             MyGUI::TextBox* label = addText(
                 mContent, hx + 34, y + h - 44, 200, 34, "#{Interface:MagicNextGroup}", sFontNormal, sBrightColour);
-            // Clicking the hint presses its button.
             addPointerTarget(mContent, hx, y + h - 44, 34 + label->getTextSize().width, 34, nullptr,
                 [] { pressButton(SDL_CONTROLLER_BUTTON_Y); });
             hx += 34 + label->getTextSize().width + 24;
@@ -423,6 +438,19 @@ namespace MWGui
             return;
         mSelected = mQuests[quests[std::clamp(mList.getFocus(), 0, static_cast<int>(quests.size()) - 1)]].mName;
         redraw();
+    }
+
+    void JournalScreen::togglePinned()
+    {
+        // The quest stays highlighted, so the list follows it into the Pinned group or back out of it.
+        for (QuestLog::Quest& quest : mQuests)
+            if (quest.mName == mSelected)
+            {
+                QuestLog::setPinned(quest, !quest.mPinned);
+                MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+                redraw();
+                return;
+            }
     }
 
     void JournalScreen::changeTab(int delta)

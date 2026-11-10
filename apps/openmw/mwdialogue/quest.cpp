@@ -29,6 +29,7 @@ namespace MWDialogue
         : Topic(state.mTopic)
         , mIndex(state.mState)
         , mFinished(state.mFinished != 0)
+        , mPinned(state.mPinned)
     {
     }
 
@@ -99,5 +100,6 @@ namespace MWDialogue
         state.mTopic = getTopic();
         state.mState = mIndex;
         state.mFinished = mFinished;
+        state.mPinned = mPinned;
     }
 }

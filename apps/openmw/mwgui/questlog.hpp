@@ -22,6 +22,10 @@ namespace MWGui
         {
             std::string mName;
             bool mFinished = false;
+            // Whether the player pinned the quest to the top of the journal
+            bool mPinned = false;
+            // The IDs of the game's quests that share the name
+            std::vector<ESM::RefId> mIds;
             // The quest's journal entries, oldest first
             std::vector<const MWDialogue::StampedJournalEntry*> mEntries;
             // Where the quest's newest entry is in the journal. A higher number is more recent.
@@ -41,6 +45,9 @@ namespace MWGui
         /// the player was. For older entries, the quest giver is the person whose conversation sets the quest's
         /// earliest stage, and the place is where that person stands.
         std::vector<Quest> collect();
+
+        /// Pins the quest to the top of the journal, or unpins it, with all the IDs that share its name.
+        void setPinned(Quest& quest, bool pinned);
 
         std::string giverName(const Quest& quest);
         std::string factionName(const Quest& quest);

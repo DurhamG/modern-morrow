@@ -11,13 +11,14 @@ This is the design for the reworked journal, agreed with the user. In controller
 ## Decisions
 
 - **A Journal tab** beside the map, inventory, magic and stats. The journal key opens the menus on it.
-- **A list of quests on the left, details on the right,** as on the other screens. The quests in progress come first, then the finished ones under their own heading.
+- **A list of quests on the left, details on the right,** as on the other screens. Pinned quests come first, under their own heading, then the quests in progress, then the finished ones under their own heading.
 - **Three ways to sort the list,** as tabs switched with L1 and R1:
   - **Recent:** by the last update, newest first. The screen opens on this tab.
   - **Places:** grouped by the town the quest started in, such as Balmora. Quests without a known place come last.
   - **Factions:** grouped by the faction the quest is for. Quests for no faction come last.
 - **Each entry** shows the quest's name, the date of its last update, and its place and faction in two columns. Guild and House quests leave the faction out of their name, such as "Exterminator" for "Fighters Guild: Exterminator", because the column shows it.
 - **The details panel** shows the full name, whether the quest is in progress or finished, who gave it, where, and for which faction. Below that are all its entries, newest first, with their dates. The right stick scrolls them when they don't fit.
+- **X pins the highlighted quest,** or unpins it. Pinned quests show in a Pinned group at the top of every tab, so the quests the player is working on stay in reach. The save keeps the pin on each of the game's quest IDs that share the quest's name, from save format version 43. Older saves load with nothing pinned.
 - **Y jumps to the next group,** as on the other screens.
 - **No topic links, no topic index, and no book of dated entries.** A topic index could come back later as a part of the Journal tab, if players miss it.
 
@@ -38,6 +39,7 @@ Counted over Morrowind, Tribunal and Bloodmoon, about 22% of quests have no fact
 | --- | --- |
 | L1, R1 | Switch between Recent, Places and Factions. |
 | D-pad up and down, left stick | Move the selection. Holding repeats. |
+| X | Pin the highlighted quest, or unpin it. |
 | Y | Jump to the next group. |
 | Right stick | Scroll the quest's entries. |
 | B | Close the menu. |
@@ -50,4 +52,3 @@ Counted over Morrowind, Tribunal and Bloodmoon, about 22% of quests have no fact
 ### Not done yet
 
 - Marking quests that changed since the player last looked.
-- Mouse input. The screen only responds to a gamepad.

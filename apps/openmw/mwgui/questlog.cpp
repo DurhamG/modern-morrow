@@ -253,15 +253,17 @@ namespace MWGui::QuestLog
             quest.mLastActivity = i;
         }
 
-        // A quest is finished when any of its IDs is, as in the journal book.
+        // A quest is finished when any of its IDs is, as in the journal book, and pinned when any of its IDs is.
         for (const auto& [id, questId] : questIds)
         {
-            if (!questId.isFinished())
-                continue;
             const std::string_view name = questId.getName();
             const auto it = byName.find(name.empty() ? "#" + id.toDebugString() : Misc::StringUtils::lowerCase(name));
-            if (it != byName.end())
-                quests[it->second].mFinished = true;
+            if (it == byName.end())
+                continue;
+            Quest& quest = quests[it->second];
+            quest.mIds.push_back(id);
+            quest.mFinished = quest.mFinished || questId.isFinished();
+            quest.mPinned = quest.mPinned || questId.isPinned();
         }
 
         for (Quest& quest : quests)
@@ -269,6 +271,15 @@ namespace MWGui::QuestLog
         std::sort(quests.begin(), quests.end(),
             [](const Quest& a, const Quest& b) { return a.mLastActivity > b.mLastActivity; });
         return quests;
+    }
+
+    void setPinned(Quest& quest, bool pinned)
+    {
+        MWBase::Journal& journal = *MWBase::Environment::get().getJournal();
+        for (const ESM::RefId& id : quest.mIds)
+            if (MWDialogue::Quest* questId = journal.getQuestOrNull(id))
+                questId->setPinned(pinned);
+        quest.mPinned = pinned;
     }
 
     std::string giverName(const Quest& quest)

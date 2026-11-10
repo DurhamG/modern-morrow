@@ -5,6 +5,7 @@
 #include <components/esm3/esmreader.hpp>
 #include <components/esm3/esmwriter.hpp>
 #include <components/esm3/journalentry.hpp>
+#include <components/esm3/queststate.hpp>
 #include <components/esm3/loadbook.hpp>
 #include <components/esm3/loadclas.hpp>
 #include <components/esm3/loadcont.hpp>
@@ -375,6 +376,31 @@ namespace ESM
             {
                 EXPECT_TRUE(result.mActor.empty());
                 EXPECT_TRUE(result.mCell.empty());
+            }
+        }
+
+        TEST_P(Esm3SaveLoadRecordTest, questStateShouldNotChange)
+        {
+            // Quest states are not saved to vanilla ESM format.
+            if (GetParam() == CurrentContentFormatVersion)
+                return;
+            for (const bool pinned : { false, true })
+            {
+                QuestState record;
+                record.mTopic = generateRandomRefId();
+                record.mState = 42;
+                record.mFinished = 1;
+                record.mPinned = pinned;
+                QuestState result;
+                saveAndLoadRecord(record, GetParam(), result);
+                EXPECT_EQ(record.mTopic, result.mTopic);
+                EXPECT_EQ(record.mState, result.mState);
+                EXPECT_EQ(record.mFinished, result.mFinished);
+                // Saves from before quests could be pinned have none pinned.
+                if (GetParam() > MaxNoPinnedQuestsFormatVersion)
+                    EXPECT_EQ(record.mPinned, result.mPinned);
+                else
+                    EXPECT_FALSE(result.mPinned);
             }
         }
 

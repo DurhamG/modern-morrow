@@ -14,7 +14,8 @@ namespace MWGui
     /// The journal in controller menus mode, as a tab beside the map, inventory, magic and stats. It lists the
     /// player's quests, the ones in progress first, and shows the highlighted quest's entries beside the list, newest
     /// first. The Recent, Places and Factions tabs sort the same quests by their last update, by the town they
-    /// started in, and by the faction they are for. See ui-rework/design/journal.md.
+    /// started in, and by the faction they are for. X pins the highlighted quest, which puts it in a Pinned group at
+    /// the top of every tab. See ui-rework/design/journal.md.
     class JournalScreen : public ControllerScreen
     {
     public:
@@ -76,6 +77,8 @@ namespace MWGui
 
         // Selects the quest the list focuses, and draws the screen again.
         void selectFocused();
+        // Pins the highlighted quest, or unpins it.
+        void togglePinned();
         void changeTab(int delta);
         void nextGroup();
     };
