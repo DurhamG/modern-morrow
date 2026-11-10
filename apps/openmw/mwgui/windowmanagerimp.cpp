@@ -868,6 +868,9 @@ namespace MWGui
                 mKeyboardNavigation->onFrame();
                 mMessageBoxManager->onFrame(dt);
                 MWBase::Environment::get().getInputManager()->update(dt, true, false);
+                // The mouse's actions run here too, while the message box they were for still exists. Left for the
+                // next update, they would outlive it, because the box is gone by then.
+                ControllerUi::runPointerActions();
 
                 if (!mWindowVisible)
                     std::this_thread::sleep_for(std::chrono::milliseconds(5));
