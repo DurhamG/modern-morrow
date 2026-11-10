@@ -163,6 +163,17 @@
                         <Property key="Caption" value="#{OMWControls:toggleSneak}"/>
                     </Widget>
                 </Widget>
+                <Widget type="HBox" position="4 430 340 28">
+                    <Widget type="AutoSizedTextBox" skin="SandText" position="0 4 89 16" align="Left Top">
+                        <Property key="Caption" value="#{OMWEngine:RunFatigue}"/>
+                    </Widget>
+                    <Widget type="ComboBox" skin="MW_ComboBox" position="0 0 100 24" align="Left Top" name="RunFatigue">
+                        <Property key="AddItem" value="100%"/>
+                        <Property key="AddItem" value="50%"/>
+                        <Property key="AddItem" value="25%"/>
+                        <Property key="AddItem" value="0%"/>
+                    </Widget>
+                </Widget>
             </Widget>
             <Widget type="TabItem">
                 <Property key="Caption" value=" #{OMWEngine:Audio} "/>

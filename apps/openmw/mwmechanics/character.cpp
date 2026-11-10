@@ -2184,7 +2184,12 @@ namespace MWMechanics
                                     fatigueLoss = fFatigueSwimRunBase + encumbrance * fFatigueSwimRunMult;
                             }
                             else if (isrunning)
+                            {
                                 fatigueLoss = fFatigueRunBase + encumbrance * fFatigueRunMult;
+                                // The player can lose less fatigue by running, as a setting allows.
+                                if (mPtr == getPlayer())
+                                    fatigueLoss *= Settings::game().mRunFatigue;
+                            }
                         }
                     }
                     fatigueLoss *= duration;

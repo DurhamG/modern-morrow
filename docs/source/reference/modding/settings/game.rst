@@ -309,6 +309,20 @@ Game Settings
    allowing Damage Fatigue to reduce Fatigue to a value below zero.
 
 .. omw-setting::
+   :title: run fatigue
+   :type: float32
+   :range: 0.0 to 1.0
+   :default: 1.0
+   :location: :bdg-info:`In Game > Options > Prefs`
+
+   How much of Morrowind's fatigue the player loses by running on land.
+   Running costs fatigue at a rate set by the fFatigueRunBase and fFatigueRunMult game settings.
+   This setting multiplies that rate for the player only.
+
+   1.0 keeps Morrowind's rules. 0.5 and 0.25 halve and quarter the cost, and 0.0 means running costs no fatigue.
+   Other actors, swimming and sneaking are not affected.
+
+.. omw-setting::
    :title: turn to movement direction
    :type: boolean
    :range: true, false

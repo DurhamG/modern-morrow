@@ -50,6 +50,7 @@ namespace MWGui
         MyGUI::ComboBox* mWaterRainRippleDetail;
 
         MyGUI::ComboBox* mMaxLights;
+        MyGUI::ComboBox* mRunFatigue;
         MyGUI::Button* mClusteredLightingButton;
         MyGUI::Widget* mClassicFalloffWidget;
         MyGUI::Button* mLightsResetButton;
@@ -105,6 +106,7 @@ namespace MWGui
 
         void onLightsResetButtonClicked(MyGUI::Widget* sender);
         void onMaxLightsChanged(MyGUI::ComboBox* sender, size_t pos);
+        void onRunFatigueChanged(MyGUI::ComboBox* sender, size_t pos);
 
         void onPrimaryLanguageChanged(MyGUI::ComboBox* sender, size_t pos) { onLanguageChanged(0, sender, pos); }
         void onSecondaryLanguageChanged(MyGUI::ComboBox* sender, size_t pos) { onLanguageChanged(1, sender, pos); }

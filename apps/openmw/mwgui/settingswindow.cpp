@@ -128,6 +128,20 @@ namespace
             box->setIndexSelected(MyGUI::ITEM_NONE);
     }
 
+    // The choices of the Run Fatigue list, in its order.
+    constexpr std::array<float, 4> sRunFatigueChoices = { 1.f, 0.5f, 0.25f, 0.f };
+
+    void updateRunFatigueComboBox(MyGUI::ComboBox* box)
+    {
+        // A value set by hand in settings.cfg shows as the nearest choice.
+        const float runFatigue = Settings::game().mRunFatigue;
+        std::size_t nearest = 0;
+        for (std::size_t i = 1; i < sRunFatigueChoices.size(); ++i)
+            if (std::abs(sRunFatigueChoices[i] - runFatigue) < std::abs(sRunFatigueChoices[nearest] - runFatigue))
+                nearest = i;
+        box->setIndexSelected(nearest);
+    }
+
     void updateAnisotropyComboBox(MyGUI::ComboBox* box)
     {
         const int anisotropy = Settings::general().mAnisotropy;
@@ -698,6 +712,7 @@ namespace MWGui
         getWidget(mClusteredLightingButton, "ClusteredLightingButton");
         getWidget(mLightsResetButton, "LightsResetButton");
         getWidget(mMaxLights, "MaxLights");
+        getWidget(mRunFatigue, "RunFatigue");
         getWidget(mScriptFilter, "ScriptFilter");
         getWidget(mScriptList, "ScriptList");
         getWidget(mScriptBox, "ScriptBox");
@@ -748,6 +763,7 @@ namespace MWGui
         mLightsResetButton->eventMouseButtonClick
             += MyGUI::newDelegate(this, &SettingsWindow::onLightsResetButtonClicked);
         mMaxLights->eventComboChangePosition += MyGUI::newDelegate(this, &SettingsWindow::onMaxLightsChanged);
+        mRunFatigue->eventComboChangePosition += MyGUI::newDelegate(this, &SettingsWindow::onRunFatigueChanged);
 
         mActorShadowsButton->eventMouseButtonClick += MyGUI::newDelegate(this, &SettingsWindow::onShadowsButtonClicked);
         mPlayerShadowsButton->eventMouseButtonClick
@@ -821,6 +837,7 @@ namespace MWGui
         mWaterRainRippleDetail->setIndexSelected(waterRainRippleDetail);
 
         updateMaxLightsComboBox(mMaxLights);
+        updateRunFatigueComboBox(mRunFatigue);
 
         const std::string& shadowMethod = Settings::shadows().mComputeSceneBounds;
         if (shadowMethod == "bounds")
@@ -1054,6 +1071,12 @@ namespace MWGui
         Settings::shaders().mMaxLights.set(8 * static_cast<int>(pos + 1));
         apply();
         configureWidgets(mMainWidget, false);
+    }
+
+    void SettingsWindow::onRunFatigueChanged(MyGUI::ComboBox* /*sender*/, size_t pos)
+    {
+        if (pos < sRunFatigueChoices.size())
+            Settings::game().mRunFatigue.set(sRunFatigueChoices[pos]);
     }
 
     void SettingsWindow::onLightsResetButtonClicked(MyGUI::Widget* /*sender*/)
