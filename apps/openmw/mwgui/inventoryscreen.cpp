@@ -1211,14 +1211,14 @@ namespace MWGui
         }
     }
 
-    void InventoryScreen::drawDetailsHeader(int x, int y, int w, int h, int item)
+    int InventoryScreen::drawDetailsHeader(int x, int y, int w, int h, int item)
     {
         const ItemStack& stack = mItems[item];
         addRect(mContent, x, y, w, h, sPanelColour, 0.9f);
         addRect(mContent, x, y, w, 1, sAccentColour, 0.3f);
         if (mTab != Tab::Equipment || mFocus == Focus::Items)
             setHighlighted(stack.mBase.getCellRef().getRefId());
-        ItemDetails::drawHeader(mContent, x, y, w, stack);
+        return ItemDetails::drawHeader(mContent, x, y, w, stack);
     }
 
     int InventoryScreen::drawButtonHints(int x, int y, int w, int h, int item, const std::string& action, bool scroll)
@@ -1238,14 +1238,14 @@ namespace MWGui
     void InventoryScreen::drawDetails(int x, int y, int w, int h, int item, const std::string& action)
     {
         const MWWorld::Ptr& ptr = mItems[item].mBase;
-        drawDetailsHeader(x, y, w, h, item);
+        const int headerBottom = drawDetailsHeader(x, y, w, h, item);
 
         // While the player chooses a quick key, the slots show in place of the stats.
         if (mQuickKeys.isChoosing())
         {
             const int hintsTop = drawHints(
                 mContent, x + 16, w - 32, y + h, { { SDL_CONTROLLER_BUTTON_DPAD_UP, "#{Interface:QuickKeyChoose}" } });
-            mQuickKeys.draw(mContent, x + 16, y + 104, w - 32, hintsTop - 12 - (y + 104));
+            mQuickKeys.draw(mContent, x + 16, headerBottom + 4, w - 32, hintsTop - 12 - (headerBottom + 4));
             return;
         }
 
@@ -1253,13 +1253,13 @@ namespace MWGui
         std::vector<Compared> compared;
         if (const int compare = compareItem(item); compare >= 0)
             compared.push_back(Compared{ "#{Interface:InventoryEquipped}", mItems[compare].mBase });
-        drawStats(mContent, x, y + 104, w, hintsTop - 16, ptr, compared);
+        drawStats(mContent, x, headerBottom + 4, w, hintsTop - 16, ptr, compared);
     }
 
     void InventoryScreen::drawBook(int x, int y, int w, int h, int item)
     {
         const MWWorld::Ptr& ptr = mItems[item].mBase;
-        drawDetailsHeader(x, y, w, h, item);
+        const int headerBottom = drawDetailsHeader(x, y, w, h, item);
         if (ptr.getCellRef().getRefId() != mBookItem)
         {
             mBookItem = ptr.getCellRef().getRefId();
@@ -1271,9 +1271,9 @@ namespace MWGui
         constexpr int padding = 20;
         constexpr int barWidth = 4;
         const int pageX = x + 16;
-        const int pageY = y + 100;
+        const int pageY = headerBottom;
         const int pageW = w - 32;
-        const int pageH = h - 100 - 56;
+        const int pageH = y + h - 56 - pageY;
         addRect(mContent, pageX, pageY, pageW, pageH, sPageColour);
         MyGUI::Widget* textArea = mContent->createWidget<MyGUI::Widget>("",
             MyGUI::IntCoord(pageX + padding, pageY + padding, pageW - 2 * padding, pageH - 2 * padding),

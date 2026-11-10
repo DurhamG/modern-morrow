@@ -210,8 +210,8 @@ namespace MWGui
         const int item = focusedItem();
         if (item >= 0)
         {
-            drawHeader(mRoot, dx, contentTop - 10, dw, mItems[item], mYourItems);
-            drawStats(mRoot, dx, contentTop + 94, dw, hintY - 12, mItems[item].mBase, {});
+            const int headerBottom = drawHeader(mRoot, dx, contentTop - 10, dw, mItems[item], mYourItems);
+            drawStats(mRoot, dx, headerBottom + 4, dw, hintY - 12, mItems[item].mBase, {});
         }
         int hx = dx + 16;
         const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {

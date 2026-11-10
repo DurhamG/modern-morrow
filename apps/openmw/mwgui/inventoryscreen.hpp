@@ -117,7 +117,8 @@ namespace MWGui
         void drawEquipmentOverview(int width);
         void drawArea(int width);
         void drawList(int x, int y, int w, int h, const std::vector<Row>& rows, ControllerList& list, bool focused);
-        void drawDetailsHeader(int x, int y, int w, int h, int item);
+        /// Returns the bottom of the header.
+        int drawDetailsHeader(int x, int y, int w, int h, int item);
         int drawButtonHints(int x, int y, int w, int h, int item, const std::string& action, bool scroll = false);
         void drawDetails(int x, int y, int w, int h, int item, const std::string& action);
         void drawBook(int x, int y, int w, int h, int item);

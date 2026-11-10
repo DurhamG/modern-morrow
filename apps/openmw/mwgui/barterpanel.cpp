@@ -437,7 +437,7 @@ namespace MWGui
         const MWWorld::Ptr& ptr = entry.mStack.mBase;
         ItemStack shown = entry.mStack;
         shown.mCount = entry.mAvailable + entry.mInDeal;
-        drawHeader(mRoot, x, y, w, shown, mSelling);
+        const int headerBottom = drawHeader(mRoot, x, y, w, shown, mSelling);
 
         // What a bought item would replace, as on the loot panel.
         std::vector<Compared> compared;
@@ -461,7 +461,7 @@ namespace MWGui
                 compared.push_back(Compared{ label, *equipped });
             }
         }
-        const int priceY = y + 104;
+        const int priceY = headerBottom + 4;
         addText(mRoot, x + 16, priceY, w - 32, 28,
             mSelling ? "#{Interface:BarterSellPrice}" : "#{Interface:BarterBuyPrice}", sFontNormal, sTextColour);
         addText(mRoot, x + 16, priceY, w - 32, 28, std::to_string(unitPrice(ptr)), sFontNormal, sBrightColour,

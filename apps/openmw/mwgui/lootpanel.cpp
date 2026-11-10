@@ -411,7 +411,7 @@ namespace MWGui
             return;
         const ItemStack& stack = mItems[item];
         const MWWorld::Ptr& ptr = stack.mBase;
-        drawHeader(mRoot, x, y, w, stack, mYourItems);
+        const int headerBottom = drawHeader(mRoot, x, y, w, stack, mYourItems);
 
         // What the item would replace: the item in each slot it fits that holds one. The player's own items aren't
         // compared, since they're already theirs.
@@ -485,7 +485,7 @@ namespace MWGui
             addGlyph(mRoot, textX, hy + 1, 22, hints[i].first);
         }
 
-        drawStats(mRoot, x, y + 104, w, firstRowY - 12, ptr, compared);
+        drawStats(mRoot, x, headerBottom + 4, w, firstRowY - 12, ptr, compared);
     }
 
     // ---------------------------------------------------------------------------------------------------------------

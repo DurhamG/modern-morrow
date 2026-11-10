@@ -417,21 +417,33 @@ namespace MWGui::ItemDetails
         return result;
     }
 
-    void drawHeader(MyGUI::Widget* parent, int x, int y, int w, const ItemStack& stack, bool showNew)
+    int drawHeader(MyGUI::Widget* parent, int x, int y, int w, const ItemStack& stack, bool showNew)
     {
         const MWWorld::Ptr& ptr = stack.mBase;
         addIcon(parent, x + 16, y + 16, 64, ptr, stack.mType == ItemStack::Type_Equipped);
-        std::string name = escaped(ptr.getClass().getName(ptr));
+        std::string name(ptr.getClass().getName(ptr));
         if (stack.mCount > 1)
             name += " (" + std::to_string(stack.mCount) + ")";
-        addText(parent, x + 92, y + 14, w - 108, 34, name, sFontLarge, sBrightColour);
-        addText(parent, x + 92, y + 46, w - 108, 26, describe(ptr), sFontSmall, sDimColour);
+
+        // A long name wraps onto a second line. The name then starts higher, and the lines below it move down by
+        // what's left of the extra line.
+        const int textW = w - 108;
+        const std::vector<std::string> lines = wrapText(parent, name, textW, sFontLarge, 2);
+        constexpr int lineHeight = 26;
+        const bool twoLines = lines.size() > 1;
+        const int nameY = twoLines ? y + 6 : y + 14;
+        const int shift = twoLines ? lineHeight - 8 : 0;
+        for (std::size_t i = 0; i < lines.size(); ++i)
+            addText(parent, x + 92, nameY + static_cast<int>(i) * lineHeight, textW, 34, escaped(lines[i]), sFontLarge,
+                sBrightColour);
+        addText(parent, x + 92, y + 46 + shift, textW, 26, describe(ptr), sFontSmall, sDimColour);
         int tx = x + 92;
         for (const auto& [label, colour] : markers(stack, showNew))
         {
-            MyGUI::TextBox* tag = addText(parent, tx, y + 70, 120, 20, label, sFontSmall, colour);
+            MyGUI::TextBox* tag = addText(parent, tx, y + 70 + shift, 120, 20, label, sFontSmall, colour);
             tx += tag->getTextSize().width + 12;
         }
+        return y + 100 + shift;
     }
 
     int drawStats(MyGUI::Widget* parent, int x, int y, int w, int bottom, const MWWorld::Ptr& ptr,

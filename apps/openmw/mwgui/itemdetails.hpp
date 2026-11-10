@@ -96,8 +96,10 @@ namespace MWGui
             MWWorld::Ptr mItem;
         };
 
-        /// Draws the item's icon, name, description and markers, in the top 100 units of a panel at x and y.
-        void drawHeader(MyGUI::Widget* parent, int x, int y, int w, const ItemStack& stack, bool showNew = true);
+        /// Draws the item's icon, name, description and markers at the top of a panel at x and y. A name too long for
+        /// one line takes two, which makes the header taller. Returns the bottom of the header, which is 100 units
+        /// below y for a name on one line.
+        int drawHeader(MyGUI::Widget* parent, int x, int y, int w, const ItemStack& stack, bool showNew = true);
 
         /// Draws the item's stats from y down, beside the stats of the equipped items it would replace, then its
         /// effects. A stat is green where it's better than what's equipped, and red where it's worse. Nothing is drawn
