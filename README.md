@@ -56,9 +56,9 @@ The local map is now a 3D view of the world. You can pan (right stick) and zoom 
 
 ### Journal
 
-![The journal, with quests in progress and finished, and the details of one](ui-rework/screenshots/journal.jpg)
+![The journal, with a pinned quest above the quests in progress and finished, and the details of the pinned one](ui-rework/screenshots/journal.jpg)
 
-The journal is a list of quests rather than a book. Quests in progress come first, then finished ones, sorted by when they last changed, or grouped by place or by faction. The details show who gave you the quest, where, and every entry, newest first.
+The journal is a list of quests rather than a book, grouped by pin, active, or finished.
 
 ### Conversations and trading
 
@@ -142,7 +142,7 @@ Optional improvements
 
 These options change the gameplay, so they're off by default. Turn them on in the Prefs tab of the options.
 
-- **Run Fatigue.** Walking is harder with a control stick than with a key, since it means holding the stick only part of the way, so you end up running more and running out of fatigue. Run Fatigue lowers how much fatigue running costs, to 50%, 25% or none at all. It's 100% by default, which keeps Morrowind's rules.
+- **Run Fatigue.** Walking is annoying with a controller, so this option lets you reduce run fatigue to 50%, 25%, or 0%. It defaults to the vanilla 100%.
 
 Trying it
 ---------
