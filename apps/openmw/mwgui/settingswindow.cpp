@@ -76,6 +76,10 @@ namespace
     }
 
     const std::string_view checkButtonType = "CheckButton";
+    // A check button for a boolean setting of the built-in scripts, kept in the player's script storage. Its
+    // SettingCategory is the storage section, and its SettingName is the key. ScriptSettingDefault is the value it
+    // shows before the scripts have stored one, which must match the scripts' own default.
+    const std::string_view scriptCheckButtonType = "ScriptCheckButton";
     const std::string_view sliderType = "Slider";
 
     std::string_view getSettingType(MyGUI::Widget* widget)
@@ -188,6 +192,21 @@ namespace MWGui
                 current->castType<MyGUI::Button>()->setCaptionWithReplacing(initialValue);
                 if (init)
                     current->eventMouseButtonClick += MyGUI::newDelegate(this, &SettingsWindow::onButtonToggled);
+            }
+            // The scripts' storage isn't loaded when the window is made, so these show their values when it opens.
+            if (type == scriptCheckButtonType)
+            {
+                if (init)
+                    current->eventMouseButtonClick += MyGUI::newDelegate(this, &SettingsWindow::onButtonToggled);
+                else
+                {
+                    MWBase::LuaManager* lua = MWBase::Environment::get().getLuaManager();
+                    const std::optional<bool> stored
+                        = lua->getPlayerStorageBool(getSettingCategory(current), getSettingName(current));
+                    const bool value = stored.value_or(current->getUserString("ScriptSettingDefault") == "true");
+                    current->castType<MyGUI::Button>()->setCaptionWithReplacing(
+                        value ? "#{Interface:On}" : "#{Interface:Off}");
+                }
             }
             if (type == sliderType)
             {
@@ -577,7 +596,7 @@ namespace MWGui
             list->setIndexSelected(next);
             list->eventListChangePosition(list, next);
         }
-        else if (getSettingType(row) == "CheckButton")
+        else if (getSettingType(row) == checkButtonType || getSettingType(row) == scriptCheckButtonType)
             activatePanelRow();
         else
             return;
@@ -1086,6 +1105,9 @@ namespace MWGui
             apply();
             return;
         }
+        if (getSettingType(sender) == scriptCheckButtonType)
+            MWBase::Environment::get().getLuaManager()->setPlayerStorageBool(
+                getSettingCategory(sender), getSettingName(sender), newState);
     }
 
     void SettingsWindow::onTextureFilteringChanged(MyGUI::ComboBox* /*sender*/, size_t pos)
@@ -1552,6 +1574,7 @@ namespace MWGui
 
     void SettingsWindow::onOpen()
     {
+        configureWidgets(mMainWidget, false);
         highlightCurrentResolution();
         updateControlsBox();
         updateLightSettings();

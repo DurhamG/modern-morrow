@@ -41,6 +41,12 @@ namespace LuaUtil
         }
         sol::table getAllSections(lua_State* state, bool readOnly = false);
 
+        /// Returns a copy of one value of a section, or nil when the section doesn't hold one under the key.
+        sol::object getSingleValue(lua_State* state, std::string_view section, std::string_view key)
+        {
+            return getSection(section)->get(key).getCopy(state);
+        }
+
         void setSingleValue(std::string_view section, std::string_view key, const sol::object& value)
         {
             getSection(section)->set(key, value);

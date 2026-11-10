@@ -51,6 +51,8 @@ namespace MWLua
 
         void loadPermanentStorage(const std::filesystem::path& userConfigPath);
         void savePermanentStorage(const std::filesystem::path& userConfigPath) override;
+        std::optional<bool> getPlayerStorageBool(std::string_view section, std::string_view key) override;
+        void setPlayerStorageBool(std::string_view section, std::string_view key, bool value) override;
 
         // \brief Executes lua handlers. Defaults to running in parallel with OSG Cull.
         //

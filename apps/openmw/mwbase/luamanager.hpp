@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <map>
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -110,6 +111,11 @@ namespace MWBase
         virtual void uiModeChanged(const MWWorld::Ptr& arg) = 0;
         virtual void viewportResized(int width, int height) = 0;
         virtual void savePermanentStorage(const std::filesystem::path& userConfigPath) = 0;
+        /// Reads a boolean from the player's script storage, such as a setting of the built-in scripts. Returns
+        /// nothing when the section doesn't hold a boolean under the key.
+        virtual std::optional<bool> getPlayerStorageBool(std::string_view section, std::string_view key) = 0;
+        /// Writes a boolean to the player's script storage. Scripts that subscribed to the section are told.
+        virtual void setPlayerStorageBool(std::string_view section, std::string_view key, bool value) = 0;
         virtual void applyMagicEffects(ESM::RefId id, const MWWorld::Ptr& caster, ESM::RefNum item,
             const MWWorld::Ptr& target, const std::vector<ESM::IndexedENAMstruct>& effects, bool ignoreReflect,
             bool ignoreSpellAbsorption, bool stackable, bool isReflect)

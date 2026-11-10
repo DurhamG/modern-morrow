@@ -152,6 +152,17 @@
                         <Property key="Caption" value="#{OMWEngine:MouseEmulationCursor}"/>
                     </Widget>
                 </Widget>
+                <Widget type="HBox" position="4 400 340 28">
+                    <Widget type="AutoSizedButton" skin="MW_Button" position="0 0 24 24" align="Left Top">
+                        <UserString key="SettingCategory" value="SettingsOMWControls"/>
+                        <UserString key="SettingName" value="toggleSneak"/>
+                        <UserString key="SettingType" value="ScriptCheckButton"/>
+                        <UserString key="ScriptSettingDefault" value="true"/>
+                    </Widget>
+                    <Widget type="AutoSizedTextBox" skin="SandText" position="28 4 89 16" align="Left Top">
+                        <Property key="Caption" value="#{OMWControls:toggleSneak}"/>
+                    </Widget>
+                </Widget>
             </Widget>
             <Widget type="TabItem">
                 <Property key="Caption" value=" #{OMWEngine:Audio} "/>

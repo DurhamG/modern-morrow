@@ -233,6 +233,24 @@ namespace MWLua
         });
     }
 
+    std::optional<bool> LuaManager::getPlayerStorageBool(std::string_view section, std::string_view key)
+    {
+        std::optional<bool> result;
+        mLua.protectedCall([&](LuaUtil::LuaView& view) {
+            const sol::object value = mPlayerStorage.getSingleValue(view.sol(), section, key);
+            if (value.is<bool>())
+                result = value.as<bool>();
+        });
+        return result;
+    }
+
+    void LuaManager::setPlayerStorageBool(std::string_view section, std::string_view key, bool value)
+    {
+        mLua.protectedCall([&](LuaUtil::LuaView& view) {
+            mPlayerStorage.setSingleValue(section, key, sol::make_object(view.sol(), value));
+        });
+    }
+
     void LuaManager::sendLocalEvent(
         const MWWorld::Ptr& target, const std::string& name, const std::optional<sol::table>& data)
     {
