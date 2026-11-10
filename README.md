@@ -3,40 +3,44 @@ Modern Morrow
 
 *A controller-first interface for OpenMW.*
 
-Modern Morrow is a fork of [OpenMW](https://gitlab.com/OpenMW/openmw). It replaces the game's whole user interface with a modern one built for a controller, a TV and handhelds such as the Steam Deck. The game itself is unchanged: the same rules, quests and saves, with new screens on top.
+Modern Morrow replaces the game's whole user interface with a modern one built for controllers, TVs and handhelds. The gameplay and in-game graphics are largely unchanged.
 
-Morrowind's menus were made for a mouse on a small monitor. They are grids of icons with the information hidden in tooltips, in small windows that overlap. This fork turns each of them into a full screen or panel in one consistent style: lists that say what each thing is, a details panel that compares it with what you have, large text that reads from the couch, and button hints for the controller in your hands.
+The grid of items has been replaced with lists and tabs. Item names and stats are more easily visible. The local map is fully 3D. Text has been made larger and easier to read.
 
-**Modern Morrow was vibe coded.** A person directed the work, played the game, and reviewed every screen in screenshots and in play. Claude wrote nearly all of the code, the tests and the design notes. It is an experiment, and it has not been reviewed by the OpenMW developers. Expect rough edges.
+**Modern Morrow is a vibe coded fork of [OpenMW](https://gitlab.com/OpenMW/openmw).** A human (me) directed the work and made design decisions. Claude wrote all of the code. It is an experiment, and it has not been reviewed by the OpenMW developers. Expect rough edges.
 
-We talked with the OpenMW developers about bringing this work into OpenMW itself. The best way to do that would be as a mod, built on OpenMW's Lua scripting, but Lua can't yet replace the user interface as completely as this fork does. Until it can, Modern Morrow stays a separate fork.
+I talked with the OpenMW developers about doing this as an extension, but OpenMW's APIs can't fully replace the user interface yet. Once they finish their Lua work, I will rework this to be a mod.
 
 Screenshots
 -----------
 
 ### Inventory
 
-**Equipment, by body area**
+**Equipment**
 
 ![The equipment overview, with every body area and what is worn there](ui-rework/screenshots/inventory-equipment.jpg)
 
-**One area, compared with what you wear**
+The inventory tab opens directly to show your currently equipped equipment. Each area of the body has one card. Clicking an area drills down into that area (see below). Areas that have new items available are labeled "New", though the screenshot doesn't show that.
+
+**One Equipment Area**
 
 ![The chest area, with cuirasses, shirts and robes in their own groups](ui-rework/screenshots/inventory-chest.jpg)
 
-The inventory opens on what you're wearing, one tile per body area. Choosing an area lists everything that fits it, grouped by slot: the chest area has cuirasses, shirts and robes, each under its own header. The stats that matter are columns. Numbers are green where they beat what you have equipped and red where they don't, and the details panel compares the two side by side. Other tabs list recent pickups, consumables grouped by effect, books, tools, and everything else, grouped by kind. The shoulder buttons switch tabs, and the triggers switch between the map, inventory, magic, stats and journal.
+Here we see the Chest area. The chest area has equipment slots for a cuirass, shirt, and robe. Selecting an item shows its stats on the right, compared with your currently equipped item. Green indicates it beats your current equipment, red means it is worse.
 
 ### Magic
 
-**What's affecting you**
+**Active Effects and Equipped Magic**
 
 ![The magic screen's Active tab, with the effects on the character and the spell that is ready](ui-rework/screenshots/magic.jpg)
 
-**Every spell, by school**
+The default Magic tab shows your active effects (left column), your equipped magic (upper right), and your recently equipped spells (lower right, empty in the screenshot) so you can switch to a recent spell easily.
+
+**Spell Tab**
 
 ![The Spells tab, with spells grouped by school and their effects written out](ui-rework/screenshots/magic-spells.jpg)
 
-The Active tab shows what's affecting you, how long each effect has left and where it came from, next to the spell that's ready to cast and the ones you used recently. Switching back to a favourite spell takes one press. The other tabs list every spell, power, magic item and scroll, with their effects written out in full. Spells are grouped by school, such as Alteration or Destruction, and Y jumps to the next school.
+The spell tab shows all your spells, grouped by school. Selecting a spell shows its details. Clicking it equips it.
 
 ### Character
 
@@ -48,7 +52,7 @@ Everything on the stats screen can be highlighted to read what it is and what it
 
 ![The local map in 3D over Balmora, with the explored town in view and the fog of war around it](ui-rework/screenshots/map-3d.jpg)
 
-The local map is a 3D view of the world, seen from above at an angle. The right stick pans it anywhere you've been, and the d-pad zooms from a few streets to a whole region. Land you haven't explored stays hidden under the fog of war, as it does on the flat map. Indoors, the ceilings are cut away so you look down into the rooms. Doors, your pins, and the things detection spells reveal are marked, and X places a pin at the crosshair.
+The local map is now a 3D view of the world. You can pan (right stick) and zoom (d-pad). Indoor maps are 3D as well, with the ceiling cut off. You can mark locations with X.
 
 ### Journal
 
@@ -60,17 +64,19 @@ The journal is a list of quests rather than a book. Quests in progress come firs
 
 ![A conversation, with the topics on the right and the answer on the left](ui-rework/screenshots/dialogue.jpg)
 
-Conversations take a panel along the bottom of the screen. In first person, the camera turns to the face of the person you're talking to, so it sits in view above the panel. New topics come first, and the person's services, such as trading, training or persuasion, have their own tab.
+Conversation text is bigger so it's easier to read. Conversation topics are now sorted so unseen topics are at the top (blue first), with already seen topics greyed out below. Services like bartering and training are on a separate tab.
+
+The camera turns to face the NPC as well.
 
 ![Bartering, with the merchant's weapons and a comparison with the equipped one](ui-rework/screenshots/barter.jpg)
 
-Trading uses the same panel style. Every item shows its price, items better than yours are marked, and the details compare them with what you have.
+Trading has a panel with a list of items to buy, and a separate tab for items to sell. Items better than yours are marked. The camera also adjusts to face the NPC.
 
 ### Looting
 
 ![Looting a crate that belongs to a merchant, with every item marked as stealing](ui-rework/screenshots/loot.jpg)
 
-Containers open in a panel beside the world, grouped by kind, with upgrades marked. When the container belongs to someone, the panel says so, and every action is named for what it is: Steal, not Take.
+Containers show a list of contents, with upgrades and stealing marked.
 
 ### HUD
 
@@ -78,18 +84,17 @@ Containers open in a panel beside the world, grouped by kind, with upgrades mark
 
 ![The bottom-left corner with low health, the weapon and an active spell effect](ui-rework/screenshots/hud-busy.jpg)
 
-This shows the bottom-left corner of the screen, where the HUD sits. The HUD hides itself until there is something worth knowing:
+This shows the bottom-left corner of the screen, where the HUD sits. The HUD components hide themselves unless you're in combat or one of your bars is not full.
 
-- The minimap is gone.
-- Health, magicka and fatigue bars fade away when they're full, unless you're in combat.
-- Effect icons leave out permanent effects, such as those of your race and birthsign.
-- The weapon and spell boxes only show when you ready or change them, or in combat.
+Also:
+- No minimap on the HUD.
+- Permanent active effects are not shown in the HUD.
 
 ### Crafting
 
 ![Alchemy, with the ingredients that share an effect with the potion grouped together](ui-rework/screenshots/alchemy.jpg)
 
-Alchemy lists your ingredients with the effects you know. Once the potion has an ingredient, the list puts the ones that share an effect with it first, so finding a match no longer means opening tooltips one by one.
+Alchemy lists your ingredients with the known effects. Once the potion has an ingredient, the list puts the ones that share an effect with it first, so finding a match no longer means opening tooltips one by one.
 
 ![Enchanting a sword, with the fire damage effect being edited and the cost updating](ui-rework/screenshots/enchanting.jpg)
 
@@ -99,7 +104,7 @@ Enchanting and spellmaking show what you're making on the right and what you can
 
 The rest of the game has controller screens in the same style too:
 
-- **Quick keys** are on the d-pad: tap a direction for one slot, or hold it for another. Assign them from the inventory or the magic screen, and the HUD briefly shows what you used.
+- **Quick keys** are on the d-pad: tap a direction for one slot, or hold it for another. Assign them from the inventory or the magic screen.
 - **Merchant services**: buying spells, training, travel and repair.
 - **Rest and wait, and level up.**
 - **Books and scrolls**, as one scrolling page.
@@ -113,52 +118,34 @@ The rest of the game has controller screens in the same style too:
 Other improvements
 ------------------
 
-- **The Steam Controller works without Steam.** The release builds run the game on SDL3, the newest version of the library that reads controllers, through SDL's sdl2-compat layer. SDL3 recognizes newer controllers, such as the 2026 Steam Controller, without Steam Input. With OpenMW's SDL2, that controller only works when Steam starts the game.
-- **The game fills the screen.** It starts in windowed fullscreen at the screen's own resolution, such as a Steam Deck's 1280x800 or a TV's, instead of in an 800x600 window.
+- **The Steam Controller works without Steam.** The game can recognize the new Steam Controller without running it through Steam. This works by upgrading the game to work with SDL3.
+- **Automatic full-screen resolution.** The game defaults to windowed fullscreen at the current screen's resolution. No need to configure it.
 - **Better settings out of the box.** Several of OpenMW's optional settings are on by default. None of them change the game's rules:
-  - Softer fog at the edge of view: the fog is round, and the far land fades into the sky, so hills no longer end at a hard edge.
-  - The water shader, for reflective water.
+  - Better distant fog: no more hard edge hill clipping in the distance.
+  - Enabled water shader.
   - Smoother distant textures (linear mipmaps), so no line shows where a floor turns blurrier.
-  - Attacks always use the weapon's most powerful swing: chop, slash or thrust. Otherwise, the direction you move as you attack picks the swing.
-  - Weapon reach and speed, the damage bonus of arrows and bolts, the chance of an enchantment succeeding, and how long magic effects and lights have left all show on screen.
+  - Attacks always use the weapon's most powerful swing.
+  - Extra details are visible in the detail view (weapon reach and speed, arrows damage bonus, enchantment chance, effect duration, etc).
   - In third person, swimming aims a little above where you look, so you don't dive by accident.
   - Merchants don't put on the armour and clothing you sell them.
+  - Sneak toggles on and off, instead of needing to be held.
 
-  Each can be turned off in the launcher or in `settings.cfg`.
-- **Saving takes no thought.** Each quicksave is a new save, and older quicksaves thin out as you play: all of the last 10 stay, then fewer the older they get. The game also autosaves after 5 minutes of play without a save, once you're out of menus and combat.
-- **Straight back into your game.** Starting the game loads your newest save, skipping the logo video and the main menu. To start a new character or load another save, use New Game or Load in the pause menu. With no saves yet, the main menu shows as usual.
-- **The AppImage sets itself up.** Started with no options, the Linux AppImage runs the setup wizard the first time, then starts the game, and goes straight into the game after that. So a Steam shortcut to it needs no launch options.
-- **The Steam Deck can keep the game up to date.** An optional script downloads the newest AppImage each time the game starts, so updating doesn't need a trip to Desktop Mode.
-- **Pins on the map.** On the local map, X drops a red pin at the crosshair in the middle of the view, which starts on you. Pins outdoors show on the world map too, and the d-pad zooms both maps.
-- **The tutorial talks about the controller.** On a controller, Morrowind's tutorial messages use the text the game was written with for the Xbox, such as "The LEFT THUMBSTICK moves you", instead of key names and mouse clicks.
+- **Simplified Saving.** Quicksave creates a new save each time, with smart removal of old quicksaves: all of the last 10 quicksaves are kept, then fewer the older they get. The game also autosaves after 5 minutes of play without a save.
+- **Automatic Game Continue.** Starting the game loads your newest save, skipping the logo video and the main menu. With no saves yet, the main menu shows as usual.
+- **Automatic Wizard on Steam Deck.** When you run the AppImage, it will launch the setup wizard if necessary, otherwise it launches the game. This means you don't have to pass command options when setting up the non-steam-game properties.
+- **Automatic Update on Steam Deck.** An optional script downloads the newest AppImage each time the game starts, so updating doesn't need a trip to Desktop Mode.
+- **Pins on the map.** On the local map, X drops a red pin at the crosshair in the middle of the view.
+- **Improved Controller Tutorial Instructions.** On a controller, Morrowind's tutorial messages use the text the game was written with for the Xbox, such as "The LEFT THUMBSTICK moves you".
 
 Trying it
 ---------
 
 > [!WARNING]
-> **Released versions of OpenMW can't load saves that Modern Morrow writes.** Modern Morrow keeps its saves in a folder of its own, so it never changes your OpenMW saves. To continue an OpenMW game in Modern Morrow, copy the save over rather than moving it, so that OpenMW still has the original.
+> **Vanilla OpenMW can't load saves that Modern Morrow writes.** Modern Morrow uses a modified save format. It saves in its own folder, so it shouldn't corrupt existing OpenMW saves, but to use an existing save from OpenMW you need to copy the save over to Modern Morrow's folder.
 
 You need a copy of Morrowind. The [Releases page](https://github.com/DurhamG/modern-morrow/releases) has a Windows installer, a Windows zip and a Linux AppImage. To build this fork yourself, build it the same way as OpenMW: see the [OpenMW build instructions](https://wiki.openmw.org/index.php?title=Development_Environment_Setup), or [CLAUDE.md](CLAUDE.md) for notes on building on Windows.
 
-The new screens are on by default. They're made for a gamepad, and they work with a mouse and the keyboard too, such as when a controller's battery runs out. Point at anything to highlight it, and click to choose it. The right button goes back, and the wheel moves through lists or scrolls text. Tabs and button hints can be clicked, and on the map, dragging pans and a click places a pin. The keys stand in for the controller's buttons:
-
-| Key | Controller button |
-| --- | --- |
-| Arrow keys | D-pad |
-| Enter or Space | A |
-| Esc or Backspace | B |
-| X, Y | X, Y |
-| Q, E | Left and right shoulder buttons, which switch a screen's own tabs |
-| Tab, Shift+Tab | Right and left triggers, which switch between the map, inventory, magic, stats and journal |
-| F, R | Clicking the left and right sticks |
-| W, A, S, D | Right stick, which pans the map and scrolls long text |
-
-Where you type a name, the keys type it, and Enter accepts it. During play, the right mouse button opens the menus, as in Morrowind. To get OpenMW's normal interface back, turn off **Enable Controller Menus** in the launcher's settings, or set this in `settings.cfg`:
-
-```ini
-[GUI]
-controller menus = false
-```
+The new screens are on by default. They're made for a gamepad, but they kinda work with mouse and keyboard.
 
 Modern Morrow keeps its settings and saves apart from OpenMW's: in `Documents/My Games/Modern Morrow` on Windows, and in `~/.config/modern-morrow` and `~/.local/share/modern-morrow` on Linux. To bring over an existing OpenMW setup and its saves, copy OpenMW's folders there.
 
@@ -167,19 +154,19 @@ Steam Deck and Steam Machine
 
 The AppImage is a Linux program, so it runs directly on SteamOS, without Proton. These steps are the same on a Steam Deck and a Steam Machine.
 
-1. **Install Morrowind in Steam.** Install The Elder Scrolls III: Morrowind from your library, as you would any game. You don't need to run it. Modern Morrow only reads its data files.
+1. **Install Morrowind in Steam.** Install The Elder Scrolls III: Morrowind from your library.
 2. **Switch to Desktop Mode.** Press the Steam button, choose Power, then Switch to Desktop.
-3. **Download Modern Morrow.** Make a folder for it, such as `Games/ModernMorrow` in your home folder, because the Steam shortcut will point there. In a web browser, open the [Releases page](https://github.com/DurhamG/modern-morrow/releases) and download one of these two files from the latest release into the folder:
-   - **`ModernMorrow-AutoUpdate.sh`, to keep the game up to date by itself.** Each time it starts, this script checks GitHub for a newer build, downloads it if there is one, with a progress bar, and then starts the game. Without an internet connection, it starts the copy it already has. It keeps the AppImage in its folder, as `ModernMorrow.AppImage`.
+3. **Download Modern Morrow.** Make a folder for it somewhere. In a web browser, open the [Releases page](https://github.com/DurhamG/modern-morrow/releases) and download one of these two files from the latest release into your folder:
+   - **`ModernMorrow-AutoUpdate.sh`, to keep the game up to date by itself.** Each time it starts, this script checks GitHub for a newer build, downloads it if there is one and starts the game. Without an internet connection, it starts the copy it already has. It keeps the AppImage in its folder, as `ModernMorrow.AppImage`.
    - **`ModernMorrow-...-Linux-x86_64.AppImage`, to update by hand.** To update it later, download the new AppImage in Desktop Mode and point the Steam shortcut at it.
-4. **Make it executable.** In the Dolphin file manager, right-click the file you downloaded, choose Properties, then Permissions, and tick **Is executable**.
-5. **Add it to Steam.** Open Steam, choose Games, then **Add a Non-Steam Game to My Library**. Choose Browse, set the file type to All Files so that the file shows, and add it. It needs no launch options. Leave the compatibility settings off, because Modern Morrow isn't a Windows program.
-6. **Start it once to set up the game data.** Still in Desktop Mode, start Modern Morrow from your Steam library. With the update script, this first start needs an internet connection, and a window shows the progress while it downloads the AppImage. Then the setup wizard opens. Choose to use an existing installation. The wizard finds Morrowind on the internal drive by itself. If Morrowind is on a microSD card, browse to the `steamapps/common/Morrowind` folder on the card instead. When the wizard finishes, the game starts.
-7. **Play in Game Mode.** Return to Gaming Mode and start Modern Morrow from your library. From now on, it goes straight into the game. The Steam Deck's controls and Steam Controllers reach the game as a gamepad.
+4. **Make it executable.** In the Dolphin file manager, right-click the file you downloaded, choose Properties, then Permissions, and tick **Allow executing file as program** or **Is executable**.
+5. **Add it to Steam.** Open Steam, choose Games, then **Add a Non-Steam Game to My Library**. Choose Browse, set the file type to All Files so that the file shows, and add the file you downloaded. Leave all the other options alone.
+6. **Start it once to set up the game data.** Still in Desktop Mode, start Modern Morrow from your Steam library. With the update script, this first start needs an internet connection. Then the setup wizard opens. Choose to use an existing installation. The wizard finds Morrowind on the internal drive by itself. If Morrowind is on a microSD card, browse to the `steamapps/common/Morrowind` folder on the card instead. When the wizard finishes, the game starts.
+7. **Play in Game Mode.** Return to Gaming Mode and start Modern Morrow from your library. From now on, it goes straight into the game.
 
 Start Modern Morrow from Steam rather than by double-clicking it in Dolphin. Dolphin refuses to start some AppImages, even when they're executable.
 
-When an update doesn't seem to arrive, `ModernMorrow-AutoUpdate.log`, in the script's folder, says what the last check did. To open the launcher for mods and settings, set the shortcut's launch options to `--launcher` for one start. `--wizard` runs the setup wizard again. The settings and saves are in `~/.config/modern-morrow` and `~/.local/share/modern-morrow`.
+If the autoupdater isn't working, `ModernMorrow-AutoUpdate.log`, in the script's folder, says what the last check did. To open the launcher for mods and settings, set the shortcut's launch options to `--launcher` for one start. `--wizard` runs the setup wizard again. The settings and saves are in `~/.config/modern-morrow` and `~/.local/share/modern-morrow`.
 
 How it's built
 --------------
