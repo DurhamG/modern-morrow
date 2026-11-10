@@ -38,6 +38,9 @@ namespace MWInput
 
         bool injectMouseButtonPress(Uint8 button);
         bool injectMouseButtonRelease(Uint8 button);
+
+        /// Whether the mouse works a controller menu now: controller menus mode is on and one of its menus shows.
+        bool usesControllerMenus() const;
         void injectMouseMove(float xMove, float yMove, float mouseWheelMove);
         void warpMouse();
         void warpMouseToWidget(MyGUI::Widget* widget);

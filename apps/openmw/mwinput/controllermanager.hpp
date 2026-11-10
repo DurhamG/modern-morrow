@@ -56,6 +56,11 @@ namespace MWInput
         /// Records that a key is up again, for isButtonPressed and getAxisValue.
         void keyReleased(const SDL_KeyboardEvent& arg);
 
+        /// Presses a button for the controller menu that shows, and counts it as held until the next frame starts.
+        void pressMenuButton(SDL_GameControllerButton button);
+        /// Forgets the buttons that pressMenuButton held, at the start of a frame.
+        void clearPressedMenuButtons() { mPressedMenuButtons.clear(); }
+
         bool isGyroAvailable() const;
         std::array<float, 3> getGyroValues() const;
 
@@ -89,6 +94,8 @@ namespace MWInput
         // The keys that are down. They come from the key events, rather than from SDL's keyboard state, so keys sent
         // as events, such as by the automation harness, count too.
         std::set<SDL_Scancode> mHeldKeys;
+        // The buttons pressMenuButton pressed in this frame.
+        std::set<SDL_GameControllerButton> mPressedMenuButtons;
     };
 }
 #endif

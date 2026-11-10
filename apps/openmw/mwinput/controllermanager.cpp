@@ -493,6 +493,8 @@ namespace MWInput
         SDL_GameController* cntrl = mBindingsManager->getControllerOrNull();
         if (cntrl != nullptr && SDL_GameControllerGetButton(cntrl, button) > 0)
             return true;
+        if (mPressedMenuButtons.contains(button))
+            return true;
         if (!keysStandInForButtons())
             return false;
         for (const auto& [key, keyButton] : sKeyButtons)
@@ -510,6 +512,23 @@ namespace MWInput
             return false;
         MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
         return topWin != nullptr && topWin->isVisible() && !topWin->takesTypedText();
+    }
+
+    void ControllerManager::pressMenuButton(SDL_GameControllerButton button)
+    {
+        if (!Settings::gui().mControllerMenus)
+            return;
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        MWGui::WindowBase* topWin = winMgr->isGuiMode() ? winMgr->getActiveControllerWindow() : nullptr;
+        if (topWin == nullptr || !topWin->isVisible())
+            return;
+        mPressedMenuButtons.insert(button);
+        SDL_ControllerButtonEvent event{};
+        event.type = SDL_CONTROLLERBUTTONDOWN;
+        event.timestamp = SDL_GetTicks();
+        event.button = static_cast<Uint8>(button);
+        event.state = SDL_PRESSED;
+        topWin->onControllerButtonEvent(event);
     }
 
     void ControllerManager::keyReleased(const SDL_KeyboardEvent& arg)

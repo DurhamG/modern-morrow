@@ -76,6 +76,10 @@ namespace MWBase
 
         virtual float getActionValue(int action) const = 0; // returns value in range [0, 1]
         virtual bool isControllerButtonPressed(SDL_GameControllerButton button) const = 0;
+        /// In controller menus mode, presses a controller button for the menu that shows, as the mouse does for its
+        /// clicks and its wheel. The button also counts as held for the rest of the frame, for the menus that read the
+        /// d-pad each frame.
+        virtual void pressControllerMenuButton(SDL_GameControllerButton button) = 0;
         virtual float getControllerAxisValue(SDL_GameControllerAxis axis) const = 0; // returns value in range [-1, 1]
         virtual int getMouseMoveX() const = 0;
         virtual int getMouseMoveY() const = 0;

@@ -1,12 +1,15 @@
 #include "controllerscreen.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 
 #include <MyGUI_Gui.h>
 #include <MyGUI_ILayer.h>
 #include <MyGUI_ImageBox.h>
+#include <MyGUI_InputManager.h>
 #include <MyGUI_LanguageManager.h>
 #include <MyGUI_LayerManager.h>
 #include <MyGUI_TextIterator.h>
@@ -17,6 +20,7 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
+#include "../mwbase/windowmanager.hpp"
 
 #include "../mwworld/ptr.hpp"
 
@@ -26,6 +30,61 @@ namespace MWGui
 {
     namespace
     {
+        // What the mouse asked for since the last frame, run at the start of the next one.
+        std::vector<std::function<void()>> sPointerActions;
+        // The target the mouse last pointed at.
+        MyGUI::Widget* sPointedAt = nullptr;
+
+        // What a pointer target does, kept in its widget's user data.
+        struct PointerTarget
+        {
+            std::function<void()> mOnPoint;
+            std::function<void()> mOnClick;
+            std::function<void(int)> mOnWheel;
+        };
+
+        // The pointer target at a point. The targets are found here rather than through MyGUI's mouse focus, because
+        // MyGUI keeps the mouse within a modal window, and the controller menus draw a modal window's panel apart
+        // from the window.
+        const PointerTarget* findPointerTarget(int x, int y, MyGUI::Widget*& widget)
+        {
+            widget = MyGUI::LayerManager::getInstance().getWidgetFromPoint(x, y);
+            for (; widget != nullptr; widget = widget->getParent())
+            {
+                if (const PointerTarget* target = widget->getUserData<PointerTarget>(false))
+                    return target;
+                if (widget->getNeedMouseFocus())
+                    return nullptr;
+            }
+            return nullptr;
+        }
+
+        // A panel on the layer of modal panels keeps the mouse from the screens under it, as its window would. It
+        // gets a target with no actions, under its own, that covers the screen.
+        void blockPointerUnder(MyGUI::Widget* parent)
+        {
+            MyGUI::Widget* root = parent;
+            while (root->getParent() != nullptr)
+                root = root->getParent();
+            if (root->getLayer() == nullptr || root->getLayer()->getName() != "ControllerModal")
+                return;
+            constexpr std::string_view blockerName = "PointerBlocker";
+            for (std::size_t i = 0; i < root->getChildCount(); ++i)
+                if (root->getChildAt(i)->getName() == blockerName)
+                    return;
+            MyGUI::Widget* blocker = root->createWidget<MyGUI::Widget>("",
+                MyGUI::IntCoord(MyGUI::IntPoint(), root->getSize()), MyGUI::Align::Default, std::string(blockerName));
+            blocker->setUserData(PointerTarget{});
+        }
+
+        // Lets the mouse reach the widgets a parent holds, up to the first widget that takes the mouse itself. The
+        // panels' roots and containers ignore the mouse, and by default that hides their children from it too.
+        void passPointerThrough(MyGUI::Widget* widget)
+        {
+            for (; widget != nullptr && !widget->getNeedMouseFocus(); widget = widget->getParent())
+                widget->setInheritsPick(true);
+        }
+
         constexpr float sRepeatDelay = 0.35f;
         constexpr float sRepeatInterval = 0.08f;
         constexpr float sStickThreshold = 0.5f;
@@ -308,6 +367,12 @@ namespace MWGui
                 {
                     addGlyph(parent, hx, y, glyphSize, hint.mButton);
                     hint.mLabel->setCoord(hx + labelX, y - 4, hint.mWidth - labelX + 8, 34);
+                    // Clicking a hint presses its button. The d-pad's hints stand for two directions, so they don't.
+                    const SDL_GameControllerButton button = hint.mButton;
+                    if (button != SDL_CONTROLLER_BUTTON_DPAD_UP && button != SDL_CONTROLLER_BUTTON_DPAD_DOWN
+                        && button != SDL_CONTROLLER_BUTTON_DPAD_LEFT && button != SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
+                        addPointerTarget(
+                            parent, hx, y - 4, hint.mWidth, 34, nullptr, [button] { pressButton(button); });
                     hx += hint.mWidth + gap;
                 }
             }
@@ -319,6 +384,7 @@ namespace MWGui
         {
             int x = sMargin;
             addGlyph(parent, x, 59, 22, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+            addPointerTarget(parent, x, 54, 30, 32, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER); });
             x += 34;
             for (int tab = 0; tab < static_cast<int>(captions.size()); ++tab)
             {
@@ -330,13 +396,195 @@ namespace MWGui
                 label->setTextAlign(MyGUI::Align::Center);
                 if (isSelected)
                     addRect(parent, x + 8, 84, labelW - 16, 2, sAccentColour);
+                // The shoulder buttons step through the tabs, so clicking a tab steps to it.
+                const int steps = tab - selected;
+                if (steps != 0)
+                    addPointerTarget(parent, x, 50, labelW, 40, nullptr, [steps] {
+                        for (int i = 0; i < std::abs(steps); ++i)
+                            pressButton(
+                                steps > 0 ? SDL_CONTROLLER_BUTTON_RIGHTSHOULDER : SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+                    });
                 x += labelW + 6;
             }
             addGlyph(parent, x + 4, 59, 22, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+            addPointerTarget(
+                parent, x + 4, 54, 30, 32, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
 
             addText(parent, width - sMargin - 420, 50, 420, 40, status, sFontSmall, sDimColour,
                 MyGUI::Align::Right | MyGUI::Align::VCenter);
             addRect(parent, 0, 94, width, 1, sAccentColour, 0.2f);
         }
+
+        void addPointerTarget(MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void()> onPoint,
+            std::function<void()> onClick)
+        {
+            passPointerThrough(parent);
+            blockPointerUnder(parent);
+            MyGUI::Widget* area
+                = parent->createWidget<MyGUI::Widget>("", MyGUI::IntCoord(x, y, w, h), MyGUI::Align::Default);
+            area->setNeedMouseFocus(true);
+            area->setUserData(PointerTarget{ std::move(onPoint), std::move(onClick), nullptr });
+        }
+
+        void pointerMoved(int x, int y)
+        {
+            // Only a pointer that moves points at things, so a resting one doesn't fight the d-pad when the panel
+            // draws again under it.
+            MyGUI::Widget* widget = nullptr;
+            const PointerTarget* target = findPointerTarget(x, y, widget);
+            if (widget == sPointedAt)
+                return;
+            sPointedAt = widget;
+            if (target != nullptr && target->mOnPoint)
+                sPointerActions.emplace_back(target->mOnPoint);
+        }
+
+        void addWheelTarget(MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void(int steps)> onWheel)
+        {
+            passPointerThrough(parent);
+            blockPointerUnder(parent);
+            MyGUI::Widget* area
+                = parent->createWidget<MyGUI::Widget>("", MyGUI::IntCoord(x, y, w, h), MyGUI::Align::Default);
+            area->setNeedMouseFocus(true);
+            area->setUserData(PointerTarget{ nullptr, nullptr, std::move(onWheel) });
+        }
+
+        bool pointerWheel(int x, int y, int steps)
+        {
+            MyGUI::Widget* widget = nullptr;
+            const PointerTarget* target = findPointerTarget(x, y, widget);
+            if (target == nullptr || !target->mOnWheel)
+                return false;
+            sPointerActions.emplace_back([onWheel = target->mOnWheel, steps] { onWheel(steps); });
+            return true;
+        }
+
+        bool pointerClicked(int x, int y)
+        {
+            MyGUI::Widget* widget = nullptr;
+            const PointerTarget* target = findPointerTarget(x, y, widget);
+            if (target == nullptr)
+                return false;
+            if (target->mOnClick)
+                sPointerActions.emplace_back(target->mOnClick);
+            return true;
+        }
+
+        void pressButton(SDL_GameControllerButton button)
+        {
+            MWBase::Environment::get().getInputManager()->pressControllerMenuButton(button);
+        }
+
+        void runPointerActions()
+        {
+            std::vector<std::function<void()>> actions;
+            actions.swap(sPointerActions);
+            for (const std::function<void()>& action : actions)
+                action();
+        }
+    }
+
+    void ControllerList::reset()
+    {
+        mFocus = 0;
+        mScroll = 0;
+    }
+
+    bool ControllerList::updateHeld(float duration, int itemCount)
+    {
+        int dx = 0;
+        int dy = 0;
+        if (!mHeld.update(duration, dx, dy) || dy == 0 || itemCount <= 0)
+            return false;
+        const int focus = std::clamp(mFocus + dy, 0, itemCount - 1);
+        if (focus == mFocus)
+            return false;
+        mFocus = focus;
+        return true;
+    }
+
+    bool ControllerList::draw(MyGUI::Widget* parent, int x, int y, int w, int h, const std::vector<Row>& rows,
+        const std::function<void(std::size_t row, int y, bool focused)>& drawRow, std::function<void()> onChange,
+        std::function<void()> onActivate)
+    {
+        int itemCount = 0;
+        for (const Row& row : rows)
+            itemCount += row.mItem ? 1 : 0;
+        if (itemCount == 0)
+            return false;
+        mFocus = std::clamp(mFocus, 0, itemCount - 1);
+
+        // The row of the focused item.
+        int focusRow = 0;
+        for (int i = 0, item = 0; i < static_cast<int>(rows.size()); ++i)
+        {
+            if (!rows[i].mItem)
+                continue;
+            if (item++ == mFocus)
+            {
+                focusRow = i;
+                break;
+            }
+        }
+
+        // Scroll so the focused row is in view. Scrolling up also shows the focused item's group header.
+        mScroll = std::clamp(mScroll, 0, static_cast<int>(rows.size()) - 1);
+        if (focusRow < mScroll)
+            mScroll = focusRow > 0 && !rows[focusRow - 1].mItem ? focusRow - 1 : focusRow;
+        while (mScroll < focusRow)
+        {
+            int bottomOfFocus = y;
+            for (int i = mScroll; i <= focusRow; ++i)
+                bottomOfFocus += rows[i].mHeight;
+            if (bottomOfFocus <= y + h)
+                break;
+            ++mScroll;
+        }
+        // The list doesn't scroll past its end, which would leave empty space below it, as when it gets shorter.
+        int below = 0;
+        for (std::size_t i = static_cast<std::size_t>(mScroll); i < rows.size(); ++i)
+            below += rows[i].mHeight;
+        while (mScroll > 0 && below + rows[mScroll - 1].mHeight <= h)
+        {
+            --mScroll;
+            below += rows[mScroll].mHeight;
+        }
+
+        int item = 0;
+        for (int i = 0; i < mScroll; ++i)
+            item += rows[i].mItem ? 1 : 0;
+        int rowY = y;
+        for (std::size_t i = static_cast<std::size_t>(mScroll); i < rows.size(); ++i)
+        {
+            const Row& row = rows[i];
+            if (rowY + row.mHeight > y + h)
+                break;
+            drawRow(i, rowY, row.mItem && item == mFocus);
+            if (row.mItem)
+            {
+                const int thisItem = item;
+                ControllerUi::addPointerTarget(
+                    parent, x, rowY, w, row.mHeight,
+                    [this, thisItem, onChange] {
+                        if (mFocus == thisItem)
+                            return;
+                        mFocus = thisItem;
+                        if (onChange)
+                            onChange();
+                    },
+                    [this, thisItem, onChange, onActivate] {
+                        // The screen first catches up with the clicked item, so what A does acts on it.
+                        const bool changed = mFocus != thisItem;
+                        mFocus = thisItem;
+                        if (changed && onChange)
+                            onChange();
+                        if (onActivate)
+                            onActivate();
+                    });
+                ++item;
+            }
+            rowY += row.mHeight;
+        }
+        return true;
     }
 }

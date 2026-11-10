@@ -1,6 +1,7 @@
 #ifndef MWGUI_CONTROLLERSCREEN_H
 #define MWGUI_CONTROLLERSCREEN_H
 
+#include <functional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -149,9 +150,83 @@ namespace MWGui
         int drawHints(MyGUI::Widget* parent, int x, int width, int bottom, const std::vector<Hint>& hints);
 
         /// Draws the screen's own tabs, switched with the shoulder buttons, and a status line at their right.
+        /// Clicking a tab switches to it, as pressing a shoulder button that many times does.
         void drawTabRow(MyGUI::Widget* parent, int width, const std::vector<std::string>& captions, int selected,
             const std::string& status);
+
+        /// Makes an area that the mouse can point at and click, such as a row of a list. Moving the mouse onto it
+        /// calls onPoint, and a left click calls onClick. Either can be empty. They run at the start of the next
+        /// frame, since they usually draw the panel again, which destroys the area's widget.
+        void addPointerTarget(MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void()> onPoint,
+            std::function<void()> onClick);
+
+        /// Points at the target under the mouse, when it is a different one than before. The mouse manager calls it
+        /// when the mouse moves in controller menus mode.
+        void pointerMoved(int x, int y);
+        /// Clicks the target under the mouse. Returns true when there was one, so the click goes no further.
+        bool pointerClicked(int x, int y);
+
+        /// Makes an area that the mouse wheel scrolls, such as a page of text. The wheel otherwise works as the
+        /// d-pad's up and down. onWheel gets the wheel's steps, positive when it turns away from the player, and runs
+        /// at the start of the next frame.
+        void addWheelTarget(MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void(int steps)> onWheel);
+        /// Turns the wheel over the area under the mouse. Returns true when an area took it.
+        bool pointerWheel(int x, int y, int steps);
+        /// How far the wheel scrolls text per step, in canvas units.
+        inline constexpr float sWheelScrollStep = 90.f;
+
+        /// Presses a controller button for the menu that shows, as clicking a button hint does.
+        void pressButton(SDL_GameControllerButton button);
+
+        /// Runs what the mouse asked for since the last frame. The window manager calls it every frame, before the
+        /// windows update.
+        void runPointerActions();
     }
+
+    /// A list for a controller screen that scrolls to keep its focused row in view. Its rows are group headers and
+    /// items, and only items take the focus. The screen draws each row, and the list keeps the focus and the scrolling
+    /// for it. It also moves the focus with the held d-pad or left stick, and with the mouse: pointing at an item
+    /// focuses it, and clicking an item focuses it and activates it, as A does.
+    class ControllerList
+    {
+    public:
+        struct Row
+        {
+            int mHeight = 0;
+            bool mItem = true;
+        };
+
+        /// The focused item, counting items only.
+        int getFocus() const { return mFocus; }
+        void setFocus(int item) { mFocus = item; }
+        /// Focuses the first item and scrolls to the top.
+        void reset();
+
+        /// The first row drawn. Setting it puts a row at the top, such as a group's header, as long as the focused
+        /// item stays in view.
+        int getScroll() const { return mScroll; }
+        void setScroll(int row) { mScroll = row; }
+
+        /// Moves the focus with the held d-pad or left stick, within itemCount items. Returns true when it moved, so
+        /// the screen draws again.
+        bool updateHeld(float duration, int itemCount);
+        /// Forgets a held direction, as when the screen stops being the active one.
+        void resetHeld() { mHeld.reset(); }
+
+        /// Draws the rows that fit in an area, keeping the focused item in view, and never scrolling so far that space
+        /// is left empty below the last row. drawRow draws a row at a height,
+        /// and says whether the row is the focused item. Returns false when there are no items to draw, so the screen
+        /// can show a message instead. Pointing at an item calls onChange after focusing it. Clicking one does the
+        /// same, then calls onActivate.
+        bool draw(MyGUI::Widget* parent, int x, int y, int w, int h, const std::vector<Row>& rows,
+            const std::function<void(std::size_t row, int y, bool focused)>& drawRow, std::function<void()> onChange,
+            std::function<void()> onActivate);
+
+    private:
+        int mFocus = 0;
+        int mScroll = 0;
+        HeldDirection mHeld;
+    };
 }
 
 #endif

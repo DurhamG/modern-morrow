@@ -15,7 +15,9 @@
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
+#include "../mwgui/controllerscreen.hpp"
 #include "../mwgui/settingswindow.hpp"
+#include "../mwgui/windowbase.hpp"
 
 #include "../mwworld/player.hpp"
 
@@ -45,6 +47,17 @@ namespace MWInput
         float uiScale = MWBase::Environment::get().getWindowManager()->getScalingFactor();
         mGuiCursorX = w / (2.f * uiScale);
         mGuiCursorY = h / (2.f * uiScale);
+    }
+
+    bool MouseManager::usesControllerMenus() const
+    {
+        if (!Settings::gui().mControllerMenus || mBindingsManager->isDetectingBindingState())
+            return false;
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (!winMgr->isGuiMode())
+            return false;
+        const MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
+        return topWin != nullptr && topWin->isVisible();
     }
 
     void MouseManager::mouseMoved(const SDLUtil::MouseMotionEvent& arg)
@@ -85,6 +98,10 @@ namespace MWInput
                 winMgr->setControllerTooltipVisible(false);
                 winMgr->setCursorVisible(true);
             }
+
+            // In controller menus mode, a mouse that moves points at the menus' pointer targets.
+            if (!isFromWarp && (arg.xrel != 0 || arg.yrel != 0) && usesControllerMenus())
+                MWGui::ControllerUi::pointerMoved(static_cast<int>(mGuiCursorX), static_cast<int>(mGuiCursorY));
 
             // Clear warp tracking after processing
             mLastWarpX = -1;
@@ -156,6 +173,18 @@ namespace MWInput
         MWBase::Environment::get().getLuaManager()->inputEvent({ MWBase::LuaManager::InputEvent::MouseWheel,
             MWBase::LuaManager::InputEvent::WheelChange{ arg.x, arg.y } });
 
+        // In controller menus mode, the wheel works as the d-pad's up and down: it moves through lists, and zooms the
+        // map.
+        if (arg.y != 0 && usesControllerMenus())
+        {
+            // An area of text scrolls by itself.
+            const int steps = arg.y > 0 ? 1 : -1;
+            if (!MWGui::ControllerUi::pointerWheel(static_cast<int>(mGuiCursorX), static_cast<int>(mGuiCursorY), steps))
+                input->pressControllerMenuButton(
+                    steps > 0 ? SDL_CONTROLLER_BUTTON_DPAD_UP : SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+            return;
+        }
+
         if (mGuiCursorEnabled)
         {
             if (MyGUI::Widget* widget = MyGUI::InputManager::getInstance().getMouseFocusWidget())
@@ -168,6 +197,17 @@ namespace MWInput
         MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
         input->setJoystickLastUsed(false);
         bool guiMode = false;
+
+        // In controller menus mode, the right button goes back, as B does, rather than closing every menu. The left
+        // button clicks the menus' pointer targets.
+        if (id == SDL_BUTTON_RIGHT && usesControllerMenus())
+        {
+            input->pressControllerMenuButton(SDL_CONTROLLER_BUTTON_B);
+            return;
+        }
+        if (id == SDL_BUTTON_LEFT && usesControllerMenus()
+            && MWGui::ControllerUi::pointerClicked(static_cast<int>(mGuiCursorX), static_cast<int>(mGuiCursorY)))
+            return;
 
         if (id == SDL_BUTTON_LEFT || id == SDL_BUTTON_RIGHT) // MyGUI only uses these mouse events
         {

@@ -112,18 +112,26 @@ namespace MWGui
             }
             addText(mRoot, x + 36, rowY, sPanelWidth - 72, sRowHeight, itemLabel(mItems[i]), sFontLarge,
                 focused ? sActiveColour : sBrightColour);
+            // Pointing at an item focuses it, and clicking it chooses it, as A does.
+            addPointerTarget(
+                mRoot, x + 16, rowY + 4, sPanelWidth - 32, sRowHeight - 8,
+                [this, i] {
+                    if (mFocus == i)
+                        return;
+                    mFocus = i;
+                    redraw();
+                },
+                [this, i] {
+                    mFocus = i;
+                    redraw();
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                });
             rowY += sRowHeight;
         }
 
         // What the buttons do.
-        int hx = x + 28;
-        const int hy = y + panelH - 42;
-        for (const auto& [button, label] : { std::pair{ SDL_CONTROLLER_BUTTON_A, "#{Interface:PauseSelect}" } })
-        {
-            addGlyph(mRoot, hx, hy + 1, 24, button);
-            MyGUI::TextBox* text = addText(mRoot, hx + 32, hy - 3, 200, 30, label, sFontNormal, sBrightColour);
-            hx += 32 + text->getTextSize().width + 26;
-        }
+        drawHints(mRoot, x + 28, sPanelWidth - 56, y + panelH - 1,
+            { { SDL_CONTROLLER_BUTTON_A, "#{Interface:PauseSelect}" } });
     }
 
     std::string PauseMenu::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)

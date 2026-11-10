@@ -81,6 +81,7 @@ namespace MWInput
 
         float getActionValue(int action) const override;
         bool isControllerButtonPressed(SDL_GameControllerButton button) const override;
+        void pressControllerMenuButton(SDL_GameControllerButton button) override;
         float getControllerAxisValue(SDL_GameControllerAxis axis) const override;
         int getMouseMoveX() const override;
         int getMouseMoveY() const override;

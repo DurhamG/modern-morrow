@@ -58,6 +58,8 @@ namespace MWInput
         mControlsDisabled = disableControls;
 
         mInputWrapper->setMouseVisible(MWBase::Environment::get().getWindowManager()->getCursorVisible());
+        // The buttons the mouse pressed count as held for one frame, the last one.
+        mControllerManager->clearPressedMenuButtons();
         mInputWrapper->capture(disableEvents);
 
         if (disableControls)
@@ -201,6 +203,11 @@ namespace MWInput
     bool InputManager::isControllerButtonPressed(SDL_GameControllerButton button) const
     {
         return mControllerManager->isButtonPressed(button);
+    }
+
+    void InputManager::pressControllerMenuButton(SDL_GameControllerButton button)
+    {
+        mControllerManager->pressMenuButton(button);
     }
 
     float InputManager::getControllerAxisValue(SDL_GameControllerAxis axis) const

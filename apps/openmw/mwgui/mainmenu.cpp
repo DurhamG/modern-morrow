@@ -418,6 +418,9 @@ namespace MWGui
             curH += static_cast<int>(height / scale - 16);
         }
 
+        // The main menu covers the screen, on a layer above the pause menu's, so it lets the mouse through to the pause
+        // menu while that shows.
+        mMainWidget->setNeedMouseFocus(!pauseMenu);
         if (pauseMenu)
         {
             mButtonBox->setVisible(false);

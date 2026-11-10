@@ -89,6 +89,7 @@
 #include "console.hpp"
 #include "container.hpp"
 #include "controllers.hpp"
+#include "controllerscreen.hpp"
 #include "countdialog.hpp"
 #include "cursor.hpp"
 #include "debugwindow.hpp"
@@ -1063,6 +1064,8 @@ namespace MWGui
 
     void WindowManager::update(float frameDuration)
     {
+        // The mouse's actions run first, while the message boxes they were for still exist.
+        ControllerUi::runPointerActions();
         handleScheduledMessageBoxes();
 
         bool gameRunning
