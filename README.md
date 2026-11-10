@@ -137,6 +137,13 @@ Other improvements
 - **Pins on the map.** On the local map, X drops a red pin at the crosshair in the middle of the view.
 - **Improved Controller Tutorial Instructions.** On a controller, Morrowind's tutorial messages use the text the game was written with for the Xbox, such as "The LEFT THUMBSTICK moves you".
 
+Optional improvements
+---------------------
+
+These options change the gameplay, so they're off by default. Turn them on in the Prefs tab of the options.
+
+- **Run Fatigue.** Walking is harder with a control stick than with a key, since it means holding the stick only part of the way, so you end up running more and running out of fatigue. Run Fatigue lowers how much fatigue running costs, to 50%, 25% or none at all. It's 100% by default, which keeps Morrowind's rules.
+
 Trying it
 ---------
 
