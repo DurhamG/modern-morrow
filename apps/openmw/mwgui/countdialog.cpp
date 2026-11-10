@@ -97,6 +97,11 @@ namespace MWGui
         const int ty = y + 92;
         addGlyph(mPanel, innerX, ty + 10, 26, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
         addGlyph(mPanel, innerX + innerW - 26, ty + 10, 26, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+        // Clicking an arrow presses that direction on the d-pad, which changes the count by one.
+        addPointerTarget(
+            mPanel, innerX - 6, ty + 4, 38, 38, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_DPAD_LEFT); });
+        addPointerTarget(mPanel, innerX + innerW - 32, ty + 4, 38, 38, nullptr,
+            [] { pressButton(SDL_CONTROLLER_BUTTON_DPAD_RIGHT); });
         addText(mPanel, innerX, ty, innerW, 46, std::to_string(count) + " / " + std::to_string(total), sFontTitle,
             sActiveColour, MyGUI::Align::Center);
         addRect(mPanel, innerX, ty + 56, innerW, 8, MyGUI::Colour::Black, 0.6f);
@@ -109,6 +114,9 @@ namespace MWGui
         const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
             addGlyph(mPanel, hx, hintY + 4, 22, button);
             MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 200, 30, label, sFontNormal, sBrightColour);
+            // Clicking a hint presses its button.
+            addPointerTarget(
+                mPanel, hx, hintY, 30 + text->getTextSize().width, 30, nullptr, [button] { pressButton(button); });
             hx += 30 + text->getTextSize().width + 22;
         };
         hint(SDL_CONTROLLER_BUTTON_A, "#{Interface:OK}");

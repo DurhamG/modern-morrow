@@ -70,18 +70,12 @@ namespace MWGui
             int mItem = -1;
         };
 
-        struct ListState
-        {
-            int mFocus = 0;
-            int mScroll = 0;
-        };
-
         std::unique_ptr<InventoryItemModel> mModel;
         std::vector<ItemStack> mItems;
         bool mNeedsUpdate = true;
 
         Tab mTab = Tab::Equipment;
-        std::array<ListState, sTabCount> mLists;
+        std::array<ControllerList, sTabCount> mLists;
 
         // Each list remembers its own sort order, as a position in the orders the sort button cycles through.
         std::array<int, sTabCount> mTabSort{};
@@ -93,7 +87,7 @@ namespace MWGui
         int mSlotFocus = 0;
         int mSlotFilter = -1;
         int mPendingRing = -1;
-        ListState mAreaList;
+        ControllerList mAreaList;
 
         // The item last highlighted, which is marked as seen once the selection moves off it.
         ESM::RefId mHighlighted;
@@ -122,7 +116,7 @@ namespace MWGui
         void drawHeader(int width);
         void drawEquipmentOverview(int width);
         void drawArea(int width);
-        void drawList(int x, int y, int w, int h, const std::vector<Row>& rows, ListState& state, bool focused);
+        void drawList(int x, int y, int w, int h, const std::vector<Row>& rows, ControllerList& list, bool focused);
         void drawDetailsHeader(int x, int y, int w, int h, int item);
         int drawButtonHints(int x, int y, int w, int h, int item, const std::string& action, bool scroll = false);
         void drawDetails(int x, int y, int w, int h, int item, const std::string& action);
@@ -132,7 +126,7 @@ namespace MWGui
         void drawEmptyDetails(int x, int y, int w, int h, const std::string& text);
 
         void move(int dx, int dy);
-        void moveInList(ListState& state, const std::vector<Row>& rows, int delta);
+        void moveInList(ControllerList& list, const std::vector<Row>& rows, int delta);
         void changeTab(int delta);
         void activate();
         void back();

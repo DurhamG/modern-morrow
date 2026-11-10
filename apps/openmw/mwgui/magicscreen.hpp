@@ -96,12 +96,6 @@ namespace MWGui
             int mItem = -1;
         };
 
-        struct ListState
-        {
-            int mFocus = 0;
-            int mScroll = 0;
-        };
-
         std::vector<Castable> mCastables;
         std::vector<ActiveEffect> mEffects;
         // A summary of what the screen last showed, to tell when it needs to redraw.
@@ -109,12 +103,13 @@ namespace MWGui
         float mRefreshTimer = 0.f;
 
         Tab mTab = Tab::Active;
-        std::array<ListState, sTabCount> mLists;
+        // Each tab's list. The Active tab has its own two lists instead.
+        std::array<ControllerList, sTabCount> mLists;
 
         // The Active tab's two columns: the effects on the left, and the recently used spells on the right.
         bool mEffectsFocused = false;
-        ListState mEffectList;
-        ListState mRecentList;
+        ControllerList mEffectList;
+        ControllerList mRecentList;
 
         HeldDirection mHeldDirection;
         QuickKeyAssigner mQuickKeys;
@@ -132,7 +127,8 @@ namespace MWGui
         void drawActive(int width);
         void drawEffects(int x, int y, int w, int h);
         void drawReadyCard(int x, int y, int w, int h, int item);
-        void drawList(int x, int y, int w, int h, const std::vector<Row>& rows, ListState& state, bool focused);
+        void drawList(int x, int y, int w, int h, const std::vector<Row>& rows, ControllerList& list, bool focused);
+        void coverList(int x, int y, int w, int h, int focusedRowY, int rowHeight, bool focused, bool effects);
         void drawEntry(int x, int y, int w, int h, int item, bool focused);
         void drawDetails(int x, int y, int w, int h, int item);
         int drawHints(int x, int y, int w, int h, int item);

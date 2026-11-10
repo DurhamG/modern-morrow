@@ -310,7 +310,7 @@ namespace MWGui
         mLists = {};
         mTabSort = {};
         mAreaSort = {};
-        mAreaList = {};
+        mAreaList.reset();
         mHighlighted = ESM::RefId();
         mQuickKeys.cancel();
     }
@@ -696,13 +696,13 @@ namespace MWGui
             }
         }
         const std::vector<Row> rows = buildRows();
-        const ListState& state = mTab == Tab::Equipment ? mAreaList : mLists[static_cast<int>(mTab)];
+        const ControllerList& list = mTab == Tab::Equipment ? mAreaList : mLists[static_cast<int>(mTab)];
         int index = 0;
         for (const Row& row : rows)
         {
             if (row.mItem < 0)
                 continue;
-            if (index == state.mFocus)
+            if (index == list.getFocus())
                 return row.mItem;
             ++index;
         }
@@ -805,8 +805,7 @@ namespace MWGui
                                               : std::max(300, static_cast<int>(size.width * 0.3f));
         const int listW = size.width - 2 * sMargin - panelW - 16;
         const std::vector<Row> rows = buildRows();
-        ListState& state = mLists[static_cast<int>(mTab)];
-        drawList(sMargin, top, listW, bottom - top, rows, state, true);
+        drawList(sMargin, top, listW, bottom - top, rows, mLists[static_cast<int>(mTab)], true);
         const int item = focusedItem();
         if (item >= 0 && mTab == Tab::Notes && !mQuickKeys.isChoosing())
             drawBook(size.width - sMargin - panelW, top, panelW, bottom - top, item);
@@ -851,6 +850,19 @@ namespace MWGui
             const int y = top + row * (cardH + 6);
             const bool focused = area == mArea;
             addRect(mContent, x, y, columnW, cardH, sPanelColour, 0.9f);
+            // Pointing at an area highlights it, and clicking it opens it, as A does.
+            addPointerTarget(
+                mContent, x, y, columnW, cardH,
+                [this, area] {
+                    if (mArea == area)
+                        return;
+                    mArea = area;
+                    redraw();
+                },
+                [this, area] {
+                    mArea = area;
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                });
             if (focused)
             {
                 addRect(mContent, x, y, columnW, cardH, sAccentColour, 0.16f);
@@ -930,8 +942,11 @@ namespace MWGui
             addText(mContent, px + 16, y + 6, panelW - 32, 24, "#{Interface:InventoryNew}: " + news, sFontSmall,
                 sNewColour);
         addGlyph(mContent, px + 16, bottom - 44, 26, SDL_CONTROLLER_BUTTON_A);
-        addText(mContent, px + 50, bottom - 48, panelW - 66, 34, "#{Interface:InventoryActionChange}", sFontNormal,
-            sBrightColour);
+        MyGUI::TextBox* change = addText(mContent, px + 50, bottom - 48, panelW - 66, 34,
+            "#{Interface:InventoryActionChange}", sFontNormal, sBrightColour);
+        // Clicking the hint presses its button.
+        addPointerTarget(mContent, px + 16, bottom - 48, 34 + change->getTextSize().width, 34, nullptr,
+            [] { pressButton(SDL_CONTROLLER_BUTTON_A); });
     }
 
     void InventoryScreen::drawArea(int width)
@@ -963,6 +978,29 @@ namespace MWGui
             {
                 addRect(mContent, sMargin + 4, y - 2, slotsW - 8, 68, sAccentColour, focused ? 0.16f : 0.08f);
                 addRect(mContent, sMargin + 4, y - 2, 3, 68, sAccentColour, focused ? 1.f : 0.5f);
+            }
+            // Pointing at a slot highlights it, moving the selection there from the items as the d-pad does, and
+            // clicking it acts on it, as A does. While the player picks a quick key, the d-pad picks it instead.
+            if (!mQuickKeys.hasDpad())
+            {
+                const auto focusSlot = [this, i] {
+                    if (mFocus == Focus::Items)
+                        setHighlighted(ESM::RefId());
+                    mFocus = Focus::Slots;
+                    mSlotFocus = i;
+                };
+                addPointerTarget(
+                    mContent, sMargin + 4, y - 2, slotsW - 8, 68,
+                    [this, i, focusSlot] {
+                        if (mFocus == Focus::Slots && mSlotFocus == i)
+                            return;
+                        focusSlot();
+                        redraw();
+                    },
+                    [focusSlot] {
+                        focusSlot();
+                        pressButton(SDL_CONTROLLER_BUTTON_A);
+                    });
             }
             addText(mContent, sMargin + 16, y, slotsW - 32, 22, slotKey(slot), sFontSmall, sDimColour);
             y += 24;
@@ -1005,7 +1043,7 @@ namespace MWGui
     }
 
     void InventoryScreen::drawList(
-        int x, int y, int w, int h, const std::vector<Row>& rows, ListState& state, bool focused)
+        int x, int y, int w, int h, const std::vector<Row>& rows, ControllerList& list, bool focused)
     {
         addRect(mContent, x, y, w, h, sPanelColour, 0.9f);
         const int tab = static_cast<int>(mTab);
@@ -1031,63 +1069,29 @@ namespace MWGui
             cx += column.mWidth;
         }
 
-        int itemCount = 0;
+        std::vector<ControllerList::Row> listRows;
         for (const Row& row : rows)
-            itemCount += row.mItem >= 0 ? 1 : 0;
-        if (itemCount == 0)
-        {
-            addText(mContent, x + 16, y + 40, w - 32, 30, "#{Interface:InventoryNoItems}", sFontNormal, sDimColour);
-            return;
-        }
-        state.mFocus = std::clamp(state.mFocus, 0, itemCount - 1);
-
-        // Scroll so the focused row is in view.
+            listRows.push_back({ row.mItem < 0 ? sHeaderRowHeight : sRowHeight, row.mItem >= 0 });
         const int listTop = y + 32;
         const int listBottom = y + h - 4;
-        int focusRow = 0;
-        for (int i = 0, index = 0; i < static_cast<int>(rows.size()); ++i)
-        {
-            if (rows[i].mItem < 0)
-                continue;
-            if (index++ == state.mFocus)
-            {
-                focusRow = i;
-                break;
-            }
-        }
-        const auto rowHeight = [&](int i) { return rows[i].mItem < 0 ? sHeaderRowHeight : sRowHeight; };
-        if (focusRow < state.mScroll)
-            state.mScroll = focusRow > 0 && rows[focusRow - 1].mItem < 0 ? focusRow - 1 : focusRow;
-        while (true)
-        {
-            int bottomOfFocus = listTop;
-            for (int i = state.mScroll; i <= focusRow; ++i)
-                bottomOfFocus += rowHeight(i);
-            if (bottomOfFocus <= listBottom || state.mScroll >= focusRow)
-                break;
-            ++state.mScroll;
-        }
 
         const MWWorld::Player& worldPlayer = MWBase::Environment::get().getWorld()->getPlayer();
         MWWorld::InventoryStore& inventory = playerInventory();
-        int rowY = listTop;
-        int index = 0;
-        for (int i = 0; i < state.mScroll; ++i)
-            index += rows[i].mItem >= 0 ? 1 : 0;
-        for (int i = state.mScroll; i < static_cast<int>(rows.size()); ++i)
-        {
+        // Where the list's own focused row is drawn while the selection is elsewhere on the screen, such as on the
+        // equipment area's slots.
+        std::optional<int> unfocusedRowY;
+        const auto drawRow = [&](std::size_t i, int rowY, bool listFocus) {
             const Row& row = rows[i];
-            if (rowY + rowHeight(i) > listBottom)
-                break;
             if (row.mItem < 0)
             {
                 addText(mContent, x + 12, rowY, w - 24, 24, row.mHeader, sFontSmall, sBrightColour);
                 addRect(mContent, x + 12, rowY + 23, w - 24, 1, sAccentColour, 0.25f);
-                rowY += sHeaderRowHeight;
-                continue;
+                return;
             }
+            if (listFocus && !focused)
+                unfocusedRowY = rowY;
             const ItemStack& item = mItems[row.mItem];
-            const bool rowFocused = focused && index == state.mFocus;
+            const bool rowFocused = focused && listFocus;
             const bool equipped = item.mType == ItemStack::Type_Equipped;
             const int rx = x + 4;
             const int rw = w - 8;
@@ -1159,8 +1163,51 @@ namespace MWGui
                     sFontNormal, colour, MyGUI::Align::Right | MyGUI::Align::VCenter);
                 cx += column.mWidth;
             }
-            rowY += sRowHeight;
-            ++index;
+        };
+
+        // Pointing at an item highlights it, and clicking it uses it, as A does. On the Equipment tab, either one
+        // also moves the selection from the area's slots to its items.
+        const auto selectItems = [this] {
+            if (mTab == Tab::Equipment)
+                mFocus = Focus::Items;
+        };
+        if (!list.draw(
+                mContent, x + 4, listTop, w - 8, listBottom - listTop, listRows, drawRow,
+                [this, selectItems] {
+                    selectItems();
+                    redraw();
+                },
+                [this, selectItems] {
+                    selectItems();
+                    redraw();
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                }))
+        {
+            addText(mContent, x + 16, y + 40, w - 32, 30, "#{Interface:InventoryNoItems}", sFontNormal, sDimColour);
+            return;
+        }
+
+        if (mPendingRing >= 0 || mQuickKeys.hasDpad())
+        {
+            // While the player picks which ring to replace, or a quick key, the d-pad can't move through the items,
+            // so neither can the mouse. This area sits over the list's rows and takes the pointer from them.
+            addPointerTarget(mContent, x, y, w, h, nullptr, nullptr);
+        }
+        else if (unfocusedRowY)
+        {
+            // The list doesn't react to pointing at the item it already has, so this row moves the selection to the
+            // items itself.
+            addPointerTarget(
+                mContent, x + 4, *unfocusedRowY, w - 8, sRowHeight,
+                [this, selectItems] {
+                    selectItems();
+                    redraw();
+                },
+                [this, selectItems] {
+                    selectItems();
+                    redraw();
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                });
         }
     }
 
@@ -1281,14 +1328,14 @@ namespace MWGui
     // ---------------------------------------------------------------------------------------------------------------
     // Input
 
-    void InventoryScreen::moveInList(ListState& state, const std::vector<Row>& rows, int delta)
+    void InventoryScreen::moveInList(ControllerList& list, const std::vector<Row>& rows, int delta)
     {
         int itemCount = 0;
         for (const Row& row : rows)
             itemCount += row.mItem >= 0 ? 1 : 0;
         if (itemCount == 0)
             return;
-        state.mFocus = std::clamp(state.mFocus + delta, 0, itemCount - 1);
+        list.setFocus(std::clamp(list.getFocus() + delta, 0, itemCount - 1));
     }
 
     void InventoryScreen::move(int dx, int dy)
@@ -1335,7 +1382,7 @@ namespace MWGui
                 mFocus = Focus::Items;
                 mSlotFilter = -1;
                 mSlotFocus = 0;
-                mAreaList = {};
+                mAreaList.reset();
                 winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
                 redraw();
                 return;
@@ -1351,7 +1398,7 @@ namespace MWGui
                 else
                 {
                     mSlotFilter = mSlotFilter == slot ? -1 : slot;
-                    mAreaList = {};
+                    mAreaList.reset();
                     winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
                 }
                 mFocus = Focus::Items;
@@ -1430,7 +1477,7 @@ namespace MWGui
             else if (mSlotFilter >= 0)
             {
                 mSlotFilter = -1;
-                mAreaList = {};
+                mAreaList.reset();
             }
             else
             {

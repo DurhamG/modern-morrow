@@ -454,16 +454,16 @@ namespace MWGui
             const std::vector<int> recent = recentCastables(true);
             if (recent.empty())
                 return -1;
-            return recent[std::clamp(mRecentList.mFocus, 0, static_cast<int>(recent.size()) - 1)];
+            return recent[std::clamp(mRecentList.getFocus(), 0, static_cast<int>(recent.size()) - 1)];
         }
         const std::vector<Row> rows = buildRows();
-        const ListState& state = mLists[static_cast<int>(mTab)];
+        const int focus = mLists[static_cast<int>(mTab)].getFocus();
         int index = 0;
         for (const Row& row : rows)
         {
             if (row.mItem < 0)
                 continue;
-            if (index == state.mFocus)
+            if (index == focus)
                 return row.mItem;
             ++index;
         }
@@ -566,21 +566,15 @@ namespace MWGui
             return;
         }
 
-        const int count = static_cast<int>(mEffects.size());
-        mEffectList.mFocus = std::clamp(mEffectList.mFocus, 0, count - 1);
         const int listTop = y + 44;
-        const int visible = std::max(1, (y + h - 8 - listTop) / sEffectHeight);
-        if (mEffectList.mFocus < mEffectList.mScroll)
-            mEffectList.mScroll = mEffectList.mFocus;
-        if (mEffectList.mFocus >= mEffectList.mScroll + visible)
-            mEffectList.mScroll = mEffectList.mFocus - visible + 1;
-        mEffectList.mScroll = std::clamp(mEffectList.mScroll, 0, std::max(0, count - visible));
-
-        for (int i = mEffectList.mScroll; i < count && i < mEffectList.mScroll + visible; ++i)
-        {
+        const int listBottom = y + h - 8;
+        const std::vector<ControllerList::Row> rows(mEffects.size(), ControllerList::Row{ sEffectHeight, true });
+        int focusedRowY = -1;
+        const auto drawRow = [&](std::size_t i, int rowY, bool listFocused) {
             const ActiveEffect& effect = mEffects[i];
-            const int rowY = listTop + (i - mEffectList.mScroll) * sEffectHeight;
-            const bool focused = mEffectsFocused && i == mEffectList.mFocus;
+            const bool focused = mEffectsFocused && listFocused;
+            if (listFocused)
+                focusedRowY = rowY;
             if (focused)
             {
                 addRect(mContent, x + 4, rowY, w - 8, sEffectHeight - 2, sAccentColour, 0.16f);
@@ -595,7 +589,17 @@ namespace MWGui
             addText(mContent, x + w - timeW - 16, rowY + 3, timeW, 24,
                 effect.mTimeLeft < 0 ? "#{Interface:MagicConstant}" : remainingTime(effect.mTimeLeft), sFontSmall,
                 sDimColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
-        }
+        };
+        // Pointing at an effect or clicking it highlights it, moving the selection there from the recent spells.
+        // A does nothing on an effect, so a click does nothing more.
+        mEffectList.draw(
+            mContent, x, listTop, w, listBottom - listTop, rows, drawRow,
+            [this] {
+                mEffectsFocused = true;
+                redraw();
+            },
+            nullptr);
+        coverList(x, listTop, w, listBottom - listTop, focusedRowY, sEffectHeight, mEffectsFocused, true);
     }
 
     void MagicScreen::drawReadyCard(int x, int y, int w, int h, int item)
@@ -638,76 +642,69 @@ namespace MWGui
     }
 
     void MagicScreen::drawList(
-        int x, int y, int w, int h, const std::vector<Row>& rows, ListState& state, bool focused)
+        int x, int y, int w, int h, const std::vector<Row>& rows, ControllerList& list, bool focused)
     {
         const int top = y + 8;
-
-        int itemCount = 0;
-        for (const Row& row : rows)
-            itemCount += row.mItem >= 0 ? 1 : 0;
-        if (itemCount == 0)
-        {
-            addText(mContent, x + 16, top + 8, w - 32, 30, "#{Interface:MagicNoSpells}", sFontNormal, sDimColour);
-            return;
-        }
-        state.mFocus = std::clamp(state.mFocus, 0, itemCount - 1);
-
-        // Scroll so the focused row is in view.
         const int listBottom = y + h - 4;
-        int focusRow = 0;
-        for (int i = 0, index = 0; i < static_cast<int>(rows.size()); ++i)
-        {
-            if (rows[i].mItem < 0)
-                continue;
-            if (index++ == state.mFocus)
-            {
-                focusRow = i;
-                break;
-            }
-        }
-        const auto rowHeight = [&](int i) { return rows[i].mItem < 0 ? sHeaderRowHeight : sEntryHeight; };
-        if (focusRow < state.mScroll)
-            state.mScroll = focusRow > 0 && rows[focusRow - 1].mItem < 0 ? focusRow - 1 : focusRow;
-        while (true)
-        {
-            int bottomOfFocus = top;
-            for (int i = state.mScroll; i <= focusRow; ++i)
-                bottomOfFocus += rowHeight(i);
-            if (bottomOfFocus <= listBottom || state.mScroll >= focusRow)
-                break;
-            ++state.mScroll;
-        }
-        // Don't scroll past the end of the list, which would leave empty space below it.
-        int lastScroll = static_cast<int>(rows.size());
-        for (int i = static_cast<int>(rows.size()) - 1, used = 0; i >= 0; --i)
-        {
-            used += rowHeight(i);
-            if (top + used > listBottom)
-                break;
-            lastScroll = i;
-        }
-        state.mScroll = std::min(state.mScroll, lastScroll);
 
-        int rowY = top;
-        int index = 0;
-        for (int i = 0; i < state.mScroll; ++i)
-            index += rows[i].mItem >= 0 ? 1 : 0;
-        for (int i = state.mScroll; i < static_cast<int>(rows.size()); ++i)
-        {
+        std::vector<ControllerList::Row> listRows;
+        for (const Row& row : rows)
+            listRows.push_back({ row.mItem < 0 ? sHeaderRowHeight : sEntryHeight, row.mItem >= 0 });
+        int focusedRowY = -1;
+        const auto drawRow = [&](std::size_t i, int rowY, bool listFocused) {
             const Row& row = rows[i];
-            if (rowY + rowHeight(i) > listBottom)
-                break;
             if (row.mItem < 0)
             {
                 addText(mContent, x + 12, rowY, w - 24, 24, row.mHeader, sFontSmall, sBrightColour);
                 addRect(mContent, x + 12, rowY + 23, w - 24, 1, sAccentColour, 0.25f);
-                rowY += sHeaderRowHeight;
-                continue;
+                return;
             }
-            drawEntry(x + 4, rowY, w - 8, sEntryHeight - 2, row.mItem, focused && index == state.mFocus);
-            rowY += sEntryHeight;
-            ++index;
+            if (listFocused)
+                focusedRowY = rowY;
+            drawEntry(x + 4, rowY, w - 8, sEntryHeight - 2, row.mItem, focused && listFocused);
+        };
+        // Pointing at an entry highlights it, and clicking it readies it, as A does. On the Active tab, either one
+        // also moves the selection from the effects to the recent spells.
+        if (!list.draw(
+                mContent, x, top, w, listBottom - top, listRows, drawRow,
+                [this] {
+                    if (mTab == Tab::Active)
+                        mEffectsFocused = false;
+                    redraw();
+                },
+                [] { pressButton(SDL_CONTROLLER_BUTTON_A); }))
+        {
+            addText(mContent, x + 16, top + 8, w - 32, 30, "#{Interface:MagicNoSpells}", sFontNormal, sDimColour);
+            return;
         }
+        coverList(x, top, w, listBottom - top, focusedRowY, sEntryHeight, focused, false);
+    }
+
+    void MagicScreen::coverList(int x, int y, int w, int h, int focusedRowY, int rowHeight, bool focused, bool effects)
+    {
+        // While the player picks a quick key, the d-pad doesn't move the selection, so neither does the mouse. A
+        // target that does nothing covers the list's own targets.
+        if (mQuickKeys.hasDpad())
+        {
+            addPointerTarget(mContent, x, y, w, h, nullptr, nullptr);
+            return;
+        }
+        // In the Active tab's other column, the list keeps its focused row, so pointing at that row doesn't change
+        // the list's focus, and the list does nothing. A target over that row moves the selection to its column
+        // instead, as the d-pad does.
+        if (focused || focusedRowY < 0)
+            return;
+        const auto focusColumn = [this, effects] {
+            mEffectsFocused = effects;
+            redraw();
+        };
+        if (effects)
+            addPointerTarget(mContent, x, focusedRowY, w, rowHeight, focusColumn, focusColumn);
+        else
+            addPointerTarget(mContent, x, focusedRowY, w, rowHeight, focusColumn, [focusColumn] {
+                focusColumn();
+                pressButton(SDL_CONTROLLER_BUTTON_A);
+            });
     }
 
     void MagicScreen::drawEntry(int x, int y, int w, int h, int item, bool focused)
@@ -887,20 +884,20 @@ namespace MWGui
                 mEffectsFocused = true;
             else if (dx > 0)
                 mEffectsFocused = false;
-            ListState& state = mEffectsFocused ? mEffectList : mRecentList;
+            ControllerList& list = mEffectsFocused ? mEffectList : mRecentList;
             const int count
                 = mEffectsFocused ? static_cast<int>(mEffects.size()) : static_cast<int>(recentCastables(true).size());
             if (count > 0)
-                state.mFocus = std::clamp(state.mFocus + dy, 0, count - 1);
+                list.setFocus(std::clamp(list.getFocus() + dy, 0, count - 1));
         }
         else if (dy != 0)
         {
             int itemCount = 0;
             for (const Row& row : buildRows())
                 itemCount += row.mItem >= 0 ? 1 : 0;
-            ListState& state = mLists[static_cast<int>(mTab)];
+            ControllerList& list = mLists[static_cast<int>(mTab)];
             if (itemCount > 0)
-                state.mFocus = std::clamp(state.mFocus + dy, 0, itemCount - 1);
+                list.setFocus(std::clamp(list.getFocus() + dy, 0, itemCount - 1));
         }
         redraw();
     }
@@ -917,7 +914,7 @@ namespace MWGui
         if (mTab == Tab::Active)
             return;
         const std::vector<Row> rows = buildRows();
-        ListState& state = mLists[static_cast<int>(mTab)];
+        ControllerList& list = mLists[static_cast<int>(mTab)];
         // Each group's first entry, and the row of its header.
         std::vector<std::pair<int, int>> groupStarts;
         for (int i = 0, index = 0; i < static_cast<int>(rows.size()); ++i)
@@ -932,12 +929,12 @@ namespace MWGui
         if (groupStarts.size() < 2)
             return;
         auto next = std::find_if(groupStarts.begin(), groupStarts.end(),
-            [&](const std::pair<int, int>& start) { return start.first > state.mFocus; });
+            [&](const std::pair<int, int>& start) { return start.first > list.getFocus(); });
         if (next == groupStarts.end())
             next = groupStarts.begin();
         // The group's header goes to the top of the list, so the whole group shows.
-        state.mFocus = next->first;
-        state.mScroll = next->second;
+        list.setFocus(next->first);
+        list.setScroll(next->second);
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         redraw();
     }

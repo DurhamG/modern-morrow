@@ -43,8 +43,9 @@ namespace MWGui
         /// screen needs to redraw.
         bool update(float duration);
 
-        /// Draws the eight d-pad slots, and what is on each, in the area.
-        void draw(MyGUI::Widget* parent, int x, int y, int w, int h) const;
+        /// Draws the eight d-pad slots, and what is on each, in the area. Clicking a slot chooses it, as its direction
+        /// does. While choosing, the mouse wheel does nothing, since it would otherwise press the d-pad.
+        void draw(MyGUI::Widget* parent, int x, int y, int w, int h);
 
     private:
         enum class State
@@ -65,6 +66,8 @@ namespace MWGui
         State mState = State::Idle;
         int mDirection = -1;
         float mHeldTime = 0.f;
+        // The slot the mouse clicked, which update assigns.
+        int mClickedSlot = -1;
     };
 
     /// Returns the d-pad slot, from 1 to 8, that holds the item, or the spell when there is no item. Returns -1 when

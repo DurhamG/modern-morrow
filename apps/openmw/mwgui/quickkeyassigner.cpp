@@ -64,6 +64,17 @@ namespace MWGui
 
     bool QuickKeyAssigner::update(float duration)
     {
+        if (mClickedSlot >= 0)
+        {
+            const int slot = mClickedSlot;
+            mClickedSlot = -1;
+            if (mState == State::Choosing)
+            {
+                assign(slot);
+                cancel();
+                return true;
+            }
+        }
         if (mState == State::Pressed)
         {
             if (!isDown(mDirection))
@@ -99,8 +110,11 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
     }
 
-    void QuickKeyAssigner::draw(MyGUI::Widget* parent, int x, int y, int w, int h) const
+    void QuickKeyAssigner::draw(MyGUI::Widget* parent, int x, int y, int w, int h)
     {
+        // The wheel works as the d-pad elsewhere, which here would choose a slot by accident.
+        addWheelTarget(parent, 0, 0, parent->getWidth(), parent->getHeight(), [](int) {});
+
         int ry = y;
         for (const std::string& line :
             wrapText(parent, localised("#{Interface:QuickKeyInstructions}"), w, sFontSmall, 3))
@@ -123,6 +137,7 @@ namespace MWGui
             for (const bool held : { false, true })
             {
                 const int slot = slotFor(direction, held);
+                addPointerTarget(parent, x - 6, ry, w + 12, rowH, nullptr, [this, slot] { mClickedSlot = slot; });
                 drawQuickKeyMarker(parent, x, ry + 6, 4, slot);
                 addText(parent, x + 30, ry, labelW, rowH,
                     held ? "#{Interface:QuickKeyHold}" : "#{Interface:QuickKeyPress}", sFontSmall, sDimColour);
