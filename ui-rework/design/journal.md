@@ -20,7 +20,8 @@ This is the design for the reworked journal, agreed with the user. In controller
 - **The details panel** shows the full name, whether the quest is in progress or finished, who gave it, where, and for which faction. Below that are all its entries, newest first, with their dates. The right stick scrolls them when they don't fit.
 - **X pins the highlighted quest,** or unpins it. Pinned quests show in a Pinned group at the top of every tab, so the quests the player is working on stay in reach. The save keeps the pin on each of the game's quest IDs that share the quest's name, from save format version 43. Older saves load with nothing pinned.
 - **Y jumps to the next group,** as on the other screens.
-- **No topic links, no topic index, and no book of dated entries.** A topic index could come back later as a part of the Journal tab, if players miss it.
+- **Topics are reached from quests.** The topics the player has asked about are highlighted in a quest's entries. A moves the focus into the entries, where the d-pad steps from topic to topic, and A opens the topic's page: what each person told the player about it, newest first, with who said it. A topic page highlights the topics in it too, so the player can follow one to the next. B steps back a page, then to the list. A mouse click on a topic opens it. A topic the player hasn't asked about isn't highlighted, since its page would be empty.
+- **No topic index, and no book of dated entries.** Topics are only reached from the quests that mention them.
 
 ## Where the quest giver and place come from
 
@@ -38,11 +39,12 @@ Counted over Morrowind, Tribunal and Bloodmoon, about 22% of quests have no fact
 | Button | What it does |
 | --- | --- |
 | L1, R1 | Switch between Recent, Places and Factions. |
-| D-pad up and down, left stick | Move the selection. Holding repeats. |
+| D-pad up and down, left stick | Move the selection. In the entries, step from topic to topic. Holding repeats. |
+| A | Move into the quest's entries, onto its first topic. There, open the highlighted topic. |
 | X | Pin the highlighted quest, or unpin it. |
 | Y | Jump to the next group. |
 | Right stick | Scroll the quest's entries. |
-| B | Close the menu. |
+| B | Step back from a topic, or out of the entries, or close the menu. |
 | L2, R2 | Switch between the map, inventory, magic, stats and journal. |
 
 ## The first version

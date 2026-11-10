@@ -5,16 +5,23 @@
 #include <cmath>
 #include <string_view>
 
+#include <cstdio>
+
+#include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
+#include <MyGUI_TextBox.h>
 
 #include <components/misc/strings/algorithm.hpp>
 #include <components/misc/strings/lower.hpp>
+#include <components/translation/translation.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
+#include "../mwbase/journal.hpp"
 #include "../mwbase/windowmanager.hpp"
 
 #include "../mwdialogue/journalentry.hpp"
+#include "../mwdialogue/topic.hpp"
 
 namespace MWGui
 {
@@ -28,6 +35,18 @@ namespace MWGui
         constexpr int sPlaceColumnWidth = 170;
         constexpr int sFactionColumnWidth = 180;
         constexpr float sScrollSpeed = 700.f;
+        constexpr int sLineHeight = sFontNormal + 6;
+
+        // A colour as a tag in a text box's caption, such as "#7FB3FF", which colours the text after it.
+        std::string colourTag(const MyGUI::Colour& colour)
+        {
+            const auto channel
+                = [](float value) { return static_cast<int>(std::lround(std::clamp(value, 0.f, 1.f) * 255)); };
+            char tag[8];
+            std::snprintf(
+                tag, sizeof(tag), "#%02X%02X%02X", channel(colour.red), channel(colour.green), channel(colour.blue));
+            return tag;
+        }
 
         std::string tabKey(int tab)
         {
@@ -57,14 +76,31 @@ namespace MWGui
         mQuests.clear();
         mSelected.clear();
         mList.reset();
-        mEntriesQuest.clear();
+        mEntriesPage.clear();
+        mInDetails = false;
+        mTopicPages.clear();
+        mKeywordSearch.clear();
+        mTopics.clear();
     }
 
     void JournalScreen::onOpen()
     {
         mList.resetHeld();
-        // The journal can't change while the menus are open, so the quests are read once.
+        mLinkHeld.reset();
+        mInDetails = false;
+        mTopicPages.clear();
+        // The journal can't change while the menus are open, so the quests and topics are read once.
         mQuests = QuestLog::collect();
+        mKeywordSearch.clear();
+        mTopics.clear();
+        const Translation::Storage& translations
+            = MWBase::Environment::get().getWindowManager()->getTranslationDataStorage();
+        for (const auto& [id, topic] : MWBase::Environment::get().getJournal()->getTopics())
+        {
+            const std::string key = Misc::StringUtils::lowerCase(topic.getName());
+            mTopics[key] = &topic;
+            mKeywordSearch.seed(translations.topicKeyword(topic.getName()), key);
+        }
         redraw();
     }
 
@@ -75,8 +111,16 @@ namespace MWGui
             mList.resetHeld();
             return;
         }
-        // Every tab lists all the quests, in its own order.
-        if (mList.updateHeld(duration, static_cast<int>(mQuests.size())))
+        // In the details, the d-pad steps from topic to topic. In the list, every tab lists all the quests, in its own
+        // order.
+        if (mInDetails)
+        {
+            int dx = 0;
+            int dy = 0;
+            if (mLinkHeld.update(duration, dx, dy))
+                moveLink(dy != 0 ? dy : dx);
+        }
+        else if (mList.updateHeld(duration, static_cast<int>(mQuests.size())))
             selectFocused();
         scrollEntries(
             MWBase::Environment::get().getInputManager()->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTY), duration);
@@ -87,14 +131,20 @@ namespace MWGui
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         switch (arg.button)
         {
+            case SDL_CONTROLLER_BUTTON_A:
+                activateDetails();
+                break;
             case SDL_CONTROLLER_BUTTON_B:
-                winMgr->exitCurrentGuiMode();
+                if (!stepBack())
+                    winMgr->exitCurrentGuiMode();
                 break;
             case SDL_CONTROLLER_BUTTON_X:
-                togglePinned();
+                if (!mInDetails)
+                    togglePinned();
                 break;
             case SDL_CONTROLLER_BUTTON_Y:
-                nextGroup();
+                if (!mInDetails)
+                    nextGroup();
                 break;
             case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
                 changeTab(-1);
@@ -300,106 +350,283 @@ namespace MWGui
         const int innerX = x + 16;
         const int innerW = w - 32;
         int ty = y + 12;
+        const MWDialogue::Topic* topic = mTopicPages.empty() ? nullptr : mTopicPages.back().mTopic;
 
-        for (const std::string& line : wrapText(mContent, quest.mName, innerW, sFontLarge, 2))
+        if (topic == nullptr)
         {
-            addText(mContent, innerX, ty, innerW, 32, escaped(line), sFontLarge, sBrightColour);
+            for (const std::string& line : wrapText(mContent, quest.mName, innerW, sFontLarge, 2))
+            {
+                addText(mContent, innerX, ty, innerW, 32, escaped(line), sFontLarge, sBrightColour);
+                ty += 30;
+            }
+            addText(mContent, innerX, ty, innerW, 22,
+                quest.mFinished ? "#{Interface:JournalFinished}" : "#{Interface:JournalInProgress}", sFontSmall,
+                quest.mFinished ? sBetterColour : sNewColour);
+            ty += 30;
+
+            // Who gave the quest, where, and for whom, when the game knows.
+            const auto fact = [&](const std::string& label, const std::string& value) {
+                if (value.empty())
+                    return;
+                addText(mContent, innerX, ty, 100, 26, label, sFontSmall, sDimColour);
+                addText(mContent, innerX + 100, ty, innerW - 100, 26, escaped(value), sFontNormal, sTextColour);
+                ty += 26;
+            };
+            fact("#{Interface:JournalGivenBy}", QuestLog::giverName(quest));
+            fact("#{Interface:JournalPlace}", quest.mPlace);
+            fact("#{Interface:JournalFaction}", QuestLog::factionName(quest));
+        }
+        else
+        {
+            // The way here from the quest, then the topic's name.
+            std::string path = quest.mName;
+            for (std::size_t i = 0; i + 1 < mTopicPages.size(); ++i)
+                path += " > " + std::string(mTopicPages[i].mTopic->getName());
+            addText(mContent, innerX, ty, innerW, 22, escaped(wrapText(mContent, path, innerW, sFontSmall, 1).front()),
+                sFontSmall, sDimColour);
+            ty += 26;
+            for (const std::string& line : wrapText(mContent, std::string(topic->getName()), innerW, sFontLarge, 2))
+            {
+                addText(mContent, innerX, ty, innerW, 32, escaped(line), sFontLarge, sBrightColour);
+                ty += 30;
+            }
+            addText(mContent, innerX, ty, innerW, 22, "#{Interface:JournalWhatYouHeard}", sFontSmall, sNewColour);
             ty += 30;
         }
-        addText(mContent, innerX, ty, innerW, 22,
-            quest.mFinished ? "#{Interface:JournalFinished}" : "#{Interface:JournalInProgress}", sFontSmall,
-            quest.mFinished ? sBetterColour : sNewColour);
-        ty += 30;
-
-        // Who gave the quest, where, and for whom, when the game knows.
-        const auto fact = [&](const std::string& label, const std::string& value) {
-            if (value.empty())
-                return;
-            addText(mContent, innerX, ty, 100, 26, label, sFontSmall, sDimColour);
-            addText(mContent, innerX + 100, ty, innerW - 100, 26, escaped(value), sFontNormal, sTextColour);
-            ty += 26;
-        };
-        fact("#{Interface:JournalGivenBy}", QuestLog::giverName(quest));
-        fact("#{Interface:JournalPlace}", quest.mPlace);
-        fact("#{Interface:JournalFaction}", QuestLog::factionName(quest));
         ty += 8;
         addRect(mContent, innerX, ty, innerW, 1, sAccentColour, 0.25f);
         ty += 10;
 
-        // The entries, newest first, on a page the right stick scrolls when they don't fit.
+        // The entries, newest first, on a page the right stick scrolls when they don't fit. They are drawn first, to
+        // know which topics they highlight and how tall they are. The area is fitted above the button hints after.
         constexpr int barWidth = 4;
-        const int areaBottom = y + h - 56;
         MyGUI::Widget* area = mContent->createWidget<MyGUI::Widget>(
-            "", MyGUI::IntCoord(innerX, ty, innerW, areaBottom - ty), MyGUI::Align::Default);
+            "", MyGUI::IntCoord(innerX, ty, innerW, std::max(0, y + h - ty)), MyGUI::Align::Default);
         area->setNeedMouseFocus(false);
-        // The wheel scrolls the entries, rather than moving through the quests.
-        addWheelTarget(mContent, innerX, ty, innerW, areaBottom - ty, [this](int steps) {
+        constexpr int unlimitedHeight = 1 << 20;
+        const int paperW = innerW - 12;
+        mEntriesPaper = area->createWidget<MyGUI::Widget>(
+            "", MyGUI::IntCoord(0, 0, paperW, unlimitedHeight), MyGUI::Align::Default);
+        mEntriesPaper->setNeedMouseFocus(false);
+        mLinks.clear();
+        int py = 0;
+        if (topic == nullptr)
+        {
+            for (auto it = quest.mEntries.rbegin(); it != quest.mEntries.rend(); ++it)
+            {
+                const bool latest = it == quest.mEntries.rbegin();
+                addText(mEntriesPaper, 0, py, paperW, 22, escaped(QuestLog::timestamp(**it)), sFontSmall,
+                    latest ? sNewColour : sDimColour);
+                py += 24;
+                py += drawLinkedText(py, paperW, linkTopics((*it)->getText(), nullptr),
+                    latest ? sBrightColour : sTextColour);
+                py += 14;
+            }
+        }
+        else
+        {
+            // What each person said about the topic, newest first.
+            for (std::size_t i = topic->size(); i-- > 0;)
+            {
+                const MWDialogue::Entry& entry = (*topic)[i];
+                const bool latest = i + 1 == topic->size();
+                if (!entry.mActorName.empty())
+                {
+                    addText(mEntriesPaper, 0, py, paperW, 22, escaped(entry.mActorName), sFontSmall,
+                        latest ? sNewColour : sDimColour);
+                    py += 24;
+                }
+                py += drawLinkedText(
+                    py, paperW, linkTopics(entry.getText(), topic), latest ? sBrightColour : sTextColour);
+                py += 14;
+            }
+        }
+        mEntriesPaper->setSize(paperW, py);
+        mLinkFocus = mLinks.empty() ? 0 : std::clamp(mLinkFocus, 0, static_cast<int>(mLinks.size()) - 1);
+
+        // The button hints along the bottom of the panel, on a second row when they don't fit on one. The right
+        // stick's hint shows when the entries are taller than the room left above the hints.
+        std::vector<Hint> hints;
+        if (!mLinks.empty())
+            hints.emplace_back(
+                SDL_CONTROLLER_BUTTON_A, mInDetails ? "#{Interface:JournalOpenTopic}" : "#{Interface:JournalTopics}");
+        if (!mInDetails)
+        {
+            hints.emplace_back(
+                SDL_CONTROLLER_BUTTON_X, quest.mPinned ? "#{Interface:JournalUnpin}" : "#{Interface:JournalPin}");
+            if (groups)
+                hints.emplace_back(SDL_CONTROLLER_BUTTON_Y, "#{Interface:MagicNextGroup}");
+        }
+        constexpr int hintsGap = 16;
+        std::vector<Hint> scrolling = hints;
+        scrolling.emplace_back(SDL_CONTROLLER_BUTTON_RIGHTSTICK, "#{Interface:InventoryScroll}");
+        if (py > y + h - hintsHeight(mContent, innerW, scrolling) - hintsGap - ty)
+            hints = std::move(scrolling);
+        const int areaBottom = drawHints(mContent, innerX, innerW, y + h, hints) - hintsGap;
+        area->setSize(innerW, std::max(0, areaBottom - ty));
+        // The wheel scrolls the entries too, rather than moving through the quests. Its area goes behind the page, so
+        // the topics on the page can be clicked.
+        addWheelTarget(mContent, innerX, ty, innerW, std::max(0, areaBottom - ty), [this](int steps) {
             mEntriesScroll = std::clamp(
                 mEntriesScroll - steps * sWheelScrollStep, 0.f, static_cast<float>(std::max(0, mEntriesScrollMax)));
             placeEntries();
-        });
-        constexpr int unlimitedHeight = 1 << 20;
-        mEntriesPaper = area->createWidget<MyGUI::Widget>(
-            "", MyGUI::IntCoord(0, 0, innerW - 12, unlimitedHeight), MyGUI::Align::Default);
-        mEntriesPaper->setNeedMouseFocus(false);
-        int py = 0;
-        for (auto it = quest.mEntries.rbegin(); it != quest.mEntries.rend(); ++it)
-        {
-            const bool latest = it == quest.mEntries.rbegin();
-            addText(mEntriesPaper, 0, py, innerW - 12, 22, escaped(QuestLog::timestamp(**it)), sFontSmall,
-                latest ? sNewColour : sDimColour);
-            py += 24;
-            for (const std::string& line :
-                wrapText(mEntriesPaper, (*it)->getText(), innerW - 12, sFontNormal, std::size_t(-1)))
-            {
-                addText(mEntriesPaper, 0, py, innerW - 12, sFontNormal + 6, escaped(line), sFontNormal,
-                    latest ? sBrightColour : sTextColour);
-                py += sFontNormal + 6;
-            }
-            py += 14;
-        }
-        mEntriesPaper->setSize(innerW - 12, py);
+        })->setDepth(1);
 
-        if (quest.mName != mEntriesQuest)
+        // Each page starts at its top. In the details, the page scrolls to keep the highlighted topic in view.
+        std::string page = quest.mName;
+        for (const TopicPage& opened : mTopicPages)
+            page += "\n" + std::string(opened.mTopic->getName());
+        if (page != mEntriesPage)
         {
-            mEntriesQuest = quest.mName;
+            mEntriesPage = page;
             mEntriesScroll = 0.f;
         }
-        mEntriesScrollMax = std::max(0, py - area->getHeight());
+        mEntriesViewHeight = area->getHeight();
+        mEntriesScrollMax = std::max(0, py - mEntriesViewHeight);
+        if (mInDetails && !mLinks.empty())
+        {
+            const std::vector<MyGUI::IntCoord>& parts = mLinks[mLinkFocus].mParts;
+            const int top = parts.front().top - 8;
+            const int bottom = parts.back().bottom() + 8;
+            if (top < mEntriesScroll)
+                mEntriesScroll = static_cast<float>(top);
+            else if (bottom > mEntriesScroll + mEntriesViewHeight)
+                mEntriesScroll = static_cast<float>(bottom - mEntriesViewHeight);
+        }
         mEntriesScroll = std::clamp(mEntriesScroll, 0.f, static_cast<float>(mEntriesScrollMax));
 
-        // The button hints along the bottom of the panel. Clicking a hint presses its button.
-        int hx = innerX;
-        {
-            addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_X);
-            MyGUI::TextBox* label = addText(mContent, hx + 34, y + h - 44, 200, 34,
-                quest.mPinned ? "#{Interface:JournalUnpin}" : "#{Interface:JournalPin}", sFontNormal, sBrightColour);
-            addPointerTarget(mContent, hx, y + h - 44, 34 + label->getTextSize().width, 34, nullptr,
-                [] { pressButton(SDL_CONTROLLER_BUTTON_X); });
-            hx += 34 + label->getTextSize().width + 24;
-        }
-        if (groups)
-        {
-            addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_Y);
-            MyGUI::TextBox* label = addText(
-                mContent, hx + 34, y + h - 44, 200, 34, "#{Interface:MagicNextGroup}", sFontNormal, sBrightColour);
-            addPointerTarget(mContent, hx, y + h - 44, 34 + label->getTextSize().width, 34, nullptr,
-                [] { pressButton(SDL_CONTROLLER_BUTTON_Y); });
-            hx += 34 + label->getTextSize().width + 24;
-        }
         if (mEntriesScrollMax > 0)
         {
             mEntriesTrack = MyGUI::IntCoord(innerX + innerW - barWidth, ty, barWidth, areaBottom - ty);
             addRect(mContent, mEntriesTrack.left, mEntriesTrack.top, mEntriesTrack.width, mEntriesTrack.height,
                 sAccentColour, 0.12f);
-            const float visible = static_cast<float>(area->getHeight()) / py;
+            const float visible = static_cast<float>(mEntriesViewHeight) / py;
             mEntriesScrollThumb = addRect(mContent, mEntriesTrack.left, mEntriesTrack.top, mEntriesTrack.width,
                 std::max(16, static_cast<int>(mEntriesTrack.height * visible)), sAccentColour, 0.6f);
-
-            addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_RIGHTSTICK);
-            addText(mContent, hx + 34, y + h - 44, 160, 34, "#{Interface:InventoryScroll}", sFontNormal, sBrightColour);
         }
         placeEntries();
+    }
+
+    JournalScreen::LinkedText JournalScreen::linkTopics(const std::string& text, const MWDialogue::Topic* page) const
+    {
+        // As in the journal book, the text shows each topic by its display name.
+        const Translation::Storage& translations
+            = MWBase::Environment::get().getWindowManager()->getTranslationDataStorage();
+        LinkedText result;
+        MWDialogue::KeywordSearch::Point position = text.begin();
+        for (const MWDialogue::KeywordSearch::Match& match : mKeywordSearch.parseHyperText(text, translations))
+        {
+            const std::string_view name = match.getDisplayName();
+            result.mText.append(position, match.mBeg);
+            const std::size_t start = result.mText.size();
+            result.mText.append(name);
+            position = match.mEnd;
+            const auto found = mTopics.find(match.mTopicId);
+            if (found != mTopics.end() && found->second != page)
+                result.mSpans.emplace_back(start, result.mText.size(), found->second);
+        }
+        result.mText.append(position, text.end());
+        return result;
+    }
+
+    int JournalScreen::drawLinkedText(int y, int width, const LinkedText& text, const MyGUI::Colour& colour)
+    {
+        // The text is measured in a hidden text box, a word at a time, to break it into lines that fit.
+        MyGUI::TextBox* probe = addText(mEntriesPaper, 0, 0, width, sLineHeight, {}, sFontNormal, colour);
+        probe->setVisible(false);
+        const std::string& body = text.mText;
+        const auto measure = [&](std::size_t from, std::size_t to) {
+            probe->setCaption(MyGUI::UString(escaped(std::string_view(body).substr(from, to - from))));
+            return probe->getTextSize().width;
+        };
+
+        // Each line, as its start and end in the text. A line break in the text starts a new line.
+        std::vector<std::pair<std::size_t, std::size_t>> lines;
+        std::size_t lineStart = std::string::npos;
+        std::size_t lineEnd = 0;
+        std::size_t i = 0;
+        while (i < body.size())
+        {
+            if (body[i] == '\n')
+            {
+                if (lineStart != std::string::npos)
+                    lines.emplace_back(lineStart, lineEnd);
+                lineStart = std::string::npos;
+                ++i;
+                continue;
+            }
+            if (body[i] == ' ' || body[i] == '\t' || body[i] == '\r')
+            {
+                ++i;
+                continue;
+            }
+            std::size_t wordEnd = i;
+            while (wordEnd < body.size() && body[wordEnd] != ' ' && body[wordEnd] != '\t' && body[wordEnd] != '\r'
+                && body[wordEnd] != '\n')
+                ++wordEnd;
+            if (lineStart == std::string::npos)
+                lineStart = i;
+            else if (measure(lineStart, wordEnd) > width)
+            {
+                lines.emplace_back(lineStart, lineEnd);
+                lineStart = i;
+            }
+            lineEnd = wordEnd;
+            i = wordEnd;
+        }
+        if (lineStart != std::string::npos)
+            lines.emplace_back(lineStart, lineEnd);
+
+        const std::string textTag = colourTag(colour);
+        int ly = y;
+        std::size_t span = 0;
+        for (const auto& [from, to] : lines)
+        {
+            // The line's text, with each topic in it coloured, and the highlighted topic on a box of its own.
+            std::string caption;
+            std::size_t at = from;
+            for (std::size_t s = span; s < text.mSpans.size(); ++s)
+            {
+                const auto& [spanStart, spanEnd, spanTopic] = text.mSpans[s];
+                if (spanStart >= to)
+                    break;
+                if (spanEnd <= from)
+                    continue;
+                const std::size_t partStart = std::max(spanStart, from);
+                const std::size_t partEnd = std::min(spanEnd, to);
+                // A topic that started on the line before is the same link.
+                const bool continued = spanStart < from;
+                if (!continued)
+                    mLinks.push_back(Link{ spanTopic, {} });
+                const int link = static_cast<int>(mLinks.size()) - 1;
+                const MyGUI::IntCoord part(measure(from, partStart), ly, measure(partStart, partEnd), sLineHeight);
+                mLinks.back().mParts.push_back(part);
+                const bool focused = mInDetails && link == mLinkFocus;
+                if (focused)
+                    addRect(mEntriesPaper, part.left - 3, part.top, part.width + 6, part.height, sAccentColour, 0.3f);
+                addPointerTarget(
+                    mEntriesPaper, part.left, part.top, part.width, part.height,
+                    [this, link] {
+                        if (!mInDetails || mLinkFocus == link)
+                            return;
+                        mLinkFocus = link;
+                        redraw();
+                    },
+                    [this, link] { openLink(link); });
+                caption += escaped(std::string_view(body).substr(at, partStart - at));
+                caption += colourTag(focused ? sActiveColour : sNewColour);
+                caption += escaped(std::string_view(body).substr(partStart, partEnd - partStart));
+                caption += textTag;
+                at = partEnd;
+                if (spanEnd <= to)
+                    span = s + 1;
+            }
+            caption += escaped(std::string_view(body).substr(at, to - at));
+            addText(mEntriesPaper, 0, ly, width, sLineHeight, caption, sFontNormal, colour);
+            ly += sLineHeight;
+        }
+        MyGUI::Gui::getInstance().destroyWidget(probe);
+        return ly - y;
     }
 
     void JournalScreen::placeEntries()
@@ -431,8 +658,75 @@ namespace MWGui
     // ---------------------------------------------------------------------------------------------------------------
     // Input
 
+    void JournalScreen::activateDetails()
+    {
+        if (mLinks.empty())
+            return;
+        if (!mInDetails)
+        {
+            mInDetails = true;
+            mLinkFocus = 0;
+            mLinkHeld.reset();
+            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+            redraw();
+            return;
+        }
+        openLink(mLinkFocus);
+    }
+
+    bool JournalScreen::stepBack()
+    {
+        if (!mInDetails)
+            return false;
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        if (mTopicPages.empty())
+        {
+            leaveDetails();
+            return true;
+        }
+        mLinkFocus = mTopicPages.back().mLinkBefore;
+        mTopicPages.pop_back();
+        redraw();
+        return true;
+    }
+
+    void JournalScreen::moveLink(int delta)
+    {
+        if (mLinks.empty())
+            return;
+        const int focus = std::clamp(mLinkFocus + delta, 0, static_cast<int>(mLinks.size()) - 1);
+        if (focus == mLinkFocus)
+            return;
+        mLinkFocus = focus;
+        redraw();
+    }
+
+    void JournalScreen::openLink(int link)
+    {
+        if (link < 0 || link >= static_cast<int>(mLinks.size()))
+            return;
+        const int before = mInDetails ? link : 0;
+        mInDetails = true;
+        mTopicPages.push_back(TopicPage{ mLinks[link].mTopic, before });
+        mLinkFocus = 0;
+        mLinkHeld.reset();
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        redraw();
+    }
+
+    void JournalScreen::leaveDetails()
+    {
+        mInDetails = false;
+        mTopicPages.clear();
+        mLinkFocus = 0;
+        redraw();
+    }
+
     void JournalScreen::selectFocused()
     {
+        // Moving through the list takes the focus back from the details.
+        mInDetails = false;
+        mTopicPages.clear();
         const std::vector<int> quests = order();
         if (quests.empty())
             return;
@@ -455,6 +749,8 @@ namespace MWGui
 
     void JournalScreen::changeTab(int delta)
     {
+        mInDetails = false;
+        mTopicPages.clear();
         mTab = static_cast<Tab>((static_cast<int>(mTab) + delta + sTabCount) % sTabCount);
         mList.setScroll(0);
         redraw();

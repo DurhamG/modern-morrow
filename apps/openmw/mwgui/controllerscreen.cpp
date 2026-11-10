@@ -327,53 +327,68 @@ namespace MWGui
             return lines;
         }
 
-        int drawHints(MyGUI::Widget* parent, int x, int width, int bottom, const std::vector<Hint>& hints)
-        {
-            constexpr int glyphSize = 26;
-            constexpr int labelX = glyphSize + 8;
-            constexpr int gap = 24;
-            constexpr int rowHeight = 40;
+        constexpr int sHintGlyphSize = 26;
+        constexpr int sHintLabelX = sHintGlyphSize + 8;
+        constexpr int sHintGap = 24;
+        constexpr int sHintRowHeight = 40;
 
-            // Each hint's label is measured first, to know where the rows break.
-            struct Placed
-            {
-                SDL_GameControllerButton mButton;
-                MyGUI::TextBox* mLabel;
-                int mWidth;
-            };
-            std::vector<std::vector<Placed>> rows(1);
+        // Each hint's index and width, in the rows they break into to fit the width. The labels are measured in a
+        // hidden text box.
+        std::vector<std::vector<std::pair<std::size_t, int>>> layoutHints(
+            MyGUI::Widget* parent, int width, const std::vector<Hint>& hints)
+        {
+            MyGUI::TextBox* probe = addText(parent, 0, 0, width, 34, {}, sFontNormal, sBrightColour);
+            probe->setVisible(false);
+            std::vector<std::vector<std::pair<std::size_t, int>>> rows(1);
             int rowWidth = 0;
-            for (const auto& [button, caption] : hints)
+            for (std::size_t i = 0; i < hints.size(); ++i)
             {
-                MyGUI::TextBox* label = addText(parent, 0, 0, width, 34, caption, sFontNormal, sBrightColour);
-                const int hintWidth = labelX + label->getTextSize().width;
-                if (!rows.back().empty() && rowWidth + gap + hintWidth > width)
+                probe->setCaptionWithReplacing(hints[i].second);
+                const int hintWidth = sHintLabelX + probe->getTextSize().width;
+                if (!rows.back().empty() && rowWidth + sHintGap + hintWidth > width)
                 {
                     rows.emplace_back();
                     rowWidth = 0;
                 }
-                rowWidth += (rows.back().empty() ? 0 : gap) + hintWidth;
-                rows.back().push_back(Placed{ button, label, hintWidth });
+                rowWidth += (rows.back().empty() ? 0 : sHintGap) + hintWidth;
+                rows.back().emplace_back(i, hintWidth);
             }
+            MyGUI::Gui::getInstance().destroyWidget(probe);
+            return rows;
+        }
+
+        int hintsHeight(MyGUI::Widget* parent, int width, const std::vector<Hint>& hints)
+        {
+            if (hints.empty())
+                return 0;
+            return sHintRowHeight * static_cast<int>(layoutHints(parent, width, hints).size());
+        }
+
+        int drawHints(MyGUI::Widget* parent, int x, int width, int bottom, const std::vector<Hint>& hints)
+        {
             if (hints.empty())
                 return bottom;
-
-            const int top = bottom - rowHeight * static_cast<int>(rows.size());
+            const std::vector<std::vector<std::pair<std::size_t, int>>> rows = layoutHints(parent, width, hints);
+            const int top = bottom - sHintRowHeight * static_cast<int>(rows.size());
             for (std::size_t row = 0; row < rows.size(); ++row)
             {
-                const int y = top + static_cast<int>(row) * rowHeight;
+                const int y = top + static_cast<int>(row) * sHintRowHeight;
                 int hx = x;
-                for (const Placed& hint : rows[row])
+                for (const auto& [index, hintWidth] : rows[row])
                 {
-                    addGlyph(parent, hx, y, glyphSize, hint.mButton);
-                    hint.mLabel->setCoord(hx + labelX, y - 4, hint.mWidth - labelX + 8, 34);
+                    const auto& [button, caption] = hints[index];
+                    addGlyph(parent, hx, y, sHintGlyphSize, button);
+                    addText(parent, hx + sHintLabelX, y - 4, hintWidth - sHintLabelX + 8, 34, caption, sFontNormal,
+                        sBrightColour);
                     // Clicking a hint presses its button. The d-pad's hints stand for two directions, so they don't.
-                    const SDL_GameControllerButton button = hint.mButton;
                     if (button != SDL_CONTROLLER_BUTTON_DPAD_UP && button != SDL_CONTROLLER_BUTTON_DPAD_DOWN
                         && button != SDL_CONTROLLER_BUTTON_DPAD_LEFT && button != SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
+                    {
+                        const SDL_GameControllerButton pressed = button;
                         addPointerTarget(
-                            parent, hx, y - 4, hint.mWidth, 34, nullptr, [button] { pressButton(button); });
-                    hx += hint.mWidth + gap;
+                            parent, hx, y - 4, hintWidth, 34, nullptr, [pressed] { pressButton(pressed); });
+                    }
+                    hx += hintWidth + sHintGap;
                 }
             }
             return top;
@@ -439,7 +454,8 @@ namespace MWGui
                 sPointerActions.emplace_back(target->mOnPoint);
         }
 
-        void addWheelTarget(MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void(int steps)> onWheel)
+        MyGUI::Widget* addWheelTarget(
+            MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void(int steps)> onWheel)
         {
             passPointerThrough(parent);
             blockPointerUnder(parent);
@@ -447,6 +463,7 @@ namespace MWGui
                 = parent->createWidget<MyGUI::Widget>("", MyGUI::IntCoord(x, y, w, h), MyGUI::Align::Default);
             area->setNeedMouseFocus(true);
             area->setUserData(PointerTarget{ nullptr, nullptr, std::move(onWheel) });
+            return area;
         }
 
         bool pointerWheel(int x, int y, int steps)

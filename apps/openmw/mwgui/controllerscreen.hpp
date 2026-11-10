@@ -148,6 +148,8 @@ namespace MWGui
         /// Draws button hints in rows along the bottom of an area, starting another row above when one is full.
         /// Returns the top of the highest row, or the bottom when there are no hints.
         int drawHints(MyGUI::Widget* parent, int x, int width, int bottom, const std::vector<Hint>& hints);
+        /// How tall drawHints would draw the hints in the width.
+        int hintsHeight(MyGUI::Widget* parent, int width, const std::vector<Hint>& hints);
 
         /// Draws the screen's own tabs, switched with the shoulder buttons, and a status line at their right.
         /// Clicking a tab switches to it, as pressing a shoulder button that many times does.
@@ -169,7 +171,9 @@ namespace MWGui
         /// Makes an area that the mouse wheel scrolls, such as a page of text. The wheel otherwise works as the
         /// d-pad's up and down. onWheel gets the wheel's steps, positive when it turns away from the player, and runs
         /// at the start of the next frame.
-        void addWheelTarget(MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void(int steps)> onWheel);
+        /// Returns the area's widget.
+        MyGUI::Widget* addWheelTarget(
+            MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void(int steps)> onWheel);
         /// Turns the wheel over the area under the mouse. Returns true when an area took it.
         bool pointerWheel(int x, int y, int steps);
         /// How far the wheel scrolls text per step, in canvas units.
