@@ -42,6 +42,15 @@
 
 #include <SDL_messagebox.h>
 
+#ifndef _WIN32
+#include <cerrno>
+#include <cstdlib>
+#include <streambuf>
+
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 namespace Debug
 {
 #ifdef _WIN32
@@ -355,6 +364,88 @@ namespace Debug
         static std::unique_ptr<std::mutex> rawStderrMutex = nullptr;
         static std::ofstream logfile;
 
+#ifndef _WIN32
+        // A stream buffer that writes straight to a file descriptor.
+        class FileDescriptorBuffer : public std::streambuf
+        {
+        public:
+            explicit FileDescriptorBuffer(int fd)
+                : mFd(fd)
+            {
+            }
+
+        protected:
+            int_type overflow(int_type c) override
+            {
+                if (traits_type::eq_int_type(c, traits_type::eof()))
+                    return traits_type::not_eof(c);
+                const char character = traits_type::to_char_type(c);
+                return writeAll(&character, 1) ? c : traits_type::eof();
+            }
+
+            std::streamsize xsputn(const char* str, std::streamsize size) override
+            {
+                return writeAll(str, size) ? size : 0;
+            }
+
+        private:
+            bool writeAll(const char* str, std::streamsize size)
+            {
+                while (size > 0)
+                {
+                    const ssize_t written = ::write(mFd, str, static_cast<std::size_t>(size));
+                    if (written < 0)
+                    {
+                        if (errno == EINTR)
+                            continue;
+                        return false;
+                    }
+                    str += written;
+                    size -= written;
+                }
+                return true;
+            }
+
+            int mFd;
+        };
+
+        // Never freed, since the error output can be written to until the process ends, after static objects such as
+        // a unique_ptr would have been destroyed.
+        static FileDescriptorBuffer* terminalErrorBuffer = nullptr;
+
+        // Sends what is written straight to the error output into the log too. That catches messages written just
+        // before the game aborts, such as the C library's report of corrupted memory, or the reason an exception ended
+        // the game, which otherwise only show in a terminal. Under Steam, nobody sees them. What the game writes to
+        // std::cerr goes to the log through the log's own stream, and to the terminal through a copy of the error
+        // output made here, so it isn't logged twice.
+        void sendErrorOutputToLog(const std::filesystem::path& logPath)
+        {
+            // The C library writes its fatal messages to the error output rather than to the terminal device.
+            setenv("LIBC_FATAL_STDERR_", "1", 0);
+
+            const int terminal = fcntl(STDERR_FILENO, F_DUPFD_CLOEXEC, 3);
+            if (terminal == -1)
+                return;
+            const int log = open(logPath.c_str(), O_WRONLY | O_APPEND | O_CLOEXEC);
+            if (log == -1)
+            {
+                close(terminal);
+                return;
+            }
+            rawStderr->flush();
+            fflush(stderr);
+            const bool redirected = dup2(log, STDERR_FILENO) != -1;
+            close(log);
+            if (!redirected)
+            {
+                close(terminal);
+                return;
+            }
+            terminalErrorBuffer = new FileDescriptorBuffer(terminal);
+            rawStderr->rdbuf(terminalErrorBuffer);
+        }
+#endif
+
 #if defined(_WIN32) && defined(_DEBUG)
         static boost::iostreams::stream_buffer<DebugOutput> sb;
 #else
@@ -403,7 +494,15 @@ namespace Debug
 
 #if !(defined(_WIN32) && defined(_DEBUG))
         const std::string logName = Misc::StringUtils::lowerCase(appName) + ".log";
-        logfile.open(logDir / logName, std::ios::out);
+        const std::filesystem::path logPath = logDir / logName;
+#ifdef _WIN32
+        logfile.open(logPath, std::ios::out);
+#else
+        // The log is appended to, since the error output also writes into it, below.
+        logfile.open(logPath, std::ios::out | std::ios::trunc);
+        logfile.close();
+        logfile.open(logPath, std::ios::out | std::ios::app);
+#endif
 
         Identity log(logfile);
 
@@ -417,6 +516,11 @@ namespace Debug
 
         std::cout.rdbuf(&standardOut);
         std::cerr.rdbuf(&standardErr);
+
+#ifndef _WIN32
+        // After the log's outputs above, which decide whether to colour their text from where the error output goes.
+        sendErrorOutputToLog(logPath);
+#endif
 #endif
 
 #ifdef _WIN32
