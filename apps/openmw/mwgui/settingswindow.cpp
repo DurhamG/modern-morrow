@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cmath>
+#include <functional>
 
 #include <unicode/locid.h>
 
@@ -325,7 +326,8 @@ namespace MWGui
                 continue;
             if (child->isType<MyGUI::ScrollBar>())
             {
-                if (getSettingType(child) == "Slider")
+                // A slider with no size only keeps a label up to date, such as the one for the maximum lights.
+                if (getSettingType(child) == "Slider" && child->getWidth() > 0 && child->getHeight() > 0)
                     mPanelRows.push_back(child);
             }
             else if (child->isType<MyGUI::ComboBox>() || child->isType<MyGUI::ListBox>()
@@ -458,13 +460,51 @@ namespace MWGui
                     && !widget->isType<MyGUI::EditBox>() && widget->getVisible()
                     && !widget->castType<MyGUI::TextBox>()->getCaption().empty();
             };
-            const auto labelBefore = [&](MyGUI::Widget* container, std::size_t position) {
-                for (std::size_t j = position; j-- > 0;)
-                    if (isLabel(container->getChildAt(j)))
-                        return container->getChildAt(j)->castType<MyGUI::TextBox>()->getCaption().asUTF8();
+            const auto isSetting = [](MyGUI::Widget* widget) {
+                return widget->isType<MyGUI::ScrollBar>() || widget->isType<MyGUI::ComboBox>()
+                    || widget->isType<MyGUI::ListBox>() || widget->isType<MyGUI::Button>();
+            };
+            const std::function<bool(MyGUI::Widget*)> holdsSetting = [&](MyGUI::Widget* widget) {
+                if (isSetting(widget))
+                    return true;
+                for (std::size_t j = 0; j < widget->getChildCount(); ++j)
+                    if (holdsSetting(widget->getChildAt(j)))
+                        return true;
+                return false;
+            };
+            const std::function<std::string(MyGUI::Widget*)> lastLabelIn = [&](MyGUI::Widget* widget) {
+                if (isLabel(widget))
+                    return widget->castType<MyGUI::TextBox>()->getCaption().asUTF8();
+                for (std::size_t j = widget->getChildCount(); j-- > 0;)
+                    if (std::string found = lastLabelIn(widget->getChildAt(j)); !found.empty())
+                        return found;
                 return std::string();
             };
-            label = labelBefore(parent, index);
+            // The nearest label before the position. A label can be in a box of its own just before, but a box
+            // that holds another setting holds that setting's label, so the search stops there. Next to a setting,
+            // the search goes past other settings, which can share the setting's box, such as the slider that keeps
+            // the maximum lights' label up to date. Next to a setting's box, it stops at them too.
+            const auto labelBefore = [&](MyGUI::Widget* container, std::size_t position, bool pastSettings) {
+                for (std::size_t j = position; j-- > 0;)
+                {
+                    MyGUI::Widget* before = container->getChildAt(j);
+                    if (isLabel(before))
+                        return before->castType<MyGUI::TextBox>()->getCaption().asUTF8();
+                    if (!before->getVisible() || (pastSettings && isSetting(before)))
+                        continue;
+                    if (holdsSetting(before))
+                        break;
+                    if (std::string found = lastLabelIn(before); !found.empty())
+                        return found;
+                }
+                return std::string();
+            };
+            // A slider can name the text box that shows its name and value.
+            if (MyGUI::ScrollBar* slider = row->castType<MyGUI::ScrollBar>(false))
+                if (MyGUI::TextBox* sliderLabel = getSliderLabel(slider))
+                    label = sliderLabel->getCaption().asUTF8();
+            if (label.empty())
+                label = labelBefore(parent, index, true);
             if (label.empty() && row->isType<MyGUI::Button>())
                 for (std::size_t j = index + 1; j < parent->getChildCount(); ++j)
                     if (isLabel(parent->getChildAt(j)))
@@ -479,10 +519,14 @@ namespace MWGui
                 std::size_t parentIndex = 0;
                 while (parentIndex < grandparent->getChildCount() && grandparent->getChildAt(parentIndex) != parent)
                     ++parentIndex;
-                label = labelBefore(grandparent, parentIndex);
+                label = labelBefore(grandparent, parentIndex, false);
             }
             if (row == mResolutionList)
                 label = localised("#{Interface:OptionsResolution}");
+            // A button that does something, such as resetting the lights, is named by its own caption.
+            const bool action = label.empty() && row->isType<MyGUI::Button>() && getSettingType(row).empty();
+            if (action)
+                label = row->castType<MyGUI::Button>()->getCaption().asUTF8();
             addText(mPanel, x + 16, ry, w - valueW - 32, rowH - 6, escaped(label), sFontNormal,
                 focused ? sActiveColour : sBrightColour);
 
@@ -506,7 +550,7 @@ namespace MWGui
                     if (list->getIndexSelected() != MyGUI::ITEM_NONE)
                         value = list->getItemNameAt(list->getIndexSelected()).asUTF8();
                 }
-                else if (MyGUI::Button* button = row->castType<MyGUI::Button>(false))
+                else if (MyGUI::Button* button = row->castType<MyGUI::Button>(false); button != nullptr && !action)
                     value = button->getCaption().asUTF8();
                 const bool choice = !row->isType<MyGUI::Button>();
                 if (choice && focused)
