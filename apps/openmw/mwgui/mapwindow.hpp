@@ -352,6 +352,11 @@ namespace MWGui
         void onMap3DMousePressed(MyGUI::Widget* sender, int left, int top, MyGUI::MouseButton id);
         void onMap3DMouseDrag(MyGUI::Widget* sender, int left, int top, MyGUI::MouseButton id);
         void onMap3DMouseReleased(MyGUI::Widget* sender, int left, int top, MyGUI::MouseButton id);
+        void onMap3DMouseMove(MyGUI::Widget* sender, int left, int top);
+        void onMap3DMouseLostFocus(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
+        /// Names the door or pin under the mouse pointer, or under the crosshair when the mouse isn't pointing at the
+        /// view, as the flat map's tooltips do.
+        void updateMap3DLabel();
         /// Whether the fog of war leaves a place in the 3D view to see.
         bool isMap3DExplored(const osg::Vec3f& position) const;
 
@@ -399,6 +404,12 @@ namespace MWGui
         MyGUI::IntPoint mMap3DPressedAt;
         MyGUI::IntPoint mMap3DDraggedTo;
         bool mMap3DDragging = false;
+        // Where the mouse pointer is over the 3D view, until it leaves the view or the right stick pans it.
+        std::optional<MyGUI::IntPoint> mMap3DPointer;
+        // The label that names a door or pin, and the marker it names.
+        MyGUI::Widget* mMap3DLabel = nullptr;
+        MyGUI::TextBox* mMap3DLabelText = nullptr;
+        MyGUI::Widget* mMap3DLabelled = nullptr;
         // Rooms are small, so indoors the view has a zoom of its own.
         float mMap3DInteriorDistance = 2000.f;
         // A marker on the 3D view: its widget, a child of the view's image, and its place in the world.
@@ -406,6 +417,8 @@ namespace MWGui
         {
             MyGUI::Widget* mWidget;
             osg::Vec3f mPosition;
+            // What the label says about the marker, as plain text: where a door leads, or a pin's note.
+            std::string mName;
         };
         std::vector<Map3DMarker> mMap3DPins;
         std::vector<Map3DMarker> mMap3DDoors;

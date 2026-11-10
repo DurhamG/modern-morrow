@@ -1712,6 +1712,7 @@ namespace MWGui
     void MapWindow::stopMap3D()
     {
         mMap3DStarted = false;
+        mMap3DPointer.reset();
         if (mMap3D != nullptr)
             mMap3D->setShown(false);
         if (mMap3DImage != nullptr)
@@ -1750,6 +1751,8 @@ namespace MWGui
             mMap3DImage->eventMouseButtonPressed += MyGUI::newDelegate(this, &MapWindow::onMap3DMousePressed);
             mMap3DImage->eventMouseDrag += MyGUI::newDelegate(this, &MapWindow::onMap3DMouseDrag);
             mMap3DImage->eventMouseButtonReleased += MyGUI::newDelegate(this, &MapWindow::onMap3DMouseReleased);
+            mMap3DImage->eventMouseMove += MyGUI::newDelegate(this, &MapWindow::onMap3DMouseMove);
+            mMap3DImage->eventMouseLostFocus += MyGUI::newDelegate(this, &MapWindow::onMap3DMouseLostFocus);
             for (MyGUI::Widget* hint : { mControllerGuide, mGuideZoom, mGuideMark, mCrosshair })
                 hint->setDepth(-1);
             // The player's arrow goes in front of the markers, and the pins in front of the doors.
@@ -1759,6 +1762,15 @@ namespace MWGui
             mMap3DPlayer->setImageTexture("textures\\compass.dds");
             mMap3DPlayer->setNeedMouseFocus(false);
             mMap3DPlayer->setDepth(-2);
+            // The label goes in front of everything else in the view.
+            mMap3DLabel = mMap3DImage->createWidget<MyGUI::Widget>("", MyGUI::IntCoord(), MyGUI::Align::Default);
+            mMap3DLabel->setNeedMouseFocus(false);
+            mMap3DLabel->setDepth(-3);
+            mMap3DLabel->setVisible(false);
+            ControllerUi::addRect(mMap3DLabel, 0, 0, 0, 0, MyGUI::Colour::Black, 0.7f)->setAlign(MyGUI::Align::Stretch);
+            mMap3DLabelText = ControllerUi::addText(mMap3DLabel, 0, 0, 0, 0, {}, getMap3DMarkerSize(17),
+                MyGUI::Colour::parse("#dfc99f"), MyGUI::Align::Center);
+            mMap3DLabelText->setAlign(MyGUI::Align::Stretch);
         }
         mMap3DImage->setCoord(coord);
         mMap3DImage->setRenderItemTexture(mMap3DTexture.get());
@@ -1829,7 +1841,8 @@ namespace MWGui
             widget->setUserData(marker);
             widget->setNeedMouseFocus(false);
             mMap3DPins.push_back({ widget,
-                osg::Vec3f(marker.mWorldX, marker.mWorldY, getMap3DGroundHeight(marker.mWorldX, marker.mWorldY)) });
+                osg::Vec3f(marker.mWorldX, marker.mWorldY, getMap3DGroundHeight(marker.mWorldX, marker.mWorldY)),
+                marker.mNote });
         }
     }
 
@@ -1886,7 +1899,8 @@ namespace MWGui
                     "MarkerButton", MyGUI::IntCoord(0, 0, size, size), MyGUI::Align::Default);
                 widget->setNormalColour(colour);
                 widget->setNeedMouseFocus(false);
-                mMap3DDoors.push_back({ widget, osg::Vec3f(door.x, door.y, door.z) });
+                mMap3DDoors.push_back({ widget, osg::Vec3f(door.x, door.y, door.z),
+                    MyGUI::LanguageManager::getInstance().replaceTags(door.name).asUTF8() });
             }
         };
 
@@ -2055,6 +2069,17 @@ namespace MWGui
             mMap3DFocus.y() += from.y() - to.y();
         }
         mMap3DDraggedTo = point;
+        mMap3DPointer = point;
+    }
+
+    void MapWindow::onMap3DMouseMove(MyGUI::Widget* /*sender*/, int left, int top)
+    {
+        mMap3DPointer = MyGUI::IntPoint(left, top);
+    }
+
+    void MapWindow::onMap3DMouseLostFocus(MyGUI::Widget* /*sender*/, MyGUI::Widget* /*newFocus*/)
+    {
+        mMap3DPointer.reset();
     }
 
     void MapWindow::onMap3DMouseReleased(MyGUI::Widget* /*sender*/, int left, int top, MyGUI::MouseButton id)
@@ -2134,6 +2159,8 @@ namespace MWGui
         const float y = stickResponse(input->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTY));
         mMap3DFocus.x() += x * mMap3DDistance * dt;
         mMap3DFocus.y() -= y * mMap3DDistance * dt;
+        if (x != 0.f || y != 0.f)
+            mMap3DPointer.reset();
 
         // Outdoors, the camera looks at the ground under the point. Indoors, it stays at the height of the player's
         // feet, and everything a little above the player's head is cut away, ceilings and upper floors included.
@@ -2171,6 +2198,85 @@ namespace MWGui
             arrow->setCenter(MyGUI::IntPoint(half, half));
             arrow->setAngle(position.rot[2]);
         }
+        updateMap3DLabel();
+    }
+
+    void MapWindow::updateMap3DLabel()
+    {
+        if (mMap3DLabel == nullptr)
+            return;
+
+        // The marker nearest the mouse pointer, or else the one nearest the crosshair, within a short reach of it.
+        std::optional<MyGUI::IntPoint> point = mMap3DPointer;
+        int reach = getMap3DMarkerSize(12);
+        if (!point.has_value() && mCrosshair != nullptr && mCrosshair->getVisible())
+        {
+            point = mMap3DImage->getAbsolutePosition()
+                + MyGUI::IntPoint(mMap3DImage->getWidth() / 2, mMap3DImage->getHeight() / 2);
+            reach = mCrosshair->getWidth() / 2;
+        }
+        // A door within reach is named before a pin, since most pins have no note. Doors under the fog of war are
+        // hidden, so they aren't named.
+        const Map3DMarker* found = nullptr;
+        bool isDoor = false;
+        if (point.has_value())
+        {
+            for (const std::vector<Map3DMarker>* markers : { &mMap3DDoors, &mMap3DPins })
+            {
+                int nearest = reach * reach + 1;
+                for (const Map3DMarker& marker : *markers)
+                {
+                    if (marker.mName.empty() || !marker.mWidget->getVisible())
+                        continue;
+                    const MyGUI::IntCoord coord = marker.mWidget->getAbsoluteCoord();
+                    const int dx = coord.left + coord.width / 2 - point->left;
+                    const int dy = coord.top + coord.height / 2 - point->top;
+                    if (dx * dx + dy * dy < nearest)
+                    {
+                        nearest = dx * dx + dy * dy;
+                        found = &marker;
+                    }
+                }
+                if (found != nullptr)
+                {
+                    isDoor = markers == &mMap3DDoors;
+                    break;
+                }
+            }
+        }
+        if (found == nullptr)
+        {
+            mMap3DLabel->setVisible(false);
+            mMap3DLabelled = nullptr;
+            return;
+        }
+
+        if (found->mWidget != mMap3DLabelled)
+        {
+            mMap3DLabelled = found->mWidget;
+            // Morrowind names an interior after its town first, such as "Balmora, Guild of Mages", so a door's
+            // name leaves out everything up to the first comma. The rest says which building it is.
+            std::string_view name = found->mName;
+            constexpr std::string_view separator = ", ";
+            if (const std::size_t comma = name.find(separator);
+                isDoor && comma != std::string_view::npos && comma + separator.size() < name.size())
+                name.remove_prefix(comma + separator.size());
+            mMap3DLabelText->setCaption(MyGUI::TextIterator::toTagsString(MyGUI::UString(std::string(name))));
+            const MyGUI::IntSize textSize = mMap3DLabelText->getTextSize();
+            const int padding = getMap3DMarkerSize(6);
+            mMap3DLabel->setSize(textSize.width + 2 * padding, textSize.height + padding);
+        }
+        // Below the marker, or above it at the bottom of the view, and always inside the view.
+        const MyGUI::IntCoord marker = found->mWidget->getCoord();
+        const MyGUI::IntSize view = mMap3DImage->getSize();
+        const MyGUI::IntSize label = mMap3DLabel->getSize();
+        const int left
+            = std::clamp(marker.left + marker.width / 2 - label.width / 2, 0, std::max(0, view.width - label.width));
+        int top = marker.top + marker.height + getMap3DMarkerSize(4);
+        if (top + label.height > view.height)
+            top = marker.top - getMap3DMarkerSize(4) - label.height;
+        mMap3DLabel->setPosition(left, top);
+        mMap3DLabel->setVisible(true);
     }
 
     void MapWindow::drawControllerTabs()
