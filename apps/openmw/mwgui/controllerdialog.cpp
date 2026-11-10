@@ -118,6 +118,20 @@ namespace MWGui
                     focused ? sActiveColour : sTextColour);
                 lineY += lineHeight;
             }
+            // Pointing at an answer highlights it, and clicking it picks it, as A does.
+            addPointerTarget(
+                mRoot, x + 16, ty, w - 32, rowH - 4,
+                [this, i] {
+                    if (mFocus == i)
+                        return;
+                    mFocus = i;
+                    draw();
+                },
+                [this, i] {
+                    mFocus = i;
+                    draw();
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                });
             ty += rowH;
         }
 
@@ -127,6 +141,9 @@ namespace MWGui
         const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
             addGlyph(mRoot, hx, hintY + 4, 22, button);
             MyGUI::TextBox* text = addText(mRoot, hx + 30, hintY, 200, 30, label, sFontNormal, sBrightColour);
+            // Clicking a hint presses its button.
+            addPointerTarget(
+                mRoot, hx, hintY, 30 + text->getTextSize().width, 30, nullptr, [button] { pressButton(button); });
             hx += 30 + text->getTextSize().width + 22;
         };
         if (!mAnswers.empty())

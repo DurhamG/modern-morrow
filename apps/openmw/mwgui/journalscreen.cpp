@@ -56,13 +56,13 @@ namespace MWGui
         mTab = Tab::Recent;
         mQuests.clear();
         mSelected.clear();
-        mScroll = 0;
+        mList.reset();
         mEntriesQuest.clear();
     }
 
     void JournalScreen::onOpen()
     {
-        mHeldDirection.reset();
+        mList.resetHeld();
         // The journal can't change while the menus are open, so the quests are read once.
         mQuests = QuestLog::collect();
         redraw();
@@ -72,13 +72,12 @@ namespace MWGui
     {
         if (!isVisible() || MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() != this)
         {
-            mHeldDirection.reset();
+            mList.resetHeld();
             return;
         }
-        int dx = 0;
-        int dy = 0;
-        if (mHeldDirection.update(duration, dx, dy) && dy != 0)
-            move(dy);
+        // Every tab lists all the quests, in its own order.
+        if (mList.updateHeld(duration, static_cast<int>(mQuests.size())))
+            selectFocused();
         scrollEntries(
             MWBase::Environment::get().getInputManager()->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTY), duration);
     }
@@ -235,6 +234,7 @@ namespace MWGui
         }
         const int focus = focusIndex(quests);
         mSelected = mQuests[quests[focus]].mName;
+        mList.setFocus(focus);
         drawList(sMargin, top, listW, bottom - top, quests, rows);
         drawDetails(px, top, panelW, bottom - top, mQuests[quests[focus]], groupStarts(rows).size() > 1);
     }
@@ -248,54 +248,23 @@ namespace MWGui
         addText(mContent, cx + sPlaceColumnWidth, y + 6, sFactionColumnWidth, 22, "#{Interface:JournalFaction}",
             sFontSmall, sDimColour);
 
-        const int focus = focusIndex(order);
-
-        // Scroll so the focused row is in view.
-        const int top = y + sColumnsHeight;
-        const int listBottom = y + h - 4;
-        int focusRow = 0;
-        for (int i = 0; i < static_cast<int>(rows.size()); ++i)
-            if (rows[i].mEntry == focus)
-                focusRow = i;
-        const auto rowHeight = [&](int i) { return rows[i].mEntry < 0 ? sHeaderRowHeight : sEntryHeight; };
-        if (focusRow < mScroll)
-            mScroll = focusRow > 0 && rows[focusRow - 1].mEntry == -1 ? focusRow - 1 : focusRow;
-        while (true)
-        {
-            int bottomOfFocus = top;
-            for (int i = mScroll; i <= focusRow; ++i)
-                bottomOfFocus += rowHeight(i);
-            if (bottomOfFocus <= listBottom || mScroll >= focusRow)
-                break;
-            ++mScroll;
-        }
-        // Don't scroll past the end of the list, which would leave empty space below it.
-        int lastScroll = static_cast<int>(rows.size());
-        for (int i = static_cast<int>(rows.size()) - 1, used = 0; i >= 0; --i)
-        {
-            used += rowHeight(i);
-            if (top + used > listBottom)
-                break;
-            lastScroll = i;
-        }
-        mScroll = std::min(mScroll, lastScroll);
-
-        int rowY = top;
-        for (int i = mScroll; i < static_cast<int>(rows.size()); ++i)
-        {
+        std::vector<ControllerList::Row> listRows;
+        for (const Row& row : rows)
+            listRows.push_back({ row.mEntry < 0 ? sHeaderRowHeight : sEntryHeight, row.mEntry >= 0 });
+        const auto drawRow = [&](std::size_t i, int rowY, bool focused) {
             const Row& row = rows[i];
-            if (rowY + rowHeight(i) > listBottom)
-                break;
             if (row.mEntry == -1)
             {
                 addText(mContent, x + 12, rowY, w - 24, 24, row.mHeader, sFontSmall, sBrightColour);
                 addRect(mContent, x + 12, rowY + 23, w - 24, 1, sAccentColour, 0.25f);
-                rowY += sHeaderRowHeight;
-                continue;
+                return;
             }
-            drawEntry(x + 4, rowY, w - 8, sEntryHeight - 2, mQuests[order[row.mEntry]], row.mEntry == focus);
-            rowY += sEntryHeight;
-        }
+            drawEntry(x + 4, rowY, w - 8, sEntryHeight - 2, mQuests[order[row.mEntry]], focused);
+        };
+        const int top = y + sColumnsHeight;
+        const int listBottom = y + h - 4;
+        // Pointing at a quest or clicking it selects it, to show its entries. A does nothing more here.
+        mList.draw(mContent, x, top, w, listBottom - top, listRows, drawRow, [this] { selectFocused(); }, nullptr);
     }
 
     void JournalScreen::drawEntry(int x, int y, int w, int h, const QuestLog::Quest& quest, bool focused)
@@ -355,6 +324,12 @@ namespace MWGui
         MyGUI::Widget* area = mContent->createWidget<MyGUI::Widget>(
             "", MyGUI::IntCoord(innerX, ty, innerW, areaBottom - ty), MyGUI::Align::Default);
         area->setNeedMouseFocus(false);
+        // The wheel scrolls the entries, rather than moving through the quests.
+        addWheelTarget(mContent, innerX, ty, innerW, areaBottom - ty, [this](int steps) {
+            mEntriesScroll = std::clamp(
+                mEntriesScroll - steps * sWheelScrollStep, 0.f, static_cast<float>(std::max(0, mEntriesScrollMax)));
+            placeEntries();
+        });
         constexpr int unlimitedHeight = 1 << 20;
         mEntriesPaper = area->createWidget<MyGUI::Widget>(
             "", MyGUI::IntCoord(0, 0, innerW - 12, unlimitedHeight), MyGUI::Align::Default);
@@ -392,6 +367,9 @@ namespace MWGui
             addGlyph(mContent, hx, y + h - 40, 26, SDL_CONTROLLER_BUTTON_Y);
             MyGUI::TextBox* label = addText(
                 mContent, hx + 34, y + h - 44, 200, 34, "#{Interface:MagicNextGroup}", sFontNormal, sBrightColour);
+            // Clicking the hint presses its button.
+            addPointerTarget(mContent, hx, y + h - 44, 34 + label->getTextSize().width, 34, nullptr,
+                [] { pressButton(SDL_CONTROLLER_BUTTON_Y); });
             hx += 34 + label->getTextSize().width + 24;
         }
         if (mEntriesScrollMax > 0)
@@ -438,20 +416,19 @@ namespace MWGui
     // ---------------------------------------------------------------------------------------------------------------
     // Input
 
-    void JournalScreen::move(int dy)
+    void JournalScreen::selectFocused()
     {
         const std::vector<int> quests = order();
         if (quests.empty())
             return;
-        const int focus = std::clamp(focusIndex(quests) + dy, 0, static_cast<int>(quests.size()) - 1);
-        mSelected = mQuests[quests[focus]].mName;
+        mSelected = mQuests[quests[std::clamp(mList.getFocus(), 0, static_cast<int>(quests.size()) - 1)]].mName;
         redraw();
     }
 
     void JournalScreen::changeTab(int delta)
     {
         mTab = static_cast<Tab>((static_cast<int>(mTab) + delta + sTabCount) % sTabCount);
-        mScroll = 0;
+        mList.setScroll(0);
         redraw();
     }
 
@@ -469,7 +446,7 @@ namespace MWGui
         // The group's header goes to the top of the list, so the whole group shows.
         for (int i = 1; i < static_cast<int>(rows.size()); ++i)
             if (rows[i].mEntry == focus)
-                mScroll = i - 1;
+                mList.setScroll(i - 1);
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         redraw();
     }

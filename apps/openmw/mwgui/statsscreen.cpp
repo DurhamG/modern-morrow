@@ -175,7 +175,9 @@ namespace MWGui
     void StatsScreen::clear()
     {
         mTab = Tab::Character;
-        mLists = {};
+        mTileFocus = 0;
+        mSkillList.reset();
+        mFactionList.reset();
         mTiles.clear();
         mShownState.clear();
     }
@@ -306,17 +308,22 @@ namespace MWGui
             addRect(mContent, px, top, panelW, bottom - top, sPanelColour, 0.9f);
             return;
         }
-        ListState& state = mLists[static_cast<int>(mTab)];
-        state.mFocus = std::clamp(state.mFocus, 0, static_cast<int>(entries.size()) - 1);
-        drawDetails(px, top, panelW, bottom - top, entries[state.mFocus]);
+        ControllerList& list = currentList();
+        list.setFocus(std::clamp(list.getFocus(), 0, static_cast<int>(entries.size()) - 1));
+        drawDetails(px, top, panelW, bottom - top, entries[list.getFocus()]);
 
         // The button hint for jumping between the groups of the list, when there is more than one.
         if (groupStarts(buildRows(entries)).size() > 1)
-        {
-            addGlyph(mContent, px + 16, bottom - 40, 26, SDL_CONTROLLER_BUTTON_Y);
-            addText(
-                mContent, px + 50, bottom - 44, 200, 34, "#{Interface:MagicNextGroup}", sFontNormal, sBrightColour);
-        }
+            drawHints(
+                mContent, px + 16, panelW - 32, bottom, { { SDL_CONTROLLER_BUTTON_Y, "#{Interface:MagicNextGroup}" } });
+    }
+
+    void StatsScreen::focusTileWithPointer(int tile)
+    {
+        if (mTab != Tab::Character || mTileFocus == tile)
+            return;
+        mTileFocus = tile;
+        redraw();
     }
 
     void StatsScreen::drawCharacter(int width)
@@ -351,16 +358,19 @@ namespace MWGui
         row(std::vector<Info>(attributes.begin(), attributes.begin() + half), 84);
         row(std::vector<Info>(attributes.begin() + half, attributes.end()), 84);
 
-        ListState& state = mLists[static_cast<int>(Tab::Character)];
-        state.mFocus = std::clamp(state.mFocus, 0, static_cast<int>(mTiles.size()) - 1);
+        mTileFocus = std::clamp(mTileFocus, 0, static_cast<int>(mTiles.size()) - 1);
         for (std::size_t i = 0; i < mTiles.size(); ++i)
         {
             const MyGUI::IntCoord& coord = mTiles[i].second;
-            drawTile(coord.left, coord.top, coord.width, coord.height, mTiles[i].first,
-                static_cast<int>(i) == state.mFocus);
+            drawTile(
+                coord.left, coord.top, coord.width, coord.height, mTiles[i].first, static_cast<int>(i) == mTileFocus);
+            // Pointing at a tile or clicking it selects it, to show its details. A does nothing more here.
+            const int tile = static_cast<int>(i);
+            const auto select = [this, tile] { focusTileWithPointer(tile); };
+            addPointerTarget(mContent, coord.left, coord.top, coord.width, coord.height, select, select);
         }
 
-        drawDetails(width - sMargin - panelW, top, panelW, bottom - top, mTiles[state.mFocus].first);
+        drawDetails(width - sMargin - panelW, top, panelW, bottom - top, mTiles[mTileFocus].first);
     }
 
     void StatsScreen::drawBar(int x, int y, int w, int h, float fraction, const MyGUI::Colour& colour)
@@ -490,6 +500,11 @@ namespace MWGui
         return entries;
     }
 
+    ControllerList& StatsScreen::currentList()
+    {
+        return mTab == Tab::Factions ? mFactionList : mSkillList;
+    }
+
     std::vector<int> StatsScreen::groupStarts(const std::vector<Row>& rows)
     {
         // The first entry under each group header that has entries.
@@ -537,45 +552,12 @@ namespace MWGui
         const std::vector<Row> rows = buildRows(entries);
         if (entries.empty())
             return;
-        ListState& state = mLists[static_cast<int>(mTab)];
-        state.mFocus = std::clamp(state.mFocus, 0, static_cast<int>(entries.size()) - 1);
 
-        // Scroll so the focused row is in view.
-        const int top = y + 8;
-        const int listBottom = y + h - 4;
-        int focusRow = 0;
-        for (int i = 0; i < static_cast<int>(rows.size()); ++i)
-            if (rows[i].mEntry == state.mFocus)
-                focusRow = i;
-        const auto rowHeight = [&](int i) { return rows[i].mEntry < 0 ? sHeaderRowHeight : sEntryHeight; };
-        if (focusRow < state.mScroll)
-            state.mScroll = focusRow > 0 && rows[focusRow - 1].mEntry == -1 ? focusRow - 1 : focusRow;
-        while (true)
-        {
-            int bottomOfFocus = top;
-            for (int i = state.mScroll; i <= focusRow; ++i)
-                bottomOfFocus += rowHeight(i);
-            if (bottomOfFocus <= listBottom || state.mScroll >= focusRow)
-                break;
-            ++state.mScroll;
-        }
-        // Don't scroll past the end of the list, which would leave empty space below it.
-        int lastScroll = static_cast<int>(rows.size());
-        for (int i = static_cast<int>(rows.size()) - 1, used = 0; i >= 0; --i)
-        {
-            used += rowHeight(i);
-            if (top + used > listBottom)
-                break;
-            lastScroll = i;
-        }
-        state.mScroll = std::min(state.mScroll, lastScroll);
-
-        int rowY = top;
-        for (int i = state.mScroll; i < static_cast<int>(rows.size()); ++i)
-        {
+        std::vector<ControllerList::Row> listRows;
+        for (const Row& row : rows)
+            listRows.push_back({ row.mEntry < 0 ? sHeaderRowHeight : sEntryHeight, row.mEntry >= 0 });
+        const auto drawRow = [&](std::size_t i, int rowY, bool focused) {
             const Row& row = rows[i];
-            if (rowY + rowHeight(i) > listBottom)
-                break;
             if (row.mEntry == -1)
             {
                 addText(mContent, x + 12, rowY, w - 24, 24, row.mHeader, sFontSmall, sBrightColour);
@@ -584,13 +566,12 @@ namespace MWGui
             else if (row.mEntry == -2)
                 addText(mContent, x + 16, rowY, w - 32, 24, row.mHeader, sFontNormal, sDimColour);
             else
-            {
-                drawEntry(x + 4, rowY, w - 8, sEntryHeight - 2, entries[row.mEntry], row.mEntry == state.mFocus);
-                rowY += sEntryHeight;
-                continue;
-            }
-            rowY += sHeaderRowHeight;
-        }
+                drawEntry(x + 4, rowY, w - 8, sEntryHeight - 2, entries[row.mEntry], focused);
+        };
+        const int top = y + 8;
+        const int listBottom = y + h - 4;
+        // Pointing at an entry or clicking it selects it, to show its details. A does nothing more here.
+        currentList().draw(mContent, x, top, w, listBottom - top, listRows, drawRow, [this] { redraw(); }, nullptr);
     }
 
     void StatsScreen::drawEntry(int x, int y, int w, int h, const Info& info, bool focused)
@@ -973,9 +954,9 @@ namespace MWGui
         else if (dy != 0)
         {
             const int count = static_cast<int>(listEntries().size());
-            ListState& state = mLists[static_cast<int>(mTab)];
+            ControllerList& list = currentList();
             if (count > 0)
-                state.mFocus = std::clamp(state.mFocus + dy, 0, count - 1);
+                list.setFocus(std::clamp(list.getFocus() + dy, 0, count - 1));
         }
         redraw();
     }
@@ -983,10 +964,9 @@ namespace MWGui
     void StatsScreen::moveOnTiles(int dx, int dy)
     {
         // Moves to the nearest tile in the pressed direction, preferring tiles in line with the current one.
-        ListState& state = mLists[static_cast<int>(Tab::Character)];
         if (mTiles.empty())
             return;
-        const MyGUI::IntCoord& from = mTiles[std::clamp(state.mFocus, 0, static_cast<int>(mTiles.size()) - 1)].second;
+        const MyGUI::IntCoord& from = mTiles[std::clamp(mTileFocus, 0, static_cast<int>(mTiles.size()) - 1)].second;
         const float fromX = from.left + from.width / 2.f;
         const float fromY = from.top + from.height / 2.f;
         float best = std::numeric_limits<float>::max();
@@ -1007,7 +987,7 @@ namespace MWGui
             if (score < best)
             {
                 best = score;
-                state.mFocus = static_cast<int>(i);
+                mTileFocus = static_cast<int>(i);
             }
         }
     }
@@ -1027,13 +1007,13 @@ namespace MWGui
         const std::vector<int> starts = groupStarts(rows);
         if (starts.size() < 2)
             return;
-        ListState& state = mLists[static_cast<int>(mTab)];
-        const auto next = std::upper_bound(starts.begin(), starts.end(), state.mFocus);
-        state.mFocus = next != starts.end() ? *next : starts.front();
+        ControllerList& list = currentList();
+        const auto next = std::upper_bound(starts.begin(), starts.end(), list.getFocus());
+        list.setFocus(next != starts.end() ? *next : starts.front());
         // The group's header goes to the top of the list, so the whole group shows.
         for (int i = 1; i < static_cast<int>(rows.size()); ++i)
-            if (rows[i].mEntry == state.mFocus)
-                state.mScroll = i - 1;
+            if (rows[i].mEntry == list.getFocus())
+                list.setScroll(i - 1);
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         redraw();
     }

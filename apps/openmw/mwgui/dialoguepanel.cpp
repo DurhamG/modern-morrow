@@ -142,7 +142,7 @@ namespace MWGui
         }
         mRoot->setSize(mRoot->getLayer()->getSize());
         mRoot->setVisible(true);
-        mHeldDirection.reset();
+        mList.resetHeld();
         update();
     }
 
@@ -155,8 +155,7 @@ namespace MWGui
             return;
         mShownEntries = 0;
         mTab = Tab::Topics;
-        mFocus = 0;
-        mScroll = 0;
+        mList.reset();
         mFocusedLabel.clear();
         mFocusOnTop = true;
     }
@@ -192,8 +191,7 @@ namespace MWGui
         const std::size_t entries = mWindow.mHistoryContents.size();
         if (entries != mShownEntries && mTab == Tab::Topics)
         {
-            mFocus = 0;
-            mScroll = 0;
+            mList.reset();
             mFocusOnTop = true;
         }
         drawConversation();
@@ -256,6 +254,11 @@ namespace MWGui
         MyGUI::Widget* clip = mConversation->createWidget<MyGUI::Widget>(
             "", MyGUI::IntCoord(cols.mTextX, sHistoryTop, cols.mTextW, viewH), MyGUI::Align::Default);
         clip->setNeedMouseFocus(false);
+        // The wheel scrolls the conversation, rather than moving through the topics.
+        addWheelTarget(mConversation, cols.mTextX, sHistoryTop, cols.mTextW, viewH, [this](int steps) {
+            mHistoryScroll -= steps * sWheelScrollStep;
+            placeHistory();
+        });
         mHistory = clip->createWidget<MyGUI::Widget>(
             "", MyGUI::IntCoord(0, 0, cols.mTextW, viewH), MyGUI::Align::Default);
         mHistory->setNeedMouseFocus(false);
@@ -414,14 +417,14 @@ namespace MWGui
         int y = sPanelTop + 12;
 
         const std::vector<Row> rows = buildRows();
-        int optionCount = 0;
+        mOptionCount = 0;
         for (const Row& row : rows)
-            optionCount += row.mHeader.empty() ? 1 : 0;
+            mOptionCount += row.mHeader.empty() ? 1 : 0;
 
         // Keep the focus on the same option when the list changes around it.
         if (mFocusOnTop)
         {
-            mFocus = 0;
+            mList.setFocus(0);
             mFocusedLabel.clear();
         }
         else if (!mFocusedLabel.empty())
@@ -431,11 +434,10 @@ namespace MWGui
                 if (!rows[i].mHeader.empty())
                     continue;
                 if (rows[i].mLabel == mFocusedLabel)
-                    mFocus = index;
+                    mList.setFocus(index);
                 ++index;
             }
         }
-        mFocus = std::clamp(mFocus, 0, std::max(0, optionCount - 1));
 
         if (inChoice())
         {
@@ -445,8 +447,11 @@ namespace MWGui
         }
         else if (!mWindow.mGoodbye)
         {
-            // The Topics and Services tabs, switched with the shoulder buttons.
+            // The Topics and Services tabs, switched with the shoulder buttons. Clicking a glyph presses its button,
+            // and clicking the other tab switches to it.
             addGlyph(mOptions, x, y + 5, 22, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+            addPointerTarget(
+                mOptions, x - 4, y, 30, 32, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER); });
             int tx = x + 32;
             for (Tab tab : { Tab::Topics, Tab::Services })
             {
@@ -459,14 +464,18 @@ namespace MWGui
                 label->setTextAlign(MyGUI::Align::Center);
                 if (selected)
                     addRect(mOptions, tx + 8, y + 30, tabW - 16, 2, sAccentColour);
+                else
+                    addPointerTarget(
+                        mOptions, tx, y, tabW, 32, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
                 tx += tabW + 4;
             }
             addGlyph(mOptions, tx + 2, y + 5, 22, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+            addPointerTarget(
+                mOptions, tx - 2, y, 30, 32, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
             y += 44;
         }
 
         // The rows, scrolled so the focused one is in view.
-        const int listBottom = sPanelBottom - 8;
         const auto rowHeight = [&](const Row& row) {
             if (!row.mHeader.empty())
                 return sRowHeight;
@@ -474,59 +483,24 @@ namespace MWGui
                 return static_cast<int>(wrapText(mOptions, row.mLabel, w - 16, sFontNormal, 4).size()) * 24 + 10;
             return row.mDetail.empty() ? sRowHeight : sServiceRowHeight;
         };
-        int focusRow = 0;
-        for (int i = 0, index = 0; i < static_cast<int>(rows.size()); ++i)
-        {
-            if (!rows[i].mHeader.empty())
-                continue;
-            if (index++ == mFocus)
-                focusRow = i;
-        }
-        if (focusRow < mScroll)
-            mScroll = focusRow > 0 && !rows[focusRow - 1].mHeader.empty() ? focusRow - 1 : focusRow;
-        while (mScroll < focusRow)
-        {
-            int bottom = y;
-            for (int i = mScroll; i <= focusRow; ++i)
-                bottom += rowHeight(rows[i]);
-            if (bottom <= listBottom)
-                break;
-            ++mScroll;
-        }
-        // Don't scroll past the end of the list, which would leave empty space below it.
-        int lastScroll = static_cast<int>(rows.size());
-        for (int i = static_cast<int>(rows.size()) - 1, used = 0; i >= 0; --i)
-        {
-            used += rowHeight(rows[i]);
-            if (y + used > listBottom)
-                break;
-            lastScroll = i;
-        }
-        mScroll = std::clamp(mScroll, 0, std::max(0, lastScroll));
-
-        int index = 0;
-        for (int i = 0; i < mScroll; ++i)
-            index += rows[i].mHeader.empty() ? 1 : 0;
-        for (int i = mScroll; i < static_cast<int>(rows.size()); ++i)
-        {
+        std::vector<ControllerList::Row> listRows;
+        for (const Row& row : rows)
+            listRows.push_back({ rowHeight(row), row.mHeader.empty() });
+        const auto drawRow = [&](std::size_t i, int rowY, bool focused) {
             const Row& row = rows[i];
-            const int h = rowHeight(row);
-            if (y + h > listBottom)
-                break;
+            const int h = listRows[i].mHeight;
             if (!row.mHeader.empty())
             {
-                addText(mOptions, x, y + 2, w, 22, row.mHeader, sFontSmall, sDimColour);
-                addRect(mOptions, x, y + 23, w, 1, sAccentColour, 0.2f);
-                y += h;
-                continue;
+                addText(mOptions, x, rowY + 2, w, 22, row.mHeader, sFontSmall, sDimColour);
+                addRect(mOptions, x, rowY + 23, w, 1, sAccentColour, 0.2f);
+                return;
             }
-            const bool focused = index == mFocus;
             if (focused)
             {
                 if (!mFocusOnTop)
                     mFocusedLabel = row.mLabel;
-                addRect(mOptions, x - 8, y, w + 8, h - 2, sAccentColour, 0.16f);
-                addRect(mOptions, x - 8, y, 3, h - 2, sAccentColour);
+                addRect(mOptions, x - 8, rowY, w + 8, h - 2, sAccentColour, 0.16f);
+                addRect(mOptions, x - 8, rowY, 3, h - 2, sAccentColour);
             }
             MyGUI::Colour colour = row.mAsked ? sDimColour : (row.mMentioned ? sNewColour : sBrightColour);
             if (focused)
@@ -535,19 +509,23 @@ namespace MWGui
             {
                 const std::vector<std::string> lines = wrapText(mOptions, row.mLabel, w - 16, sFontNormal, 4);
                 for (std::size_t line = 0; line < lines.size(); ++line)
-                    addText(mOptions, x + 4, y + 5 + static_cast<int>(line) * 24, w - 8, 24, escaped(lines[line]),
+                    addText(mOptions, x + 4, rowY + 5 + static_cast<int>(line) * 24, w - 8, 24, escaped(lines[line]),
                         sFontNormal, colour);
             }
             else if (!row.mDetail.empty())
             {
-                addText(mOptions, x + 4, y + 2, w - 8, 26, escaped(row.mLabel), sFontNormal, colour);
-                addText(mOptions, x + 4, y + 24, w - 8, 22, row.mDetail, sFontSmall, sDimColour);
+                addText(mOptions, x + 4, rowY + 2, w - 8, 26, escaped(row.mLabel), sFontNormal, colour);
+                addText(mOptions, x + 4, rowY + 24, w - 8, 22, row.mDetail, sFontSmall, sDimColour);
             }
             else
-                addText(mOptions, x + 4, y, w - 8, h - 2, escaped(row.mLabel), sFontNormal, colour);
-            y += h;
-            ++index;
-        }
+                addText(mOptions, x + 4, rowY, w - 8, h - 2, escaped(row.mLabel), sFontNormal, colour);
+        };
+        // Pointing at an option focuses it, and clicking it chooses it, as A does. The list's area starts left of the
+        // options, where the focus highlight does.
+        const int listBottom = sPanelBottom - 8;
+        mList.draw(
+            mOptions, x - 8, y, w + 8, listBottom - y, listRows, drawRow, [this] { focusMoved(); },
+            [] { pressButton(SDL_CONTROLLER_BUTTON_A); });
 
         // What the buttons do now.
         std::vector<std::pair<SDL_GameControllerButton, std::string>> hints;
@@ -555,7 +533,7 @@ namespace MWGui
             hints.emplace_back(SDL_CONTROLLER_BUTTON_A, "#{Interface:DialogueReply}");
         else if (!mWindow.mGoodbye)
         {
-            if (optionCount > 0)
+            if (mOptionCount > 0)
                 hints.emplace_back(SDL_CONTROLLER_BUTTON_A,
                     mTab == Tab::Topics ? "#{Interface:DialogueAsk}" : "#{Interface:DialogueOpen}");
             int groups = 0;
@@ -575,6 +553,10 @@ namespace MWGui
         {
             addGlyph(mHints, x, y + 1, 24, button);
             MyGUI::TextBox* text = addText(mHints, x + 32, y - 3, 220, 30, label, sFontNormal, sBrightColour);
+            // Clicking a hint presses its button.
+            const SDL_GameControllerButton pressed = button;
+            addPointerTarget(
+                mHints, x, y - 3, 32 + text->getTextSize().width, 30, nullptr, [pressed] { pressButton(pressed); });
             x += 32 + text->getTextSize().width + 26;
         }
     }
@@ -596,13 +578,11 @@ namespace MWGui
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         if (winMgr->getActiveControllerWindow() != &mWindow)
         {
-            mHeldDirection.reset();
+            mList.resetHeld();
             return;
         }
-        int dx = 0;
-        int dy = 0;
-        if (mHeldDirection.update(duration, dx, dy) && dy != 0)
-            move(dy);
+        if (mList.updateHeld(duration, mOptionCount))
+            focusMoved();
 
         // The right stick scrolls the conversation. Squaring the deflection gives finer control near the centre.
         const float stick = MWBase::Environment::get().getInputManager()->getControllerAxisValue(
@@ -638,8 +618,7 @@ namespace MWGui
                 if (!inChoice() && !mWindow.mGoodbye)
                 {
                     mTab = mTab == Tab::Topics ? Tab::Services : Tab::Topics;
-                    mFocus = 0;
-                    mScroll = 0;
+                    mList.reset();
                     mFocusedLabel.clear();
                     winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
                     drawOptions();
@@ -652,14 +631,9 @@ namespace MWGui
         return true;
     }
 
-    void DialoguePanel::move(int delta)
+    void DialoguePanel::focusMoved()
     {
-        int optionCount = 0;
-        for (const Row& row : buildRows())
-            optionCount += row.mHeader.empty() ? 1 : 0;
-        if (optionCount == 0)
-            return;
-        mFocus = std::clamp(mFocus + delta, 0, optionCount - 1);
+        // The focus now stays where the player put it, rather than on the top option or a remembered one.
         mFocusedLabel.clear();
         mFocusOnTop = false;
         drawOptions();
@@ -682,11 +656,11 @@ namespace MWGui
         if (groupStarts.size() < 2)
             return;
         auto next = std::find_if(
-            groupStarts.begin(), groupStarts.end(), [&](const auto& start) { return start.first > mFocus; });
+            groupStarts.begin(), groupStarts.end(), [&](const auto& start) { return start.first > mList.getFocus(); });
         if (next == groupStarts.end())
             next = groupStarts.begin();
-        mFocus = next->first;
-        mScroll = next->second;
+        mList.setFocus(next->first);
+        mList.setScroll(next->second);
         mFocusedLabel.clear();
         mFocusOnTop = false;
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
@@ -701,7 +675,7 @@ namespace MWGui
         {
             if (!row.mHeader.empty())
                 continue;
-            if (index++ != mFocus)
+            if (index++ != mList.getFocus())
                 continue;
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
             if (row.mChoice >= 0)

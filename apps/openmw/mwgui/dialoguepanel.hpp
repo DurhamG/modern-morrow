@@ -66,8 +66,9 @@ namespace MWGui
         MyGUI::Widget* mEarlierHint = nullptr;
 
         Tab mTab = Tab::Topics;
-        int mFocus = 0;
-        int mScroll = 0;
+        ControllerList mList;
+        // How many options the list had when it was last drawn, for moving through them with the d-pad.
+        int mOptionCount = 0;
         std::string mFocusedLabel;
         // After a new answer, the focus stays on the top option, even as the topics update after it.
         bool mFocusOnTop = true;
@@ -79,8 +80,6 @@ namespace MWGui
         std::size_t mShownEntries = 0;
         int mShownDisposition = -1;
 
-        HeldDirection mHeldDirection;
-
         std::vector<Row> buildRows() const;
         std::vector<std::string> mentionedTopics() const;
         bool inChoice() const;
@@ -90,7 +89,8 @@ namespace MWGui
         void drawHints(const std::vector<std::pair<SDL_GameControllerButton, std::string>>& hints);
         void placeHistory();
 
-        void move(int delta);
+        // Draws the options again after the d-pad or the mouse moved the focus.
+        void focusMoved();
         void nextGroup();
         void activate();
     };

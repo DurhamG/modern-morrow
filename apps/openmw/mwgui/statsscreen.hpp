@@ -69,14 +69,11 @@ namespace MWGui
             int mEntry = -1;
         };
 
-        struct ListState
-        {
-            int mFocus = 0;
-            int mScroll = 0;
-        };
-
         Tab mTab = Tab::Character;
-        std::array<ListState, sTabCount> mLists;
+        // The selected tile on the Character tab.
+        int mTileFocus = 0;
+        ControllerList mSkillList;
+        ControllerList mFactionList;
 
         // The Character tab's tiles, where the last redraw put them, for moving between them with the d-pad.
         std::vector<std::pair<Info, MyGUI::IntCoord>> mTiles;
@@ -93,6 +90,8 @@ namespace MWGui
         void drawTile(int x, int y, int w, int h, const Info& info, bool focused);
         void drawBar(int x, int y, int w, int h, float fraction, const MyGUI::Colour& colour);
 
+        // The list the Skills or Factions tab shows.
+        ControllerList& currentList();
         std::vector<Info> listEntries() const;
         std::vector<Row> buildRows(const std::vector<Info>& entries) const;
         static std::vector<int> groupStarts(const std::vector<Row>& rows);
@@ -104,6 +103,8 @@ namespace MWGui
         int drawValueRow(int x, int y, int w, const std::string& label, const std::string& value,
             const MyGUI::Colour& colour);
 
+        // Selects a tile that the mouse points at or clicks, when the Character tab still shows.
+        void focusTileWithPointer(int tile);
         void move(int dx, int dy);
         void moveOnTiles(int dx, int dy);
         void changeTab(int delta);

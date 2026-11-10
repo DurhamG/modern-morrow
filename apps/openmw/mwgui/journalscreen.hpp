@@ -48,8 +48,8 @@ namespace MWGui
         std::vector<QuestLog::Quest> mQuests;
         // The highlighted quest, by name, so it stays highlighted when the tab changes
         std::string mSelected;
-        int mScroll = 0;
-        HeldDirection mHeldDirection;
+        // The list's focus is set from mSelected each time the screen draws.
+        ControllerList mList;
 
         // The highlighted quest's entries, which the right stick scrolls when they don't fit.
         MyGUI::Widget* mEntriesPaper = nullptr;
@@ -74,7 +74,8 @@ namespace MWGui
         void placeEntries();
         void scrollEntries(float stick, float duration);
 
-        void move(int dy);
+        // Selects the quest the list focuses, and draws the screen again.
+        void selectFocused();
         void changeTab(int delta);
         void nextGroup();
     };

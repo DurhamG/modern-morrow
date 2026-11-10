@@ -62,6 +62,8 @@ namespace MWGui
         MyGUI::Widget* mPanel = nullptr;
         ESM::RefId mClassImageId;
         void drawPanel();
+        // Highlights the attribute tile that the mouse points at or clicks.
+        void focusWithPointer(std::size_t index);
     };
 
 }

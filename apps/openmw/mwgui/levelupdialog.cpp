@@ -217,6 +217,17 @@ namespace MWGui
                 : std::to_string(base);
             addText(mPanel, tx + tileW - 120, tileY, 108, tileH, value, sFontLarge,
                 chosen ? sBetterColour : sBrightColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
+            // Pointing at a tile highlights it, and clicking it picks it, as A does.
+            addPointerTarget(
+                mPanel, tx, tileY, tileW, tileH,
+                [this, i] {
+                    if (mControllerFocus != i)
+                        focusWithPointer(i);
+                },
+                [this, i] {
+                    focusWithPointer(i);
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                });
             ++i;
         }
 
@@ -247,10 +258,24 @@ namespace MWGui
         const auto hint = [&](SDL_GameControllerButton button, const std::string& label, const MyGUI::Colour& colour) {
             addGlyph(mPanel, hx, hintY + 4, 22, button);
             MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 220, 30, label, sFontNormal, colour);
+            // Clicking a hint presses its button.
+            addPointerTarget(
+                mPanel, hx, hintY, 30 + text->getTextSize().width, 30, nullptr, [button] { pressButton(button); });
             hx += 30 + text->getTextSize().width + 22;
         };
         hint(SDL_CONTROLLER_BUTTON_A, "#{Interface:LevelUpPick}", sBrightColour);
         hint(SDL_CONTROLLER_BUTTON_X, "#{sDone}", left == 0 ? sBrightColour : sDimColour);
+    }
+
+    void LevelupDialog::focusWithPointer(std::size_t index)
+    {
+        if (index >= mAttributeButtons.size())
+            return;
+        setControllerFocus(mAttributeButtons, mControllerFocus, false);
+        mControllerFocus = index;
+        setControllerFocus(mAttributeButtons, mControllerFocus, true);
+        if (mPanel != nullptr && mPanel->getVisible())
+            drawPanel();
     }
 
     void LevelupDialog::setAttributeValues()
