@@ -77,8 +77,7 @@ namespace MWGui
         std::vector<Choice> mChoices;
         int mLineFocus = 0;
         bool mChoicesFocused = false;
-        int mChoiceFocus = 0;
-        int mChoiceScroll = 0;
+        ControllerList mChoiceList;
         HeldDirection mHeldDirection;
         std::unique_ptr<TextInputDialog> mTextDialog;
         // Whether the open text dialog is for the description rather than the name
@@ -93,6 +92,8 @@ namespace MWGui
         void drawChoices(int x, int y, int w, int h);
 
         void chooseLine();
+        /// Moves the highlight to a line on the left, as up and down do there.
+        void focusLine(int line);
         void pick(const Choice& choice);
         void editText(bool description);
         void onTextDone(WindowBase* sender);

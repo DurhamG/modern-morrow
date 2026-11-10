@@ -1,6 +1,7 @@
 #ifndef MWGUI_RACE_H
 #define MWGUI_RACE_H
 
+#include "controllerscreen.hpp"
 #include "windowbase.hpp"
 #include <components/esm/refid.hpp>
 #include <memory>
@@ -115,8 +116,10 @@ namespace MWGui
 
         // In controller menus mode, a full screen panel shows the races and the head instead of this window.
         MyGUI::Widget* mPanel = nullptr;
-        int mPanelScroll = 0;
+        ControllerList mList;
         void drawPanel();
+        /// Selects a race in the race list, as moving the selection there does.
+        void selectRace(int index);
     };
 }
 #endif

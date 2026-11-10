@@ -9,7 +9,7 @@
 
 namespace MWGui
 {
-    MyGUI::IntCoord ChoiceScreen::draw(MyGUI::Widget* root, int& scroll) const
+    MyGUI::IntCoord ChoiceScreen::draw(MyGUI::Widget* root, ControllerList& list) const
     {
         using namespace ControllerUi;
         clearPanel(root);
@@ -26,12 +26,11 @@ namespace MWGui
         constexpr int listW = 230;
         const int count = static_cast<int>(mChoices.size());
         const int visible = std::max(1, (bottom - top - 12) / entryH);
-        scroll = std::clamp(scroll, std::max(0, mFocus - visible + 1), std::max(0, mFocus));
         addRect(root, sMargin, top, listW, bottom - top, sPanelColour, 0.9f);
-        for (int i = scroll; i < count && i < scroll + visible; ++i)
-        {
-            const int ry = top + 6 + (i - scroll) * entryH;
-            const bool focused = i == mFocus;
+        const std::vector<ControllerList::Row> rows(
+            static_cast<std::size_t>(count), ControllerList::Row{ entryH, true });
+        list.setFocus(mFocus);
+        const auto drawRow = [&](std::size_t i, int ry, bool focused) {
             if (focused)
             {
                 addRect(root, sMargin + 4, ry, listW - 8, entryH - 4, sAccentColour, 0.16f);
@@ -39,7 +38,8 @@ namespace MWGui
             }
             addText(root, sMargin + 18, ry, listW - 30, entryH - 4, escaped(mChoices[i]), sFontNormal,
                 focused ? sActiveColour : sBrightColour);
-        }
+        };
+        list.draw(root, sMargin + 4, top + 6, listW - 8, visible * entryH, rows, drawRow, mOnPoint, mOnClick);
 
         // The picture in the middle, above the description.
         const int px = sMargin + listW + 20;
@@ -95,8 +95,12 @@ namespace MWGui
         const int hintY = size.height - 48;
         for (const auto& [button, label] : mHints)
         {
-            addGlyph(root, hx, hintY + 4, 22, static_cast<SDL_GameControllerButton>(button));
+            const SDL_GameControllerButton pressed = static_cast<SDL_GameControllerButton>(button);
+            addGlyph(root, hx, hintY + 4, 22, pressed);
             MyGUI::TextBox* text = addText(root, hx + 30, hintY, 220, 30, label, sFontNormal, sBrightColour);
+            // Clicking a hint presses its button.
+            addPointerTarget(
+                root, hx, hintY, 30 + text->getTextSize().width, 30, nullptr, [pressed] { pressButton(pressed); });
             hx += 30 + text->getTextSize().width + 22;
         }
         return picture;

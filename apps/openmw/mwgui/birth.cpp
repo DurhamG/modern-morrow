@@ -162,7 +162,16 @@ namespace MWGui
             }
         }
         screen.mHints = { { SDL_CONTROLLER_BUTTON_A, "#{sDone}" } };
-        const MyGUI::IntCoord picture = screen.draw(mPanel, mPanelScroll);
+        // Pointing at a birthsign shows it, and clicking a birthsign chooses it, as A does.
+        screen.mOnPoint = [this] {
+            selectBirth(mList.getFocus());
+            drawPanel();
+        };
+        screen.mOnClick = [this] {
+            selectBirth(mList.getFocus());
+            ControllerUi::pressButton(SDL_CONTROLLER_BUTTON_A);
+        };
+        const MyGUI::IntCoord picture = screen.draw(mPanel, mList);
         if (birth != nullptr)
         {
             MyGUI::ImageBox* image = mPanel->createWidget<MyGUI::ImageBox>("ImageBox", picture, MyGUI::Align::Default);
@@ -187,6 +196,14 @@ namespace MWGui
         }
 
         updateSpells();
+    }
+
+    void BirthDialog::selectBirth(int index)
+    {
+        if (index < 0 || static_cast<size_t>(index) >= mBirthList->getItemCount())
+            return;
+        mBirthList->setIndexSelected(static_cast<size_t>(index));
+        onSelectBirth(mBirthList, static_cast<size_t>(index));
     }
 
     // widget controls

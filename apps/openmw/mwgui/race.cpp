@@ -153,12 +153,11 @@ namespace MWGui
         const int focus
             = mRaceList->getIndexSelected() == MyGUI::ITEM_NONE ? 0 : static_cast<int>(mRaceList->getIndexSelected());
         const int visible = std::max(1, (bottom - top) / entryH);
-        mPanelScroll = std::clamp(mPanelScroll, std::max(0, focus - visible + 1), focus);
         addRect(mPanel, sMargin, top, listW, bottom - top, sPanelColour, 0.9f);
-        for (int i = mPanelScroll; i < count && i < mPanelScroll + visible; ++i)
-        {
-            const int ry = top + 6 + (i - mPanelScroll) * entryH;
-            const bool focused = i == focus;
+        const std::vector<ControllerList::Row> rows(
+            static_cast<std::size_t>(count), ControllerList::Row{ entryH, true });
+        mList.setFocus(focus);
+        const auto drawRow = [&](std::size_t i, int ry, bool focused) {
             if (focused)
             {
                 addRect(mPanel, sMargin + 4, ry, listW - 8, entryH - 4, sAccentColour, 0.16f);
@@ -166,7 +165,18 @@ namespace MWGui
             }
             addText(mPanel, sMargin + 18, ry, listW - 30, entryH - 4, escaped(mRaceList->getItemNameAt(i).asUTF8()),
                 sFontNormal, focused ? sActiveColour : sBrightColour);
-        }
+        };
+        // Pointing at a race shows it, and clicking a race chooses it, as A does.
+        mList.draw(
+            mPanel, sMargin + 4, top + 6, listW - 8, visible * entryH, rows, drawRow,
+            [this] {
+                selectRace(mList.getFocus());
+                drawPanel();
+            },
+            [this] {
+                selectRace(mList.getFocus());
+                pressButton(SDL_CONTROLLER_BUTTON_A);
+            });
 
         // The head, and how it looks, in the middle.
         const int px = sMargin + listW + 20;
@@ -189,6 +199,8 @@ namespace MWGui
                   addText(mPanel, px + 32, ay, 120, 30, label, sFontNormal, sTextColour);
                   addText(mPanel, px + 32, ay, previewW - 32, 30, value, sFontNormal, sBrightColour,
                       MyGUI::Align::Right | MyGUI::Align::VCenter);
+                  // Clicking a line changes it, as its button does.
+                  addPointerTarget(mPanel, px, ay, previewW, 32, nullptr, [button] { pressButton(button); });
                   ay += 34;
               };
         appearance(SDL_CONTROLLER_BUTTON_Y, "#{Interface:ChargenSex}",
@@ -246,6 +258,10 @@ namespace MWGui
         const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
             addGlyph(mPanel, hx, hintY + 4, 22, button);
             MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 220, 30, label, sFontNormal, sBrightColour);
+            // Clicking a hint presses its button. The right stick turns the head, so its hint has nothing to press.
+            if (button != SDL_CONTROLLER_BUTTON_RIGHTSTICK)
+                addPointerTarget(
+                    mPanel, hx, hintY, 30 + text->getTextSize().width, 30, nullptr, [button] { pressButton(button); });
             hx += 30 + text->getTextSize().width + 22;
         };
         hint(SDL_CONTROLLER_BUTTON_A, "#{sDone}");
@@ -326,7 +342,7 @@ namespace MWGui
         if (mPanel != nullptr)
         {
             ControllerUi::hideWindow(mMainWidget);
-            mPanelScroll = 0;
+            mList.reset();
             mPanel->setVisible(true);
             MyGUI::LayerManager::getInstance().upLayerItem(mPanel);
             drawPanel();
@@ -458,6 +474,14 @@ namespace MWGui
         updatePreview();
         updateSkills();
         updateSpellPowers();
+    }
+
+    void RaceDialog::selectRace(int index)
+    {
+        if (index < 0 || static_cast<size_t>(index) >= mRaceList->getItemCount())
+            return;
+        mRaceList->setIndexSelected(static_cast<size_t>(index));
+        onSelectRace(mRaceList, static_cast<size_t>(index));
     }
 
     void RaceDialog::onAccept(MyGUI::ListBox* sender, size_t index)

@@ -16,6 +16,7 @@
 #include <optional>
 
 #include "controllerdialog.hpp"
+#include "controllerscreen.hpp"
 #include "windowbase.hpp"
 
 namespace MWGui
@@ -124,7 +125,7 @@ namespace MWGui
 
         // In controller menus mode, a full screen panel shows the choice instead of this window.
         MyGUI::Widget* mPanel = nullptr;
-        int mPanelScroll = 0;
+        ControllerList mList;
         void drawPanel();
     };
 
@@ -170,8 +171,10 @@ namespace MWGui
 
         // In controller menus mode, a full screen panel shows the choice instead of this window.
         MyGUI::Widget* mPanel = nullptr;
-        int mPanelScroll = 0;
+        ControllerList mList;
         void drawPanel();
+        /// Selects a class in the class list, as moving the selection there does.
+        void selectClass(int index);
 
         MyGUI::ImageBox* mClassImage;
         MyGUI::ListBox* mClassList;

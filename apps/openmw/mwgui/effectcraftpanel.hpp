@@ -117,8 +117,7 @@ namespace MWGui
         Picker mPicker = Picker::Effects;
         std::vector<Entry> mEntries;
         bool mListFocused = false;
-        int mListFocus = 0;
-        int mListScroll = 0;
+        ControllerList mList;
         int mLineFocus = 0;
         int mSettingFocus = 0;
         // The effect waiting for its skill or attribute to be picked
@@ -152,6 +151,8 @@ namespace MWGui
         void pickSoulGem(const MWWorld::Ptr& gem);
         void focusNextLine();
         void adjust(int delta);
+        /// Sets a setting's value to where the mouse is on its bar, which starts at barX and is barW wide.
+        void setValueAtPointer(int setting, int barX, int barW);
         void rename();
         void onRenameDone(WindowBase* sender);
     };

@@ -163,7 +163,9 @@ namespace MWGui
         describeClass(*playerClass, screen);
         screen.mHints = { { SDL_CONTROLLER_BUTTON_A, "#{sMessageQuestionAnswer2}" },
             { SDL_CONTROLLER_BUTTON_B, "#{sMessageQuestionAnswer3}" } };
-        addClassImage(mPanel, screen.draw(mPanel, mPanelScroll), mCurrentClassId);
+        // Clicking the class takes it, as A does.
+        screen.mOnClick = [] { ControllerUi::pressButton(SDL_CONTROLLER_BUTTON_A); };
+        addClassImage(mPanel, screen.draw(mPanel, mList), mCurrentClassId);
     }
 
     bool GenerateClassResultDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
@@ -318,7 +320,24 @@ namespace MWGui
         if (playerClass != nullptr)
             describeClass(*playerClass, screen);
         screen.mHints = { { SDL_CONTROLLER_BUTTON_A, "#{sDone}" } };
-        addClassImage(mPanel, screen.draw(mPanel, mPanelScroll), mCurrentClassId);
+        // Pointing at a class shows it, and clicking a class chooses it, as A does.
+        screen.mOnPoint = [this] {
+            selectClass(mList.getFocus());
+            drawPanel();
+        };
+        screen.mOnClick = [this] {
+            selectClass(mList.getFocus());
+            ControllerUi::pressButton(SDL_CONTROLLER_BUTTON_A);
+        };
+        addClassImage(mPanel, screen.draw(mPanel, mList), mCurrentClassId);
+    }
+
+    void PickClassDialog::selectClass(int index)
+    {
+        if (index < 0 || static_cast<size_t>(index) >= mClassList->getItemCount())
+            return;
+        mClassList->setIndexSelected(static_cast<size_t>(index));
+        onSelectClass(mClassList, static_cast<size_t>(index));
     }
 
     void PickClassDialog::setClassId(const ESM::RefId& classId)

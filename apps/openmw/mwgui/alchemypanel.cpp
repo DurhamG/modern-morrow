@@ -111,9 +111,8 @@ namespace MWGui
         if (mRoot == nullptr)
             return;
         mRoot->setVisible(true);
-        mFocus = 0;
-        mScroll = 0;
-        mHeldDirection.reset();
+        mList.reset();
+        mList.resetHeld();
         update();
     }
 
@@ -146,7 +145,7 @@ namespace MWGui
         {
             if (row.mItem.isEmpty())
                 continue;
-            if (index++ == mFocus)
+            if (index++ == mList.getFocus())
                 return &row;
         }
         return nullptr;
@@ -209,15 +208,16 @@ namespace MWGui
         addGroup("#{Interface:AlchemyOther}", others);
 
         int index = 0;
+        int focus = mList.getFocus();
         for (const Row& row : mRows)
         {
             if (row.mItem.isEmpty())
                 continue;
             if (!focusedItem.isEmpty() && row.mItem == focusedItem)
-                mFocus = index;
+                focus = index;
             ++index;
         }
-        mFocus = std::clamp(mFocus, 0, std::max(0, index - 1));
+        mList.setFocus(std::clamp(focus, 0, std::max(0, index - 1)));
     }
 
     void AlchemyPanel::update()
@@ -251,60 +251,20 @@ namespace MWGui
         addRect(mRoot, x, y, w, h, sPanelColour, 0.9f);
         addText(mRoot, x + 16, y + 8, w - 32, 30, "#{sIngredients}", sFontLarge, sBrightColour);
 
-        int count = 0;
-        for (const Row& row : mRows)
-            count += row.mItem.isEmpty() ? 0 : 1;
         const int listTop = y + 44;
         const int listBottom = y + h - 6;
-        if (count == 0)
-        {
-            addText(mRoot, x + 16, listTop, w - 32, 30, "#{Interface:AlchemyNoIngredients}", sFontNormal, sDimColour);
-            return;
-        }
+        std::vector<ControllerList::Row> listRows;
+        for (const Row& row : mRows)
+            listRows.push_back({ row.mItem.isEmpty() ? sHeaderHeight : sRowHeight, !row.mItem.isEmpty() });
 
-        // Scroll so the focused row, and the header above it, are in view.
-        int focusRow = 0;
-        for (int i = 0, index = 0; i < static_cast<int>(mRows.size()); ++i)
-        {
-            if (mRows[i].mItem.isEmpty())
-                continue;
-            if (index++ == mFocus)
-            {
-                focusRow = i;
-                break;
-            }
-        }
-        const auto rowHeight = [&](int i) { return mRows[i].mItem.isEmpty() ? sHeaderHeight : sRowHeight; };
-        mScroll = std::min(mScroll, static_cast<int>(mRows.size()) - 1);
-        if (focusRow < mScroll)
-            mScroll = focusRow > 0 && mRows[focusRow - 1].mItem.isEmpty() ? focusRow - 1 : focusRow;
-        while (true)
-        {
-            int bottomOfFocus = listTop;
-            for (int i = mScroll; i <= focusRow; ++i)
-                bottomOfFocus += rowHeight(i);
-            if (bottomOfFocus <= listBottom || mScroll >= focusRow)
-                break;
-            ++mScroll;
-        }
-
-        int rowY = listTop;
-        int index = 0;
-        for (int i = 0; i < mScroll; ++i)
-            index += mRows[i].mItem.isEmpty() ? 0 : 1;
-        for (int i = mScroll; i < static_cast<int>(mRows.size()); ++i)
-        {
+        const auto drawRow = [&](std::size_t i, int rowY, bool focused) {
             const Row& row = mRows[i];
-            if (rowY + rowHeight(i) > listBottom)
-                break;
             if (row.mItem.isEmpty())
             {
                 addText(mRoot, x + 12, rowY + 4, w - 24, 24, row.mHeader, sFontSmall, sBrightColour);
                 addRect(mRoot, x + 12, rowY + 27, w - 24, 1, sAccentColour, 0.25f);
-                rowY += sHeaderHeight;
-                continue;
+                return;
             }
-            const bool focused = index == mFocus;
             const int rx = x + 4;
             const int rw = w - 8;
             if (focused)
@@ -323,9 +283,12 @@ namespace MWGui
             const std::string effects
                 = row.mEffects.empty() ? "#{Interface:AlchemyNoKnownEffects}" : escaped(joined(row.mEffects));
             addText(mRoot, textX, rowY + 30, textW, 22, effects, sFontSmall, sDimColour);
-            rowY += sRowHeight;
-            ++index;
-        }
+        };
+        // Pointing at an ingredient focuses it, and clicking it puts it in the potion or takes it out, as A does.
+        if (!mList.draw(
+                mRoot, x + 4, listTop, w - 8, listBottom - listTop, listRows, drawRow, [this] { update(); },
+                [] { pressButton(SDL_CONTROLLER_BUTTON_A); }))
+            addText(mRoot, x + 16, listTop, w - 32, 30, "#{Interface:AlchemyNoIngredients}", sFontNormal, sDimColour);
     }
 
     void AlchemyPanel::drawPotion(int x, int y, int w, int h)
@@ -358,7 +321,8 @@ namespace MWGui
         // The four ingredient slots.
         addText(mRoot, x + 16, ry, w - 32, 22, "#{sIngredients}", sFontSmall, sDimColour);
         ry += 26;
-        for (auto it = alchemy.beginIngredients(); it != alchemy.endIngredients(); ++it)
+        int slot = 0;
+        for (auto it = alchemy.beginIngredients(); it != alchemy.endIngredients(); ++it, ++slot)
         {
             if (it->isEmpty())
             {
@@ -371,6 +335,9 @@ namespace MWGui
                 addIcon(mRoot, x + 16, ry + 2, sSlotHeight - 6, *it, false);
                 addText(mRoot, x + 16 + sSlotHeight + 4, ry, w - 32 - sSlotHeight, sSlotHeight - 2,
                     escaped(it->getClass().getName(*it)), sFontNormal, sBrightColour);
+                // Clicking an ingredient in the potion takes it out, as A does on it in the list.
+                addPointerTarget(
+                    mRoot, x + 12, ry, w - 24, sSlotHeight, nullptr, [this, slot] { removeFromSlot(slot); });
             }
             ry += sSlotHeight;
         }
@@ -422,7 +389,11 @@ namespace MWGui
                     sFontLarge, sBrightColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
             const int valueLeft = x + w - 16 - 34 - value->getTextSize().width;
             addGlyph(mRoot, valueLeft - 34, by + 2, 26, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+            addPointerTarget(mRoot, valueLeft - 38, by - 2, 34, 34, nullptr,
+                [] { pressButton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER); });
             addGlyph(mRoot, x + w - 16 - 26, by + 2, 26, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+            addPointerTarget(mRoot, x + w - 16 - 30, by - 2, 34, 34, nullptr,
+                [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
             by -= 8;
         }
 
@@ -446,16 +417,14 @@ namespace MWGui
             return;
         if (MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() != &mWindow)
         {
-            mHeldDirection.reset();
+            mList.resetHeld();
             return;
         }
-        int dx = 0;
-        int dy = 0;
-        if (mHeldDirection.update(duration, dx, dy) && dy != 0)
-        {
-            mFocus = std::max(0, mFocus + dy);
+        int itemCount = 0;
+        for (const Row& row : mRows)
+            itemCount += row.mItem.isEmpty() ? 0 : 1;
+        if (mList.updateHeld(duration, itemCount))
             update();
-        }
     }
 
     bool AlchemyPanel::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
@@ -513,6 +482,30 @@ namespace MWGui
         }
         mWindow.update();
         update();
+    }
+
+    void AlchemyPanel::removeFromSlot(int slot)
+    {
+        const MWMechanics::Alchemy& alchemy = *mWindow.mAlchemy;
+        if (slot < 0 || slot >= alchemy.endIngredients() - alchemy.beginIngredients())
+            return;
+        const MWWorld::Ptr item = alchemy.beginIngredients()[slot];
+        if (item.isEmpty())
+            return;
+        // Focuses the ingredient in the list, so the removal goes through the same path as A.
+        int index = 0;
+        for (const Row& row : mRows)
+        {
+            if (row.mItem.isEmpty())
+                continue;
+            if (row.mItem == item)
+            {
+                mList.setFocus(index);
+                toggleFocused();
+                return;
+            }
+            ++index;
+        }
     }
 
     void AlchemyPanel::brew()

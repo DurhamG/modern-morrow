@@ -1,11 +1,13 @@
 #include "effectcraftpanel.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 
 #include <MyGUI_EditBox.h>
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
+#include <MyGUI_InputManager.h>
 #include <MyGUI_ScrollBar.h>
 
 #include <components/esm/attr.hpp>
@@ -197,8 +199,7 @@ namespace MWGui
         mRoot->setVisible(true);
         mPicker = Picker::Effects;
         mListFocused = false;
-        mListFocus = 0;
-        mListScroll = 0;
+        mList.reset();
         mPendingEffect = nullptr;
         mHeldDirection.reset();
         // The highlight starts on the first thing still to choose.
@@ -274,8 +275,7 @@ namespace MWGui
     void EffectCraftPanel::setPicker(Picker picker)
     {
         mPicker = picker;
-        mListFocus = 0;
-        mListScroll = 0;
+        mList.reset();
     }
 
     void EffectCraftPanel::readEntries()
@@ -365,7 +365,7 @@ namespace MWGui
                 }
                 break;
         }
-        mListFocus = std::clamp(mListFocus, 0, std::max(0, entryCount() - 1));
+        mList.setFocus(std::clamp(mList.getFocus(), 0, std::max(0, entryCount() - 1)));
     }
 
     int EffectCraftPanel::entryCount() const
@@ -381,7 +381,7 @@ namespace MWGui
         {
             if (!entry.mHeader.empty())
                 continue;
-            if (index++ == mListFocus)
+            if (index++ == mList.getFocus())
                 return &entry;
         }
         return nullptr;
@@ -453,60 +453,23 @@ namespace MWGui
 
         const int listTop = y + 44;
         const int listBottom = y + h - 6;
-        if (entryCount() == 0)
-        {
-            int ty = listTop;
-            for (const std::string& line : wrapText(mRoot, localised(empty), w - 32, sFontNormal, 3))
-            {
-                addText(mRoot, x + 16, ty, w - 32, 26, escaped(line), sFontNormal, sDimColour);
-                ty += 26;
-            }
-            return;
-        }
+        std::vector<ControllerList::Row> rows;
+        for (const Entry& entry : mEntries)
+            rows.push_back({ entry.mHeader.empty() ? sEntryHeight : sHeaderHeight, entry.mHeader.empty() });
 
-        // Scroll so the focused entry, and the header above it, are in view.
-        int focusRow = 0;
-        for (int i = 0, index = 0; i < static_cast<int>(mEntries.size()); ++i)
-        {
-            if (!mEntries[i].mHeader.empty())
-                continue;
-            if (index++ == mListFocus)
-            {
-                focusRow = i;
-                break;
-            }
-        }
-        const auto rowHeight = [&](int i) { return mEntries[i].mHeader.empty() ? sEntryHeight : sHeaderHeight; };
-        mListScroll = std::min(mListScroll, static_cast<int>(mEntries.size()) - 1);
-        if (focusRow < mListScroll)
-            mListScroll = focusRow > 0 && !mEntries[focusRow - 1].mHeader.empty() ? focusRow - 1 : focusRow;
-        while (true)
-        {
-            int bottomOfFocus = listTop;
-            for (int i = mListScroll; i <= focusRow; ++i)
-                bottomOfFocus += rowHeight(i);
-            if (bottomOfFocus <= listBottom || mListScroll >= focusRow)
-                break;
-            ++mListScroll;
-        }
-
-        int rowY = listTop;
-        int index = 0;
-        for (int i = 0; i < mListScroll; ++i)
-            index += mEntries[i].mHeader.empty() ? 1 : 0;
-        for (int i = mListScroll; i < static_cast<int>(mEntries.size()); ++i)
-        {
+        // Where the list's focused entry is drawn, or -1 when it is out of view.
+        int focusedY = -1;
+        const auto drawRow = [&](std::size_t i, int rowY, bool isFocus) {
             const Entry& entry = mEntries[i];
-            if (rowY + rowHeight(i) > listBottom)
-                break;
             if (!entry.mHeader.empty())
             {
                 addText(mRoot, x + 12, rowY + 4, w - 24, 24, entry.mHeader, sFontSmall, sBrightColour);
                 addRect(mRoot, x + 12, rowY + 27, w - 24, 1, sAccentColour, 0.25f);
-                rowY += sHeaderHeight;
-                continue;
+                return;
             }
-            const bool focused = mListFocused && index == mListFocus;
+            if (isFocus)
+                focusedY = rowY;
+            const bool focused = mListFocused && isFocus;
             const int rx = x + 4;
             const int rw = w - 8;
             if (focused)
@@ -526,9 +489,43 @@ namespace MWGui
                 sFontNormal, focused ? sActiveColour : (entry.mAdded ? sNewColour : sBrightColour));
             if (hasDetail)
                 addText(mRoot, textX, rowY + 26, textW, 22, entry.mDetail, sFontSmall, sDimColour);
-            rowY += sEntryHeight;
-            ++index;
+        };
+        // Pointing at an entry moves the highlight to the list and onto it. Clicking an entry picks it, as A does.
+        if (!mList.draw(
+                mRoot, x + 4, listTop, w - 8, listBottom - listTop, rows, drawRow,
+                [this] {
+                    mListFocused = true;
+                    update();
+                },
+                [this] {
+                    mListFocused = true;
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                }))
+        {
+            int ty = listTop;
+            for (const std::string& line : wrapText(mRoot, localised(empty), w - 32, sFontNormal, 3))
+            {
+                addText(mRoot, x + 16, ty, w - 32, 26, escaped(line), sFontNormal, sDimColour);
+                ty += 26;
+            }
+            return;
         }
+
+        // The list only reacts to pointing at an entry other than its focused one. While the right side has the
+        // highlight, pointing at the list's focused entry has to move the highlight to the list as well.
+        if (!mListFocused && focusedY >= 0)
+            addPointerTarget(
+                mRoot, x + 4, focusedY, w - 8, sEntryHeight,
+                [this] {
+                    if (mListFocused)
+                        return;
+                    mListFocused = true;
+                    update();
+                },
+                [this] {
+                    mListFocused = true;
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                });
     }
 
     void EffectCraftPanel::drawEditor(int x, int y, int w, int h)
@@ -591,12 +588,34 @@ namespace MWGui
             addText(mRoot, x + 20, ry + 2, w - 40, 28, label, sFontNormal, focused ? sActiveColour : sTextColour);
             addText(mRoot, x + 20, ry + 2, w - 40, 28, value, sFontLarge, sBrightColour,
                 MyGUI::Align::Right | MyGUI::Align::VCenter);
+            // Pointing at a setting highlights it. Clicking the range changes it, as left or right does.
+            const int index = static_cast<int>(i);
+            const bool isRange = all[i] == Setting::Range;
+            addPointerTarget(
+                mRoot, x + 4, ry, w - 8, sSettingHeight - 4,
+                [this, index] {
+                    if (mSettingFocus == index)
+                        return;
+                    mSettingFocus = index;
+                    update();
+                },
+                [this, index, isRange] {
+                    mSettingFocus = index;
+                    if (isRange)
+                        adjust(1);
+                    update();
+                });
             if (slider != nullptr && slider->getScrollRange() > 1)
             {
                 const float fraction = static_cast<float>(slider->getScrollPosition()) / (slider->getScrollRange() - 1);
                 addRect(mRoot, x + 20, ry + 36, w - 40, 6, MyGUI::Colour::Black, 0.6f);
                 addRect(
                     mRoot, x + 20, ry + 36, std::max(2, static_cast<int>((w - 40) * fraction)), 6, sAccentColour, 0.8f);
+                // Clicking the bar sets the value to the point clicked.
+                const int barX = x + 20;
+                const int barW = w - 40;
+                addPointerTarget(mRoot, barX, ry + 28, barW, 22, nullptr,
+                    [this, index, barX, barW] { setValueAtPointer(index, barX, barW); });
             }
             ry += sSettingHeight;
         }
@@ -648,8 +667,30 @@ namespace MWGui
             name.empty() ? sDimColour : sBrightColour);
 
         const std::vector<Line> all = lines();
-        const bool rightFocused = !mListFocused && !isEditing();
+        const bool editing = isEditing();
+        const bool rightFocused = !mListFocused && !editing;
         int ry = y + 52;
+        // Pointing at a line moves the highlight onto it, and clicking a line chooses it, as A does. The lines can't
+        // be chosen while an effect is being edited.
+        const auto addLineTarget = [&](std::size_t i, int height) {
+            if (editing)
+                return;
+            const int index = static_cast<int>(i);
+            addPointerTarget(
+                mRoot, x + 4, ry, w - 8, height - 2,
+                [this, index] {
+                    if (!mListFocused && mLineFocus == index)
+                        return;
+                    mListFocused = false;
+                    mLineFocus = index;
+                    update();
+                },
+                [this, index] {
+                    mListFocused = false;
+                    mLineFocus = index;
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                });
+        };
         const auto highlight = [&](std::size_t i, int height) {
             if (rightFocused && static_cast<int>(i) == mLineFocus)
             {
@@ -677,6 +718,7 @@ namespace MWGui
                 if (ry + sEffectLineHeight > y + h - 190)
                     break;
                 const bool focused = highlight(i, sEffectLineHeight);
+                addLineTarget(i, sEffectLineHeight);
                 if (line.mKind == Line::Kind::AddEffect)
                     addText(mRoot, x + 20, ry, w - 40, sEffectLineHeight - 2, "+  #{Interface:EnchantAddEffect}",
                         sFontNormal, focused ? sActiveColour : sTextColour);
@@ -694,6 +736,7 @@ namespace MWGui
             }
 
             const bool focused = highlight(i, sLineHeight);
+            addLineTarget(i, sLineHeight);
             const MyGUI::Colour labelColour = focused ? sActiveColour : sTextColour;
             MWMechanics::Enchanting& enchanting = mEnchant->mEnchanting;
             if (line.mKind == Line::Kind::Item || line.mKind == Line::Kind::SoulGem)
@@ -875,7 +918,7 @@ namespace MWGui
         else if (dx > 0 && mListFocused)
             mListFocused = false;
         else if (dy != 0 && mListFocused)
-            mListFocus = std::clamp(mListFocus + dy, 0, std::max(0, entryCount() - 1));
+            mList.setFocus(std::clamp(mList.getFocus() + dy, 0, std::max(0, entryCount() - 1)));
         else if (dy != 0)
             mLineFocus = std::clamp(mLineFocus + dy, 0, static_cast<int>(lines().size()) - 1);
         update();
@@ -1143,6 +1186,41 @@ namespace MWGui
                 break;
         }
         playSound("Menu Click");
+    }
+
+    void EffectCraftPanel::setValueAtPointer(int setting, int barX, int barW)
+    {
+        const std::vector<Setting> all = settings();
+        if (setting < 0 || setting >= static_cast<int>(all.size()) || barW <= 0)
+            return;
+        const EditEffectDialog& dialog = mEditor.mAddEffectDialog;
+        const MyGUI::ScrollBar* slider = nullptr;
+        switch (all[setting])
+        {
+            case Setting::Range:
+                break;
+            case Setting::MagnitudeMin:
+                slider = dialog.mMagnitudeMinSlider;
+                break;
+            case Setting::MagnitudeMax:
+                slider = dialog.mMagnitudeMaxSlider;
+                break;
+            case Setting::Duration:
+                slider = dialog.mDurationSlider;
+                break;
+            case Setting::Area:
+                slider = dialog.mAreaSlider;
+                break;
+        }
+        mSettingFocus = setting;
+        if (slider != nullptr && slider->getScrollRange() > 1)
+        {
+            const int mouseX = MyGUI::InputManager::getInstance().getMousePosition().left - mRoot->getAbsoluteLeft();
+            const float fraction = std::clamp(static_cast<float>(mouseX - barX) / barW, 0.f, 1.f);
+            const int position = static_cast<int>(std::lround(fraction * (slider->getScrollRange() - 1)));
+            adjust(position - static_cast<int>(slider->getScrollPosition()));
+        }
+        update();
     }
 
     void EffectCraftPanel::rename()

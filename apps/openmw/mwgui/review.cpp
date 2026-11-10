@@ -206,6 +206,19 @@ namespace MWGui
             addText(mPanel, sMargin + 14, ty + 2, leftW - 28, 20, choices[i].first, sFontSmall, sDimColour);
             addText(mPanel, sMargin + 14, ty + 20, leftW - 28, 28, escaped(choices[i].second), sFontNormal,
                 focused ? sActiveColour : sBrightColour);
+            // Pointing at a choice highlights it, and clicking a choice goes back to change it, as A does.
+            addPointerTarget(
+                mPanel, sMargin, ty, leftW, choiceH - 6,
+                [this, i] {
+                    if (mControllerFocus == i)
+                        return;
+                    mControllerFocus = i;
+                    drawPanel();
+                },
+                [this, i] {
+                    mControllerFocus = i;
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                });
             ty += choiceH;
         }
 
@@ -300,6 +313,9 @@ namespace MWGui
         const auto hint = [&](SDL_GameControllerButton button, const std::string& label) {
             addGlyph(mPanel, hx, hintY + 4, 22, button);
             MyGUI::TextBox* text = addText(mPanel, hx + 30, hintY, 220, 30, label, sFontNormal, sBrightColour);
+            // Clicking a hint presses its button.
+            addPointerTarget(
+                mPanel, hx, hintY, 30 + text->getTextSize().width, 30, nullptr, [button] { pressButton(button); });
             hx += 30 + text->getTextSize().width + 22;
         };
         hint(SDL_CONTROLLER_BUTTON_A, "#{Interface:ChargenChange}");

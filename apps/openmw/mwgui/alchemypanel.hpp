@@ -53,9 +53,7 @@ namespace MWGui
         AlchemyWindow& mWindow;
         MyGUI::Widget* mRoot = nullptr;
         std::vector<Row> mRows;
-        int mFocus = 0;
-        int mScroll = 0;
-        HeldDirection mHeldDirection;
+        ControllerList mList;
         std::unique_ptr<TextInputDialog> mRenameDialog;
 
         void readIngredients();
@@ -67,6 +65,7 @@ namespace MWGui
         void drawPotion(int x, int y, int w, int h);
 
         void toggleFocused();
+        void removeFromSlot(int slot);
         void brew();
         void rename();
         void onRenameDone(WindowBase* sender);

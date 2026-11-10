@@ -182,17 +182,16 @@ namespace MWGui
         }
 
         // The highlight starts on the current choice.
-        mChoiceFocus = 0;
+        mChoiceList.reset();
         int index = 0;
         for (const Choice& choice : mChoices)
         {
             if (!choice.mHeader.empty())
                 continue;
             if (choice.mCurrent)
-                mChoiceFocus = index;
+                mChoiceList.setFocus(index);
             ++index;
         }
-        mChoiceScroll = 0;
     }
 
     int CreateClassPanel::choiceCount() const
@@ -208,7 +207,7 @@ namespace MWGui
         {
             if (!choice.mHeader.empty())
                 continue;
-            if (index++ == mChoiceFocus)
+            if (index++ == mChoiceList.getFocus())
                 return &choice;
         }
         return nullptr;
@@ -262,6 +261,20 @@ namespace MWGui
                 addRect(mRoot, x + 4, ry, 3, sLineHeight - 2, sAccentColour);
             }
             const MyGUI::Colour colour = focused && !mChoicesFocused ? sActiveColour : sBrightColour;
+            // Pointing at a line moves the highlight onto it, and clicking a line chooses it, as A does.
+            const int lineIndex = static_cast<int>(i);
+            addPointerTarget(
+                mRoot, x + 4, ry, w - 8, sLineHeight - 2,
+                [this, lineIndex] {
+                    if (!mChoicesFocused && mLineFocus == lineIndex)
+                        return;
+                    focusLine(lineIndex);
+                    update();
+                },
+                [this, lineIndex] {
+                    focusLine(lineIndex);
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                });
             std::string label;
             std::string value;
             std::string icon;
@@ -373,47 +386,23 @@ namespace MWGui
         // The choices, scrolled so the highlighted one shows.
         const int listTop = y + 44;
         const int listBottom = descriptionTop;
-        int focusRow = 0;
-        for (int i = 0, index = 0; i < static_cast<int>(mChoices.size()); ++i)
-        {
-            if (!mChoices[i].mHeader.empty())
-                continue;
-            if (index++ == mChoiceFocus)
-            {
-                focusRow = i;
-                break;
-            }
-        }
-        const auto rowHeight = [&](int i) { return mChoices[i].mHeader.empty() ? sChoiceHeight : sHeaderHeight; };
-        if (focusRow < mChoiceScroll)
-            mChoiceScroll = focusRow > 0 && !mChoices[focusRow - 1].mHeader.empty() ? focusRow - 1 : focusRow;
-        while (true)
-        {
-            int bottomOfFocus = listTop;
-            for (int i = mChoiceScroll; i <= focusRow; ++i)
-                bottomOfFocus += rowHeight(i);
-            if (bottomOfFocus <= listBottom || mChoiceScroll >= focusRow)
-                break;
-            ++mChoiceScroll;
-        }
+        std::vector<ControllerList::Row> rows;
+        for (const Choice& choice : mChoices)
+            rows.push_back({ choice.mHeader.empty() ? sChoiceHeight : sHeaderHeight, choice.mHeader.empty() });
 
-        int ry = listTop;
-        int index = 0;
-        for (int i = 0; i < mChoiceScroll; ++i)
-            index += mChoices[i].mHeader.empty() ? 1 : 0;
-        for (int i = mChoiceScroll; i < static_cast<int>(mChoices.size()); ++i)
-        {
+        // Where the list's focused choice is drawn, or -1 when it is out of view.
+        int focusedY = -1;
+        const auto drawRow = [&](std::size_t i, int ry, bool isFocus) {
             const Choice& choice = mChoices[i];
-            if (ry + rowHeight(i) > listBottom)
-                break;
             if (!choice.mHeader.empty())
             {
                 addText(mRoot, x + 12, ry + 4, w - 24, 22, choice.mHeader, sFontSmall, sBrightColour);
                 addRect(mRoot, x + 12, ry + 26, w - 24, 1, sAccentColour, 0.25f);
-                ry += sHeaderHeight;
-                continue;
+                return;
             }
-            const bool highlighted = mChoicesFocused && index == mChoiceFocus;
+            if (isFocus)
+                focusedY = ry;
+            const bool highlighted = mChoicesFocused && isFocus;
             if (highlighted)
             {
                 addRect(mRoot, x + 4, ry, w - 8, sChoiceHeight - 2, sAccentColour, 0.16f);
@@ -433,9 +422,35 @@ namespace MWGui
             std::string marker = choice.mCurrent ? "#{Interface:ClassCurrent}" : choice.mMarker;
             addText(mRoot, x + 16, ry, w - 32, sChoiceHeight - 2, marker, sFontSmall,
                 choice.mCurrent ? sNewColour : sDimColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
-            ry += sChoiceHeight;
-            ++index;
-        }
+        };
+        // Pointing at a choice moves the highlight to the choices and onto it. Clicking a choice picks it, as A does.
+        if (!mChoiceList.draw(
+                mRoot, x + 4, listTop, w - 8, listBottom - listTop, rows, drawRow,
+                [this] {
+                    mChoicesFocused = true;
+                    update();
+                },
+                [this] {
+                    mChoicesFocused = true;
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                }))
+            return;
+
+        // The list only reacts to pointing at a choice other than its focused one. While the left side has the
+        // highlight, pointing at the focused choice has to move the highlight to the choices as well.
+        if (!mChoicesFocused && focusedY >= 0)
+            addPointerTarget(
+                mRoot, x + 4, focusedY, w - 8, sChoiceHeight,
+                [this] {
+                    if (mChoicesFocused)
+                        return;
+                    mChoicesFocused = true;
+                    update();
+                },
+                [this] {
+                    mChoicesFocused = true;
+                    pressButton(SDL_CONTROLLER_BUTTON_A);
+                });
     }
 
     void CreateClassPanel::onFrame(float duration)
@@ -458,7 +473,7 @@ namespace MWGui
         else if (dx < 0 && mChoicesFocused)
             mChoicesFocused = false;
         else if (dy != 0 && mChoicesFocused)
-            mChoiceFocus = std::clamp(mChoiceFocus + dy, 0, std::max(0, choiceCount() - 1));
+            mChoiceList.setFocus(std::clamp(mChoiceList.getFocus() + dy, 0, std::max(0, choiceCount() - 1)));
         else if (dy != 0)
         {
             mLineFocus = std::clamp(mLineFocus + dy, 0, static_cast<int>(mLines.size()) - 1);
@@ -517,6 +532,17 @@ namespace MWGui
         }
         mChoicesFocused = true;
         windowManager().playSound(ESM::RefId::stringRefId("Menu Click"));
+    }
+
+    void CreateClassPanel::focusLine(int line)
+    {
+        if (line < 0 || line >= static_cast<int>(mLines.size()))
+            return;
+        mChoicesFocused = false;
+        if (line == mLineFocus)
+            return;
+        mLineFocus = line;
+        readChoices();
     }
 
     void CreateClassPanel::pick(const Choice& choice)

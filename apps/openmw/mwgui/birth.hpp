@@ -1,6 +1,7 @@
 #ifndef MWGUI_BIRTH_H
 #define MWGUI_BIRTH_H
 
+#include "controllerscreen.hpp"
 #include "windowbase.hpp"
 #include <components/esm/refid.hpp>
 
@@ -63,8 +64,10 @@ namespace MWGui
 
         // In controller menus mode, a full screen panel shows the choice instead of this window.
         MyGUI::Widget* mPanel = nullptr;
-        int mPanelScroll = 0;
+        ControllerList mList;
         void drawPanel();
+        /// Selects a birthsign in the birthsign list, as moving the selection there does.
+        void selectBirth(int index);
     };
 }
 #endif
