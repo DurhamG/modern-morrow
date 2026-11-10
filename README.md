@@ -140,7 +140,7 @@ Trying it
 
 You need a copy of Morrowind. The [Releases page](https://github.com/DurhamG/modern-morrow/releases) has a Windows installer, a Windows zip and a Linux AppImage. To build this fork yourself, build it the same way as OpenMW: see the [OpenMW build instructions](https://wiki.openmw.org/index.php?title=Development_Environment_Setup), or [CLAUDE.md](CLAUDE.md) for notes on building on Windows.
 
-The new screens are on by default. They're made for a gamepad, and they work from the keyboard too, such as when a controller's battery runs out:
+The new screens are on by default. They're made for a gamepad, and they work with a mouse and the keyboard too, such as when a controller's battery runs out. Point at anything to highlight it, and click to choose it. The right button goes back, and the wheel moves through lists or scrolls text. Tabs and button hints can be clicked, and on the map, dragging pans and a click places a pin. The keys stand in for the controller's buttons:
 
 | Key | Controller button |
 | --- | --- |
@@ -153,7 +153,7 @@ The new screens are on by default. They're made for a gamepad, and they work fro
 | F, R | Clicking the left and right sticks |
 | W, A, S, D | Right stick, which pans the map and scrolls long text |
 
-Where you type a name, the keys type it, and Enter accepts it. During play, the right mouse button opens the menus, as in Morrowind. Mouse support in the menus is planned. To get OpenMW's normal interface back, turn off **Enable Controller Menus** in the launcher's settings, or set this in `settings.cfg`:
+Where you type a name, the keys type it, and Enter accepts it. During play, the right mouse button opens the menus, as in Morrowind. To get OpenMW's normal interface back, turn off **Enable Controller Menus** in the launcher's settings, or set this in `settings.cfg`:
 
 ```ini
 [GUI]

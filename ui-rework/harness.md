@@ -121,6 +121,7 @@ Each scenario runs in its own profile, so different scenarios could run in paral
 ## Known limits
 
 - Key and mouse input goes through SDL's event queue. Code that reads key state directly from SDL, such as Lua's `input.isKeyPressed`, does not see it. Gamepad input does not have this problem, because the virtual gamepad is a real SDL device.
+- Under sdl2-compat, which the build folders use for SDL3, two kinds of injected events arrive wrongly. A `mouse action=wheel` event arrives with the mouse's height as its wheel step, so it always scrolls up. Text from `key text=...` crashes the game in SDL. Keys, clicks and mouse moves work.
 - In gameplay, the mouse turns the camera, and the game ignores mouse motion unless the window has focus. Use the right stick to turn instead.
 - The `tv4k` window is larger than the user's 2560x1440 monitors. It still renders and captures at full size.
 - The main menu buttons show images instead of text. They are named `MainMenu_<id>`, such as `MainMenu_options`, so use `click-name`.
