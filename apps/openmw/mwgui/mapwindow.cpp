@@ -1039,7 +1039,7 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         if (mPinAtCrosshair == nullptr)
         {
-            mCustomMarkers.addMarker(getMap3DPinAtCenter());
+            mCustomMarkers.addMarker(getMap3DPinAt(mMap3DFocus.x(), mMap3DFocus.y()));
             return;
         }
 
@@ -1744,7 +1744,12 @@ namespace MWGui
             // The view covers the map's other widgets, except the button hints, which move in front of it.
             mMap3DImage
                 = mLocalMap->getParent()->createWidget<MyGUI::ImageBox>("ImageBox", coord, MyGUI::Align::Stretch);
-            mMap3DImage->setNeedMouseFocus(false);
+            // The mouse drags the view to pan it, and a click places a pin or removes one. The wheel zooms, as the
+            // d-pad does.
+            mMap3DImage->setNeedMouseFocus(true);
+            mMap3DImage->eventMouseButtonPressed += MyGUI::newDelegate(this, &MapWindow::onMap3DMousePressed);
+            mMap3DImage->eventMouseDrag += MyGUI::newDelegate(this, &MapWindow::onMap3DMouseDrag);
+            mMap3DImage->eventMouseButtonReleased += MyGUI::newDelegate(this, &MapWindow::onMap3DMouseReleased);
             for (MyGUI::Widget* hint : { mControllerGuide, mGuideZoom, mGuideMark, mCrosshair })
                 hint->setDepth(-1);
             // The player's arrow goes in front of the markers, and the pins in front of the doors.
@@ -1966,15 +1971,99 @@ namespace MWGui
         return *mMap3DFogImage->data(s, t) < 128;
     }
 
-    ESM::CustomMarker MapWindow::getMap3DPinAtCenter() const
+    ESM::CustomMarker MapWindow::getMap3DPinAt(float x, float y) const
     {
         ESM::CustomMarker marker;
-        marker.mWorldX = mMap3DFocus.x();
-        marker.mWorldY = mMap3DFocus.y();
+        marker.mWorldX = x;
+        marker.mWorldY = y;
         const float mapCellSize = static_cast<float>(cellSize);
-        marker.mCell = getCellIdInWorldSpace(*mActiveCell, static_cast<int>(std::floor(mMap3DFocus.x() / mapCellSize)),
-            static_cast<int>(std::floor(mMap3DFocus.y() / mapCellSize)));
+        marker.mCell = getCellIdInWorldSpace(
+            *mActiveCell, static_cast<int>(std::floor(x / mapCellSize)), static_cast<int>(std::floor(y / mapCellSize)));
         return marker;
+    }
+
+    bool MapWindow::map3DPointToGround(MyGUI::IntPoint point, osg::Vec3f& ground) const
+    {
+        if (mMap3D == nullptr || mMap3DImage == nullptr)
+            return false;
+        const MyGUI::IntCoord image = mMap3DImage->getAbsoluteCoord();
+        if (image.width <= 0 || image.height <= 0)
+            return false;
+        const osg::Vec2f picture(static_cast<float>(point.left - image.left) / image.width,
+            static_cast<float>(point.top - image.top) / image.height);
+        // The ground is taken as level at the height the view looks at, which is close enough near the middle.
+        return mMap3D->pictureToGround(picture, mMap3DFocus.z(), ground);
+    }
+
+    void MapWindow::togglePinAtMap3DPoint(MyGUI::IntPoint point)
+    {
+        if (mActiveCell == nullptr)
+            return;
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+
+        // A pin under the point goes, asking first when it has a note, as with X.
+        const int reach = getMap3DMarkerSize(16);
+        for (const Map3DMarker& pin : mMap3DPins)
+        {
+            if (!pin.mWidget->getVisible())
+                continue;
+            const MyGUI::IntCoord coord = pin.mWidget->getAbsoluteCoord();
+            const int dx = coord.left + coord.width / 2 - point.left;
+            const int dy = coord.top + coord.height / 2 - point.top;
+            if (dx * dx + dy * dy > reach * reach)
+                continue;
+            mEditingMarker = *pin.mWidget->getUserData<ESM::CustomMarker>();
+            if (!mEditingMarker.mNote.empty())
+                onNoteEditDelete();
+            else
+                mCustomMarkers.deleteMarker(mEditingMarker);
+            return;
+        }
+
+        osg::Vec3f ground;
+        if (map3DPointToGround(point, ground))
+            mCustomMarkers.addMarker(getMap3DPinAt(ground.x(), ground.y()));
+    }
+
+    void MapWindow::onMap3DMousePressed(MyGUI::Widget* /*sender*/, int left, int top, MyGUI::MouseButton id)
+    {
+        if (id != MyGUI::MouseButton::Left)
+            return;
+        mMap3DPressedAt = MyGUI::IntPoint(left, top);
+        mMap3DDraggedTo = mMap3DPressedAt;
+        mMap3DDragging = false;
+    }
+
+    void MapWindow::onMap3DMouseDrag(MyGUI::Widget* /*sender*/, int left, int top, MyGUI::MouseButton id)
+    {
+        if (id != MyGUI::MouseButton::Left)
+            return;
+        const MyGUI::IntPoint point(left, top);
+        // A few pixels of movement still count as a click.
+        constexpr int dragThreshold = 6;
+        const MyGUI::IntPoint moved = point - mMap3DPressedAt;
+        if (!mMap3DDragging && moved.left * moved.left + moved.top * moved.top < dragThreshold * dragThreshold)
+            return;
+        mMap3DDragging = true;
+
+        // The ground that was under the pointer stays under it.
+        osg::Vec3f from;
+        osg::Vec3f to;
+        if (map3DPointToGround(mMap3DDraggedTo, from) && map3DPointToGround(point, to))
+        {
+            mMap3DFocus.x() += from.x() - to.x();
+            mMap3DFocus.y() += from.y() - to.y();
+        }
+        mMap3DDraggedTo = point;
+    }
+
+    void MapWindow::onMap3DMouseReleased(MyGUI::Widget* /*sender*/, int left, int top, MyGUI::MouseButton id)
+    {
+        if (id != MyGUI::MouseButton::Left)
+            return;
+        if (!mMap3DDragging)
+            togglePinAtMap3DPoint(MyGUI::IntPoint(left, top));
+        mMap3DDragging = false;
     }
 
     void MapWindow::centerMap3D()

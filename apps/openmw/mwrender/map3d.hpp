@@ -79,6 +79,10 @@ namespace MWRender
         /// behind the camera.
         bool worldToPicture(const osg::Vec3f& position, osg::Vec2f& picture) const;
 
+        /// Returns where a point of the picture, from 0 to 1 across and down, meets level ground at a height. Returns
+        /// false when the point looks at the sky.
+        bool pictureToGround(const osg::Vec2f& picture, float height, osg::Vec3f& ground) const;
+
     private:
         /// Starts building the pieces for where the view is now, and switches to them once they are built.
         void updateTerrainPieces();

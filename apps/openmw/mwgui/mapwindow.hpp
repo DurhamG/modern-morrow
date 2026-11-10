@@ -343,8 +343,15 @@ namespace MWGui
         void addMap3DDoors();
         /// Moves the 3D view's markers to where their places show in the picture.
         void placeMap3DMarkers();
-        /// The pin that X places in the 3D view, at the point the view looks at.
-        ESM::CustomMarker getMap3DPinAtCenter() const;
+        /// A pin at a place in the 3D view, without a note.
+        ESM::CustomMarker getMap3DPinAt(float x, float y) const;
+        /// Places a pin, or removes the pin under it, at the point of the 3D view a widget's absolute point shows.
+        void togglePinAtMap3DPoint(MyGUI::IntPoint point);
+        /// Where a widget's absolute point shows on the ground in the 3D view.
+        bool map3DPointToGround(MyGUI::IntPoint point, osg::Vec3f& ground) const;
+        void onMap3DMousePressed(MyGUI::Widget* sender, int left, int top, MyGUI::MouseButton id);
+        void onMap3DMouseDrag(MyGUI::Widget* sender, int left, int top, MyGUI::MouseButton id);
+        void onMap3DMouseReleased(MyGUI::Widget* sender, int left, int top, MyGUI::MouseButton id);
         /// Whether the fog of war leaves a place in the 3D view to see.
         bool isMap3DExplored(const osg::Vec3f& position) const;
 
@@ -387,6 +394,11 @@ namespace MWGui
         // The point on the ground that the 3D view looks at, and how far away the camera is, in world units.
         osg::Vec3f mMap3DFocus;
         float mMap3DDistance = 11718.75f;
+        // The mouse drags the 3D view: where the left button went down, where the drag last was, and whether it moved
+        // far enough to count as a drag rather than a click.
+        MyGUI::IntPoint mMap3DPressedAt;
+        MyGUI::IntPoint mMap3DDraggedTo;
+        bool mMap3DDragging = false;
         // Rooms are small, so indoors the view has a zoom of its own.
         float mMap3DInteriorDistance = 2000.f;
         // A marker on the 3D view: its widget, a child of the view's image, and its place in the world.
