@@ -2160,6 +2160,7 @@ namespace MWMechanics
                 {
                     // reduce fatigue
                     float fatigueLoss = 0.f;
+                    bool runsOnLand = false;
                     static const float fFatigueRunBase = gmst.find("fFatigueRunBase")->mValue.getFloat();
                     static const float fFatigueRunMult = gmst.find("fFatigueRunMult")->mValue.getFloat();
                     static const float fFatigueSwimWalkBase = gmst.find("fFatigueSwimWalkBase")->mValue.getFloat();
@@ -2186,15 +2187,32 @@ namespace MWMechanics
                             else if (isrunning)
                             {
                                 fatigueLoss = fFatigueRunBase + encumbrance * fFatigueRunMult;
-                                // The player can lose less fatigue by running, as a setting allows.
-                                if (mPtr == getPlayer())
-                                    fatigueLoss *= Settings::game().mRunFatigue;
+                                runsOnLand = true;
                             }
                         }
                     }
                     fatigueLoss *= duration;
                     fatigueLoss *= movementSettings.mSpeedFactor;
                     DynamicStat<float> fatigue = cls.getCreatureStats(mPtr).getFatigue();
+
+                    // The player can lose less fatigue by running, as a setting allows. Fatigue also comes back
+                    // while running, as long as it isn't full, and that is often most of what running costs. So
+                    // the setting scales what running costs beyond what comes back, which is what the player
+                    // sees go.
+                    if (runsOnLand && mPtr == getPlayer())
+                    {
+                        static const float fFatigueReturnBase = gmst.find("fFatigueReturnBase")->mValue.getFloat();
+                        static const float fFatigueReturnMult = gmst.find("fFatigueReturnMult")->mValue.getFloat();
+                        float recovered = 0.f;
+                        if (fatigue.getCurrent() < fatigue.getBase())
+                        {
+                            const float endurance
+                                = cls.getCreatureStats(mPtr).getAttribute(ESM::Attribute::Endurance).getModified();
+                            recovered = (fFatigueReturnBase + fFatigueReturnMult * endurance) * duration;
+                        }
+                        if (fatigueLoss > recovered)
+                            fatigueLoss = recovered + (fatigueLoss - recovered) * Settings::game().mRunFatigue;
+                    }
                     fatigue.setCurrent(fatigue.getCurrent() - fatigueLoss, fatigue.getCurrent() < 0);
                     cls.getCreatureStats(mPtr).setFatigue(fatigue);
                 }

@@ -317,9 +317,12 @@ Game Settings
 
    How much of Morrowind's fatigue the player loses by running on land.
    Running costs fatigue at a rate set by the fFatigueRunBase and fFatigueRunMult game settings.
-   This setting multiplies that rate for the player only.
+   Fatigue also comes back all the time it isn't full, at a rate set by fFatigueReturnBase and fFatigueReturnMult,
+   so what running takes from the player is the difference.
+   This setting multiplies that difference, for the player only.
 
-   1.0 keeps Morrowind's rules. 0.5 and 0.25 halve and quarter the cost, and 0.0 means running costs no fatigue.
+   1.0 keeps Morrowind's rules. 0.5 and 0.25 halve and quarter how fast fatigue goes down while running,
+   and 0.0 means running costs no fatigue.
    Other actors, swimming and sneaking are not affected.
 
 .. omw-setting::
