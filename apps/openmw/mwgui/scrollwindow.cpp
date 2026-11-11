@@ -165,6 +165,11 @@ namespace MWGui
             mPanel->hide();
         if (Settings::gui().mControllerMenus)
             MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(true);
+        // Once the window is closed, rather than hidden under another window, it forgets the scroll, as the
+        // container and barter windows do. The scroll may be gone by the time the window opens again, and the
+        // window opens before it is given its next one.
+        if (!MWBase::Environment::get().getWindowManager()->containsMode(GM_Scroll))
+            mScroll = MWWorld::Ptr();
         BookWindowBase::onClose();
     }
 
