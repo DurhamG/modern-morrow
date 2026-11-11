@@ -25,6 +25,20 @@ To try the builds without a release, start the Release workflow by hand from the
 
 The builds aren't signed, so Windows SmartScreen warns the first time someone runs the installer. "More info" and "Run anyway" get past it.
 
+## Reading a Linux crash log
+
+When the game crashes on Linux, it writes `/tmp/openmw-crash.log`. On a Steam Deck, which has no debugger, the log lists each frame of the crashed thread as an address, the file it is in, and an offset in that file, such as `#5  0x000055d0c1a2b3c4 /tmp/.mount_ModernAbCdEf/openmw + 0x1a2b3c4`. The game's own log, `~/.config/modern-morrow/openmw.log`, ends with any message written just before the crash, such as the C library's report of corrupted memory.
+
+The Linux build saves the debug information for its programs as the `modern-morrow-linux-symbols` artifact, on the Release workflow's run page. It isn't a file of the release. It holds one `<program>.debug` file for each program, such as `openmw.debug`, and only matches the programs from that same run. GitHub deletes artifacts after 90 days.
+
+To name the function and line at a frame, take one off its offset, since the address is just after the call, and run:
+
+```bash
+addr2line -f -C -i -e openmw.debug 0x1a2b3c3
+```
+
+Frames in files the build didn't make, such as the C library or OpenSceneGraph, don't get names this way.
+
 ## Playing on the Steam Deck
 
 The steps for installing the AppImage on a Steam Deck or a Steam Machine are in the README, in [Steam Deck and Steam Machine](../README.md#steam-deck-and-steam-machine).

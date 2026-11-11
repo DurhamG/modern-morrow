@@ -37,7 +37,16 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: modern-morrow-linux-package
-        path: build/ModernMorrow*.tar.xz
+        path: build/ModernMorrow*-Linux-x86_64.tar.xz
+
+    # Not part of the release. It names the functions in a crash log from this build, as ui-rework/releasing.md
+    # explains.
+    - name: Store the debug information
+      uses: actions/upload-artifact@v6
+      with:
+        name: modern-morrow-linux-symbols
+        path: build/ModernMorrow*-Linux-x86_64-symbols.tar.xz
+        compression-level: 0
 
     - name: Find the AppImage
       id: files

@@ -1,7 +1,7 @@
 #!/bin/bash
-# Builds Modern Morrow's Linux release files: the portable package, ModernMorrow-<label>-Linux-x86_64.tar.xz, and
-# an AppImage made from it, both in build/. The label is the first argument, such as the release tag, or the version
-# when there is none.
+# Builds Modern Morrow's Linux release files: the portable package, ModernMorrow-<label>-Linux-x86_64.tar.xz, an
+# AppImage made from it, and the debug information for its programs, ModernMorrow-<label>-Linux-x86_64-symbols.tar.xz,
+# all in build/. The label is the first argument, such as the release tag, or the version when there is none.
 #
 # It runs as root on AlmaLinux 9, the same system OpenMW builds its portable Linux package on, so the result runs on
 # any newer Linux system, SteamOS on the Steam Deck included. GitHub Actions runs it in the almalinux:9 container. To
@@ -18,7 +18,9 @@ set -euo pipefail
 export CUSTOM_CPACK_LABEL="${1:-}"
 export CC=gcc
 export CXX=g++
-export CMAKE_BUILD_TYPE=Release
+# The build keeps debug information, which is saved apart from the package below. The package's programs are
+# stripped, so its size stays the same.
+export CMAKE_BUILD_TYPE=RelWithDebInfo
 export OPENMW_LOCAL_INSTALL=1
 export CI_OPENMW_USE_VCPKG=true
 
@@ -37,9 +39,21 @@ CI/before_script.linux.sh
 cd build
 cmake --build . -- -j "$(nproc)"
 cpack -G TXZ -D CPACK_STRIP_FILES=ON -D CPACK_THREADS=0 -D CPACK_INCLUDE_TOPLEVEL_DIRECTORY=0
+package=$(ls ModernMorrow*-Linux-x86_64.tar.xz)
+
+# A crash log made without a debugger lists each frame as a program and an offset in it. The debug information saved
+# here, one <program>.debug file for each program the build made, names the function and line at each offset, as
+# ui-rework/releasing.md explains. It only matches the programs from this same build.
+rm -rf symbols
+mkdir symbols
+for file in *; do
+    if [[ -f $file && -x $file ]] && readelf -S "$file" 2> /dev/null | grep '\.debug_info' > /dev/null; then
+        objcopy --only-keep-debug --compress-debug-sections "$file" "symbols/$file.debug"
+    fi
+done
+tar -cJf "${package%.tar.xz}-symbols.tar.xz" -C symbols .
 
 # The AppImage is the package's files, plus a start script, a desktop entry and an icon at the top.
-package=$(ls ModernMorrow*.tar.xz)
 rm -rf AppDir
 mkdir AppDir
 tar -xf "$package" -C AppDir
