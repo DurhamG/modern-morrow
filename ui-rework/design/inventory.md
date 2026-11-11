@@ -28,7 +28,8 @@ This is the design for the reworked inventory screen, agreed with the user. It i
 
 - **No character portrait.** It takes too much room on a handheld. The armour rating, encumbrance and gold go in free space on the screen.
 - **The screen fills everything below the top tab bar.** The bottom button bar is gone, as on the map. Button hints come back later, where they're needed.
-- **Tabs** replace the filters. There are six: Recent, Equipment, Consumables, Notes, Tools and Misc. There is no All tab.
+- **Tabs** replace the filters. There are seven: Recent, Equipment, Consumables, Notes, Tools, Misc and Weight. Weight is the only tab that lists every item.
+  - **Weight** lists every item, the heaviest stacks first, so the player can see what makes them weigh so much. Its columns are the count and the total weight of the stack, which is what it sorts by. One item's weight shows in the details panel. The other tabs show one item's weight, so a stack of 30 light items doesn't look heavy there. The loot and barter screens share the other tabs but have no Weight tab.
   - **Misc** holds whatever doesn't fit elsewhere. It is split into keys, soul gems, and other things, in that order, each under its own header.
   - **Notes** is split the same way into skill books, other books, and letters and notes.
   - There is no Quest tab for now. Marking quest items needs an analysis of which items the quests refer to, and a quest journal elsewhere may show them better.

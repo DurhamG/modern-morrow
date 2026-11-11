@@ -51,8 +51,10 @@ namespace MWGui
             Notes,
             Tools,
             Misc,
+            // Every item, the heaviest stacks first, to find what weighs the player down.
+            Weight,
         };
-        static constexpr int sTabCount = 6;
+        static constexpr int sTabCount = 7;
         static constexpr int sAreaCount = 12;
 
         // Which part of the Equipment tab has the selection.

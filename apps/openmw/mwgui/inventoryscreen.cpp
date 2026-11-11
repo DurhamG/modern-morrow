@@ -128,6 +128,8 @@ namespace MWGui
             Damage,
             Speed,
             Weight,
+            // The weight of the whole stack: one item's weight times the count.
+            TotalWeight,
             Value,
             Count,
             Effect,
@@ -138,8 +140,8 @@ namespace MWGui
 
         std::string statLabel(Stat stat)
         {
-            static const std::array<std::string_view, 10> names
-                = { "Armor", "Damage", "Speed", "Weight", "Value", "Count", "Effect", "Quality", "Uses", "Name" };
+            static const std::array<std::string_view, 11> names = { "Armor", "Damage", "Speed", "Weight", "TotalWeight",
+                "Value", "Count", "Effect", "Quality", "Uses", "Name" };
             return "#{Interface:InventoryColumn" + std::string(names[static_cast<int>(stat)]) + "}";
         }
 
@@ -172,6 +174,8 @@ namespace MWGui
                     return formatNumber(ptr.get<ESM::Weapon>()->mBase->mData.mSpeed);
                 case Stat::Weight:
                     return formatNumber(ptr.getClass().getWeight(ptr));
+                case Stat::TotalWeight:
+                    return formatNumber(ptr.getClass().getWeight(ptr) * item.mCount);
                 case Stat::Value:
                     return std::to_string(ptr.getClass().getValue(ptr));
                 case Stat::Count:
@@ -217,6 +221,8 @@ namespace MWGui
                     return { { Stat::Quality, 70 }, { Stat::Uses, 58 }, { Stat::Weight, 62 }, { Stat::Value, 62 } };
                 case 3:
                     return { { Stat::Weight, 62 }, { Stat::Value, 62 } };
+                case 6:
+                    return { { Stat::Count, 58 }, { Stat::TotalWeight, 130 } };
                 default:
                     return { { Stat::Count, 58 }, { Stat::Weight, 62 }, { Stat::Value, 62 } };
             }
@@ -238,6 +244,8 @@ namespace MWGui
                 first = Stat::Armor;
             else if (tab == 4)
                 first = Stat::Quality;
+            else if (tab == 6)
+                first = Stat::TotalWeight;
             std::vector<Stat> orders{ first };
             for (const Column& column : listColumns(tab, area))
                 if (column.mStat != first && column.mStat != Stat::Effect)
@@ -280,6 +288,8 @@ namespace MWGui
                     return type == ESM::Weapon::sRecordId ? ptr.get<ESM::Weapon>()->mBase->mData.mSpeed : -1.f;
                 case Stat::Weight:
                     return cls.getWeight(ptr);
+                case Stat::TotalWeight:
+                    return cls.getWeight(ptr) * item.mCount;
                 case Stat::Value:
                     return static_cast<float>(cls.getValue(ptr));
                 case Stat::Count:
@@ -595,9 +605,10 @@ namespace MWGui
             return rows;
         }
 
+        // The Weight tab lists every item, whichever tab it belongs in.
         std::vector<int> items;
         for (std::size_t i = 0; i < mItems.size(); ++i)
-            if (inventoryTab(mItems[i].mBase) == tab)
+            if (mTab == Tab::Weight || inventoryTab(mItems[i].mBase) == tab)
                 items.push_back(static_cast<int>(i));
         std::stable_sort(items.begin(), items.end(), sorter);
 
@@ -819,8 +830,10 @@ namespace MWGui
     void InventoryScreen::drawHeader(int width)
     {
         std::vector<std::string> captions;
+        // The loot and barter screens share the other tabs' names, but have no Weight tab.
         for (int tab = 0; tab < sTabCount; ++tab)
-            captions.push_back(inventoryTabKey(tab));
+            captions.push_back(tab == static_cast<int>(Tab::Weight) ? "#{Interface:InventoryTabWeight}"
+                                                                     : inventoryTabKey(tab));
 
         // The armour rating, encumbrance and gold.
         const MWWorld::Ptr actor = player();
