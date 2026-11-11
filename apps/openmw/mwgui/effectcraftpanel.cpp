@@ -391,6 +391,9 @@ namespace MWGui
     {
         if (mRoot == nullptr || !mRoot->getVisible())
             return;
+        // The window opens before it knows who enchants or makes the spell, and the panel draws again once it does.
+        if (merchant().isEmpty())
+            return;
         readEntries();
         mLineFocus = std::clamp(mLineFocus, 0, static_cast<int>(lines().size()) - 1);
         if (isEditing())

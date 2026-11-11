@@ -65,6 +65,11 @@ namespace MWGui
     {
         if (mPanel != nullptr)
             mPanel->hide();
+        // Once the window is closed, rather than hidden under another window, it forgets the guide, as the
+        // container and barter windows do. The guide may be gone by the time the window opens again, and the
+        // window opens before it is given its next one.
+        if (!MWBase::Environment::get().getWindowManager()->containsMode(GM_Travel))
+            resetReference();
     }
 
     void TravelWindow::onFrame(float dt)

@@ -619,6 +619,9 @@ namespace MWGui
             return;
         // Reset history
         mHistoryContents.clear();
+        // Saying goodbye forgets the actor, but some ways of ending a conversation skip it, such as being sent to
+        // jail. The actor may be gone by the next conversation, and the window opens before it is given the next one.
+        resetReference();
     }
 
     bool DialogueWindow::setKeywords(const std::list<std::string>& keyWords)

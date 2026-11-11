@@ -264,6 +264,11 @@ namespace MWGui
         mItemTransfer->removeTarget(*mItemView);
         if (mPanel != nullptr)
             mPanel->hide();
+        // Once the window is closed, rather than hidden under another window, it forgets the companion, as the
+        // container and barter windows do. The companion may be gone by the time the window opens again, and the
+        // window opens before it is given its next one.
+        if (!MWBase::Environment::get().getWindowManager()->containsMode(GM_Companion))
+            resetReference();
     }
 
     bool CompanionWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
