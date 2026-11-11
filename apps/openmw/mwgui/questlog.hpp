@@ -22,6 +22,9 @@ namespace MWGui
         {
             std::string mName;
             bool mFinished = false;
+            // Whether this is a note rather than a quest: a journal ID with no quest name, and no entry in the game's
+            // data that finishes it, such as a faction's rules or a gift. The list names it from its first entry.
+            bool mNote = false;
             // Whether the player pinned the quest to the top of the journal
             bool mPinned = false;
             // The IDs of the game's quests that share the name

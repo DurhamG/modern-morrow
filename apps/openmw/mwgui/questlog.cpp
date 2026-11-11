@@ -185,6 +185,17 @@ namespace MWGui::QuestLog
             return text;
         }
 
+        // Whether a journal ID without a quest name is a note. A note's ID has no entry that finishes it in the game's
+        // data, so as a quest it would stay in progress forever. Most have a single entry, such as a faction's rules.
+        bool isNote(const ESM::RefId& id)
+        {
+            const ESM::Dialogue* dialogue = store().get<ESM::Dialogue>().search(id);
+            if (dialogue == nullptr)
+                return false;
+            return std::none_of(dialogue->mInfo.begin(), dialogue->mInfo.end(),
+                [](const ESM::DialInfo& info) { return info.mQuestStatus == ESM::DialInfo::QS_Finished; });
+        }
+
         void findSource(Quest& quest)
         {
             // The entries recorded since the game started recording the actor and cell come first.
@@ -246,6 +257,7 @@ namespace MWGui::QuestLog
             if (inserted)
             {
                 quests.emplace_back();
+                quests.back().mNote = name.empty() && isNote(entry.mTopic);
                 quests.back().mName = name.empty() ? untitledName(entry) : std::move(name);
             }
             Quest& quest = quests[it->second];

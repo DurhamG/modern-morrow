@@ -50,7 +50,7 @@ namespace MWGui
 
         std::string tabKey(int tab)
         {
-            static const std::array<std::string_view, 3> names = { "Recent", "Places", "Factions" };
+            static const std::array<std::string_view, 4> names = { "Recent", "Places", "Factions", "Notes" };
             return "#{Interface:JournalTab" + std::string(names[tab]) + "}";
         }
 
@@ -111,8 +111,7 @@ namespace MWGui
             mList.resetHeld();
             return;
         }
-        // In the details, the d-pad steps from topic to topic. In the list, every tab lists all the quests, in its own
-        // order.
+        // In the details, the d-pad steps from topic to topic. In the list, it moves through what the tab lists.
         if (mInDetails)
         {
             int dx = 0;
@@ -120,7 +119,7 @@ namespace MWGui
             if (mLinkHeld.update(duration, dx, dy))
                 moveLink(dy != 0 ? dy : dx);
         }
-        else if (mList.updateHeld(duration, static_cast<int>(mQuests.size())))
+        else if (mList.updateHeld(duration, static_cast<int>(order().size())))
             selectFocused();
         scrollEntries(
             MWBase::Environment::get().getInputManager()->getControllerAxisValue(SDL_CONTROLLER_AXIS_RIGHTY), duration);
@@ -187,6 +186,8 @@ namespace MWGui
                 const std::string faction = QuestLog::factionName(quest);
                 return faction.empty() ? "#{Interface:JournalNoFaction}" : escaped(faction);
             }
+            case Tab::Notes:
+                return "#{Interface:JournalTabNotes}";
             default:
                 return "#{Interface:JournalInProgress}";
         }
@@ -196,10 +197,15 @@ namespace MWGui
     {
         // mQuests is already in order of the most recent activity. Pinned quests come first, then quests in
         // progress. On the Places and Factions tabs, the quests in progress are grouped by name, with quests that have
-        // no place or faction after the rest.
-        std::vector<int> result(mQuests.size());
-        for (std::size_t i = 0; i < result.size(); ++i)
-            result[i] = static_cast<int>(i);
+        // no place or faction after the rest. The Notes tab lists only the notes, and the other tabs only the quests,
+        // apart from pinned notes, which stay in reach on every tab.
+        std::vector<int> result;
+        for (std::size_t i = 0; i < mQuests.size(); ++i)
+        {
+            const QuestLog::Quest& quest = mQuests[i];
+            if (mTab == Tab::Notes ? quest.mNote : !quest.mNote || quest.mPinned)
+                result.push_back(static_cast<int>(i));
+        }
         const auto groupKey = [&](const QuestLog::Quest& quest) -> std::pair<int, std::string> {
             if (quest.mPinned)
                 return { -1, {} };
@@ -264,15 +270,25 @@ namespace MWGui
         mEntriesScrollThumb = nullptr;
         const MyGUI::IntSize size = mMainWidget->getSize();
 
+        int inProgress = 0;
         int finished = 0;
+        int notes = 0;
         for (const QuestLog::Quest& quest : mQuests)
-            finished += quest.mFinished ? 1 : 0;
+        {
+            if (quest.mNote)
+                ++notes;
+            else if (quest.mFinished)
+                ++finished;
+            else
+                ++inProgress;
+        }
         std::vector<std::string> captions;
         for (int tab = 0; tab < sTabCount; ++tab)
             captions.push_back(tabKey(tab));
         drawTabRow(mContent, size.width, captions, static_cast<int>(mTab),
-            std::to_string(mQuests.size() - finished) + " " + localised("#{Interface:JournalCountInProgress}") + "    "
-                + std::to_string(finished) + " " + localised("#{Interface:JournalCountFinished}"));
+            std::to_string(inProgress) + " " + localised("#{Interface:JournalCountInProgress}") + "    "
+                + std::to_string(finished) + " " + localised("#{Interface:JournalCountFinished}") + "    "
+                + std::to_string(notes) + " " + localised("#{Interface:JournalCountNotes}"));
 
         const int top = sContentTop;
         const int bottom = size.height - sContentBottomMargin;
@@ -285,7 +301,8 @@ namespace MWGui
         if (quests.empty())
         {
             addRect(mContent, sMargin, top, listW, bottom - top, sPanelColour, 0.9f);
-            addText(mContent, sMargin + 16, top + 16, listW - 32, 30, "#{Interface:JournalNoQuests}", sFontNormal,
+            addText(mContent, sMargin + 16, top + 16, listW - 32, 30,
+                mTab == Tab::Notes ? "#{Interface:JournalNoNotes}" : "#{Interface:JournalNoQuests}", sFontNormal,
                 sDimColour);
             addRect(mContent, px, top, panelW, bottom - top, sPanelColour, 0.9f);
             return;
@@ -359,9 +376,12 @@ namespace MWGui
                 addText(mContent, innerX, ty, innerW, 32, escaped(line), sFontLarge, sBrightColour);
                 ty += 30;
             }
-            addText(mContent, innerX, ty, innerW, 22,
-                quest.mFinished ? "#{Interface:JournalFinished}" : "#{Interface:JournalInProgress}", sFontSmall,
-                quest.mFinished ? sBetterColour : sNewColour);
+            if (quest.mNote)
+                addText(mContent, innerX, ty, innerW, 22, "#{Interface:JournalNote}", sFontSmall, sDimColour);
+            else
+                addText(mContent, innerX, ty, innerW, 22,
+                    quest.mFinished ? "#{Interface:JournalFinished}" : "#{Interface:JournalInProgress}", sFontSmall,
+                    quest.mFinished ? sBetterColour : sNewColour);
             ty += 30;
 
             // Who gave the quest, where, and for whom, when the game knows.

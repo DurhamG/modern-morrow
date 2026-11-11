@@ -12,13 +12,15 @@ This is the design for the reworked journal, agreed with the user. In controller
 
 - **A Journal tab** beside the map, inventory, magic and stats. The journal key opens the menus on it.
 - **A list of quests on the left, details on the right,** as on the other screens. Pinned quests come first, under their own heading, then the quests in progress, then the finished ones under their own heading.
-- **Three ways to sort the list,** as tabs switched with L1 and R1:
+- **Three ways to sort the list, and a tab of notes,** switched with L1 and R1:
   - **Recent:** by the last update, newest first. The screen opens on this tab.
   - **Places:** grouped by the town the quest started in, such as Balmora. Quests without a known place come last.
   - **Factions:** grouped by the faction the quest is for. Quests for no faction come last.
+  - **Notes:** the journal entries that aren't quests, newest first. See below.
+- **Notes are kept apart from quests.** A journal ID with no quest name in the game's data, and no entry that finishes it, is a note. Examples are a faction's rules, a gift from one of Caius's Blades contacts, a book someone gave the player, and each of the 27 Threads of the Webspinner returned. Most have a single entry. Some have several, such as Rerlas Mon's pets and Ennbjof's ship burial. Either way, as a quest it would stay in progress forever. The list names a note from the first sentence of its first entry, as it does any quest without a name. Of the 82 unnamed journal IDs in Morrowind, Tribunal and Bloodmoon, 79 are notes. The other 3 can be finished, so they stay with the quests: Blood Ties, and Bloodmoon's two East Empire Company quests. The original journal's quest list leaves all 82 out.
 - **Each entry** shows the quest's name, the date of its last update, and its place and faction in two columns. Guild and House quests leave the faction out of their name, such as "Exterminator" for "Fighters Guild: Exterminator", because the column shows it.
 - **The details panel** shows the full name, whether the quest is in progress or finished, who gave it, where, and for which faction. Below that are all its entries, newest first, with their dates. The right stick scrolls them when they don't fit.
-- **X pins the highlighted quest,** or unpins it. Pinned quests show in a Pinned group at the top of every tab, so the quests the player is working on stay in reach. The save keeps the pin on each of the game's quest IDs that share the quest's name, from save format version 43. Older saves load with nothing pinned.
+- **X pins the highlighted quest or note,** or unpins it. Pinned quests and notes show in a Pinned group at the top of every tab, so the quests the player is working on stay in reach. The save keeps the pin on each of the game's quest IDs that share the quest's name, from save format version 43. Older saves load with nothing pinned.
 - **Y jumps to the next group,** as on the other screens.
 - **Topics are reached from quests.** The topics the player has asked about are highlighted in a quest's entries. A moves the focus into the entries, where the d-pad steps from topic to topic, and A opens the topic's page: what each person told the player about it, newest first, with who said it. A topic page highlights the topics in it too, so the player can follow one to the next. B steps back a page, then to the list. A mouse click on a topic opens it. A topic the player hasn't asked about isn't highlighted, since its page would be empty.
 - **No topic index, and no book of dated entries.** Topics are only reached from the quests that mention them.
@@ -38,7 +40,7 @@ Counted over Morrowind, Tribunal and Bloodmoon, about 22% of quests have no fact
 
 | Button | What it does |
 | --- | --- |
-| L1, R1 | Switch between Recent, Places and Factions. |
+| L1, R1 | Switch between Recent, Places, Factions and Notes. |
 | D-pad up and down, left stick | Move the selection. In the entries, step from topic to topic. Holding repeats. |
 | A | Move into the quest's entries, onto its first topic. There, open the highlighted topic. |
 | X | Pin the highlighted quest, or unpin it. |

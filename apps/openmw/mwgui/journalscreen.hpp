@@ -23,8 +23,9 @@ namespace MWGui
     /// The journal in controller menus mode, as a tab beside the map, inventory, magic and stats. It lists the
     /// player's quests, the ones in progress first, and shows the highlighted quest's entries beside the list, newest
     /// first. The Recent, Places and Factions tabs sort the same quests by their last update, by the town they
-    /// started in, and by the faction they are for. X pins the highlighted quest, which puts it in a Pinned group at
-    /// the top of every tab. The topics the player has asked about are highlighted in the entries. A moves the focus
+    /// started in, and by the faction they are for. The Notes tab lists the journal's notes, such as a faction's rules,
+    /// which aren't quests. X pins the highlighted quest or note, which puts it in a Pinned group at the top of every
+    /// tab. The topics the player has asked about are highlighted in the entries. A moves the focus
     /// into the entries, where the d-pad steps from topic to topic, and A opens a topic's page: what people told the
     /// player about it. B steps back. See ui-rework/design/journal.md.
     class JournalScreen : public ControllerScreen
@@ -46,8 +47,9 @@ namespace MWGui
             Recent,
             Places,
             Factions,
+            Notes,
         };
-        static constexpr int sTabCount = 3;
+        static constexpr int sTabCount = 4;
 
         // A line in the list: a group header, or an index into the tab's order of quests.
         struct Row
@@ -106,7 +108,7 @@ namespace MWGui
 
         void redraw() override;
 
-        /// The quests in the order the current tab lists them, as indices into mQuests.
+        /// The quests or notes the current tab lists, in its order, as indices into mQuests.
         std::vector<int> order() const;
         std::string groupOf(const QuestLog::Quest& quest) const;
         std::vector<Row> buildRows(const std::vector<int>& order) const;
