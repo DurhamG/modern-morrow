@@ -160,7 +160,7 @@ namespace MWGui
         /// calls onPoint, and a left click calls onClick. Either can be empty. They run at the start of the next
         /// frame, since they usually draw the panel again, which destroys the area's widget.
         void addPointerTarget(MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void()> onPoint,
-            std::function<void()> onClick);
+            std::function<void()> onClick, std::function<void(int steps)> onWheel = nullptr);
 
         /// Points at the target under the mouse, when it is a different one than before. The mouse manager calls it
         /// when the mouse moves in controller menus mode.
@@ -176,6 +176,9 @@ namespace MWGui
             MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void(int steps)> onWheel);
         /// Turns the wheel over the area under the mouse. Returns true when an area took it.
         bool pointerWheel(int x, int y, int steps);
+        /// Where the mouse is, as the menus last saw it move, for an area's onWheel. Before it has moved, where it was
+        /// when the wheel last turned. A mouse move gives the same position that pointing at targets uses.
+        MyGUI::IntPoint pointerPoint();
         /// How far the wheel scrolls text per step, in canvas units.
         inline constexpr float sWheelScrollStep = 90.f;
 
@@ -221,7 +224,8 @@ namespace MWGui
         /// is left empty below the last row. drawRow draws a row at a height,
         /// and says whether the row is the focused item. Returns false when there are no items to draw, so the screen
         /// can show a message instead. Pointing at an item calls onChange after focusing it. Clicking one does the
-        /// same, then calls onActivate.
+        /// same, then calls onActivate. The mouse wheel scrolls the list and focuses the item under the mouse, then
+        /// calls onChange. Without onChange, the wheel works as the d-pad instead.
         bool draw(MyGUI::Widget* parent, int x, int y, int w, int h, const std::vector<Row>& rows,
             const std::function<void(std::size_t row, int y, bool focused)>& drawRow, std::function<void()> onChange,
             std::function<void()> onActivate);

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iomanip>
 #include <memory>
+#include <optional>
 #include <sstream>
 
 #include <MyGUI_Gui.h>
@@ -34,6 +35,9 @@ namespace MWGui
         std::vector<std::function<void()>> sPointerActions;
         // The target the mouse last pointed at.
         MyGUI::Widget* sPointedAt = nullptr;
+        // Where the mouse last moved to, and where it was when the wheel last turned.
+        std::optional<MyGUI::IntPoint> sMovedTo;
+        MyGUI::IntPoint sWheelPoint;
 
         // What a pointer target does, kept in its widget's user data.
         struct PointerTarget
@@ -431,20 +435,21 @@ namespace MWGui
         }
 
         void addPointerTarget(MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void()> onPoint,
-            std::function<void()> onClick)
+            std::function<void()> onClick, std::function<void(int steps)> onWheel)
         {
             passPointerThrough(parent);
             blockPointerUnder(parent);
             MyGUI::Widget* area
                 = parent->createWidget<MyGUI::Widget>("", MyGUI::IntCoord(x, y, w, h), MyGUI::Align::Default);
             area->setNeedMouseFocus(true);
-            area->setUserData(PointerTarget{ std::move(onPoint), std::move(onClick), nullptr });
+            area->setUserData(PointerTarget{ std::move(onPoint), std::move(onClick), std::move(onWheel) });
         }
 
         void pointerMoved(int x, int y)
         {
             // Only a pointer that moves points at things, so a resting one doesn't fight the d-pad when the panel
             // draws again under it.
+            sMovedTo = MyGUI::IntPoint(x, y);
             MyGUI::Widget* widget = nullptr;
             const PointerTarget* target = findPointerTarget(x, y, widget);
             if (widget == sPointedAt)
@@ -472,8 +477,14 @@ namespace MWGui
             const PointerTarget* target = findPointerTarget(x, y, widget);
             if (target == nullptr || !target->mOnWheel)
                 return false;
+            sWheelPoint = MyGUI::IntPoint(x, y);
             sPointerActions.emplace_back([onWheel = target->mOnWheel, steps] { onWheel(steps); });
             return true;
+        }
+
+        MyGUI::IntPoint pointerPoint()
+        {
+            return sMovedTo.value_or(sWheelPoint);
         }
 
         bool pointerClicked(int x, int y)
@@ -558,13 +569,55 @@ namespace MWGui
             ++mScroll;
         }
         // The list doesn't scroll past its end, which would leave empty space below it, as when it gets shorter.
-        int below = 0;
-        for (std::size_t i = static_cast<std::size_t>(mScroll); i < rows.size(); ++i)
-            below += rows[i].mHeight;
-        while (mScroll > 0 && below + rows[mScroll - 1].mHeight <= h)
+        int maxScroll = static_cast<int>(rows.size()) - 1;
+        for (int below = rows.back().mHeight; maxScroll > 0 && below + rows[maxScroll - 1].mHeight <= h;)
+            below += rows[--maxScroll].mHeight;
+        mScroll = std::min(mScroll, maxScroll);
+
+        // The wheel scrolls the list a row at a time, and the item under the mouse then takes the focus, so moving the
+        // mouse afterwards doesn't pull the focus back. It goes behind the rows, so a header or the space below the
+        // last row takes the wheel too.
+        std::function<void(int)> onWheel;
+        if (onChange)
         {
-            --mScroll;
-            below += rows[mScroll].mHeight;
+            // The mouse's position is in screen pixels, and the layer converts it to the units the rows are drawn in.
+            MyGUI::Widget* root = parent;
+            while (root->getParent() != nullptr)
+                root = root->getParent();
+            onWheel = [this, shared = std::make_shared<const std::vector<Row>>(rows), h, maxScroll, onChange,
+                          layer = root->getLayer(), top = parent->getAbsoluteTop() + y](int steps) {
+                const std::vector<Row>& all = *shared;
+                const int scroll = std::clamp(mScroll - steps, 0, maxScroll);
+                if (scroll == mScroll)
+                    return;
+                // The first item that ends below the mouse, among the rows that fit, so a header gives the item under
+                // it. Below the last row, the last item.
+                const MyGUI::IntPoint point = ControllerUi::pointerPoint();
+                const int pointY = (layer != nullptr ? layer->getPosition(point.left, point.top).top : point.top) - top;
+                int focusRow = -1;
+                int lastItemRow = -1;
+                int rowTop = 0;
+                for (int i = scroll; i < static_cast<int>(all.size()) && rowTop + all[i].mHeight <= h; ++i)
+                {
+                    rowTop += all[i].mHeight;
+                    if (!all[i].mItem)
+                        continue;
+                    lastItemRow = i;
+                    if (focusRow < 0 && pointY < rowTop)
+                        focusRow = i;
+                }
+                if (focusRow < 0)
+                    focusRow = lastItemRow;
+                if (focusRow < 0)
+                    return;
+                int item = 0;
+                for (int i = 0; i < focusRow; ++i)
+                    item += all[i].mItem ? 1 : 0;
+                mScroll = scroll;
+                mFocus = item;
+                onChange();
+            };
+            ControllerUi::addWheelTarget(parent, x, y, w, h, onWheel);
         }
 
         int item = 0;
@@ -597,7 +650,8 @@ namespace MWGui
                             onChange();
                         if (onActivate)
                             onActivate();
-                    });
+                    },
+                    onWheel);
                 ++item;
             }
             rowY += row.mHeight;

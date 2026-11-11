@@ -7,7 +7,7 @@ The controller menus work with a mouse, as well as with a controller and the key
 - **Pointing** at a row, tile, key or option highlights it, as moving the d-pad onto it does. Only a mouse that moves points at things, so a resting pointer doesn't fight the d-pad.
 - **Left-clicking** it chooses it, as A does.
 - **Right-clicking** anywhere goes back, as B does.
-- **The wheel** works as the d-pad's up and down: it moves through lists, and zooms the map. Over a page of text, such as a book, a quest's entries or a conversation, it scrolls the text instead.
+- **The wheel** scrolls a list a row at a time, and the item under the pointer then takes the highlight, so moving the mouse afterwards doesn't pull the highlight back. Over a page of text, such as a book, a quest's entries or a conversation, it scrolls the text. Elsewhere it works as the d-pad's up and down, such as to zoom the map.
 - **Clicking a tab** switches to it, on the top bar and on a screen's own tabs. Clicking a shoulder button's glyph presses it.
 - **Clicking a button hint**, such as "X Drop" or "Y Take All", presses that button. The d-pad's and the sticks' hints stand for directions, so they aren't buttons.
 - **On the 3D map**, dragging pans the view, and a click places a pin, or removes the pin under the pointer.
@@ -22,11 +22,11 @@ The controller menus draw everything in code, with `ControllerUi::addRect`, `add
 - **Dialogs keep the mouse to themselves.** A panel on the ControllerModal layer, where the dialogs draw, gets a target with no actions under its own, covering the screen. So clicks don't reach the screen behind a dialog.
 - **Actions run on the next frame.** A target's actions usually draw the panel again, which destroys the target's widget. So they are queued, and the window manager runs them at the start of its next update.
 - **The right button and the wheel** go through `MWBase::InputManager::pressControllerMenuButton`, which sends a button to the active menu, as a controller does. The button also counts as held for one frame, for the menus that read the held d-pad each frame. `ControllerUi::addWheelTarget` makes an area that takes the wheel for itself, such as a page of text.
-- **`ControllerList`** is the shared scrolling list. It owns the focus and the scroll position, keeps the focused row in view, never scrolls past the end, moves with the held d-pad, and registers each visible row as a pointer target. `setScroll` puts a row at the top, for "Y: next group". The screens with scrolling lists use it in place of their own focus and scrolling code. The screens draw each row themselves, so they look as before.
+- **`ControllerList`** is the shared scrolling list. It owns the focus and the scroll position, keeps the focused row in view, never scrolls past the end, moves with the held d-pad, and registers each visible row as a pointer target. It also takes the wheel over the whole list: the wheel scrolls it, then focuses the item under the pointer. That uses the position of the mouse's last move, the same one pointing uses, converted through the layer into the units the rows are drawn in, since the UI scale makes them differ from screen pixels. `setScroll` puts a row at the top, for "Y: next group". The screens with scrolling lists use it in place of their own focus and scrolling code. The screens draw each row themselves, so they look as before.
 - **The keyboard** goes through `ControllerManager::keyToMenuButton`, which turns a key into the controller button it stands for. The README lists the keys.
 
 ## What the mouse can't do yet
 
 - Bartering one item at a time, and haggling, use the d-pad and the right stick. They would need new controls, such as plus and minus buttons.
 - Turning the race preview's head uses the right stick. It would need dragging.
-- The automation harness's wheel and text input reach the game wrongly through sdl2-compat, so the harness can't test the wheel or typing.
+- The automation harness's text input reaches the game wrongly through sdl2-compat, so the harness can't test typing. Its wheel always scrolls up, so it can only test scrolling up.
