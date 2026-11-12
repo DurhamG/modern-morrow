@@ -1,5 +1,5 @@
-#ifndef stderr
-int stderr = 0; // Hack: fix linker error
+#if !defined(stderr) && __ANDROID_API__ < 23
+int stderr = 0; // Hack: fix linker error. Android declares stderr itself from API level 23.
 #endif
 
 #include "SDL_main.h"
