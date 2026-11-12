@@ -10,6 +10,7 @@ These documents are for the people and agents working on the project. They are n
 - [harness.md](harness.md) describes the automation harness. The harness lets an agent launch the game, send it keyboard and gamepad input, set up game states, and take screenshots from inside the game.
 - [progress.md](progress.md) is a dated log of what has been done, what was learned, and what is next.
 - [releasing.md](releasing.md) explains how GitHub Actions builds the Windows and Linux release files, how to make a release, and how to set the AppImage up on the Steam Deck.
+- [android.md](android.md) is the plan for an Android build played with a gamepad, and what it borrows from the community Android ports.
 - [screens.md](screens.md) lists every piece of Morrowind's UI, with the code and layout files behind each one.
 - [research/gamepad-ui-references.md](research/gamepad-ui-references.md) lists games with well-regarded gamepad UIs, and sites for browsing their screens.
 - [research/controller-support.md](research/controller-support.md) assesses OpenMW's existing gamepad code, and what it would take to use the 2026 Steam Controller's extra inputs.
