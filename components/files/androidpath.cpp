@@ -9,13 +9,13 @@
 #include <pwd.h>
 #include <unistd.h>
 
-static const char* g_path_global; //< Path to global directory root, e.g. /data/data/com.libopenmw.openmw
-static const char* g_path_user; //< Path to user root, e.g. /sdcard/Android/data/com.libopenmw.openmw
+static const char* g_path_global; //< Path to global directory root, e.g. /data/data/io.github.durhamg.modernmorrow
+static const char* g_path_user; //< Path to user root, e.g. /sdcard/Android/data/io.github.durhamg.modernmorrow/files
 
 /**
  * \brief Called by java code to set up directory paths
  */
-extern "C" JNIEXPORT void JNICALL Java_ui_activity_GameActivity_getPathToJni(
+extern "C" JNIEXPORT void JNICALL Java_io_github_durhamg_modernmorrow_GameActivity_getPathToJni(
     JNIEnv* env, jobject obj, jstring global, jstring user)
 {
     g_path_global = env->GetStringUTFChars(global, nullptr);
@@ -27,27 +27,27 @@ namespace Files
 
     AndroidPath::AndroidPath(const std::string& application_name) {}
 
-    // /sdcard/Android/data/com.libopenmw.openmw/config
+    // /sdcard/Android/data/io.github.durhamg.modernmorrow/files/config
     std::filesystem::path AndroidPath::getUserConfigPath() const
     {
         return std::filesystem::path(g_path_user) / "config";
     }
 
-    // /sdcard/Android/data/com.libopenmw.openmw/
-    // (so that saves are placed at /sdcard/Android/data/com.libopenmw.openmw/saves)
+    // /sdcard/Android/data/io.github.durhamg.modernmorrow/files/
+    // (so that saves are placed at /sdcard/Android/data/io.github.durhamg.modernmorrow/files/saves)
     std::filesystem::path AndroidPath::getUserDataPath() const
     {
         return std::filesystem::path(g_path_user);
     }
 
-    // /data/data/com.libopenmw.openmw/cache
+    // /data/data/io.github.durhamg.modernmorrow/cache
     // (supposed to be "official" android cache location)
     std::filesystem::path AndroidPath::getCachePath() const
     {
         return std::filesystem::path(g_path_global) / "cache";
     }
 
-    // /data/data/com.libopenmw.openmw/files/config
+    // /data/data/io.github.durhamg.modernmorrow/files/config
     // (note the addition of "files")
     std::filesystem::path AndroidPath::getGlobalConfigPath() const
     {
@@ -59,8 +59,8 @@ namespace Files
         return std::filesystem::path("./");
     }
 
-    // /sdcard/Android/data/com.libopenmw.openmw
-    // (so that the data is at /sdcard/Android/data/com.libopenmw.openmw/data)
+    // /sdcard/Android/data/io.github.durhamg.modernmorrow/files
+    // (so that the data is at /sdcard/Android/data/io.github.durhamg.modernmorrow/files/data)
     std::filesystem::path AndroidPath::getGlobalDataPath() const
     {
         return std::filesystem::path(g_path_user);
