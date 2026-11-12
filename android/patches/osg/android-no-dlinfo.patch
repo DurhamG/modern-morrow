@@ -1,0 +1,18 @@
+Android: skip dlinfo, which bionic does not have
+
+Bionic has no RTLD_DI_SERINFO. On Android the plugins are linked in statically, so there is no
+library search path to find.
+
+diff --git a/src/osgDB/FileUtils.cpp b/src/osgDB/FileUtils.cpp
+index c95362585..e165bb6a9 100644
+--- a/src/osgDB/FileUtils.cpp
++++ b/src/osgDB/FileUtils.cpp
+@@ -1183,7 +1183,7 @@ bool osgDB::containsCurrentWorkingDirectoryReference(const FilePathList& paths)
+ 
+     void osgDB::appendPlatformSpecificLibraryFilePaths(FilePathList& filepath)
+     {
+-#ifdef __unix__
++#if defined(__unix__) && !defined(__ANDROID__)
+         auto* application = dlopen(nullptr, RTLD_LAZY | RTLD_NOLOAD);
+         Dl_serinfo searchInfoSize;
+         dlinfo(application, RTLD_DI_SERINFOSIZE, &searchInfoSize);

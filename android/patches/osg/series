@@ -1,0 +1,12 @@
+disable-polygon-offset.patch
+remove-lib-prefix-from-plugins.patch
+fix-freetype-include-dirs.patch
+0001-Replace-Atomic-impl-with-std-atomic.patch
+0002-BufferObject-make-numClients-atomic.patch
+0004-IncrementalCompileOperation-wrap-some-stuff-in-atomi.patch
+force-add-plugins.patch
+dae_collada.patch
+ng-gl4es.patch
+wtf.patch
+0005-CullSettings-make-inheritanceMask-atomic-to-silence-.patch
+android-no-dlinfo.patch
