@@ -17,7 +17,7 @@ Getting something that looks and feels good comes first. Making the changes clea
 - Fast iteration matters more than thorough validation. Every so often, review how long one iteration takes, and look for ways to speed it up. Examples include building fewer targets or configurations, and running fewer checks on the hot path. Validation tends to grow over time, so this review needs to happen more than once.
 - The project alternates between working sessions together and stretches where the agent works alone. The user says when the agent should work alone.
 - The agent may use subagents and git worktrees to work on independent pieces in parallel.
-- No software is downloaded or installed from the internet. Web research is allowed.
+- No software is downloaded or installed from the internet without the user's go-ahead. Web research is allowed. The user has approved the Android tools and the reference copies of the community ports. See [android.md](android.md).
 
 ## Phases
 
@@ -71,10 +71,13 @@ These are the screen sizes the harness should cover:
 | `deck` | 1280x800 | Steam Deck and similar handhelds |
 | `tv1080` | 1920x1080 | 1080p TV |
 | `tv4k` | 3840x2160 | 4K TV |
+| `fold` | 2448x1848 | Galaxy Z Fold 8 main screen, 7.6" at about 403 ppi, 4:3 |
+| `fold-cover` | 1972x1248 | Galaxy Z Fold 8 cover screen, 5.5" at about 428 ppi, 16:10 |
 
 Published guidance gives some numbers to check designs against:
 
 - **Steam Deck:** Valve requires the smallest text to be at least 9 px tall at 1280x800, and recommends 12 px.
+- **Phones:** the Deck numbers, kept at the same physical size, come to about 17 px (22 px recommended) on the Fold's main screen and 18 px (24 px recommended) on its cover screen. These screens have nearly twice the Deck's pixel density, so the UI needs a scaling factor near 2 there.
 - **Xbox:** Microsoft's guidance for console text is at least 26 px for body text at 1080p, or 52 px at 4K.
 - **TV:** keep important content inside the "TV-safe" area, which is inset 48 px from the left and right and 27 px from the top and bottom at 1080p.
 - **Focus:** the widget with controller focus must be clearly visible from across the room.

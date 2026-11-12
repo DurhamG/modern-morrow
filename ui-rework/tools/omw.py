@@ -38,6 +38,8 @@ RESOLUTIONS = {
     "deck": (1280, 800),
     "tv1080": (1920, 1080),
     "tv4k": (3840, 2160),
+    "fold": (2448, 1848),
+    "fold-cover": (1972, 1248),
 }
 
 # openmw.cfg keys that the profile sets itself, so they are not copied from the user's file.
