@@ -6,6 +6,8 @@
 #include <fstream>
 #include <optional>
 #include <sstream>
+#include <string>
+#include <string_view>
 #include <system_error>
 
 #include <SDL_clipboard.h>
@@ -58,30 +60,44 @@
 
 namespace
 {
-    // The quests pinned in the character's latest save from this game, one quest ID to a line. OpenMW versions without
-    // the controller menus drop the save's record of the pins, so a save they wrote takes its pins from here. The file
-    // sits in the folder of all the characters, named after the character's folder, such as
-    // "Lendias.pinned-quests.txt". A character's folder holds only saves, and the save list reads every file in it.
-    std::filesystem::path pinnedQuestsPath(const std::filesystem::path& characterDir)
+    // The quests pinned, or archived, in the character's latest save from this game, one quest ID to a line. OpenMW
+    // versions without the controller menus drop the save's record of them, so a save they wrote takes them from
+    // here. The files sit in the folder of all the characters, named after the character's folder, such as
+    // "Lendias.pinned-quests.txt" and "Lendias.archived-quests.txt". A character's folder holds only saves, and the
+    // save list reads every file in it.
+    constexpr std::string_view sPinnedQuests = "pinned-quests";
+    constexpr std::string_view sArchivedQuests = "archived-quests";
+
+    std::filesystem::path questListPath(const std::filesystem::path& characterDir, std::string_view list)
     {
         std::filesystem::path name = characterDir.filename();
-        name += ".pinned-quests.txt";
+        name += "." + std::string(list) + ".txt";
         return characterDir.parent_path() / name;
     }
 
-    void writePinnedQuests(const std::filesystem::path& characterDir, const std::vector<ESM::RefId>& quests)
+    void writeQuestList(
+        const std::filesystem::path& characterDir, std::string_view list, const std::vector<ESM::RefId>& quests)
     {
-        std::ofstream file(pinnedQuestsPath(characterDir), std::ios::trunc);
+        const std::filesystem::path path = questListPath(characterDir, list);
+        // An empty list needs no file, which keeps the saves folder tidy.
+        if (quests.empty())
+        {
+            std::error_code ec;
+            std::filesystem::remove(path, ec);
+            return;
+        }
+        std::ofstream file(path, std::ios::trunc);
         for (const ESM::RefId& quest : quests)
             file << quest.serializeText() << '\n';
         if (file.fail())
-            Log(Debug::Warning) << "Failed to write the pinned quests to " << pinnedQuestsPath(characterDir);
+            Log(Debug::Warning) << "Failed to write the quest list " << path;
     }
 
-    std::vector<ESM::RefId> readPinnedQuests(const std::filesystem::path& characterDir)
+    std::vector<ESM::RefId> readQuestList(const std::filesystem::path& characterDir, std::string_view list)
     {
+        const std::filesystem::path path = questListPath(characterDir, list);
         std::vector<ESM::RefId> quests;
-        std::ifstream file(pinnedQuestsPath(characterDir));
+        std::ifstream file(path);
         std::string line;
         try
         {
@@ -91,8 +107,7 @@ namespace
         }
         catch (const std::exception& e)
         {
-            Log(Debug::Warning) << "Failed to read the pinned quests from " << pinnedQuestsPath(characterDir) << ": "
-                                << e.what();
+            Log(Debug::Warning) << "Failed to read the quest list " << path << ": " << e.what();
         }
         return quests;
     }
@@ -556,7 +571,8 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
         if (filestream.fail())
             throw std::runtime_error("Write operation failed (file stream): " + std::generic_category().message(errno));
 
-        writePinnedQuests(slot->mPath.parent_path(), uiState.mPinnedQuests);
+        writeQuestList(slot->mPath.parent_path(), sPinnedQuests, uiState.mPinnedQuests);
+        writeQuestList(slot->mPath.parent_path(), sArchivedQuests, uiState.mArchivedQuests);
 
         // Saving into OpenMW's folder leaves this game's own saves as the ones to continue from.
         if (!toOpenMW)
@@ -879,12 +895,14 @@ void MWState::StateManager::loadGame(const Character* character, const std::file
             }
         }
 
-        // A save that another OpenMW version wrote has no record of the controller menus, so its pins come from the
-        // character's file beside the saves. Saves at formats 42 and 43 have the menus' data in their other records.
+        // A save that another OpenMW version wrote has no record of the controller menus, so its pinned and archived
+        // quests come from the character's files beside the saves. Saves at formats 42 and 43 have the menus' data in
+        // their other records.
         if (!uiState && version <= ESM::CurrentSaveGameFormatVersion)
         {
             uiState.emplace();
-            uiState->mPinnedQuests = readPinnedQuests(filepath.parent_path());
+            uiState->mPinnedQuests = readQuestList(filepath.parent_path(), sPinnedQuests);
+            uiState->mArchivedQuests = readQuestList(filepath.parent_path(), sArchivedQuests);
         }
         if (uiState)
         {

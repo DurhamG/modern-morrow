@@ -16,6 +16,7 @@ namespace MWDialogue
         int mIndex;
         bool mFinished;
         bool mPinned = false;
+        bool mArchived = false;
 
     public:
         Quest();
@@ -38,6 +39,10 @@ namespace MWDialogue
         /// Whether the player pinned the quest to the top of the journal.
         bool isPinned() const { return mPinned; }
         void setPinned(bool pinned) { mPinned = pinned; }
+
+        /// Whether the player moved the quest to the journal's Archived group, out of the way.
+        bool isArchived() const { return mArchived; }
+        void setArchived(bool archived) { mArchived = archived; }
 
         bool addEntry(const JournalEntry& entry) override;
         ///< Add entry and adjust index accordingly. Returns true if the quest should be restarted.

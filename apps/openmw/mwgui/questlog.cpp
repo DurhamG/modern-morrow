@@ -265,7 +265,8 @@ namespace MWGui::QuestLog
             quest.mLastActivity = i;
         }
 
-        // A quest is finished when any of its IDs is, as in the journal book, and pinned when any of its IDs is.
+        // A quest is finished when any of its IDs is, as in the journal book. It is pinned or archived when any of its
+        // IDs is.
         for (const auto& [id, questId] : questIds)
         {
             const std::string_view name = questId.getName();
@@ -276,6 +277,7 @@ namespace MWGui::QuestLog
             quest.mIds.push_back(id);
             quest.mFinished = quest.mFinished || questId.isFinished();
             quest.mPinned = quest.mPinned || questId.isPinned();
+            quest.mArchived = quest.mArchived || questId.isArchived();
         }
 
         for (Quest& quest : quests)
@@ -290,8 +292,29 @@ namespace MWGui::QuestLog
         MWBase::Journal& journal = *MWBase::Environment::get().getJournal();
         for (const ESM::RefId& id : quest.mIds)
             if (MWDialogue::Quest* questId = journal.getQuestOrNull(id))
+            {
                 questId->setPinned(pinned);
+                if (pinned)
+                    questId->setArchived(false);
+            }
         quest.mPinned = pinned;
+        if (pinned)
+            quest.mArchived = false;
+    }
+
+    void setArchived(Quest& quest, bool archived)
+    {
+        MWBase::Journal& journal = *MWBase::Environment::get().getJournal();
+        for (const ESM::RefId& id : quest.mIds)
+            if (MWDialogue::Quest* questId = journal.getQuestOrNull(id))
+            {
+                questId->setArchived(archived);
+                if (archived)
+                    questId->setPinned(false);
+            }
+        quest.mArchived = archived;
+        if (archived)
+            quest.mPinned = false;
     }
 
     std::string giverName(const Quest& quest)

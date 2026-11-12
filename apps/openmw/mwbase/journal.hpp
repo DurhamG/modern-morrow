@@ -81,8 +81,8 @@ namespace MWBase
 
         virtual void readRecord(ESM::ESMReader& reader, uint32_t type) = 0;
 
-        /// Copies who gave each quest entry and where, and which quests are pinned, into the controller menus'
-        /// record of a save.
+        /// Copies who gave each quest entry and where, and which quests are pinned or archived, into the controller
+        /// menus' record of a save.
         virtual void writeUiState(ESM::UiState& state) const = 0;
 
         /// Copies them back from a save's record, once the journal's own records are loaded.

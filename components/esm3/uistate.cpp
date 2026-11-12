@@ -35,6 +35,10 @@ namespace ESM
         mPinnedQuests.clear();
         while (esm.isNextSub("QPIN"))
             mPinnedQuests.push_back(esm.getRefId());
+
+        mArchivedQuests.clear();
+        while (esm.isNextSub("QARC"))
+            mArchivedQuests.push_back(esm.getRefId());
     }
 
     void UiState::save(ESMWriter& esm) const
@@ -59,5 +63,8 @@ namespace ESM
 
         for (const ESM::RefId& quest : mPinnedQuests)
             esm.writeHNRefId("QPIN", quest);
+
+        for (const ESM::RefId& quest : mArchivedQuests)
+            esm.writeHNRefId("QARC", quest);
     }
 }

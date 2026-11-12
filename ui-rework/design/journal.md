@@ -11,7 +11,7 @@ This is the design for the reworked journal, agreed with the user. In controller
 ## Decisions
 
 - **A Journal tab** beside the map, inventory, magic and stats. The journal key opens the menus on it.
-- **A list of quests on the left, details on the right,** as on the other screens. Pinned quests come first, under their own heading, then the quests in progress, then the finished ones under their own heading.
+- **A list of quests on the left, details on the right,** as on the other screens. Pinned quests come first, under their own heading, then the quests in progress, then the finished ones under their own heading, then the archived ones.
 - **Three ways to sort the list, and a tab of notes,** switched with L1 and R1:
   - **Recent:** by the last update, newest first. The screen opens on this tab.
   - **Places:** grouped by the town the quest started in, such as Balmora. Quests without a known place come last.
@@ -21,6 +21,7 @@ This is the design for the reworked journal, agreed with the user. In controller
 - **Each entry** shows the quest's name, the date of its last update, and its place and faction in two columns. Guild and House quests leave the faction out of their name, such as "Exterminator" for "Fighters Guild: Exterminator", because the column shows it.
 - **The details panel** shows the full name, whether the quest is in progress or finished, who gave it, where, and for which faction. Below that are all its entries, newest first, with their dates. The right stick scrolls them when they don't fit.
 - **X pins the highlighted quest or note,** or unpins it. Pinned quests and notes show in a Pinned group at the top of every tab, so the quests the player is working on stay in reach. The save keeps the pin on each of the game's quest IDs that share the quest's name, in the controller menus' own record (see below). Saves from before pinning load with nothing pinned.
+- **The left stick's click archives the highlighted quest or note,** or takes it out of the archive. Archived quests and notes go in an Archived group at the bottom of their tab, out of the way, such as a quest the player has given up on. The hint reads "Unarchive" on an archived one. Archiving a pinned quest unpins it, and pinning an archived one takes it out of the archive. A quest that gets a new journal entry comes out of the archive by itself, so a quest that moves on isn't left hidden. The save keeps the archive in the controller menus' own record, as it does the pins.
 - **Y jumps to the next group,** as on the other screens.
 - **Topics are reached from quests.** The topics the player has asked about are highlighted in a quest's entries. A moves the focus into the entries, where the d-pad steps from topic to topic, and A opens the topic's page: what each person told the player about it, newest first, with who said it. A topic page highlights the topics in it too, so the player can follow one to the next. B steps back a page, then to the list. A mouse click on a topic opens it. A topic the player hasn't asked about isn't highlighted, since its page would be empty.
 - **No topic index, and no book of dated entries.** Topics are only reached from the quests that mention them.
@@ -29,7 +30,7 @@ This is the design for the reworked journal, agreed with the user. In controller
 
 Morrowind's quests have only a name, numbered stages with their text, and a finished flag. Nothing says who gives a quest or where.
 
-- **From now on, the journal records it.** When a quest entry is added, the save keeps the actor the player was talking to, and the cell the player was in. Scripts that aren't run by an actor record only the cell. The save keeps them in the controller menus' own record, `ESM::UiState`, with the recent items and spells and the pinned quests. Each source is matched to its entry by quest, entry ID and day. Other OpenMW versions skip that record, so they can load the save, and a save they write has no sources, so its entries fall back to the conversations, as older entries do. Pinned quests also go to a file beside the character's saves folder, such as `Lendias.pinned-quests.txt`, so a save that another OpenMW version wrote still gets them. Modern Morrow's earlier saves, at formats 42 and 43, kept these fields inside the journal, quest and player records, and still load.
+- **From now on, the journal records it.** When a quest entry is added, the save keeps the actor the player was talking to, and the cell the player was in. Scripts that aren't run by an actor record only the cell. The save keeps them in the controller menus' own record, `ESM::UiState`, with the recent items and spells and the pinned quests. Each source is matched to its entry by quest, entry ID and day. Other OpenMW versions skip that record, so they can load the save, and a save they write has no sources, so its entries fall back to the conversations, as older entries do. Pinned and archived quests also go to files beside the character's saves folder, such as `Lendias.pinned-quests.txt` and `Lendias.archived-quests.txt`, so a save that another OpenMW version wrote still gets them. A list with nothing in it has no file. Modern Morrow's earlier saves, at formats 42 and 43, kept these fields inside the journal, quest and player records, and still load.
 - **For older entries,** the game looks through the conversations for the line that sets the quest's earliest stage. Its speaker is the quest giver, and the cell the speaker is placed in is the quest's place. Some conversations only name a faction or a cell instead of a speaker.
 - **The place's town** is the start of an interior's name, before a comma or colon, such as "Balmora" for "Balmora, Guild of Fighters". An exterior cell without a name is in its region.
 - **The faction** is the one in a quest's name, then the quest giver's faction, then the faction the conversation names.
@@ -44,6 +45,7 @@ Counted over Morrowind, Tribunal and Bloodmoon, about 22% of quests have no fact
 | D-pad up and down, left stick | Move the selection. In the entries, step from topic to topic. Holding repeats. |
 | A | Move into the quest's entries, onto its first topic. There, open the highlighted topic. |
 | X | Pin the highlighted quest, or unpin it. |
+| Left stick click | Archive the highlighted quest, or take it out of the archive. |
 | Y | Jump to the next group. |
 | Right stick | Scroll the quest's entries. |
 | B | Step back from a topic, or out of the entries, or close the menu. |

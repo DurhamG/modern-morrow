@@ -115,6 +115,13 @@ namespace MWDialogue
         {
             mJournal.push_back(std::move(entry));
             MWBase::Environment::get().getWindowManager()->messageBox("#{sJournalEntry}");
+
+            // A quest that moves on comes back out of the archive, with the other quests that share its name, as the
+            // journal shows them as one quest.
+            const std::string_view name = quest.getName();
+            for (auto& [otherId, other] : mQuests)
+                if (otherId == id || (!name.empty() && Misc::StringUtils::ciEqual(other.getName(), name)))
+                    other.setArchived(false);
         }
     }
 
@@ -266,8 +273,12 @@ namespace MWDialogue
                     ESM::UiState::JournalSource{ entry.mTopic, entry.mInfoId, entry.mDay, entry.mActor, entry.mCell });
 
         for (const auto& [id, quest] : mQuests)
+        {
             if (quest.isPinned())
                 state.mPinnedQuests.push_back(id);
+            if (quest.isArchived())
+                state.mArchivedQuests.push_back(id);
+        }
     }
 
     void Journal::readUiState(const ESM::UiState& state)
@@ -287,5 +298,8 @@ namespace MWDialogue
         for (const ESM::RefId& id : state.mPinnedQuests)
             if (Quest* quest = getQuestOrNull(id))
                 quest->setPinned(true);
+        for (const ESM::RefId& id : state.mArchivedQuests)
+            if (Quest* quest = getQuestOrNull(id))
+                quest->setArchived(true);
     }
 }

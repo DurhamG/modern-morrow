@@ -27,6 +27,8 @@ namespace MWGui
             bool mNote = false;
             // Whether the player pinned the quest to the top of the journal
             bool mPinned = false;
+            // Whether the player moved the quest to the Archived group at the bottom of the journal
+            bool mArchived = false;
             // The IDs of the game's quests that share the name
             std::vector<ESM::RefId> mIds;
             // The quest's journal entries, oldest first
@@ -49,8 +51,13 @@ namespace MWGui
         /// earliest stage, and the place is where that person stands.
         std::vector<Quest> collect();
 
-        /// Pins the quest to the top of the journal, or unpins it, with all the IDs that share its name.
+        /// Pins the quest to the top of the journal, or unpins it, with all the IDs that share its name. Pinning a
+        /// quest takes it out of the archive.
         void setPinned(Quest& quest, bool pinned);
+
+        /// Moves the quest to the Archived group at the bottom of the journal, or back out of it, with all the IDs
+        /// that share its name. Archiving a quest unpins it.
+        void setArchived(Quest& quest, bool archived);
 
         std::string giverName(const Quest& quest);
         std::string factionName(const Quest& quest);

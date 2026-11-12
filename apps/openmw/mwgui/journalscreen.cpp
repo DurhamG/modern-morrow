@@ -145,6 +145,10 @@ namespace MWGui
                 if (!mInDetails)
                     nextGroup();
                 break;
+            case SDL_CONTROLLER_BUTTON_LEFTSTICK:
+                if (!mInDetails)
+                    toggleArchived();
+                break;
             case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
                 changeTab(-1);
                 winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
@@ -173,6 +177,8 @@ namespace MWGui
 
     std::string JournalScreen::groupOf(const QuestLog::Quest& quest) const
     {
+        if (quest.mArchived)
+            return "#{Interface:JournalArchived}";
         if (quest.mPinned)
             return "#{Interface:JournalPinned}";
         if (quest.mFinished)
@@ -196,9 +202,9 @@ namespace MWGui
     std::vector<int> JournalScreen::order() const
     {
         // mQuests is already in order of the most recent activity. Pinned quests come first, then quests in
-        // progress. On the Places and Factions tabs, the quests in progress are grouped by name, with quests that have
-        // no place or faction after the rest. The Notes tab lists only the notes, and the other tabs only the quests,
-        // apart from pinned notes, which stay in reach on every tab.
+        // progress, then finished quests, then archived ones. On the Places and Factions tabs, the quests in progress
+        // are grouped by name, with quests that have no place or faction after the rest. The Notes tab lists only the
+        // notes, and the other tabs only the quests, apart from pinned notes, which stay in reach on every tab.
         std::vector<int> result;
         for (std::size_t i = 0; i < mQuests.size(); ++i)
         {
@@ -207,6 +213,8 @@ namespace MWGui
                 result.push_back(static_cast<int>(i));
         }
         const auto groupKey = [&](const QuestLog::Quest& quest) -> std::pair<int, std::string> {
+            if (quest.mArchived)
+                return { 3, {} };
             if (quest.mPinned)
                 return { -1, {} };
             if (quest.mFinished)
@@ -349,7 +357,8 @@ namespace MWGui
             addRect(mContent, x, y, w, h, sAccentColour, 0.16f);
             addRect(mContent, x, y, 3, h, sAccentColour);
         }
-        const MyGUI::Colour& nameColour = focused ? sActiveColour : quest.mFinished ? sTextColour : sBrightColour;
+        const bool putAway = quest.mFinished || quest.mArchived;
+        const MyGUI::Colour& nameColour = focused ? sActiveColour : putAway ? sTextColour : sBrightColour;
         const int columnsX = x + w - 8 - sPlaceColumnWidth - sFactionColumnWidth;
         const int nameW = columnsX - x - 16 - 12;
         addText(mContent, x + 12, y + 4, nameW, 26, escaped(shortName(quest)), sFontNormal, nameColour);
@@ -474,6 +483,8 @@ namespace MWGui
         {
             hints.emplace_back(
                 SDL_CONTROLLER_BUTTON_X, quest.mPinned ? "#{Interface:JournalUnpin}" : "#{Interface:JournalPin}");
+            hints.emplace_back(SDL_CONTROLLER_BUTTON_LEFTSTICK,
+                quest.mArchived ? "#{Interface:JournalUnarchive}" : "#{Interface:JournalArchive}");
             if (groups)
                 hints.emplace_back(SDL_CONTROLLER_BUTTON_Y, "#{Interface:MagicNextGroup}");
         }
@@ -761,6 +772,19 @@ namespace MWGui
             if (quest.mName == mSelected)
             {
                 QuestLog::setPinned(quest, !quest.mPinned);
+                MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+                redraw();
+                return;
+            }
+    }
+
+    void JournalScreen::toggleArchived()
+    {
+        // As with pinning, the quest stays highlighted, so the list follows it into the Archived group or back out.
+        for (QuestLog::Quest& quest : mQuests)
+            if (quest.mName == mSelected)
+            {
+                QuestLog::setArchived(quest, !quest.mArchived);
                 MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
                 redraw();
                 return;

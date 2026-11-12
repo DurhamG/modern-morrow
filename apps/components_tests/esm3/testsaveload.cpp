@@ -421,6 +421,7 @@ namespace ESM
                 UiState::JournalSource{ generateRandomRefId(), generateRandomRefId(), 30, {}, generateRandomRefId() },
             };
             record.mPinnedQuests = { generateRandomRefId(), generateRandomRefId() };
+            record.mArchivedQuests = { generateRandomRefId() };
             UiState result;
             saveAndLoadRecord(record, GetParam(), result);
             ASSERT_EQ(record.mRecentItems.size(), result.mRecentItems.size());
@@ -440,6 +441,7 @@ namespace ESM
                 EXPECT_EQ(record.mJournalSources[i].mCell, result.mJournalSources[i].mCell);
             }
             EXPECT_EQ(record.mPinnedQuests, result.mPinnedQuests);
+            EXPECT_EQ(record.mArchivedQuests, result.mArchivedQuests);
         }
 
         TEST_P(Esm3SaveLoadRecordTest, cellRefShouldNotChange)

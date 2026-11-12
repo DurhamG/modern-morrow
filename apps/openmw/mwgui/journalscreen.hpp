@@ -25,9 +25,10 @@ namespace MWGui
     /// first. The Recent, Places and Factions tabs sort the same quests by their last update, by the town they
     /// started in, and by the faction they are for. The Notes tab lists the journal's notes, such as a faction's rules,
     /// which aren't quests. X pins the highlighted quest or note, which puts it in a Pinned group at the top of every
-    /// tab. The topics the player has asked about are highlighted in the entries. A moves the focus
-    /// into the entries, where the d-pad steps from topic to topic, and A opens a topic's page: what people told the
-    /// player about it. B steps back. See ui-rework/design/journal.md.
+    /// tab. The left stick's click archives it, which moves it to an Archived group at the bottom. The topics the
+    /// player has asked about are highlighted in the entries. A moves the focus into the entries, where the d-pad steps
+    /// from topic to topic, and A opens a topic's page: what people told the player about it. B steps back. See
+    /// ui-rework/design/journal.md.
     class JournalScreen : public ControllerScreen
     {
     public:
@@ -130,6 +131,8 @@ namespace MWGui
         void selectFocused();
         // Pins the highlighted quest, or unpins it.
         void togglePinned();
+        // Moves the highlighted quest to the Archived group, or back out of it.
+        void toggleArchived();
         // Moves the focus into the details, onto the first topic, or opens the highlighted topic.
         void activateDetails();
         // Steps back from a topic's page, or moves the focus back to the list. Returns false when the list has it.

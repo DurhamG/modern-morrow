@@ -43,6 +43,8 @@ namespace ESM
         std::vector<JournalSource> mJournalSources;
         // The quests the player pinned to the top of the journal
         std::vector<ESM::RefId> mPinnedQuests;
+        // The quests the player moved to the journal's Archived group, out of the way
+        std::vector<ESM::RefId> mArchivedQuests;
 
         void load(ESMReader& esm);
         void save(ESMWriter& esm) const;
