@@ -22,6 +22,7 @@
 #include <components/esm3/loadweap.hpp>
 #include <components/esm3/player.hpp>
 #include <components/esm3/quickkeys.hpp>
+#include <components/esm3/uistate.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -109,7 +110,8 @@ namespace ESM
                 MaxLimitedSizeStringsFormatVersion,
                 MaxStringRefIdFormatVersion,
             });
-            for (ESM::FormatVersion v = result.back() + 1; v <= ESM::CurrentSaveGameFormatVersion; ++v)
+            // Modern Morrow's own formats, 42 and 43, still load.
+            for (ESM::FormatVersion v = result.back() + 1; v <= ESM::MaxModernMorrowSaveGameFormatVersion; ++v)
                 result.push_back(v);
             return result;
         }
@@ -366,7 +368,7 @@ namespace ESM
             EXPECT_EQ(record.mDay, result.mDay);
             EXPECT_EQ(record.mMonth, result.mMonth);
             EXPECT_EQ(record.mDayOfMonth, result.mDayOfMonth);
-            // Saves from before the actor and cell were recorded have neither.
+            // Only Modern Morrow's own formats keep the actor and cell in the entry. Other saves keep them in UiState.
             if (GetParam() > MaxNoJournalSourceFormatVersion)
             {
                 EXPECT_EQ(record.mActor, result.mActor);
@@ -396,12 +398,48 @@ namespace ESM
                 EXPECT_EQ(record.mTopic, result.mTopic);
                 EXPECT_EQ(record.mState, result.mState);
                 EXPECT_EQ(record.mFinished, result.mFinished);
-                // Saves from before quests could be pinned have none pinned.
+                // Only Modern Morrow's format 43 keeps the pin in the quest's state. Other saves keep it in UiState.
                 if (GetParam() > MaxNoPinnedQuestsFormatVersion)
                     EXPECT_EQ(record.mPinned, result.mPinned);
                 else
                     EXPECT_FALSE(result.mPinned);
             }
+        }
+
+        TEST_P(Esm3SaveLoadRecordTest, uiStateShouldNotChange)
+        {
+            // The controller menus' record is only in saved games.
+            if (GetParam() == CurrentContentFormatVersion)
+                return;
+            UiState record;
+            record.mRecentItems
+                = { RecentItem{ generateRandomRefId(), true }, RecentItem{ generateRandomRefId(), false } };
+            record.mRecentSpells = { generateRandomRefId(), generateRandomRefId() };
+            record.mJournalSources = {
+                UiState::JournalSource{ generateRandomRefId(), generateRandomRefId(), 12, generateRandomRefId(),
+                    generateRandomRefId() },
+                UiState::JournalSource{ generateRandomRefId(), generateRandomRefId(), 30, {}, generateRandomRefId() },
+            };
+            record.mPinnedQuests = { generateRandomRefId(), generateRandomRefId() };
+            UiState result;
+            saveAndLoadRecord(record, GetParam(), result);
+            ASSERT_EQ(record.mRecentItems.size(), result.mRecentItems.size());
+            for (std::size_t i = 0; i < record.mRecentItems.size(); ++i)
+            {
+                EXPECT_EQ(record.mRecentItems[i].mItem, result.mRecentItems[i].mItem);
+                EXPECT_EQ(record.mRecentItems[i].mSeen, result.mRecentItems[i].mSeen);
+            }
+            EXPECT_EQ(record.mRecentSpells, result.mRecentSpells);
+            ASSERT_EQ(record.mJournalSources.size(), result.mJournalSources.size());
+            for (std::size_t i = 0; i < record.mJournalSources.size(); ++i)
+            {
+                EXPECT_EQ(record.mJournalSources[i].mQuest, result.mJournalSources[i].mQuest);
+                EXPECT_EQ(record.mJournalSources[i].mInfo, result.mJournalSources[i].mInfo);
+                EXPECT_EQ(record.mJournalSources[i].mDay, result.mJournalSources[i].mDay);
+                EXPECT_EQ(record.mJournalSources[i].mActor, result.mJournalSources[i].mActor);
+                EXPECT_EQ(record.mJournalSources[i].mCell, result.mJournalSources[i].mCell);
+            }
+            EXPECT_EQ(record.mPinnedQuests, result.mPinnedQuests);
         }
 
         TEST_P(Esm3SaveLoadRecordTest, cellRefShouldNotChange)

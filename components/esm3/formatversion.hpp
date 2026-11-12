@@ -34,11 +34,17 @@ namespace ESM
     inline constexpr FormatVersion MaxIngredientIndexFormatVersion = 37;
     inline constexpr FormatVersion MaxFixedStatsFormatVersion = 39;
     inline constexpr FormatVersion MaxWeatherIndexFormatVersion = 40;
+    inline constexpr FormatVersion CurrentSaveGameFormatVersion = 41;
+
+    // Modern Morrow once wrote saves at formats 42 and 43, with the controller menus' data inside the player, journal
+    // and quest records. It now writes OpenMW's format, and keeps that data in a record of its own, ESM::UiState, so
+    // other OpenMW versions can load its saves. Saves at 42 and 43 still load. OpenMW will use 42 and 43 for changes of
+    // its own, so these must go before Modern Morrow moves to an OpenMW that has them.
     inline constexpr FormatVersion MaxNoRecentItemsFormatVersion = 41;
     inline constexpr FormatVersion MaxNoRecentSpellsFormatVersion = 41;
     inline constexpr FormatVersion MaxNoJournalSourceFormatVersion = 41;
     inline constexpr FormatVersion MaxNoPinnedQuestsFormatVersion = 42;
-    inline constexpr FormatVersion CurrentSaveGameFormatVersion = 43;
+    inline constexpr FormatVersion MaxModernMorrowSaveGameFormatVersion = 43;
 
     inline constexpr FormatVersion MinSupportedSaveGameFormatVersion = 5;
     inline constexpr FormatVersion OpenMW0_49MinSaveGameFormatVersion = 5;

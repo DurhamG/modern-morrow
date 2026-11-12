@@ -11,6 +11,7 @@
 #include <components/esm3/loadbsgn.hpp>
 #include <components/esm3/loadmgef.hpp>
 #include <components/esm3/player.hpp>
+#include <components/esm3/uistate.hpp>
 #include <components/fallback/fallback.hpp>
 
 #include "../mwworld/esmstore.hpp"
@@ -308,8 +309,6 @@ namespace MWWorld
         player.mSaveSkills = mSaveSkills;
 
         player.mPreviousItems = mPreviousItems;
-        player.mRecentItems = mRecentItems;
-        player.mRecentSpells = mRecentSpells;
 
         writer.startRecord(ESM::REC_PLAY);
         player.save(writer);
@@ -408,6 +407,7 @@ namespace MWWorld
             mTeleported = false;
 
             mPreviousItems = player.mPreviousItems;
+            // Saves at formats 42 and 43 have the recent items and spells here, and newer saves in ESM::UiState.
             mRecentItems = player.mRecentItems;
             mRecentSpells = player.mRecentSpells;
 
@@ -509,14 +509,26 @@ namespace MWWorld
         rendering->setNightEyeFactor(std::min(1.f, (nightEye / 100.f)));
     }
 
+    void Player::writeUiState(ESM::UiState& state) const
+    {
+        state.mRecentItems = mRecentItems;
+        state.mRecentSpells = mRecentSpells;
+    }
+
+    void Player::readUiState(const ESM::UiState& state)
+    {
+        mRecentItems = state.mRecentItems;
+        mRecentSpells = state.mRecentSpells;
+    }
+
     void Player::addRecentItem(const ESM::RefId& item)
     {
         // Items older than the Recent tab shows are only kept while the player hasn't seen them, so the first items
         // of a big haul still show as new elsewhere in the inventory.
         constexpr std::size_t maxRecentItems = 200;
-        std::erase_if(mRecentItems, [&](const ESM::Player::RecentItem& recent) { return recent.mItem == item; });
-        mRecentItems.insert(mRecentItems.begin(), ESM::Player::RecentItem{ item, false });
-        std::vector<ESM::Player::RecentItem> kept;
+        std::erase_if(mRecentItems, [&](const ESM::RecentItem& recent) { return recent.mItem == item; });
+        mRecentItems.insert(mRecentItems.begin(), ESM::RecentItem{ item, false });
+        std::vector<ESM::RecentItem> kept;
         for (std::size_t i = 0; i < mRecentItems.size() && kept.size() < maxRecentItems; ++i)
             if (i < sRecentItemsShown || !mRecentItems[i].mSeen)
                 kept.push_back(mRecentItems[i]);
@@ -535,14 +547,14 @@ namespace MWWorld
 
     void Player::markRecentItemSeen(const ESM::RefId& item)
     {
-        for (ESM::Player::RecentItem& recent : mRecentItems)
+        for (ESM::RecentItem& recent : mRecentItems)
             if (recent.mItem == item)
                 recent.mSeen = true;
     }
 
     bool Player::isRecentItemNew(const ESM::RefId& item) const
     {
-        for (const ESM::Player::RecentItem& recent : mRecentItems)
+        for (const ESM::RecentItem& recent : mRecentItems)
             if (recent.mItem == item)
                 return !recent.mSeen;
         return false;

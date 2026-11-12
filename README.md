@@ -147,8 +147,8 @@ These options change the gameplay, so they're off by default. Turn them on in th
 Trying it
 ---------
 
-> [!WARNING]
-> **Vanilla OpenMW can't load saves that Modern Morrow writes.** Modern Morrow uses a modified save format. It saves in its own folder, so it shouldn't corrupt existing OpenMW saves, but to use an existing save from OpenMW you need to copy the save over to Modern Morrow's folder.
+> [!NOTE]
+> **Saves work in both OpenMW and Modern Morrow.** Modern Morrow writes OpenMW's own save format, and keeps its extras, such as pinned quests and recent items, in a part of the save that OpenMW skips. A save written by OpenMW loses those extras, apart from pinned quests, which Modern Morrow also keeps in a file of their own. Saves from Modern Morrow before this change load only in Modern Morrow, until it saves them again. The two keep their saves in separate folders, so copy a save over to use it in the other.
 
 You need a copy of Morrowind. The [Releases page](https://github.com/DurhamG/modern-morrow/releases) has a Windows installer, a Windows zip and a Linux AppImage. To build this fork yourself, build it the same way as OpenMW: see the [OpenMW build instructions](https://wiki.openmw.org/index.php?title=Development_Environment_Setup), or [CLAUDE.md](CLAUDE.md) for notes on building on Windows.
 

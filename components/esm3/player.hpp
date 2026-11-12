@@ -9,6 +9,7 @@
 
 #include "loadskil.hpp"
 #include "npcstate.hpp"
+#include "uistate.hpp"
 
 namespace ESM
 {
@@ -36,14 +37,10 @@ namespace ESM
 
         std::map<ESM::RefId, ESM::RefId> mPreviousItems; // previous equipped items, needed for bound spells
 
-        struct RecentItem
-        {
-            ESM::RefId mItem;
-            bool mSeen = false;
-        };
-        // Items that recently entered the inventory, newest first
+        // Items that recently entered the inventory, newest first, and spells, and enchanted items or scrolls, that
+        // the player recently readied or cast, most recent first. Only saves at formats 42 and 43 have them here.
+        // Newer saves keep them in ESM::UiState.
         std::vector<RecentItem> mRecentItems;
-        // Spells, and enchanted items or scrolls, that the player recently readied or cast, most recent first
         std::vector<ESM::RefId> mRecentSpells;
 
         void load(ESMReader& esm);

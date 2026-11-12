@@ -41,8 +41,11 @@ namespace ESM
             esm.writeHNT("JEDA", mDay);
             esm.writeHNT("JEMO", mMonth);
             esm.writeHNT("JEDM", mDayOfMonth);
-            esm.writeHNORefId("JEAC", mActor);
-            esm.writeHNORefId("JECE", mCell);
+            if (esm.getFormatVersion() > MaxNoJournalSourceFormatVersion)
+            {
+                esm.writeHNORefId("JEAC", mActor);
+                esm.writeHNORefId("JECE", mCell);
+            }
         }
         else if (mType == Type_Topic)
             esm.writeHNString("ACT_", mActorName);

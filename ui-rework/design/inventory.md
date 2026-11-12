@@ -33,7 +33,7 @@ This is the design for the reworked inventory screen, agreed with the user. It i
   - **Misc** holds whatever doesn't fit elsewhere. It is split into keys, soul gems, and other things, in that order, each under its own header.
   - **Notes** is split the same way into skill books, other books, and letters and notes.
   - There is no Quest tab for now. Marking quest items needs an analysis of which items the quests refer to, and a quest journal elsewhere may show them better.
-- **Recent** lists everything that has entered the inventory, newest first, up to a fixed limit such as 40 items. It doesn't clear items once they've been seen. Recording when each item arrived needs a save format change, which is acceptable.
+- **Recent** lists everything that has entered the inventory, newest first, up to a fixed limit such as 40 items. It doesn't clear items once they've been seen. Recording when each item arrived goes in the controller menus' own record in the save, which other OpenMW versions skip.
 - **"New until seen"** markers are for other places, such as an equipment area with new items that fit it.
 - **Equipment** shows the body areas, each with its top-most equipped item. That is the armour piece if there is one, otherwise the clothing. Areas with new items that fit have a marker.
   - Selecting an area shows its slots on the left. Shoulders, for example, has a left pauldron and a right pauldron. Chest has a cuirass, a shirt and a robe. The right side lists the items that fit the area.

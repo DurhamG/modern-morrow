@@ -51,7 +51,7 @@ namespace MWWorld
         PreviousItems mPreviousItems;
 
         // Items that recently entered the inventory, newest first, and whether the player has seen them
-        std::vector<ESM::Player::RecentItem> mRecentItems;
+        std::vector<ESM::RecentItem> mRecentItems;
 
         // Spells, and enchanted items or scrolls, that the player recently readied or cast, most recent first
         std::vector<ESM::RefId> mRecentSpells;
@@ -74,7 +74,7 @@ namespace MWWorld
         void addRecentItem(const ESM::RefId& item);
         /// Marks the item as seen, so the inventory stops showing it as new.
         void markRecentItemSeen(const ESM::RefId& item);
-        const std::vector<ESM::Player::RecentItem>& getRecentItems() const { return mRecentItems; }
+        const std::vector<ESM::RecentItem>& getRecentItems() const { return mRecentItems; }
         bool isRecentItemNew(const ESM::RefId& item) const;
 
         /// Moves a spell, or an enchanted item or scroll, to the front of the recently used spells.
@@ -129,6 +129,10 @@ namespace MWWorld
         void write(ESM::ESMWriter& writer, Loading::Listener& progress) const;
 
         bool readRecord(ESM::ESMReader& reader, uint32_t type);
+
+        /// Copies the recent items and spells into the controller menus' record of a save, or back from it.
+        void writeUiState(ESM::UiState& state) const;
+        void readUiState(const ESM::UiState& state);
 
         int getNewCrimeId(); // get new id for witnesses
         void recordCrimeId(); // record the paid crime id when bounty is 0

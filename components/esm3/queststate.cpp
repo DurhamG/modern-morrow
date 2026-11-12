@@ -26,7 +26,7 @@ namespace ESM
         esm.writeHNRefId("YETO", mTopic);
         esm.writeHNT("QSTA", mState);
         esm.writeHNT("QFIN", mFinished);
-        if (mPinned)
+        if (mPinned && esm.getFormatVersion() > MaxNoPinnedQuestsFormatVersion)
             esm.writeHNT("QPIN", static_cast<unsigned char>(1));
     }
 

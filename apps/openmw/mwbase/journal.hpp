@@ -21,6 +21,7 @@ namespace ESM
 {
     class ESMReader;
     class ESMWriter;
+    struct UiState;
 }
 
 namespace MWBase
@@ -79,6 +80,13 @@ namespace MWBase
         virtual void write(ESM::ESMWriter& writer, Loading::Listener& progress) const = 0;
 
         virtual void readRecord(ESM::ESMReader& reader, uint32_t type) = 0;
+
+        /// Copies who gave each quest entry and where, and which quests are pinned, into the controller menus'
+        /// record of a save.
+        virtual void writeUiState(ESM::UiState& state) const = 0;
+
+        /// Copies them back from a save's record, once the journal's own records are loaded.
+        virtual void readUiState(const ESM::UiState& state) = 0;
     };
 }
 

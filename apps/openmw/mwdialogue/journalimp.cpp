@@ -1,11 +1,14 @@
 #include "journalimp.hpp"
 
 #include <iterator>
+#include <map>
+#include <tuple>
 
 #include <components/esm3/esmreader.hpp>
 #include <components/esm3/esmwriter.hpp>
 #include <components/esm3/journalentry.hpp>
 #include <components/esm3/queststate.hpp>
+#include <components/esm3/uistate.hpp>
 
 #include <components/misc/strings/algorithm.hpp>
 
@@ -253,5 +256,36 @@ namespace MWDialogue
                 result.first->second.setIndex(record.mState);
             }
         }
+    }
+
+    void Journal::writeUiState(ESM::UiState& state) const
+    {
+        for (const StampedJournalEntry& entry : mJournal)
+            if (!entry.mActor.empty() || !entry.mCell.empty())
+                state.mJournalSources.push_back(
+                    ESM::UiState::JournalSource{ entry.mTopic, entry.mInfoId, entry.mDay, entry.mActor, entry.mCell });
+
+        for (const auto& [id, quest] : mQuests)
+            if (quest.isPinned())
+                state.mPinnedQuests.push_back(id);
+    }
+
+    void Journal::readUiState(const ESM::UiState& state)
+    {
+        std::map<std::tuple<ESM::RefId, ESM::RefId, int>, const ESM::UiState::JournalSource*> sources;
+        for (const ESM::UiState::JournalSource& source : state.mJournalSources)
+            sources[{ source.mQuest, source.mInfo, source.mDay }] = &source;
+        for (StampedJournalEntry& entry : mJournal)
+        {
+            const auto found = sources.find({ entry.mTopic, entry.mInfoId, entry.mDay });
+            if (found == sources.end())
+                continue;
+            entry.mActor = found->second->mActor;
+            entry.mCell = found->second->mCell;
+        }
+
+        for (const ESM::RefId& id : state.mPinnedQuests)
+            if (Quest* quest = getQuestOrNull(id))
+                quest->setPinned(true);
     }
 }

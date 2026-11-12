@@ -33,7 +33,7 @@ The plan held up. These are the places where it was wrong or incomplete:
   - an item's equipment slots and sounds;
   - dropping or picking up an item by the engine's rules;
   - a merchant's goods in the containers they own;
-  - who gave a journal entry and where, which needs save format 42;
+  - who gave a journal entry and where, which the save keeps in a record of its own;
   - plain messages that Lua can draw;
   - rest and jail progress.
 
@@ -127,8 +127,8 @@ The fork made a few changes outside the screens. Most wouldn't be needed as a mo
 
 | Fork change | As a mod |
 |---|---|
-| Saves record recent items and recent spells for the Recent tabs (save format 42). | Not needed. Lua scripts can store their own data in saves through `onSave` and `onLoad`, and can watch inventory and spell changes themselves. |
-| Quest entries record who gave them and where (save format 42). | Mostly not needed. A Lua script can note the dialogue partner and cell when a journal entry appears. An engine field would be more accurate for entries added by game scripts. |
+| Saves record recent items and recent spells for the Recent tabs, in a record of their own. | Not needed. Lua scripts can store their own data in saves through `onSave` and `onLoad`, and can watch inventory and spell changes themselves. |
+| Quest entries record who gave them and where, in the same record. | Mostly not needed. A Lua script can note the dialogue partner and cell when a journal entry appears. An engine field would be more accurate for entries added by game scripts. |
 | Dialogue remembers answers heard this session. | Becomes part of the dialogue bindings. |
 | A, B and Start skip videos. | A small generic fix, which can go upstream as is. |
 | The `local map cell distance` setting, terrain loading out to the map corner, and the sky blending clip change. | General engine features, independent of the UI. Each can go upstream on its own or stay as a fork patch. |

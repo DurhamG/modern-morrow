@@ -16,7 +16,8 @@ namespace ESM
         ESM::RefId mTopic; // lower case id
         int32_t mState;
         unsigned char mFinished;
-        // Whether the player pinned the quest to the top of the journal
+        // Whether the player pinned the quest to the top of the journal. Only saves at format 43 have it here. Newer
+        // saves keep it in ESM::UiState.
         bool mPinned = false;
 
         void load(ESMReader& esm);

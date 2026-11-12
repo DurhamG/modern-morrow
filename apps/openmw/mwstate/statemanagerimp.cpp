@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <sstream>
 
 #include <SDL_clipboard.h>
@@ -13,6 +14,7 @@
 #include <components/esm3/esmwriter.hpp>
 #include <components/esm3/loadcell.hpp>
 #include <components/esm3/loadclas.hpp>
+#include <components/esm3/uistate.hpp>
 
 #include <components/l10n/manager.hpp>
 
@@ -48,6 +50,48 @@
 #include "../mwscript/globalscripts.hpp"
 
 #include "quicksavemanager.hpp"
+
+namespace
+{
+    // The quests pinned in the character's latest save from this game, one quest ID to a line. OpenMW versions without
+    // the controller menus drop the save's record of the pins, so a save they wrote takes its pins from here. The file
+    // sits in the folder of all the characters, named after the character's folder, such as
+    // "Lendias.pinned-quests.txt". A character's folder holds only saves, and the save list reads every file in it.
+    std::filesystem::path pinnedQuestsPath(const std::filesystem::path& characterDir)
+    {
+        std::filesystem::path name = characterDir.filename();
+        name += ".pinned-quests.txt";
+        return characterDir.parent_path() / name;
+    }
+
+    void writePinnedQuests(const std::filesystem::path& characterDir, const std::vector<ESM::RefId>& quests)
+    {
+        std::ofstream file(pinnedQuestsPath(characterDir), std::ios::trunc);
+        for (const ESM::RefId& quest : quests)
+            file << quest.serializeText() << '\n';
+        if (file.fail())
+            Log(Debug::Warning) << "Failed to write the pinned quests to " << pinnedQuestsPath(characterDir);
+    }
+
+    std::vector<ESM::RefId> readPinnedQuests(const std::filesystem::path& characterDir)
+    {
+        std::vector<ESM::RefId> quests;
+        std::ifstream file(pinnedQuestsPath(characterDir));
+        std::string line;
+        try
+        {
+            while (std::getline(file, line))
+                if (!line.empty())
+                    quests.push_back(ESM::RefId::deserializeText(line));
+        }
+        catch (const std::exception& e)
+        {
+            Log(Debug::Warning) << "Failed to read the pinned quests from " << pinnedQuestsPath(characterDir) << ": "
+                                << e.what();
+        }
+        return quests;
+    }
+}
 
 void MWState::StateManager::cleanup(bool force)
 {
@@ -294,7 +338,8 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
             + MWBase::Environment::get().getDialogueManager()->countSavedGameRecords()
             + MWBase::Environment::get().getMechanicsManager()->countSavedGameRecords()
             + MWBase::Environment::get().getInputManager()->countSavedGameRecords()
-            + MWBase::Environment::get().getWindowManager()->countSavedGameRecords();
+            + MWBase::Environment::get().getWindowManager()->countSavedGameRecords()
+            + 1; // the controller menus' record
         writer.setRecordCount(static_cast<int>(recordCount));
 
         writer.save(stream);
@@ -321,6 +366,15 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
         MWBase::Environment::get().getInputManager()->write(writer, listener);
         MWBase::Environment::get().getWindowManager()->write(writer, listener);
 
+        // What the controller menus remember goes in a record of its own, which other OpenMW versions skip. It comes
+        // last, so the journal is loaded by the time it is read.
+        ESM::UiState uiState;
+        MWBase::Environment::get().getWorld()->getPlayer().writeUiState(uiState);
+        MWBase::Environment::get().getJournal()->writeUiState(uiState);
+        writer.startRecord(ESM::REC_UIST);
+        uiState.save(writer);
+        writer.endRecord(ESM::REC_UIST);
+
         // Ensure we have written the number of records that was estimated
         if (static_cast<size_t>(writer.getRecordCount()) != recordCount + 1) // 1 extra for TES3 record
             Log(Debug::Warning) << "Warning: number of written savegame records does not match. Estimated: "
@@ -338,6 +392,8 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
 
         if (filestream.fail())
             throw std::runtime_error("Write operation failed (file stream): " + std::generic_category().message(errno));
+
+        writePinnedQuests(slot->mPath.parent_path(), uiState.mPinnedQuests);
 
         Settings::saves().mCharacter.set(Files::pathToUnicodeString(slot->mPath.parent_path().filename()));
         mLastSavegame = slot->mPath;
@@ -500,7 +556,7 @@ void MWState::StateManager::loadGame(const Character* character, const std::file
         reader.open(filepath);
 
         ESM::FormatVersion version = reader.getFormatVersion();
-        if (version > ESM::CurrentSaveGameFormatVersion)
+        if (version > ESM::MaxModernMorrowSaveGameFormatVersion)
             throw SaveVersionTooNewError(version);
         else if (version < ESM::MinSupportedSaveGameFormatVersion)
             throw SaveVersionTooOldError(version);
@@ -524,6 +580,7 @@ void MWState::StateManager::loadGame(const Character* character, const std::file
 
         size_t total = reader.getFileSize();
         int currentPercent = 0;
+        std::optional<ESM::UiState> uiState;
         while (reader.hasMoreRecs())
         {
             ESM::NAME n = reader.getRecName();
@@ -624,6 +681,11 @@ void MWState::StateManager::loadGame(const Character* character, const std::file
                     MWBase::Environment::get().getLuaManager()->readRecord(reader, n.toInt());
                     break;
 
+                case ESM::REC_UIST:
+                    uiState.emplace();
+                    uiState->load(reader);
+                    break;
+
                 default:
 
                     // ignore invalid records
@@ -637,6 +699,20 @@ void MWState::StateManager::loadGame(const Character* character, const std::file
                 currentPercent = progressPercent;
             }
         }
+
+        // A save that another OpenMW version wrote has no record of the controller menus, so its pins come from the
+        // character's file beside the saves. Saves at formats 42 and 43 have the menus' data in their other records.
+        if (!uiState && version <= ESM::CurrentSaveGameFormatVersion)
+        {
+            uiState.emplace();
+            uiState->mPinnedQuests = readPinnedQuests(filepath.parent_path());
+        }
+        if (uiState)
+        {
+            MWBase::Environment::get().getWorld()->getPlayer().readUiState(*uiState);
+            MWBase::Environment::get().getJournal()->readUiState(*uiState);
+        }
+
         mCharacterManager.setCurrentCharacter(character);
 
         mState = State_Running;

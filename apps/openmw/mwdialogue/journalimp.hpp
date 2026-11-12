@@ -58,6 +58,10 @@ namespace MWDialogue
         void write(ESM::ESMWriter& writer, Loading::Listener& progress) const override;
 
         void readRecord(ESM::ESMReader& reader, uint32_t type) override;
+
+        void writeUiState(ESM::UiState& state) const override;
+
+        void readUiState(const ESM::UiState& state) override;
     };
 }
 

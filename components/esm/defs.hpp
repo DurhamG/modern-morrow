@@ -131,6 +131,7 @@ namespace ESM
         REC_CAM_ = esm3Recname("CAM_"),
         REC_STLN = esm3Recname("STLN"),
         REC_INPU = esm3Recname("INPU"),
+        REC_UIST = esm3Recname("UIST"), // What the controller menus remember, which other OpenMW versions skip
 
         // format 1
         REC_FILT = esm3Recname("FILT"),

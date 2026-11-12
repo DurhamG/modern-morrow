@@ -543,7 +543,7 @@ namespace MWGui
 
         if (mTab == Tab::Recent)
         {
-            for (const ESM::Player::RecentItem& recent :
+            for (const ESM::RecentItem& recent :
                 MWBase::Environment::get().getWorld()->getPlayer().getRecentItems())
                 for (std::size_t i = 0; i < mItems.size(); ++i)
                     if (mItems[i].mBase.getCellRef().getRefId() == recent.mItem

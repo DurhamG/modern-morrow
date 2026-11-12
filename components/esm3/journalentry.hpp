@@ -32,7 +32,7 @@ namespace ESM
         int32_t mMonth;
         int32_t mDayOfMonth;
         // For quest entries: the actor the player was talking to when the entry was added, if any, and the cell the
-        // player was in. Both are empty for entries from older saves.
+        // player was in. Only saves at formats 42 and 43 have them here. Newer saves keep them in ESM::UiState.
         ESM::RefId mActor;
         ESM::RefId mCell;
 
