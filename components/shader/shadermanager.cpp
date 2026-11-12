@@ -77,6 +77,60 @@ namespace
         return lineNumber;
     }
 
+#ifdef ANDROID
+    // Merging linked shaders into one, which OpenGL ES needs: it links only one shader object per stage. Adapted from
+    // Alpha3's support library (https://gitlab.com/duron27/alpha3, cpp/openmw-upstream/support/src/shaders.cpp),
+    // which is licensed under the GNU GPL version 3.
+
+    // Separate shader objects may each declare the same uniform, but one shader may declare it only once. This puts a
+    // plain uniform declaration behind a guard named after the uniform, so the preprocessor keeps the first one.
+    std::string declareUniformOnce(std::string_view line)
+    {
+        const std::size_t first = line.find_first_not_of(" \t");
+        if (first == std::string_view::npos || !line.substr(first).starts_with("uniform "))
+            return std::string(line);
+        std::string_view declaration = line.substr(first);
+        const std::size_t last = declaration.find_last_not_of(" \t\r");
+        if (declaration[last] != ';' || declaration.find_first_of("=,(") != std::string_view::npos)
+            return std::string(line);
+        declaration = declaration.substr(0, last);
+        if (declaration.ends_with(']'))
+        {
+            const std::size_t open = declaration.rfind('[');
+            if (open == std::string_view::npos)
+                return std::string(line);
+            declaration = declaration.substr(0, open);
+        }
+        const std::size_t end = declaration.find_last_not_of(" \t");
+        const std::size_t begin = declaration.find_last_of(" \t", end);
+        if (end == std::string_view::npos || begin == std::string_view::npos)
+            return std::string(line);
+        const std::string guard = "OMW_UNIFORM_" + std::string(declaration.substr(begin + 1, end - begin));
+        return "#ifndef " + guard + "\n#define " + guard + "\n" + std::string(line) + "\n#endif";
+    }
+
+    // Guards the source's uniform declarations, and drops the #version line of a linked shader.
+    std::string foldForMerge(const std::string& source, bool linked)
+    {
+        std::string out;
+        out.reserve(source.size() + source.size() / 8);
+        std::size_t pos = 0;
+        while (pos < source.size())
+        {
+            const std::size_t end = source.find('\n', pos);
+            const std::size_t lineEnd = end == std::string::npos ? source.size() : end;
+            const std::string_view line(source.data() + pos, lineEnd - pos);
+            const std::size_t first = line.find_first_not_of(" \t");
+            if (!linked || first == std::string_view::npos || !line.substr(first).starts_with("#version"))
+                out += declareUniformOnce(line);
+            if (end != std::string::npos)
+                out.push_back('\n');
+            pos = lineEnd + 1;
+        }
+        return out;
+    }
+#endif
+
     bool addLineDirectivesAfterConditionalBlocks(std::string& source)
     {
         for (size_t position = 0; position < source.length();)
@@ -686,10 +740,8 @@ namespace Shader
             osg::ref_ptr<SamplerProgram> program = programTemplate
                 ? new SamplerProgram(samplers, *programTemplate, osg::CopyOp::SHALLOW_COPY)
                 : new SamplerProgram(samplers);
-            program->addShader(vertexShader);
-            program->addShader(fragmentShader);
-            addLinkedShaders(vertexShader, program);
-            addLinkedShaders(fragmentShader, program);
+            addShaderStage(vertexShader, program);
+            addShaderStage(fragmentShader, program);
             found = mPrograms.insert(std::make_pair(std::make_pair(vertexShader, fragmentShader), program)).first;
         }
         else
@@ -744,10 +796,19 @@ namespace Shader
 
             getLinkedShaders(shader, linkedShaderNames, defines);
         }
+        mMergedShaders.clear();
         for (const auto& [pair, program] : mPrograms)
         {
+#ifdef ANDROID
+            // The new defines can change what each shader links, so both stages are merged again.
+            while (program->getNumShaders() > 0)
+                program->removeShader(program->getShader(0));
+            addShaderStage(pair.first, program);
+            addShaderStage(pair.second, program);
+#else
             addLinkedShaders(pair.first, program);
             addLinkedShaders(pair.second, program);
+#endif
         }
     }
 
@@ -796,6 +857,43 @@ namespace Shader
             for (const auto& linkedShader : linkedIt->second)
                 program->addShader(linkedShader);
     }
+
+    void ShaderManager::addShaderStage(osg::ref_ptr<osg::Shader> shader, osg::ref_ptr<osg::Program> program)
+    {
+#ifdef ANDROID
+        program->addShader(getMergedShader(shader));
+#else
+        program->addShader(shader);
+        addLinkedShaders(shader, program);
+#endif
+    }
+
+#ifdef ANDROID
+    osg::ref_ptr<osg::Shader> ShaderManager::getMergedShader(osg::ref_ptr<osg::Shader> shader)
+    {
+        auto linkedIt = mLinkedShaders.find(shader);
+        if (linkedIt == mLinkedShaders.end())
+            return shader;
+
+        osg::ref_ptr<osg::Shader>& merged = mMergedShaders[shader];
+        if (!merged)
+        {
+            // The shader with main() comes first, so its #version line is the merged shader's. A shader that
+            // includes a header twice links its shaders twice, which osg::Program::addShader ignores, so each goes
+            // in once here too.
+            std::string source = foldForMerge(shader->getShaderSource(), false);
+            std::set<const osg::Shader*> added;
+            for (const auto& linkedShader : linkedIt->second)
+            {
+                if (added.insert(linkedShader.get()).second)
+                    source += "\n" + foldForMerge(linkedShader->getShaderSource(), true);
+            }
+            merged = new osg::Shader(shader->getType(), source);
+            merged->setName(shader->getName() + " (merged)");
+        }
+        return merged;
+    }
+#endif
 
     int ShaderManager::reserveGlobalTextureUnits(Slot slot, int count)
     {
