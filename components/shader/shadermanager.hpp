@@ -100,6 +100,11 @@ namespace Shader
         void getLinkedShaders(osg::ref_ptr<osg::Shader> shader, const std::vector<std::string>& linkedShaderNames,
             const DefineMap& defines);
         void addLinkedShaders(osg::ref_ptr<osg::Shader> shader, osg::ref_ptr<osg::Program> program);
+        // Adds the shader and the shaders it links to the program. On Android they go in as one merged shader.
+        void addShaderStage(osg::ref_ptr<osg::Shader> shader, osg::ref_ptr<osg::Program> program);
+#ifdef ANDROID
+        osg::ref_ptr<osg::Shader> getMergedShader(osg::ref_ptr<osg::Shader> shader);
+#endif
 
         std::filesystem::path mPath;
 
@@ -120,6 +125,8 @@ namespace Shader
         typedef std::vector<osg::ref_ptr<osg::Shader>> ShaderList;
         typedef std::map<osg::ref_ptr<osg::Shader>, ShaderList> LinkedShadersMap;
         LinkedShadersMap mLinkedShaders;
+        // Each shader that links others, with the merged copy that getMergedShader made of them.
+        std::map<osg::ref_ptr<osg::Shader>, osg::ref_ptr<osg::Shader>> mMergedShaders;
 
         std::mutex mMutex;
 
