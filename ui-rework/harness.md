@@ -39,7 +39,7 @@ Changing a header that many files include, such as `apps/openmw/mwbase/windowman
 `omw.py launch` starts the game with its config folder replaced by `.automation/profiles/<name>/config/`. Git ignores the `.automation/` folder. The profile holds its own settings, log, saves and screenshots, so it never touches the user's own OpenMW folder in Documents. The profile's `openmw.cfg` is copied from the user's `openmw.cfg`, which says where the Morrowind data files are. The game only reads those files.
 
 - `--profile` (or `-p`, or `$OMW_PROFILE`) picks the profile. The default is `default`. Each running game needs its own profile. Scenarios use `scenario-<name>`.
-- `--resolution` (or `-r`) is `deck` (1280x800), `tv1080` (1920x1080) or `tv4k` (3840x2160). The default is `deck`.
+- `--resolution` (or `-r`) is `deck` (1280x800), `tv1080` (1920x1080), `tv4k` (3840x2160), `fold` (2448x1848) or `fold-cover` (1972x1248). The default is `deck`. The two Fold screens are small and dense, so try them with `--scale 2` as well.
 - `--scale` sets the UI scaling factor. The default is 1.
 - `--set Section.key=value` sets any other setting, such as `--set "GUI.controller menus=true"`.
 - The start point is the main menu by default. `--start <cell>` starts a new game in that cell without character creation. `--skip-chargen` does the same in the default start cell, which is outdoors and dangerous. `--new-game` runs character creation, and `--save <file>` loads a save.
