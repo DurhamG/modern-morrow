@@ -3,6 +3,8 @@
 
 #include <filesystem>
 #include <map>
+#include <optional>
+#include <string>
 #include <utility>
 
 #include "../mwbase/statemanager.hpp"
@@ -25,6 +27,14 @@ namespace MWState
         std::optional<std::pair<const Character*, std::filesystem::path>> mLoadRequest;
         State mState;
         CharacterManager mCharacterManager;
+        std::vector<std::string> mContentFiles;
+        // The saves folder of an OpenMW install on this computer, if one was found, and its characters, once the
+        // folder exists.
+        std::filesystem::path mOpenMWSaves;
+        std::optional<CharacterManager> mOpenMWCharacters;
+        // When the game was loaded from OpenMW's saves and this game has no character folder of that name yet, the
+        // folder's name, so the first save here creates a character folder of the same name.
+        std::filesystem::path mOpenMWFolderName;
         double mTimePlayed;
         // Seconds of play, outside menus, since the game was last saved or loaded.
         double mPlayedSinceSave = 0;
@@ -45,6 +55,21 @@ namespace MWState
         std::vector<const Slot*> findSaves(std::string_view description);
 
         std::map<int, int> buildContentFileIndexMap(const ESM::ESMReader& reader) const;
+
+        /// Whether the save file is in OpenMW's saves folder.
+        bool isOpenMWSave(const std::filesystem::path& filepath) const;
+
+        /// The name of the current character's folder, or of the OpenMW character folder the game was loaded from.
+        /// Empty for a new game that was never saved.
+        std::filesystem::path currentFolderName();
+
+        Character* findSaveCharacter(SaveFolder folder);
+
+        /// OpenMW's characters, creating its saves folder if it doesn't exist yet.
+        CharacterManager& openMWCharacters();
+
+        /// Copies an OpenMW save that is about to be overwritten into this game's backups folder.
+        void backUpOpenMWSave(const std::filesystem::path& filepath) const;
 
     public:
         StateManager(const std::filesystem::path& saves, const std::vector<std::string>& contentFiles);
@@ -82,6 +107,14 @@ namespace MWState
         ///
         /// \note Slot must belong to the current character.
 
+        void saveGame(std::string_view description, const Slot* slot, SaveFolder folder) override;
+
+        bool hasSaveFolder(SaveFolder folder) const override;
+
+        void rescanSaveFolder(SaveFolder folder) override;
+
+        const Character* getSaveCharacter(SaveFolder folder) override;
+
         /// Saves a file, using supplied filename, overwritting if needed
         /** This is mostly used for quicksaving and autosaving, for they use the same name over and over again
             \param name Name of save, defaults to "Quicksave"**/
@@ -107,6 +140,9 @@ namespace MWState
         /// iterator.
 
         CharacterIterator characterEnd() override;
+
+        CharacterIterator characterBegin(SaveFolder folder) override;
+        CharacterIterator characterEnd(SaveFolder folder) override;
 
         void update(float duration);
     };

@@ -412,6 +412,8 @@ namespace MWBase
         virtual int getControllerMenuHeight() = 0;
         /// Cycle to the next window to receive controller events
         virtual void cycleActiveControllerWindow(bool next) = 0;
+        /// Handles L2 or R2: the active window may use it, and otherwise it cycles the windows.
+        virtual void controllerTriggerPressed(bool right) = 0;
         virtual void setActiveControllerWindow(MWGui::GuiMode mode, size_t activeIndex) = 0;
         virtual bool getControllerTooltipVisible() const = 0;
         virtual void setControllerTooltipVisible(bool visible) = 0;

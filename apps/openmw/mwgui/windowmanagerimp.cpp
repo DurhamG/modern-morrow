@@ -1019,6 +1019,16 @@ namespace MWGui
             setActiveControllerWindow(mode, activeIndex);
     }
 
+    void WindowManager::controllerTriggerPressed(bool right)
+    {
+        if (!Settings::gui().mControllerMenus)
+            return;
+        WindowBase* active = getActiveControllerWindow();
+        if (active != nullptr && active->isVisible() && active->onControllerTrigger(right))
+            return;
+        cycleActiveControllerWindow(right);
+    }
+
     void WindowManager::reapplyActiveControllerWindow()
     {
         if (!Settings::gui().mControllerMenus || mGuiModes.empty())

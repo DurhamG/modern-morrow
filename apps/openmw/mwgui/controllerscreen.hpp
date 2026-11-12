@@ -130,6 +130,8 @@ namespace MWGui
 
         /// Shows the controller's icon for a button.
         void addGlyph(MyGUI::Widget* parent, int x, int y, int size, SDL_GameControllerButton button);
+        /// Draws the glyph of a trigger, L2 or R2.
+        void addGlyph(MyGUI::Widget* parent, int x, int y, int size, SDL_GameControllerAxis trigger);
 
         /// Shows an item's icon on a dark square.
         void addIcon(MyGUI::Widget* parent, int x, int y, int size, const MWWorld::Ptr& ptr, bool equipped);

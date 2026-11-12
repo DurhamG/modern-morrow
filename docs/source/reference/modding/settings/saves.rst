@@ -63,3 +63,14 @@ Saves Settings
    Whether the game starts straight into the newest save, without the logos or the main menu.
    With no saves, the main menu shows as usual.
    A save or ``--skip-menu`` given on the command line comes first.
+
+.. omw-setting::
+   :title: openmw saves folder
+   :type: string
+   :default: ""
+
+   The saves folder of an OpenMW install.
+   In controller menus mode, the save and load menus show its saves in a tab beside this game's own,
+   so a game can be loaded from OpenMW or saved into its folder.
+   Empty looks for OpenMW in its usual folders, and on Linux in the folder of its Flatpak too.
+   When several are installed, the one saved to most recently is shown.

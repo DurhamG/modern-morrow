@@ -148,7 +148,7 @@ Trying it
 ---------
 
 > [!NOTE]
-> **Saves work in both OpenMW and Modern Morrow.** Modern Morrow writes OpenMW's own save format, and keeps its extras, such as pinned quests and recent items, in a part of the save that OpenMW skips. A save written by OpenMW loses those extras, apart from pinned quests, which Modern Morrow also keeps in a file of their own. Saves from Modern Morrow before this change load only in Modern Morrow, until it saves them again. The two keep their saves in separate folders, so copy a save over to use it in the other.
+> **Modern Morrow keeps its saves separate from OpenMW.** Modern Morrow tweaks the save format slightly, so it stores saves in a separate directory from OpenMW. You can use the Load menu in Modern Morrow to import a save from OpenMW, and you can use the Save menu in Modern Morrow to export a save back to OpenMW. To bring over a save from Steam Morrowind, first convert it to an OpenMW save with OpenMW's `openmw-essimporter` tool, and put the result in a character folder in OpenMW's saves folder. Then import it from the Load menu. The converted save keeps your quest progress, but not your journal entries. Saves can't go back to Steam Morrowind. Note, you will need OpenMW 0.52 or above.
 
 You need a copy of Morrowind. The [Releases page](https://github.com/DurhamG/modern-morrow/releases) has a Windows installer, a Windows zip and a Linux AppImage. To build this fork yourself, build it the same way as OpenMW: see the [OpenMW build instructions](https://wiki.openmw.org/index.php?title=Development_Environment_Setup), or [CLAUDE.md](CLAUDE.md) for notes on building on Windows.
 

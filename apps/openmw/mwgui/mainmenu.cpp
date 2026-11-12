@@ -354,8 +354,11 @@ namespace MWGui
             && MWBase::Environment::get().getWindowManager()->isSavingAllowed())
             buttons.emplace_back("savegame");
 
-        if (MWBase::Environment::get().getStateManager()->characterBegin()
-            != MWBase::Environment::get().getStateManager()->characterEnd())
+        // The load screen also shows the saves of an OpenMW install, so it is offered when only those exist.
+        MWBase::StateManager* stateManager = MWBase::Environment::get().getStateManager();
+        using SaveFolder = MWBase::StateManager::SaveFolder;
+        if (stateManager->characterBegin(SaveFolder::Own) != stateManager->characterEnd(SaveFolder::Own)
+            || stateManager->characterBegin(SaveFolder::OpenMW) != stateManager->characterEnd(SaveFolder::OpenMW))
             buttons.emplace_back("loadgame");
 
         if (pauseMenu)

@@ -134,6 +134,37 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
     }
 
+    bool SaveGameDialog::showFolderTabs() const
+    {
+        // Saving can create OpenMW's first save. Loading needs saves there to load.
+        using SaveFolder = MWBase::StateManager::SaveFolder;
+        MWBase::StateManager* mgr = MWBase::Environment::get().getStateManager();
+        return mPanel != nullptr && mgr->hasSaveFolder(SaveFolder::OpenMW)
+            && (mSaving || mgr->characterBegin(SaveFolder::OpenMW) != mgr->characterEnd(SaveFolder::OpenMW));
+    }
+
+    void SaveGameDialog::changeFolder()
+    {
+        using SaveFolder = MWBase::StateManager::SaveFolder;
+        if (!showFolderTabs())
+            return;
+        mFolder = mFolder == SaveFolder::Own ? SaveFolder::OpenMW : SaveFolder::Own;
+        fillCharacters();
+        mList.reset();
+        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+    }
+
+    bool SaveGameDialog::onControllerTrigger(bool right)
+    {
+        // L2 and R2 switch characters. Saving has nothing for them to do, but they still shouldn't switch between the
+        // windows behind the saves.
+        if (mPanel == nullptr || !mPanel->getVisible())
+            return false;
+        changeCharacter(right ? 1 : -1);
+        drawPanel();
+        return true;
+    }
+
     void SaveGameDialog::onFrame(float duration)
     {
         if (mPanel == nullptr || !mPanel->getVisible())
@@ -166,32 +197,67 @@ namespace MWGui
         addRect(mPanel, x, y, w, h, MyGUI::Colour::parse("#0d0b08"));
         addRect(mPanel, x, y, w, 1, sAccentColour, 0.6f);
 
-        // The title, and the character whose saves these are. Loading can switch characters.
+        // The title, and the character whose saves these are. Loading can switch characters with L2 and R2.
         addText(mPanel, x + 24, y + 12, w - 48, 36,
             mSaving ? "#{Interface:SavesSaveTitle}" : "#{Interface:SavesLoadTitle}", sFontTitle, sBrightColour);
         const std::size_t character = mCharacterSelection->getIndexSelected();
         std::string characterName;
         if (character != MyGUI::ITEM_NONE && character < mCharacterSelection->getItemCount())
             characterName = mCharacterSelection->getItemNameAt(character).asUTF8();
-        // Clicking a shoulder button's glyph presses it.
+        // Clicking a trigger's glyph does what pressing the trigger does.
+        const bool switchCharacters = !mSaving && mCharacterSelection->getItemCount() > 1;
         int cx = x + w - 24;
-        if (!mSaving && mCharacterSelection->getItemCount() > 1)
+        if (switchCharacters)
         {
-            addGlyph(mPanel, cx - 22, y + 20, 22, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
-            addPointerTarget(
-                mPanel, cx - 26, y + 16, 30, 30, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
+            addGlyph(mPanel, cx - 22, y + 20, 22, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+            addPointerTarget(mPanel, cx - 26, y + 16, 30, 30, nullptr, [this] { onControllerTrigger(true); });
             cx -= 30;
         }
         MyGUI::TextBox* nameText = addText(mPanel, x + 24, y + 12, cx - x - 24, 36, escaped(characterName), sFontNormal,
             sTextColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
-        if (!mSaving && mCharacterSelection->getItemCount() > 1)
+        if (switchCharacters)
         {
             const int gx = cx - nameText->getTextSize().width - 30;
-            addGlyph(mPanel, gx, y + 20, 22, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-            addPointerTarget(
-                mPanel, gx - 4, y + 16, 30, 30, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER); });
+            addGlyph(mPanel, gx, y + 20, 22, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+            addPointerTarget(mPanel, gx - 4, y + 16, 30, 30, nullptr, [this] { onControllerTrigger(false); });
         }
-        const int contentTop = y + 64;
+
+        // The tabs for this game's saves and OpenMW's, switched with L1 and R1. Clicking a glyph or the other tab
+        // presses the shoulder button.
+        int contentTop = y + 64;
+        if (showFolderTabs())
+        {
+            using SaveFolder = MWBase::StateManager::SaveFolder;
+            const int ty = y + 52;
+            int tx = x + 24;
+            addGlyph(mPanel, tx, ty + 9, 22, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+            addPointerTarget(
+                mPanel, tx - 4, ty + 4, 30, 32, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER); });
+            tx += 34;
+            const std::pair<SaveFolder, std::string> tabs[] = {
+                { SaveFolder::Own, "#{Interface:SavesFolderOwn}" },
+                { SaveFolder::OpenMW, "#{Interface:SavesFolderOpenMW}" },
+            };
+            for (const auto& [folder, caption] : tabs)
+            {
+                const bool selected = folder == mFolder;
+                MyGUI::TextBox* label = addText(mPanel, tx, ty, 200, 40, caption, sFontNormal,
+                    selected ? sBrightColour : sDimColour, MyGUI::Align::Left | MyGUI::Align::VCenter);
+                const int labelW = label->getTextSize().width + 24;
+                label->setCoord(tx, ty, labelW, 40);
+                label->setTextAlign(MyGUI::Align::Center);
+                if (selected)
+                    addRect(mPanel, tx + 8, ty + 34, labelW - 16, 2, sAccentColour);
+                else
+                    addPointerTarget(
+                        mPanel, tx, ty, labelW, 40, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
+                tx += labelW + 6;
+            }
+            addGlyph(mPanel, tx + 4, ty + 9, 22, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+            addPointerTarget(
+                mPanel, tx, ty + 4, 30, 32, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
+            contentTop = ty + 56;
+        }
         addRect(mPanel, x + 24, contentTop - 8, w - 48, 1, sAccentColour, 0.2f);
 
         // The saves on the left.
@@ -238,7 +304,19 @@ namespace MWGui
                     drawPanel();
                     pressButton(SDL_CONTROLLER_BUTTON_A);
                 }))
-            addText(mPanel, listX + 12, contentTop, listW - 24, 30, "#{Interface:SavesNone}", sFontNormal, sDimColour);
+        {
+            // With no saves of this game's own to load, the message points at OpenMW's tab, when there is one.
+            const bool pointAtOpenMW
+                = !mSaving && mFolder == MWBase::StateManager::SaveFolder::Own && showFolderTabs();
+            int ty = contentTop;
+            for (const std::string& line : wrapText(mPanel,
+                     localised(pointAtOpenMW ? "#{Interface:SavesNoneSeeOpenMW}" : "#{Interface:SavesNone}"),
+                     listW - 24, sFontNormal, 4))
+            {
+                addText(mPanel, listX + 12, ty, listW - 24, 30, escaped(line), sFontNormal, sDimColour);
+                ty += 26;
+            }
+        }
 
         // The highlighted save's screenshot and details on the right.
         const int dx = x + static_cast<int>(w * 0.5f) + 16;
@@ -271,8 +349,10 @@ namespace MWGui
         else if (mSaving)
         {
             int ty = contentTop;
-            for (const std::string& line :
-                wrapText(mPanel, localised("#{Interface:SavesNewSaveText}"), dw, sFontNormal, 4))
+            const bool ownFolder = mFolder == MWBase::StateManager::SaveFolder::Own;
+            for (const std::string& line : wrapText(mPanel,
+                     localised(ownFolder ? "#{Interface:SavesNewSaveText}" : "#{Interface:SavesNewSaveTextOpenMW}"), dw,
+                     sFontNormal, 6))
             {
                 addText(mPanel, dx, ty, dw, 26, escaped(line), sFontNormal, sTextColour);
                 ty += 26;
@@ -292,7 +372,8 @@ namespace MWGui
         };
         if (count > 0)
             hint(SDL_CONTROLLER_BUTTON_A, mSaving ? "#{Interface:SavesSave}" : "#{Interface:SavesLoad}");
-        if (!mSaving && mCurrentSlot != nullptr)
+        // OpenMW's saves can't be deleted from here, since they may be the only copy of a game played there.
+        if (!mSaving && mCurrentSlot != nullptr && mFolder == MWBase::StateManager::SaveFolder::Own)
             hint(SDL_CONTROLLER_BUTTON_X, "#{Interface:SavesDelete}");
     }
 
@@ -410,13 +491,6 @@ namespace MWGui
 
         center();
 
-        mCharacterSelection->setCaption({});
-        mCharacterSelection->removeAllItems();
-        mCurrentCharacter = nullptr;
-        mCurrentSlot = nullptr;
-        mSaveList->removeAllItems();
-        onSlotSelected(mSaveList, MyGUI::ITEM_NONE);
-
         if (Settings::gui().mControllerMenus)
         {
             mOkButtonFocus = true;
@@ -424,20 +498,38 @@ namespace MWGui
             mCancelButton->setStateSelected(false);
         }
 
-        MWBase::StateManager* mgr = MWBase::Environment::get().getStateManager();
-        if (mgr->characterBegin() == mgr->characterEnd())
-        {
-            showPanel();
-            return;
-        }
+        // OpenMW may have changed its saves while this game ran. The screen always opens on this game's own saves.
+        MWBase::Environment::get().getStateManager()->rescanSaveFolder(MWBase::StateManager::SaveFolder::OpenMW);
+        mFolder = MWBase::StateManager::SaveFolder::Own;
 
-        mCurrentCharacter = mgr->getCurrentCharacter();
+        fillCharacters();
+        showPanel();
+    }
+
+    void SaveGameDialog::fillCharacters()
+    {
+        mCharacterSelection->setCaption({});
+        mCharacterSelection->removeAllItems();
+        mCurrentCharacter = nullptr;
+        mCurrentSlot = nullptr;
+        mSaveList->removeAllItems();
+        onSlotSelected(mSaveList, MyGUI::ITEM_NONE);
+
+        MWBase::StateManager* mgr = MWBase::Environment::get().getStateManager();
+        if (mgr->characterBegin(mFolder) == mgr->characterEnd(mFolder))
+            return;
+
+        // Saving writes to the current character, or in OpenMW's folder, to the character of the same name.
+        // Loading starts on the current character, or the last one played.
+        const bool ownFolder = mFolder == MWBase::StateManager::SaveFolder::Own;
+        mCurrentCharacter = mSaving ? mgr->getSaveCharacter(mFolder) : ownFolder ? mgr->getCurrentCharacter() : nullptr;
 
         const std::string& directory = Settings::saves().mCharacter;
 
         size_t selectedIndex = MyGUI::ITEM_NONE;
 
-        for (MWBase::StateManager::CharacterIterator it = mgr->characterBegin(); it != mgr->characterEnd(); ++it)
+        for (MWBase::StateManager::CharacterIterator it = mgr->characterBegin(mFolder); it != mgr->characterEnd(mFolder);
+             ++it)
         {
             if (it->begin() != it->end())
             {
@@ -469,7 +561,7 @@ namespace MWGui
                 mCharacterSelection->addItem(playerDesc, &*it);
 
                 if (mCurrentCharacter == &*it
-                    || (!mCurrentCharacter && !mSaving
+                    || (!mCurrentCharacter && !mSaving && ownFolder
                         && Misc::StringUtils::ciEqual(directory, Files::pathToUnicodeString(it->getPath().filename()))))
                 {
                     mCurrentCharacter = &*it;
@@ -488,7 +580,6 @@ namespace MWGui
             mCharacterSelection->setCaptionWithReplacing("#{OMWEngine:SelectCharacter}");
 
         fillSaveList();
-        showPanel();
     }
 
     void SaveGameDialog::setLoadOrSave(bool load)
@@ -538,7 +629,9 @@ namespace MWGui
             if (mCurrentSlot != nullptr && !reallySure)
             {
                 ConfirmationDialog* dialog = MWBase::Environment::get().getWindowManager()->getConfirmationDialog();
-                dialog->askForConfirmation("#{OMWEngine:OverwriteGameConfirmation}");
+                dialog->askForConfirmation(mFolder == MWBase::StateManager::SaveFolder::Own
+                        ? "#{OMWEngine:OverwriteGameConfirmation}"
+                        : "#{Interface:SavesOverwriteOpenMW}");
                 dialog->eventOkClicked.clear();
                 dialog->eventOkClicked += MyGUI::newDelegate(this, &SaveGameDialog::onConfirmationGiven);
                 dialog->eventCancelClicked.clear();
@@ -573,7 +666,7 @@ namespace MWGui
 
         if (mSaving)
         {
-            MWBase::Environment::get().getStateManager()->saveGame(mSaveNameEdit->getCaption(), mCurrentSlot);
+            MWBase::Environment::get().getStateManager()->saveGame(mSaveNameEdit->getCaption(), mCurrentSlot, mFolder);
         }
         else
         {
@@ -762,7 +855,7 @@ namespace MWGui
                     }
                     break;
                 case SDL_CONTROLLER_BUTTON_X:
-                    if (!mSaving && mCurrentSlot != nullptr)
+                    if (!mSaving && mCurrentSlot != nullptr && mFolder == MWBase::StateManager::SaveFolder::Own)
                         confirmDeleteSave();
                     break;
                 case SDL_CONTROLLER_BUTTON_B:
@@ -770,7 +863,8 @@ namespace MWGui
                     break;
                 case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
                 case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
-                    changeCharacter(arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER ? -1 : 1);
+                    // With two tabs, either shoulder button switches to the other one.
+                    changeFolder();
                     drawPanel();
                     break;
                 default:

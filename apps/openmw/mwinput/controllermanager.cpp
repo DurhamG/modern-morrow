@@ -394,14 +394,12 @@ namespace MWInput
             // Left and right triggers toggle through open GUI windows.
             if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
             {
-                handleTriggerPress(
-                    arg.value, mRightTriggerGuiPressed, [&] { winMgr->cycleActiveControllerWindow(true); });
+                handleTriggerPress(arg.value, mRightTriggerGuiPressed, [&] { winMgr->controllerTriggerPressed(true); });
                 return true;
             }
             else if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
             {
-                handleTriggerPress(
-                    arg.value, mLeftTriggerGuiPressed, [&] { winMgr->cycleActiveControllerWindow(false); });
+                handleTriggerPress(arg.value, mLeftTriggerGuiPressed, [&] { winMgr->controllerTriggerPressed(false); });
                 return true;
             }
 
@@ -555,7 +553,7 @@ namespace MWInput
         if (key == SDL_SCANCODE_TAB)
         {
             if (!arg.repeat)
-                MWBase::Environment::get().getWindowManager()->cycleActiveControllerWindow(
+                MWBase::Environment::get().getWindowManager()->controllerTriggerPressed(
                     (arg.keysym.mod & KMOD_SHIFT) == 0);
             return true;
         }

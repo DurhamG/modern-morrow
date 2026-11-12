@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include "../mwbase/statemanager.hpp"
+
 #include "controllerscreen.hpp"
 #include "windowbase.hpp"
 
@@ -55,6 +57,8 @@ namespace MWGui
         void accept(bool reallySure = false);
 
         void fillSaveList();
+        /// Lists the characters of the shown saves folder, and selects the one to show.
+        void fillCharacters();
 
         std::unique_ptr<MyGUI::ITexture> mScreenshotTexture;
         MyGUI::ImageBox* mScreenshot;
@@ -76,8 +80,10 @@ namespace MWGui
         bool mOkButtonFocus = true;
 
         // In controller menus mode, a full screen panel shows the saves instead of this window. When saving, the
-        // first entry is a new save with the name the dialog made up.
+        // first entry is a new save with the name the dialog made up. When an OpenMW install was found, tabs switch
+        // between this game's saves and OpenMW's, so a game can be loaded from OpenMW or saved into its folder.
         MyGUI::Widget* mPanel = nullptr;
+        MWBase::StateManager::SaveFolder mFolder = MWBase::StateManager::SaveFolder::Own;
         ControllerList mList;
         std::string mNewSaveName;
         std::size_t panelEntryCount() const;
@@ -85,6 +91,9 @@ namespace MWGui
         void showPanel();
         void drawPanel();
         void changeCharacter(int delta);
+        bool showFolderTabs() const;
+        void changeFolder();
+        bool onControllerTrigger(bool right) override;
 
     public:
         void onFrame(float duration) override;

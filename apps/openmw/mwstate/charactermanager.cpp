@@ -5,6 +5,8 @@
 #include <sstream>
 #include <utility>
 
+#include <components/files/conversion.hpp>
+#include <components/misc/strings/algorithm.hpp>
 #include <components/misc/utf8stream.hpp>
 
 MWState::CharacterManager::CharacterManager(std::filesystem::path saves, const std::vector<std::string>& contentFiles)
@@ -82,6 +84,22 @@ MWState::Character* MWState::CharacterManager::createCharacter(const std::string
     }
 
     return &mCharacters.emplace_front(path, mGame);
+}
+
+MWState::Character* MWState::CharacterManager::findCharacter(const std::filesystem::path& folderName)
+{
+    const std::string name = Files::pathToUnicodeString(folderName);
+    for (Character& character : mCharacters)
+        if (Misc::StringUtils::ciEqual(Files::pathToUnicodeString(character.getPath().filename()), name))
+            return &character;
+    return nullptr;
+}
+
+MWState::Character* MWState::CharacterManager::findOrCreateCharacter(const std::filesystem::path& folderName)
+{
+    if (Character* character = findCharacter(folderName))
+        return character;
+    return &mCharacters.emplace_front(mPath / folderName, mGame);
 }
 
 std::list<MWState::Character>::iterator MWState::CharacterManager::findCharacter(const MWState::Character* character)

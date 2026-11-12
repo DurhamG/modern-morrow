@@ -1,9 +1,12 @@
 #include "statemanagerimp.hpp"
 
+#include <algorithm>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <optional>
 #include <sstream>
+#include <system_error>
 
 #include <SDL_clipboard.h>
 
@@ -21,7 +24,9 @@
 #include <components/loadinglistener/loadinglistener.hpp>
 
 #include <components/files/conversion.hpp>
+#include <components/files/fixedpath.hpp>
 #include <components/misc/algorithm.hpp>
+#include <components/misc/timeconvert.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/dialoguemanager.hpp"
@@ -91,6 +96,64 @@ namespace
         }
         return quests;
     }
+
+    // When a file in the saves folder was last written, or the oldest possible time when it has no saves.
+    std::filesystem::file_time_type newestSave(const std::filesystem::path& saves)
+    {
+        std::filesystem::file_time_type newest = std::filesystem::file_time_type::min();
+        std::error_code ec;
+        for (const auto& characterDir : std::filesystem::directory_iterator(saves, ec))
+        {
+            if (!characterDir.is_directory(ec))
+                continue;
+            for (const auto& file : std::filesystem::directory_iterator(characterDir.path(), ec))
+                if (file.is_regular_file(ec))
+                    newest = std::max(newest, file.last_write_time(ec));
+        }
+        return newest;
+    }
+
+    // Finds the saves folder of an OpenMW install on this computer. The "openmw saves folder" setting can name it.
+    // Otherwise, on Linux, it is either the Flatpak, which app stores such as the Steam Deck's Discover install, or
+    // OpenMW's usual folder. Elsewhere, it is OpenMW's usual folder. When more than one is installed, it is the one
+    // saved to most recently. Returns an empty path when there is no install.
+    std::filesystem::path findOpenMWSaves(const std::filesystem::path& ownSaves)
+    {
+        const std::string& setting = Settings::saves().mOpenMWSavesFolder;
+        if (!setting.empty())
+            return Files::pathFromUnicodeString(setting);
+
+        // An install has a config folder, which its launcher and setup wizard make, and a saves folder, which its
+        // first save makes.
+        std::vector<std::pair<std::filesystem::path, std::filesystem::path>> installs;
+#if defined(__linux__)
+        if (const char* home = std::getenv("HOME"))
+        {
+            const std::filesystem::path flatpak = std::filesystem::path(home) / ".var/app/org.openmw.OpenMW";
+            installs.emplace_back(flatpak / "config/openmw", flatpak / "data/openmw/saves");
+        }
+#endif
+        const Files::FixedPath<> openmw("openmw");
+        installs.emplace_back(openmw.getUserConfigPath(), openmw.getUserDataPath() / "saves");
+
+        std::filesystem::path found;
+        std::filesystem::file_time_type foundNewest = std::filesystem::file_time_type::min();
+        std::error_code ec;
+        for (const auto& [config, saves] : installs)
+        {
+            if (!std::filesystem::is_directory(config, ec) && !std::filesystem::is_directory(saves, ec))
+                continue;
+            if (std::filesystem::equivalent(saves, ownSaves, ec))
+                continue;
+            const std::filesystem::file_time_type newest = newestSave(saves);
+            if (found.empty() || newest > foundNewest)
+            {
+                found = saves;
+                foundNewest = newest;
+            }
+        }
+        return found;
+    }
 }
 
 void MWState::StateManager::cleanup(bool force)
@@ -107,6 +170,7 @@ void MWState::StateManager::cleanup(bool force)
         MWBase::Environment::get().getMechanicsManager()->clear();
 
         mCharacterManager.setCurrentCharacter(nullptr);
+        mOpenMWFolderName.clear();
         mTimePlayed = 0;
         mPlayedSinceSave = 0;
         mLastSavegame.clear();
@@ -147,8 +211,88 @@ MWState::StateManager::StateManager(const std::filesystem::path& saves, const st
     , mAskLoadRecent(false)
     , mState(State_NoGame)
     , mCharacterManager(saves, contentFiles)
+    , mContentFiles(contentFiles)
+    , mOpenMWSaves(findOpenMWSaves(saves))
     , mTimePlayed(0)
 {
+    if (!mOpenMWSaves.empty())
+        Log(Debug::Info) << "Found OpenMW's saves folder " << mOpenMWSaves;
+    rescanSaveFolder(SaveFolder::OpenMW);
+}
+
+bool MWState::StateManager::hasSaveFolder(SaveFolder folder) const
+{
+    return folder == SaveFolder::Own || !mOpenMWSaves.empty();
+}
+
+void MWState::StateManager::rescanSaveFolder(SaveFolder folder)
+{
+    // This game keeps its own list up to date as it saves and deletes.
+    if (folder != SaveFolder::OpenMW)
+        return;
+    mOpenMWCharacters.reset();
+    std::error_code ec;
+    if (mOpenMWSaves.empty() || !std::filesystem::is_directory(mOpenMWSaves, ec))
+        return;
+    try
+    {
+        mOpenMWCharacters.emplace(mOpenMWSaves, mContentFiles);
+    }
+    catch (const std::exception& e)
+    {
+        Log(Debug::Warning) << "Failed to read OpenMW's saves in " << mOpenMWSaves << ": " << e.what();
+        mOpenMWCharacters.reset();
+    }
+}
+
+MWState::CharacterManager& MWState::StateManager::openMWCharacters()
+{
+    if (mOpenMWSaves.empty())
+        throw std::runtime_error("No OpenMW install was found");
+    if (!mOpenMWCharacters)
+        mOpenMWCharacters.emplace(mOpenMWSaves, mContentFiles);
+    return *mOpenMWCharacters;
+}
+
+bool MWState::StateManager::isOpenMWSave(const std::filesystem::path& filepath) const
+{
+    std::error_code ec;
+    return !mOpenMWSaves.empty() && std::filesystem::equivalent(filepath.parent_path().parent_path(), mOpenMWSaves, ec);
+}
+
+std::filesystem::path MWState::StateManager::currentFolderName()
+{
+    if (const Character* character = mCharacterManager.getCurrentCharacter())
+        return character->getPath().filename();
+    return mOpenMWFolderName;
+}
+
+MWState::Character* MWState::StateManager::findSaveCharacter(SaveFolder folder)
+{
+    if (folder == SaveFolder::Own)
+        return mCharacterManager.getCurrentCharacter();
+    const std::filesystem::path folderName = currentFolderName();
+    if (!mOpenMWCharacters || folderName.empty())
+        return nullptr;
+    return mOpenMWCharacters->findCharacter(folderName);
+}
+
+const MWState::Character* MWState::StateManager::getSaveCharacter(SaveFolder folder)
+{
+    return findSaveCharacter(folder);
+}
+
+void MWState::StateManager::backUpOpenMWSave(const std::filesystem::path& filepath) const
+{
+    // The backups go in this game's own folder, since OpenMW would list a file in its character folders as a save.
+    const std::filesystem::path folder
+        = mCharacterManager.getPath().parent_path() / "backups" / "OpenMW" / filepath.parent_path().filename();
+    std::filesystem::create_directories(folder);
+    std::filesystem::path name = filepath.stem();
+    name += Misc::fileTimeToString(std::filesystem::file_time_type::clock::now(), " %Y-%m-%d %H-%M-%S");
+    name += filepath.extension();
+    std::filesystem::copy_file(filepath, folder / name, std::filesystem::copy_options::overwrite_existing);
+    Log(Debug::Info) << "Copied " << filepath << " to " << folder / name << " before saving over it";
 }
 
 void MWState::StateManager::requestQuit()
@@ -254,9 +398,15 @@ void MWState::StateManager::resumeGame()
 
 void MWState::StateManager::saveGame(std::string_view description, const Slot* slot)
 {
+    saveGame(description, slot, SaveFolder::Own);
+}
+
+void MWState::StateManager::saveGame(std::string_view description, const Slot* slot, SaveFolder folder)
+{
     MWBase::Environment::get().getLuaManager()->applyDelayedActions();
 
-    MWState::Character* character = getCurrentCharacter();
+    const bool toOpenMW = folder == SaveFolder::OpenMW;
+    MWState::Character* character = nullptr;
 
     try
     {
@@ -264,13 +414,21 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
 
         MWBase::Environment::get().getWindowManager()->asyncPrepareSaveMap();
 
+        character = findSaveCharacter(folder);
         if (!character)
         {
-            MWWorld::ConstPtr player = MWMechanics::getPlayer();
-            const std::string& name = player.get<ESM::NPC>()->mBase->mName;
-
-            character = mCharacterManager.createCharacter(name);
-            mCharacterManager.setCurrentCharacter(character);
+            // A game loaded from one folder keeps its character folder's name in the other.
+            CharacterManager& characters = toOpenMW ? openMWCharacters() : mCharacterManager;
+            const std::filesystem::path folderName = currentFolderName();
+            if (folderName.empty())
+            {
+                MWWorld::ConstPtr player = MWMechanics::getPlayer();
+                character = characters.createCharacter(player.get<ESM::NPC>()->mBase->mName);
+            }
+            else
+                character = characters.findOrCreateCharacter(folderName);
+            if (!toOpenMW)
+                mCharacterManager.setCurrentCharacter(character);
         }
 
         ESM::SavedGame profile;
@@ -386,6 +544,11 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
             throw std::runtime_error(
                 "Write operation failed (memory stream): " + std::generic_category().message(errno));
 
+        // A save in OpenMW's folder may hold a game played there, so it is kept before being saved over. If the copy
+        // fails, the save is left as it was.
+        if (toOpenMW && std::filesystem::exists(slot->mPath))
+            backUpOpenMWSave(slot->mPath);
+
         // All good, write to file
         std::ofstream filestream(slot->mPath, std::ios::binary);
         filestream << stream.rdbuf();
@@ -395,8 +558,12 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
 
         writePinnedQuests(slot->mPath.parent_path(), uiState.mPinnedQuests);
 
-        Settings::saves().mCharacter.set(Files::pathToUnicodeString(slot->mPath.parent_path().filename()));
-        mLastSavegame = slot->mPath;
+        // Saving into OpenMW's folder leaves this game's own saves as the ones to continue from.
+        if (!toOpenMW)
+        {
+            Settings::saves().mCharacter.set(Files::pathToUnicodeString(slot->mPath.parent_path().filename()));
+            mLastSavegame = slot->mPath;
+        }
         mPlayedSinceSave = 0;
 
         const auto finish = std::chrono::steady_clock::now();
@@ -550,13 +717,25 @@ void MWState::StateManager::loadGame(const Character* character, const std::file
     {
         cleanup();
 
+        // A game loaded from OpenMW's folder goes on in this game's character folder of the same name. If there is
+        // none yet, the first save here creates it.
+        std::filesystem::path openMWFolderName;
+        const bool fromOpenMW = isOpenMWSave(filepath);
+        if (fromOpenMW)
+        {
+            character = mCharacterManager.findCharacter(filepath.parent_path().filename());
+            if (character == nullptr)
+                openMWFolderName = filepath.parent_path().filename();
+        }
+
         Log(Debug::Info) << "Reading save file " << filepath.filename();
 
         ESM::ESMReader reader;
         reader.open(filepath);
 
+        // Formats 42 and 43 are this game's earlier saves. In OpenMW's folder, they would be from a newer OpenMW.
         ESM::FormatVersion version = reader.getFormatVersion();
-        if (version > ESM::MaxModernMorrowSaveGameFormatVersion)
+        if (version > (fromOpenMW ? ESM::CurrentSaveGameFormatVersion : ESM::MaxModernMorrowSaveGameFormatVersion))
             throw SaveVersionTooNewError(version);
         else if (version < ESM::MinSupportedSaveGameFormatVersion)
             throw SaveVersionTooOldError(version);
@@ -714,6 +893,7 @@ void MWState::StateManager::loadGame(const Character* character, const std::file
         }
 
         mCharacterManager.setCurrentCharacter(character);
+        mOpenMWFolderName = openMWFolderName;
 
         mState = State_Running;
 
@@ -857,6 +1037,26 @@ MWState::StateManager::CharacterIterator MWState::StateManager::characterBegin()
 MWState::StateManager::CharacterIterator MWState::StateManager::characterEnd()
 {
     return mCharacterManager.end();
+}
+
+namespace
+{
+    // The characters of OpenMW's folder when it has none.
+    const std::list<MWState::Character> sNoCharacters;
+}
+
+MWState::StateManager::CharacterIterator MWState::StateManager::characterBegin(SaveFolder folder)
+{
+    if (folder == SaveFolder::Own)
+        return mCharacterManager.begin();
+    return mOpenMWCharacters ? mOpenMWCharacters->begin() : sNoCharacters.begin();
+}
+
+MWState::StateManager::CharacterIterator MWState::StateManager::characterEnd(SaveFolder folder)
+{
+    if (folder == SaveFolder::Own)
+        return mCharacterManager.end();
+    return mOpenMWCharacters ? mOpenMWCharacters->end() : sNoCharacters.end();
 }
 
 void MWState::StateManager::update(float duration)

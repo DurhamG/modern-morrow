@@ -280,14 +280,29 @@ namespace MWGui
             return text;
         }
 
+        namespace
+        {
+            void addGlyphImage(MyGUI::Widget* parent, int x, int y, int size, const std::string& texture)
+            {
+                auto* image = parent->createWidget<MyGUI::ImageBox>(
+                    "ImageBox", MyGUI::IntCoord(x, y, size, size), MyGUI::Align::Default);
+                image->setImageTexture(texture);
+                image->setColour(MyGUI::Colour::parse("#ccb589"));
+                image->setAlpha(0.85f);
+                image->setNeedMouseFocus(false);
+            }
+        }
+
         void addGlyph(MyGUI::Widget* parent, int x, int y, int size, SDL_GameControllerButton button)
         {
-            auto* image = parent->createWidget<MyGUI::ImageBox>(
-                "ImageBox", MyGUI::IntCoord(x, y, size, size), MyGUI::Align::Default);
-            image->setImageTexture(MWBase::Environment::get().getInputManager()->getControllerButtonIcon(button));
-            image->setColour(MyGUI::Colour::parse("#ccb589"));
-            image->setAlpha(0.85f);
-            image->setNeedMouseFocus(false);
+            addGlyphImage(
+                parent, x, y, size, MWBase::Environment::get().getInputManager()->getControllerButtonIcon(button));
+        }
+
+        void addGlyph(MyGUI::Widget* parent, int x, int y, int size, SDL_GameControllerAxis trigger)
+        {
+            addGlyphImage(
+                parent, x, y, size, MWBase::Environment::get().getInputManager()->getControllerAxisIcon(trigger));
         }
 
         void addIcon(MyGUI::Widget* parent, int x, int y, int size, const MWWorld::Ptr& ptr, bool equipped)

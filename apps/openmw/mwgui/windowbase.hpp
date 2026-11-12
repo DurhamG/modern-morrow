@@ -89,6 +89,9 @@ namespace MWGui
         virtual bool takesTypedText() const { return false; }
         virtual bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) { return true; }
         virtual bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) { return false; }
+        /// Called when L2 (right is false) or R2 is pressed. Returns false to let the triggers switch between the
+        /// windows of the menu, as they usually do.
+        virtual bool onControllerTrigger(bool right) { return false; }
         virtual void setActiveControllerWindow(bool active) { mActiveControllerWindow = active; }
 
     protected:

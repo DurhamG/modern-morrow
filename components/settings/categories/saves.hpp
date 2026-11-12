@@ -24,6 +24,7 @@ namespace Settings
         SettingValue<bool> mQuicksaveHistory{ mIndex, "Saves", "quicksave history" };
         SettingValue<int> mAutosaveInterval{ mIndex, "Saves", "autosave interval", makeMaxSanitizerInt(0) };
         SettingValue<bool> mLoadNewestSave{ mIndex, "Saves", "load newest save" };
+        SettingValue<std::string> mOpenMWSavesFolder{ mIndex, "Saves", "openmw saves folder" };
     };
 }
 
