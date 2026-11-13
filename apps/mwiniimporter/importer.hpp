@@ -25,7 +25,7 @@ public:
     void merge(multistrmap& cfg, const multistrmap& ini) const;
     void mergeFallback(multistrmap& cfg, const multistrmap& ini) const;
     void importGameFiles(multistrmap& cfg, const multistrmap& ini, const std::filesystem::path& iniFilename) const;
-    void importArchives(multistrmap& cfg, const multistrmap& ini) const;
+    void importArchives(multistrmap& cfg, const multistrmap& ini, const std::filesystem::path& iniFilename) const;
     static void writeToFile(std::ostream& out, const multistrmap& cfg);
 
     static std::vector<std::string> dependencySort(MwIniImporter::dependencyList source);
@@ -37,6 +37,10 @@ private:
 
     static void insertMultistrmap(multistrmap& cfg, const std::string& key, const std::string& value);
     static void addPaths(std::vector<std::filesystem::path>& output, std::vector<std::string> input);
+
+    /// \return the data folders from the cfg file, followed by the Data Files folder beside the ini file
+    static std::vector<std::filesystem::path> dataPaths(
+        const multistrmap& cfg, const std::filesystem::path& iniFilename);
 
     /// \return file's "last modified time", used in original MW to determine plug-in load order
     static std::time_t lastWriteTime(const std::filesystem::path& filename, std::time_t defaultTime);

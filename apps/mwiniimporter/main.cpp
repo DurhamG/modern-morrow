@@ -158,7 +158,7 @@ int wmain(int argc, wchar_t* wargv[])
 
         if (!vm.count("no-archives"))
         {
-            importer.importArchives(cfg, ini);
+            importer.importArchives(cfg, ini, iniFile);
         }
 
         std::cout << "write to: " << Files::pathToUnicodeString(outputFile) << std::endl;

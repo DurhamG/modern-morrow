@@ -1,6 +1,7 @@
 #include "importer.hpp"
 
 #include <components/esm3/esmreader.hpp>
+#include <components/files/collections.hpp>
 #include <components/files/conversion.hpp>
 #include <components/misc/strings/algorithm.hpp>
 #include <components/misc/strings/lower.hpp>
@@ -446,8 +447,24 @@ void MwIniImporter::insertMultistrmap(multistrmap& cfg, const std::string& key, 
     cfg[key].push_back(value);
 }
 
-void MwIniImporter::importArchives(multistrmap& cfg, const multistrmap& ini) const
+void MwIniImporter::importArchives(
+    multistrmap& cfg, const multistrmap& ini, const std::filesystem::path& iniFilename) const
 {
+    // Only import archives found in a data folder, the way importGameFiles only imports plugins it finds. The engine
+    // refuses to start when an archive in the cfg file is missing. A Morrowind.ini can still list the archives of mods
+    // that were removed. For example, Steam Cloud restores a modded Morrowind.ini after a fresh install of Morrowind.
+    //
+    // Files::Collections matches names regardless of case, as the engine does when it loads archives. It throws on a
+    // folder that doesn't exist, so it only gets the folders that do.
+    Files::PathContainer existingDataPaths;
+    for (std::filesystem::path& path : dataPaths(cfg, iniFilename))
+    {
+        std::error_code ec;
+        if (std::filesystem::is_directory(path, ec))
+            existingDataPaths.push_back(std::move(path));
+    }
+    const Files::Collections collections(existingDataPaths);
+
     std::vector<std::string> archives;
 
     // Search archives listed in ini file
@@ -464,7 +481,10 @@ void MwIniImporter::importArchives(multistrmap& cfg, const multistrmap& ini) con
 
         for (std::vector<std::string>::const_iterator entry = it->second.begin(); entry != it->second.end(); ++entry)
         {
-            archives.push_back(*entry);
+            if (collections.doesExist(*entry))
+                archives.push_back(*entry);
+            else
+                std::cout << "Warning: " << *entry << " not found, ignoring" << std::endl;
         }
     }
 
@@ -530,6 +550,20 @@ void MwIniImporter::addPaths(std::vector<std::filesystem::path>& output, std::ve
     }
 }
 
+std::vector<std::filesystem::path> MwIniImporter::dataPaths(
+    const multistrmap& cfg, const std::filesystem::path& iniFilename)
+{
+    std::vector<std::filesystem::path> paths;
+    for (const char* key : { "data", "data-local" })
+    {
+        const auto it = cfg.find(key);
+        if (it != cfg.end())
+            addPaths(paths, it->second);
+    }
+    paths.push_back(iniFilename.parent_path() / "Data Files");
+    return paths;
+}
+
 void MwIniImporter::importGameFiles(
     multistrmap& cfg, const multistrmap& ini, const std::filesystem::path& iniFilename) const
 {
@@ -537,14 +571,7 @@ void MwIniImporter::importGameFiles(
     std::time_t defaultTime = 0;
     ToUTF8::Utf8Encoder encoder(mEncoding);
 
-    std::vector<std::filesystem::path> dataPaths;
-    if (cfg.count("data"))
-        addPaths(dataPaths, cfg["data"]);
-
-    if (cfg.count("data-local"))
-        addPaths(dataPaths, cfg["data-local"]);
-
-    dataPaths.push_back(iniFilename.parent_path() /= "Data Files");
+    const std::vector<std::filesystem::path> dataPaths = MwIniImporter::dataPaths(cfg, iniFilename);
 
     auto it = ini.begin();
     for (int i = 0; it != ini.end(); i++)
