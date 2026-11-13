@@ -103,6 +103,6 @@ Two pages explain the touch controls, drawn over the game itself rather than ove
 ## Not done yet
 
 - Trying it on the phone. The timings and distances above are starting values to tune there.
-- Assigning quick keys, bartering one item at a time, haggling and turning the race preview's head, by touch.
+- Bartering one item at a time, haggling and turning the race preview's head, by touch.
 - The menus show gamepad glyphs on their hints, which mean nothing to a player without a gamepad, though tapping them works.
 - The tutorial's messages still talk about thumbsticks and buttons. That's left for later.

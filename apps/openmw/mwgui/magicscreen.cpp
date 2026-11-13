@@ -815,8 +815,7 @@ namespace MWGui
 
         if (mQuickKeys.isChoosing())
         {
-            const int hintsTop = ControllerUi::drawHints(
-                mContent, x + 16, w - 32, y + h, { { SDL_CONTROLLER_BUTTON_DPAD_UP, "#{Interface:QuickKeyChoose}" } });
+            const int hintsTop = ControllerUi::drawHints(mContent, x + 16, w - 32, y + h, QuickKeyAssigner::hints());
             mQuickKeys.draw(mContent, x + 16, y + 104, w - 32, hintsTop - 12 - (y + 104));
             return;
         }

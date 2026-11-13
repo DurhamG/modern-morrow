@@ -3,6 +3,8 @@
 #include <array>
 #include <utility>
 
+#include <components/settings/values.hpp>
+
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -110,14 +112,24 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
     }
 
+    std::vector<ControllerUi::Hint> QuickKeyAssigner::hints()
+    {
+        if (Settings::input().mTouchControls)
+            return { { SDL_CONTROLLER_BUTTON_B, "#{Interface:Cancel}" } };
+        return { { SDL_CONTROLLER_BUTTON_DPAD_UP, "#{Interface:QuickKeyChoose}" } };
+    }
+
     void QuickKeyAssigner::draw(MyGUI::Widget* parent, int x, int y, int w, int h)
     {
-        // The wheel works as the d-pad elsewhere, which here would choose a slot by accident.
-        addWheelTarget(parent, 0, 0, parent->getWidth(), parent->getHeight(), [](int) {});
+        // The wheel works as the d-pad elsewhere, which here would choose a slot by accident. Its area goes behind the
+        // rest, so the hints under the slots can still be clicked.
+        addWheelTarget(parent, 0, 0, parent->getWidth(), parent->getHeight(), [](int) {})->setDepth(1);
 
         int ry = y;
-        for (const std::string& line :
-            wrapText(parent, localised("#{Interface:QuickKeyInstructions}"), w, sFontSmall, 3))
+        // With touch controls, the slots are tapped rather than chosen with the d-pad.
+        const std::string instructions = Settings::input().mTouchControls ? "#{Interface:QuickKeyInstructionsTouch}"
+                                                                          : "#{Interface:QuickKeyInstructions}";
+        for (const std::string& line : wrapText(parent, localised(instructions), w, sFontSmall, 4))
         {
             addText(parent, x, ry, w, 22, escaped(line), sFontSmall, sTextColour);
             ry += 22;

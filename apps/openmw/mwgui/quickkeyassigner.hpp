@@ -1,10 +1,14 @@
 #ifndef MWGUI_QUICKKEYASSIGNER_H
 #define MWGUI_QUICKKEYASSIGNER_H
 
+#include <vector>
+
 #include <components/esm/refid.hpp>
 #include <components/esm3/quickkeys.hpp>
 
 #include "../mwworld/ptr.hpp"
+
+#include "controllerscreen.hpp"
 
 namespace MyGUI
 {
@@ -42,6 +46,10 @@ namespace MWGui
         /// Tells a press of a direction from a hold, and assigns the slot once it knows which. Returns true when the
         /// screen needs to redraw.
         bool update(float duration);
+
+        /// The button hints under the slots while choosing. With touch controls, the d-pad's hint would choose a slot
+        /// when tapped, so B's hint to cancel takes its place.
+        static std::vector<ControllerUi::Hint> hints();
 
         /// Draws the eight d-pad slots, and what is on each, in the area. Clicking a slot chooses it, as its direction
         /// does. While choosing, the mouse wheel does nothing, since it would otherwise press the d-pad.
