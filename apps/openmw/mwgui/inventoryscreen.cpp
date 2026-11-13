@@ -1256,8 +1256,7 @@ namespace MWGui
         // While the player chooses a quick key, the slots show in place of the stats.
         if (mQuickKeys.isChoosing())
         {
-            const int hintsTop = drawHints(
-                mContent, x + 16, w - 32, y + h, { { SDL_CONTROLLER_BUTTON_DPAD_UP, "#{Interface:QuickKeyChoose}" } });
+            const int hintsTop = drawHints(mContent, x + 16, w - 32, y + h, QuickKeyAssigner::hints());
             mQuickKeys.draw(mContent, x + 16, headerBottom + 4, w - 32, hintsTop - 12 - (headerBottom + 4));
             return;
         }

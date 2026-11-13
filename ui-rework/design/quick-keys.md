@@ -29,6 +29,12 @@ This is the design for quick keys in controller menus mode, agreed with the user
 - **The HUD shows what was used.** After a quick key is used, its icon and name show above the weapon and spell boxes for two seconds, then fade. Drinking a potion or reading a scroll gave no sign of what happened before, and the holds are easy to forget.
 - **Saves don't change.** The d-pad slots are the same slots 1 to 8 that the number keys use, so keyboard and controller share them, and quick keys from older saves carry over.
 
+## Touch and the mouse
+
+- The "Quick key" hint starts assigning when tapped or clicked, and each slot row chooses that slot.
+- With touch controls, the panel's instructions say to tap a slot, and B's hint to cancel replaces the d-pad's, which tapping would have taken as choosing a slot.
+- During play, touch uses the slots through the quick keys radial, which opens from the mode picker.
+
 ## Other games
 
 - Skyrim on consoles is the closest. Players mark favourites, and in the favourites list press d-pad left or right on one to put it on that direction.
@@ -40,5 +46,4 @@ Assigning straight to the d-pad is the quickest in a fight: one press, with no c
 
 ## Not done yet
 
-- Mouse input. The assigning only responds to a gamepad, like the rest of the screens.
 - The user hasn't reviewed this design in the game yet.
