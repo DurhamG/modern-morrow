@@ -45,6 +45,8 @@ namespace MWGui
             std::function<void()> mOnPoint;
             std::function<void()> mOnClick;
             std::function<void(int)> mOnWheel;
+            // A list row that isn't selected, which a tap selects rather than clicks.
+            bool mTapSelects = false;
         };
 
         // The pointer target at a point. The targets are found here rather than through MyGUI's mouse focus, because
@@ -79,6 +81,26 @@ namespace MWGui
                     return target;
             }
             return nullptr;
+        }
+
+        // Whether a widget, or one inside it, draws something at a point in its layer's coordinates. The panels group
+        // what they draw in plain widgets that can cover the whole layer, so those only count by what is inside them.
+        bool drawsAt(const MyGUI::Widget* widget, const MyGUI::IntPoint& point)
+        {
+            for (std::size_t i = 0; i < widget->getChildCount(); ++i)
+            {
+                const MyGUI::Widget* child = widget->getChildAt(i);
+                if (!child->getVisible())
+                    continue;
+                if (child->getTypeName() == MyGUI::Widget::getClassTypeName())
+                {
+                    if (drawsAt(child, point))
+                        return true;
+                }
+                else if (child->getAbsoluteCoord().inside(point))
+                    return true;
+            }
+            return false;
         }
 
         // A panel on the layer of modal panels keeps the mouse from the screens under it, as its window would. It
@@ -478,6 +500,17 @@ namespace MWGui
             area->setUserData(PointerTarget{ std::move(onPoint), std::move(onClick), std::move(onWheel) });
         }
 
+        void addRowPointerTarget(MyGUI::Widget* parent, int x, int y, int w, int h, bool selected,
+            std::function<void()> onPoint, std::function<void()> onClick, std::function<void(int steps)> onWheel)
+        {
+            passPointerThrough(parent);
+            blockPointerUnder(parent);
+            MyGUI::Widget* area
+                = parent->createWidget<MyGUI::Widget>("", MyGUI::IntCoord(x, y, w, h), MyGUI::Align::Default);
+            area->setNeedMouseFocus(true);
+            area->setUserData(PointerTarget{ std::move(onPoint), std::move(onClick), std::move(onWheel), !selected });
+        }
+
         void pointerMoved(int x, int y)
         {
             // Only a pointer that moves points at things, so a resting one doesn't fight the d-pad when the panel
@@ -536,6 +569,45 @@ namespace MWGui
                 return false;
             if (target->mOnClick)
                 sPointerActions.emplace_back(target->mOnClick);
+            return true;
+        }
+
+        bool pointerTargetAt(int x, int y)
+        {
+            MyGUI::Widget* widget = nullptr;
+            return findPointerTarget(x, y, widget) != nullptr;
+        }
+
+        bool pointerOnPanel(int x, int y)
+        {
+            MyGUI::EnumeratorWidgetPtr roots = MyGUI::Gui::getInstance().getEnumerator();
+            while (roots.next())
+            {
+                const MyGUI::Widget* root = roots.current();
+                const MyGUI::ILayer* layer = root->getLayer();
+                if (layer == nullptr || !root->getVisible() || root->getChildCount() == 0)
+                    continue;
+                if (layer->getName() == "ControllerModal")
+                    return true;
+                if (layer->getName() != "ControllerMenus")
+                    continue;
+                if (drawsAt(root, layer->getPosition(x, y)))
+                    return true;
+            }
+            return false;
+        }
+
+        bool pointerTapped(int x, int y)
+        {
+            MyGUI::Widget* widget = nullptr;
+            const PointerTarget* target = findPointerTarget(x, y, widget);
+            if (target == nullptr)
+                return false;
+            sMovedTo = MyGUI::IntPoint(x, y);
+            sPointedAt = widget;
+            const std::function<void()>& action = target->mTapSelects ? target->mOnPoint : target->mOnClick;
+            if (action)
+                sPointerActions.emplace_back(action);
             return true;
         }
 
@@ -674,8 +746,8 @@ namespace MWGui
             if (row.mItem)
             {
                 const int thisItem = item;
-                ControllerUi::addPointerTarget(
-                    parent, x, rowY, w, row.mHeight,
+                ControllerUi::addRowPointerTarget(
+                    parent, x, rowY, w, row.mHeight, item == mFocus,
                     [this, thisItem, onChange] {
                         if (mFocus == thisItem)
                             return;

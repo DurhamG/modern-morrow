@@ -19,15 +19,17 @@ namespace MWGui
 namespace MWInput
 {
     class BindingsManager;
+    class MouseManager;
 
     /// Plays the game with fingers on a touch screen, as ui-rework/design/touch.md describes. During play the left
     /// thumb walks like a stick, and the right thumb looks and taps to act in the current mode. Swiping in from the
     /// left edge opens the inventory, and from the right edge picks the mode or a quick key. Corners quicksave,
-    /// quickload and sneak.
+    /// quickload and sneak. In menus a tap clicks, a drag scrolls, a sideways drag switches tabs, and swiping in from
+    /// either edge goes back.
     class TouchManager : public SDLUtil::TouchListener
     {
     public:
-        TouchManager(BindingsManager* bindingsManager, SDL_Window* window);
+        TouchManager(BindingsManager* bindingsManager, MouseManager* mouseManager, SDL_Window* window);
         ~TouchManager() override;
 
         void fingerPressed(const SDL_TouchFingerEvent& arg) override;
@@ -56,8 +58,12 @@ namespace MWInput
             QuickSave,
             QuickLoad,
             Sneak,
+            /// One of two fingers that came down together on the map.
+            Pinch,
             /// A finger tapping the quick keys radial.
             Radial,
+            /// A finger in a menu: a tap clicks, a drag scrolls, a sideways drag switches tabs.
+            Menu,
         };
 
         /// The modes, which are also the mode picker's items. Its quick keys item opens the quick keys radial.
@@ -83,8 +89,19 @@ namespace MWInput
             MyGUI::FloatPoint mPosition;
             Uint32 mDownTime = 0;
             float mFarthest = 0;
-            /// Whether the right thumb holds the attack.
+            /// Whether the right thumb holds the attack, or the menu finger has scrolled.
             bool mHolding = false;
+            float mScrolled = 0;
+            /// A menu finger that went down away from the controller menus' rows and hints works as the mouse's left
+            /// button, so it can drag, such as to pan the map. It presses the button once it moves.
+            bool mMouse = false;
+            bool mPressed = false;
+            /// Whether a menu finger has moved far enough to be a scroll, a drag or a tab swipe, and which.
+            bool mDecided = false;
+            bool mTabSwipe = false;
+            /// How many tabs a tab swipe has moved, to the right.
+            int mTabsMoved = 0;
+            bool mOnSlider = false;
         };
 
         struct PendingAction
@@ -109,6 +126,8 @@ namespace MWInput
         int edgeAt(const MyGUI::FloatPoint& point) const;
         /// Whether an edge finger has swiped in, and acts if so. One that heads elsewhere goes back to its fallback.
         void updateEdge(Finger& finger);
+        bool startPinch(Finger& finger);
+        void updatePinch();
 
         void look(const Finger& finger, const MyGUI::FloatPoint& previous);
         /// Turns the camera while the right thumb is past the edge of its circle.
@@ -127,11 +146,23 @@ namespace MWInput
         void tapRadial(const MyGUI::FloatPoint& point);
         void closeRadial();
 
+        void menuPointer(const MyGUI::FloatPoint& point);
+        MyGUI::IntPoint toGui(const MyGUI::FloatPoint& point) const;
+        void menuTap(const MyGUI::FloatPoint& point);
+        void menuScroll(Finger& finger);
+        bool canSwipeTabs(const Finger& finger) const;
+        /// Switches tabs as a sideways drag goes along.
+        void menuSwipeTabs(Finger& finger);
+        void menuBack();
+        /// Says goodbye, closing any service on top of the conversation, when the conversation lets it end.
+        bool leaveConversation();
+
         /// Runs an action after the given number of frames, so that it comes after the game unpauses.
         void queueAction(int action, int frames = 0);
         void pause(bool paused);
 
         BindingsManager* mBindingsManager;
+        MouseManager* mMouseManager;
         SDL_Window* mWindow;
         std::unique_ptr<MWGui::TouchOverlay> mOverlay;
 
@@ -153,6 +184,9 @@ namespace MWInput
         /// Where the thumb was when the picker opened. Its moves from there pick the item.
         MyGUI::FloatPoint mPickerOrigin;
         MyGUI::FloatPoint mPickerCentre;
+
+        /// How far apart a pinch's fingers were when it last zoomed the map.
+        float mPinchZoomedAt = 0;
 
         bool mRadialOpen = false;
         std::vector<MyGUI::IntCoord> mRadialSlots;

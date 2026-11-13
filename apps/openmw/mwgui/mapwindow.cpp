@@ -1147,6 +1147,36 @@ namespace MWGui
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
     }
 
+    void MapWindow::zoomMap3D(float factor)
+    {
+        const bool exterior = mActiveCell == nullptr || mActiveCell->isExterior();
+        float& distance = exterior ? mMap3DDistance : mMap3DInteriorDistance;
+        const float zoomed = distance / factor;
+        distance = exterior ? std::clamp(zoomed, 6000.f, 100000.f) : std::clamp(zoomed, 1000.f, 30000.f);
+    }
+
+    void MapWindow::zoomByPinch(float factor, MyGUI::IntPoint point)
+    {
+        if (!mMap3DStarted)
+        {
+            zoomMap(factor, point - mGlobalMap->getAbsolutePosition());
+            return;
+        }
+        const bool exterior = mActiveCell == nullptr || mActiveCell->isExterior();
+        const float before = exterior ? mMap3DDistance : mMap3DInteriorDistance;
+        zoomMap3D(factor);
+        const float after = exterior ? mMap3DDistance : mMap3DInteriorDistance;
+        // The view looks down at its focus, so moving the focus towards the pinch by the zoom's share keeps the ground
+        // under the pinch where it was.
+        osg::Vec3f ground;
+        if (after != before && map3DPointToGround(point, ground))
+        {
+            const float kept = after / before;
+            mMap3DFocus.x() = ground.x() + (mMap3DFocus.x() - ground.x()) * kept;
+            mMap3DFocus.y() = ground.y() + (mMap3DFocus.y() - ground.y()) * kept;
+        }
+    }
+
     void MapWindow::zoomAround(float speedDiff, MyGUI::IntPoint cursor)
     {
         auto map = Settings::map().mGlobal ? mGlobalMap : mLocalMap;
@@ -1644,10 +1674,7 @@ namespace MWGui
             else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
             {
                 constexpr float step = 1.25f;
-                const bool exterior = mActiveCell == nullptr || mActiveCell->isExterior();
-                float& distance = exterior ? mMap3DDistance : mMap3DInteriorDistance;
-                const float zoomed = distance * (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP ? 1.f / step : step);
-                distance = exterior ? std::clamp(zoomed, 6000.f, 100000.f) : std::clamp(zoomed, 1000.f, 30000.f);
+                zoomMap3D(arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP ? step : 1.f / step);
                 MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
             }
         }
@@ -2207,7 +2234,11 @@ namespace MWGui
             return;
 
         // The marker nearest the mouse pointer, or else the one nearest the crosshair, within a short reach of it.
-        std::optional<MyGUI::IntPoint> point = mMap3DPointer;
+        // A finger on a touch screen moves the pointer too, but it doesn't hover, and it covers what's under it, so
+        // with touch controls the crosshair always picks the marker.
+        std::optional<MyGUI::IntPoint> point;
+        if (!Settings::input().mTouchControls)
+            point = mMap3DPointer;
         int reach = getMap3DMarkerSize(12);
         if (!point.has_value() && mCrosshair != nullptr && mCrosshair->getVisible())
         {

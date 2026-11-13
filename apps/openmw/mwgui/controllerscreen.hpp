@@ -164,11 +164,24 @@ namespace MWGui
         void addPointerTarget(MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void()> onPoint,
             std::function<void()> onClick, std::function<void(int steps)> onWheel = nullptr);
 
+        /// A list row's pointer target, which also knows whether its row is selected. Touch has nothing to point with
+        /// before it taps, so tapping a row that isn't selected only selects it, and tapping the selected row acts.
+        void addRowPointerTarget(MyGUI::Widget* parent, int x, int y, int w, int h, bool selected,
+            std::function<void()> onPoint, std::function<void()> onClick, std::function<void(int steps)> onWheel);
+
         /// Points at the target under the mouse, when it is a different one than before. The mouse manager calls it
         /// when the mouse moves in controller menus mode.
         void pointerMoved(int x, int y);
         /// Clicks the target under the mouse. Returns true when there was one, so the click goes no further.
         bool pointerClicked(int x, int y);
+        /// Taps the target under a finger: a list row that isn't selected gets selected, and anything else is clicked.
+        /// Returns true when there was a target.
+        bool pointerTapped(int x, int y);
+        /// Whether a pointer target, a list row, a hint or an area the wheel scrolls, is at a point.
+        bool pointerTargetAt(int x, int y);
+        /// Whether a point is on something a controller menu drew, rather than on the game beside it, such as above
+        /// the dialogue panel. A dialog over the menus counts as covering everything.
+        bool pointerOnPanel(int x, int y);
 
         /// Makes an area that the mouse wheel scrolls, such as a page of text. The wheel otherwise works as the
         /// d-pad's up and down. onWheel gets the wheel's steps, positive when it turns away from the player, and runs

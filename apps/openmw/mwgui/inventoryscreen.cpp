@@ -1305,7 +1305,7 @@ namespace MWGui
 
         // A scroll bar along the page's right edge, when the text is longer than the page.
         const bool scrolls = mBookPaper != nullptr && mBookScrollMax > 0;
-        // The wheel scrolls the page too.
+        // The wheel scrolls the page too, as does dragging it on a touch screen.
         if (scrolls)
             addWheelTarget(mContent, pageX, pageY, pageW, pageH, [this](int steps) {
                 mBookScroll = std::clamp(
