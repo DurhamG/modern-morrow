@@ -2286,6 +2286,7 @@ namespace MWGui
                 || input->isControllerButtonPressed(SDL_CONTROLLER_BUTTON_START);
         };
         bool skipButtonWasPressed = skipButtonPressed();
+        mSkippableVideo = allowSkipping;
 
         Misc::FrameRateLimiter frameRateLimiter
             = Misc::makeFrameRateLimiter(MWBase::Environment::get().getFrameRateLimit());
@@ -2326,6 +2327,7 @@ namespace MWGui
             frameRateLimiter.limit();
         }
         mVideoWidget->stop();
+        mSkippableVideo = false;
 
         MWBase::Environment::get().getSoundManager()->resumeSounds(MWSound::VideoPlayback);
 
@@ -2337,6 +2339,14 @@ namespace MWGui
         updateVisible();
 
         mVideoBackground->setVisible(false);
+    }
+
+    bool WindowManager::skipVideo()
+    {
+        if (!mSkippableVideo)
+            return false;
+        mVideoWidget->stop();
+        return true;
     }
 
     void WindowManager::sizeVideo(int screenWidth, int screenHeight)

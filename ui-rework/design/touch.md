@@ -45,7 +45,11 @@ Jumping is a mode of its own, so a jump in the middle of a fight means switching
 - Tapping a slot uses it, as the d-pad would. Tapping outside the radial closes it without using anything.
 - Assigning slots stays on the inventory and magic screens: tap the item or spell, then the "Quick key" hint, then a slot. With touch controls, the slot panel says to tap a slot, and its hint is B to cancel.
 
-### Telling gestures apart
+#### Videos
+
+- A tap skips a video that can be skipped, such as the logos at startup, as A, B or Start do on a gamepad.
+
+## Telling gestures apart
 
 These are starting values to tune on the phone. Distances are in millimetres on the glass, so the Fold's two screens and other phones feel the same.
 

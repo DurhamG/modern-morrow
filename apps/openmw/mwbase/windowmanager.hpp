@@ -120,6 +120,9 @@ namespace MWBase
         /// (and will continually update the window while doing so)
         virtual void playVideo(std::string_view name, bool allowSkipping, bool overrideSounds = true) = 0;
 
+        /// Stops the video that plays, if it can be skipped, as a tap on a touch screen does. Returns whether it did.
+        virtual bool skipVideo() = 0;
+
         virtual void setNewGame(bool newgame) = 0;
 
         virtual void pushGuiMode(MWGui::GuiMode mode, const MWWorld::Ptr& arg) = 0;
