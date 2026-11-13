@@ -140,4 +140,30 @@ namespace MWAutomation
         event.wheel.mouseY = mMouseY;
         push(event);
     }
+
+    void InputInjector::finger(std::uint32_t type, std::int64_t id, float x, float y)
+    {
+        int width = 0;
+        int height = 0;
+        SDL_GetWindowSize(mWindow, &width, &height);
+        const float fx = x / std::max(1, width);
+        const float fy = y / std::max(1, height);
+        const std::size_t slot = static_cast<std::size_t>(std::clamp<std::int64_t>(id, 0, 9));
+
+        SDL_Event event{};
+        event.tfinger.type = type;
+        event.tfinger.timestamp = SDL_GetTicks();
+        // Any touch device ID other than the mouse's own stands for the screen.
+        event.tfinger.touchId = 1;
+        event.tfinger.fingerId = id;
+        event.tfinger.x = fx;
+        event.tfinger.y = fy;
+        event.tfinger.dx = type == SDL_FINGERDOWN ? 0 : fx - mFingerX[slot];
+        event.tfinger.dy = type == SDL_FINGERDOWN ? 0 : fy - mFingerY[slot];
+        event.tfinger.pressure = type == SDL_FINGERUP ? 0 : 1;
+        event.tfinger.windowID = SDL_GetWindowID(mWindow);
+        mFingerX[slot] = fx;
+        mFingerY[slot] = fy;
+        push(event);
+    }
 }

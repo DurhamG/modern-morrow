@@ -28,12 +28,18 @@ namespace MWAutomation
         void mouseMove(int x, int y);
         void mouseButton(std::uint8_t button, bool pressed);
         void mouseWheel(float x, float y);
+        // A finger on a touch screen, in window pixels from the top left. "type" is SDL_FINGERDOWN, SDL_FINGERMOTION
+        // or SDL_FINGERUP.
+        void finger(std::uint32_t type, std::int64_t id, float x, float y);
 
     private:
         SDL_Window* mWindow;
         int mMouseX = 0;
         int mMouseY = 0;
         std::uint32_t mMouseButtons = 0;
+        // Each finger's last position, for the motion events' deltas.
+        float mFingerX[10] = {};
+        float mFingerY[10] = {};
     };
 }
 

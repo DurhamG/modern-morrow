@@ -8,6 +8,7 @@
 #include <MyGUI_ResourceLayout.h>
 #include <MyGUI_XmlDocument.h>
 
+#include <SDL_events.h>
 #include <SDL_video.h>
 
 #include <components/debug/debuglog.hpp>
@@ -384,6 +385,82 @@ namespace MWAutomation
             }
             else if (action != "move")
                 throw std::runtime_error("\"action\" must be move, down, up, click or wheel");
+            return sequence(std::move(steps));
+        };
+
+        // Touch screen input, in window pixels from the top left. "action" is "tap" (the default), "down", "move",
+        // "up", "drag" or "pinch". Down, move and up take "finger" (0 to 9, default 0), "x" and "y". A tap puts a
+        // finger down and lifts it in the same frame. A drag puts a finger down on the first point of "path", a list
+        // of [x, y], moves it to each other point "frames" frames apart (default 1), and lifts it at the end unless
+        // "release" is false. A pinch puts two fingers down side by side, "from" pixels apart around "x" and "y", and
+        // moves them to "to" pixels apart in "steps" moves (default 6), then lifts them.
+        mHandlers["touch"] = [this](const Json& request) -> Poll {
+            const std::string action = request.getString("action", "tap");
+            const auto finger = static_cast<std::int64_t>(request.getNumber("finger", 0));
+            const auto x = static_cast<float>(request.getNumber("x", 0));
+            const auto y = static_cast<float>(request.getNumber("y", 0));
+            std::vector<std::pair<int, std::function<void()>>> steps;
+            if (action == "down" || action == "move" || action == "up")
+            {
+                const std::uint32_t type
+                    = action == "down" ? SDL_FINGERDOWN : (action == "move" ? SDL_FINGERMOTION : SDL_FINGERUP);
+                steps.emplace_back(0, [=, this] { mInput->finger(type, finger, x, y); });
+            }
+            else if (action == "tap")
+            {
+                steps.emplace_back(0, [=, this] {
+                    mInput->finger(SDL_FINGERDOWN, finger, x, y);
+                    mInput->finger(SDL_FINGERUP, finger, x, y);
+                });
+            }
+            else if (action == "drag")
+            {
+                const Json* path = request.find("path");
+                if (path == nullptr || !path->isArray() || path->asArray().empty())
+                    throw std::runtime_error("drag needs a \"path\" of [x, y] points");
+                const int frames = std::max(1, static_cast<int>(request.getNumber("frames", 1)));
+                int frame = 0;
+                bool first = true;
+                float lastX = 0;
+                float lastY = 0;
+                for (const Json& point : path->asArray())
+                {
+                    if (!point.isArray() || point.asArray().size() != 2)
+                        throw std::runtime_error("each point of \"path\" must be [x, y]");
+                    lastX = static_cast<float>(point.asArray()[0].asNumber());
+                    lastY = static_cast<float>(point.asArray()[1].asNumber());
+                    const std::uint32_t type = first ? SDL_FINGERDOWN : SDL_FINGERMOTION;
+                    steps.emplace_back(frame, [=, this] { mInput->finger(type, finger, lastX, lastY); });
+                    frame += frames;
+                    first = false;
+                }
+                if (request.getBool("release", true))
+                    steps.emplace_back(frame, [=, this] { mInput->finger(SDL_FINGERUP, finger, lastX, lastY); });
+            }
+            else if (action == "pinch")
+            {
+                const auto from = static_cast<float>(request.getNumber("from", 100));
+                const auto to = static_cast<float>(request.getNumber("to", 400));
+                const int count = std::max(1, static_cast<int>(request.getNumber("steps", 6)));
+                steps.emplace_back(0, [=, this] {
+                    mInput->finger(SDL_FINGERDOWN, 0, x - from / 2, y);
+                    mInput->finger(SDL_FINGERDOWN, 1, x + from / 2, y);
+                });
+                for (int i = 1; i <= count; ++i)
+                {
+                    const float half = (from + (to - from) * i / count) / 2;
+                    steps.emplace_back(i, [=, this] {
+                        mInput->finger(SDL_FINGERMOTION, 0, x - half, y);
+                        mInput->finger(SDL_FINGERMOTION, 1, x + half, y);
+                    });
+                }
+                steps.emplace_back(count + 1, [=, this] {
+                    mInput->finger(SDL_FINGERUP, 0, x - to / 2, y);
+                    mInput->finger(SDL_FINGERUP, 1, x + to / 2, y);
+                });
+            }
+            else
+                throw std::runtime_error("\"action\" must be tap, down, move, up, drag or pinch");
             return sequence(std::move(steps));
         };
     }
