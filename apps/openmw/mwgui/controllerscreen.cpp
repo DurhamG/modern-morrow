@@ -63,6 +63,24 @@ namespace MWGui
             return nullptr;
         }
 
+        // A target the wheel scrolls at a point, inside a widget, whatever else is over it there, such as a link on a
+        // page the wheel scrolls.
+        const PointerTarget* findWheelTarget(MyGUI::Widget* widget, const MyGUI::IntPoint& point)
+        {
+            for (std::size_t i = 0; i < widget->getChildCount(); ++i)
+            {
+                MyGUI::Widget* child = widget->getChildAt(i);
+                if (!child->getVisible())
+                    continue;
+                if (const PointerTarget* found = findWheelTarget(child, point))
+                    return found;
+                const PointerTarget* target = child->getUserData<PointerTarget>(false);
+                if (target != nullptr && target->mOnWheel && child->getAbsoluteCoord().inside(point))
+                    return target;
+            }
+            return nullptr;
+        }
+
         // A panel on the layer of modal panels keeps the mouse from the screens under it, as its window would. It
         // gets a target with no actions, under its own, that covers the screen.
         void blockPointerUnder(MyGUI::Widget* parent)
@@ -490,6 +508,14 @@ namespace MWGui
         {
             MyGUI::Widget* widget = nullptr;
             const PointerTarget* target = findPointerTarget(x, y, widget);
+            if ((target == nullptr || !target->mOnWheel) && widget != nullptr)
+            {
+                // Something the wheel doesn't scroll, such as a link, can be on a page that it does.
+                MyGUI::Widget* root = widget;
+                while (root->getParent() != nullptr)
+                    root = root->getParent();
+                target = findWheelTarget(root, MyGUI::IntPoint(x, y));
+            }
             if (target == nullptr || !target->mOnWheel)
                 return false;
             sWheelPoint = MyGUI::IntPoint(x, y);
