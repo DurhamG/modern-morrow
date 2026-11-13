@@ -53,7 +53,8 @@ public class MainActivity extends Activity {
             + "Copy the \"Data Files\" folder from Morrowind's install folder on a computer into this folder on "
             + "the device, over USB:\n\n    " + appFolder + "\n\n"
             + "Data Files/Morrowind.esm should end up in it. That needs no permission, but uninstalling the app "
-            + "deletes the folder.";
+            + "deletes the folder.\n\n"
+            + "On Windows, Steam installs Morrowind in C:\\Program Files (x86)\\Steam\\steamapps\\common\\Morrowind.";
         if (!Environment.isExternalStorageManager()) {
             text += "\n\nOr put Data Files in a Morrowind folder at the top of the device's internal storage, which "
                 + "stays when the app is uninstalled. The app can only read it there with access to all files.";
