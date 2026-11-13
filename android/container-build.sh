@@ -71,6 +71,9 @@ cp -r /build/resources "$ASSETS/resources"
 # drivers or SDL versions did, which scrambled a Switch Pro Controller's buttons. A player can still add the file to
 # the user config folder.
 cp /build/openmw.cfg /build/defaults.bin "$ASSETS/config/"
+# Players only copy Data Files, so Morrowind.ini isn't there to import. These are the settings the desktop imports from
+# it that the global openmw.cfg lacks, such as the Ashstorm and Blight weathers.
+cat /src/android/morrowind-ini.cfg >> "$ASSETS/config/openmw.cfg"
 cp /src/android/settings.cfg "$ASSETS/config/"
 git -C /src rev-parse HEAD > "$ASSETS/version"
 date +%s >> "$ASSETS/version"
