@@ -87,3 +87,5 @@ jobs:
       contents: read
       packages: write
     uses: ./.github/workflows/android.yml
+    # The signing key, which android.yml only uses for pushes to master.
+    secrets: inherit

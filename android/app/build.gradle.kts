@@ -18,13 +18,15 @@ android {
         // CI sets these from the run number and the release tag.
         versionCode = env("MM_VERSION_CODE")?.toInt() ?: 1
         versionName = env("MM_VERSION_NAME") ?: "0.1"
+        manifestPlaceholders["appName"] = "Modern Morrow"
         ndk {
             abiFilters += "arm64-v8a"
         }
     }
 
     // The release key stays out of the repository. android/build.sh release checks that these are set, and
-    // ui-rework/releasing.md says where the key is kept.
+    // ui-rework/releasing.md says where the key is kept. CI also signs master's debug builds with it, so testers can
+    // update them in place.
     val releaseKeystore = env("ANDROID_KEYSTORE")
     signingConfigs {
         if (releaseKeystore != null) {
@@ -39,6 +41,16 @@ android {
     }
 
     buildTypes {
+        // A debug build is an app of its own, so it installs beside the released app rather than over it, with its
+        // own settings and saves.
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            manifestPlaceholders["appName"] = "Modern Morrow Debug"
+            if (releaseKeystore != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
         release {
             isMinifyEnabled = false
             if (releaseKeystore != null) {

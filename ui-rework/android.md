@@ -2,7 +2,7 @@
 
 This is the plan for running Modern Morrow on Android with a gamepad. It targets Android handhelds such as the Retroid Pocket and AYN Odin, and phones or tablets with a controller attached. A gamepad is the main way to play. Touch controls for players without one are designed in [design/touch.md](design/touch.md): gestures with no buttons on screen, and taps in the menus.
 
-The app's package name is `io.github.durhamg.modernmorrow`. Testing starts in the Android emulator on the Mac, then moves to a Galaxy Z Fold 8 with a Bluetooth controller.
+The app's package name is `io.github.durhamg.modernmorrow`. Debug builds are a separate app, `io.github.durhamg.modernmorrow.debug`, called Modern Morrow Debug, so they install beside a released one. Testing starts in the Android emulator on the Mac, then moves to a Galaxy Z Fold 8 with a Bluetooth controller.
 
 ## What already exists
 
@@ -95,7 +95,7 @@ Each step ends in something that can be tried.
 5. **Start the game.** In progress. In the emulator, the game loads Morrowind, Tribunal and Bloodmoon, shows the main menu, and starts a new game in Seyda Neen with the world, sky, water and HUD drawn. On the Fold 8 it starts a new game on the prison ship, drawn on the GPU. The automation server works over `adb forward`, and its virtual gamepad moves the main menu's highlight. To start it with options:
 
    ```bash
-   adb shell "am start -n io.github.durhamg.modernmorrow/.MainActivity --esa args '--automation-port,4242,--skip-menu,--start,Seyda Neen'"
+   adb shell "am start -n io.github.durhamg.modernmorrow.debug/io.github.durhamg.modernmorrow.MainActivity --esa args '--automation-port,4242,--skip-menu,--start,Seyda Neen'"
    ```
 
    Found so far:
@@ -108,7 +108,7 @@ Each step ends in something that can be tried.
 
    On the Fold 8:
    - Install over USB with `adb install -r android/out/modern-morrow-debug.apk`. Wireless debugging dropped in the middle of copying the game data when the phone's Wi-Fi was poor, and USB copied the 1.1 GB in 33 seconds.
-   - Copy the data with `adb push --sync ~/Morrowind/"Data Files" /sdcard/Morrowind/`, which skips files already there. `adb shell appops set --uid io.github.durhamg.modernmorrow MANAGE_EXTERNAL_STORAGE allow` gives the app the all-files access it needs to read them, as the app's own button would.
+   - Copy the data with `adb push --sync ~/Morrowind/"Data Files" /sdcard/Morrowind/`, which skips files already there. `adb shell appops set --uid io.github.durhamg.modernmorrow.debug MANAGE_EXTERNAL_STORAGE allow` gives the app the all-files access it needs to read them, as the app's own button would.
    - The phone has two displays, so `screencap` needs `-d` with an ID from `adb shell dumpsys SurfaceFlinger --display-id`.
    - If the phone is locked when the game starts, Android stops the activity at once. It comes back when the phone is unlocked.
    - The APK built with the SDK tools was signed with another key, so the emulator needs `adb uninstall io.github.durhamg.modernmorrow` before the Gradle build installs there.
@@ -121,14 +121,14 @@ Each step ends in something that can be tried.
 
    Testing touch controls in the emulator:
    - Software rendering at the Fold's full 1848x2448 is too slow to play. `adb shell wm size 924x1224` and `adb shell wm density 200` halve the display and keep sizes in millimetres the same, since the touch controls measure in millimetres from the density. `adb shell wm size reset` and `wm density reset` undo them.
-   - A `settings.cfg` pushed to `/sdcard/Android/data/io.github.durhamg.modernmorrow/files/config/` lowers the drawing cost further: `[Camera] viewing distance = 2000`, `[Terrain] distant terrain = false` and `object paging = false`, and `[Water] shader = false`. The water shader's reflection also fails to set up its framebuffer under SwiftShader ("FBO status 0x8cdd") and logs an error every frame.
+   - A `settings.cfg` pushed to `/sdcard/Android/data/io.github.durhamg.modernmorrow.debug/files/config/` lowers the drawing cost further: `[Camera] viewing distance = 2000`, `[Terrain] distant terrain = false` and `object paging = false`, and `[Water] shader = false`. The water shader's reflection also fails to set up its framebuffer under SwiftShader ("FBO status 0x8cdd") and logs an error every frame.
    - Before drawing moved to SDL's thread, the emulator ran at anywhere from 1 to 9 frames a second. The gestures time themselves from the touch events, so they work at any speed, but holds need to last a few frames.
    - The `--start` option can't take a cell name with a comma through `--esa`, which splits on commas. Start in Seyda Neen, or continue the newest save by giving no start option.
 
    Still to do: load a save on the Fold, play with a real controller, and measure frame rates on the Fold.
 6. **Fix and tune.** Expect rendering bugs from gl4es and slow frames. Pick Android defaults in `settings-default.cfg` or an Android-only defaults file. Candidates are view distance, shadows, post-processing, the resolution scale and a UI scaling factor near 2. Any shaders or post-processing that this branch added for the UI need the same gl4es checks as upstream's. Read Alpha3's patches for problems it has already solved.
 7. **Data setup.** Import `Morrowind.ini` into the user `openmw.cfg`, as `mwiniimporter` does on the desktop. Replace the fixed data folders with a first-run folder picker.
-8. **CI and release builds.** Written, not yet run on GitHub. `.github/workflows/android.yml` builds the APK with `android/build.sh`, the same as on the Mac. `push.yml` runs it on every push for a debug APK, and `release.yml` runs it for a release APK signed with the key in the repository's secrets, which goes into the draft release with the other files. The dependency image is kept in the repository's GitHub container registry, tagged with a hash of the Dockerfile and its patches, so only a change to those rebuilds it, which takes over an hour. ccache's folder is kept with `actions/cache`. [releasing.md](releasing.md) explains the signing key.
+8. **CI and release builds.** Written, not yet run on GitHub. `.github/workflows/android.yml` builds the APK with `android/build.sh`, the same as on the Mac. `push.yml` runs it on every push for a debug APK, signed with the release key for pushes to master so testers can update it in place, and `release.yml` runs it for a release APK signed with the key in the repository's secrets, which goes into the draft release with the other files. The dependency image is kept in the repository's GitHub container registry, tagged with a hash of the Dockerfile and its patches, so only a change to those rebuilds it, which takes over an hour. ccache's folder is kept with `actions/cache`. [releasing.md](releasing.md) explains the signing key.
 
 ## Risks
 
