@@ -219,6 +219,8 @@ namespace MWInput
         /// A game started or loaded, so the tutorial may be due once the player is in the game.
         bool mTutorialCheck = false;
         bool mWasRunning = false;
+        /// The play page shows again once the menu that hid it closes.
+        bool mPlayTutorialDue = false;
         /// The menus page shows the next time the inventory screens open.
         bool mMenusTutorialDue = false;
         /// A new game's character has no folder of saves until it saves, so it's recorded then.

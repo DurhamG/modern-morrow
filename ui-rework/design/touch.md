@@ -76,7 +76,7 @@ These are starting values to tune on the phone. Distances are in millimetres on 
 
 Two pages explain the touch controls, drawn over the game itself rather than over screenshots, so they fit any screen.
 
-- **The play page** shows over the paused game: the three corners, the swipes in from the left edge (the inventory) and the right edge (the mode picker, drawn small), and what each thumb does. A tap, or a gamepad's A or B, closes it.
+- **The play page** waits until the player can move and look, so a new game's opening scene, whose scripts and voices run on regardless of a pause, plays out first. It then shows over the paused game: the three corners, the swipes in from the left edge (the inventory) and the right edge (the mode picker, drawn small), and what each thumb does. A tap, or a gamepad's A or B, closes it. A menu that a script opens over it, such as a message, hides it until the menu closes.
 - **The menus page** shows the next time the inventory screens open, which can be much later, since a new game's inventory stays locked until the tutorial dialogue gives it. It shows switching screens on the left half, tabs on the right half, going back from either edge, and that the button hints can be tapped. A tap, A or B closes it and leaves the inventory open.
 - **When.** The play page shows on a new game, on loading a character that hasn't seen it, and on loading any game after 14 days without playing with touch. `touch-tutorial.txt` in the user data folder records the characters that have seen it, by their folder of saves, and when the game was last played with touch. A new game's character has no folder until it saves, so it's recorded then. With touch controls off, the tutorial never shows.
 

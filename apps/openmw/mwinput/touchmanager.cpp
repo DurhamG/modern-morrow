@@ -956,11 +956,11 @@ namespace MWInput
         // A menu that opens, such as from talking to someone, ends whatever the thumbs were doing in the game.
         if (!inGame())
         {
-            // A menu that a script opens over the play page takes its place, and the menus page comes later.
+            // A menu that a script opens over the play page, such as a message, hides it until the menu closes.
             if (mTutorialPage == TutorialPage::Play)
             {
                 mTutorialPage = TutorialPage::None;
-                mMenusTutorialDue = true;
+                mPlayTutorialDue = true;
             }
             stopMovement();
             pressUse(false);
@@ -980,8 +980,20 @@ namespace MWInput
 
         if (mTutorialPage == TutorialPage::Play)
             return;
-        if (mTutorialCheck && mFingers.empty())
-            checkTutorial();
+        // The play page waits until the player can move and look, such as after a new game's opening scene, whose
+        // scripts and voices go on whether the game is paused or not.
+        MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
+        if (mFingers.empty() && input->getControlSwitch("playercontrols") && input->getControlSwitch("playerlooking"))
+        {
+            if (mPlayTutorialDue)
+            {
+                mPlayTutorialDue = false;
+                showTutorial(TutorialPage::Play);
+                return;
+            }
+            if (mTutorialCheck)
+                checkTutorial();
+        }
 
         const Uint32 now = SDL_GetTicks();
         for (Finger& finger : mFingers)
@@ -1024,6 +1036,7 @@ namespace MWInput
         mOverlay->hide();
         pause(false);
         mTutorialPage = TutorialPage::None;
+        mPlayTutorialDue = false;
         mMenusTutorialDue = false;
         mTutorialCheck = true;
     }
