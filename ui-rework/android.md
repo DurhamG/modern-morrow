@@ -122,11 +122,11 @@ Each step ends in something that can be tried.
    Still to do: load a save on the Fold, play with a real controller, and measure frame rates on the Fold.
 6. **Fix and tune.** Expect rendering bugs from gl4es and slow frames. Pick Android defaults in `settings-default.cfg` or an Android-only defaults file. Candidates are view distance, shadows, post-processing, the resolution scale and a UI scaling factor near 2. Any shaders or post-processing that this branch added for the UI need the same gl4es checks as upstream's. Read Alpha3's patches for problems it has already solved.
 7. **Data setup.** Import `Morrowind.ini` into the user `openmw.cfg`, as `mwiniimporter` does on the desktop. Replace the fixed data folders with a first-run folder picker.
-8. **Release builds.** Add an Android job to `.github/workflows/release.yml`. It builds the APK with the same Dockerfile, caches the dependency layers, and signs the APK. The signing key goes in a GitHub secret. Document the install in the README and in [releasing.md](releasing.md).
+8. **CI and release builds.** Written, not yet run on GitHub. `.github/workflows/android.yml` builds the APK with `android/build.sh`, the same as on the Mac. `push.yml` runs it on every push for a debug APK, and `release.yml` runs it for a release APK signed with the key in the repository's secrets, which goes into the draft release with the other files. The dependency image is kept in the repository's GitHub container registry, tagged with a hash of the Dockerfile and its patches, so only a change to those rebuilds it, which takes over an hour. ccache's folder is kept with `actions/cache`. [releasing.md](releasing.md) explains the signing key.
 
 ## Risks
 
 - **Drawing.** gl4es is proven with OpenMW, but each OpenMW update can break it, and some effects may not work at all. If it can't keep up, ANGLE is the fallback. It is maintained by Google, and Alpha3 already uses it.
 - **Speed.** Alpha3's README reports about 35 frames per second through the phone's own OpenGL ES on a Galaxy Tab S6, which has a 2019 Snapdragon 855. The Fold 8 and other phones with newer Snapdragon chips should do better, but gl4es adds its own cost.
-- **Upkeep.** Every upstream merge can break the Android build. A CI job that at least builds the APK catches that early.
+- **Upkeep.** Every upstream merge can break the Android build. The CI job that builds the APK on every push catches that early.
 - **Effort.** Steps 1 to 5 are mostly mechanical. Step 6 is open-ended.

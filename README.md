@@ -150,7 +150,7 @@ Trying it
 > [!NOTE]
 > **Modern Morrow keeps its saves separate from OpenMW.** Modern Morrow tweaks the save format slightly, so it stores saves in a separate directory from OpenMW. You can use the Load menu in Modern Morrow to import a save from OpenMW, and you can use the Save menu in Modern Morrow to export a save back to OpenMW. To bring over a save from Steam Morrowind, first convert it to an OpenMW save with OpenMW's `openmw-essimporter` tool, and put the result in a character folder in OpenMW's saves folder. Then import it from the Load menu. The converted save keeps your quest progress, but not your journal entries. Saves can't go back to Steam Morrowind. Note, you will need OpenMW 0.52 or above.
 
-You need a copy of Morrowind. The [Releases page](https://github.com/DurhamG/modern-morrow/releases) has a Windows installer, a Windows zip and a Linux AppImage. To build this fork yourself, build it the same way as OpenMW: see the [OpenMW build instructions](https://wiki.openmw.org/index.php?title=Development_Environment_Setup), or [CLAUDE.md](CLAUDE.md) for notes on building on Windows.
+You need a copy of Morrowind. The [Releases page](https://github.com/DurhamG/modern-morrow/releases) has a Windows installer, a Windows zip, a Linux AppImage and an Android APK. To build this fork yourself, build it the same way as OpenMW: see the [OpenMW build instructions](https://wiki.openmw.org/index.php?title=Development_Environment_Setup), or [CLAUDE.md](CLAUDE.md) for notes on building on Windows.
 
 The new screens are on by default. They're made for a gamepad, but they kinda work with mouse and keyboard.
 
@@ -174,6 +174,17 @@ The AppImage is a Linux program, so it runs directly on SteamOS, without Proton.
 Start Modern Morrow from Steam rather than by double-clicking it in Dolphin. Dolphin refuses to start some AppImages, even when they're executable.
 
 If the autoupdater isn't working, `ModernMorrow-AutoUpdate.log`, in the script's folder, says what the last check did. To open the launcher for mods and settings, set the shortcut's launch options to `--launcher` for one start. `--wizard` runs the setup wizard again. The settings and saves are in `~/.config/modern-morrow` and `~/.local/share/modern-morrow`.
+
+Android
+-------
+
+The Android version is an early test. It is for phones, tablets and handhelds with a gamepad. There are no touch controls.
+
+1. **Install the APK.** Download `ModernMorrow-...-Android-arm64.apk` from the [Releases page](https://github.com/DurhamG/modern-morrow/releases) on the device and open it. Android asks you to allow installing apps from your browser or file manager.
+2. **Copy the game data.** Copy Morrowind's `Data Files` folder from a PC install into a `Morrowind` folder at the top of the device's storage, so that `Morrowind/Data Files/Morrowind.esm` is there.
+3. **Start Modern Morrow.** The first time, it asks for access to all files, so it can read the `Morrowind` folder. Allow it, then return to the app.
+
+The settings, saves and logs are in `Android/data/io.github.durhamg.modernmorrow/files`. Uninstalling the app deletes that folder, saves included.
 
 How it's built
 --------------

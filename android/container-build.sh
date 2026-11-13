@@ -39,7 +39,12 @@ cmake -S /src -B /build -G Ninja ${COMMON_CMAKE_ARGS} \
 
 cmake --build /build --target openmw --parallel "$JOBS"
 
-# The APK gets stripped copies. /build keeps libopenmw.so with its debug information, for reading crash stacks.
+# The APK gets stripped copies. /build keeps libopenmw.so with its debug information, for reading crash stacks, and
+# CI keeps a copy of it next to the release.
+if [ "${KEEP_SYMBOLS:-0}" = 1 ]; then
+    mkdir -p /src/android/out/symbols
+    cp /build/libopenmw.so /src/android/out/symbols/
+fi
 rm -rf "$LIBS"
 mkdir -p "$LIBS"
 llvm-strip -o "$LIBS/libopenmw.so" /build/libopenmw.so
