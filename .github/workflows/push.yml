@@ -1,6 +1,7 @@
 name: Build and test
 
-# Branch pushes and pull requests build and test on Linux and Windows. Release tags are built by release.yml instead.
+# Branch pushes and pull requests build and test on Linux and Windows, and build the Android debug APK. Release tags
+# are built by release.yml instead.
 on:
   push:
     branches:
@@ -79,3 +80,10 @@ jobs:
     uses: ./.github/workflows/windows.yml
     with:
       image: ${{ matrix.image }}
+
+  # Packages: write lets it keep the Android dependency image in the container registry.
+  Android:
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/android.yml

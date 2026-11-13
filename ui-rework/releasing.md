@@ -5,7 +5,8 @@ GitHub Actions builds the release files. The release workflow, `.github/workflow
 - a Windows installer, `ModernMorrow-<tag>-Windows-x64.exe`, made by NSIS,
 - a Windows zip of the same files, `ModernMorrow-<tag>-Windows-x64.zip`, to unpack and run anywhere,
 - a Linux AppImage, `ModernMorrow-<tag>-Linux-x86_64.AppImage`, for the Steam Deck and other Linux systems,
-- `ModernMorrow-AutoUpdate.sh`, a script that downloads the newest AppImage and starts it, for a Steam shortcut that keeps itself up to date.
+- `ModernMorrow-AutoUpdate.sh`, a script that downloads the newest AppImage and starts it, for a Steam shortcut that keeps itself up to date,
+- an Android APK, `ModernMorrow-<tag>-Android-arm64.apk`, built as [android.md](android.md) describes.
 
 The script lives in `CI/linux/appimage/`. It finds the newest published release, pre-releases included, through GitHub's API. GitHub lists each release file with its SHA-256 checksum, and the script downloads the AppImage when that checksum differs from its own copy's. It goes by the file rather than the version number, so a release rebuilt under the same tag still reaches it.
 
@@ -24,6 +25,42 @@ To rebuild a published release, move its tag with `git tag -f v0.1.0 <commit>` a
 To try the builds without a release, start the Release workflow by hand from the Actions tab. The files are then on the run's page, under Artifacts.
 
 The builds aren't signed, so Windows SmartScreen warns the first time someone runs the installer. "More info" and "Run anyway" get past it.
+
+## The Android signing key
+
+Android only installs an update over an app signed with the same key. Every release APK must be signed with one key, kept for as long as the app exists. If it's lost, players have to uninstall the app to install a newer one, and uninstalling deletes the app's folder with their settings and saves.
+
+The release workflow reads the key from three repository secrets:
+
+- `ANDROID_KEYSTORE_BASE64`, the keystore file in base64,
+- `ANDROID_KEYSTORE_PASSWORD`, its password, which is also the key's password,
+- `ANDROID_KEY_ALIAS`, the key's name in the keystore.
+
+To make the key once and store it, run these on a machine with a JDK and the `gh` command, outside the repository:
+
+```bash
+keytool -genkeypair -keystore modern-morrow-release.keystore -alias modern-morrow -keyalg RSA -keysize 4096 -validity 36500 -dname "CN=Modern Morrow"
+```
+
+```bash
+base64 -i modern-morrow-release.keystore | gh secret set ANDROID_KEYSTORE_BASE64 --repo DurhamG/modern-morrow
+```
+
+```bash
+gh secret set ANDROID_KEYSTORE_PASSWORD --repo DurhamG/modern-morrow
+```
+
+```bash
+gh secret set ANDROID_KEY_ALIAS --repo DurhamG/modern-morrow --body modern-morrow
+```
+
+`keytool` asks for the password, and `gh` asks for it again. Keep the keystore file and its password somewhere safe outside GitHub, such as a password manager, since GitHub secrets can't be read back.
+
+The APK's version code is the release workflow's run number, which only grows, so each release installs over the one before. Its version name is the tag without the `v`.
+
+Debug APKs from branch pushes are on each run's page too. Each run signs them with a new throwaway key, so installing one over another needs `adb uninstall io.github.durhamg.modernmorrow` first, which deletes the app's settings and saves.
+
+To build a signed release APK on the Mac, set the same three values as `ANDROID_KEYSTORE` (the keystore's path), `ANDROID_KEYSTORE_PASSWORD` and `ANDROID_KEY_ALIAS`, and run `android/build.sh release`.
 
 ## Reading a Linux crash log
 

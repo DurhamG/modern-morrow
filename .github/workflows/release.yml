@@ -1,8 +1,8 @@
 name: Release
 
-# Pushing a tag such as v0.1.0 builds the Windows installer, the Windows zip and the Linux AppImage, and puts them in
-# a draft release for the tag, to check and publish by hand. Starting the workflow by hand from the Actions tab builds
-# the same files without making a release, and leaves them on the run's page.
+# Pushing a tag such as v0.1.0 builds the Windows installer, the Windows zip, the Linux AppImage and the Android APK,
+# and puts them in a draft release for the tag, to check and publish by hand. Starting the workflow by hand from the
+# Actions tab builds the same files without making a release, and leaves them on the run's page.
 
 on:
   push:
@@ -28,10 +28,22 @@ jobs:
     with:
       label: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
 
+  # Packages: write lets it keep the Android dependency image in the container registry. The signing key comes from
+  # the repository's secrets.
+  Android:
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/android.yml
+    with:
+      label: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+      release: true
+    secrets: inherit
+
   # One job makes the release, so the builds, which run side by side, don't each make a draft of their own.
   Publish:
     if: ${{ github.ref_type == 'tag' }}
-    needs: [Windows, Linux]
+    needs: [Windows, Linux, Android]
     runs-on: ubuntu-latest
 
     steps:
@@ -46,6 +58,12 @@ jobs:
       with:
         name: ${{ needs.Linux.outputs.appimage }}
         path: linux
+
+    - name: Fetch the APK
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ needs.Android.outputs.apk }}
+        path: android
 
     # The update script from CI/linux/appimage is a file of the release too.
     - uses: actions/checkout@v6
@@ -64,4 +82,5 @@ jobs:
           windows/*.exe
           windows/*.zip
           linux/*.AppImage
+          android/*.apk
           source/CI/linux/appimage/ModernMorrow-AutoUpdate.sh

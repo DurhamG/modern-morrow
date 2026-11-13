@@ -1,0 +1,3 @@
+# The Dockerfile only reads the patches. This keeps the APK and the built libraries out of the build context.
+*
+!patches

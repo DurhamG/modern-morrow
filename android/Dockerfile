@@ -322,3 +322,7 @@ RUN wget -q https://github.com/OpenMW/osg/archive/${OSG_VERSION}.tar.gz -O - | t
 
 # For android/container-build.sh, which builds OpenMW itself.
 RUN dnf install -y ccache && dnf clean all
+
+# Links the image to the repository in GitHub's container registry, where CI keeps it. Last, so it never
+# invalidates the cached layers above.
+LABEL org.opencontainers.image.source=https://github.com/DurhamG/modern-morrow

@@ -4,6 +4,9 @@ plugins {
     id("com.android.application")
 }
 
+// CI passes unset values as empty strings.
+fun env(name: String): String? = System.getenv(name)?.takeIf { it.isNotEmpty() }
+
 android {
     namespace = "io.github.durhamg.modernmorrow"
     compileSdk = 35
@@ -12,16 +15,35 @@ android {
         applicationId = "io.github.durhamg.modernmorrow"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1"
+        // CI sets these from the run number and the release tag.
+        versionCode = env("MM_VERSION_CODE")?.toInt() ?: 1
+        versionName = env("MM_VERSION_NAME") ?: "0.1"
         ndk {
             abiFilters += "arm64-v8a"
+        }
+    }
+
+    // The release key stays out of the repository. android/build.sh release checks that these are set, and
+    // ui-rework/releasing.md says where the key is kept.
+    val releaseKeystore = env("ANDROID_KEYSTORE")
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                // A PKCS12 keystore, as keytool makes by default, uses the same password for the key.
+                keyPassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            }
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (releaseKeystore != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
