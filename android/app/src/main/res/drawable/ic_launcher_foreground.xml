@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OpenMW's emblem from files/launcher/images/openmw.png, kept inside the launcher's safe zone. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/openmw_emblem"
+    android:inset="21%" />

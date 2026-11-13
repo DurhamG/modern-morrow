@@ -58,7 +58,7 @@ Two emulator devices match these screens. Both use the Android 15 (API 35) Googl
 | `MM_Fold8_Main` | 1848x2448 | 400 dpi |
 | `MM_Fold8_Cover` | 1248x1972 | 420 dpi |
 
-Both start in landscape and have 6 GB of memory, 6 cores, a 16 GB data partition and the host GPU. Start one with `emulator -avd MM_Fold8_Main`. The emulator draws with OpenGL ES 3.0, translated onto the Mac's Metal, so frame rates there say nothing about the phone. The Fold 8 runs Android 16 (API 36). An API 36 image would match it better, and would be one more download.
+Both start in landscape and have 6 GB of memory, 6 cores and a 16 GB data partition. Start one with `emulator -avd MM_Fold8_Main -gpu swiftshader`. Step 5 explains why it draws in software. The emulator's frame rates say nothing about the phone. The test Fold 8 (model SM-F971U1) runs Android 17 (API 37). An image for that API level would match it better, and would be one more download.
 
 ## Storage and the game data
 
@@ -74,32 +74,54 @@ The desktop builds find Morrowind's data with the Qt setup wizard. Qt isn't part
 Each step ends in something that can be tried.
 
 1. **Set up the tools on the Mac.** Done. Android Studio, the SDK, the emulator, NDK 29.0.13846066 (r29 beta 3) and Docker Desktop are installed, and the two emulator devices above exist. The Linux build downloads its own NDK r29, so the Mac's NDK is only needed if we later build there.
-2. **Build the dependencies in Docker.** All Android builds run in a Linux container, on the Mac and in CI alike. Nothing cross-builds on macOS itself. `android/Dockerfile` builds every dependency into `/root/prefix` in the `modernmorrow-android-deps` image. Docker caches each dependency's layer, so a rebuild only redoes what changed. The command is in the Dockerfile's header. It started from the cavebros Dockerfile, with these changes:
-   - It leaves out what OpenMW doesn't use: the other games that file also builds (UQM and dethrace), the Rust mod tools, the texture tool, libogg and libvorbis, the MinGW packages, the SDK tools and the prebuilt ANGLE libraries. The SDK tools come back when step 4 builds the APK.
-   - It builds OpenSceneGraph at `9b384d54`, the commit that `extern/CMakeLists.txt` pins, not cavebros' older `8aa8d917`. Its 11 OSG patches are copied into `android/patches/osg/`, and apply without fuzz.
+2. **Build the dependencies in Docker.** All Android builds run in a Linux container, on the Mac and in CI alike. Nothing cross-builds on macOS itself. `android/Dockerfile` builds every dependency into `/root/prefix` in the `modernmorrow-android-deps` image. Docker caches each dependency's layer, so a rebuild only redoes what changed. `android/build.sh deps` builds it. It started from the cavebros Dockerfile, with these changes:
+   - It leaves out what OpenMW doesn't use: the other games that file also builds (UQM and dethrace), the Rust mod tools, the texture tool, libogg and libvorbis, the MinGW packages, the SDK tools and the prebuilt ANGLE libraries.
+   - It builds OpenSceneGraph at `9b384d54`, the commit that `extern/CMakeLists.txt` pins, not cavebros' older `8aa8d917`. Its 11 OSG patches are copied into `android/patches/osg/`, and apply without fuzz. A 12th patch of ours skips a `dlinfo` call in that newer commit, which Android's C library doesn't have.
    - It pins every source. Cavebros cloned the heads of bzip2 and NG-GL4ES, and LuaJIT's moving `v2.1.ROLLING` tarball. NG-GL4ES is pinned at `a26bd21`, which was its branch's head when cavebros last changed its Dockerfile.
    - It turns off LTO. With LTO, every link of `libopenmw.so` would redo the code generation for all the static dependencies.
    - gl4es's config and log folder is our package's `files/config`, set with `sed`, in place of the patch that pointed it at Alpha3's folder.
    - The NDK only ships Linux tools for x86-64, so the image is `linux/amd64` and runs under Rosetta on Apple Silicon. Docker Desktop's "Use Rosetta for x86_64/amd64 emulation" setting is on, and its VM has 16 GB of memory.
    - FFmpeg is built with `--disable-asm --disable-optimizations`, as cavebros did. If video or sound decoding turns out slow on the phone, try turning optimizations back on.
-3. **Build `libopenmw.so` from this tree.** Run the container with this checkout mounted into it, and a ccache volume so incremental builds stay quick. Configure it against the dependency folder, with the launcher, wizard, editor and tools turned off. Port the needed engine patches as ordinary commits on this branch, one change per commit, and not as patch files. The likely set:
-   - linking against gl4es,
-   - shader and post-processing changes for gl4es,
-   - keeping the OpenGL context when the app is sent to the background,
-   - the Android folder lookup.
+3. **Build `libopenmw.so` from this tree.** Done. `android/build.sh openmw` runs `android/container-build.sh` in the image, with this checkout mounted at `/src`. The build folder and ccache live in Docker volumes, so an incremental build takes about a minute. The first build took about 9 minutes under Rosetta. The script then copies `libopenmw.so` and the shared libraries it needs into `android/app/src/main/jniLibs/`, and the built `resources/`, `openmw.cfg`, `defaults.bin` and `gamecontrollerdb.txt` into the app's assets. Both folders are ignored by git. The engine needed three commits:
+   - The JNI path function is named after our package.
+   - `androidmain.cpp`'s `stderr` workaround only applies below API 23, as later Android declares `stderr` itself.
+   - The shader manager merges linked shaders into one shader per stage on Android. Upstream's shaders link library shaders such as `lib/core/fragment.glsl` as separate objects, and OpenGL ES links only one per stage. Cavebros didn't need this, as its OpenMW predates the links. The merging is adapted from Alpha3.
 
-   Check that our own engine changes build for Android, such as the automation server in `apps/openmw/mwautomation/`. Its socket code uses plain `sys/socket.h` outside Windows, so it should build.
-4. **Make the Android app.** Put a Gradle project in `android/app/`.
-   - It holds SDL's Java files, copied from the same SDL release as the native library, because the two must match.
-   - It has one activity that extends `SDLActivity`, loads the libraries, and passes the folders to the engine.
-   - It runs in landscape and full screen, and traps the Back button.
-   - Rename the JNI function in `androidpath.cpp` to match our package, for example `Java_io_github_durhamg_modernmorrow_GameActivity_getPathToJni`. This keeps the Java names our own.
-   - It passes command-line options to the engine through SDL's `getArguments()`, read from the intent's extras. The harness starts the game with `--automation-port`, through `adb shell am start`.
-   - Its manifest asks for the `INTERNET` permission, which Android requires before an app can open any socket, even one on localhost.
-   - Nothing for touch.
-5. **Start the game.** Test in the emulator first, then on the Fold. The game must reach the main menu, load a save and be playable with a gamepad. The automation harness works over `adb forward`, which forwards its port to the device. `omw.py` needs a way to start the game through `adb` and copy a profile's settings and saves to the device, so the existing scenarios can run against it.
+   The automation server builds for Android as it is. Keeping the OpenGL context when the app goes to the background isn't done yet.
+4. **Make the Android app.** Done. `android/app/src/main/` holds the manifest, SDL 2.32.4's Java files and two activities of ours. `android/build.sh apk` builds the APK on the Mac with Gradle (`android/gradlew`, Gradle 9.6.0 and the Android Gradle plugin 9.4.1) against Android 35, and signs it with Gradle's usual debug key in `~/.android/`. The Docker build puts the native libraries and assets into `android/app/src/main/`, and Gradle packages them as they are.
+   - `MainActivity` copies the resources and global config out of the APK when the APK changes, finds the data, writes the user `openmw.cfg`, then starts `GameActivity`. It passes its intent's extras on. Without the data, it says where to put it.
+   - `GameActivity` extends `SDLActivity`. It loads the libraries, passes the folders to the engine, takes command-line options from the `args` extra, and sets SDL's hints for the Back button and landscape.
+   - The game data is looked for in the app's own `Morrowind` folder, then in `/sdcard/Morrowind`, which needs "All files access".
+5. **Start the game.** In progress. In the emulator, the game loads Morrowind, Tribunal and Bloodmoon, shows the main menu, and starts a new game in Seyda Neen with the world, sky, water and HUD drawn. On the Fold 8 it starts a new game on the prison ship, drawn on the GPU. The automation server works over `adb forward`, and its virtual gamepad moves the main menu's highlight. To start it with options:
+
+   ```bash
+   adb shell "am start -n io.github.durhamg.modernmorrow/.MainActivity --esa args '--automation-port,4242,--skip-menu,--start,Seyda Neen'"
+   ```
+
+   Found so far:
+   - The emulator's default GPU mode crashed the emulator itself, in Apple's OpenGL under `glClear`. Start it with `-gpu swiftshader`, which draws in software. It is correct but slow: a frame of Seyda Neen takes seconds at 2448x1848, and Android's own processes stop responding at times.
+   - The built-in `openmw.cfg` has no fallback values for the Ashstorm and Blight weathers, which on the desktop `mwiniimporter` copies from `Morrowind.ini`. Without them the built-in weather script stops with "cloudsMaximumPercent must be greater than 0". Step 7 has to import `Morrowind.ini`.
+   - gl4es reports "invalid enumerant" after many draws. Nothing looks wrong yet.
+   - SDL's HIDAPI controller code throws on Android 14 and later, because it registers a broadcast receiver without saying whether it is exported. Android's own controller input still works. SDL 2.32.4 has the bug; setting `SDL_JOYSTICK_HIDAPI` to 0 would avoid it.
+   - Android shows its "Viewing full screen" card the first time the game starts. Check on the phone that a controller can dismiss it.
+   - The Mac's Python is 3.9, where `socket.timeout` isn't yet a `TimeoutError`, so `omw.py` fails on its first slow reply. `omw.py` also has no Android launch yet: it needs to start the game through `adb`, copy a profile's settings and saves over, and pull screenshots back.
+
+   On the Fold 8:
+   - Install over USB with `adb install -r android/out/modern-morrow-debug.apk`. Wireless debugging dropped in the middle of copying the game data when the phone's Wi-Fi was poor, and USB copied the 1.1 GB in 33 seconds.
+   - Copy the data with `adb push --sync ~/Morrowind/"Data Files" /sdcard/Morrowind/`, which skips files already there. `adb shell appops set --uid io.github.durhamg.modernmorrow MANAGE_EXTERNAL_STORAGE allow` gives the app the all-files access it needs to read them, as the app's own button would.
+   - The phone has two displays, so `screencap` needs `-d` with an ID from `adb shell dumpsys SurfaceFlinger --display-id`.
+   - If the phone is locked when the game starts, Android stops the activity at once. It comes back when the phone is unlocked.
+   - The APK built with the SDK tools was signed with another key, so the emulator needs `adb uninstall io.github.durhamg.modernmorrow` before the Gradle build installs there.
+
+   Coming back from the home screen used to show a black screen while the music played. OpenSceneGraph draws on a thread of its own by default, and that thread deadlocked with SDL's when Android took the window's surface away. The app now sets `OSG_THREADING=SingleThreaded`, so drawing happens on SDL's thread. In the emulator that was also much faster, about 20 frames a second instead of 1 to 9. Whether it costs frame rate on the phone's GPU is still to check.
+
+   A Nintendo Switch Pro Controller paired over Bluetooth had scrambled buttons: ZR opened the pause menu, + changed the camera, and so on. The community `gamecontrollerdb.txt` that OpenMW ships has an Android entry for it whose button numbers come from an older Android driver or SDL version. Android turns every controller's buttons into its standard key codes through its own key layout files, and SDL maps those itself, so the APK no longer ships the file. A player can still put one in the user config folder.
+
+   SDL's own mapping for the Switch Pro Controller goes by the buttons' labels, so the right button, labelled A, was A. The app sets `SDL_GAMECONTROLLER_USE_BUTTON_LABELS=0`, so Nintendo controllers go by position, as an Xbox controller does: the bottom button is A. The tutorial's messages and the menus' hints name the Xbox buttons.
+
+   Still to do: load a save on the Fold, play with a real controller, and measure frame rates on the Fold.
 6. **Fix and tune.** Expect rendering bugs from gl4es and slow frames. Pick Android defaults in `settings-default.cfg` or an Android-only defaults file. Candidates are view distance, shadows, post-processing, the resolution scale and a UI scaling factor near 2. Any shaders or post-processing that this branch added for the UI need the same gl4es checks as upstream's. Read Alpha3's patches for problems it has already solved.
-7. **Data setup.** Replace the fixed data folder with the first-run folder picker.
+7. **Data setup.** Import `Morrowind.ini` into the user `openmw.cfg`, as `mwiniimporter` does on the desktop. Replace the fixed data folders with a first-run folder picker.
 8. **Release builds.** Add an Android job to `.github/workflows/release.yml`. It builds the APK with the same Dockerfile, caches the dependency layers, and signs the APK. The signing key goes in a GitHub secret. Document the install in the README and in [releasing.md](releasing.md).
 
 ## Risks
