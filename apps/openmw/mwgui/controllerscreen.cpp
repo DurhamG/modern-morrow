@@ -6,6 +6,9 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include <MyGUI_Gui.h>
 #include <MyGUI_ILayer.h>
@@ -484,8 +487,37 @@ namespace MWGui
             addPointerTarget(
                 parent, x + 4, 54, 30, 32, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
 
-            addText(parent, width - sMargin - 420, 50, 420, 40, status, sFontSmall, sDimColour,
-                MyGUI::Align::Right | MyGUI::Align::VCenter);
+            // The status sits at the right of the row. When it would run into the tabs, as on a 4:3 screen, its parts,
+            // which wide gaps keep apart, go on as many lines as it takes.
+            const int statusLeft = x + 4 + 22 + 24;
+            const int room = std::max(1, width - sMargin - statusLeft);
+            std::vector<std::string> lines = { status };
+            MyGUI::TextBox* probe = addText(parent, 0, 0, room, 40, status, sFontSmall, sDimColour);
+            probe->setVisible(false);
+            if (probe->getTextSize().width > room)
+            {
+                constexpr std::string_view gap = "      ";
+                lines.assign(1, {});
+                for (std::size_t start = 0; start <= status.size();)
+                {
+                    const std::size_t end = std::min(status.find(gap, start), status.size());
+                    const std::string part = status.substr(start, end - start);
+                    const std::string longer = lines.back().empty() ? part : lines.back() + std::string(gap) + part;
+                    probe->setCaptionWithReplacing(longer);
+                    if (!lines.back().empty() && probe->getTextSize().width > room)
+                        lines.push_back(part);
+                    else
+                        lines.back() = longer;
+                    start = end + gap.size();
+                }
+            }
+            MyGUI::Gui::getInstance().destroyWidget(probe);
+            const int count = static_cast<int>(lines.size());
+            const int bandTop = count <= 2 ? 50 : 46;
+            const int lineHeight = (count <= 2 ? 40 : 46) / count;
+            for (int i = 0; i < count; ++i)
+                addText(parent, statusLeft, bandTop + i * lineHeight, room, lineHeight, lines[i], sFontSmall,
+                    sDimColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
             addRect(parent, 0, 94, width, 1, sAccentColour, 0.2f);
         }
 
