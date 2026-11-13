@@ -149,6 +149,7 @@ namespace MWGui
         /// @note This method will block until the video finishes playing
         /// (and will continually update the window while doing so)
         void playVideo(std::string_view name, bool allowSkipping, bool overrideSounds = true) override;
+        bool skipVideo() override;
 
         /// Warning: do not use MyGUI::InputManager::setKeyFocusWidget directly. Instead use this.
         void setKeyFocusWidget(MyGUI::Widget* widget) override;
@@ -484,6 +485,8 @@ namespace MWGui
         std::unique_ptr<SoulgemDialog> mSoulgemDialog;
         MyGUI::ImageBox* mVideoBackground;
         VideoWidget* mVideoWidget;
+        /// Whether a video plays that the player can skip.
+        bool mSkippableVideo = false;
         ScreenFader* mWerewolfFader;
         ScreenFader* mBlindnessFader;
         ScreenFader* mHitFader;

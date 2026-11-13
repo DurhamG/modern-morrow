@@ -470,6 +470,9 @@ namespace MWInput
             finger.mRole = finger.mFallback;
 
         const bool tap = isTap(finger, arg.timestamp);
+        // A tap skips a video that can be skipped, such as the logos at startup, as A does on a gamepad.
+        if (tap && MWBase::Environment::get().getWindowManager()->skipVideo())
+            return;
         const bool still = finger.mFarthest < sSlopMm * pixelsPerMm();
         switch (finger.mRole)
         {
