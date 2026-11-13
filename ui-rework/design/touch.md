@@ -43,7 +43,7 @@ Jumping is a mode of its own, so a jump in the middle of a fight means switching
 - Sliding past attack to quick keys and lifting opens a radial of the quick keys around the picker. The game stays paused.
 - The radial holds the eight d-pad slots from [quick-keys.md](quick-keys.md), in the d-pad's own directions. The four press slots make an inner ring and the four hold slots an outer ring, like the marker's short and long arms.
 - Tapping a slot uses it, as the d-pad would. Tapping outside the radial closes it without using anything.
-- Assigning slots stays on the inventory and magic screens. It only works with a gamepad today, so it needs tappable controls, which the mouse is missing too.
+- Assigning slots stays on the inventory and magic screens: tap the item or spell, then the "Quick key" hint, then a slot. With touch controls, the slot panel says to tap a slot, and its hint is B to cancel.
 
 ### Telling gestures apart
 
@@ -70,7 +70,7 @@ These are starting values to tune on the phone. Distances are in millimetres on 
 - **Dragging sideways switches tabs**, if the drag is more sideways than up or down: one tab for every 12 mm, towards the side the finger moves, so dragging right goes to the tabs on the right. The tab follows the finger while it's down, so one long drag goes through several tabs, and pulling back undoes an overshoot. On the left half of the screen it switches the big tabs, as the triggers do, and on the right half the screen's own tabs, as the shoulder buttons do. There's no sliding animation, so the swipe moves the tab highlight rather than pulling a page. It doesn't happen on the map, which pans when dragged and whose tabs can be tapped, or on a slider.
 - **Dragging up or down scrolls** lists, books, quests and dialogue topics, one row for each 6 mm dragged, the way the mouse wheel does. As with the wheel, the row under the finger takes the selection. A drag that starts on a link in a page, such as a topic in the journal, still scrolls the page.
 - **Rest and Menu.** With touch controls on, the tab bar above the inventory screens ends with **Rest**, which opens the rest dialog, and **Menu**, which opens the pause menu. The tabs move left to make room. The journal is already a tab. The desktop and Steam Deck tab bars are unchanged.
-- Three things a mouse can't do yet, from [mouse.md](../mouse.md), need touch controls too: bartering one item at a time, haggling, and turning the head on the race screen. Assigning quick keys needs them too.
+- Three things a mouse can't do yet, from [mouse.md](../mouse.md), need touch controls too: bartering one item at a time, haggling, and turning the head on the race screen.
 
 ## Tutorial
 
