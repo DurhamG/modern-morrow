@@ -511,13 +511,18 @@ namespace MWGui
                     start = end + gap.size();
                 }
             }
-            MyGUI::Gui::getInstance().destroyWidget(probe);
             const int count = static_cast<int>(lines.size());
             const int bandTop = count <= 2 ? 50 : 46;
             const int lineHeight = (count <= 2 ? 40 : 46) / count;
             for (int i = 0; i < count; ++i)
-                addText(parent, statusLeft, bandTop + i * lineHeight, room, lineHeight, lines[i], sFontSmall,
-                    sDimColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
+            {
+                // A part too wide for the room on its own reaches left into the gap, rather than being cut off.
+                probe->setCaptionWithReplacing(lines[i]);
+                const int left = std::min(statusLeft, width - sMargin - probe->getTextSize().width);
+                addText(parent, left, bandTop + i * lineHeight, width - sMargin - left, lineHeight, lines[i],
+                    sFontSmall, sDimColour, MyGUI::Align::Right | MyGUI::Align::VCenter);
+            }
+            MyGUI::Gui::getInstance().destroyWidget(probe);
             addRect(parent, 0, 94, width, 1, sAccentColour, 0.2f);
         }
 
