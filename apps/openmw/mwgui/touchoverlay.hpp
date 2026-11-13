@@ -13,9 +13,19 @@ namespace MyGUI
 
 namespace MWGui
 {
-    /// Draws what the touch controls show over the game: the mode picker, the quick keys radial and the wait for a
-    /// quickload. The touch manager works out where everything goes, in screen pixels, and this draws it on the
-    /// ControllerNotification layer. See ui-rework/design/touch.md.
+    /// Where the touch controls' zones are, in screen pixels, for the tutorial to draw.
+    struct TouchTutorialZones
+    {
+        MyGUI::IntCoord mQuickSave;
+        MyGUI::IntCoord mQuickLoad;
+        MyGUI::IntCoord mSneak;
+        MyGUI::IntCoord mLeftEdge;
+        MyGUI::IntCoord mRightEdge;
+    };
+
+    /// Draws what the touch controls show over the game: the tutorial, the mode picker, the quick keys radial and the
+    /// wait for a quickload. The touch manager works out where everything goes, in screen pixels, and this draws it on
+    /// the ControllerNotification layer. See ui-rework/design/touch.md.
     class TouchOverlay
     {
     public:
@@ -31,6 +41,14 @@ namespace MWGui
         /// centre, which shows what tapping outside does.
         void showRadial(
             const std::vector<MyGUI::IntCoord>& slots, const MyGUI::IntCoord& centre, const MyGUI::IntSize& screen);
+
+        /// Draws the tutorial's first page over the paused game: the corners, the edge swipes and what each thumb does.
+        /// pixelsPerMm sizes what's drawn the same on any screen.
+        void showTutorialPlay(const TouchTutorialZones& zones, const MyGUI::IntSize& screen, float pixelsPerMm);
+
+        /// Draws the tutorial's second page over the inventory screens: switching screens and tabs, going back, and
+        /// the button hints.
+        void showTutorialMenus(const MyGUI::IntSize& screen, float pixelsPerMm);
 
         /// Draws the label and a bar that fills as a hold goes on, such as the quickload's.
         void showProgress(const std::string& label, float fraction);

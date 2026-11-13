@@ -50,7 +50,7 @@ namespace MWInput
         InputManager(SDL_Window* window, std::unique_ptr<SDLUtil::InputWrapper> inputWrapper,
             std::function<void()> takeScreenshot, const std::filesystem::path& userFile, bool userFileExists,
             const std::filesystem::path& userControllerBindingsFile,
-            const std::filesystem::path& controllerBindingsFile);
+            const std::filesystem::path& controllerBindingsFile, const std::filesystem::path& touchTutorialFile);
 
         ~InputManager() final;
 
