@@ -4,6 +4,10 @@
 #include <cmath>
 #include <limits>
 
+#include <MyGUI_InputManager.h>
+#include <MyGUI_ScrollBar.h>
+
+#include <SDL_gamecontroller.h>
 #include <SDL_timer.h>
 #include <SDL_video.h>
 
@@ -17,6 +21,8 @@
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
+#include "../mwgui/controllerscreen.hpp"
+#include "../mwgui/mapwindow.hpp"
 #include "../mwgui/touchoverlay.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
@@ -29,6 +35,7 @@
 
 #include "actions.hpp"
 #include "bindingsmanager.hpp"
+#include "mousemanager.hpp"
 
 namespace MWInput
 {
@@ -54,6 +61,8 @@ namespace MWInput
         constexpr float sLookCircleMm = 10.f;
         constexpr float sLookRampMm = 20.f;
         const float sLookFullSpeed = osg::DegreesToRadians(130.f);
+        // On the map, two fingers that touch down this close together in time are a pinch, which zooms.
+        constexpr Uint32 sPinchWindow = 150;
         // A finger that goes down this close to a side edge, in the middle half of the edge's height, swipes in from
         // the edge once it has moved this far inwards, more in than up or down. GameActivity keeps Android's back
         // gesture off the same part of the edges.
@@ -74,6 +83,12 @@ namespace MWInput
         constexpr float sRadialInnerMm = 16.f;
         constexpr float sRadialOuterMm = 30.f;
         constexpr float sRadialIconMm = 10.f;
+        // A drag of this length in a menu scrolls a list by one row.
+        constexpr float sScrollStepMm = 6.f;
+        // A drag in a menu that is more sideways than up or down switches tabs, one for each time it goes this far, and
+        // back again if it comes back: the big tabs, as the triggers do, on the left half of the screen, and the
+        // screen's own tabs, as the shoulder buttons do, on the right half.
+        constexpr float sTabSwipeMm = 12.f;
         // How many frames a tap holds the attack, so the game sees it.
         constexpr int sUseFrames = 3;
 
@@ -89,8 +104,9 @@ namespace MWInput
         }
     }
 
-    TouchManager::TouchManager(BindingsManager* bindingsManager, SDL_Window* window)
+    TouchManager::TouchManager(BindingsManager* bindingsManager, MouseManager* mouseManager, SDL_Window* window)
         : mBindingsManager(bindingsManager)
+        , mMouseManager(mouseManager)
         , mWindow(window)
         , mOverlay(std::make_unique<MWGui::TouchOverlay>())
     {
@@ -201,7 +217,19 @@ namespace MWInput
         finger.mStart = finger.mPosition = toPixels(arg);
         finger.mDownTime = arg.timestamp;
 
-        if (!inGame())
+        if (MWBase::Environment::get().getWindowManager()->isGuiMode())
+        {
+            finger.mRole = Role::Menu;
+            menuPointer(finger.mPosition);
+            const MyGUI::IntPoint gui = toGui(finger.mPosition);
+            finger.mMouse
+                = !mMouseManager->usesControllerMenus() || !MWGui::ControllerUi::pointerTargetAt(gui.left, gui.top);
+            // A slider is dragged sideways, so a finger on one never switches tabs.
+            MyGUI::Widget* widget = MyGUI::InputManager::getInstance().getMouseFocusWidget();
+            for (; widget != nullptr && !finger.mOnSlider; widget = widget->getParent())
+                finger.mOnSlider = widget->isType<MyGUI::ScrollBar>();
+        }
+        else if (!inGame())
             finger.mRole = Role::Ignored;
         else if (mRadialOpen)
             finger.mRole = Role::Radial;
@@ -221,7 +249,8 @@ namespace MWInput
 
         // Either thumb can go down by its edge and swipe in. Until it does, it waits to see.
         finger.mEdge = edgeAt(finger.mPosition);
-        if (finger.mEdge != 0 && (finger.mRole == Role::Move || finger.mRole == Role::Look))
+        if (finger.mEdge != 0
+            && (finger.mRole == Role::Menu || finger.mRole == Role::Move || finger.mRole == Role::Look))
         {
             finger.mFallback = finger.mRole;
             finger.mRole = Role::Edge;
@@ -231,6 +260,7 @@ namespace MWInput
             mOverlay->showProgress("#{Interface:TouchQuickLoad}", 0.f);
 
         mFingers.push_back(finger);
+        startPinch(mFingers.back());
     }
 
     void TouchManager::updateEdge(Finger& finger)
@@ -248,7 +278,12 @@ namespace MWInput
             return;
         }
 
-        if (!inGame())
+        if (MWBase::Environment::get().getWindowManager()->isGuiMode())
+        {
+            finger.mRole = Role::Ignored;
+            menuBack();
+        }
+        else if (!inGame())
             finger.mRole = Role::Ignored;
         else if (finger.mEdge < 0)
         {
@@ -262,6 +297,30 @@ namespace MWInput
         }
     }
 
+    bool TouchManager::startPinch(Finger& finger)
+    {
+        if (finger.mRole != Role::Menu)
+            return false;
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (dynamic_cast<MWGui::MapWindow*>(winMgr->getActiveControllerWindow()) == nullptr)
+            return false;
+        const float slop = sSlopMm * pixelsPerMm();
+        for (Finger& other : mFingers)
+        {
+            if (&other == &finger || finger.mDownTime - other.mDownTime > sPinchWindow)
+                continue;
+            const bool fresh
+                = other.mRole == Role::Menu && other.mScrolled == 0 && !other.mPressed && other.mFarthest < slop;
+            if (!fresh)
+                continue;
+            finger.mRole = Role::Pinch;
+            other.mRole = Role::Pinch;
+            mPinchZoomedAt = distance(finger.mStart, other.mStart);
+            return true;
+        }
+        return false;
+    }
+
     void TouchManager::fingerMoved(const SDL_TouchFingerEvent& arg)
     {
         Finger* finger = find(arg.fingerId);
@@ -272,6 +331,7 @@ namespace MWInput
         const MyGUI::FloatPoint delta(position.left - finger->mPosition.left, position.top - finger->mPosition.top);
         finger->mPosition = position;
         finger->mFarthest = std::max(finger->mFarthest, distance(finger->mStart, position));
+        const float slop = sSlopMm * pixelsPerMm();
 
         // An edge finger that turns out not to swipe in carries on as its fallback from here.
         if (finger->mRole == Role::Edge)
@@ -289,6 +349,37 @@ namespace MWInput
                 break;
             case Role::Select:
                 updatePicker(*finger);
+                break;
+            case Role::Pinch:
+                updatePinch();
+                break;
+            case Role::Menu:
+                if (finger->mFarthest < slop)
+                    break;
+                if (!finger->mDecided)
+                {
+                    finger->mDecided = true;
+                    finger->mTabSwipe
+                        = std::abs(position.left - finger->mStart.left) > std::abs(position.top - finger->mStart.top)
+                        && canSwipeTabs(*finger);
+                }
+                if (finger->mTabSwipe)
+                    menuSwipeTabs(*finger);
+                else if (!finger->mMouse)
+                    menuScroll(*finger);
+                else
+                {
+                    const MyGUI::IntPoint start = toGui(finger->mStart);
+                    const MyGUI::IntPoint now = toGui(position);
+                    if (!finger->mPressed)
+                    {
+                        MyGUI::InputManager::getInstance().injectMouseMove(start.left, start.top, 0);
+                        MyGUI::InputManager::getInstance().injectMousePress(
+                            start.left, start.top, MyGUI::MouseButton::Left);
+                        finger->mPressed = true;
+                    }
+                    MyGUI::InputManager::getInstance().injectMouseMove(now.left, now.top, 0);
+                }
                 break;
             default:
                 break;
@@ -339,9 +430,41 @@ namespace MWInput
                 if (still)
                     tapRadial(finger.mPosition);
                 break;
+            case Role::Menu:
+                if (finger.mPressed)
+                {
+                    const MyGUI::IntPoint at = toGui(finger.mPosition);
+                    MyGUI::InputManager::getInstance().injectMouseRelease(at.left, at.top, MyGUI::MouseButton::Left);
+                }
+                else if (tap || (still && finger.mScrolled == 0))
+                    menuTap(finger.mPosition);
+                break;
             default:
                 break;
         }
+    }
+
+    void TouchManager::updatePinch()
+    {
+        std::vector<Finger*> pinch;
+        for (Finger& finger : mFingers)
+            if (finger.mRole == Role::Pinch)
+                pinch.push_back(&finger);
+        if (pinch.size() != 2)
+            return;
+
+        // A pinch zooms the map for as long as the fingers stay down, as on a phone's own maps.
+        const float now = distance(pinch[0]->mPosition, pinch[1]->mPosition);
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        auto* map
+            = winMgr->isGuiMode() ? dynamic_cast<MWGui::MapWindow*>(winMgr->getActiveControllerWindow()) : nullptr;
+        if (map != nullptr && now > 0 && mPinchZoomedAt > 0)
+        {
+            const MyGUI::FloatPoint middle((pinch[0]->mPosition.left + pinch[1]->mPosition.left) / 2,
+                (pinch[0]->mPosition.top + pinch[1]->mPosition.top) / 2);
+            map->zoomByPinch(now / mPinchZoomedAt, toGui(middle));
+        }
+        mPinchZoomedAt = now;
     }
 
     void TouchManager::look(const Finger& finger, const MyGUI::FloatPoint& previous)
@@ -575,6 +698,117 @@ namespace MWInput
         pause(false);
     }
 
+    MyGUI::IntPoint TouchManager::toGui(const MyGUI::FloatPoint& point) const
+    {
+        const float scale = MWBase::Environment::get().getWindowManager()->getScalingFactor();
+        return { static_cast<int>(point.left / scale), static_cast<int>(point.top / scale) };
+    }
+
+    void TouchManager::menuPointer(const MyGUI::FloatPoint& point)
+    {
+        const float scale = MWBase::Environment::get().getWindowManager()->getScalingFactor();
+        const int x = static_cast<int>(point.left / scale);
+        const int y = static_cast<int>(point.top / scale);
+        MyGUI::InputManager::getInstance().injectMouseMove(x, y, 0);
+    }
+
+    void TouchManager::menuTap(const MyGUI::FloatPoint& point)
+    {
+        menuPointer(point);
+        const float scale = MWBase::Environment::get().getWindowManager()->getScalingFactor();
+        const int x = static_cast<int>(point.left / scale);
+        const int y = static_cast<int>(point.top / scale);
+        if (mMouseManager->usesControllerMenus())
+        {
+            if (MWGui::ControllerUi::pointerTapped(x, y))
+                return;
+            // Tapping the game beside a conversation's panel, such as the speaker above it, ends the conversation.
+            if (!MWGui::ControllerUi::pointerOnPanel(x, y) && leaveConversation())
+                return;
+        }
+        MyGUI::InputManager::getInstance().injectMousePress(x, y, MyGUI::MouseButton::Left);
+        MyGUI::InputManager::getInstance().injectMouseRelease(x, y, MyGUI::MouseButton::Left);
+    }
+
+    void TouchManager::menuScroll(Finger& finger)
+    {
+        // Dragging up moves the list up, which shows the rows below, as turning the wheel towards the player does.
+        const float step = sScrollStepMm * pixelsPerMm();
+        const float dragged = (finger.mStart.top - finger.mPosition.top) / step;
+        const int steps = static_cast<int>(dragged) - static_cast<int>(finger.mScrolled);
+        if (steps == 0)
+            return;
+        finger.mScrolled += steps;
+        if (!mMouseManager->usesControllerMenus())
+            return;
+        const float scale = MWBase::Environment::get().getWindowManager()->getScalingFactor();
+        const int x = static_cast<int>(finger.mStart.left / scale);
+        const int y = static_cast<int>(finger.mStart.top / scale);
+        MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
+        for (int i = 0; i < std::abs(steps); ++i)
+        {
+            const int wheel = steps > 0 ? -1 : 1;
+            if (!MWGui::ControllerUi::pointerWheel(x, y, wheel))
+                input->pressControllerMenuButton(
+                    wheel > 0 ? SDL_CONTROLLER_BUTTON_DPAD_UP : SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+        }
+    }
+
+    bool TouchManager::canSwipeTabs(const Finger& finger) const
+    {
+        // The map pans when dragged, and its tabs can be tapped instead.
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        return mMouseManager->usesControllerMenus() && !finger.mOnSlider
+            && dynamic_cast<MWGui::MapWindow*>(winMgr->getActiveControllerWindow()) == nullptr;
+    }
+
+    void TouchManager::menuSwipeTabs(Finger& finger)
+    {
+        // Dragging right goes to the tabs on the right. The tab follows the finger, so overshooting is undone by
+        // pulling back.
+        const float dragged = (finger.mPosition.left - finger.mStart.left) / (sTabSwipeMm * pixelsPerMm());
+        const int tabs = static_cast<int>(dragged);
+        const bool big = finger.mStart.left < screenSize().width / 2.f;
+        for (; finger.mTabsMoved != tabs; finger.mTabsMoved += tabs > finger.mTabsMoved ? 1 : -1)
+        {
+            const bool right = tabs > finger.mTabsMoved;
+            if (big)
+                MWBase::Environment::get().getWindowManager()->controllerTriggerPressed(right);
+            else
+                MWBase::Environment::get().getInputManager()->pressControllerMenuButton(
+                    right ? SDL_CONTROLLER_BUTTON_RIGHTSHOULDER : SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+        }
+    }
+
+    void TouchManager::menuBack()
+    {
+        if (mMouseManager->usesControllerMenus())
+            MWBase::Environment::get().getInputManager()->pressControllerMenuButton(SDL_CONTROLLER_BUTTON_B);
+    }
+
+    bool TouchManager::leaveConversation()
+    {
+        using namespace MWGui;
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        const auto& modes = winMgr->getGuiModeStack();
+        if (std::find(modes.begin(), modes.end(), GM_Dialogue) == modes.end())
+            return false;
+        // The services a conversation opens close first, then the conversation says goodbye, unless the speaker
+        // waits for an answer.
+        constexpr GuiMode conversation[] = { GM_Dialogue, GM_Barter, GM_Companion, GM_SpellBuying, GM_Travel,
+            GM_SpellCreation, GM_Enchanting, GM_Training, GM_MerchantRepair };
+        for (int i = 0; i < 5 && winMgr->isGuiMode(); ++i)
+        {
+            const GuiMode top = winMgr->getMode();
+            if (std::find(std::begin(conversation), std::end(conversation), top) == std::end(conversation))
+                break;
+            winMgr->exitCurrentGuiMode();
+            if (winMgr->isGuiMode() && winMgr->getMode() == top)
+                break;
+        }
+        return true;
+    }
+
     void TouchManager::queueAction(int action, int frames)
     {
         mPending.push_back({ action, frames });
@@ -614,8 +848,7 @@ namespace MWInput
         if (mUseFrames > 0 && --mUseFrames == 0)
             pressUse(false);
 
-        // A menu that opens, such as from talking to someone, ends whatever the thumbs were doing in the game. Fingers
-        // in menus do nothing yet.
+        // A menu that opens, such as from talking to someone, ends whatever the thumbs were doing in the game.
         if (!inGame())
         {
             stopMovement();
@@ -625,7 +858,12 @@ namespace MWInput
             mOverlay->hide();
             pause(false);
             for (Finger& finger : mFingers)
-                finger.mRole = Role::Ignored;
+            {
+                const bool menu = finger.mRole == Role::Menu || finger.mRole == Role::Pinch
+                    || (finger.mRole == Role::Edge && finger.mFallback == Role::Menu);
+                if (!menu)
+                    finger.mRole = Role::Ignored;
+            }
             return;
         }
 

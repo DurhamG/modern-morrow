@@ -7,6 +7,7 @@ This is the design for playing on a phone or tablet without a gamepad, agreed wi
 - **No buttons on screen during play.** The whole screen is the game. Icons only appear while the player picks a mode or a quick key.
 - **Two thumbs, like two sticks.** The left half of the screen moves and strafes, and the right half looks and acts, as a gamepad's left and right sticks and triggers do. Swipes in from the side edges open the inventory and pick the mode. Three corners have spots of their own.
 - **Every gesture does something the game can already do.** The gestures press the same actions as the gamepad, so the game's rules don't change.
+- **Menus are tapped.** The controller menus already work with a mouse, as [mouse.md](../mouse.md) describes, so a tap in a menu acts as a click.
 
 ## During play
 
@@ -53,9 +54,23 @@ These are starting values to tune on the phone. Distances are in millimetres on 
 - **The attack's charge** starts after the right thumb stays still for 180 ms in attack mode. A quick tap sends the press and release together, which gives a full swing because Modern Morrow always uses the best attack. A thumb that moves before 180 ms only looks, and lifting it does nothing. In Morrowind an attack can't be cancelled once wound up, so this delay is what keeps looking from swinging.
 - **Movement** has a 2 mm dead zone around where the thumb went down, and reaches full speed 15 mm away in any direction, as a stick's circle does.
 - **An edge swipe** starts within 5 mm of a side edge, in the middle half of the screen's height, and moves 8 mm inwards, more in than up or down. A thumb that goes down there but moves up or down first, or lifts, does what it would have anywhere else on its half.
+- **Pinches are only for the map.** Two fingers that touch down there within 150 ms of each other zoom it.
 - **Turning** goes 1.5° for each millimetre the right thumb drags, before the camera sensitivity setting, within 10 mm to either side of where it went down. Past that edge the camera keeps turning that way for as long as the thumb stays out, starting from no speed at the edge, so there's no jump between the two, and rising evenly to 130° a second 20 mm past it. Coming back inside stops it. Looking up and down is always the mouse-style 1.5° a millimetre.
 - **The corners** are about 12 mm squares. A touch that starts in one belongs to it, not to the left or right half.
 - **Android's back gesture** is also a swipe in from a side edge. The app keeps the middle half of each side edge from it, so the edge swipes there are the game's, and the ends of the edges still go back.
+
+## In menus
+
+- **A tap is a click**: it presses a hint, switches a tab, or presses a dialog's button, through the mouse support.
+- **A tap on a list row selects it first.** Touch has nothing to point with before it taps, and a click on a row does what A does, such as eating an ingredient. So the first tap on a row selects it and shows its details, and a tap on the selected row acts. Rows of other kinds, such as the equipment slots, still act on the first tap.
+- **Swiping in from either side edge is back (B)**, in the same middle half of the edges as during play.
+- **The map** pans when dragged and zooms when pinched, as a phone's maps do. The zoom keeps the ground between the fingers still. A tap places a pin, or removes the one under the finger, as a click does. The name of the door or pin under the crosshair shows, as with a gamepad, rather than the one under the finger, since a finger doesn't hover and covers what's under it.
+- **A finger away from the rows, hints and scrolling areas works as the mouse's left button**: it presses when it starts to move, drags, and lets go when it lifts, and a tap clicks. That is what pans the map, and it works the same in the windows that aren't controller menus.
+- **Tapping beside a conversation ends it**: a tap on the game beside the dialogue panel, or beside a service the conversation opened, such as barter, says goodbye, as long as the speaker isn't waiting for an answer. A tap on an empty part of a panel does nothing. `ControllerUi::pointerOnPanel` tells the two apart by what the panels draw.
+- **Dragging sideways switches tabs**, if the drag is more sideways than up or down: one tab for every 12 mm, towards the side the finger moves, so dragging right goes to the tabs on the right. The tab follows the finger while it's down, so one long drag goes through several tabs, and pulling back undoes an overshoot. On the left half of the screen it switches the big tabs, as the triggers do, and on the right half the screen's own tabs, as the shoulder buttons do. There's no sliding animation, so the swipe moves the tab highlight rather than pulling a page. It doesn't happen on the map, which pans when dragged and whose tabs can be tapped, or on a slider.
+- **Dragging up or down scrolls** lists, books, quests and dialogue topics, one row for each 6 mm dragged, the way the mouse wheel does. As with the wheel, the row under the finger takes the selection. A drag that starts on a link in a page, such as a topic in the journal, still scrolls the page.
+- **Rest and Menu.** With touch controls on, the tab bar above the inventory screens ends with **Rest**, which opens the rest dialog, and **Menu**, which opens the pause menu. The tabs move left to make room. The journal is already a tab. The desktop and Steam Deck tab bars are unchanged.
+- Three things a mouse can't do yet, from [mouse.md](../mouse.md), need touch controls too: bartering one item at a time, haggling, and turning the head on the race screen. Assigning quick keys needs them too.
 
 ## How it is built
 
@@ -63,7 +78,8 @@ These are starting values to tune on the phone. Distances are in millimetres on 
   - Walking and attacking hold actions at a value, as a bound key or stick would. `BindingsManager::setTouchActionValue` holds `A_MoveForwardBackward`, `A_MoveLeftRight` and `A_Use`, and the game's Lua reads them as it reads a stick, so how far the thumb drags picks walking or running.
   - Single actions, such as jumping, activating, sneaking, the inventory, readying a weapon or spell, quick keys, quicksave and quickload, run with `InputManager::executeAction`, as their keys do.
   - Looking turns the player directly, as the mouse does, with the camera sensitivity setting applied.
-- **SDL's touch-as-mouse is dropped** while touch controls are on, so that a tap during play doesn't also click, and a left click doesn't attack. The menus get no mouse cursor either, and don't take touch yet.
+  - In menus, a tap goes to `ControllerUi::pointerTapped`, or to MyGUI as a click for the windows that aren't controller menus, such as the main menu's buttons. A drag turns the wheel through `ControllerUi::pointerWheel`.
+- **SDL's touch-as-mouse is dropped** while touch controls are on, so that a tap during play doesn't also click, and a left click doesn't attack. The menus get no mouse cursor either.
 - **The mode picker, the radial and the quickload panel** are drawn by `MWGui::TouchOverlay` on the ControllerNotification layer, with the controller UI's helpers.
 - **A setting turns touch controls on**, `[Input] touch controls`. It's off in `settings-default.cfg`. The Android app ships `android/settings.cfg` next to `defaults.bin`, and the game reads it as more defaults, which turns it on there while a player's own `settings.cfg` can still turn it off. With it off, finger events are ignored as before, so the desktop and Steam Deck builds behave as they did.
 - **Pausing** for the picker and the radial adds a "touch" pause tag to the time manager, the same way Lua's `world.pause` does.
@@ -79,5 +95,6 @@ These are starting values to tune on the phone. Distances are in millimetres on 
 ## Not done yet
 
 - Trying it on the phone. The timings and distances above are starting values to tune there.
-- Touch in the menus.
+- Assigning quick keys, bartering one item at a time, haggling and turning the race preview's head, by touch.
+- The menus show gamepad glyphs on their hints, which mean nothing to a player without a gamepad, though tapping them works.
 - The tutorial's messages still talk about thumbsticks and buttons. That's left for later.

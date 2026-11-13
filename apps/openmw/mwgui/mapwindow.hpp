@@ -274,6 +274,10 @@ namespace MWGui
 
         std::string_view getWindowIdForLua() const override { return "Map"; }
 
+        /// Zooms the map that shows by a pinch on a touch screen, keeping the ground under the pinch still. A factor
+        /// above 1 zooms in. The point is in the view's coordinates, as the mouse's.
+        void zoomByPinch(float factor, MyGUI::IntPoint point);
+
     protected:
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
@@ -288,6 +292,8 @@ namespace MWGui
         /// Zooms the map that shows by a factor, within its limits, keeping a point of the view still. The point is
         /// from the view's top left corner. Returns false when the zoom was already at its limit.
         bool zoomMap(float factor, MyGUI::IntPoint focus);
+        /// Zooms the 3D view by a factor, within its limits. A factor above 1 zooms in.
+        void zoomMap3D(float factor);
         /// Zooms the world map in or out by a step, for the d-pad.
         void zoomWithController(bool zoomIn);
         void zoomAround(float speedDiff, MyGUI::IntPoint cursor);

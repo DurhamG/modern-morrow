@@ -37,7 +37,7 @@ namespace MWInput
               mBindingsManager.get(), mMouseManager.get(), userControllerBindingsFile, controllerBindingsFile))
         , mSensorManager(std::make_unique<SensorManager>())
         , mGyroManager(std::make_unique<GyroManager>())
-        , mTouchManager(std::make_unique<TouchManager>(mBindingsManager.get(), window))
+        , mTouchManager(std::make_unique<TouchManager>(mBindingsManager.get(), mMouseManager.get(), window))
     {
         mInputWrapper->setWindowEventCallback(MWBase::Environment::get().getWindowManager());
         mInputWrapper->setKeyboardEventCallback(mKeyboardManager.get());

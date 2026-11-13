@@ -5,6 +5,8 @@
 #include <MyGUI_RenderManager.h>
 #include <MyGUI_TextBox.h>
 
+#include <components/settings/values.hpp>
+
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -14,6 +16,7 @@ namespace MWGui
     namespace
     {
         constexpr int sTabWidth = 120;
+        constexpr int sTouchButtonWidth = 90;
         constexpr int sFontHeight = 22;
         const MyGUI::Colour sSelectedColour = MyGUI::Colour::White;
         const MyGUI::Colour sOtherColour = MyGUI::Colour::parse("#8c7a55");
@@ -36,6 +39,21 @@ namespace MWGui
             mTabs.push_back(tab);
         }
         getWidget(mUnderline, "TabUnderline");
+
+        for (MyGUI::TextBox** button : { &mRest, &mMenu })
+        {
+            *button = mMainWidget->createWidget<MyGUI::TextBox>(
+                "NormalText", MyGUI::IntCoord(0, 0, sTouchButtonWidth, 44), MyGUI::Align::Default);
+            (*button)->setFontHeight(sFontHeight);
+            (*button)->setTextAlign(MyGUI::Align::Center);
+            (*button)->setTextColour(sOtherColour);
+            (*button)->setTextShadow(true);
+            (*button)->setTextShadowColour(MyGUI::Colour::Black);
+        }
+        mRest->setCaptionWithReplacing("#{Interface:Rest}");
+        mRest->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryTabsOverlay::onRestClicked);
+        mMenu->setCaptionWithReplacing("#{Interface:TouchMenu}");
+        mMenu->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryTabsOverlay::onMenuClicked);
 
         getWidget(mL2Image, "BtnL2Image");
         mL2Image->setImageTexture(
@@ -70,7 +88,10 @@ namespace MWGui
     void InventoryTabsOverlay::layoutTabs()
     {
         const int width = mMainWidget->getWidth();
-        int x = (width - sTabWidth * static_cast<int>(mTabs.size())) / 2;
+        // With touch controls, Rest and Menu take the right end, and the tabs centre in the rest of the bar.
+        const bool touch = Settings::input().mTouchControls;
+        const int buttons = touch ? 2 * sTouchButtonWidth + 16 : 0;
+        int x = (width - buttons - sTabWidth * static_cast<int>(mTabs.size())) / 2;
         mL2Image->setPosition(x - 34, 11);
         for (MyGUI::TextBox* tab : mTabs)
         {
@@ -78,7 +99,34 @@ namespace MWGui
             x += sTabWidth;
         }
         mR2Image->setPosition(x + 12, 11);
+
+        mMenu->setCoord(width - 16 - sTouchButtonWidth, 0, sTouchButtonWidth, mMainWidget->getHeight());
+        mRest->setCoord(mMenu->getLeft() - sTouchButtonWidth, 0, sTouchButtonWidth, mMainWidget->getHeight());
+        mRest->setVisible(touch);
+        mMenu->setVisible(touch);
         setTab(mTab);
+    }
+
+    void InventoryTabsOverlay::onOpen()
+    {
+        layoutTabs();
+    }
+
+    void InventoryTabsOverlay::onRestClicked(MyGUI::Widget* /*sender*/)
+    {
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (!MWBase::Environment::get().getInputManager()->getControlSwitch("playercontrols")
+            || !winMgr->getRestEnabled())
+            return;
+        winMgr->removeGuiMode(GM_Inventory);
+        winMgr->pushGuiMode(GM_Rest);
+    }
+
+    void InventoryTabsOverlay::onMenuClicked(MyGUI::Widget* /*sender*/)
+    {
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        winMgr->removeGuiMode(GM_Inventory);
+        winMgr->pushGuiMode(GM_MainMenu);
     }
 
     void InventoryTabsOverlay::onTabClicked(MyGUI::Widget* sender)
