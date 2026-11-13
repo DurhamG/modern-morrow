@@ -178,7 +178,7 @@ If the autoupdater isn't working, `ModernMorrow-AutoUpdate.log`, in the script's
 Android
 -------
 
-The Android version is an early test. It is for phones, tablets and handhelds with a gamepad. There are no touch controls.
+The Android version is an early test. It is for phones, tablets and handhelds, played with a gamepad or with touch gestures. With touch, there are no buttons on the screen: the left thumb walks and the right thumb looks and acts, swiping in from the left edge opens the inventory, and swiping in from the right edge picks the mode, such as attack or magic. The corners quicksave (top left), quickload (hold top right) and sneak (bottom right).
 
 1. **Install the APK.** Download `ModernMorrow-...-Android-arm64.apk` from the [Releases page](https://github.com/DurhamG/modern-morrow/releases) on the device and open it. Android asks you to allow installing apps from your browser or file manager.
 2. **Copy the game data.** Copy Morrowind's `Data Files` folder from a PC install into a `Morrowind` folder at the top of the device's storage, so that `Morrowind/Data Files/Morrowind.esm` is there.

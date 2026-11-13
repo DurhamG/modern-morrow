@@ -2,6 +2,7 @@
 #define MWINPUT_MWBINDINGSMANAGER_H
 
 #include <filesystem>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -48,6 +49,10 @@ namespace MWInput
         bool actionIsActive(int id) const;
         float getActionValue(int id) const; // returns value in range [0, 1]
 
+        /// Holds an action at a value, as a bound key or stick would, until it is cleared. Touch controls use it.
+        void setTouchActionValue(int id, float value) { mTouchValues[id] = value; }
+        void clearTouchActionValue(int id) { mTouchValues.erase(id); }
+
         SDL_GameController* getControllerOrNull() const;
 
         void mousePressed(const SDL_MouseButtonEvent& evt, Uint8 deviceID);
@@ -82,6 +87,8 @@ namespace MWInput
         std::filesystem::path mUserFile;
 
         bool mDragDrop;
+
+        std::map<int, float> mTouchValues;
     };
 }
 #endif

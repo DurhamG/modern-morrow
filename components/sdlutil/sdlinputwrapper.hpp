@@ -27,6 +27,9 @@ namespace SDLUtil
         void setKeyboardEventCallback(KeyListener* listen) { mKeyboardListener = listen; }
         void setWindowEventCallback(WindowListener* listen) { mWindowListener = listen; }
         void setControllerEventCallback(ControllerListener* listen) { mConListener = listen; }
+        /// While a touch listener is set, it gets the fingers, and the mouse events SDL makes from touches are
+        /// dropped.
+        void setTouchEventCallback(TouchListener* listen) { mTouchListener = listen; }
 
         void capture(bool windowEventsOnly);
         bool isModifierHeld(int mod);
@@ -57,6 +60,7 @@ namespace SDLUtil
         KeyListener* mKeyboardListener;
         WindowListener* mWindowListener;
         ControllerListener* mConListener;
+        TouchListener* mTouchListener;
 
         Uint16 mWarpX;
         Uint16 mWarpY;

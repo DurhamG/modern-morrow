@@ -19,8 +19,8 @@ import java.util.List;
 /**
  * The folders the engine uses, and the files the app puts in them before it starts.
  *
- * - The global folder is the app's private data folder. It holds the engine's resources, the global openmw.cfg
- *   and defaults.bin, all copied out of the APK's assets whenever the APK changes.
+ * - The global folder is the app's private data folder. It holds the engine's resources, the global openmw.cfg,
+ *   defaults.bin and settings.cfg, all copied out of the APK's assets whenever the APK changes.
  * - The user folder is the app's folder on shared storage, /sdcard/Android/data/io.github.durhamg.modernmorrow/files.
  *   It holds settings, saves and logs, and players can reach it over USB.
  *

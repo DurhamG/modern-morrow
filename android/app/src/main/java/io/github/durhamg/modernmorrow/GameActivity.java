@@ -1,6 +1,11 @@
 package io.github.durhamg.modernmorrow;
 
+import android.graphics.Rect;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+
+import java.util.Arrays;
 
 import org.libsdl.app.SDLActivity;
 
@@ -44,5 +49,28 @@ public class GameActivity extends SDLActivity {
         // window's surface away, and that thread deadlocks with SDL's, so coming back showed a black screen while the
         // music played. Drawing on SDL's thread avoids it, and was faster too in the emulator.
         nativeSetenv("OSG_THREADING", "SingleThreaded");
+
+        excludeEdgeGestures();
+    }
+
+    /**
+     * Swiping in from a side edge is Android's back gesture, but the touch controls use swipes in from the middle half
+     * of each side edge (apps/openmw/mwinput/touchmanager.cpp), so that half is kept from Android. Android normally
+     * lets an app keep only 200 dp of each edge, but SDL's fullscreen window is immersive sticky, which lifts that
+     * limit. The ends of the edges still go back.
+     */
+    private void excludeEdgeGestures() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+            return;
+        mLayout.addOnLayoutChangeListener((View view, int left, int top, int right, int bottom, int oldLeft,
+                int oldTop, int oldRight, int oldBottom) -> {
+            float density = getResources().getDisplayMetrics().density;
+            int edge = (int) (48 * density);
+            int width = right - left;
+            int screenBottom = bottom - top;
+            view.setSystemGestureExclusionRects(Arrays.asList(
+                    new Rect(0, screenBottom / 4, edge, screenBottom * 3 / 4),
+                    new Rect(width - edge, screenBottom / 4, width, screenBottom * 3 / 4)));
+        });
     }
 }

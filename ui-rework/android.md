@@ -1,6 +1,6 @@
 # Android port plan
 
-This is the plan for running Modern Morrow on Android with a gamepad. It targets Android handhelds such as the Retroid Pocket and AYN Odin, and phones or tablets with a controller attached. There will be no touch controls. A player who has no gamepad can't play.
+This is the plan for running Modern Morrow on Android with a gamepad. It targets Android handhelds such as the Retroid Pocket and AYN Odin, and phones or tablets with a controller attached. A gamepad is the main way to play. Touch controls for players without one are designed in [design/touch.md](design/touch.md): gestures with no buttons on screen, and taps in the menus.
 
 The app's package name is `io.github.durhamg.modernmorrow`. Testing starts in the Android emulator on the Mac, then moves to a Galaxy Z Fold 8 with a Bluetooth controller.
 
@@ -29,7 +29,7 @@ Each port adds three things to OpenMW:
 2. **A way to draw.** OpenMW draws with desktop OpenGL, and Android only offers OpenGL ES. The ports translate one into the other with gl4es, a library that implements desktop OpenGL on top of OpenGL ES. They also patch OpenMW's shaders and post-processing for it. In the cavebros port these patches come to about 800 lines. Alpha3 also offers ANGLE and Zink, which run OpenGL on top of Vulkan, and a native OpenGL ES renderer.
 3. **An Android app.** It is built from SDL's stock Java code (`SDLActivity` and friends). On top of that sit a launcher for mods, settings and the data folder, and about 1000 lines of touch controls and an on-screen keyboard.
 
-We take the dependency recipes and the engine patches. We drop the touch controls and the launcher.
+We take the dependency recipes and the engine patches. We drop their touch controls, which are on-screen buttons, and the launcher. Ours are gestures, in [design/touch.md](design/touch.md).
 
 We don't take any prebuilt files from those repositories. These include ANGLE libraries, a hooking library, a code obfuscator and a signing keystore. Everything we ship is built from source.
 
@@ -113,11 +113,17 @@ Each step ends in something that can be tried.
    - If the phone is locked when the game starts, Android stops the activity at once. It comes back when the phone is unlocked.
    - The APK built with the SDK tools was signed with another key, so the emulator needs `adb uninstall io.github.durhamg.modernmorrow` before the Gradle build installs there.
 
-   Coming back from the home screen used to show a black screen while the music played. OpenSceneGraph draws on a thread of its own by default, and that thread deadlocked with SDL's when Android took the window's surface away. The app now sets `OSG_THREADING=SingleThreaded`, so drawing happens on SDL's thread. In the emulator that was also much faster, about 20 frames a second instead of 1 to 9. Whether it costs frame rate on the phone's GPU is still to check.
+   Coming back from the home screen used to show a black screen while the music played. OpenSceneGraph draws on a thread of its own by default, and that thread deadlocked with SDL's when Android took the window's surface away. The app now sets `OSG_THREADING=SingleThreaded`, so drawing happens on SDL's thread. In the emulator that was also much faster, about 20 frames a second instead of 1 to 9, which explains the slow runs below. Whether it costs frame rate on the phone's GPU is still to check.
 
    A Nintendo Switch Pro Controller paired over Bluetooth had scrambled buttons: ZR opened the pause menu, + changed the camera, and so on. The community `gamecontrollerdb.txt` that OpenMW ships has an Android entry for it whose button numbers come from an older Android driver or SDL version. Android turns every controller's buttons into its standard key codes through its own key layout files, and SDL maps those itself, so the APK no longer ships the file. A player can still put one in the user config folder.
 
    SDL's own mapping for the Switch Pro Controller goes by the buttons' labels, so the right button, labelled A, was A. The app sets `SDL_GAMECONTROLLER_USE_BUTTON_LABELS=0`, so Nintendo controllers go by position, as an Xbox controller does: the bottom button is A. The tutorial's messages and the menus' hints name the Xbox buttons.
+
+   Testing touch controls in the emulator:
+   - Software rendering at the Fold's full 1848x2448 is too slow to play. `adb shell wm size 924x1224` and `adb shell wm density 200` halve the display and keep sizes in millimetres the same, since the touch controls measure in millimetres from the density. `adb shell wm size reset` and `wm density reset` undo them.
+   - A `settings.cfg` pushed to `/sdcard/Android/data/io.github.durhamg.modernmorrow/files/config/` lowers the drawing cost further: `[Camera] viewing distance = 2000`, `[Terrain] distant terrain = false` and `object paging = false`, and `[Water] shader = false`. The water shader's reflection also fails to set up its framebuffer under SwiftShader ("FBO status 0x8cdd") and logs an error every frame.
+   - Before drawing moved to SDL's thread, the emulator ran at anywhere from 1 to 9 frames a second. The gestures time themselves from the touch events, so they work at any speed, but holds need to last a few frames.
+   - The `--start` option can't take a cell name with a comma through `--esa`, which splits on commas. Start in Seyda Neen, or continue the newest save by giving no start option.
 
    Still to do: load a save on the Fold, play with a real controller, and measure frame rates on the Fold.
 6. **Fix and tune.** Expect rendering bugs from gl4es and slow frames. Pick Android defaults in `settings-default.cfg` or an Android-only defaults file. Candidates are view distance, shadows, post-processing, the resolution scale and a UI scaling factor near 2. Any shaders or post-processing that this branch added for the UI need the same gl4es checks as upstream's. Read Alpha3's patches for problems it has already solved.

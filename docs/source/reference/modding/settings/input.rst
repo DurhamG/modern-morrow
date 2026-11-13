@@ -154,3 +154,13 @@ Input Settings
 
    Controls vertical sensitivity for gyroscope input.
    A value of X means 1° of real-world rotation causes X° of in-game rotation.
+
+.. omw-setting::
+   :title: touch controls
+   :type: boolean
+   :range: true, false
+   :default: false
+
+   Plays the game with gestures on a touch screen, with no buttons on the screen.
+   The left thumb walks and strafes, and the right thumb looks around and taps to act.
+   In menus, a tap works as a click. The Android build turns this on in its own defaults.
