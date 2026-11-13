@@ -13,6 +13,7 @@ namespace MWInput
 {
     class BindingsManager;
     class MouseManager;
+    class TouchManager;
 
     class ControllerManager : public SDLUtil::ControllerListener
     {
@@ -34,6 +35,9 @@ namespace MWInput
         void touchpadMoved(int deviceId, const SDLUtil::TouchEvent& arg) override;
         void touchpadPressed(int deviceId, const SDLUtil::TouchEvent& arg) override;
         void touchpadReleased(int deviceId, const SDLUtil::TouchEvent& arg) override;
+
+        /// The touch controls' tutorial, whose pages A and B turn.
+        void setTouchManager(TouchManager* touchManager) { mTouchManager = touchManager; }
 
         void setJoystickLastUsed(bool enabled) { mJoystickLastUsed = enabled; }
         bool joystickLastUsed() const { return mJoystickLastUsed; }
@@ -68,6 +72,10 @@ namespace MWInput
         std::string getControllerAxisIcon(int axis);
 
     private:
+        TouchManager* mTouchManager = nullptr;
+        /// Buttons whose press turned a page of the touch tutorial, so that their release does nothing either.
+        std::set<int> mTutorialButtons;
+
         // Return true if GUI consumes input.
         bool gamepadToGuiControl(const SDL_ControllerButtonEvent& arg);
         bool gamepadToGuiControl(const SDL_ControllerAxisEvent& arg);

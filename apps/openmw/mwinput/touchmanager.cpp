@@ -1,8 +1,14 @@
 #include "touchmanager.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <fstream>
 #include <limits>
+#include <set>
+#include <string>
 
 #include <MyGUI_InputManager.h>
 #include <MyGUI_ScrollBar.h>
@@ -13,6 +19,8 @@
 
 #include <osg/Math>
 
+#include <components/debug/debuglog.hpp>
+#include <components/files/conversion.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -23,11 +31,14 @@
 
 #include "../mwgui/controllerscreen.hpp"
 #include "../mwgui/mapwindow.hpp"
+#include "../mwgui/mode.hpp"
 #include "../mwgui/touchoverlay.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/drawstate.hpp"
+
+#include "../mwstate/character.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/datetimemanager.hpp"
@@ -91,6 +102,56 @@ namespace MWInput
         constexpr float sTabSwipeMm = 12.f;
         // How many frames a tap holds the attack, so the game sees it.
         constexpr int sUseFrames = 3;
+        // The tutorial shows again for a character after this long without playing with touch.
+        constexpr std::chrono::seconds sTutorialAgain = std::chrono::hours(24 * 14);
+        // How far in from a side edge the tutorial draws the edge swipes' bands, wider than they are so they show.
+        constexpr float sTutorialEdgeMm = 8.f;
+
+        // The tutorial's record is a line "played <seconds since 1970>", for when the game was last played with
+        // touch, and a line "seen <folder>" for each character, by its folder of saves, that has seen the tutorial.
+        struct TutorialRecord
+        {
+            std::int64_t mLastPlayed = 0;
+            std::set<std::string> mCharacters;
+        };
+
+        TutorialRecord readTutorialRecord(const std::filesystem::path& file)
+        {
+            TutorialRecord record;
+            std::ifstream stream(file);
+            std::string line;
+            while (std::getline(stream, line))
+            {
+                if (line.starts_with("played "))
+                    record.mLastPlayed = std::atoll(line.c_str() + 7);
+                else if (line.starts_with("seen "))
+                    record.mCharacters.insert(line.substr(5));
+            }
+            return record;
+        }
+
+        void writeTutorialRecord(const std::filesystem::path& file, const TutorialRecord& record)
+        {
+            std::ofstream stream(file);
+            stream << "played " << record.mLastPlayed << '\n';
+            for (const std::string& character : record.mCharacters)
+                stream << "seen " << character << '\n';
+            if (!stream)
+                Log(Debug::Warning) << "Failed to write the touch tutorial's record to " << file;
+        }
+
+        std::int64_t secondsNow()
+        {
+            return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
+                .count();
+        }
+
+        // The current character's folder of saves, or nothing for a new game's character, which has none yet.
+        std::string currentCharacterFolder()
+        {
+            const MWState::Character* character = MWBase::Environment::get().getStateManager()->getCurrentCharacter();
+            return character != nullptr ? Files::pathToUnicodeString(character->getPath().filename()) : std::string();
+        }
 
         float distance(const MyGUI::FloatPoint& a, const MyGUI::FloatPoint& b)
         {
@@ -104,11 +165,13 @@ namespace MWInput
         }
     }
 
-    TouchManager::TouchManager(BindingsManager* bindingsManager, MouseManager* mouseManager, SDL_Window* window)
+    TouchManager::TouchManager(BindingsManager* bindingsManager, MouseManager* mouseManager, SDL_Window* window,
+        const std::filesystem::path& tutorialFile)
         : mBindingsManager(bindingsManager)
         , mMouseManager(mouseManager)
         , mWindow(window)
         , mOverlay(std::make_unique<MWGui::TouchOverlay>())
+        , mTutorialFile(tutorialFile)
     {
     }
 
@@ -216,6 +279,13 @@ namespace MWInput
         finger.mId = arg.fingerId;
         finger.mStart = finger.mPosition = toPixels(arg);
         finger.mDownTime = arg.timestamp;
+
+        if (mTutorialPage != TutorialPage::None)
+        {
+            finger.mRole = Role::Tutorial;
+            mFingers.push_back(finger);
+            return;
+        }
 
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
@@ -429,6 +499,10 @@ namespace MWInput
             case Role::Radial:
                 if (still)
                     tapRadial(finger.mPosition);
+                break;
+            case Role::Tutorial:
+                if (still)
+                    nextTutorialPage();
                 break;
             case Role::Menu:
                 if (finger.mPressed)
@@ -848,9 +922,46 @@ namespace MWInput
         if (mUseFrames > 0 && --mUseFrames == 0)
             pressUse(false);
 
+        // The tutorial is for touch controls, so it waits until they're on.
+        if (!Settings::input().mTouchControls)
+            return;
+        const bool running
+            = MWBase::Environment::get().getStateManager()->getState() == MWBase::StateManager::State_Running;
+        if (running && !mWasRunning)
+            mTutorialCheck = true;
+        mWasRunning = running;
+        if (mTutorialCharacterDue)
+            recordTutorialCharacter();
+
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        const bool inventoryOpen
+            = winMgr->isGuiMode() && winMgr->getMode() == MWGui::GM_Inventory && mMouseManager->usesControllerMenus();
+        if (mTutorialPage == TutorialPage::Menus)
+        {
+            // The page closes with the inventory screens, such as when a gamepad closes them.
+            if (!inventoryOpen)
+            {
+                mOverlay->hide();
+                mTutorialPage = TutorialPage::None;
+            }
+            return;
+        }
+        if (mMenusTutorialDue && inventoryOpen && mFingers.empty())
+        {
+            mMenusTutorialDue = false;
+            showTutorial(TutorialPage::Menus);
+            return;
+        }
+
         // A menu that opens, such as from talking to someone, ends whatever the thumbs were doing in the game.
         if (!inGame())
         {
+            // A menu that a script opens over the play page takes its place, and the menus page comes later.
+            if (mTutorialPage == TutorialPage::Play)
+            {
+                mTutorialPage = TutorialPage::None;
+                mMenusTutorialDue = true;
+            }
             stopMovement();
             pressUse(false);
             mPickerOpen = false;
@@ -866,6 +977,11 @@ namespace MWInput
             }
             return;
         }
+
+        if (mTutorialPage == TutorialPage::Play)
+            return;
+        if (mTutorialCheck && mFingers.empty())
+            checkTutorial();
 
         const Uint32 now = SDL_GetTicks();
         for (Finger& finger : mFingers)
@@ -907,5 +1023,75 @@ namespace MWInput
         mRadialOpen = false;
         mOverlay->hide();
         pause(false);
+        mTutorialPage = TutorialPage::None;
+        mMenusTutorialDue = false;
+        mTutorialCheck = true;
+    }
+
+    void TouchManager::checkTutorial()
+    {
+        mTutorialCheck = false;
+        TutorialRecord record = readTutorialRecord(mTutorialFile);
+        const std::string character = currentCharacterFolder();
+        const std::int64_t now = secondsNow();
+        const bool away = record.mLastPlayed > 0 && now - record.mLastPlayed >= sTutorialAgain.count();
+        record.mLastPlayed = now;
+        if (character.empty() || !record.mCharacters.contains(character) || away)
+        {
+            showTutorial(TutorialPage::Play);
+            if (character.empty())
+                mTutorialCharacterDue = true;
+            else
+                record.mCharacters.insert(character);
+        }
+        writeTutorialRecord(mTutorialFile, record);
+    }
+
+    void TouchManager::recordTutorialCharacter()
+    {
+        const std::string character = currentCharacterFolder();
+        if (character.empty())
+            return;
+        mTutorialCharacterDue = false;
+        TutorialRecord record = readTutorialRecord(mTutorialFile);
+        if (record.mCharacters.insert(character).second)
+            writeTutorialRecord(mTutorialFile, record);
+    }
+
+    void TouchManager::showTutorial(TutorialPage page)
+    {
+        mTutorialPage = page;
+        const MyGUI::IntSize size = screenSize();
+        const float mm = pixelsPerMm();
+        if (page == TutorialPage::Menus)
+        {
+            mOverlay->showTutorialMenus(size, mm);
+            return;
+        }
+
+        // The zones are where the gestures start, as roleForGame() and edgeAt() find them.
+        pause(true);
+        MWGui::TouchTutorialZones zones;
+        const int corner = static_cast<int>(sCornerMm * mm);
+        zones.mQuickSave = MyGUI::IntCoord(0, 0, corner, corner);
+        zones.mQuickLoad = MyGUI::IntCoord(size.width - corner, 0, corner, corner);
+        zones.mSneak = MyGUI::IntCoord(size.width - corner, size.height - corner, corner, corner);
+        const int edge = static_cast<int>(sTutorialEdgeMm * mm);
+        zones.mLeftEdge = MyGUI::IntCoord(0, size.height / 4, edge, size.height / 2);
+        zones.mRightEdge = MyGUI::IntCoord(size.width - edge, size.height / 4, edge, size.height / 2);
+        mOverlay->showTutorialPlay(zones, size, mm);
+    }
+
+    void TouchManager::nextTutorialPage()
+    {
+        if (mTutorialPage == TutorialPage::None)
+            return;
+        mOverlay->hide();
+        if (mTutorialPage == TutorialPage::Play)
+        {
+            pause(false);
+            mMenusTutorialDue = true;
+        }
+        mTutorialPage = TutorialPage::None;
     }
 }

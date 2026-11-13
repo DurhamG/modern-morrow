@@ -1,6 +1,7 @@
 #ifndef MWINPUT_TOUCHMANAGER_H
 #define MWINPUT_TOUCHMANAGER_H
 
+#include <filesystem>
 #include <memory>
 #include <vector>
 
@@ -25,11 +26,14 @@ namespace MWInput
     /// thumb walks like a stick, and the right thumb looks and taps to act in the current mode. Swiping in from the
     /// left edge opens the inventory, and from the right edge picks the mode or a quick key. Corners quicksave,
     /// quickload and sneak. In menus a tap clicks, a drag scrolls, a sideways drag switches tabs, and swiping in from
-    /// either edge goes back.
+    /// either edge goes back. A tutorial of two pages explains this to players who may not know it.
     class TouchManager : public SDLUtil::TouchListener
     {
     public:
-        TouchManager(BindingsManager* bindingsManager, MouseManager* mouseManager, SDL_Window* window);
+        /// The tutorial's record, of the characters that have seen it and when the game was last played with touch, is
+        /// kept in tutorialFile.
+        TouchManager(BindingsManager* bindingsManager, MouseManager* mouseManager, SDL_Window* window,
+            const std::filesystem::path& tutorialFile);
         ~TouchManager() override;
 
         void fingerPressed(const SDL_TouchFingerEvent& arg) override;
@@ -38,8 +42,13 @@ namespace MWInput
 
         void update(float dt);
 
-        /// Lets go of every finger and anything they hold, such as when a game loads.
+        /// Lets go of every finger and anything they hold, such as when a game starts or loads. Then the tutorial
+        /// checks whether it's due.
         void reset();
+
+        bool tutorialShowing() const { return mTutorialPage != TutorialPage::None; }
+        /// Turns the tutorial's page. The play page leads to the menus page, which waits for the inventory screens.
+        void nextTutorialPage();
 
     private:
         enum class Role
@@ -64,6 +73,16 @@ namespace MWInput
             Radial,
             /// A finger in a menu: a tap clicks, a drag scrolls, a sideways drag switches tabs.
             Menu,
+            /// A finger on a tutorial page, which a tap turns.
+            Tutorial,
+        };
+
+        /// The tutorial's pages: the one over the game, and the one over the inventory screens.
+        enum class TutorialPage
+        {
+            None,
+            Play,
+            Menus,
         };
 
         /// The modes, which are also the mode picker's items. Its quick keys item opens the quick keys radial.
@@ -157,6 +176,13 @@ namespace MWInput
         /// Says goodbye, closing any service on top of the conversation, when the conversation lets it end.
         bool leaveConversation();
 
+        /// Shows the play page when a game that started or loaded needs it: a new game, a character that hasn't seen
+        /// the tutorial, or one who has but hasn't played with touch for a while.
+        void checkTutorial();
+        void showTutorial(TutorialPage page);
+        /// Adds the current character to the tutorial's record, once it has a folder of saves.
+        void recordTutorialCharacter();
+
         /// Runs an action after the given number of frames, so that it comes after the game unpauses.
         void queueAction(int action, int frames = 0);
         void pause(bool paused);
@@ -187,6 +213,16 @@ namespace MWInput
 
         /// How far apart a pinch's fingers were when it last zoomed the map.
         float mPinchZoomedAt = 0;
+
+        std::filesystem::path mTutorialFile;
+        TutorialPage mTutorialPage = TutorialPage::None;
+        /// A game started or loaded, so the tutorial may be due once the player is in the game.
+        bool mTutorialCheck = false;
+        bool mWasRunning = false;
+        /// The menus page shows the next time the inventory screens open.
+        bool mMenusTutorialDue = false;
+        /// A new game's character has no folder of saves until it saves, so it's recorded then.
+        bool mTutorialCharacterDue = false;
 
         bool mRadialOpen = false;
         std::vector<MyGUI::IntCoord> mRadialSlots;

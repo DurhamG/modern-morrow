@@ -25,7 +25,8 @@ namespace MWInput
 {
     InputManager::InputManager(SDL_Window* window, std::unique_ptr<SDLUtil::InputWrapper> inputWrapper,
         std::function<void()> takeScreenshot, const std::filesystem::path& userFile, bool userFileExists,
-        const std::filesystem::path& userControllerBindingsFile, const std::filesystem::path& controllerBindingsFile)
+        const std::filesystem::path& userControllerBindingsFile, const std::filesystem::path& controllerBindingsFile,
+        const std::filesystem::path& touchTutorialFile)
         : mControlsDisabled(false)
         , mInputWrapper(std::move(inputWrapper))
         , mBindingsManager(std::make_unique<BindingsManager>(userFile, userFileExists))
@@ -37,13 +38,15 @@ namespace MWInput
               mBindingsManager.get(), mMouseManager.get(), userControllerBindingsFile, controllerBindingsFile))
         , mSensorManager(std::make_unique<SensorManager>())
         , mGyroManager(std::make_unique<GyroManager>())
-        , mTouchManager(std::make_unique<TouchManager>(mBindingsManager.get(), mMouseManager.get(), window))
+        , mTouchManager(
+              std::make_unique<TouchManager>(mBindingsManager.get(), mMouseManager.get(), window, touchTutorialFile))
     {
         mInputWrapper->setWindowEventCallback(MWBase::Environment::get().getWindowManager());
         mInputWrapper->setKeyboardEventCallback(mKeyboardManager.get());
         mInputWrapper->setMouseEventCallback(mMouseManager.get());
         mInputWrapper->setControllerEventCallback(mControllerManager.get());
         mKeyboardManager->setControllerManager(mControllerManager.get());
+        mControllerManager->setTouchManager(mTouchManager.get());
         mInputWrapper->setSensorEventCallback(mSensorManager.get());
         updateTouchControls();
     }

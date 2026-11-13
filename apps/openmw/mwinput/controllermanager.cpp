@@ -25,6 +25,7 @@
 #include "actions.hpp"
 #include "bindingsmanager.hpp"
 #include "mousemanager.hpp"
+#include "touchmanager.hpp"
 
 namespace
 {
@@ -159,6 +160,16 @@ namespace MWInput
         if (!Settings::input().mEnableController || mBindingsManager->isDetectingBindingState())
             return;
 
+        // A or B turns a page of the touch controls' tutorial, and does nothing else.
+        if ((arg.button == SDL_CONTROLLER_BUTTON_A || arg.button == SDL_CONTROLLER_BUTTON_B) && mTouchManager != nullptr
+            && mTouchManager->tutorialShowing())
+        {
+            mTouchManager->nextTutorialPage();
+            mTutorialButtons.insert(arg.button);
+            mJoystickLastUsed = true;
+            return;
+        }
+
         MWBase::Environment::get().getLuaManager()->inputEvent(
             { MWBase::LuaManager::InputEvent::ControllerPressed, arg.button });
 
@@ -206,6 +217,8 @@ namespace MWInput
             mBindingsManager->controllerButtonReleased(deviceID, arg);
             return;
         }
+        if (mTutorialButtons.erase(arg.button) != 0)
+            return;
 
         if (Settings::input().mEnableController)
         {

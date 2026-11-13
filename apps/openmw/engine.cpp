@@ -884,7 +884,7 @@ void OMW::Engine::prepareEngine()
     };
     mInputManager = std::make_unique<MWInput::InputManager>(mWindow,
         std::make_unique<SDLUtil::InputWrapper>(mWindow, mViewer, mGrab), takeScreenshot, keybinderUser,
-        keybinderUserExists, userGameControllerdb, gameControllerdb);
+        keybinderUserExists, userGameControllerdb, gameControllerdb, mCfgMgr.getUserDataPath() / "touch-tutorial.txt");
     mEnvironment.setInputManager(*mInputManager);
 
     // Create sound system

@@ -72,6 +72,14 @@ These are starting values to tune on the phone. Distances are in millimetres on 
 - **Rest and Menu.** With touch controls on, the tab bar above the inventory screens ends with **Rest**, which opens the rest dialog, and **Menu**, which opens the pause menu. The tabs move left to make room. The journal is already a tab. The desktop and Steam Deck tab bars are unchanged.
 - Three things a mouse can't do yet, from [mouse.md](../mouse.md), need touch controls too: bartering one item at a time, haggling, and turning the head on the race screen. Assigning quick keys needs them too.
 
+## Tutorial
+
+Two pages explain the touch controls, drawn over the game itself rather than over screenshots, so they fit any screen.
+
+- **The play page** shows over the paused game: the three corners, the swipes in from the left edge (the inventory) and the right edge (the mode picker, drawn small), and what each thumb does. A tap, or a gamepad's A or B, closes it.
+- **The menus page** shows the next time the inventory screens open, which can be much later, since a new game's inventory stays locked until the tutorial dialogue gives it. It shows switching screens on the left half, tabs on the right half, going back from either edge, and that the button hints can be tapped. A tap, A or B closes it and leaves the inventory open.
+- **When.** The play page shows on a new game, on loading a character that hasn't seen it, and on loading any game after 14 days without playing with touch. `touch-tutorial.txt` in the user data folder records the characters that have seen it, by their folder of saves, and when the game was last played with touch. A new game's character has no folder until it saves, so it's recorded then. With touch controls off, the tutorial never shows.
+
 ## How it is built
 
 - **The engine reads the fingers.** SDL sends multi-touch finger events, which `SDLUtil::InputWrapper` passes to a `SDLUtil::TouchListener`. `MWInput::TouchManager` is that listener. It recognises the gestures and acts through the paths the other input already uses:
@@ -80,7 +88,7 @@ These are starting values to tune on the phone. Distances are in millimetres on 
   - Looking turns the player directly, as the mouse does, with the camera sensitivity setting applied.
   - In menus, a tap goes to `ControllerUi::pointerTapped`, or to MyGUI as a click for the windows that aren't controller menus, such as the main menu's buttons. A drag turns the wheel through `ControllerUi::pointerWheel`.
 - **SDL's touch-as-mouse is dropped** while touch controls are on, so that a tap during play doesn't also click, and a left click doesn't attack. The menus get no mouse cursor either.
-- **The mode picker, the radial and the quickload panel** are drawn by `MWGui::TouchOverlay` on the ControllerNotification layer, with the controller UI's helpers.
+- **The tutorial, the mode picker, the radial and the quickload panel** are drawn by `MWGui::TouchOverlay` on the ControllerNotification layer, with the controller UI's helpers.
 - **A setting turns touch controls on**, `[Input] touch controls`. It's off in `settings-default.cfg`. The Android app ships `android/settings.cfg` next to `defaults.bin`, and the game reads it as more defaults, which turns it on there while a player's own `settings.cfg` can still turn it off. With it off, finger events are ignored as before, so the desktop and Steam Deck builds behave as they did.
 - **Pausing** for the picker and the radial adds a "touch" pause tag to the time manager, the same way Lua's `world.pause` does.
 - **The screen's edges.** `GameActivity` asks Android to keep the middle half of each side edge, 48 dp wide, free of the back gesture. Android normally allows only 200 dp of each edge, but lifts that for an immersive sticky window, which SDL's fullscreen window is. `dumpsys window` showed the whole middle half granted in the emulator (Android 15) and on the Fold 8 (Android 17).
