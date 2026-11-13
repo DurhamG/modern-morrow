@@ -58,7 +58,7 @@ gh secret set ANDROID_KEY_ALIAS --repo DurhamG/modern-morrow --body modern-morro
 
 The APK's version code is the release workflow's run number, which only grows, so each release installs over the one before. Its version name is the tag without the `v`.
 
-Debug APKs from branch pushes are on each run's page too. Each run signs them with a new throwaway key, so installing one over another needs `adb uninstall io.github.durhamg.modernmorrow` first, which deletes the app's settings and saves.
+Debug APKs from branch pushes are on each run's page too. A debug build is an app of its own, `io.github.durhamg.modernmorrow.debug`, called Modern Morrow Debug, so it installs beside the released app and has its own settings and saves. Pushes to master sign it with the release key, so each master build installs over the last. Other branches and pull requests sign it with a new throwaway key each run, so installing one over another needs `adb uninstall io.github.durhamg.modernmorrow.debug` first, which deletes the debug app's settings and saves.
 
 To build a signed release APK on the Mac, set the same three values as `ANDROID_KEYSTORE` (the keystore's path), `ANDROID_KEYSTORE_PASSWORD` and `ANDROID_KEY_ALIAS`, and run `android/build.sh release`.
 
