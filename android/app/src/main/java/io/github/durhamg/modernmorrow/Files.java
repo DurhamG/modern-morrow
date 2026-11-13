@@ -25,7 +25,8 @@ import java.util.List;
  *   It holds settings, saves and logs, and players can reach it over USB.
  *
  * The Morrowind data is looked for in the user folder's Morrowind folder, which needs no permission, then in
- * /sdcard/Morrowind, which needs "All files access". Either holds Data Files, as a Morrowind install does.
+ * /sdcard/Morrowind, which needs "All files access". Either holds Data Files, as a Morrowind install does. The user
+ * folder's Morrowind folder is made empty at the start, so that it's there to copy into over USB.
  */
 final class Files {
     private Files() {}
@@ -47,25 +48,33 @@ final class Files {
         return new File(userDir(context), "config");
     }
 
-    /** Returns null when the game can start, or else what the player has to do first. */
-    static String prepare(Context context) throws IOException {
+    /** The Morrowind folder in the app's own folder, which needs no permission. */
+    static File appMorrowindDir(Context context) {
+        return new File(userDir(context), "Morrowind");
+    }
+
+    /** The Morrowind folder at the top of the device's storage, which needs access to all files. */
+    static File sharedMorrowindDir() {
+        return new File(Environment.getExternalStorageDirectory(), "Morrowind");
+    }
+
+    /** Returns true when the game can start, or false when the Morrowind data hasn't been found. */
+    static boolean prepare(Context context) throws IOException {
         copyAssetsIfChanged(context);
+        appMorrowindDir(context).mkdirs();
 
         File dataFiles = findDataFiles(context);
-        if (dataFiles == null) {
-            return "Modern Morrow needs the files of a Morrowind install. Copy the folder that holds \"Data Files\" "
-                + "to " + new File(userDir(context), "Morrowind") + " or to /sdcard/Morrowind.\n\n"
-                + "/sdcard/Morrowind needs access to all files.";
-        }
+        if (dataFiles == null)
+            return false;
         writeUserConfig(context, dataFiles);
-        return null;
+        return true;
     }
 
     private static File findDataFiles(Context context) {
         List<File> installs = new ArrayList<>();
-        installs.add(new File(userDir(context), "Morrowind"));
+        installs.add(appMorrowindDir(context));
         if (Environment.isExternalStorageManager())
-            installs.add(new File(Environment.getExternalStorageDirectory(), "Morrowind"));
+            installs.add(sharedMorrowindDir());
         for (File install : installs) {
             File dataFiles = new File(install, "Data Files");
             if (new File(dataFiles, "Morrowind.esm").isFile())
