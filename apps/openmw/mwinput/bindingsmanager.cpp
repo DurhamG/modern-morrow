@@ -242,6 +242,8 @@ namespace MWInput
 
     float BindingsManager::getActionValue(int id) const
     {
+        if (const auto touch = mTouchValues.find(id); touch != mTouchValues.end())
+            return touch->second;
         return mInputBinder->getChannel(id)->getValue();
     }
 

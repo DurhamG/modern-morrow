@@ -28,7 +28,7 @@ add_openmw_dir (mwrender
 
 add_openmw_dir (mwinput
     actions actionmanager bindingsmanager controllermanager controlswitch
-    inputmanagerimp mousemanager keyboardmanager sensormanager gyromanager
+    inputmanagerimp mousemanager keyboardmanager sensormanager gyromanager touchmanager
     )
 
 add_openmw_dir (mwgui
@@ -47,7 +47,7 @@ add_openmw_dir (mwgui
     postprocessorhud settings worlditemmodel itemtransfer inventorytabsoverlay controllerscreen inventoryscreen
     magicscreen statsscreen dialoguepanel pausemenu itemdetails lootpanel barterpanel questlog
     journalscreen servicepanel controllerdialog readingpanel companionpanel choicescreen quickkeyslots
-    quickkeyassigner alchemypanel effectcraftpanel toolpanel createclasspanel
+    quickkeyassigner alchemypanel effectcraftpanel toolpanel createclasspanel touchoverlay
     )
 
 add_openmw_dir (mwdialogue

@@ -19,6 +19,7 @@
 #include "keyboardmanager.hpp"
 #include "mousemanager.hpp"
 #include "sensormanager.hpp"
+#include "touchmanager.hpp"
 
 namespace MWInput
 {
@@ -36,6 +37,7 @@ namespace MWInput
               mBindingsManager.get(), mMouseManager.get(), userControllerBindingsFile, controllerBindingsFile))
         , mSensorManager(std::make_unique<SensorManager>())
         , mGyroManager(std::make_unique<GyroManager>())
+        , mTouchManager(std::make_unique<TouchManager>(mBindingsManager.get(), window))
     {
         mInputWrapper->setWindowEventCallback(MWBase::Environment::get().getWindowManager());
         mInputWrapper->setKeyboardEventCallback(mKeyboardManager.get());
@@ -43,12 +45,25 @@ namespace MWInput
         mInputWrapper->setControllerEventCallback(mControllerManager.get());
         mKeyboardManager->setControllerManager(mControllerManager.get());
         mInputWrapper->setSensorEventCallback(mSensorManager.get());
+        updateTouchControls();
+    }
+
+    void InputManager::updateTouchControls()
+    {
+        if (Settings::input().mTouchControls)
+            mInputWrapper->setTouchEventCallback(mTouchManager.get());
+        else
+        {
+            mInputWrapper->setTouchEventCallback(nullptr);
+            mTouchManager->reset();
+        }
     }
 
     void InputManager::clear()
     {
         // Enable all controls
         mControlSwitch->clear();
+        mTouchManager->reset();
     }
 
     InputManager::~InputManager() {}
@@ -76,6 +91,7 @@ namespace MWInput
         mMouseManager->update(dt);
         mSensorManager->update(dt);
         mActionManager->update(dt);
+        mTouchManager->update(dt);
 
         if (Settings::input().mEnableGyroscope)
         {
@@ -109,8 +125,9 @@ namespace MWInput
         if (guiMode)
             MWBase::Environment::get().getWindowManager()->showCrosshair(false);
 
-        bool isCursorVisible
-            = guiMode && (!mControllerManager->joystickLastUsed() || mControllerManager->gamepadGuiCursorEnabled());
+        // Touch controls tap where they act, so they have no cursor.
+        bool isCursorVisible = guiMode && !Settings::input().mTouchControls
+            && (!mControllerManager->joystickLastUsed() || mControllerManager->gamepadGuiCursorEnabled());
         MWBase::Environment::get().getWindowManager()->setCursorVisible(isCursorVisible);
 
         if (!guiMode)
@@ -153,6 +170,7 @@ namespace MWInput
     void InputManager::processChangedSettings(const Settings::CategorySettingVector& changed)
     {
         mSensorManager->processChangedSettings(changed);
+        updateTouchControls();
     }
 
     bool InputManager::getControlSwitch(std::string_view sw)

@@ -71,6 +71,7 @@ cp -r /build/resources "$ASSETS/resources"
 # drivers or SDL versions did, which scrambled a Switch Pro Controller's buttons. A player can still add the file to
 # the user config folder.
 cp /build/openmw.cfg /build/defaults.bin "$ASSETS/config/"
+cp /src/android/settings.cfg "$ASSETS/config/"
 git -C /src rev-parse HEAD > "$ASSETS/version"
 date +%s >> "$ASSETS/version"
 

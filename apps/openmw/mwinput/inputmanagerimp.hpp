@@ -39,6 +39,7 @@ namespace MWInput
     class MouseManager;
     class SensorManager;
     class GyroManager;
+    class TouchManager;
 
     /**
      * @brief Class that provides a high-level API for game input
@@ -124,6 +125,10 @@ namespace MWInput
         std::unique_ptr<ControllerManager> mControllerManager;
         std::unique_ptr<SensorManager> mSensorManager;
         std::unique_ptr<GyroManager> mGyroManager;
+        std::unique_ptr<TouchManager> mTouchManager;
+
+        /// Gives the fingers to the touch manager while the setting is on.
+        void updateTouchControls();
     };
 }
 #endif

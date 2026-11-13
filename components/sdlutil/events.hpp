@@ -87,6 +87,16 @@ namespace SDLUtil
         virtual void touchpadReleased(int deviceId, const TouchEvent& arg) = 0;
     };
 
+    /// Fingers on a touch screen. Positions are from 0 to 1 across the window.
+    class TouchListener
+    {
+    public:
+        virtual ~TouchListener() {}
+        virtual void fingerPressed(const SDL_TouchFingerEvent& arg) = 0;
+        virtual void fingerMoved(const SDL_TouchFingerEvent& arg) = 0;
+        virtual void fingerReleased(const SDL_TouchFingerEvent& arg) = 0;
+    };
+
     class WindowListener
     {
     public:

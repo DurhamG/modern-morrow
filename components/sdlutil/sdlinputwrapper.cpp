@@ -16,6 +16,7 @@ namespace SDLUtil
         , mKeyboardListener(nullptr)
         , mWindowListener(nullptr)
         , mConListener(nullptr)
+        , mTouchListener(nullptr)
         , mWarpX(0)
         , mWarpY(0)
         , mWarpCompensate(false)
@@ -69,6 +70,7 @@ namespace SDLUtil
             SDL_FlushEvent(SDL_MOUSEBUTTONDOWN);
             SDL_FlushEvent(SDL_MOUSEMOTION);
             SDL_FlushEvent(SDL_MOUSEWHEEL);
+            SDL_FlushEvent(SDL_FINGERDOWN);
 
             return;
         }
@@ -87,6 +89,14 @@ namespace SDLUtil
             if (evt.type > SDL_SYSWMEVENT && evt.type < SDL_KEYDOWN)
                 continue;
 #endif
+            // The touch listener reads the fingers itself, so the mouse that SDL makes from them would act twice.
+            if (mTouchListener != nullptr
+                && (((evt.type == SDL_MOUSEMOTION) && evt.motion.which == SDL_TOUCH_MOUSEID)
+                    || ((evt.type == SDL_MOUSEBUTTONDOWN || evt.type == SDL_MOUSEBUTTONUP)
+                        && evt.button.which == SDL_TOUCH_MOUSEID)
+                    || (evt.type == SDL_MOUSEWHEEL && evt.wheel.which == SDL_TOUCH_MOUSEID)))
+                continue;
+
             switch (evt.type)
             {
                 case SDL_MOUSEMOTION:
@@ -209,12 +219,21 @@ namespace SDLUtil
                     break; // We don't need this event, clipboard is retrieved on demand
 
                 case SDL_FINGERDOWN:
+                    if (mTouchListener)
+                        mTouchListener->fingerPressed(evt.tfinger);
+                    break;
                 case SDL_FINGERUP:
+                    if (mTouchListener)
+                        mTouchListener->fingerReleased(evt.tfinger);
+                    break;
                 case SDL_FINGERMOTION:
+                    if (mTouchListener)
+                        mTouchListener->fingerMoved(evt.tfinger);
+                    break;
                 case SDL_DOLLARGESTURE:
                 case SDL_DOLLARRECORD:
                 case SDL_MULTIGESTURE:
-                    // No use for touch & gesture events
+                    // No use for SDL's own gestures
                     break;
 
                 case SDL_APP_WILLENTERBACKGROUND:
