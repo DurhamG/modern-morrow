@@ -178,13 +178,26 @@ If the autoupdater isn't working, `ModernMorrow-AutoUpdate.log`, in the script's
 Android
 -------
 
-The Android version is an early test. It is for phones, tablets and handhelds, played with a gamepad or with touch gestures. With touch, there are no buttons on the screen: the left thumb walks and the right thumb looks and acts, swiping in from the left edge opens the inventory, and swiping in from the right edge picks the mode, such as attack or magic. The corners quicksave (top left), quickload (hold top right) and sneak (bottom right).
+> [!WARNING]
+> **The Android version is an early test.** Expect bugs, and keep backups of saves you care about.
 
-1. **Install the APK.** Download `ModernMorrow-...-Android-arm64.apk` from the [Releases page](https://github.com/DurhamG/modern-morrow/releases) on the device and open it. Android asks you to allow installing apps from your browser or file manager.
-2. **Start Modern Morrow once.** It makes the folder for the game data, `Android/data/io.github.durhamg.modernmorrow/files/Morrowind`, and says where it is.
-3. **Copy the game data.** Connect the device to a computer over USB, and copy Morrowind's `Data Files` folder from a PC install into that folder, so that `Morrowind/Data Files/Morrowind.esm` is there. On Windows, Steam installs Morrowind in `C:\Program Files (x86)\Steam\steamapps\common\Morrowind`, and GOG Galaxy in `C:\Program Files (x86)\GOG Galaxy\Games\Morrowind`. Then tap "Check again". This needs no permission, but uninstalling the app deletes the folder. Instead, `Data Files` can go in a `Morrowind` folder at the top of the device's internal storage, which stays when the app is uninstalled, but the app then needs access to all files to read it.
+The Android version supports gamepads and touch controls. You need to own Morrowind on Steam or GOG, to copy its game files to the device.
 
-The settings, saves and logs are in `Android/data/io.github.durhamg.modernmorrow/files`. Uninstalling the app deletes that folder, saves included.
+1. **Install the APK.** Download `ModernMorrow-...-Android-arm64.apk` from the [Releases page](https://github.com/DurhamG/modern-morrow/releases) on the device and open it.
+2. **Start Modern Morrow once.** It makes the folder for the game data, `Android/data/io.github.durhamg.modernmorrow/files/Morrowind`.
+3. **Copy the game data.** Connect the device to a computer over USB, and copy Morrowind's `Data Files` folder into that folder. Steam installs Morrowind in `C:\Program Files (x86)\Steam\steamapps\common\Morrowind`, and GOG Galaxy in `C:\Program Files (x86)\GOG Galaxy\Games\Morrowind`.
+4. **Tap "Check again".** The game starts.
+
+Uninstalling the app deletes its folder, including the game data and your saves. To keep the game data across reinstalls, put `Data Files` in a `Morrowind` folder at the top of the device's storage instead, and let the app access all files.
+
+### Touch controls
+
+- **Left thumb:** walk and strafe.
+- **Right thumb:** drag to look. Tap to use, attack, cast or jump, depending on the mode. In attack mode, hold still to charge.
+- **Swipe in from the left edge:** open the inventory.
+- **Swipe in from the right edge:** pick the mode. Use is under your thumb, attack and then quick keys are to the left, magic is up and jump is down.
+- **Corners:** quicksave at the top left, quickload by holding the top right, and sneak at the bottom right.
+- **In menus:** tap a row to select it and again to act. Drag to scroll, and drag sideways to switch tabs. Swipe in from either edge to go back. Pinch to zoom the map.
 
 How it's built
 --------------
