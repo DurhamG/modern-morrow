@@ -15,6 +15,7 @@ struct SDL_Window;
 namespace MWGui
 {
     class TouchOverlay;
+    class TouchTrace;
 }
 
 namespace MWInput
@@ -41,6 +42,9 @@ namespace MWInput
         void fingerReleased(const SDL_TouchFingerEvent& arg) override;
 
         void update(float dt);
+        /// Draws the fingers for the "show touches" setting. It runs every frame, even when the controls are off, such
+        /// as during a video or a loading screen.
+        void drawTouches();
 
         /// Lets go of every finger and anything they hold, such as when a game starts or loads. Then the tutorial
         /// checks whether it's due.
@@ -134,6 +138,8 @@ namespace MWInput
         MyGUI::IntSize screenSize() const;
         float pixelsPerMm() const;
         bool isTap(const Finger& finger, Uint32 upTime) const;
+        /// Where a finger is, in GUI coordinates, for the "show touches" setting.
+        MyGUI::FloatPoint toTrace(const SDL_TouchFingerEvent& arg) const;
         bool inGame() const;
         /// The mode a tap acts in: jump, or what the player has out.
         int currentMode() const;
@@ -191,6 +197,7 @@ namespace MWInput
         MouseManager* mMouseManager;
         SDL_Window* mWindow;
         std::unique_ptr<MWGui::TouchOverlay> mOverlay;
+        std::unique_ptr<MWGui::TouchTrace> mTrace;
 
         std::vector<Finger> mFingers;
         std::vector<PendingAction> mPending;

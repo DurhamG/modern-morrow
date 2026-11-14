@@ -33,6 +33,7 @@
 #include "../mwgui/mapwindow.hpp"
 #include "../mwgui/mode.hpp"
 #include "../mwgui/touchoverlay.hpp"
+#include "../mwgui/touchtrace.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
@@ -171,6 +172,7 @@ namespace MWInput
         , mMouseManager(mouseManager)
         , mWindow(window)
         , mOverlay(std::make_unique<MWGui::TouchOverlay>())
+        , mTrace(std::make_unique<MWGui::TouchTrace>())
         , mTutorialFile(tutorialFile)
     {
     }
@@ -210,6 +212,13 @@ namespace MWInput
         SDL_GetWindowSize(mWindow, &windowWidth, nullptr);
         const float pixelsPerPoint = windowWidth > 0 ? static_cast<float>(screenSize().width) / windowWidth : 1.f;
         return dpi / 25.4f * pixelsPerPoint;
+    }
+
+    MyGUI::FloatPoint TouchManager::toTrace(const SDL_TouchFingerEvent& arg) const
+    {
+        const float scale = MWBase::Environment::get().getWindowManager()->getScalingFactor();
+        const MyGUI::FloatPoint pixels = toPixels(arg);
+        return { pixels.left / scale, pixels.top / scale };
     }
 
     bool TouchManager::isTap(const Finger& finger, Uint32 upTime) const
@@ -274,6 +283,8 @@ namespace MWInput
 
     void TouchManager::fingerPressed(const SDL_TouchFingerEvent& arg)
     {
+        if (Settings::input().mShowTouches)
+            mTrace->press(arg.fingerId, toTrace(arg), arg.timestamp);
         MWBase::Environment::get().getInputManager()->resetIdleTime();
         Finger finger;
         finger.mId = arg.fingerId;
@@ -393,6 +404,8 @@ namespace MWInput
 
     void TouchManager::fingerMoved(const SDL_TouchFingerEvent& arg)
     {
+        if (Settings::input().mShowTouches)
+            mTrace->move(arg.fingerId, toTrace(arg), arg.timestamp);
         Finger* finger = find(arg.fingerId);
         if (finger == nullptr)
             return;
@@ -458,6 +471,8 @@ namespace MWInput
 
     void TouchManager::fingerReleased(const SDL_TouchFingerEvent& arg)
     {
+        if (Settings::input().mShowTouches)
+            mTrace->release(arg.fingerId, toTrace(arg), arg.timestamp);
         Finger* found = find(arg.fingerId);
         if (found == nullptr)
             return;
@@ -1026,6 +1041,17 @@ namespace MWInput
                     mOverlay->showProgress("#{Interface:TouchQuickLoad}", fraction);
             }
         }
+    }
+
+    void TouchManager::drawTouches()
+    {
+        if (!Settings::input().mShowTouches)
+        {
+            mTrace->clear();
+            return;
+        }
+        const float scale = MWBase::Environment::get().getWindowManager()->getScalingFactor();
+        mTrace->draw(SDL_GetTicks(), pixelsPerMm() / scale);
     }
 
     void TouchManager::reset()

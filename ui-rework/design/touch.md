@@ -84,6 +84,17 @@ Two pages explain the touch controls, drawn over the game itself rather than ove
 - **The menus page** shows the next time the inventory screens open, which can be much later, since a new game's inventory stays locked until the tutorial dialogue gives it. It shows switching screens on the left half, tabs on the right half, going back from either edge, and that the button hints can be tapped. A tap, A or B closes it and leaves the inventory open.
 - **When.** The play page shows on a new game, on loading a character that hasn't seen it, and on loading any game after 14 days without playing with touch. `touch-tutorial.txt` in the user data folder records the characters that have seen it, by their folder of saves, and when the game was last played with touch. A new game's character has no folder until it saves, so it's recorded then. With touch controls off, the tutorial never shows.
 
+## Showing touches
+
+For recording videos of the touch controls, the game can draw where the fingers touch, so a screen recording shows them without a camera on the hands. The "Show Touches" option in the Prefs tab, `[Input] show touches`, turns it on. The option only shows when touch controls are on.
+
+- **A tap** leaves a ring where the finger lifted, which grows and fades.
+- **A drag** draws a dot under the finger and a trail along its path that fades after half a second.
+- **A finger held still** shows a ring that fills from the middle, full after 0.6 seconds, such as while charging an attack.
+- **Each finger has its own colour**: the first finger down is cyan, the second amber, then pink, green and lilac. A finger takes the first colour no finger still down has, which matches how Android numbers pointers.
+
+`MWGui::TouchTrace` draws them on the Pointer layer, over everything, videos included. Its rings and discs are two textures it makes itself, coloured per finger, from a pool of images reused every frame. The touch manager passes it every finger event before its own handling, and the input manager has it draw every frame, even while the controls are off.
+
 ## How it is built
 
 - **The engine reads the fingers.** SDL sends multi-touch finger events, which `SDLUtil::InputWrapper` passes to a `SDLUtil::TouchListener`. `MWInput::TouchManager` is that listener. It recognises the gestures and acts through the paths the other input already uses:

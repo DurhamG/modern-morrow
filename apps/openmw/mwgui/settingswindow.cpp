@@ -809,6 +809,11 @@ namespace MWGui
         mMaxLights->eventComboChangePosition += MyGUI::newDelegate(this, &SettingsWindow::onMaxLightsChanged);
         mRunFatigue->eventComboChangePosition += MyGUI::newDelegate(this, &SettingsWindow::onRunFatigueChanged);
 
+        // Showing touches is only for touch controls.
+        MyGUI::Widget* showTouchesRow = nullptr;
+        getWidget(showTouchesRow, "ShowTouchesRow");
+        showTouchesRow->setVisible(Settings::input().mTouchControls);
+
         mActorShadowsButton->eventMouseButtonClick += MyGUI::newDelegate(this, &SettingsWindow::onShadowsButtonClicked);
         mPlayerShadowsButton->eventMouseButtonClick
             += MyGUI::newDelegate(this, &SettingsWindow::onShadowsButtonClicked);

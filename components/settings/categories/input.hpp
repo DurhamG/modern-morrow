@@ -31,6 +31,7 @@ namespace Settings
             makeClampSanitizerFloat(0, 0.5f) };
         SettingValue<bool> mEnableGyroscope{ mIndex, "Input", "enable gyroscope" };
         SettingValue<bool> mTouchControls{ mIndex, "Input", "touch controls" };
+        SettingValue<bool> mShowTouches{ mIndex, "Input", "show touches" };
         SettingValue<GyroscopeAxis> mGyroHorizontalAxis{ mIndex, "Input", "gyro horizontal axis" };
         SettingValue<GyroscopeAxis> mGyroVerticalAxis{ mIndex, "Input", "gyro vertical axis" };
         SettingValue<float> mGyroInputThreshold{ mIndex, "Input", "gyro input threshold", makeMaxSanitizerFloat(0) };

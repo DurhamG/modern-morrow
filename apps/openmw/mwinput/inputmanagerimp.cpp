@@ -79,6 +79,8 @@ namespace MWInput
         // The buttons the mouse pressed count as held for one frame, the last one.
         mControllerManager->clearPressedMenuButtons();
         mInputWrapper->capture(disableEvents);
+        if (Settings::input().mTouchControls)
+            mTouchManager->drawTouches();
 
         if (disableControls)
         {

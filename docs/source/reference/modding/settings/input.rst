@@ -164,3 +164,14 @@ Input Settings
    Plays the game with gestures on a touch screen, with no buttons on the screen.
    The left thumb walks and strafes, and the right thumb looks around and taps to act.
    In menus, a tap works as a click. The Android build turns this on in its own defaults.
+
+.. omw-setting::
+   :title: show touches
+   :type: boolean
+   :range: true, false
+   :default: false
+
+   With touch controls on, draws where the fingers touch the screen, over everything else.
+   A tap leaves a ring that grows and fades, a drag leaves a fading trail, and a finger held still fills a ring.
+   Each finger has its own colour. It's for recording videos of the touch controls.
+   It can be changed in the Prefs tab of the Options menu when touch controls are on.
