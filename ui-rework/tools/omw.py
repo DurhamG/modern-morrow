@@ -130,18 +130,21 @@ class Profile:
 
 
 def process_alive(pid):
+    """Whether the game's process is still running. The system can give a finished process's number to a new one, so
+    the process must also be OpenMW."""
     if sys.platform == "win32":
         result = subprocess.run(
             ["tasklist", "/FI", f"PID eq {pid}", "/NH", "/FO", "CSV"],
             capture_output=True,
             text=True,
         )
-        return f'"{pid}"' in result.stdout
+        return any(f'"{pid}"' in row and row.lower().startswith('"openmw') for row in result.stdout.splitlines())
     try:
         os.kill(pid, 0)
     except OSError:
         return False
-    return True
+    comm = Path(f"/proc/{pid}/comm")
+    return not comm.is_file() or comm.read_text(errors="replace").startswith("openmw")
 
 
 def kill_process(pid):
