@@ -48,6 +48,7 @@ add_openmw_dir (mwgui
     magicscreen statsscreen dialoguepanel pausemenu itemdetails lootpanel barterpanel questlog
     journalscreen journallinks servicepanel controllerdialog readingpanel companionpanel choicescreen quickkeyslots
     quickkeyassigner alchemypanel effectcraftpanel toolpanel createclasspanel touchoverlay touchtrace listscroll
+    textpacking
     )
 
 add_openmw_dir (mwdialogue

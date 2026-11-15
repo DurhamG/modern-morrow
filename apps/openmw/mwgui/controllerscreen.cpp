@@ -29,6 +29,7 @@
 #include "../mwworld/ptr.hpp"
 
 #include "itemwidget.hpp"
+#include "textpacking.hpp"
 
 namespace MWGui
 {
@@ -401,21 +402,20 @@ namespace MWGui
         {
             MyGUI::TextBox* probe = addText(parent, 0, 0, width, 34, {}, sFontNormal, sBrightColour);
             probe->setVisible(false);
-            std::vector<std::vector<std::pair<std::size_t, int>>> rows(1);
-            int rowWidth = 0;
-            for (std::size_t i = 0; i < hints.size(); ++i)
+            std::vector<int> widths;
+            for (const Hint& hint : hints)
             {
-                probe->setCaptionWithReplacing(hints[i].second);
-                const int hintWidth = sHintLabelX + probe->getTextSize().width;
-                if (!rows.back().empty() && rowWidth + sHintGap + hintWidth > width)
-                {
-                    rows.emplace_back();
-                    rowWidth = 0;
-                }
-                rowWidth += (rows.back().empty() ? 0 : sHintGap) + hintWidth;
-                rows.back().emplace_back(i, hintWidth);
+                probe->setCaptionWithReplacing(hint.second);
+                widths.push_back(sHintLabelX + probe->getTextSize().width);
             }
             MyGUI::Gui::getInstance().destroyWidget(probe);
+            std::vector<std::vector<std::pair<std::size_t, int>>> rows;
+            for (const std::vector<std::size_t>& row : packRows(widths, sHintGap, width))
+            {
+                rows.emplace_back();
+                for (std::size_t i : row)
+                    rows.back().emplace_back(i, widths[i]);
+            }
             return rows;
         }
 
@@ -491,26 +491,12 @@ namespace MWGui
             // which wide gaps keep apart, go on as many lines as it takes.
             const int statusLeft = x + 4 + 22 + 24;
             const int room = std::max(1, width - sMargin - statusLeft);
-            std::vector<std::string> lines = { status };
             MyGUI::TextBox* probe = addText(parent, 0, 0, room, 40, status, sFontSmall, sDimColour);
             probe->setVisible(false);
-            if (probe->getTextSize().width > room)
-            {
-                constexpr std::string_view gap = "      ";
-                lines.assign(1, {});
-                for (std::size_t start = 0; start <= status.size();)
-                {
-                    const std::size_t end = std::min(status.find(gap, start), status.size());
-                    const std::string part = status.substr(start, end - start);
-                    const std::string longer = lines.back().empty() ? part : lines.back() + std::string(gap) + part;
-                    probe->setCaptionWithReplacing(longer);
-                    if (!lines.back().empty() && probe->getTextSize().width > room)
-                        lines.push_back(part);
-                    else
-                        lines.back() = longer;
-                    start = end + gap.size();
-                }
-            }
+            const std::vector<std::string> lines = packStatus(status, room, [&](const std::string& text) {
+                probe->setCaptionWithReplacing(text);
+                return probe->getTextSize().width;
+            });
             const int count = static_cast<int>(lines.size());
             const int bandTop = count <= 2 ? 50 : 46;
             const int lineHeight = (count <= 2 ? 40 : 46) / count;
