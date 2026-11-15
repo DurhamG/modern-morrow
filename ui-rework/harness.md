@@ -123,6 +123,10 @@ Scenarios can read and change save files with `ui-rework/tools/savefile.py`. Pat
 - `save-strip PATH NAME OUT`: writes a copy of the save to OUT without the records of that name. A copy without `UIST` is what an OpenMW version without the controller menus writes.
 - `save-set-format PATH VERSION`: changes the save's format version in place, such as to 44 to see that a save too new is refused.
 
+- `expect-file PATTERN` and `expect-no-file PATTERN`: a file in the profile's data folder matches the pattern, or none does, such as `backups/OpenMW/*/*.omwsave`.
+
+`launch --openmw-saves` makes an empty folder in the profile, `data/openmw-saves`, and uses it as OpenMW's saves folder, so the save screens show an OpenMW tab without touching OpenMW's real saves. A scenario puts saves there with `save-strip`.
+
 `savefile.py` also works on its own: `savefile.py records FILE`, `savefile.py format FILE [VERSION]` and `savefile.py strip FILE NAME -o OUT`.
 
 A scenario also fails when the game logs an error: a line at OpenMW's error level, or one with `Error in frame`, `Bad LiveCellRef` or `Fatal error`. The check runs at the end of the scenario, and at an `expect-log-clean` line. `ui-rework/tools/log-allowlist.txt` lists errors that are harmless, each with the reason. A scenario that causes an error on purpose says so with `expect-log TEXT`, which fails when no line has TEXT, and lets the lines that have it pass the check.

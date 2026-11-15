@@ -1,0 +1,74 @@
+# OpenMW's saves on the save and load screens, with a scratch folder standing in for OpenMW's. A save there without
+# the controller menus' record, as OpenMW writes it, loads, carries on in Modern Morrow's own character folder of the
+# same name, and is backed up before Modern Morrow saves over it. A save at a format too new for OpenMW is refused.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true" --openmw-saves
+# Save into Modern Morrow's own folder, and copy the save into OpenMW's under another character's folder.
+pad button=start
+wait-mode MainMenu
+pad button=a
+wait-text "Modern Morrow"
+pad button=a
+wait frames=90
+expect-file "saves/player/*.omwsave"
+save-format "saves/player/*.omwsave" 41
+save-has-record "saves/player/*.omwsave" UIST
+save-strip "saves/player/*.omwsave" UIST "openmw-saves/Vivec/OpenMW game.omwsave"
+# Load it from the OpenMW tab.
+pad button=start
+wait-mode MainMenu
+pad button=dpdown
+pad button=a
+wait-text "Load Game"
+pad button=rightshoulder
+wait frames=10
+shot load-openmw
+expect-text OpenMW
+pad button=a
+wait-text "lose your current game"
+pad button=a
+wait frames=120
+expect-state running
+expect-no-mode
+expect-log-clean
+# Saving in Modern Morrow's own folder makes a character folder of the same name.
+pad button=start
+wait-mode MainMenu
+pad button=a
+wait frames=10
+pad button=a
+wait frames=90
+expect-file "saves/Vivec/*.omwsave"
+save-has-record "saves/Vivec/*.omwsave" UIST
+# Saving over the save in OpenMW's folder backs it up first.
+pad button=start
+wait-mode MainMenu
+pad button=a
+wait frames=10
+pad button=rightshoulder
+wait frames=10
+pad button=dpdown
+wait frames=5
+pad button=a
+wait frames=10
+shot save-over-openmw
+pad button=a
+wait frames=90
+expect-file "backups/OpenMW/Vivec/OpenMW game *.omwsave"
+save-has-record "openmw-saves/Vivec/OpenMW game.omwsave" UIST
+save-no-record "backups/OpenMW/Vivec/*.omwsave" UIST
+# A save at format 42 in OpenMW's folder would be from a newer OpenMW, so it is refused.
+save-set-format "openmw-saves/Vivec/OpenMW game.omwsave" 42
+pad button=start
+wait-mode MainMenu
+pad button=dpdown
+pad button=a
+wait-text "Load Game"
+pad button=rightshoulder
+wait frames=10
+pad button=a
+wait-text "lose your current game"
+pad button=a
+wait frames=60
+expect-log "format version 42 is too new"
+shot refused
+expect-text "created using a newer version of OpenMW"

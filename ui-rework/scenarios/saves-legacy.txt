@@ -1,0 +1,23 @@
+# A save at format 43, Modern Morrow's own before it wrote OpenMW's format 41, still loads from Modern Morrow's folder.
+# This only checks the version rule, since the save's records are still format 41's. The record tests in
+# apps/components_tests/esm3/testsaveload.cpp check what formats 42 and 43 hold.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+pad button=start
+wait-mode MainMenu
+pad button=a
+wait-text "Modern Morrow"
+pad button=a
+wait frames=90
+save-set-format "saves/player/*.omwsave" 43
+save-format "saves/player/*.omwsave" 43
+pad button=start
+wait-mode MainMenu
+pad button=dpdown
+pad button=a
+wait-text "Load Game"
+pad button=a
+wait-text "lose your current game"
+pad button=a
+wait frames=120
+expect-state running
+expect-no-mode

@@ -233,6 +233,12 @@ def write_settings_cfg(profile, args):
         harness_settings["GUI"] = {"scaling factor": args.scale if args.scale is not None else 1.0}
     for section, values in harness_settings.items():
         sections.setdefault(section, {}).update(values)
+    if getattr(args, "openmw_saves", False):
+        # An empty folder of the profile's own stands in for OpenMW's saves, so a run never touches the real ones.
+        openmw_saves = profile.data_dir / "openmw-saves"
+        shutil.rmtree(openmw_saves, ignore_errors=True)
+        openmw_saves.mkdir(parents=True)
+        sections.setdefault("Saves", {})["openmw saves folder"] = str(openmw_saves)
     for setting in args.set or []:
         try:
             name, value = setting.split("=", 1)
@@ -885,6 +891,24 @@ def find_save(data_dir, pattern):
     return found[0]
 
 
+def file_line(words, data_dir):
+    """Runs expect-file or expect-no-file, which check for files in the profile's data folder. Returns a message when
+    the check fails, or None. Other lines give False."""
+    command = words[0]
+    if command not in ("expect-file", "expect-no-file"):
+        return False
+    if len(words) != 2:
+        raise HarnessError(f"{command} takes one pattern")
+    if data_dir is None:
+        raise HarnessError(f"{command} needs the profile's data folder")
+    found = sorted(data_dir.glob(words[1]))
+    if command == "expect-file" and not found:
+        return f"no file in {data_dir} matches {words[1]!r}"
+    if command == "expect-no-file" and found:
+        return f"{found[0]} matches {words[1]!r}"
+    return None
+
+
 def save_line(words, data_dir):
     """Runs one of the scenario lines that read or change save files. Returns a message when a check fails, or None.
     Lines that aren't about saves give False."""
@@ -1067,9 +1091,11 @@ def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, l
             if failure:
                 raise HarnessError(f"{where}: {failure}")
             result = "ok"
-        elif words[0].startswith("save-"):
+        elif words[0].startswith("save-") or words[0] in ("expect-file", "expect-no-file"):
             try:
-                failure = save_line(words, data_dir)
+                failure = file_line(words, data_dir)
+                if failure is False:
+                    failure = save_line(words, data_dir)
             except HarnessError as error:
                 raise HarnessError(f"{where}: {error}")
             if failure is False:
@@ -1145,6 +1171,9 @@ def run_scenario(parser, name, resolution, args):
         shutil.rmtree(out_dir)
 
     start = time.monotonic()
+    # Saves from an earlier run would change what the save screens show, so each run starts without them.
+    for folder in ("saves", "backups"):
+        shutil.rmtree(Profile(profile_name).data_dir / folder, ignore_errors=True)
     cmd_launch(launch_args)
     profile = Profile(profile_name)
     # The game starts a new log each time it starts, so errors while it starts count too.
@@ -1301,6 +1330,8 @@ def build_parser():
     p.add_argument("--screen", type=int, default=int(os.environ.get("OMW_SCREEN", "1")),
                    help="SDL display index for the window (default: $OMW_SCREEN or 1)")
     p.add_argument("--set", action="append", metavar="Section.key=value", help="extra setting; repeatable")
+    p.add_argument("--openmw-saves", action="store_true",
+                   help="use an empty folder in the profile, data/openmw-saves, as OpenMW's saves folder")
     start = p.add_mutually_exclusive_group()
     start.add_argument("--save", help="load this save file")
     start.add_argument("--new-game", action="store_true", help="start a new game with character creation")
