@@ -130,22 +130,31 @@ namespace MyGUIPlatform
         const MyGUI::IntSize globalViewSize = MyGUI::RenderManager::getInstance().getViewSize();
         if (globalViewSize.height <= 0)
             return;
-        mViewSize.height = mFixedHeight;
-        mViewSize.width = static_cast<int>(
-            std::lround(globalViewSize.width * static_cast<double>(mFixedHeight) / globalViewSize.height));
+        mViewSize = fixedHeightViewSize(globalViewSize, mFixedHeight);
     }
 
     MyGUI::IntCoord ScalingLayer::layerToScreenCoords(const MyGUI::IntCoord& coord) const
     {
-        const float scale = getScaleFactor(mViewSize);
-        const MyGUI::IntSize globalViewSize = MyGUI::RenderManager::getInstance().getViewSize();
+        return layerToScreen(
+            coord, mViewSize, MyGUI::RenderManager::getInstance().getViewSize(), getScaleFactor(mViewSize));
+    }
+
+    MyGUI::IntSize fixedHeightViewSize(const MyGUI::IntSize& screen, int height)
+    {
+        return MyGUI::IntSize(
+            static_cast<int>(std::lround(screen.width * static_cast<double>(height) / screen.height)), height);
+    }
+
+    MyGUI::IntCoord layerToScreen(
+        const MyGUI::IntCoord& coord, const MyGUI::IntSize& layer, const MyGUI::IntSize& screen, float scale)
+    {
         const auto toScreen = [scale](int value, int layerSize, int screenSize) {
             return static_cast<int>(std::lround((value - layerSize / 2.f) * scale + screenSize / 2.f));
         };
-        const int left = toScreen(coord.left, mViewSize.width, globalViewSize.width);
-        const int top = toScreen(coord.top, mViewSize.height, globalViewSize.height);
-        const int right = toScreen(coord.right(), mViewSize.width, globalViewSize.width);
-        const int bottom = toScreen(coord.bottom(), mViewSize.height, globalViewSize.height);
+        const int left = toScreen(coord.left, layer.width, screen.width);
+        const int top = toScreen(coord.top, layer.height, screen.height);
+        const int right = toScreen(coord.right(), layer.width, screen.width);
+        const int bottom = toScreen(coord.bottom(), layer.height, screen.height);
         return MyGUI::IntCoord(left, top, right - left, bottom - top);
     }
 

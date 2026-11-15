@@ -41,6 +41,14 @@ namespace MyGUIPlatform
         void updateFixedHeightViewSize();
     };
 
+    /// The size of a layer that is a fixed number of units high, as wide as the screen's shape makes it.
+    MyGUI::IntSize fixedHeightViewSize(const MyGUI::IntSize& screen, int height);
+
+    /// Where a box in a layer's units is on the screen, for a layer of that size drawn at a scale in the middle of the
+    /// screen.
+    MyGUI::IntCoord layerToScreen(
+        const MyGUI::IntCoord& coord, const MyGUI::IntSize& layer, const MyGUI::IntSize& screen, float scale);
+
 }
 
 #endif
