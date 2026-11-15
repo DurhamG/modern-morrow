@@ -114,6 +114,8 @@ Scenarios can check what the game shows. A check that fails stops the scenario w
 - `expect-lua CODE VALUE [context=NAME]`: running the Lua code prints VALUE, such as `expect-lua "print(1 + 1)" 2 context=player`.
 - `wait-text TEXT [timeout=SECONDS]` and `wait-mode MODE [timeout=SECONDS]`: wait until the text shows or the mode is on top, checking every five frames, for up to 10 seconds unless a timeout is given. They are better than a fixed `wait`, which is too long on a fast machine and too short on a slow one.
 
+A scenario also fails when the game logs an error: a line at OpenMW's error level, or one with `Error in frame`, `Bad LiveCellRef` or `Fatal error`. The check runs at the end of the scenario, and at an `expect-log-clean` line. `ui-rework/tools/log-allowlist.txt` lists errors that are harmless, each with the reason. A scenario that causes an error on purpose says so with `expect-log TEXT`, which fails when no line has TEXT, and lets the lines that have it pass the check.
+
 For example, `barter.txt`:
 
 ```

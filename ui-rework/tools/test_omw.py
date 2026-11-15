@@ -162,5 +162,39 @@ class CheckTest(unittest.TestCase):
         self.assertEqual(omw.lua_output({"output": []}), "")
 
 
+class LogTest(unittest.TestCase):
+    lines = [
+        "[21:36:05.510 I] Loading cell Balmora",
+        "[21:36:05.510 E] Failed to open image: Resource 'textures/x.dds' not found",
+        "[21:36:05.600 W] A warning",
+        "[21:36:05.700 E] Error in frame: class does not have services",
+        "[21:36:05.800 I] Bad LiveCellRef cast to BOOK4 from Static",
+    ]
+
+    def test_log_errors_are_found(self):
+        errors = omw.log_errors(self.lines, [])
+        self.assertEqual(len(errors), 3)
+
+    def test_allowlisted_lines_are_skipped(self):
+        allowlist = omw.read_log_allowlist()
+        errors = omw.log_errors(self.lines, allowlist)
+        self.assertEqual(len(errors), 2)
+        self.assertNotIn("does not have services", " ".join(errors))
+
+    def test_expected_errors_are_skipped(self):
+        errors = omw.log_errors(self.lines, [], expected=["textures/x.dds", "Bad LiveCellRef"])
+        self.assertEqual(errors, ["[21:36:05.700 E] Error in frame: class does not have services"])
+
+    def test_lines_before_the_watch_started_are_skipped(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "openmw.log"
+            path.write_text(self.lines[1] + "\n", encoding="utf-8")
+            watch = omw.LogWatch(path)
+            with open(path, "a", encoding="utf-8") as file:
+                file.write(self.lines[3] + "\n")
+            self.assertEqual(watch.new_lines(), [self.lines[3]])
+            self.assertEqual(omw.LogWatch(path, from_start=True).new_lines(), [self.lines[1], self.lines[3]])
+
+
 if __name__ == "__main__":
     unittest.main()

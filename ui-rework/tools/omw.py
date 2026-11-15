@@ -12,6 +12,7 @@ Run "omw.py <command> --help" for the options of each command.
 import argparse
 import json
 import os
+import re
 import shlex
 import shutil
 import socket
@@ -25,6 +26,11 @@ AUTOMATION_DIR = REPO_ROOT / ".automation"
 PROFILES_DIR = AUTOMATION_DIR / "profiles"
 SCENARIOS_DIR = REPO_ROOT / "ui-rework" / "scenarios"
 OUTPUT_DIR = AUTOMATION_DIR / "out"
+LOG_ALLOWLIST = REPO_ROOT / "ui-rework" / "tools" / "log-allowlist.txt"
+
+# Log lines that fail a scenario: OpenMW's error level, and messages that mean something went wrong in a frame or in
+# the game's objects.
+LOG_ERROR_PATTERN = re.compile(r"^\[[0-9:.]+ E\]|Error in frame|Bad LiveCellRef|Fatal error")
 
 # "launch --steam" asks Steam to start the game, so that Steam Input gives it a gamepad. Some controllers need
 # this, such as the 2026 Steam Controller. Steam needs a non-Steam game shortcut to the openmw binary, with
@@ -782,12 +788,48 @@ def check_order(dump, texts):
     return None
 
 
+def read_log_allowlist(path=LOG_ALLOWLIST):
+    """The allow list's regular expressions, without its comments and blank lines."""
+    if not path.is_file():
+        return []
+    return [re.compile(line.strip()) for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.strip().startswith("#")]
+
+
+def log_errors(lines, allowlist, expected=()):
+    """The lines of a log that are errors, leaving out those that the allow list or an expected text matches."""
+    return [line for line in lines if LOG_ERROR_PATTERN.search(line)
+            and not any(pattern.search(line) for pattern in allowlist)
+            and not any(text in line for text in expected)]
+
+
+class LogWatch:
+    """Reads the lines a running game adds to its openmw.log, from where the watch started."""
+
+    def __init__(self, path, from_start=False):
+        self.path = path
+        self.offset = 0 if from_start or not path.is_file() else path.stat().st_size
+        self.allowlist = read_log_allowlist()
+        # Texts of errors that the scenario expects, with expect-log.
+        self.expected = []
+
+    def new_lines(self):
+        if not self.path.is_file():
+            return []
+        with open(self.path, "rb") as file:
+            file.seek(self.offset)
+            return file.read().decode("utf-8", errors="replace").splitlines()
+
+    def errors(self):
+        return log_errors(self.new_lines(), self.allowlist, self.expected)
+
+
 def lua_output(reply):
     """The text a lua command printed, without the empty line its output ends with."""
     return "\n".join(line for line in reply.get("output", []) if line).strip()
 
 
-def check_line(connection, words, timeout):
+def check_line(connection, words, timeout, log=None):
     """Runs one of the scenario lines that check the game, and returns a message when the check fails, or None. Lines
     that aren't checks give False."""
     command = words[0]
@@ -844,6 +886,17 @@ def check_line(connection, words, timeout):
             fields["context"] = value
         output = lua_output(request(**fields))
         return None if output == words[2] else f"the code printed {output!r}"
+    if command in ("expect-log", "expect-log-clean"):
+        need(1 if command == "expect-log" else 0)
+        if log is None:
+            raise HarnessError(f"{command} needs the game's log, which only scenarios watch")
+        if command == "expect-log":
+            if not any(words[1] in line for line in log.new_lines()):
+                return f"the log has no line with {words[1]!r}"
+            log.expected.append(words[1])
+            return None
+        errors = log.errors()
+        return f"the log has errors: {errors[:3]}" if errors else None
     if command in ("wait-text", "wait-mode"):
         if len(words) not in (2, 3):
             raise HarnessError(f"{command} takes one argument and optionally timeout=SECONDS")
@@ -884,7 +937,7 @@ def take_shot(connection, out_dir, name, timeout, scale=None):
     return out_dir / f"{name}.png"
 
 
-def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False):
+def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, log=None):
     """Runs script lines against a running game. Besides server commands, a script can use:
 
     click-text TEXT   click the visible widget that shows TEXT
@@ -913,7 +966,7 @@ def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False):
             result = str(shots[-1])
         elif words[0].startswith(("expect-", "wait-")):
             try:
-                failure = check_line(connection, words, timeout)
+                failure = check_line(connection, words, timeout, log)
             except HarnessError as error:
                 raise HarnessError(f"{where}: {error}")
             if failure is False:
@@ -980,10 +1033,15 @@ def run_scenario(parser, name, resolution, args):
     start = time.monotonic()
     cmd_launch(launch_args)
     profile = Profile(profile_name)
+    # The game starts a new log each time it starts, so errors while it starts count too.
+    log = LogWatch(profile.config_dir / "openmw.log", from_start=True)
     try:
         connection = connect(profile)
         try:
-            shots = run_lines(connection, lines[1:], path, args.timeout, out_dir, args.verbose)
+            shots = run_lines(connection, lines[1:], path, args.timeout, out_dir, args.verbose, log)
+            errors = log.errors()
+            if errors:
+                raise HarnessError(f"{path}: the game logged errors: {errors[:3]}")
         finally:
             connection.close()
     finally:

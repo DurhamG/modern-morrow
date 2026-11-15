@@ -1,0 +1,10 @@
+# Errors in openmw.log that don't fail a scenario. Each line is a Python regular expression, searched for in each line
+# of the log. Every entry needs a comment saying why the error is harmless.
+
+# CMake writes resources/version when it configures the build, with the commit it was on. After a local commit, the
+# binary is newer than that file until CMake configures again. Release builds configure from scratch.
+Resources dir .* doesn't match OpenMW binary
+
+# A failed load at the main menu logs this once. It was there before the scenarios checked the log, and is recorded in
+# progress.md as a known bug.
+Error in frame: class does not have services
