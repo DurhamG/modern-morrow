@@ -28,6 +28,10 @@ build_deps() {
 }
 
 build_openmw() {
+    # The container runs as root. With KEEP_SYMBOLS=1 it writes android/out/symbols, and if android/out didn't exist
+    # yet, root would own it too, so the APK couldn't be copied into it afterwards. Making it here keeps it the host
+    # user's.
+    mkdir -p "$ANDROID_DIR/out"
     docker run --rm --platform linux/amd64 \
         -v "$REPO_ROOT:/src" \
         -v modernmorrow-android-build:/build \
