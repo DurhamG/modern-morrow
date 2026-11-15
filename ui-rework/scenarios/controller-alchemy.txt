@@ -14,6 +14,7 @@ console "command=player->setalchemy 40"
 lua "code=require('openmw.interfaces').UI.addMode('Alchemy')" context=player
 wait frames=10
 shot start
+expect-mode Alchemy
 pad button=dpdown
 wait frames=3
 pad button=dpdown
@@ -21,25 +22,32 @@ wait frames=3
 pad button=a
 wait frames=5
 shot one-ingredient
+expect-mode Alchemy
 pad button=dpdown
 wait frames=5
 pad button=a
 wait frames=5
 shot two-ingredients
+expect-mode Alchemy
 pad button=rightshoulder
 wait frames=3
 shot count
+expect-mode Alchemy
 pad button=x
 wait frames=10
 shot brewed
+expect-mode Alchemy
 pad button=leftstick
 wait frames=5
 pad button=a
 wait frames=3
 shot rename
+expect-mode Alchemy
 pad button=start
 wait frames=5
 shot renamed
+expect-mode Alchemy
 pad button=b
 wait frames=10
 shot closed
+expect-no-mode

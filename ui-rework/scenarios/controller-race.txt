@@ -3,12 +3,15 @@ launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
 console command=EnableRaceMenu
 wait frames=20
 shot race
+expect-mode ChargenRace
 pad button=dpdown
 pad button=dpdown
 pad button=rightshoulder
 pad button=y
 wait frames=20
 shot race-changed
+expect-mode ChargenRace
 pad axis=rightx value=1 hold=20
 wait frames=10
 shot race-turned
+expect-mode ChargenRace

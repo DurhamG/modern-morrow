@@ -8,6 +8,7 @@ pad button=dpdown
 pad button=a
 wait frames=10
 shot start
+expect-mode ChargenClassCreate
 pad button=a
 wait frames=5
 pad button=a
@@ -16,6 +17,7 @@ wait frames=3
 pad button=start
 wait frames=5
 shot named
+expect-mode ChargenClassCreate
 pad button=dpdown
 wait frames=3
 pad button=dpdown
@@ -25,6 +27,7 @@ wait frames=3
 pad button=dpdown
 wait frames=3
 shot specializations
+expect-mode ChargenClassCreate
 pad button=a
 wait frames=3
 pad button=dpdown
@@ -34,6 +37,7 @@ wait frames=3
 pad button=dpdown
 wait frames=3
 shot major-skill
+expect-mode ChargenClassCreate
 pad button=dpright
 wait frames=3
 pad button=dpdown
@@ -41,9 +45,12 @@ wait frames=3
 pad button=dpdown
 wait frames=3
 shot skills
+expect-mode ChargenClassCreate
 pad button=a
 wait frames=5
 shot skill-picked
+expect-mode ChargenClassCreate
 pad button=x
 wait frames=10
 shot done
+expect-no-mode

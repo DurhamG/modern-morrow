@@ -3,12 +3,15 @@ launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
 lua "code=local types = require('openmw.types') for _, item in ipairs(require('openmw.nearby').items) do if types.Book.objectIsInstance(item) and not types.Book.record(item).isScroll then require('openmw.interfaces').UI.addMode('Book', { target = item }) break end end"
 wait frames=20
 shot book
+expect-mode Book
 pad axis=righty value=1 hold=40
 wait frames=5
 shot book-scrolled
+expect-mode Book
 pad button=b
 wait frames=10
 console "command=player->additem bk_seniliasreport 1"
 lua "code=local types = require('openmw.types') for _, item in ipairs(types.Actor.inventory(require('openmw.self')):getAll(types.Book)) do if types.Book.record(item).isScroll then require('openmw.interfaces').UI.addMode('Scroll', { target = item }) break end end"
 wait frames=20
 shot scroll
+expect-mode Scroll

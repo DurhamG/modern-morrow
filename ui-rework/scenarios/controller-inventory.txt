@@ -6,6 +6,8 @@ console "command=player->additem p_restore_health_s 3"
 pad button=b
 wait frames=10
 shot inventory
+expect-mode Interface
 pad button=dpdown
 wait frames=5
 shot inventory-moved
+expect-mode Interface

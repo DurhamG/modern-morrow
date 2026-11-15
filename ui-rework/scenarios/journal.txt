@@ -4,3 +4,4 @@ console "command=journal A1_1_FindSpymaster 1"
 pad button=leftshoulder
 wait frames=15
 shot journal
+expect-mode Interface

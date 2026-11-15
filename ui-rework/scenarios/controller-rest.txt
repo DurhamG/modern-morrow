@@ -8,17 +8,21 @@ lua "code=local types = require('openmw.types') local level = types.Actor.stats.
 key key=T
 wait frames=10
 shot rest
+expect-mode Rest
 pad button=dpright
 pad button=dpright
 pad button=dpright
 wait frames=5
 shot rest-more-hours
+expect-mode Rest
 pad button=rightshoulder
 pad button=a
 wait frames=30
 shot resting
+expect-mode Rest
 wait frames=300
 shot level-up
+expect-mode LevelUp
 pad button=a
 pad button=dpright
 pad button=dpright
@@ -28,6 +32,8 @@ pad button=dpdown
 pad button=a
 wait frames=5
 shot level-up-chosen
+expect-mode LevelUp
 pad button=x
 wait frames=20
 shot level-up-done
+expect-no-mode

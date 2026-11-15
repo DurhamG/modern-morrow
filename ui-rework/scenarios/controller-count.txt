@@ -6,12 +6,16 @@ wait frames=10
 pad button=leftshoulder
 wait frames=5
 shot inventory
+expect-mode Interface
 pad button=x
 wait frames=10
 shot count
+expect-mode Interface
 pad axis=leftx value=-1 hold=40
 wait frames=5
 shot count-changed
+expect-mode Interface
 pad button=b
 wait frames=10
 shot count-cancelled
+expect-mode Interface

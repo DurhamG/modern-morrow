@@ -9,12 +9,16 @@ wait frames=5
 pad button=a
 wait frames=10
 shot choices
+expect-mode Dialogue
 pad button=a
 wait frames=15
 shot admired
+expect-mode Dialogue
 pad button=a
 wait frames=10
 shot choices-again
+expect-mode Dialogue
 pad button=b
 wait frames=10
 shot closed
+expect-mode Dialogue

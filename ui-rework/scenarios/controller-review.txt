@@ -6,3 +6,4 @@ pad button=dpdown
 pad button=dpdown
 wait frames=5
 shot review
+expect-mode ChargenClassReview

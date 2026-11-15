@@ -23,12 +23,15 @@ pad button=b
 pad axis=righttrigger value=1 hold=5
 wait frames=10
 shot active-empty
+expect-mode Interface
 pad button=rightshoulder
 wait frames=5
 shot spells
+expect-mode Interface
 pad button=y
 wait frames=5
 shot spells-next-group
+expect-mode Interface
 pad button=y
 pad button=y
 pad button=y
@@ -42,26 +45,32 @@ pad button=rightshoulder
 pad button=rightshoulder
 wait frames=5
 shot items
+expect-mode Interface
 pad button=a
 wait frames=10
 pad button=rightshoulder
 wait frames=5
 shot scrolls
+expect-mode Interface
 pad button=y
 wait frames=5
 shot scrolls-next-group
+expect-mode Interface
 pad button=leftshoulder
 pad button=leftshoulder
 pad button=leftshoulder
 pad button=leftshoulder
 wait frames=5
 shot active
+expect-mode Interface
 pad button=a
 wait frames=10
 shot active-switched
+expect-mode Interface
 pad button=leftshoulder
 wait frames=5
 shot recent
+expect-mode Interface
 pad axis=lefttrigger value=1 hold=5
 wait frames=5
 pad axis=lefttrigger value=1 hold=5
@@ -71,3 +80,4 @@ wait frames=10
 pad button=b
 wait frames=10
 shot map-reopened
+expect-mode Interface

@@ -3,9 +3,11 @@ launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
 console command=EnableClassMenu
 wait frames=10
 shot class-choice
+expect-mode ChargenClass
 pad button=a
 wait frames=10
 shot class-question
+expect-mode ChargenClassGenerate
 pad button=a
 wait frames=5
 pad button=a
@@ -28,3 +30,4 @@ pad button=a
 wait frames=5
 wait frames=10
 shot class-result
+expect-mode ChargenClassGenerate

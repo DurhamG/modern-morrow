@@ -6,13 +6,17 @@ wait frames=20
 pad button=rightshoulder
 wait frames=5
 shot services
+expect-mode Dialogue
 pad button=dpdown
 pad button=a
 wait frames=20
 shot travel
+expect-mode Travel
 pad button=dpdown
 wait frames=5
 shot travel-moved
+expect-mode Travel
 pad button=a
 wait frames=120
 shot arrived
+expect-no-mode

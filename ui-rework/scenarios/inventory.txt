@@ -12,3 +12,4 @@ console "command=player->additem pick_apprentice_01 2"
 pad button=b
 wait frames=10
 shot inventory
+expect-mode Interface

@@ -5,10 +5,13 @@ console "command=SetPCCrimeLevel 500"
 console "command=GoToJail"
 wait frames=50
 shot jail
+expect-mode Jail
 wait frames=400
 shot jail-done
+expect-no-mode
 pad button=a
 wait frames=10
 console "command=coc \"Vivec, Arena\""
 wait frames=30
 shot after-loading
+expect-no-mode

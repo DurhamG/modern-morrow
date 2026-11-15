@@ -9,6 +9,7 @@ pad button=dpdown
 pad button=dpdown
 wait frames=5
 shot class-list
+expect-mode ChargenClassPick
 pad button=x
 wait frames=10
 console command=EnableBirthMenu
@@ -16,3 +17,4 @@ wait frames=10
 pad button=dpdown
 wait frames=5
 shot birthsign
+expect-mode ChargenBirth

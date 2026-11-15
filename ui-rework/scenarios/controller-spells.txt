@@ -8,13 +8,16 @@ pad button=dpdown
 pad button=a
 wait frames=20
 shot spells
+expect-mode SpellBuying
 pad button=dpdown
 pad button=dpdown
 wait frames=5
 shot spells-moved
+expect-mode SpellBuying
 pad button=a
 wait frames=10
 shot spells-bought
+expect-mode SpellBuying
 pad button=b
 wait frames=10
 pad button=dpdown
@@ -22,9 +25,12 @@ pad button=dpdown
 pad button=a
 wait frames=20
 shot training
+expect-mode Training
 pad button=dpdown
 wait frames=5
 shot training-moved
+expect-mode Training
 pad button=a
 wait frames=200
 shot trained
+expect-no-mode

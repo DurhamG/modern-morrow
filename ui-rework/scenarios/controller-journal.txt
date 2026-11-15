@@ -20,22 +20,32 @@ wait frames=900
 key key=J
 wait frames=20
 shot recent
+expect-mode Interface
+expect-order "In progress" Finished
 pad button=dpdown
 pad button=dpdown
 wait frames=5
 shot recent-moved
+expect-mode Interface
 pad axis=righty value=1 hold=30
 wait frames=5
 shot recent-scrolled
+expect-mode Interface
 pad button=rightshoulder
 wait frames=5
 shot places
+expect-mode Interface
+expect-order "Seyda Neen" Finished
 pad button=y
 wait frames=5
 shot places-next-group
+expect-mode Interface
 pad button=rightshoulder
 wait frames=5
 shot factions
+expect-mode Interface
+expect-order Blades "Fighters Guild" Finished
 pad button=b
 wait frames=10
 shot closed
+expect-no-mode

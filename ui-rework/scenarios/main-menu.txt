@@ -1,6 +1,8 @@
 # The main menu, and its Options window.
 launch
 shot main-menu
+expect-mode MainMenu
 click-name MainMenu_options
 wait frames=5
 shot options
+expect-mode MainMenu

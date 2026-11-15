@@ -6,17 +6,22 @@ wait frames=10
 pad axis=lefttrigger value=1 hold=5
 wait frames=10
 shot map-local
+expect-mode Interface
 pad axis=righty value=1 hold=30
 wait frames=35
 shot map-local-panned
+expect-mode Interface
 pad button=rightshoulder
 wait frames=10
 shot map-world
+expect-mode Interface
 pad axis=righttrigger value=1 hold=5
 wait frames=10
 shot inventory-after-map
+expect-mode Interface
 pad axis=lefttrigger value=1 hold=5
 wait frames=10
 pad button=b
 wait frames=10
 shot closed-from-map
+expect-no-mode

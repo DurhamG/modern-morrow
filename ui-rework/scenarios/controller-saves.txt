@@ -6,14 +6,18 @@ wait frames=10
 pad button=a
 wait frames=10
 shot save
+expect-mode MainMenu
 pad button=a
 wait frames=60
+save-format "saves/*/*.omwsave" 41
+save-has-record "saves/*/*.omwsave" UIST
 pad button=start
 wait frames=10
 pad button=dpdown
 pad button=a
 wait frames=10
 shot load
+expect-mode MainMenu
 pad button=b
 wait frames=5
 pad button=dpup
@@ -22,9 +26,12 @@ wait frames=10
 pad button=dpdown
 wait frames=5
 shot save-over
+expect-mode MainMenu
 pad button=a
 wait frames=10
 shot save-over-confirm
+expect-mode MainMenu
 pad button=b
 wait frames=10
 shot save-over-cancelled
+expect-mode MainMenu

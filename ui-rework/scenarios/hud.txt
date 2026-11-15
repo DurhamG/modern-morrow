@@ -7,3 +7,4 @@ console "command=player->additem \"iron saber\" 1"
 console "command=player->equip \"iron saber\""
 wait frames=30
 shot hud
+expect-no-mode
