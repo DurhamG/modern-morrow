@@ -1,0 +1,11 @@
+# Starting the game with no start option carries on from the newest save, skipping the logo video and the main menu.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->additem misc_com_bottle_01 7"
+key key=F5
+wait frames=60
+expect-file "saves/*/*.omwsave"
+relaunch --set "GUI.controller menus=true"
+wait frames=60
+expect-state running
+expect-no-mode
+expect-lua "print(require('openmw.types').Actor.inventory(require('openmw.self')):countOf('misc_com_bottle_01'))" 7 context=player

@@ -1,0 +1,12 @@
+# With the "run fatigue" setting at 0, running costs only what comes back while running, so fatigue stays level.
+# The player runs for three seconds with the keyboard, which works whether or not a real controller is connected.
+launch --start "Seyda Neen" --set "Game.run fatigue=0"
+console "command=player->setfatigue 50"
+lua "code=local s = require('openmw.self'); _G.startPos = s.position" context=player
+key key="Left Shift" action=down
+key key=W action=down
+wait seconds=3
+key key=W action=up
+key key="Left Shift" action=up
+expect-lua "local s = require('openmw.self'); print((s.position - _G.startPos):length() > 300)" true context=player
+expect-lua "local f = require('openmw.types').Actor.stats.dynamic.fatigue(require('openmw.self')).current; print(math.abs(f - 50) < 1)" true context=player

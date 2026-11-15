@@ -43,6 +43,10 @@ class ParsingTest(unittest.TestCase):
         request = omw.build_request(["screenshot", "path=shot.png"])
         self.assertTrue(Path(request["path"]).is_absolute())
 
+    def test_build_request_keeps_a_touch_path_of_points(self):
+        request = omw.build_request(["touch", "action=drag", "path=[[4,400],[160,400]]"])
+        self.assertEqual(request["path"], [[4, 400], [160, 400]])
+
     def test_build_request_refuses_words_without_equals(self):
         with self.assertRaises(omw.HarnessError):
             omw.build_request(["wait", "frames"])

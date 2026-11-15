@@ -1,0 +1,17 @@
+# The inventory's Weight tab lists stacks by their total weight, heaviest first, so a big pile of light items comes
+# before a single heavy one: 30 bottles weigh 30, an iron longsword 20 and an iron dagger 3.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+console "command=player->additem \"iron dagger\" 1"
+console "command=player->additem \"iron longsword\" 1"
+console "command=player->additem misc_com_bottle_01 30"
+pad button=b
+wait-text Weight
+pad button=rightshoulder
+pad button=rightshoulder
+pad button=rightshoulder
+pad button=rightshoulder
+pad button=rightshoulder
+wait frames=10
+shot weight
+expect-mode Interface
+expect-order Bottle "Iron Longsword" "Iron Dagger"

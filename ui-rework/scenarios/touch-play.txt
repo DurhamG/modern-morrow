@@ -1,0 +1,19 @@
+# Playing with touch controls: a swipe in from the left edge opens the inventory, another closes it, and a tap in
+# the top left corner quicksaves. The tutorial shows first for a new game, and its second page over the inventory.
+launch --start "Seyda Neen" --set "Input.touch controls=true"
+wait-text "Touch controls"
+touch action=tap x=640 y=780
+wait frames=10
+expect-no-text "Tap to continue"
+touch action=drag path=[[4,400],[40,400],[80,400],[160,400]] frames=2
+wait frames=20
+expect-mode Interface
+shot inventory
+touch action=tap x=640 y=780
+wait frames=10
+touch action=drag path=[[4,400],[40,400],[80,400],[160,400]] frames=2
+wait frames=20
+expect-no-mode
+touch action=tap x=10 y=10
+wait frames=60
+expect-file "saves/*/Quicksave*.omwsave"

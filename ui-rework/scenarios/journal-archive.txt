@@ -1,0 +1,40 @@
+# Archiving a quest in the controller journal. The quest goes to the Archived group below Finished, stays there
+# through a quicksave and quickload, and comes back out when it gets a new journal entry. The archive is also kept in
+# a file beside the saves, for OpenMW versions that drop the controller menus' record.
+launch --start "Seyda Neen, Arrille's Tradehouse" --set "GUI.controller menus=true"
+console "command=journal a1_1_findspymaster 1"
+console "command=journal ms_fargothring 10"
+console "command=journal ms_fargothring 100"
+key key=J
+wait-text Finished
+expect-no-text Archived
+# The quest in progress is first in the list, so it has the focus.
+pad button=leftstick
+wait frames=5
+expect-order Finished Archived
+shot archived
+pad button=b
+wait frames=10
+expect-no-mode
+key key=F5
+wait frames=60
+expect-file "saves/*.archived-quests.txt"
+key key=F9
+wait frames=120
+expect-state running
+key key=J
+wait-text Archived
+expect-order Finished Archived
+pad button=b
+wait frames=10
+# A new entry takes the quest out of the archive.
+console "command=journal a1_1_findspymaster 10"
+key key=J
+wait-text Finished
+expect-no-text Archived
+shot unarchived
+pad button=b
+wait frames=10
+key key=F5
+wait frames=60
+expect-no-file "saves/*.archived-quests.txt"

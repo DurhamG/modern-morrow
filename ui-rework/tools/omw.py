@@ -472,7 +472,8 @@ def parse_value(text):
 def build_request(words):
     """Turns ["wait", "frames=10"] into {"cmd": "wait", "frames": 10}.
 
-    The game's working folder is the build folder, so a relative "path" parameter is made absolute here.
+    The game's working folder is the build folder, so a relative "path" parameter is made absolute here. The touch
+    command's "path" is a list of points instead, which is left alone.
     """
     if not words:
         raise HarnessError("Missing command name.")
@@ -481,7 +482,8 @@ def build_request(words):
         if "=" not in word:
             raise HarnessError(f"Parameters must look like key=value, got {word!r}.")
         key, value = word.split("=", 1)
-        request[key] = str(Path(value).resolve()) if key == "path" else parse_value(value)
+        is_file = key == "path" and not value.lstrip().startswith("[")
+        request[key] = str(Path(value).resolve()) if is_file else parse_value(value)
     return request
 
 
@@ -1155,17 +1157,24 @@ def scenario_path(name):
 
 
 def run_scenario(parser, name, resolution, args):
-    """Launches the game as the scenario's first line says, runs the rest of the scenario, and quits. Returns the
-    screenshots it took."""
+    """Launches the game as the scenario's first line says, runs the rest of the scenario, and quits. A relaunch line
+    quits the game and launches it again with that line's options, in the same profile. Returns the screenshots it
+    took."""
     path = scenario_path(name)
     lines = [(n, l) for n, l in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1)
              if l.strip() and not l.strip().startswith("#")]
     if not lines or not lines[0][1].strip().startswith("launch"):
         raise HarnessError(f"{path}: the first command must be a launch line")
+    # Each part of the scenario runs in one launch of the game.
+    parts = []
+    for number, line in lines:
+        words = shlex.split(line, comments=True)
+        if words[0] in ("launch", "relaunch"):
+            parts.append((words[1:], []))
+        else:
+            parts[-1][1].append((number, line))
+
     profile_name = f"scenario-{name}"
-    launch_words = shlex.split(lines[0][1])[1:]
-    launch_args = parser.parse_args(["launch", *launch_words, "-p", profile_name, "-r", resolution,
-                                     "--scale", str(args.scale)] + (["--fresh"] if args.fresh else []))
     out_dir = OUTPUT_DIR / name / f"{resolution}-x{args.scale:g}"
     if out_dir.is_dir():
         shutil.rmtree(out_dir)
@@ -1174,25 +1183,30 @@ def run_scenario(parser, name, resolution, args):
     # Saves from an earlier run would change what the save screens show, so each run starts without them.
     for folder in ("saves", "backups"):
         shutil.rmtree(Profile(profile_name).data_dir / folder, ignore_errors=True)
-    cmd_launch(launch_args)
-    profile = Profile(profile_name)
-    # The game starts a new log each time it starts, so errors while it starts count too.
-    log = LogWatch(profile.config_dir / "openmw.log", from_start=True)
-    try:
-        connection = connect(profile)
+    shots = []
+    for index, (launch_words, part_lines) in enumerate(parts):
+        launch_args = parser.parse_args(["launch", *launch_words, "-p", profile_name, "-r", resolution,
+                                         "--scale", str(args.scale)] + (["--fresh"] if args.fresh and not index else []))
+        cmd_launch(launch_args)
+        profile = Profile(profile_name)
+        # The game starts a new log each time it starts, so errors while it starts count too.
+        log = LogWatch(profile.config_dir / "openmw.log", from_start=True)
+        last = index == len(parts) - 1
         try:
-            shots = run_lines(connection, lines[1:], path, args.timeout, out_dir, args.verbose, log,
-                              profile.data_dir, GOLDEN_DIR / name / f"{resolution}-x{args.scale:g}",
-                              args.update_golden)
-            errors = log.errors()
-            if errors:
-                raise HarnessError(f"{path}: the game logged errors: {errors[:3]}")
+            connection = connect(profile)
+            try:
+                shots += run_lines(connection, part_lines, path, args.timeout, out_dir, args.verbose, log,
+                                   profile.data_dir, GOLDEN_DIR / name / f"{resolution}-x{args.scale:g}",
+                                   args.update_golden)
+                errors = log.errors()
+                if errors:
+                    raise HarnessError(f"{path}: the game logged errors: {errors[:3]}")
+            finally:
+                connection.close()
         finally:
-            connection.close()
-    finally:
-        if not args.keep:
-            quit_args = argparse.Namespace(profile=profile_name, timeout=10, kill=False)
-            cmd_quit(quit_args)
+            if not (args.keep and last):
+                quit_args = argparse.Namespace(profile=profile_name, timeout=10, kill=False)
+                cmd_quit(quit_args)
     print(f"{name} at {resolution}: {len(shots)} shots in {time.monotonic() - start:.1f} s -> {out_dir}")
     return shots
 

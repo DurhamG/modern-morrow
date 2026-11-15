@@ -102,7 +102,8 @@ A scenario file's first line is `launch` followed by launch options. Its other l
 
 - `shot NAME` saves a screenshot and a UI dump,
 - `click-text TEXT` clicks a widget by its text,
-- `click-name NAME` clicks a widget by its name.
+- `click-name NAME` clicks a widget by its name,
+- `relaunch [OPTIONS]` quits the game and launches it again in the same profile, with the launch options given, such as none, which carries on from the newest save.
 
 Scenarios can check what the game shows. A check that fails stops the scenario with the file, the line and what it found, and `omw.py scenario` then exits with 1. Texts match a part of a widget's text, ignoring case, and only visible widgets count. Quote a text with spaces.
 
