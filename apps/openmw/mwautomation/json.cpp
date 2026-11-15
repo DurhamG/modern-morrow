@@ -28,8 +28,13 @@ namespace MWAutomation
             }
 
         private:
+            // Commands are only a few levels deep. The limit keeps input such as thousands of nested arrays from
+            // overflowing the stack, since each level is parsed by a call of its own.
+            static constexpr int sMaxDepth = 64;
+
             std::string_view mText;
             std::size_t mPos = 0;
+            int mDepth = 0;
 
             [[noreturn]] void fail(std::string_view message) const
             {
@@ -64,9 +69,14 @@ namespace MWAutomation
                 switch (peek())
                 {
                     case '{':
-                        return parseObject();
                     case '[':
-                        return parseArray();
+                    {
+                        if (++mDepth > sMaxDepth)
+                            fail("nested too deeply");
+                        Json value = mText[mPos] == '{' ? parseObject() : parseArray();
+                        --mDepth;
+                        return value;
+                    }
                     case '"':
                         return Json(parseString());
                     case 't':
