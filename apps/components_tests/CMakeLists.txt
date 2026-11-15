@@ -114,6 +114,11 @@ target_link_libraries(components-tests
     components
 )
 
+if (BUILD_MWINIIMPORTER)
+    target_sources(components-tests PRIVATE mwiniimporter/testimporter.cpp)
+    target_link_libraries(components-tests openmw-iniimporter-lib)
+endif()
+
 if (USE_QT)
     target_sources(components-tests PRIVATE config/testlaunchersettings.cpp)
     target_link_libraries(components-tests components_qt)
