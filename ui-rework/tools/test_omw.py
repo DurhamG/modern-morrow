@@ -196,5 +196,38 @@ class LogTest(unittest.TestCase):
             self.assertEqual(omw.LogWatch(path, from_start=True).new_lines(), [self.lines[1], self.lines[3]])
 
 
+class GoldenTest(unittest.TestCase):
+    def dump(self, save_text="Save", rect=(100, 100, 80, 20), extra=()):
+        return {"widgets": [widget("Window", name="_Main", children=[
+            widget("TextBox", text=save_text, rect=rect, fontHeight=18),
+            widget("TextBox", text="Load", rect=(100, 130, 80, 20)),
+            *extra,
+        ])]}
+
+    def test_golden_ignores_positions_and_sizes(self):
+        self.assertEqual(omw.golden_lines(self.dump()), omw.golden_lines(self.dump(rect=(5, 5, 300, 40))))
+
+    def test_golden_notices_changed_text(self):
+        self.assertNotEqual(omw.golden_lines(self.dump()), omw.golden_lines(self.dump(save_text="Save game")))
+
+    def test_golden_notices_a_missing_widget(self):
+        extra = [widget("TextBox", text="Exit")]
+        self.assertNotEqual(omw.golden_lines(self.dump()), omw.golden_lines(self.dump(extra=extra)))
+
+    def test_golden_ignores_focus_and_fading(self):
+        focused = self.dump()
+        focused["widgets"][0]["children"][0].update(keyFocus=True, alpha=0.5)
+        self.assertEqual(omw.golden_lines(self.dump()), omw.golden_lines(focused))
+
+    def test_golden_ignores_the_order_of_siblings(self):
+        swapped = self.dump()
+        swapped["widgets"][0]["children"].reverse()
+        self.assertEqual(omw.golden_lines(self.dump()), omw.golden_lines(swapped))
+
+    def test_golden_keeps_depth(self):
+        self.assertEqual(omw.golden_lines(self.dump())[0], "Window '_Main'")
+        self.assertIn("  TextBox 'Save'", omw.golden_lines(self.dump()))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,7 @@ Run "omw.py <command> --help" for the options of each command.
 """
 
 import argparse
+import difflib
 import json
 import os
 import re
@@ -29,6 +30,9 @@ PROFILES_DIR = AUTOMATION_DIR / "profiles"
 SCENARIOS_DIR = REPO_ROOT / "ui-rework" / "scenarios"
 OUTPUT_DIR = AUTOMATION_DIR / "out"
 LOG_ALLOWLIST = REPO_ROOT / "ui-rework" / "tools" / "log-allowlist.txt"
+# Stored UI dumps for the golden lines. They hold Morrowind's text, so they stay out of the repository, and compare a
+# run with an earlier one on the same machine.
+GOLDEN_DIR = AUTOMATION_DIR / "golden"
 
 # Log lines that fail a scenario: OpenMW's error level, and messages that mean something went wrong in a frame or in
 # the game's objects.
@@ -826,6 +830,49 @@ class LogWatch:
         return log_errors(self.new_lines(), self.allowlist, self.expected)
 
 
+def golden_lines(dump):
+    """A UI dump reduced to what shouldn't change by accident: each widget's depth, type, name and text. Positions,
+    sizes, fonts, fading and focus are left out. Widgets with the same parent are sorted, since some, such as those
+    that Lua scripts draw, come in a different order from run to run."""
+
+    def describe(node, depth):
+        parts = [node["type"]]
+        if "name" in node:
+            parts.append(repr(node["name"]))
+        if node.get("text"):
+            parts.append(repr(node["text"]))
+        children = sorted((describe(child, depth + 1) for child in node.get("children", [])))
+        return ["  " * depth + " ".join(parts)] + [line for child in children for line in child]
+
+    roots = sorted(describe(root, 0) for root in dump["widgets"])
+    return [line for root in roots for line in root]
+
+
+def golden_line(connection, words, timeout, golden_dir, update):
+    """Compares the UI with the stored copy named by the line, or stores it when updating. Returns a message when they
+    differ, or None."""
+    if len(words) != 2:
+        raise HarnessError("golden takes one name")
+    if golden_dir is None:
+        raise HarnessError("golden needs a folder for the stored copies, which only scenarios have")
+    reply = connection.request({"cmd": "ui"}, timeout=timeout)
+    if not reply.get("ok"):
+        raise HarnessError(reply.get("error"))
+    lines = golden_lines(reply["result"])
+    path = golden_dir / f"{words[1]}.txt"
+    if update:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return None
+    if not path.is_file():
+        return f"there is no stored copy at {path}. Run the scenario with --update-golden to store one."
+    stored = path.read_text(encoding="utf-8").splitlines()
+    if stored == lines:
+        return None
+    diff = list(difflib.unified_diff(stored, lines, "stored", "now", n=1, lineterm=""))
+    return "the UI differs from the stored copy:\n" + "\n".join(diff[:30])
+
+
 def find_save(saves_dir, pattern):
     """The one file in the saves folder that matches a pattern such as "*/Quicksave.omwsave", where * matches one
     name. Save file names come from the save's description, so a scenario rarely knows them exactly."""
@@ -981,7 +1028,8 @@ def take_shot(connection, out_dir, name, timeout, scale=None):
     return out_dir / f"{name}.png"
 
 
-def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, log=None, saves_dir=None):
+def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, log=None, saves_dir=None,
+              golden_dir=None, update_golden=False):
     """Runs script lines against a running game. Besides server commands, a script can use:
 
     click-text TEXT   click the visible widget that shows TEXT
@@ -1008,6 +1056,14 @@ def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, l
                 raise HarnessError(f"{where}: shot takes one name, and needs an output folder")
             shots.append(take_shot(connection, out_dir, words[1], timeout))
             result = str(shots[-1])
+        elif words[0] == "golden":
+            try:
+                failure = golden_line(connection, words, timeout, golden_dir, update_golden)
+            except HarnessError as error:
+                raise HarnessError(f"{where}: {error}")
+            if failure:
+                raise HarnessError(f"{where}: {failure}")
+            result = "ok"
         elif words[0].startswith("save-"):
             try:
                 failure = save_line(words, saves_dir)
@@ -1094,7 +1150,8 @@ def run_scenario(parser, name, resolution, args):
         connection = connect(profile)
         try:
             shots = run_lines(connection, lines[1:], path, args.timeout, out_dir, args.verbose, log,
-                              profile.data_dir / "saves")
+                              profile.data_dir / "saves", GOLDEN_DIR / name / f"{resolution}-x{args.scale:g}",
+                              args.update_golden)
             errors = log.errors()
             if errors:
                 raise HarnessError(f"{path}: the game logged errors: {errors[:3]}")
@@ -1312,6 +1369,8 @@ def build_parser():
     p.add_argument("--scale", type=float, default=1.0, help="GUI scaling factor (default 1.0)")
     p.add_argument("--fresh", action="store_true", help="delete leftover profile config files first")
     p.add_argument("--keep", action="store_true", help="leave the game running, and stop at the first failure")
+    p.add_argument("--update-golden", action="store_true",
+                   help="store the UI for each golden line, instead of comparing it with the stored copy")
     p.add_argument("--timeout", type=float, default=60, help="seconds to wait for each reply")
     p.add_argument("--verbose", "-v", action="store_true", help="print each command's result")
     p.set_defaults(func=cmd_scenario)
