@@ -111,7 +111,7 @@ add_openmw_dir (mwmechanics
     )
 
 add_openmw_dir (mwstate
-    statemanagerimp charactermanager character quicksavemanager
+    statemanagerimp charactermanager character quicksavemanager questlists
     )
 
 add_openmw_dir (mwbase

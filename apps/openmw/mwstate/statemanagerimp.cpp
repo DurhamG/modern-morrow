@@ -56,62 +56,11 @@
 
 #include "../mwscript/globalscripts.hpp"
 
+#include "questlists.hpp"
 #include "quicksavemanager.hpp"
 
 namespace
 {
-    // The quests pinned, or archived, in the character's latest save from this game, one quest ID to a line. OpenMW
-    // versions without the controller menus drop the save's record of them, so a save they wrote takes them from
-    // here. The files sit in the folder of all the characters, named after the character's folder, such as
-    // "Lendias.pinned-quests.txt" and "Lendias.archived-quests.txt". A character's folder holds only saves, and the
-    // save list reads every file in it.
-    constexpr std::string_view sPinnedQuests = "pinned-quests";
-    constexpr std::string_view sArchivedQuests = "archived-quests";
-
-    std::filesystem::path questListPath(const std::filesystem::path& characterDir, std::string_view list)
-    {
-        std::filesystem::path name = characterDir.filename();
-        name += "." + std::string(list) + ".txt";
-        return characterDir.parent_path() / name;
-    }
-
-    void writeQuestList(
-        const std::filesystem::path& characterDir, std::string_view list, const std::vector<ESM::RefId>& quests)
-    {
-        const std::filesystem::path path = questListPath(characterDir, list);
-        // An empty list needs no file, which keeps the saves folder tidy.
-        if (quests.empty())
-        {
-            std::error_code ec;
-            std::filesystem::remove(path, ec);
-            return;
-        }
-        std::ofstream file(path, std::ios::trunc);
-        for (const ESM::RefId& quest : quests)
-            file << quest.serializeText() << '\n';
-        if (file.fail())
-            Log(Debug::Warning) << "Failed to write the quest list " << path;
-    }
-
-    std::vector<ESM::RefId> readQuestList(const std::filesystem::path& characterDir, std::string_view list)
-    {
-        const std::filesystem::path path = questListPath(characterDir, list);
-        std::vector<ESM::RefId> quests;
-        std::ifstream file(path);
-        std::string line;
-        try
-        {
-            while (std::getline(file, line))
-                if (!line.empty())
-                    quests.push_back(ESM::RefId::deserializeText(line));
-        }
-        catch (const std::exception& e)
-        {
-            Log(Debug::Warning) << "Failed to read the quest list " << path << ": " << e.what();
-        }
-        return quests;
-    }
-
     // When a file in the saves folder was last written, or the oldest possible time when it has no saves.
     std::filesystem::file_time_type newestSave(const std::filesystem::path& saves)
     {
