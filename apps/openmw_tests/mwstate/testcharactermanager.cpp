@@ -1,10 +1,14 @@
 #include "apps/openmw/mwstate/charactermanager.hpp"
 
+#include <components/esm3/esmwriter.hpp>
+#include <components/esm3/formatversion.hpp>
+#include <components/esm3/savedgame.hpp>
 #include <components/testing/util.hpp>
 
 #include <gtest/gtest.h>
 
 #include <filesystem>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -47,6 +51,46 @@ namespace MWState
             CharacterManager characters(savesDir(), sContentFiles);
             const Character* lendias = characters.findOrCreateCharacter("Lendias");
             EXPECT_EQ(characters.findCharacter("lendias"), lendias);
+        }
+
+        // Writes a save that the character manager lists for a game of Morrowind.esm.
+        void writeSave(const std::filesystem::path& path)
+        {
+            std::filesystem::create_directories(path.parent_path());
+            ESM::SavedGame profile;
+            profile.mContentFiles = sContentFiles;
+            profile.mPlayerName = "Lendias";
+            ESM::ESMWriter writer;
+            writer.setFormatVersion(ESM::CurrentSaveGameFormatVersion);
+            std::ofstream file(path, std::ios::binary);
+            writer.save(file);
+            writer.startRecord(ESM::REC_SAVE);
+            profile.save(writer);
+            writer.endRecord(ESM::REC_SAVE);
+            writer.close();
+        }
+
+        TEST(MWStateCharacterManagerTest, findCharacterShouldPreferAnExactMatch)
+        {
+            std::filesystem::create_directories(savesDir() / "Lendias");
+            if (std::filesystem::exists(savesDir() / "lendias"))
+                GTEST_SKIP() << "This file system ignores case, so it can't hold two such folders";
+            writeSave(savesDir() / "Lendias" / "1.omwsave");
+            writeSave(savesDir() / "lendias" / "1.omwsave");
+            CharacterManager characters(savesDir(), sContentFiles);
+            ASSERT_NE(characters.findCharacter("Lendias"), nullptr);
+            ASSERT_NE(characters.findCharacter("lendias"), nullptr);
+            EXPECT_EQ(characters.findCharacter("Lendias")->getPath(), savesDir() / "Lendias");
+            EXPECT_EQ(characters.findCharacter("lendias")->getPath(), savesDir() / "lendias");
+            EXPECT_NE(characters.findCharacter("LENDIAS"), nullptr);
+        }
+
+        TEST(MWStateCharacterManagerTest, savedCharacterShouldBeFoundAfterARestart)
+        {
+            writeSave(savesDir() / "Lendias" / "1.omwsave");
+            CharacterManager characters(savesDir(), sContentFiles);
+            ASSERT_NE(characters.findCharacter("Lendias"), nullptr);
+            EXPECT_EQ(characters.findCharacter("Lendias")->getPath(), savesDir() / "Lendias");
         }
 
         TEST(MWStateCharacterManagerTest, findOrCreateShouldReturnTheExistingCharacter)

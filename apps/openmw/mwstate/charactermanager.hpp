@@ -43,7 +43,9 @@ namespace MWState
         /// none. Saving into another OpenMW's saves uses it, so a character keeps the folder name it has here.
         Character* findOrCreateCharacter(const std::filesystem::path& folderName);
 
-        /// Returns the character whose saves are in the folder of this name, or null when there is none.
+        /// Returns the character whose saves are in the folder of this name, or null when there is none. A folder whose
+        /// name matches exactly comes first. Otherwise the case of the letters doesn't matter, as on Windows. On Linux,
+        /// "Lendias" and "lendias" can be two folders, and each finds its own.
         Character* findCharacter(const std::filesystem::path& folderName);
 
         /// The folder that holds a folder for each character.

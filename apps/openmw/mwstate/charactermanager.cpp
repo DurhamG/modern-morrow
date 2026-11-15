@@ -89,10 +89,16 @@ MWState::Character* MWState::CharacterManager::createCharacter(const std::string
 MWState::Character* MWState::CharacterManager::findCharacter(const std::filesystem::path& folderName)
 {
     const std::string name = Files::pathToUnicodeString(folderName);
+    Character* ignoringCase = nullptr;
     for (Character& character : mCharacters)
-        if (Misc::StringUtils::ciEqual(Files::pathToUnicodeString(character.getPath().filename()), name))
+    {
+        const std::string folder = Files::pathToUnicodeString(character.getPath().filename());
+        if (folder == name)
             return &character;
-    return nullptr;
+        if (ignoringCase == nullptr && Misc::StringUtils::ciEqual(folder, name))
+            ignoringCase = &character;
+    }
+    return ignoringCase;
 }
 
 MWState::Character* MWState::CharacterManager::findOrCreateCharacter(const std::filesystem::path& folderName)
