@@ -1,7 +1,11 @@
 # Resting and the level up that follows it, in controller menus mode. The player is hurt and has enough skill
 # increases for a level, so resting offers "until healed", and waking up opens the level up.
-launch --start "Seyda Neen" --set "GUI.controller menus=true"
-console "command=coe -3 -8"
+# The rest happens in a cave, where sleep is allowed and no creature can interrupt it, as one can outdoors. Its
+# bandits are disabled, since nobody can rest with enemies nearby. Tribunal's script that sends a Dark Brotherhood
+# assassin to attack a sleeping player, at random, is stopped.
+launch --start "Addamasartus" --set "GUI.controller menus=true"
+lua "code=local types = require('openmw.types'); local cell = require('openmw.world').players[1].cell; for _, kind in ipairs({ types.NPC, types.Creature }) do for _, actor in ipairs(cell:getAll(kind)) do actor.enabled = false end end" context=global
+console "command=stopscript dbattackScript"
 wait frames=30
 console "command=player->modcurrenthealth -30"
 lua "code=local types = require('openmw.types') local level = types.Actor.stats.level(require('openmw.self')) level.progress = 10 level.skillIncreasesForAttribute.strength = 6 level.skillIncreasesForAttribute.endurance = 9 level.skillIncreasesForAttribute.agility = 2"
@@ -19,12 +23,10 @@ shot rest-more-hours
 expect-mode Rest
 pad button=rightshoulder
 pad button=a
-wait frames=30
-wait-mode Rest
+wait frames=10
 shot resting
-expect-mode Rest
 wait frames=300
-wait-mode LevelUp
+wait-mode LevelUp timeout=20
 shot level-up
 expect-mode LevelUp
 pad button=a
@@ -35,7 +37,7 @@ pad button=a
 pad button=dpdown
 pad button=a
 wait frames=5
-wait-mode LevelUp
+wait-mode LevelUp timeout=20
 shot level-up-chosen
 expect-mode LevelUp
 pad button=x
