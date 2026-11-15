@@ -64,6 +64,35 @@ namespace MWGui
         std::string giverName(const Quest& quest);
         std::string factionName(const Quest& quest);
 
+        /// The tabs of the controller journal's list.
+        enum class Tab
+        {
+            Recent,
+            Places,
+            Factions,
+            Notes,
+        };
+
+        /// A line in the list: a group header, or an index into the tab's order of quests.
+        struct Row
+        {
+            std::string mHeader;
+            int mEntry = -1;
+        };
+
+        /// The group a quest goes under on a tab, as a caption with localisation tags, such as
+        /// "#{Interface:JournalFinished}" or a town's name.
+        std::string groupOf(const Quest& quest, Tab tab);
+
+        /// The quests a tab lists, as indexes into the quests, in the order the list shows them.
+        std::vector<int> order(const std::vector<Quest>& quests, Tab tab);
+
+        /// The list's lines for the quests in that order, with a header at the start of each group.
+        std::vector<Row> buildRows(const std::vector<Quest>& quests, const std::vector<int>& order, Tab tab);
+
+        /// The first entry under each group header, as an index into the order.
+        std::vector<int> groupStarts(const std::vector<Row>& rows);
+
         /// When the entry was added, such as "16 Last Seed (Day 1)".
         std::string timestamp(const MWDialogue::StampedJournalEntry& entry);
 

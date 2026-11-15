@@ -31,6 +31,8 @@
 #include "../mwworld/datetimemanager.hpp"
 #include "../mwworld/esmstore.hpp"
 
+#include "controllerscreen.hpp"
+
 namespace MWGui::QuestLog
 {
     namespace
@@ -350,5 +352,90 @@ namespace MWGui::QuestLog
             = MWBase::Environment::get().getWorld()->getTimeManager()->getMonthName(entry.mMonth);
         return std::to_string(entry.mDayOfMonth) + " " + std::string(month) + " (" + day + " "
             + std::to_string(entry.mDay) + ")";
+    }
+
+    std::string groupOf(const Quest& quest, Tab tab)
+    {
+        if (quest.mArchived)
+            return "#{Interface:JournalArchived}";
+        if (quest.mPinned)
+            return "#{Interface:JournalPinned}";
+        if (quest.mFinished)
+            return "#{Interface:JournalFinished}";
+        switch (tab)
+        {
+            case Tab::Places:
+                return quest.mTown.empty() ? "#{Interface:JournalUnknownPlace}" : ControllerUi::escaped(quest.mTown);
+            case Tab::Factions:
+            {
+                const std::string faction = factionName(quest);
+                return faction.empty() ? "#{Interface:JournalNoFaction}" : ControllerUi::escaped(faction);
+            }
+            case Tab::Notes:
+                return "#{Interface:JournalTabNotes}";
+            default:
+                return "#{Interface:JournalInProgress}";
+        }
+    }
+
+    std::vector<int> order(const std::vector<Quest>& quests, Tab tab)
+    {
+        // The quests are already in order of the most recent activity. Pinned quests come first, then quests in
+        // progress, then finished quests, then archived ones. On the Places and Factions tabs, the quests in progress
+        // are grouped by name, with quests that have no place or faction after the rest. The Notes tab lists only the
+        // notes, and the other tabs only the quests, apart from pinned notes, which stay in reach on every tab.
+        std::vector<int> result;
+        for (std::size_t i = 0; i < quests.size(); ++i)
+        {
+            const Quest& quest = quests[i];
+            if (tab == Tab::Notes ? quest.mNote : !quest.mNote || quest.mPinned)
+                result.push_back(static_cast<int>(i));
+        }
+        const auto groupKey = [&](const Quest& quest) -> std::pair<int, std::string> {
+            if (quest.mArchived)
+                return { 3, {} };
+            if (quest.mPinned)
+                return { -1, {} };
+            if (quest.mFinished)
+                return { 2, {} };
+            if (tab == Tab::Places)
+                return { quest.mTown.empty() ? 1 : 0, Misc::StringUtils::lowerCase(quest.mTown) };
+            if (tab == Tab::Factions)
+            {
+                const std::string faction = factionName(quest);
+                return { faction.empty() ? 1 : 0, Misc::StringUtils::lowerCase(faction) };
+            }
+            return { 0, {} };
+        };
+        std::stable_sort(
+            result.begin(), result.end(), [&](int a, int b) { return groupKey(quests[a]) < groupKey(quests[b]); });
+        return result;
+    }
+
+    std::vector<Row> buildRows(const std::vector<Quest>& quests, const std::vector<int>& order, Tab tab)
+    {
+        std::vector<Row> rows;
+        std::string group;
+        for (std::size_t i = 0; i < order.size(); ++i)
+        {
+            std::string header = groupOf(quests[order[i]], tab);
+            if (rows.empty() || header != group)
+            {
+                group = header;
+                rows.push_back(Row{ std::move(header), -1 });
+            }
+            rows.push_back(Row{ {}, static_cast<int>(i) });
+        }
+        return rows;
+    }
+
+    std::vector<int> groupStarts(const std::vector<Row>& rows)
+    {
+        // The first entry under each group header.
+        std::vector<int> starts;
+        for (std::size_t i = 0; i + 1 < rows.size(); ++i)
+            if (rows[i].mEntry == -1 && rows[i + 1].mEntry >= 0)
+                starts.push_back(rows[i + 1].mEntry);
+        return starts;
     }
 }

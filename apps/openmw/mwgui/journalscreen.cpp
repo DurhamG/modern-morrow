@@ -177,87 +177,22 @@ namespace MWGui
 
     std::string JournalScreen::groupOf(const QuestLog::Quest& quest) const
     {
-        if (quest.mArchived)
-            return "#{Interface:JournalArchived}";
-        if (quest.mPinned)
-            return "#{Interface:JournalPinned}";
-        if (quest.mFinished)
-            return "#{Interface:JournalFinished}";
-        switch (mTab)
-        {
-            case Tab::Places:
-                return quest.mTown.empty() ? "#{Interface:JournalUnknownPlace}" : escaped(quest.mTown);
-            case Tab::Factions:
-            {
-                const std::string faction = QuestLog::factionName(quest);
-                return faction.empty() ? "#{Interface:JournalNoFaction}" : escaped(faction);
-            }
-            case Tab::Notes:
-                return "#{Interface:JournalTabNotes}";
-            default:
-                return "#{Interface:JournalInProgress}";
-        }
+        return QuestLog::groupOf(quest, mTab);
     }
 
     std::vector<int> JournalScreen::order() const
     {
-        // mQuests is already in order of the most recent activity. Pinned quests come first, then quests in
-        // progress, then finished quests, then archived ones. On the Places and Factions tabs, the quests in progress
-        // are grouped by name, with quests that have no place or faction after the rest. The Notes tab lists only the
-        // notes, and the other tabs only the quests, apart from pinned notes, which stay in reach on every tab.
-        std::vector<int> result;
-        for (std::size_t i = 0; i < mQuests.size(); ++i)
-        {
-            const QuestLog::Quest& quest = mQuests[i];
-            if (mTab == Tab::Notes ? quest.mNote : !quest.mNote || quest.mPinned)
-                result.push_back(static_cast<int>(i));
-        }
-        const auto groupKey = [&](const QuestLog::Quest& quest) -> std::pair<int, std::string> {
-            if (quest.mArchived)
-                return { 3, {} };
-            if (quest.mPinned)
-                return { -1, {} };
-            if (quest.mFinished)
-                return { 2, {} };
-            if (mTab == Tab::Places)
-                return { quest.mTown.empty() ? 1 : 0, Misc::StringUtils::lowerCase(quest.mTown) };
-            if (mTab == Tab::Factions)
-            {
-                const std::string faction = QuestLog::factionName(quest);
-                return { faction.empty() ? 1 : 0, Misc::StringUtils::lowerCase(faction) };
-            }
-            return { 0, {} };
-        };
-        std::stable_sort(
-            result.begin(), result.end(), [&](int a, int b) { return groupKey(mQuests[a]) < groupKey(mQuests[b]); });
-        return result;
+        return QuestLog::order(mQuests, mTab);
     }
 
     std::vector<JournalScreen::Row> JournalScreen::buildRows(const std::vector<int>& order) const
     {
-        std::vector<Row> rows;
-        std::string group;
-        for (std::size_t i = 0; i < order.size(); ++i)
-        {
-            std::string header = groupOf(mQuests[order[i]]);
-            if (rows.empty() || header != group)
-            {
-                group = header;
-                rows.push_back(Row{ std::move(header), -1 });
-            }
-            rows.push_back(Row{ {}, static_cast<int>(i) });
-        }
-        return rows;
+        return QuestLog::buildRows(mQuests, order, mTab);
     }
 
     std::vector<int> JournalScreen::groupStarts(const std::vector<Row>& rows)
     {
-        // The first entry under each group header.
-        std::vector<int> starts;
-        for (std::size_t i = 0; i + 1 < rows.size(); ++i)
-            if (rows[i].mEntry == -1 && rows[i + 1].mEntry >= 0)
-                starts.push_back(rows[i + 1].mEntry);
-        return starts;
+        return QuestLog::groupStarts(rows);
     }
 
     int JournalScreen::focusIndex(const std::vector<int>& order) const

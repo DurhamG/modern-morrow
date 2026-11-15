@@ -43,21 +43,9 @@ namespace MWGui
         bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
 
     private:
-        enum class Tab
-        {
-            Recent,
-            Places,
-            Factions,
-            Notes,
-        };
+        using Tab = QuestLog::Tab;
+        using Row = QuestLog::Row;
         static constexpr int sTabCount = 4;
-
-        // A line in the list: a group header, or an index into the tab's order of quests.
-        struct Row
-        {
-            std::string mHeader;
-            int mEntry = -1;
-        };
 
         Tab mTab = Tab::Recent;
         std::vector<QuestLog::Quest> mQuests;
