@@ -183,7 +183,7 @@ public class MainActivity extends Activity {
                 bar.setIndeterminate(total == 0);
                 if (total > 0) {
                     bar.setProgress((int) (copy.done() * 1000 / total));
-                    amount.setText(DataImport.size(copy.done()) + " of " + DataImport.size(total));
+                    amount.setText(DataFiles.size(copy.done()) + " of " + DataFiles.size(total));
                 }
                 mHandler.postDelayed(this, 200);
             }
