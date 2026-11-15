@@ -24,6 +24,8 @@ file(GLOB UNITTEST_SRC_FILES
     mwgui/tooltips.cpp
     mwgui/weightedsearch.cpp
 
+    mwinput/testtouchgestures.cpp
+
     mwlua/testobjectcache.cpp
     mwlua/testmwscriptbindings.cpp
 
