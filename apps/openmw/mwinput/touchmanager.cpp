@@ -48,59 +48,29 @@
 #include "actions.hpp"
 #include "bindingsmanager.hpp"
 #include "mousemanager.hpp"
+#include "touchgestures.hpp"
 
 namespace MWInput
 {
     namespace
     {
-        // Starting values, to tune on a phone. Distances are in millimetres on the glass, so screens of any size and
-        // density feel the same. See ui-rework/design/touch.md.
+        // The gestures' distances and times are in touchgestures.hpp. These are starting values too, to tune on a
+        // phone.
+        using namespace TouchGestures;
 
-        // A tap lifts within this time, having moved less than the slop.
-        constexpr Uint32 sTapTime = 250;
-        constexpr float sSlopMm = 3.f;
         // The right thumb starts charging the attack when it stays still this long in attack mode.
         constexpr Uint32 sChargeDelay = 180;
-        // Walking starts past the dead zone and is at full speed this far from where the thumb went down, in any
-        // direction, like a stick. Half way there, the player runs.
-        constexpr float sMoveDeadZoneMm = 2.f;
-        constexpr float sMoveFullMm = 15.f;
-        // How far the camera turns for each millimetre the right thumb drags, in radians, before the camera
-        // sensitivity setting. That holds within a circle around where the thumb went down. Past its edge to either
-        // side, the camera keeps turning that way, like a stick: from standing still at the edge, so there's no jump
-        // in speed there, rising evenly to the full speed a ramp's length farther out, in radians a second.
-        constexpr float sLookRadiansPerMm = 0.026f;
-        constexpr float sLookCircleMm = 10.f;
-        constexpr float sLookRampMm = 20.f;
-        const float sLookFullSpeed = osg::DegreesToRadians(130.f);
         // On the map, two fingers that touch down this close together in time are a pinch, which zooms.
         constexpr Uint32 sPinchWindow = 150;
-        // A finger that goes down this close to a side edge, in the middle half of the edge's height, swipes in from
-        // the edge once it has moved this far inwards, more in than up or down. GameActivity keeps Android's back
-        // gesture off the same part of the edges.
-        constexpr float sEdgeMm = 5.f;
-        constexpr float sEdgeSwipeMm = 8.f;
-        // The corners' squares.
-        constexpr float sCornerMm = 12.f;
         // How long the quickload corner is held.
         constexpr Uint32 sQuickLoadTime = 1000;
-        // The mode picker's items, and how far apart their centres are across and up and down. Use is under the
-        // thumb, attack and then the quick keys to its left, magic above and jump below, in the order of the modes.
+        // The mode picker's items.
         constexpr float sPickerItemWidthMm = 16.f;
         constexpr float sPickerItemHeightMm = 9.f;
-        constexpr float sPickerAcrossMm = 19.f;
-        constexpr float sPickerUpDownMm = 13.f;
-        constexpr float sPickerOffsets[][2] = { { 0, 0 }, { -1, 0 }, { -2, 0 }, { 0, -1 }, { 0, 1 } };
         // The quick keys radial: the press slots' ring, the hold slots' ring, and each slot's icon.
         constexpr float sRadialInnerMm = 16.f;
         constexpr float sRadialOuterMm = 30.f;
         constexpr float sRadialIconMm = 10.f;
-        // A drag of this length in a menu scrolls a list by one row.
-        constexpr float sScrollStepMm = 6.f;
-        // A drag in a menu that is more sideways than up or down switches tabs, one for each time it goes this far, and
-        // back again if it comes back: the big tabs, as the triggers do, on the left half of the screen, and the
-        // screen's own tabs, as the shoulder buttons do, on the right half.
-        constexpr float sTabSwipeMm = 12.f;
         // How many frames a tap holds the attack, so the game sees it.
         constexpr int sUseFrames = 3;
         // The tutorial shows again for a character after this long without playing with touch.
@@ -205,13 +175,11 @@ namespace MWInput
     {
         float dpi = 0;
         const int display = SDL_GetWindowDisplayIndex(mWindow);
-        if (display < 0 || SDL_GetDisplayDPI(display, &dpi, nullptr, nullptr) != 0 || dpi <= 0)
-            dpi = 160;
-        // The DPI is for window coordinates, which can be smaller than the drawable's pixels.
+        if (display < 0 || SDL_GetDisplayDPI(display, &dpi, nullptr, nullptr) != 0)
+            dpi = 0;
         int windowWidth = 0;
         SDL_GetWindowSize(mWindow, &windowWidth, nullptr);
-        const float pixelsPerPoint = windowWidth > 0 ? static_cast<float>(screenSize().width) / windowWidth : 1.f;
-        return dpi / 25.4f * pixelsPerPoint;
+        return TouchGestures::pixelsPerMm(dpi, screenSize().width, windowWidth);
     }
 
     MyGUI::FloatPoint TouchManager::toTrace(const SDL_TouchFingerEvent& arg) const
@@ -223,7 +191,7 @@ namespace MWInput
 
     bool TouchManager::isTap(const Finger& finger, Uint32 upTime) const
     {
-        return upTime - finger.mDownTime <= sTapTime && finger.mFarthest < sSlopMm * pixelsPerMm();
+        return TouchGestures::isTap(finger.mDownTime, upTime, finger.mFarthest, pixelsPerMm());
     }
 
     bool TouchManager::inGame() const
@@ -254,31 +222,24 @@ namespace MWInput
 
     TouchManager::Role TouchManager::roleForGame(const MyGUI::FloatPoint& point) const
     {
-        const MyGUI::IntSize size = screenSize();
-        const float corner = sCornerMm * pixelsPerMm();
-        const bool top = point.top < corner;
-        const bool left = point.left < corner;
-        const bool right = point.left > size.width - corner;
-        if (top && left)
-            return Role::QuickSave;
-        if (top && right)
-            return Role::QuickLoad;
-        if (right && point.top > size.height - corner)
-            return Role::Sneak;
-        return point.left < size.width / 2.f ? Role::Move : Role::Look;
+        switch (zoneAt(point, screenSize(), pixelsPerMm()))
+        {
+            case Zone::QuickSave:
+                return Role::QuickSave;
+            case Zone::QuickLoad:
+                return Role::QuickLoad;
+            case Zone::Sneak:
+                return Role::Sneak;
+            case Zone::Move:
+                return Role::Move;
+            default:
+                return Role::Look;
+        }
     }
 
     int TouchManager::edgeAt(const MyGUI::FloatPoint& point) const
     {
-        const MyGUI::IntSize size = screenSize();
-        if (point.top < size.height / 4.f || point.top > size.height * 3 / 4.f)
-            return 0;
-        const float edge = sEdgeMm * pixelsPerMm();
-        if (point.left < edge)
-            return -1;
-        if (point.left > size.width - edge)
-            return 1;
-        return 0;
+        return TouchGestures::edgeAt(point, screenSize(), pixelsPerMm());
     }
 
     void TouchManager::fingerPressed(const SDL_TouchFingerEvent& arg)
@@ -346,17 +307,15 @@ namespace MWInput
 
     void TouchManager::updateEdge(Finger& finger)
     {
-        const float mm = pixelsPerMm();
-        if (finger.mFarthest < sSlopMm * mm)
-            return;
-        const float inwards = (finger.mPosition.left - finger.mStart.left) * -finger.mEdge;
-        const float across = std::abs(finger.mPosition.top - finger.mStart.top);
-        if (inwards > across && inwards < sEdgeSwipeMm * mm)
-            return;
-        if (inwards <= across)
+        switch (edgeSwipe(finger.mStart, finger.mPosition, finger.mEdge, finger.mFarthest, pixelsPerMm()))
         {
-            finger.mRole = finger.mFallback;
-            return;
+            case EdgeSwipe::Undecided:
+                return;
+            case EdgeSwipe::NotASwipe:
+                finger.mRole = finger.mFallback;
+                return;
+            case EdgeSwipe::SwipedIn:
+                break;
         }
 
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
@@ -561,23 +520,17 @@ namespace MWInput
 
     void TouchManager::look(const Finger& finger, const MyGUI::FloatPoint& previous)
     {
-        // Only the part of a sideways move inside the circle turns the camera directly. Past the edge, update()
-        // keeps turning instead.
-        const float mm = pixelsPerMm();
-        const float circle = sLookCircleMm * mm;
-        const auto inside = [&](float x) { return std::clamp(x - finger.mStart.left, -circle, circle); };
-        turn((inside(finger.mPosition.left) - inside(previous.left)) / mm * sLookRadiansPerMm,
-            (finger.mPosition.top - previous.top) / mm * sLookRadiansPerMm);
+        // Past the circle's edge, update() keeps turning instead.
+        const Turn turned = lookTurn(finger.mStart, previous, finger.mPosition, pixelsPerMm());
+        turn(turned.mYaw, turned.mPitch);
     }
 
     void TouchManager::keepTurning(const Finger& finger, float dt)
     {
-        const float mm = pixelsPerMm();
-        const float past = std::abs(finger.mPosition.left - finger.mStart.left) / mm - sLookCircleMm;
-        if (past <= 0)
+        const float speed = turnSpeed(finger.mStart.left, finger.mPosition.left, pixelsPerMm());
+        if (speed == 0)
             return;
-        const float speed = sLookFullSpeed * std::min(1.f, past / sLookRampMm);
-        turn(std::copysign(speed * dt, finger.mPosition.left - finger.mStart.left), 0.f);
+        turn(speed * dt, 0.f);
     }
 
     void TouchManager::turn(float yaw, float pitch)
@@ -618,16 +571,9 @@ namespace MWInput
 
     void TouchManager::setMovement(const Finger& finger)
     {
-        // Up the screen is forward. The actions' values run from 0 for full forward or left to 1 for full back or
-        // right, as a stick's do.
-        const float mm = pixelsPerMm();
-        const float right = (finger.mPosition.left - finger.mStart.left) / mm;
-        const float forward = (finger.mStart.top - finger.mPosition.top) / mm;
-        const float length = std::hypot(right, forward);
-        const float amount = std::clamp((length - sMoveDeadZoneMm) / (sMoveFullMm - sMoveDeadZoneMm), 0.f, 1.f)
-            / std::max(length, 1e-3f);
-        mBindingsManager->setTouchActionValue(A_MoveForwardBackward, 0.5f - forward * amount / 2.f);
-        mBindingsManager->setTouchActionValue(A_MoveLeftRight, 0.5f + right * amount / 2.f);
+        const Movement moved = movement(finger.mStart, finger.mPosition, pixelsPerMm());
+        mBindingsManager->setTouchActionValue(A_MoveForwardBackward, moved.mForwardBackward);
+        mBindingsManager->setTouchActionValue(A_MoveLeftRight, moved.mLeftRight);
         mMoving = true;
     }
 
@@ -688,21 +634,9 @@ namespace MWInput
     {
         if (!mPickerOpen || mPickerBoxes.empty())
             return;
-        // The item nearest to how far the thumb has moved since the picker opened, so that Use is under it then.
-        const float mm = pixelsPerMm();
-        const float dx = (finger.mPosition.left - mPickerOrigin.left) / (sPickerAcrossMm * mm);
-        const float dy = (finger.mPosition.top - mPickerOrigin.top) / (sPickerUpDownMm * mm);
-        int highlight = Mode_Use;
-        float nearest = std::numeric_limits<float>::max();
-        for (int i = 0; i < Mode_Count; ++i)
-        {
-            const float d = std::hypot(dx - sPickerOffsets[i][0], dy - sPickerOffsets[i][1]);
-            if (d < nearest)
-            {
-                nearest = d;
-                highlight = i;
-            }
-        }
+        // The picker's items are in the order of the modes.
+        static_assert(Mode_Count == sPickerItems);
+        const int highlight = pickerItem(mPickerOrigin, finger.mPosition, pixelsPerMm());
         if (highlight == mPickerHighlight)
             return;
         mPickerHighlight = highlight;
@@ -825,9 +759,8 @@ namespace MWInput
     void TouchManager::menuScroll(Finger& finger)
     {
         // Dragging up moves the list up, which shows the rows below, as turning the wheel towards the player does.
-        const float step = sScrollStepMm * pixelsPerMm();
-        const float dragged = (finger.mStart.top - finger.mPosition.top) / step;
-        const int steps = static_cast<int>(dragged) - static_cast<int>(finger.mScrolled);
+        const int steps
+            = scrollSteps(finger.mStart.top, finger.mPosition.top, pixelsPerMm()) - static_cast<int>(finger.mScrolled);
         if (steps == 0)
             return;
         finger.mScrolled += steps;
@@ -857,9 +790,9 @@ namespace MWInput
     void TouchManager::menuSwipeTabs(Finger& finger)
     {
         // Dragging right goes to the tabs on the right. The tab follows the finger, so overshooting is undone by
-        // pulling back.
-        const float dragged = (finger.mPosition.left - finger.mStart.left) / (sTabSwipeMm * pixelsPerMm());
-        const int tabs = static_cast<int>(dragged);
+        // pulling back. On the left half of the screen, the drag switches the big tabs, as the triggers do, and on
+        // the right half the screen's own tabs, as the shoulder buttons do.
+        const int tabs = tabsSwiped(finger.mStart.left, finger.mPosition.left, pixelsPerMm());
         const bool big = finger.mStart.left < screenSize().width / 2.f;
         for (; finger.mTabsMoved != tabs; finger.mTabsMoved += tabs > finger.mTabsMoved ? 1 : -1)
         {
