@@ -876,16 +876,16 @@ def golden_line(connection, words, timeout, golden_dir, update):
     return "the UI differs from the stored copy:\n" + "\n".join(diff[:30])
 
 
-def find_save(saves_dir, pattern):
-    """The one file in the saves folder that matches a pattern such as "*/Quicksave.omwsave", where * matches one
-    name. Save file names come from the save's description, so a scenario rarely knows them exactly."""
-    found = sorted(saves_dir.glob(pattern))
+def find_save(data_dir, pattern):
+    """The one file in the profile's data folder that matches a pattern such as "saves/*/Quicksave.omwsave", where *
+    matches one name. Save file names come from the save's description, so a scenario rarely knows them exactly."""
+    found = sorted(data_dir.glob(pattern))
     if len(found) != 1:
-        raise HarnessError(f"{len(found)} files in {saves_dir} match {pattern!r}, not one")
+        raise HarnessError(f"{len(found)} files in {data_dir} match {pattern!r}, not one")
     return found[0]
 
 
-def save_line(words, saves_dir):
+def save_line(words, data_dir):
     """Runs one of the scenario lines that read or change save files. Returns a message when a check fails, or None.
     Lines that aren't about saves give False."""
     command = words[0]
@@ -894,9 +894,9 @@ def save_line(words, saves_dir):
         return False
     if len(words) != counts[command] + 1:
         raise HarnessError(f"{command} takes {counts[command]} argument(s)")
-    if saves_dir is None:
-        raise HarnessError(f"{command} needs the profile's saves folder, which only scenarios know")
-    path = find_save(saves_dir, words[1])
+    if data_dir is None:
+        raise HarnessError(f"{command} needs the profile's data folder")
+    path = find_save(data_dir, words[1])
     data = path.read_bytes()
     try:
         if command == "save-format":
@@ -908,7 +908,7 @@ def save_line(words, saves_dir):
                 return f"{path.name} {'has no' if not has else 'has a'} {words[2]} record"
             return None
         if command == "save-strip":
-            out = saves_dir / words[3]
+            out = data_dir / words[3]
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_bytes(savefile.strip(data, words[2]))
             return None
@@ -1031,7 +1031,7 @@ def take_shot(connection, out_dir, name, timeout, scale=None):
     return out_dir / f"{name}.png"
 
 
-def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, log=None, saves_dir=None,
+def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, log=None, data_dir=None,
               golden_dir=None, update_golden=False):
     """Runs script lines against a running game. Besides server commands, a script can use:
 
@@ -1069,7 +1069,7 @@ def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, l
             result = "ok"
         elif words[0].startswith("save-"):
             try:
-                failure = save_line(words, saves_dir)
+                failure = save_line(words, data_dir)
             except HarnessError as error:
                 raise HarnessError(f"{where}: {error}")
             if failure is False:
@@ -1106,7 +1106,7 @@ def cmd_run(args):
     connection = connect(profile)
     try:
         run_lines(connection, lines, script, args.timeout, out_dir, args.verbose,
-                  saves_dir=profile.data_dir / "saves")
+                  data_dir=profile.data_dir)
     finally:
         connection.close()
 
@@ -1153,7 +1153,7 @@ def run_scenario(parser, name, resolution, args):
         connection = connect(profile)
         try:
             shots = run_lines(connection, lines[1:], path, args.timeout, out_dir, args.verbose, log,
-                              profile.data_dir / "saves", GOLDEN_DIR / name / f"{resolution}-x{args.scale:g}",
+                              profile.data_dir, GOLDEN_DIR / name / f"{resolution}-x{args.scale:g}",
                               args.update_golden)
             errors = log.errors()
             if errors:
