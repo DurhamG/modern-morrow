@@ -36,7 +36,10 @@ final class GameConfig {
     /** The build's openmw.cfg points at ./resources. The engine needs the folder the app copied them to. */
     static void fixGlobalConfig(File cfg, File resources) throws IOException {
         StringBuilder text = new StringBuilder();
-        for (String line : readFile(cfg).split("\n", -1)) {
+        String[] lines = readFile(cfg).split("\n", -1);
+        // readFile ends each line with a newline, so the last part is empty, and isn't a line.
+        for (int i = 0; i < lines.length - 1; ++i) {
+            String line = lines[i];
             if (line.startsWith("resources="))
                 line = "resources=\"" + resources.getAbsolutePath() + "\"";
             else if (line.startsWith("data=./resources/"))
