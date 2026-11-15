@@ -475,24 +475,9 @@ namespace MWGui
 
     JournalScreen::LinkedText JournalScreen::linkTopics(const std::string& text, const MWDialogue::Topic* page) const
     {
-        // As in the journal book, the text shows each topic by its display name.
         const Translation::Storage& translations
             = MWBase::Environment::get().getWindowManager()->getTranslationDataStorage();
-        LinkedText result;
-        MWDialogue::KeywordSearch::Point position = text.begin();
-        for (const MWDialogue::KeywordSearch::Match& match : mKeywordSearch.parseHyperText(text, translations))
-        {
-            const std::string_view name = match.getDisplayName();
-            result.mText.append(position, match.mBeg);
-            const std::size_t start = result.mText.size();
-            result.mText.append(name);
-            position = match.mEnd;
-            const auto found = mTopics.find(match.mTopicId);
-            if (found != mTopics.end() && found->second != page)
-                result.mSpans.emplace_back(start, result.mText.size(), found->second);
-        }
-        result.mText.append(position, text.end());
-        return result;
+        return MWGui::linkTopics(text, mKeywordSearch, translations, mTopics, page);
     }
 
     int JournalScreen::drawLinkedText(int y, int width, const LinkedText& text, const MyGUI::Colour& colour)

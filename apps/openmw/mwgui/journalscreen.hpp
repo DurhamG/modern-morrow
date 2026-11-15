@@ -11,6 +11,7 @@
 #include "../mwdialogue/keywordsearch.hpp"
 
 #include "controllerscreen.hpp"
+#include "journallinks.hpp"
 #include "questlog.hpp"
 
 namespace MWDialogue
@@ -88,12 +89,7 @@ namespace MWGui
         int mLinkFocus = 0;
         HeldDirection mLinkHeld;
 
-        // Text with the topics in it marked, as start and end offsets in the text.
-        struct LinkedText
-        {
-            std::string mText;
-            std::vector<std::tuple<std::size_t, std::size_t, const MWDialogue::Topic*>> mSpans;
-        };
+        using LinkedText = MWGui::LinkedText;
 
         void redraw() override;
 
