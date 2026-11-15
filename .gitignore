@@ -93,3 +93,7 @@ Thumbs.db
 
 ## UI rework automation harness: per-run game profiles, logs and screenshots
 /.automation/
+
+## OpenMW example suite and integration test output, for CI/run_integration_tests.sh
+/example-suite/
+/integration_tests_output/

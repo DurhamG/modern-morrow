@@ -62,6 +62,27 @@ jobs:
     - name: Run OpenMW-CS tests
       run: ./openmw-cs-tests
 
+    # Upstream's Lua tests of the real engine, run against OpenMW's free example-suite game data as upstream's GitLab
+    # CI runs them. They only run on Linux. On Windows, the example suite's player model crashes OpenSceneGraph while
+    # the game starts, in upstream's build too.
+    - name: Install the integration tests' tools
+      run: |
+        sudo apt-get install -y xvfb git-lfs
+        pip3 install --user --break-system-packages numpy matplotlib termtables click
+
+    - name: Run integration tests
+      env:
+        OPENMW_BINARY: ./openmw
+        EXAMPLE_SUITE_REVISION: a1ba6fc9d7315c2158ef4c60349fc4e71b7ca343
+      run: CI/run_integration_tests.sh
+
+    - name: Keep the integration tests' output
+      if: failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: integration-tests-output
+        path: integration_tests_output/
+
     # - name: Install
     #   shell: bash
     #   run: cmake --install .
