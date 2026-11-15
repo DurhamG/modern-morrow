@@ -53,6 +53,7 @@
 
 #include "../mwscript/globalscripts.hpp"
 
+#include "autosave.hpp"
 #include "questlists.hpp"
 #include "quicksavemanager.hpp"
 #include "savefolders.hpp"
@@ -1005,17 +1006,16 @@ void MWState::StateManager::updateTimedAutosave(float duration)
 {
     const int interval = Settings::saves().mAutosaveInterval;
     MWBase::WindowManager& windowManager = *MWBase::Environment::get().getWindowManager();
-    if (mState != State_Running || interval <= 0 || windowManager.isGuiMode())
+    if (!autosaveClockRuns(interval, mState == State_Running, windowManager.isGuiMode()))
         return;
     mPlayedSinceSave += duration;
-    if (mPlayedSinceSave < interval * 60.0)
+    if (!autosaveDue(mPlayedSinceSave, interval))
         return;
 
-    // The same checks as quicksave, without its message when saving isn't allowed, and none during combat.
     MWBase::World& world = *MWBase::Environment::get().getWorld();
     const MWWorld::Ptr player = world.getPlayerPtr();
-    if (world.getGlobalInt(MWWorld::Globals::sCharGenState) != -1 || !windowManager.isSavingAllowed()
-        || player.getClass().getCreatureStats(player).isDead() || world.getPlayer().isInCombat())
+    if (!canAutosave(world.getGlobalInt(MWWorld::Globals::sCharGenState) == -1, windowManager.isSavingAllowed(),
+            player.getClass().getCreatureStats(player).isDead(), world.getPlayer().isInCombat()))
         return;
 
     // If the save fails, it waits for another interval rather than trying again on the next frame.
