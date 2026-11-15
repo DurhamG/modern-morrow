@@ -954,3 +954,20 @@ These commits move code that runs in the game. Each is meant to change nothing, 
 | Remembering the character folder of a new game's first save into OpenMW's folder | A fix found while checking C09. Before it, each save there made a new character folder. |
 
 The list grows if a move turns out larger than planned.
+
+## 7. Status
+
+Done on 2026-11-14 and 15, on the Windows machine: phases 0 to 5, 7 and 9, with these differences from the plan.
+
+- C14 didn't move upstream's test helpers out of `teststore.cpp`. The journal tests have their own fixture, `apps/openmw_tests/mwdialogue/journalfixture.hpp`, so upstream's file stays as it is.
+- Upstream's Lua integration tests (C05) can't run on Windows. The example suite's player model crashes OpenSceneGraph while the game starts, in upstream's own build too. They run in the Linux CI job.
+- The automation server's JSON reader now refuses input nested more than 64 levels, which would otherwise overflow the stack (C39).
+- Checking the moves found two bugs, both fixed in commits of their own. A new game saved straight into OpenMW's folder made a new character folder for each save there. The fix for that let such a game join another playthrough's folder of the same name, which the review of the risky moves found.
+- The scenarios got more than C52 to C54 planned: `saves-openmw-new-game.txt`, a `relaunch` line, and a log check that reads the log from the start of each launch.
+- `prerelease.py` gives upstream's Lua tests a settings file that stops the game minimizing when its window loses focus, since a minimized game stops running them.
+
+Not done yet:
+
+- **Phase 6, the Android JVM tests.** This machine has no JDK, and the phase changes the app's own Java code, which only a compiler can check. Do it on the Mac.
+- **Phase 8, the smoke tests with the example suite.** The example suite crashes on Windows, so the harness can only run it under Linux, which means trying it in CI one push at a time.
+- **The new CI steps have never run.** The UI data check, the script tests, the harness client tests, the integration tests and the lint job only run on the next push. Expect to fix some of them then.

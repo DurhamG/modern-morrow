@@ -14,6 +14,18 @@ This checkout is being used to rework the in-game UI for gamepads, TVs and handh
 - Update `ui-rework/progress.md` after each significant piece of work.
 - On this branch, every commit must build, but the unit tests only need to run at good stopping points.
 
+### Tests for the fork's own logic
+
+`ui-rework/testing-plan.md` lists the kinds of tests, what each covers, and where each runs. New work keeps them up to date:
+
+- A rule goes in a plain function, outside the window or manager class that uses it, in a file of its own when it is more than a few lines. A rule is anything with a number, an order or a condition that a player would notice if it were wrong, such as a sort, a limit, a distance, or which file is chosen. The class calls the function, and the function gets a Google Test in `apps/openmw_tests/` or `apps/components_tests/`, in the same commit or the next.
+- A commit that moves code out of a class only moves it, with no change in behaviour, so it is easy to review. The tests come in their own commit.
+- Anything written to a save or read from one gets a round-trip test in `apps/components_tests/esm3/testsaveload.cpp`, for every format that still loads.
+- A new screen, or a change to what a screen shows, gets checks in its scenario in `ui-rework/scenarios/`, such as `expect-text`, `expect-order` and `expect-mode`. See `ui-rework/harness.md`.
+- A bug fix starts with a test that fails because of the bug, wherever a test can show it.
+- Shell scripts that players run are tested too, as in `CI/test_auto_update.sh`.
+- Run `python CI/check_ui_data.py` after adding a localisation key, a layer or a data file, and `python ui-rework/tools/prerelease.py` before a release.
+
 ## Building
 
 CMake drives the build. The default build type is RelWithDebInfo.
