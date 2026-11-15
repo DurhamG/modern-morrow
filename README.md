@@ -184,11 +184,13 @@ Android
 The Android version supports gamepads and touch controls. You need to own Morrowind on Steam or GOG, to copy its game files to the device.
 
 1. **Install the APK.** Download `ModernMorrow-...-Android-arm64.apk` from the [Releases page](https://github.com/DurhamG/modern-morrow/releases) on the device and open it.
-2. **Start Modern Morrow once.** It makes the folder for the game data, `Android/data/io.github.durhamg.modernmorrow/files/Morrowind`.
-3. **Copy the game data.** Connect the device to a computer over USB, and copy Morrowind's `Data Files` folder into that folder. Steam installs Morrowind in `C:\Program Files (x86)\Steam\steamapps\common\Morrowind`, and GOG Galaxy in `C:\Program Files (x86)\GOG Galaxy\Games\Morrowind`.
-4. **Tap "Check again".** The game starts.
+2. **Start Modern Morrow.** It asks for Morrowind's `Data Files` folder.
+3. **Give it the game data**, in one of three ways:
+   - **From the device**, such as from Downloads: tap "Choose folder" and pick `Data Files` or the folder that holds it, or tap "Choose zip file" and pick a zip of either. The app copies the files in.
+   - **From a computer:** connect the device over USB, and copy `Data Files` into `Android/data/io.github.durhamg.modernmorrow/files/Morrowind`. Steam installs Morrowind in `C:\Program Files (x86)\Steam\steamapps\common\Morrowind`, and GOG Galaxy in `C:\Program Files (x86)\GOG Galaxy\Games\Morrowind`. Then tap "Check again".
+   - **From the top of the device's storage:** put `Data Files` in a `Morrowind` folder there, and tap "Allow access to all files".
 
-Uninstalling the app deletes its folder, including the game data and your saves. To keep the game data across reinstalls, put `Data Files` in a `Morrowind` folder at the top of the device's storage instead, and let the app access all files.
+Uninstalling the app deletes its folder, including your saves and the game data the first two ways put there. The `Morrowind` folder at the top of the storage stays.
 
 ### Touch controls
 

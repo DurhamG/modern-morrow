@@ -12,7 +12,8 @@
 
     <!-- The automation harness talks to the game over a socket, and Android needs this for any socket. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- For reading the Morrowind data from /sdcard/Morrowind. -->
+    <!-- For reading the Morrowind data from /sdcard/Morrowind. The other ways of giving the app the data need no
+         permission. -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
     <application

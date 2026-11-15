@@ -64,7 +64,10 @@ Both start in landscape and have 6 GB of memory, 6 cores and a 16 GB data partit
 
 The desktop builds find Morrowind's data with the Qt setup wizard. Qt isn't part of the Android build, so the app needs another way.
 
-- The app asks for "All files access" (`MANAGE_EXTERNAL_STORAGE`). This lets the engine read the data where the player put it, with normal file paths. Google Play limits that permission, but the APK is installed from GitHub, so that doesn't matter.
+- The engine reads its data with normal file paths, so the data has to be somewhere the app can open by path. The start screen offers three ways, and the first two need no permission:
+  - **From the device.** Android's folder picker, or its file picker for a zip file, gives the app what the player picked, such as a folder in Downloads. It only gives content URIs, not paths, so `DataImport` copies the files into the app's own Morrowind folder, or unpacks the zip there. Since Android 11, nothing else lets an app read a browser's downloads without all-files access, and the picker refuses Downloads itself, so the files need a folder of their own there.
+  - **From a computer**, copied over USB into the app's own Morrowind folder.
+  - **From `/sdcard/Morrowind`**, read in place, which needs "All files access" (`MANAGE_EXTERNAL_STORAGE`), but keeps the data when the app is uninstalled. Google Play limits that permission, but the APK is installed from GitHub, so that doesn't matter.
 - On first start, a small Java screen asks for the Morrowind folder: the one that holds `Data Files` and `Morrowind.ini`. It then writes `openmw.cfg` with the `data=`, `content=` and fallback lines. On the desktop, `mwiniimporter` copies the fallback lines out of `Morrowind.ini`. On Android, either build that code into the app, or ship a ready-made list of the fallback lines. The first version can instead look in a fixed place, such as `/sdcard/Morrowind`, and show an error when it isn't there.
 - Android doesn't grant "All files access" from a dialog. The player turns it on in a system settings screen. The app has to send them there, and say what to do if they refuse.
 - Settings, saves and logs live in the app's own folder, `/sdcard/Android/data/io.github.durhamg.modernmorrow/files`. Players can reach that folder over USB. Changing the package name later would leave existing saves in the old folder.

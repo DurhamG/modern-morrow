@@ -26,7 +26,8 @@ import java.util.List;
  *
  * The Morrowind data is looked for in the user folder's Morrowind folder, which needs no permission, then in
  * /sdcard/Morrowind, which needs "All files access". Either holds Data Files, as a Morrowind install does. The user
- * folder's Morrowind folder is made empty at the start, so that it's there to copy into over USB.
+ * folder's Morrowind folder is made empty at the start, so that it's there to copy into over USB. DataImport copies
+ * into it too, from a folder or zip file the player picks.
  */
 final class Files {
     private Files() {}
