@@ -22,6 +22,9 @@ jobs:
     - name: Check the UI data files
       run: python3 CI/check_ui_data.py
 
+    - name: Test the harness client
+      run: python3 -m unittest discover -s ui-rework/tools -p 'test_*.py'
+
     - name: Test the Steam Deck scripts
       run: |
         bash CI/test_auto_update.sh
