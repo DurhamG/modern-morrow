@@ -116,13 +116,19 @@ namespace MWDialogue
             mJournal.push_back(std::move(entry));
             MWBase::Environment::get().getWindowManager()->messageBox("#{sJournalEntry}");
 
-            // A quest that moves on comes back out of the archive, with the other quests that share its name, as the
-            // journal shows them as one quest.
-            const std::string_view name = quest.getName();
-            for (auto& [otherId, other] : mQuests)
-                if (otherId == id || (!name.empty() && Misc::StringUtils::ciEqual(other.getName(), name)))
-                    other.setArchived(false);
+            // A quest that moves on comes back out of the archive.
+            unarchiveQuest(id);
         }
+    }
+
+    void Journal::unarchiveQuest(const ESM::RefId& id)
+    {
+        // The other quests that share its name come out too, as the journal shows them as one quest.
+        const Quest* quest = getQuestOrNull(id);
+        const std::string_view name = quest != nullptr ? quest->getName() : std::string_view();
+        for (auto& [otherId, other] : mQuests)
+            if (otherId == id || (!name.empty() && Misc::StringUtils::ciEqual(other.getName(), name)))
+                other.setArchived(false);
     }
 
     void Journal::setJournalIndex(const ESM::RefId& id, int index)

@@ -34,6 +34,10 @@ namespace MWDialogue
         ///< Add a journal entry.
         /// @param actor Used as context for replacing of escape sequences (%name, etc).
 
+        /// Takes the quest, and the other quests with its name, out of the archive. Adding an entry to a quest does
+        /// this.
+        void unarchiveQuest(const ESM::RefId& id);
+
         void setJournalIndex(const ESM::RefId& id, int index) override;
         ///< Set the journal index without adding an entry.
 
