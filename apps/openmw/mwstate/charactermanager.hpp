@@ -35,9 +35,10 @@ namespace MWState
 
         void deleteSlot(const MWState::Slot* slot, const Character*& character);
 
-        Character* createCharacter(const std::string& name);
+        Character* createCharacter(const std::string& name, const std::filesystem::path& alsoUnusedIn = {});
         ///< Create new character within saved game management
         /// \param name Name for the character (does not need to be unique)
+        /// \param alsoUnusedIn Another saves folder whose character folders the new folder's name must not match
 
         /// Returns the character whose saves are in the folder of this name, creating the character when there is
         /// none. Saving into another OpenMW's saves uses it, so a character keeps the folder name it has here.

@@ -127,6 +127,16 @@ namespace MWState
             EXPECT_EQ(second->getPath(), savesDir() / "Lendias - 1");
         }
 
+        TEST(MWStateCharacterManagerTest, createCharacterShouldAvoidNamesUsedInAnotherSavesFolder)
+        {
+            const std::filesystem::path other = TestingOpenMW::currentTestDirPath() / "other";
+            std::filesystem::create_directories(other / "Lendias");
+            std::filesystem::create_directories(other / "Lendias - 1");
+            CharacterManager characters(savesDir(), sContentFiles);
+            EXPECT_EQ(characters.createCharacter("Lendias", other)->getPath(), savesDir() / "Lendias - 2");
+            EXPECT_EQ(characters.createCharacter("Vickor", other)->getPath(), savesDir() / "Vickor");
+        }
+
         TEST(MWStateCharacterManagerTest, createCharacterShouldReplaceUnsafeCharacters)
         {
             CharacterManager characters(savesDir(), sContentFiles);

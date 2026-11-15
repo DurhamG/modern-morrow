@@ -319,8 +319,12 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
             const std::filesystem::path folderName = currentFolderName();
             if (folderName.empty())
             {
+                // A new game's first save in OpenMW's folder names the game's character folder in both folders, so
+                // the name must be free in this game's own folder too. Otherwise the game's later saves there would
+                // join another playthrough's folder.
                 MWWorld::ConstPtr player = MWMechanics::getPlayer();
-                character = characters.createCharacter(player.get<ESM::NPC>()->mBase->mName);
+                character = characters.createCharacter(player.get<ESM::NPC>()->mBase->mName,
+                    toOpenMW ? mCharacterManager.getPath() : std::filesystem::path());
             }
             else
                 character = characters.findOrCreateCharacter(folderName);

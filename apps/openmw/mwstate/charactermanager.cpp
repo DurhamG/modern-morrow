@@ -56,7 +56,8 @@ void MWState::CharacterManager::deleteSlot(const MWState::Slot* slot, const MWSt
     }
 }
 
-MWState::Character* MWState::CharacterManager::createCharacter(const std::string& name)
+MWState::Character* MWState::CharacterManager::createCharacter(
+    const std::string& name, const std::filesystem::path& alsoUnusedIn)
 {
     std::ostringstream stream;
 
@@ -75,7 +76,8 @@ MWState::Character* MWState::CharacterManager::createCharacter(const std::string
 
     // Append an index if necessary to ensure a unique directory
     int i = 0;
-    while (std::filesystem::exists(path))
+    while (std::filesystem::exists(path)
+        || (!alsoUnusedIn.empty() && std::filesystem::exists(alsoUnusedIn / path.filename())))
     {
         std::ostringstream test;
         test << stream.str();

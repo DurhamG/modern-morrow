@@ -1,0 +1,21 @@
+# A new game whose first save goes into OpenMW's folder must not join another playthrough's character folder of the
+# same name in Modern Morrow's own folder. Its later quicksaves would otherwise overwrite or thin out that
+# playthrough's quicksaves.
+launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true" --openmw-saves
+key key=F5
+wait frames=60
+expect-file "saves/player/Quicksave*.omwsave"
+# A new game with the same character name.
+relaunch --start "Seyda Neen" --set "GUI.controller menus=true" --openmw-saves
+pad button=start
+wait-mode MainMenu
+pad button=a
+wait-text "Modern Morrow"
+pad button=rightshoulder
+wait frames=10
+pad button=a
+wait frames=90
+expect-file "openmw-saves/*/*.omwsave"
+key key=F5
+wait frames=60
+expect-file "saves/player - 1/Quicksave*.omwsave"
