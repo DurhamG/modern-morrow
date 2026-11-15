@@ -290,5 +290,151 @@ namespace MWGui
             EXPECT_FALSE(quest("fg_rathunt").isPinned());
             EXPECT_FALSE(quest("fg_rathunt").isArchived());
         }
+
+        class MWGuiQuestLogOrderTest : public MWGuiQuestLogTest
+        {
+        protected:
+            using Names = std::vector<std::string>;
+
+            static QuestLog::Quest quest(std::string_view name)
+            {
+                QuestLog::Quest result;
+                result.mName = name;
+                return result;
+            }
+
+            static Names names(const std::vector<QuestLog::Quest>& quests, const std::vector<int>& order)
+            {
+                Names result;
+                for (int index : order)
+                    result.push_back(quests[index].mName);
+                return result;
+            }
+
+            static Names headers(const std::vector<QuestLog::Row>& rows)
+            {
+                Names result;
+                for (const QuestLog::Row& row : rows)
+                    if (row.mEntry == -1)
+                        result.push_back(row.mHeader);
+                return result;
+            }
+        };
+
+        TEST_F(MWGuiQuestLogOrderTest, pinnedShouldComeFirstThenInProgressThenFinishedThenArchived)
+        {
+            std::vector<QuestLog::Quest> quests{ quest("archived"), quest("finished"), quest("open"), quest("pinned") };
+            quests[0].mArchived = true;
+            quests[1].mFinished = true;
+            quests[3].mPinned = true;
+            EXPECT_EQ(names(quests, QuestLog::order(quests, QuestLog::Tab::Recent)),
+                (Names{ "pinned", "open", "finished", "archived" }));
+        }
+
+        TEST_F(MWGuiQuestLogOrderTest, archivedAndFinishedShouldCountAsArchived)
+        {
+            std::vector<QuestLog::Quest> quests{ quest("both"), quest("finished") };
+            quests[0].mArchived = true;
+            quests[0].mFinished = true;
+            quests[1].mFinished = true;
+            EXPECT_EQ(names(quests, QuestLog::order(quests, QuestLog::Tab::Recent)), (Names{ "finished", "both" }));
+            EXPECT_EQ(QuestLog::groupOf(quests[0], QuestLog::Tab::Recent), "#{Interface:JournalArchived}");
+        }
+
+        TEST_F(MWGuiQuestLogOrderTest, orderWithinAGroupShouldStayNewestFirst)
+        {
+            const std::vector<QuestLog::Quest> quests{ quest("newest"), quest("middle"), quest("oldest") };
+            EXPECT_EQ(names(quests, QuestLog::order(quests, QuestLog::Tab::Recent)),
+                (Names{ "newest", "middle", "oldest" }));
+        }
+
+        TEST_F(MWGuiQuestLogOrderTest, placesTabShouldGroupQuestsInProgressByTown)
+        {
+            std::vector<QuestLog::Quest> quests{ quest("in vivec"), quest("in balmora"), quest("in caldera") };
+            quests[0].mTown = "Vivec";
+            quests[1].mTown = "balmora";
+            quests[2].mTown = "Caldera";
+            const std::vector<int> order = QuestLog::order(quests, QuestLog::Tab::Places);
+            EXPECT_EQ(names(quests, order), (Names{ "in balmora", "in caldera", "in vivec" }));
+            EXPECT_EQ(headers(QuestLog::buildRows(quests, order, QuestLog::Tab::Places)),
+                (Names{ "balmora", "Caldera", "Vivec" }));
+        }
+
+        TEST_F(MWGuiQuestLogOrderTest, placesTabShouldPutQuestsWithoutATownLastBeforeFinished)
+        {
+            std::vector<QuestLog::Quest> quests{ quest("finished"), quest("nowhere"), quest("in balmora") };
+            quests[0].mFinished = true;
+            quests[2].mTown = "Balmora";
+            const std::vector<int> order = QuestLog::order(quests, QuestLog::Tab::Places);
+            EXPECT_EQ(names(quests, order), (Names{ "in balmora", "nowhere", "finished" }));
+            EXPECT_EQ(headers(QuestLog::buildRows(quests, order, QuestLog::Tab::Places)),
+                (Names{ "Balmora", "#{Interface:JournalUnknownPlace}", "#{Interface:JournalFinished}" }));
+        }
+
+        TEST_F(MWGuiQuestLogOrderTest, factionsTabShouldGroupByFactionNameWithoutAFactionLast)
+        {
+            addFaction("mages", "Mages Guild");
+            addFaction("fighters", "Fighters Guild");
+            std::vector<QuestLog::Quest> quests{ quest("none"), quest("mages"), quest("fighters") };
+            quests[1].mFaction = id("mages");
+            quests[2].mFaction = id("fighters");
+            const std::vector<int> order = QuestLog::order(quests, QuestLog::Tab::Factions);
+            EXPECT_EQ(names(quests, order), (Names{ "fighters", "mages", "none" }));
+            EXPECT_EQ(headers(QuestLog::buildRows(quests, order, QuestLog::Tab::Factions)),
+                (Names{ "Fighters Guild", "Mages Guild", "#{Interface:JournalNoFaction}" }));
+        }
+
+        TEST_F(MWGuiQuestLogOrderTest, questTabsShouldLeaveOutNotesButKeepPinnedOnes)
+        {
+            std::vector<QuestLog::Quest> quests{ quest("note"), quest("quest"), quest("pinned note") };
+            quests[0].mNote = true;
+            quests[2].mNote = true;
+            quests[2].mPinned = true;
+            for (QuestLog::Tab tab : { QuestLog::Tab::Recent, QuestLog::Tab::Places, QuestLog::Tab::Factions })
+                EXPECT_EQ(names(quests, QuestLog::order(quests, tab)), (Names{ "pinned note", "quest" }));
+        }
+
+        TEST_F(MWGuiQuestLogOrderTest, notesTabShouldListOnlyNotes)
+        {
+            std::vector<QuestLog::Quest> quests{ quest("note"), quest("quest"), quest("archived note") };
+            quests[0].mNote = true;
+            quests[2].mNote = true;
+            quests[2].mArchived = true;
+            const std::vector<int> order = QuestLog::order(quests, QuestLog::Tab::Notes);
+            EXPECT_EQ(names(quests, order), (Names{ "note", "archived note" }));
+            EXPECT_EQ(headers(QuestLog::buildRows(quests, order, QuestLog::Tab::Notes)),
+                (Names{ "#{Interface:JournalTabNotes}", "#{Interface:JournalArchived}" }));
+        }
+
+        TEST_F(MWGuiQuestLogOrderTest, rowsShouldStartEachGroupWithAHeader)
+        {
+            std::vector<QuestLog::Quest> quests{ quest("a"), quest("b"), quest("c") };
+            quests[2].mFinished = true;
+            const std::vector<int> order = QuestLog::order(quests, QuestLog::Tab::Recent);
+            const std::vector<QuestLog::Row> rows = QuestLog::buildRows(quests, order, QuestLog::Tab::Recent);
+            ASSERT_EQ(rows.size(), 5);
+            EXPECT_EQ(rows[0].mHeader, "#{Interface:JournalInProgress}");
+            EXPECT_EQ(rows[1].mEntry, 0);
+            EXPECT_EQ(rows[2].mEntry, 1);
+            EXPECT_EQ(rows[3].mHeader, "#{Interface:JournalFinished}");
+            EXPECT_EQ(rows[4].mEntry, 2);
+            EXPECT_EQ(QuestLog::groupStarts(rows), (std::vector<int>{ 0, 2 }));
+        }
+
+        TEST_F(MWGuiQuestLogOrderTest, townNameShouldBeEscapedInItsHeader)
+        {
+            std::vector<QuestLog::Quest> quests{ quest("odd") };
+            quests[0].mTown = "#{Interface:OK}";
+            EXPECT_NE(QuestLog::groupOf(quests[0], QuestLog::Tab::Places), "#{Interface:OK}");
+        }
+
+        TEST_F(MWGuiQuestLogOrderTest, emptyJournalShouldGiveNoRows)
+        {
+            const std::vector<QuestLog::Quest> quests;
+            const std::vector<int> order = QuestLog::order(quests, QuestLog::Tab::Recent);
+            EXPECT_TRUE(order.empty());
+            EXPECT_TRUE(QuestLog::buildRows(quests, order, QuestLog::Tab::Recent).empty());
+            EXPECT_TRUE(QuestLog::groupStarts({}).empty());
+        }
     }
 }
