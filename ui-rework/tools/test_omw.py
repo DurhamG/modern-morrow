@@ -116,5 +116,51 @@ class SteamTest(unittest.TestCase):
             omw.read_binary_vdf(b"\x07key\x00")
 
 
+class CheckTest(unittest.TestCase):
+    # A pause menu: a column of buttons, and a row of tabs at the top.
+    dump = {"widgets": [
+        widget("Window", children=[
+            widget("TextBox", text="Save", rect=(100, 100, 80, 20)),
+            widget("TextBox", text="Load", rect=(100, 130, 80, 20)),
+            widget("TextBox", text="New Game", rect=(100, 160, 80, 20)),
+            widget("TextBox", text="Options", rect=(100, 190, 80, 20)),
+            widget("TextBox", text="Map", rect=(10, 10, 40, 20)),
+            widget("TextBox", text="Inventory", rect=(60, 12, 40, 20)),
+        ]),
+    ]}
+
+    def test_expect_text_matches_part_of_a_text_ignoring_case(self):
+        self.assertEqual(len(omw.widgets_with_text(self.dump, "new game")), 1)
+        self.assertEqual(len(omw.widgets_with_text(self.dump, "game")), 1)
+        self.assertEqual(omw.widgets_with_text(self.dump, "Exit"), [])
+
+    def test_expect_order_passes_top_to_bottom(self):
+        self.assertIsNone(omw.check_order(self.dump, ["Save", "Load", "New Game", "Options"]))
+
+    def test_expect_order_fails_when_swapped(self):
+        message = omw.check_order(self.dump, ["Load", "Save"])
+        self.assertIn("'Save'", message)
+        self.assertIn("not after", message)
+
+    def test_expect_order_fails_when_a_text_is_missing(self):
+        self.assertIn("is not on the screen", omw.check_order(self.dump, ["Save", "Exit"]))
+
+    def test_expect_order_allows_the_same_row_left_to_right(self):
+        self.assertIsNone(omw.check_order(self.dump, ["Map", "Inventory", "Save"]))
+        self.assertIsNotNone(omw.check_order(self.dump, ["Inventory", "Map"]))
+
+    def test_expect_order_takes_the_next_match_after_the_one_before(self):
+        dump = {"widgets": [widget("Window", children=[
+            widget("TextBox", text="Finished", rect=(0, 10, 50, 20)),
+            widget("TextBox", text="In Progress", rect=(0, 40, 50, 20)),
+            widget("TextBox", text="Finished", rect=(0, 70, 50, 20)),
+        ])]}
+        self.assertIsNone(omw.check_order(dump, ["In Progress", "Finished"]))
+
+    def test_lua_output_drops_the_empty_last_line(self):
+        self.assertEqual(omw.lua_output({"output": ["42", ""]}), "42")
+        self.assertEqual(omw.lua_output({"output": []}), "")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -744,6 +744,125 @@ def click_text(connection, text, timeout, by_name=False):
     return {"clicked": widget["type"], "text": widget.get("text"), "x": x + w // 2, "y": y + h // 2}
 
 
+def widgets_with_text(dump, text):
+    """The widgets in a UI dump whose text contains TEXT, ignoring case. A dump has only visible widgets."""
+    wanted = text.strip().lower()
+    return [node for root in dump["widgets"] for node in iter_widgets(root)
+            if wanted in node.get("text", "").lower()]
+
+
+def widgets_with_name(dump, name):
+    return [node for root in dump["widgets"] for node in iter_widgets(root) if node.get("name") == name]
+
+
+def comes_after(node, previous):
+    """Whether a widget comes after another when reading the screen: lower down, or on the same row and further
+    right. Widgets whose tops are less than half the shorter one's height apart are on the same row."""
+    x, y, _, h = node["rect"]
+    px, py, _, ph = previous["rect"]
+    tolerance = min(h, ph) / 2
+    if abs(y - py) <= tolerance:
+        return x > px
+    return y > py
+
+
+def check_order(dump, texts):
+    """Checks that each text is on the screen after the one before it, in reading order. Returns None when it holds,
+    or a message saying what was found."""
+    previous = None
+    for text in texts:
+        found = sorted(widgets_with_text(dump, text), key=lambda node: (node["rect"][1], node["rect"][0]))
+        if not found:
+            return f"{text!r} is not on the screen"
+        following = [node for node in found if previous is None or comes_after(node, previous)]
+        if not following:
+            where = ", ".join(f"{node['rect'][0]},{node['rect'][1]}" for node in found)
+            return f"{text!r} is on the screen, at {where}, but not after {previous.get('text', '')!r}"
+        previous = following[0]
+    return None
+
+
+def lua_output(reply):
+    """The text a lua command printed, without the empty line its output ends with."""
+    return "\n".join(line for line in reply.get("output", []) if line).strip()
+
+
+def check_line(connection, words, timeout):
+    """Runs one of the scenario lines that check the game, and returns a message when the check fails, or None. Lines
+    that aren't checks give False."""
+    command = words[0]
+
+    def request(**fields):
+        reply = connection.request(fields, timeout=timeout)
+        if not reply.get("ok"):
+            raise HarnessError(reply.get("error"))
+        return reply["result"]
+
+    def need(count):
+        if len(words) != count + 1:
+            raise HarnessError(f"{command} takes {count} argument(s); quote text with spaces")
+
+    if command in ("expect-text", "expect-no-text"):
+        need(1)
+        found = widgets_with_text(request(cmd="ui"), words[1])
+        if command == "expect-text" and not found:
+            return f"no visible widget shows {words[1]!r}"
+        if command == "expect-no-text" and found:
+            return f"a visible {found[0]['type']} shows {found[0].get('text')!r}"
+        return None
+    if command in ("expect-name", "expect-no-name"):
+        need(1)
+        found = widgets_with_name(request(cmd="ui"), words[1])
+        if command == "expect-name" and not found:
+            return f"no visible widget is named {words[1]!r}"
+        if command == "expect-no-name" and found:
+            return f"a visible {found[0]['type']} is named {words[1]!r}"
+        return None
+    if command == "expect-order":
+        if len(words) < 3:
+            raise HarnessError("expect-order takes two or more texts")
+        return check_order(request(cmd="ui"), words[1:])
+    if command in ("expect-mode", "expect-no-mode", "expect-state"):
+        need(0 if command == "expect-no-mode" else 1)
+        state = request(cmd="state")
+        modes = state.get("modes") or []
+        if command == "expect-mode" and (not modes or modes[-1] != words[1]):
+            return f"the open modes are {modes}"
+        if command == "expect-no-mode" and modes:
+            return f"the open modes are {modes}"
+        if command == "expect-state" and state.get("state") != words[1]:
+            return f"the game is in the state {state.get('state')!r}"
+        return None
+    if command == "expect-lua":
+        if len(words) not in (3, 4):
+            raise HarnessError("expect-lua takes code, a value and optionally context=NAME")
+        fields = {"cmd": "lua", "code": words[1]}
+        if len(words) == 4:
+            key, _, value = words[3].partition("=")
+            if key != "context":
+                raise HarnessError("expect-lua's third argument must be context=NAME")
+            fields["context"] = value
+        output = lua_output(request(**fields))
+        return None if output == words[2] else f"the code printed {output!r}"
+    if command in ("wait-text", "wait-mode"):
+        if len(words) not in (2, 3):
+            raise HarnessError(f"{command} takes one argument and optionally timeout=SECONDS")
+        limit = float(words[2].partition("=")[2]) if len(words) == 3 else 10.0
+        deadline = time.monotonic() + limit
+        while True:
+            if command == "wait-text":
+                if widgets_with_text(request(cmd="ui"), words[1]):
+                    return None
+            else:
+                modes = request(cmd="state").get("modes") or []
+                if modes and modes[-1] == words[1]:
+                    return None
+            if time.monotonic() > deadline:
+                return f"{words[1]!r} didn't show within {limit:g} s"
+            request(cmd="wait", frames=5)
+    return False
+
+
 def take_shot(connection, out_dir, name, timeout, scale=None):
     """Saves a screenshot and a text UI dump side by side."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -771,6 +890,8 @@ def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False):
     click-text TEXT   click the visible widget that shows TEXT
     click-name NAME   click the visible widget with this name, as the UI dump shows it
     shot NAME         save NAME.png and NAME.txt (a UI dump) in the output folder
+
+    and the checks that check_line runs, such as expect-text. A failed check stops the script.
     """
     shots = []
     for number, line in lines:
@@ -790,6 +911,16 @@ def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False):
                 raise HarnessError(f"{where}: shot takes one name, and needs an output folder")
             shots.append(take_shot(connection, out_dir, words[1], timeout))
             result = str(shots[-1])
+        elif words[0].startswith(("expect-", "wait-")):
+            try:
+                failure = check_line(connection, words, timeout)
+            except HarnessError as error:
+                raise HarnessError(f"{where}: {error}")
+            if failure is False:
+                raise HarnessError(f"{where}: unknown check {words[0]!r}")
+            if failure:
+                raise HarnessError(f"{where}: {failure}")
+            result = "ok"
         else:
             reply = connection.request(build_request(words), timeout=timeout)
             if not reply.get("ok"):

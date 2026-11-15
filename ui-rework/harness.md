@@ -104,6 +104,16 @@ A scenario file's first line is `launch` followed by launch options. Its other l
 - `click-text TEXT` clicks a widget by its text,
 - `click-name NAME` clicks a widget by its name.
 
+Scenarios can check what the game shows. A check that fails stops the scenario with the file, the line and what it found, and `omw.py scenario` then exits with 1. Texts match a part of a widget's text, ignoring case, and only visible widgets count. Quote a text with spaces.
+
+- `expect-text TEXT` and `expect-no-text TEXT`: a visible widget shows TEXT, or none does.
+- `expect-name NAME` and `expect-no-name NAME`: a visible widget has the name, as the UI dump shows it.
+- `expect-order TEXT TEXT ...`: the texts are on the screen in reading order, each lower than the one before, or on the same row and further right.
+- `expect-mode MODE` and `expect-no-mode`: the topmost UI mode, as `state` names it, such as `Inventory` or `MainMenu`, or no menu open.
+- `expect-state STATE`: `menu`, `running` or `ended`.
+- `expect-lua CODE VALUE [context=NAME]`: running the Lua code prints VALUE, such as `expect-lua "print(1 + 1)" 2 context=player`.
+- `wait-text TEXT [timeout=SECONDS]` and `wait-mode MODE [timeout=SECONDS]`: wait until the text shows or the mode is on top, checking every five frames, for up to 10 seconds unless a timeout is given. They are better than a fixed `wait`, which is too long on a fast machine and too short on a slow one.
+
 For example, `barter.txt`:
 
 ```
