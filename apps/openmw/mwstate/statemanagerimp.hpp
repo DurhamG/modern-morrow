@@ -68,9 +68,6 @@ namespace MWState
         /// OpenMW's characters, creating its saves folder if it doesn't exist yet.
         CharacterManager& openMWCharacters();
 
-        /// Copies an OpenMW save that is about to be overwritten into this game's backups folder.
-        void backUpOpenMWSave(const std::filesystem::path& filepath) const;
-
     public:
         StateManager(const std::filesystem::path& saves, const std::vector<std::string>& contentFiles);
 
