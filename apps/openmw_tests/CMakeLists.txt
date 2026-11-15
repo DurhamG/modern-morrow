@@ -27,6 +27,8 @@ file(GLOB UNITTEST_SRC_FILES
     mwinput/testtouchgestures.cpp
     mwinput/testtouchtutorial.cpp
 
+    mwmechanics/testrunfatigue.cpp
+
     mwlua/testobjectcache.cpp
     mwlua/testmwscriptbindings.cpp
 
