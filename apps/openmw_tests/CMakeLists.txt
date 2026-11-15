@@ -27,6 +27,7 @@ file(GLOB UNITTEST_SRC_FILES
 
     mwstate/testquestlists.cpp
     mwstate/testquicksavemanager.cpp
+    mwstate/testsavefolders.cpp
 
     mwsound/testheadcache.cpp
     mwsound/testwarmqueue.cpp
