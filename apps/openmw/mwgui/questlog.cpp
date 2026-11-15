@@ -4,6 +4,7 @@
 #include <charconv>
 #include <climits>
 #include <map>
+#include <optional>
 #include <span>
 #include <sstream>
 #include <string_view>
@@ -48,60 +49,34 @@ namespace MWGui::QuestLog
             ESM::RefId mCell;
         };
 
-        // Reads the stage of every Journal command in a result script, such as "Journal FG_RatHunt 10".
-        template <class Function>
-        void forEachJournalCommand(std::string_view script, Function&& function)
-        {
-            std::istringstream lines{ Misc::StringUtils::lowerCase(script) };
-            std::string line;
-            while (std::getline(lines, line))
-            {
-                line = line.substr(0, line.find(';'));
-                std::replace(line.begin(), line.end(), ',', ' ');
-                std::replace(line.begin(), line.end(), '"', ' ');
-                std::istringstream words{ line };
-                std::vector<std::string> tokens;
-                for (std::string word; words >> word;)
-                    tokens.push_back(std::move(word));
-                for (std::size_t i = 0; i + 2 < tokens.size(); ++i)
-                {
-                    const std::string_view command = tokens[i];
-                    if (command != "journal" && !command.ends_with("->journal"))
-                        continue;
-                    int stage = 0;
-                    const std::string& number = tokens[i + 2];
-                    if (std::from_chars(number.data(), number.data() + number.size(), stage).ec == std::errc())
-                        function(ESM::RefId::stringRefId(tokens[i + 1]), stage);
-                }
-            }
-        }
-
         // For each quest, the conversation line that sets its earliest stage. Content can't change while the game
         // runs, so this is worked out once.
+        std::optional<std::unordered_map<ESM::RefId, ConversationSource>> sConversationSources;
+
         const std::unordered_map<ESM::RefId, ConversationSource>& conversationSources()
         {
-            static const std::unordered_map<ESM::RefId, ConversationSource> sources = [] {
-                std::unordered_map<ESM::RefId, ConversationSource> result;
-                for (const ESM::Dialogue& dialogue : store().get<ESM::Dialogue>())
+            if (sConversationSources)
+                return *sConversationSources;
+            std::unordered_map<ESM::RefId, ConversationSource>& result = sConversationSources.emplace();
+            for (const ESM::Dialogue& dialogue : store().get<ESM::Dialogue>())
+            {
+                if (dialogue.mType == ESM::Dialogue::Journal)
+                    continue;
+                for (const ESM::DialInfo& info : dialogue.mInfo)
                 {
-                    if (dialogue.mType == ESM::Dialogue::Journal)
+                    if (info.mResultScript.empty()
+                        || (info.mActor.empty() && info.mFaction.empty() && info.mCell.empty()))
                         continue;
-                    for (const ESM::DialInfo& info : dialogue.mInfo)
+                    for (const auto& [quest, stage] : journalCommands(info.mResultScript))
                     {
-                        if (info.mResultScript.empty()
-                            || (info.mActor.empty() && info.mFaction.empty() && info.mCell.empty()))
+                        ConversationSource& source = result[quest];
+                        if (stage <= 0 || stage >= source.mStage)
                             continue;
-                        forEachJournalCommand(info.mResultScript, [&](const ESM::RefId& quest, int stage) {
-                            ConversationSource& source = result[quest];
-                            if (stage <= 0 || stage >= source.mStage)
-                                return;
-                            source = ConversationSource{ stage, info.mActor, info.mFaction, info.mCell };
-                        });
+                        source = ConversationSource{ stage, info.mActor, info.mFaction, info.mCell };
                     }
                 }
-                return result;
-            }();
-            return sources;
+            }
+            return result;
         }
 
         std::string regionName(const ESM::RefId& id)
@@ -121,7 +96,7 @@ namespace MWGui::QuestLog
                 return;
             }
             place = cell.mName;
-            town = place.substr(0, place.find_first_of(",:"));
+            town = townOf(place);
         }
 
         // A conversation can be limited to cells whose names start with some text, such as "Balmora".
@@ -145,7 +120,7 @@ namespace MWGui::QuestLog
                 {
                     // The filter is the start of the name, so it is spelled as in the cell's name.
                     place = it->mName.substr(0, name.size());
-                    town = place.substr(0, place.find_first_of(",:"));
+                    town = townOf(place);
                     return;
                 }
         }
@@ -167,22 +142,6 @@ namespace MWGui::QuestLog
                     return faction.mId;
             }
             return {};
-        }
-
-        // A name for a quest that has none, from the start of its first entry.
-        std::string untitledName(const MWDialogue::StampedJournalEntry& entry)
-        {
-            constexpr std::size_t maxLength = 48;
-            std::string text = entry.getText();
-            const std::size_t sentenceEnd = text.find_first_of(".!?");
-            if (sentenceEnd != std::string::npos)
-                text.resize(sentenceEnd);
-            if (text.size() > maxLength)
-            {
-                const std::size_t space = text.rfind(' ', maxLength);
-                text = text.substr(0, space != std::string::npos ? space : maxLength) + "...";
-            }
-            return text;
         }
 
         // Whether a journal ID without a quest name is a note. A note's ID has no entry that finishes it in the game's
@@ -237,6 +196,58 @@ namespace MWGui::QuestLog
         }
     }
 
+    std::vector<std::pair<ESM::RefId, int>> journalCommands(std::string_view script)
+    {
+        std::vector<std::pair<ESM::RefId, int>> commands;
+        std::istringstream lines{ Misc::StringUtils::lowerCase(script) };
+        std::string line;
+        while (std::getline(lines, line))
+        {
+            line = line.substr(0, line.find(';'));
+            std::replace(line.begin(), line.end(), ',', ' ');
+            std::replace(line.begin(), line.end(), '"', ' ');
+            std::istringstream words{ line };
+            std::vector<std::string> tokens;
+            for (std::string word; words >> word;)
+                tokens.push_back(std::move(word));
+            for (std::size_t i = 0; i + 2 < tokens.size(); ++i)
+            {
+                const std::string_view command = tokens[i];
+                if (command != "journal" && !command.ends_with("->journal"))
+                    continue;
+                int stage = 0;
+                const std::string& number = tokens[i + 2];
+                if (std::from_chars(number.data(), number.data() + number.size(), stage).ec == std::errc())
+                    commands.emplace_back(ESM::RefId::stringRefId(tokens[i + 1]), stage);
+            }
+        }
+        return commands;
+    }
+
+    std::string townOf(std::string_view place)
+    {
+        return std::string(place.substr(0, place.find_first_of(",:")));
+    }
+
+    std::string untitledName(std::string text)
+    {
+        constexpr std::size_t maxLength = 48;
+        const std::size_t sentenceEnd = text.find_first_of(".!?");
+        if (sentenceEnd != std::string::npos)
+            text.resize(sentenceEnd);
+        if (text.size() > maxLength)
+        {
+            const std::size_t space = text.rfind(' ', maxLength);
+            text = text.substr(0, space != std::string::npos ? space : maxLength) + "...";
+        }
+        return text;
+    }
+
+    void resetContentCache()
+    {
+        sConversationSources.reset();
+    }
+
     std::vector<Quest> collect()
     {
         const MWBase::Journal& journal = *MWBase::Environment::get().getJournal();
@@ -258,7 +269,7 @@ namespace MWGui::QuestLog
             {
                 quests.emplace_back();
                 quests.back().mNote = name.empty() && isNote(entry.mTopic);
-                quests.back().mName = name.empty() ? untitledName(entry) : std::move(name);
+                quests.back().mName = name.empty() ? untitledName(entry.getText()) : std::move(name);
             }
             Quest& quest = quests[it->second];
             quest.mEntries.push_back(&entry);

@@ -3,6 +3,8 @@
 
 #include <cstddef>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include <components/esm/refid.hpp>
@@ -64,6 +66,21 @@ namespace MWGui
 
         /// When the entry was added, such as "16 Last Seed (Day 1)".
         std::string timestamp(const MWDialogue::StampedJournalEntry& entry);
+
+        /// The quest and stage of every Journal command in a result script, such as "Journal FG_RatHunt 10". The
+        /// command can be run on another object, and commands after a ";" are comments.
+        std::vector<std::pair<ESM::RefId, int>> journalCommands(std::string_view script);
+
+        /// The town a place belongs to. Interiors are named after their town, such as "Balmora, Guild of Fighters"
+        /// or "Mournhold Temple: Reception Area".
+        std::string townOf(std::string_view place);
+
+        /// A name for a quest that has none, from the start of its first entry's text.
+        std::string untitledName(std::string text);
+
+        /// Forgets what was worked out from the game's content. The game's content never changes while it runs, but
+        /// each test has content of its own.
+        void resetContentCache();
     }
 }
 
