@@ -51,6 +51,7 @@ file(GLOB UNITTEST_SRC_FILES
     settings/shadermanager.cpp
     settings/testvalues.cpp
 
+    shader/mergeshaders.cpp
     shader/parsedefines.cpp
     shader/parsefors.cpp
     shader/parselinks.cpp
