@@ -15,6 +15,7 @@ file(GLOB UNITTEST_SRC_FILES
     mwworld/testpositioncellgrid.cpp
     mwworld/testplayerrecent.cpp
 
+    mwdialogue/testjournal.cpp
     mwdialogue/testkeywordsearch.cpp
 
     mwgui/testlayouts.cpp
