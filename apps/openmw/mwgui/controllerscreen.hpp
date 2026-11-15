@@ -11,6 +11,7 @@
 #include <MyGUI_TextBox.h>
 #include <SDL_gamecontroller.h>
 
+#include "listscroll.hpp"
 #include "windowbase.hpp"
 
 namespace MyGUI
@@ -212,11 +213,7 @@ namespace MWGui
     class ControllerList
     {
     public:
-        struct Row
-        {
-            int mHeight = 0;
-            bool mItem = true;
-        };
+        using Row = ListScroll::Row;
 
         /// The focused item, counting items only.
         int getFocus() const { return mFocus; }

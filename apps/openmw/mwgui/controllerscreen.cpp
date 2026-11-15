@@ -685,43 +685,15 @@ namespace MWGui
         const std::function<void(std::size_t row, int y, bool focused)>& drawRow, std::function<void()> onChange,
         std::function<void()> onActivate)
     {
-        int itemCount = 0;
-        for (const Row& row : rows)
-            itemCount += row.mItem ? 1 : 0;
+        const int itemCount = ListScroll::itemCount(rows);
         if (itemCount == 0)
             return false;
         mFocus = std::clamp(mFocus, 0, itemCount - 1);
 
-        // The row of the focused item.
-        int focusRow = 0;
-        for (int i = 0, item = 0; i < static_cast<int>(rows.size()); ++i)
-        {
-            if (!rows[i].mItem)
-                continue;
-            if (item++ == mFocus)
-            {
-                focusRow = i;
-                break;
-            }
-        }
-
-        // Scroll so the focused row is in view. Scrolling up also shows the focused item's group header.
-        mScroll = std::clamp(mScroll, 0, static_cast<int>(rows.size()) - 1);
-        if (focusRow < mScroll)
-            mScroll = focusRow > 0 && !rows[focusRow - 1].mItem ? focusRow - 1 : focusRow;
-        while (mScroll < focusRow)
-        {
-            int bottomOfFocus = y;
-            for (int i = mScroll; i <= focusRow; ++i)
-                bottomOfFocus += rows[i].mHeight;
-            if (bottomOfFocus <= y + h)
-                break;
-            ++mScroll;
-        }
-        // The list doesn't scroll past its end, which would leave empty space below it, as when it gets shorter.
-        int maxScroll = static_cast<int>(rows.size()) - 1;
-        for (int below = rows.back().mHeight; maxScroll > 0 && below + rows[maxScroll - 1].mHeight <= h;)
-            below += rows[--maxScroll].mHeight;
+        // Scroll so the focused row is in view. The list doesn't scroll past its end, which would leave empty space
+        // below it, as when it gets shorter.
+        mScroll = ListScroll::scrollToShow(rows, mScroll, ListScroll::rowOfItem(rows, mFocus), h);
+        const int maxScroll = ListScroll::maxScroll(rows, h);
         mScroll = std::min(mScroll, maxScroll);
 
         // The wheel scrolls the list a row at a time, and the item under the mouse then takes the focus, so moving the
@@ -740,39 +712,19 @@ namespace MWGui
                 const int scroll = std::clamp(mScroll - steps, 0, maxScroll);
                 if (scroll == mScroll)
                     return;
-                // The first item that ends below the mouse, among the rows that fit, so a header gives the item under
-                // it. Below the last row, the last item.
                 const MyGUI::IntPoint point = ControllerUi::pointerPoint();
                 const int pointY = (layer != nullptr ? layer->getPosition(point.left, point.top).top : point.top) - top;
-                int focusRow = -1;
-                int lastItemRow = -1;
-                int rowTop = 0;
-                for (int i = scroll; i < static_cast<int>(all.size()) && rowTop + all[i].mHeight <= h; ++i)
-                {
-                    rowTop += all[i].mHeight;
-                    if (!all[i].mItem)
-                        continue;
-                    lastItemRow = i;
-                    if (focusRow < 0 && pointY < rowTop)
-                        focusRow = i;
-                }
-                if (focusRow < 0)
-                    focusRow = lastItemRow;
+                const int focusRow = ListScroll::itemRowAt(all, scroll, h, pointY);
                 if (focusRow < 0)
                     return;
-                int item = 0;
-                for (int i = 0; i < focusRow; ++i)
-                    item += all[i].mItem ? 1 : 0;
                 mScroll = scroll;
-                mFocus = item;
+                mFocus = ListScroll::itemsBefore(all, focusRow);
                 onChange();
             };
             ControllerUi::addWheelTarget(parent, x, y, w, h, onWheel);
         }
 
-        int item = 0;
-        for (int i = 0; i < mScroll; ++i)
-            item += rows[i].mItem ? 1 : 0;
+        int item = ListScroll::itemsBefore(rows, mScroll);
         int rowY = y;
         for (std::size_t i = static_cast<std::size_t>(mScroll); i < rows.size(); ++i)
         {
