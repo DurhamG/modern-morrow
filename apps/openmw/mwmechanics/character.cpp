@@ -52,6 +52,7 @@
 #include "creaturestats.hpp"
 #include "movement.hpp"
 #include "npcstats.hpp"
+#include "runfatigue.hpp"
 #include "security.hpp"
 #include "spellcasting.hpp"
 #include "weapontype.hpp"
@@ -2210,8 +2211,7 @@ namespace MWMechanics
                                 = cls.getCreatureStats(mPtr).getAttribute(ESM::Attribute::Endurance).getModified();
                             recovered = (fFatigueReturnBase + fFatigueReturnMult * endurance) * duration;
                         }
-                        if (fatigueLoss > recovered)
-                            fatigueLoss = recovered + (fatigueLoss - recovered) * Settings::game().mRunFatigue;
+                        fatigueLoss = scaleRunFatigueLoss(fatigueLoss, recovered, Settings::game().mRunFatigue);
                     }
                     fatigue.setCurrent(fatigue.getCurrent() - fatigueLoss, fatigue.getCurrent() < 0);
                     cls.getCreatureStats(mPtr).setFatigue(fatigue);
