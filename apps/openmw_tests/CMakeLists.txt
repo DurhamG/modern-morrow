@@ -22,6 +22,7 @@ file(GLOB UNITTEST_SRC_FILES
     mwgui/testlayouts.cpp
     mwgui/testlistscroll.cpp
     mwgui/testquestlog.cpp
+    mwgui/testquickkeyslots.cpp
     mwgui/testtextpacking.cpp
     mwgui/tooltips.cpp
     mwgui/weightedsearch.cpp
