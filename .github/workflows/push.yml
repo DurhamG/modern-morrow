@@ -18,6 +18,10 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
+    # Before the build, so a missing localisation key, layer or data file fails in seconds.
+    - name: Check the UI data files
+      run: python3 CI/check_ui_data.py
+
     - name: Add OpenMW PPA Dependencies
       run: sudo add-apt-repository ppa:openmw/openmw; sudo apt-get update
 
