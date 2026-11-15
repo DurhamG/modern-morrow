@@ -25,6 +25,7 @@ file(GLOB UNITTEST_SRC_FILES
 
     mwscript/testscripts.cpp
 
+    mwstate/testcharactermanager.cpp
     mwstate/testquestlists.cpp
     mwstate/testquicksavemanager.cpp
     mwstate/testsavefolders.cpp
