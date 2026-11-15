@@ -1,11 +1,16 @@
 #!/bin/bash
-# Starts Modern Morrow's Linux AppImage, after updating it to the newest release on GitHub. Point a Steam shortcut at
+# Starts Modern Morrow's Linux AppImage, after updating it to the latest release on GitHub. Point a Steam shortcut at
 # this script instead of at an AppImage, and the game stays up to date without a trip to Desktop Mode.
 #
+# The latest release is the one marked "Latest" on the repository's releases page. New releases start as pre-releases,
+# which can't be marked as the latest. So a new release only reaches this script once someone marks it by hand, and
+# marking an older release as the latest takes everyone back to it.
+#
 # The script keeps the AppImage in its own folder, as ModernMorrow.AppImage. GitHub lists each release file with its
-# SHA-256 checksum. The script downloads the newest release's AppImage when that checksum differs from its own copy's,
-# so a release rebuilt under the same version number still updates. When GitHub can't be reached, or the download
-# fails or doesn't match its checksum, the script starts the AppImage it already has.
+# SHA-256 checksum. The script downloads the latest release's AppImage when that checksum differs from its own copy's.
+# So a release rebuilt under the same version number still updates, and so does a move back to an older release. When
+# GitHub can't be reached, or the download fails or doesn't match its checksum, the script starts the AppImage it
+# already has.
 #
 # While it downloads, the script shows a window with a progress bar, using zenity, which SteamOS has. Steam's Game Mode
 # shows it like a game's window. On a system without zenity, the download shows nothing.
@@ -20,11 +25,10 @@ DIR="$(dirname "$(readlink -f "$0")")"
 APPIMAGE="$DIR/ModernMorrow.AppImage"
 LOG="$DIR/ModernMorrow-AutoUpdate.log"
 
-# Prints the checksum, the size in bytes and the download link of the AppImage in the newest release that has one,
-# from GitHub's list of releases. The list is JSON, one field per line. Each release file starts with a "url" field
-# that ends in /releases/assets/<id>, and its "size", "digest" and "browser_download_url" fields follow before the next
-# file starts.
-newest_appimage() {
+# Prints the checksum, the size in bytes and the download link of a release's AppImage, from GitHub's description of
+# the release. The description is JSON, one field per line. Each release file starts with a "url" field that ends in
+# /releases/assets/<id>, and its "size", "digest" and "browser_download_url" fields follow before the next file starts.
+release_appimage() {
     awk '
         function check() {
             if (digest != "" && link ~ /\/ModernMorrow-[A-Za-z0-9._-]+-Linux-x86_64\.AppImage$/) {
@@ -62,14 +66,28 @@ print_progress() {
 }
 
 update() {
-    # The newest releases come first. Pre-releases count, and drafts aren't visible without signing in.
-    local releases sha256 size url
-    releases=$(curl -fsSL --connect-timeout 5 --max-time 30 "https://api.github.com/repos/$REPO/releases?per_page=10") ||
-        { echo "Couldn't reach GitHub."; return 1; }
-    read -r sha256 size url < <(printf '%s\n' "$releases" | newest_appimage)
+    # curl adds the HTTP status after the description, on a line of its own. GitHub answers 404 when no release is
+    # marked as the latest.
+    local release status sha256 size url
+    release=$(curl -sSL --connect-timeout 5 --max-time 30 -w '\n%{http_code}' \
+        "https://api.github.com/repos/$REPO/releases/latest") || { echo "Couldn't reach GitHub."; return 1; }
+    status=${release##*$'\n'}
+    release=${release%$'\n'*}
+    case "$status" in
+    200) ;;
+    404)
+        echo "No release is marked as the latest release."
+        return 1
+        ;;
+    *)
+        echo "GitHub answered with HTTP status $status."
+        return 1
+        ;;
+    esac
+    read -r sha256 size url < <(printf '%s\n' "$release" | release_appimage)
     [[ "${size:-}" =~ ^[0-9]+$ ]] || size=0
     if [[ ! "${sha256:-}" =~ ^[0-9a-f]{64}$ || ! "${url:-}" =~ ^https://github\.com/ ]]; then
-        echo "No release has an AppImage with a checksum."
+        echo "The latest release has no AppImage with a checksum."
         return 1
     fi
 

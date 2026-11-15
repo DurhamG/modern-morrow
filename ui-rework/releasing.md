@@ -5,9 +5,9 @@ GitHub Actions builds the release files. The release workflow, `.github/workflow
 - a Windows installer, `ModernMorrow-<tag>-Windows-x64.exe`, made by NSIS,
 - a Windows zip of the same files, `ModernMorrow-<tag>-Windows-x64.zip`, to unpack and run anywhere,
 - a Linux AppImage, `ModernMorrow-<tag>-Linux-x86_64.AppImage`, for the Steam Deck and other Linux systems,
-- `ModernMorrow-AutoUpdate.sh`, a script that downloads the newest AppImage and starts it, for a Steam shortcut that keeps itself up to date.
+- `ModernMorrow-AutoUpdate.sh`, a script that downloads the latest release's AppImage and starts it, for a Steam shortcut that keeps itself up to date.
 
-The script lives in `CI/linux/appimage/`. It finds the newest published release, pre-releases included, through GitHub's API. GitHub lists each release file with its SHA-256 checksum, and the script downloads the AppImage when that checksum differs from its own copy's. It goes by the file rather than the version number, so a release rebuilt under the same tag still reaches it.
+The script lives in `CI/linux/appimage/`. It asks GitHub's API for the release marked "Latest" on the releases page. GitHub lists each release file with its SHA-256 checksum, and the script downloads the AppImage when that checksum differs from its own copy's. It goes by the file rather than the version number, so a release rebuilt under the same tag still reaches it, and so does a move back to an older release. Copies of the script from releases before this change follow the newest release, pre-releases included.
 
 The Linux build runs on AlmaLinux 9, like OpenMW's portable Linux package, so it works on newer systems such as SteamOS. Its libraries are inside the AppImage.
 
@@ -17,9 +17,12 @@ Both builds run the game on SDL3 through sdl2-compat, SDL's library for running 
 
 1. Push a tag that starts with `v`, such as `git tag v0.1.0` and `git push origin v0.1.0`.
 2. Wait for the Release workflow on the Actions tab. It takes about an hour.
-3. It leaves a draft pre-release for the tag with the files. Write the release notes on GitHub and publish it.
+3. It leaves a draft pre-release for the tag with the files. Write the release notes on GitHub and publish it, still as a pre-release. Players can download it from the releases page, but the update script doesn't get it yet.
+4. Once players have tried it, edit the release on GitHub. Untick "Set as a pre-release", tick "Set as the latest release", and save. The update script's users get it the next time they start the game.
 
-To rebuild a published release, move its tag with `git tag -f v0.1.0 <commit>` and `git push -f origin v0.1.0`. The workflow then replaces the release's files and keeps it published, and the update script picks up the new build. A release that is still a draft can't be found by its tag, so moving the tag of a draft makes a second draft. Delete the old draft by hand.
+To roll back, edit the older release and tick "Set as the latest release". The update script's users go back to it on their next start. Also tick "Set as a pre-release" on the bad release, so it isn't picked as the latest again. Check first that the release being rolled back doesn't change the save format, because older builds may not load saves from newer ones.
+
+To rebuild a published release, move its tag with `git tag -f v0.1.0 <commit>` and `git push -f origin v0.1.0`. The workflow then replaces the release's files, and keeps it published with the same pre-release and latest marks. If it is the latest release, the update script's users get the new build right away, so make a new tag for anything that should be tried first. A release that is still a draft can't be found by its tag, so moving the tag of a draft makes a second draft. Delete the old draft by hand.
 
 To try the builds without a release, start the Release workflow by hand from the Actions tab. The files are then on the run's page, under Artifacts.
 

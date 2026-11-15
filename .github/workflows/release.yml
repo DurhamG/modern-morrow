@@ -53,13 +53,46 @@ jobs:
         path: source
         sparse-checkout: CI/linux/appimage
 
-    # The first run for a tag makes a draft. Once the release is published, a run for the same tag, such as after the
-    # tag is moved, replaces its files and keeps it published.
-    - name: Make or update the release
+    # A moved tag runs this workflow again for a release that may already be published. GitHub only finds published
+    # releases by their tag, so a release that is still a draft isn't found, and the run makes a second draft. Any
+    # answer other than "not found" stops the run, so a published release never goes through the step that makes one.
+    - name: Look for a published release for the tag
+      id: existing
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        if gh api "repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" --silent 2> lookup-error.txt; then
+          echo "published=true" >> "$GITHUB_OUTPUT"
+        elif grep -q "HTTP 404" lookup-error.txt; then
+          echo "published=false" >> "$GITHUB_OUTPUT"
+        else
+          cat lookup-error.txt
+          exit 1
+        fi
+
+    # The first run for a tag makes a draft pre-release. The update script follows the release marked as the latest,
+    # and a pre-release can't be marked as the latest, so publishing it doesn't reach the script's users.
+    - name: Make the release
+      if: ${{ steps.existing.outputs.published != 'true' }}
       uses: softprops/action-gh-release@v2
       with:
         draft: true
         prerelease: true
+        files: |
+          windows/*.exe
+          windows/*.zip
+          linux/*.AppImage
+          source/CI/linux/appimage/ModernMorrow-AutoUpdate.sh
+
+    # A run for a tag whose release is published, such as after the tag is moved, only replaces the files. This step
+    # leaves out the prerelease input, because the action sets an existing release's pre-release flag to that input
+    # when it is given, and that would take a release that was marked as the latest off the update script. The draft
+    # input doesn't change a published release. It only stops the action from publishing one at the end.
+    - name: Update the release's files
+      if: ${{ steps.existing.outputs.published == 'true' }}
+      uses: softprops/action-gh-release@v2
+      with:
+        draft: true
         files: |
           windows/*.exe
           windows/*.zip
