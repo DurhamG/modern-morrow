@@ -16,10 +16,11 @@ Both builds run the game on SDL3 through sdl2-compat, SDL's library for running 
 
 ## Making a release
 
-1. Push a tag that starts with `v`, such as `git tag v0.1.0` and `git push origin v0.1.0`.
-2. Wait for the Release workflow on the Actions tab. It takes about an hour.
-3. It leaves a draft pre-release for the tag with the files. Write the release notes on GitHub and publish it, still as a pre-release. Players can download it from the releases page, but the update script doesn't get it yet.
-4. Once players have tried it, edit the release on GitHub. Untick "Set as a pre-release", tick "Set as the latest release", and save. The update script's users get it the next time they start the game.
+1. Run the checks that CI can't, on a machine with Morrowind's data and a build of the commit: `python ui-rework/tools/prerelease.py`. It runs the UI data check, the harness client's tests, `components-tests` and `openmw-tests`, upstream's Lua tests against Morrowind's data, and every harness scenario, and stops at the first failure. It takes about 20 minutes, most of it the scenarios.
+2. Push a tag that starts with `v`, such as `git tag v0.1.0` and `git push origin v0.1.0`.
+3. Wait for the Release workflow on the Actions tab. It takes about an hour.
+4. It leaves a draft pre-release for the tag with the files. Write the release notes on GitHub and publish it, still as a pre-release. Players can download it from the releases page, but the update script doesn't get it yet.
+5. Once players have tried it, edit the release on GitHub. Untick "Set as a pre-release", tick "Set as the latest release", and save. The update script's users get it the next time they start the game.
 
 To roll back, edit the older release and tick "Set as the latest release". The update script's users go back to it on their next start. Also tick "Set as a pre-release" on the bad release, so it isn't picked as the latest again. Check first that the release being rolled back doesn't change the save format, because older builds may not load saves from newer ones.
 
