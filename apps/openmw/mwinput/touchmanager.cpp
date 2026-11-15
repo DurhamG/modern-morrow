@@ -49,6 +49,7 @@
 #include "bindingsmanager.hpp"
 #include "mousemanager.hpp"
 #include "touchgestures.hpp"
+#include "touchtutorial.hpp"
 
 namespace MWInput
 {
@@ -73,43 +74,8 @@ namespace MWInput
         constexpr float sRadialIconMm = 10.f;
         // How many frames a tap holds the attack, so the game sees it.
         constexpr int sUseFrames = 3;
-        // The tutorial shows again for a character after this long without playing with touch.
-        constexpr std::chrono::seconds sTutorialAgain = std::chrono::hours(24 * 14);
         // How far in from a side edge the tutorial draws the edge swipes' bands, wider than they are so they show.
         constexpr float sTutorialEdgeMm = 8.f;
-
-        // The tutorial's record is a line "played <seconds since 1970>", for when the game was last played with
-        // touch, and a line "seen <folder>" for each character, by its folder of saves, that has seen the tutorial.
-        struct TutorialRecord
-        {
-            std::int64_t mLastPlayed = 0;
-            std::set<std::string> mCharacters;
-        };
-
-        TutorialRecord readTutorialRecord(const std::filesystem::path& file)
-        {
-            TutorialRecord record;
-            std::ifstream stream(file);
-            std::string line;
-            while (std::getline(stream, line))
-            {
-                if (line.starts_with("played "))
-                    record.mLastPlayed = std::atoll(line.c_str() + 7);
-                else if (line.starts_with("seen "))
-                    record.mCharacters.insert(line.substr(5));
-            }
-            return record;
-        }
-
-        void writeTutorialRecord(const std::filesystem::path& file, const TutorialRecord& record)
-        {
-            std::ofstream stream(file);
-            stream << "played " << record.mLastPlayed << '\n';
-            for (const std::string& character : record.mCharacters)
-                stream << "seen " << character << '\n';
-            if (!stream)
-                Log(Debug::Warning) << "Failed to write the touch tutorial's record to " << file;
-        }
 
         std::int64_t secondsNow()
         {
@@ -1009,9 +975,9 @@ namespace MWInput
         TutorialRecord record = readTutorialRecord(mTutorialFile);
         const std::string character = currentCharacterFolder();
         const std::int64_t now = secondsNow();
-        const bool away = record.mLastPlayed > 0 && now - record.mLastPlayed >= sTutorialAgain.count();
+        const bool due = tutorialDue(record, character, now);
         record.mLastPlayed = now;
-        if (character.empty() || !record.mCharacters.contains(character) || away)
+        if (due)
         {
             showTutorial(TutorialPage::Play);
             if (character.empty())
