@@ -73,3 +73,8 @@ android {
         }
     }
 }
+
+dependencies {
+    // The JVM unit tests in src/test, which android/build.sh test runs.
+    testImplementation("junit:junit:4.13.2")
+}

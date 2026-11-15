@@ -23,6 +23,24 @@ on:
         value: ${{ jobs.Android.outputs.apk }}
 
 jobs:
+  # The app's JVM unit tests need no libraries or assets, so they don't wait for the Docker build.
+  Tests:
+    name: Android unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: 21
+
+    - uses: gradle/actions/setup-gradle@v4
+
+    - name: Run the unit tests
+      run: android/build.sh test
+
   Android:
     name: Android APK
     runs-on: ubuntu-latest

@@ -6,6 +6,7 @@
 #   android/build.sh apk      builds the debug APK on this machine with Gradle, into android/out/
 #   android/build.sh release  builds the release APK, signed with the key that ANDROID_KEYSTORE,
 #                             ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS name
+#   android/build.sh test     runs the app's JVM unit tests with Gradle, which need no libraries or assets
 #   android/build.sh          does deps, openmw and apk
 #
 # libopenmw.so builds in the Docker volume modernmorrow-android-build, and ccache keeps its cache in
@@ -36,6 +37,13 @@ build_openmw() {
         "$IMAGE" /src/android/container-build.sh
 }
 
+# Runs Gradle with the Android SDK and the JDK that Android Studio installs, unless others are set.
+gradle() {
+    export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+    export JAVA_HOME="${JAVA_HOME:-/Applications/Android Studio.app/Contents/jbr/Contents/Home}"
+    (cd "$ANDROID_DIR" && ./gradlew --quiet "$@")
+}
+
 # Runs a Gradle task, then copies the APK it made to android/out/ under the given name.
 run_gradle() {
     local task="$1" built="$2" name="$3"
@@ -44,9 +52,7 @@ run_gradle() {
         exit 1
     fi
 
-    export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
-    export JAVA_HOME="${JAVA_HOME:-/Applications/Android Studio.app/Contents/jbr/Contents/Home}"
-    (cd "$ANDROID_DIR" && ./gradlew --quiet "$task")
+    gradle "$task"
     mkdir -p "$ANDROID_DIR/out"
     cp "$ANDROID_DIR/app/build/outputs/apk/$built" "$ANDROID_DIR/out/$name"
     echo "APK: $ANDROID_DIR/out/$name"
@@ -72,6 +78,7 @@ case "${1:-all}" in
     openmw) build_openmw ;;
     apk) build_apk ;;
     release) build_release ;;
+    test) gradle testDebugUnitTest ;;
     all) build_deps && build_openmw && build_apk ;;
-    *) echo "Usage: $0 [deps|openmw|apk|release]" >&2; exit 2 ;;
+    *) echo "Usage: $0 [deps|openmw|apk|release|test]" >&2; exit 2 ;;
 esac
