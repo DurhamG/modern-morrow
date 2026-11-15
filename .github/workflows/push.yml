@@ -23,7 +23,9 @@ jobs:
       run: python3 CI/check_ui_data.py
 
     - name: Test the Steam Deck scripts
-      run: bash CI/test_auto_update.sh
+      run: |
+        bash CI/test_auto_update.sh
+        bash CI/test_apprun.sh
 
     - name: Add OpenMW PPA Dependencies
       run: sudo add-apt-repository ppa:openmw/openmw; sudo apt-get update
