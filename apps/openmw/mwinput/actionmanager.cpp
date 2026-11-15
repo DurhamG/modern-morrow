@@ -63,41 +63,16 @@ namespace MWInput
         const bool playing = !windowManager->isGuiMode();
         for (int direction = 0; direction < static_cast<int>(mDpadPresses.size()); ++direction)
         {
-            DpadPress& press = mDpadPresses[direction];
             const SDL_GameControllerButton button = sDirections[direction];
             // A direction the player bound to an action of their own does that action instead.
             const bool down
                 = inputManager->isControllerButtonPressed(button) && !mBindingsManager->isControllerButtonBound(button);
-            if (!down)
-            {
-                // A direction let go before it became a hold uses its press slot.
-                if (press.mDown && !press.mDone && playing)
-                    quickKey(slotFor(direction, false));
-                press = DpadPress{};
-                continue;
-            }
-            if (!press.mDown)
-            {
-                press.mDown = true;
-                // A press that starts in a menu, such as one that moves the selection there, does nothing in play.
-                press.mDone = !playing;
-                // When nothing is on the direction's hold, there is no need to wait and see if the press becomes one.
-                const auto hold = windowManager->getQuickKeysMenu()->getSlot(slotFor(direction, true));
-                if (!press.mDone && hold.mType == ESM::QuickKeys::Type::Unassigned)
-                {
-                    quickKey(slotFor(direction, false));
-                    press.mDone = true;
-                }
-                continue;
-            }
-            press.mTime += dt;
-            if (!playing)
-                press.mDone = true;
-            if (!press.mDone && press.mTime >= sHoldTime)
-            {
-                quickKey(slotFor(direction, true));
-                press.mDone = true;
-            }
+            const auto holdAssigned = [&] {
+                return windowManager->getQuickKeysMenu()->getSlot(slotFor(direction, true)).mType
+                    != ESM::QuickKeys::Type::Unassigned;
+            };
+            if (const int slot = updatePress(mDpadPresses[direction], direction, down, playing, holdAssigned, dt))
+                quickKey(slot);
         }
     }
 
