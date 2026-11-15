@@ -32,8 +32,8 @@ namespace MWState
         // folder exists.
         std::filesystem::path mOpenMWSaves;
         std::optional<CharacterManager> mOpenMWCharacters;
-        // When the game was loaded from OpenMW's saves and this game has no character folder of that name yet, the
-        // folder's name, so the first save here creates a character folder of the same name.
+        // When the game was loaded from OpenMW's saves, or first saved there, and this game has no character folder of
+        // that name yet, the folder's name. The first save here then creates a character folder of the same name.
         std::filesystem::path mOpenMWFolderName;
         double mTimePlayed;
         // Seconds of play, outside menus, since the game was last saved or loaded.

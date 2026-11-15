@@ -325,6 +325,10 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
                 character = characters.findOrCreateCharacter(folderName);
             if (!toOpenMW)
                 mCharacterManager.setCurrentCharacter(character);
+            else if (folderName.empty())
+                // A new game's first save went into OpenMW's folder. Its later saves there, and its first save in
+                // this game's own folder, go to a character folder of the same name.
+                mOpenMWFolderName = character->getPath().filename();
         }
 
         ESM::SavedGame profile;

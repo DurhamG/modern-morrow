@@ -951,5 +951,6 @@ These commits move code that runs in the game. Each is meant to change nothing, 
 | C44 and C46, the Android app's file handling and config | Setting up the game data on Android. |
 | The autosave condition move | When the game autosaves. |
 | The exact-match character folders, and any game setting fallbacks | These change behaviour on purpose. |
+| Remembering the character folder of a new game's first save into OpenMW's folder | A fix found while checking C09. Before it, each save there made a new character folder. |
 
 The list grows if a move turns out larger than planned.
