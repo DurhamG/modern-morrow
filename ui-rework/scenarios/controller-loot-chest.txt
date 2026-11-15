@@ -12,58 +12,71 @@ console "command=player->additem expensive_ring_01 1"
 console "command=player->equip expensive_ring_01"
 lua "context=global" "code=local w = require('openmw.world'); local t = require('openmw.types'); local util = require('openmw.util'); local p = w.players[1]; local chest = w.createObject('com_chest_01'); chest:teleport(p.cell, p.position + util.vector3(0, 80, 0)); local content = t.Container.content(chest); for _, entry in ipairs({ {'gold_001', 75}, {'steel longsword', 1}, {'bonemold_cuirass', 1}, {'chitin cuirass', 1}, {'extravagant_ring_01', 1}, {'p_restore_health_s', 3}, {'sc_restoration', 1}, {'bookskill_enchant1', 1}, {'pick_apprentice_01', 2}, {'misc_com_bottle_01', 1} }) do w.createObject(entry[1], entry[2]):moveInto(content) end; chest:activateBy(p)"
 wait frames=20
+wait-mode Container
 shot chest
 expect-mode Container
 pad button=dpdown
 wait frames=3
+wait-mode Container
 shot weapon
 expect-mode Container
 pad button=dpdown
 wait frames=3
+wait-mode Container
 shot armor
 expect-mode Container
 pad button=dpdown
 pad button=dpdown
 wait frames=3
+wait-mode Container
 shot ring
 expect-mode Container
 pad button=dpup
 pad button=x
 wait frames=10
+wait-mode Container
 shot took-and-equipped
 expect-mode Container
 pad button=leftstick
 wait frames=5
+wait-mode Container
 shot your-items
 expect-mode Container
 pad button=rightshoulder
 wait frames=5
+wait-mode Container
 shot your-equipment
 expect-mode Container
 pad button=dpdown
 pad button=a
 wait frames=10
+wait-mode Container
 shot put-in
 expect-mode Container
 pad button=b
 wait frames=5
+wait-mode Container
 shot back-to-chest
 expect-mode Container
 pad button=y
 wait frames=10
+wait-no-mode
 shot after-take-all
 expect-no-mode
 lua "context=global" "code=local w = require('openmw.world'); local t = require('openmw.types'); local p = w.players[1]; for _, c in ipairs(p.cell:getAll(t.Container)) do if c.recordId == 'crate_01_iron_weapons2' then c:activateBy(p) end end"
 wait frames=20
+wait-mode Container
 shot owned
 expect-mode Container
 pad button=y
 wait frames=10
+wait-mode Container
 shot steal-all-confirmation
 expect-mode Container
 pad button=b
 wait frames=5
 pad button=b
 wait frames=10
+wait-no-mode
 shot closed
 expect-no-mode

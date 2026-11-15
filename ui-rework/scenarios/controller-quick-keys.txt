@@ -10,14 +10,17 @@ pad button=b
 wait frames=10
 pad button=leftshoulder
 wait frames=5
+wait-mode Interface
 shot inventory
 expect-mode Interface
 pad button=leftstick
 wait frames=5
+wait-mode Interface
 shot inventory-choosing
 expect-mode Interface
 pad button=dpup
 wait frames=5
+wait-mode Interface
 shot inventory-assigned
 expect-mode Interface
 pad button=dpdown
@@ -26,43 +29,51 @@ pad button=leftstick
 wait frames=5
 pad button=dpup hold=40
 wait frames=10
+wait-mode Interface
 shot inventory-assigned-hold
 expect-mode Interface
 pad axis=righttrigger value=1 hold=4
 wait frames=10
 pad button=rightshoulder
 wait frames=5
+wait-mode Interface
 shot magic-spells
 expect-mode Interface
 pad button=leftstick
 wait frames=5
+wait-mode Interface
 shot magic-choosing
 expect-mode Interface
 pad button=dpright
 wait frames=5
+wait-mode Interface
 shot magic-assigned
 expect-mode Interface
 pad button=b
 wait frames=15
 pad button=dpup
 wait frames=10
+wait-no-mode
 shot used-press
 expect-no-mode
 expect-lua "local types = require('openmw.types'); local self = require('openmw.self'); local weapon = types.Actor.getEquipment(self, types.Actor.EQUIPMENT_SLOT.CarriedRight); print(weapon and weapon.recordId)" "iron longsword" context=player
 wait frames=150
 pad button=dpup hold=40
 wait frames=10
+wait-no-mode
 shot used-hold
 expect-no-mode
 expect-lua "print(require('openmw.types').Actor.inventory(require('openmw.self')):countOf('p_restore_health_s'))" 2 context=player
 wait frames=150
 pad button=dpright
 wait frames=10
+wait-no-mode
 shot used-spell
 expect-no-mode
 pad button=b
 wait frames=10
 pad axis=lefttrigger value=1 hold=4
 wait frames=10
+wait-mode Interface
 shot inventory-markers
 expect-mode Interface

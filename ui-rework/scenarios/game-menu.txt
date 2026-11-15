@@ -2,5 +2,6 @@
 launch --start "Balmora, Caius Cosades' House"
 pad button=start
 wait frames=10
+wait-mode MainMenu
 shot game-menu
 expect-mode MainMenu

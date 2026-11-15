@@ -3,5 +3,6 @@ launch --start "Balmora, Caius Cosades' House"
 console "command=journal A1_1_FindSpymaster 1"
 pad button=leftshoulder
 wait frames=15
+wait-mode Interface
 shot journal
 expect-mode Interface

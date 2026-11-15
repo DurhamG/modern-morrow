@@ -13,25 +13,30 @@ lua "code=local types=require('openmw.types'); local world=require('openmw.world
 wait frames=5
 lua "code=local types=require('openmw.types'); local hammer=types.Actor.inventory(require('openmw.self')):find('hammer_repair'); require('openmw.interfaces').UI.addMode('Repair', {target=hammer})" context=player
 wait frames=10
+wait-mode Repair
 shot repair
 expect-mode Repair
 pad button=a
 wait frames=5
 pad button=a
 wait frames=5
+wait-mode Repair
 shot repaired
 expect-mode Repair
 pad button=y
 wait frames=5
+wait-mode Repair
 shot next-tool
 expect-mode Repair
 pad button=b
 wait frames=10
 lua "code=local types=require('openmw.types'); local gem=types.Actor.inventory(require('openmw.self')):find('misc_soulgem_common'); require('openmw.interfaces').UI.addMode('Recharge', {target=gem})" context=player
 wait frames=10
+wait-mode Recharge
 shot recharge
 expect-mode Recharge
 pad button=a
 wait frames=10
+wait-mode Recharge
 shot recharged
 expect-mode Recharge

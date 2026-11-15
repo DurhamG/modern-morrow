@@ -2,14 +2,17 @@
 launch --start "Seyda Neen" --set "GUI.controller menus=true"
 console "command=MessageBox \"A stranger offers to sell you a map of the Ashlands. What do you say?\" \"Buy it\" \"Ask for a lower price\" \"Refuse\""
 wait frames=10
+wait-no-mode
 shot message-box
 expect-no-mode
 pad button=dpdown
 wait frames=5
+wait-no-mode
 shot message-box-moved
 expect-no-mode
 pad button=a
 wait frames=10
+wait-no-mode
 shot message-box-answered
 expect-no-mode
 pad button=start
@@ -18,9 +21,11 @@ pad button=dpdown
 pad button=dpdown
 pad button=a
 wait frames=10
+wait-mode MainMenu
 shot confirm-exit
 expect-mode MainMenu
 pad button=b
 wait frames=10
+wait-mode MainMenu
 shot confirm-cancelled
 expect-mode MainMenu

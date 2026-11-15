@@ -11,23 +11,28 @@ pad axis=righttrigger value=1 hold=5
 wait frames=5
 pad axis=righttrigger value=1 hold=5
 wait frames=10
+wait-mode Interface
 shot character
 expect-mode Interface
 pad button=dpdown
 wait frames=3
+wait-mode Interface
 shot level
 expect-mode Interface
 pad button=dpdown
 pad button=dpdown
 wait frames=3
+wait-mode Interface
 shot attribute
 expect-mode Interface
 pad button=rightshoulder
 wait frames=5
+wait-mode Interface
 shot skills
 expect-mode Interface
 pad button=y
 wait frames=3
+wait-mode Interface
 shot skills-next-group
 expect-mode Interface
 pad button=rightshoulder
@@ -35,5 +40,6 @@ wait frames=5
 pad button=dpdown
 pad button=dpdown
 wait frames=3
+wait-mode Interface
 shot factions
 expect-mode Interface

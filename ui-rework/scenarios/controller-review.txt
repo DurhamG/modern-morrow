@@ -5,5 +5,6 @@ wait frames=20
 pad button=dpdown
 pad button=dpdown
 wait frames=5
+wait-mode ChargenClassReview
 shot review
 expect-mode ChargenClassReview

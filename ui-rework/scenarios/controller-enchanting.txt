@@ -9,10 +9,12 @@ console "command=player->addspell shield"
 console "command=player->setenchant 60"
 lua "code=local types=require('openmw.types'); local gem=types.Actor.inventory(require('openmw.self')):find('misc_soulgem_grand'); require('openmw.interfaces').UI.addMode('Enchanting', {target=gem})" context=player
 wait frames=10
+wait-mode Enchanting
 shot start
 expect-mode Enchanting
 pad button=a
 wait frames=5
+wait-mode Enchanting
 shot items
 expect-mode Enchanting
 pad button=dpdown
@@ -23,27 +25,31 @@ pad button=dpdown
 wait frames=3
 pad button=a
 wait frames=5
+wait-mode Enchanting
 shot item-chosen
 expect-mode Enchanting
 pad button=a
 wait frames=5
+wait-mode Enchanting
 shot effects
 expect-mode Enchanting
 pad button=a
 wait frames=5
+wait-mode Enchanting
 shot editor
 expect-mode Enchanting
 pad button=dpdown
 wait frames=3
 pad button=dpright hold=90
 wait frames=5
+wait-mode Enchanting
 shot editor-changed
 expect-mode Enchanting
 pad button=a
 wait frames=5
+wait-mode Enchanting
 shot added
 expect-mode Enchanting
 pad button=x
-wait frames=10
+wait-no-mode
 shot created
-expect-no-mode

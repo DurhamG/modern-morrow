@@ -3,9 +3,11 @@ launch --start "Balmora, Clagius Clanler: Outfitter"
 console "command=player->additem gold_001 500"
 console "command=\"clagius clanler\"->forcegreeting"
 wait frames=10
+wait-mode Dialogue
 shot dialogue
 expect-mode Dialogue
 click-text Barter
 wait frames=10
+wait-mode Dialogue
 shot barter
 expect-mode Dialogue

@@ -22,14 +22,17 @@ console "command=player->equip p_fortify_strength_s"
 pad button=b
 pad axis=righttrigger value=1 hold=5
 wait frames=10
+wait-mode Interface
 shot active-empty
 expect-mode Interface
 pad button=rightshoulder
 wait frames=5
+wait-mode Interface
 shot spells
 expect-mode Interface
 pad button=y
 wait frames=5
+wait-mode Interface
 shot spells-next-group
 expect-mode Interface
 pad button=y
@@ -44,16 +47,19 @@ pad button=a
 pad button=rightshoulder
 pad button=rightshoulder
 wait frames=5
+wait-mode Interface
 shot items
 expect-mode Interface
 pad button=a
 wait frames=10
 pad button=rightshoulder
 wait frames=5
+wait-mode Interface
 shot scrolls
 expect-mode Interface
 pad button=y
 wait frames=5
+wait-mode Interface
 shot scrolls-next-group
 expect-mode Interface
 pad button=leftshoulder
@@ -61,14 +67,17 @@ pad button=leftshoulder
 pad button=leftshoulder
 pad button=leftshoulder
 wait frames=5
+wait-mode Interface
 shot active
 expect-mode Interface
 pad button=a
 wait frames=10
+wait-mode Interface
 shot active-switched
 expect-mode Interface
 pad button=leftshoulder
 wait frames=5
+wait-mode Interface
 shot recent
 expect-mode Interface
 pad axis=lefttrigger value=1 hold=5
@@ -79,5 +88,6 @@ pad button=b
 wait frames=10
 pad button=b
 wait frames=10
+wait-mode Interface
 shot map-reopened
 expect-mode Interface

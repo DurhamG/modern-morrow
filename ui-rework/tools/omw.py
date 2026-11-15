@@ -1017,6 +1017,18 @@ def check_line(connection, words, timeout, log=None):
             return None
         errors = log.errors()
         return f"the log has errors: {errors[:3]}" if errors else None
+    if command == "wait-no-mode":
+        if len(words) not in (1, 2):
+            raise HarnessError("wait-no-mode takes optionally timeout=SECONDS")
+        limit = float(words[1].partition("=")[2]) if len(words) == 2 else 10.0
+        deadline = time.monotonic() + limit
+        while True:
+            modes = request(cmd="state").get("modes") or []
+            if not modes:
+                return None
+            if time.monotonic() > deadline:
+                return f"the menus didn't close within {limit:g} s: the open modes are {modes}"
+            request(cmd="wait", frames=5)
     if command in ("wait-text", "wait-mode"):
         if len(words) not in (2, 3):
             raise HarnessError(f"{command} takes one argument and optionally timeout=SECONDS")

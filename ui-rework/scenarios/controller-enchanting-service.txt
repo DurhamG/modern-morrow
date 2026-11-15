@@ -8,27 +8,33 @@ lua "code=local core=require('openmw.core'); local types=require('openmw.types')
 console "command=player->additem gold_001 20000"
 lua "code=for _, actor in ipairs(require('openmw.nearby').actors) do if actor.recordId == 'galbedir' then require('openmw.interfaces').UI.addMode('Enchanting', {target=actor}) end end" context=player
 wait frames=10
+wait-mode Enchanting
 shot start
 expect-mode Enchanting
 pad button=dpdown
 wait frames=3
 pad button=a
 wait frames=5
+wait-mode Enchanting
 shot soul-gems
 expect-mode Enchanting
 pad button=a
 wait frames=5
+wait-mode Enchanting
 shot soul-chosen
 expect-mode Enchanting
 pad button=dpleft
 wait frames=5
+wait-mode Enchanting
 shot effects
 expect-mode Enchanting
 pad button=a
 wait frames=5
+wait-mode Enchanting
 shot attributes
 expect-mode Enchanting
 pad button=a
 wait frames=5
+wait-mode Enchanting
 shot editor
 expect-mode Enchanting

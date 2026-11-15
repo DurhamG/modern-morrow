@@ -2,6 +2,7 @@
 launch --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
 console command=EnableNameMenu
 wait frames=10
+wait-mode ChargenName
 shot keyboard
 expect-mode ChargenName
 pad button=dpright
@@ -15,5 +16,6 @@ pad button=dpdown
 pad button=dpleft
 pad button=a
 wait frames=5
+wait-mode ChargenName
 shot keyboard-typed
 expect-mode ChargenName

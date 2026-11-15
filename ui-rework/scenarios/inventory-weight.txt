@@ -12,6 +12,7 @@ pad button=rightshoulder
 pad button=rightshoulder
 pad button=rightshoulder
 wait frames=10
+wait-mode Interface
 shot weight
 expect-mode Interface
 expect-order Bottle "Iron Longsword" "Iron Dagger"

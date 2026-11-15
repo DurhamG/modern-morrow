@@ -11,11 +11,13 @@ pad button=leftshoulder
 wait frames=5
 pad button=leftshoulder
 wait frames=5
+wait-mode Interface
 shot misc
 expect-mode Interface
 pad button=leftshoulder
 wait frames=5
 pad button=leftshoulder
 wait frames=5
+wait-mode Interface
 shot notes
 expect-mode Interface

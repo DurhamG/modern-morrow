@@ -7,16 +7,19 @@ console "command=player->addspell shield"
 console "command=player->additem gold_001 5000"
 lua "code=for _, actor in ipairs(require('openmw.nearby').actors) do if actor.recordId == 'estirdalin' then require('openmw.interfaces').UI.addMode('SpellCreation', {target=actor}) end end" context=player
 wait frames=10
+wait-mode SpellCreation
 shot start
 expect-mode SpellCreation
 pad button=a
 wait frames=5
+wait-mode SpellCreation
 shot effects
 expect-mode SpellCreation
 pad button=dpdown
 wait frames=3
 pad button=a
 wait frames=5
+wait-mode SpellCreation
 shot editor
 expect-mode SpellCreation
 pad button=dpdown
@@ -29,13 +32,16 @@ pad button=dpdown
 wait frames=3
 pad button=dpright hold=30
 wait frames=5
+wait-mode SpellCreation
 shot editor-changed
 expect-mode SpellCreation
 pad button=a
 wait frames=5
+wait-mode SpellCreation
 shot added
 expect-mode SpellCreation
 pad button=x
 wait frames=10
+wait-no-mode
 shot bought
 expect-no-mode

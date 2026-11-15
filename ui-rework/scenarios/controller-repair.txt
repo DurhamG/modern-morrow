@@ -9,6 +9,7 @@ console "command=\"wayn\"->forcegreeting"
 wait frames=20
 pad button=rightshoulder
 wait frames=5
+wait-mode Dialogue
 shot services
 expect-mode Dialogue
 pad button=dpdown
@@ -16,13 +17,16 @@ pad button=dpdown
 pad button=dpdown
 pad button=a
 wait frames=20
+wait-mode MerchantRepair
 shot repair
 expect-mode MerchantRepair
 pad button=dpdown
 wait frames=5
+wait-mode MerchantRepair
 shot repair-moved
 expect-mode MerchantRepair
 pad button=a
 wait frames=10
+wait-mode MerchantRepair
 shot repaired
 expect-mode MerchantRepair

@@ -6,5 +6,6 @@ console "command=player->addspell \"weakness frost_25\""
 console "command=player->additem \"iron saber\" 1"
 console "command=player->equip \"iron saber\""
 wait frames=30
+wait-no-mode
 shot hud
 expect-no-mode

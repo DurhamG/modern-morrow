@@ -2,5 +2,6 @@
 launch --start "Balmora, Caius Cosades' House"
 console command=EnableRaceMenu
 wait frames=10
+wait-mode ChargenRace
 shot race
 expect-mode ChargenRace

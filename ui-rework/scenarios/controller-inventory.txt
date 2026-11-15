@@ -5,9 +5,11 @@ console "command=player->additem netch_leather_cuirass 1"
 console "command=player->additem p_restore_health_s 3"
 pad button=b
 wait frames=10
+wait-mode Interface
 shot inventory
 expect-mode Interface
 pad button=dpdown
 wait frames=5
+wait-mode Interface
 shot inventory-moved
 expect-mode Interface

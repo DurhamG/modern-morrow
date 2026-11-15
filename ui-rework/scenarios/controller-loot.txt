@@ -7,6 +7,7 @@ console "command=\"fargoth\"->sethealth 0"
 wait seconds=2
 lua "context=global" "code=local w = require('openmw.world'); for _, a in ipairs(w.activeActors) do if a.recordId == 'fargoth' then a:activateBy(w.players[1]) end end"
 wait frames=20
+wait-mode Container
 shot loot
 expect-mode Container
 pad button=dpdown
@@ -15,6 +16,7 @@ pad button=dpdown
 pad button=dpdown
 pad button=dpdown
 wait frames=3
+wait-mode Container
 shot all-hints
 expect-mode Container
 pad button=dpup
@@ -24,6 +26,7 @@ pad button=dpup
 pad button=dpup
 pad button=a
 wait frames=5
+wait-mode Container
 shot took-gold
 expect-mode Container
 pad button=a
@@ -36,9 +39,11 @@ pad button=a
 wait frames=5
 pad button=a
 wait frames=5
+wait-mode Container
 shot one-left
 expect-mode Container
 pad button=a
 wait frames=10
+wait-no-mode
 shot closed
 expect-no-mode

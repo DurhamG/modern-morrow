@@ -2,5 +2,6 @@
 launch --start "Balmora, Caius Cosades' House"
 console "command=\"caius cosades\"->forcegreeting"
 wait frames=10
+wait-mode Dialogue
 shot dialogue
 expect-mode Dialogue

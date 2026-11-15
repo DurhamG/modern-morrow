@@ -2,17 +2,21 @@
 launch --start "Seyda Neen" --set "GUI.controller menus=true"
 console "command=\"fargoth\"->forcegreeting"
 wait frames=20
+wait-mode Dialogue
 shot greeting
 expect-mode Dialogue
 pad button=a
 wait frames=10
+wait-mode Dialogue
 shot choice
 expect-mode Dialogue
 pad button=b
 wait frames=5
+wait-mode Dialogue
 shot choice-after-b
 expect-mode Dialogue
 pad button=a
 wait frames=10
+wait-mode Dialogue
 shot answered
 expect-mode Dialogue

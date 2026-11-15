@@ -113,7 +113,7 @@ Scenarios can check what the game shows. A check that fails stops the scenario w
 - `expect-mode MODE` and `expect-no-mode`: the topmost UI mode, as `state` names it, such as `Inventory` or `MainMenu`, or no menu open.
 - `expect-state STATE`: `menu`, `running` or `ended`.
 - `expect-lua CODE VALUE [context=NAME]`: running the Lua code prints VALUE, such as `expect-lua "print(1 + 1)" 2 context=player`.
-- `wait-text TEXT [timeout=SECONDS]` and `wait-mode MODE [timeout=SECONDS]`: wait until the text shows or the mode is on top, checking every five frames, for up to 10 seconds unless a timeout is given. They are better than a fixed `wait`, which is too long on a fast machine and too short on a slow one.
+- `wait-text TEXT [timeout=SECONDS]`, `wait-mode MODE [timeout=SECONDS]` and `wait-no-mode [timeout=SECONDS]`: wait until the text shows, the mode is on top, or no menu is open, checking every five frames, for up to 10 seconds unless a timeout is given. They are better than a fixed `wait`, which is too long on a fast machine and too short on a slow one.
 
 A `golden NAME` line compares the UI with a stored copy, and fails with a diff when they differ. The comparison keeps each visible widget's depth, type, name and text, and leaves out positions, sizes, fonts, fading and focus, so only a real change in what a screen shows fails it. `omw.py scenario NAMES --update-golden` stores the copies instead of comparing. They go in `.automation/golden/<scenario>/<resolution>/`, which git ignores, because they hold Morrowind's text. So they compare a run before a change with one after it, on the same machine.
 

@@ -11,5 +11,6 @@ console "command=player->additem bk_BriefHistoryEmpire1 1"
 console "command=player->additem pick_apprentice_01 2"
 pad button=b
 wait frames=10
+wait-mode Interface
 shot inventory
 expect-mode Interface
