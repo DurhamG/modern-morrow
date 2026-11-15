@@ -345,6 +345,35 @@ namespace ESM
             EXPECT_EQ(record.mPaidCrimeId, result.mPaidCrimeId);
         }
 
+        TEST_P(Esm3SaveLoadRecordTest, playerShouldKeepRecentItemsInModernMorrowFormats)
+        {
+            if (GetParam() == CurrentContentFormatVersion)
+                return;
+            Player record{};
+            record.mObject.blank();
+            record.mObject.mRef.mRefID = generateRandomRefId();
+            record.mCellId = ESM::RefId::esm3ExteriorCell(0, 0);
+            record.mRecentItems = { { generateRandomRefId(), true }, { generateRandomRefId(), false } };
+            record.mRecentSpells = { generateRandomRefId(), generateRandomRefId() };
+            Player result;
+            saveAndLoadRecord(record, GetParam(), result);
+            // Only Modern Morrow's formats 42 and 43 keep them in the player record. Other saves keep them in UiState.
+            if (GetParam() > MaxNoRecentItemsFormatVersion)
+            {
+                ASSERT_EQ(result.mRecentItems.size(), 2);
+                EXPECT_EQ(result.mRecentItems[0].mItem, record.mRecentItems[0].mItem);
+                EXPECT_TRUE(result.mRecentItems[0].mSeen);
+                EXPECT_EQ(result.mRecentItems[1].mItem, record.mRecentItems[1].mItem);
+                EXPECT_FALSE(result.mRecentItems[1].mSeen);
+            }
+            else
+                EXPECT_TRUE(result.mRecentItems.empty());
+            if (GetParam() > MaxNoRecentSpellsFormatVersion)
+                EXPECT_EQ(result.mRecentSpells, record.mRecentSpells);
+            else
+                EXPECT_TRUE(result.mRecentSpells.empty());
+        }
+
         TEST_P(Esm3SaveLoadRecordTest, journalEntryShouldNotChange)
         {
             // Journal entries are not saved to vanilla ESM format.
