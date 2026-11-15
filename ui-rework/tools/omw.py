@@ -21,6 +21,8 @@ import sys
 import time
 from pathlib import Path
 
+import savefile
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AUTOMATION_DIR = REPO_ROOT / ".automation"
 PROFILES_DIR = AUTOMATION_DIR / "profiles"
@@ -824,6 +826,48 @@ class LogWatch:
         return log_errors(self.new_lines(), self.allowlist, self.expected)
 
 
+def find_save(saves_dir, pattern):
+    """The one file in the saves folder that matches a pattern such as "*/Quicksave.omwsave", where * matches one
+    name. Save file names come from the save's description, so a scenario rarely knows them exactly."""
+    found = sorted(saves_dir.glob(pattern))
+    if len(found) != 1:
+        raise HarnessError(f"{len(found)} files in {saves_dir} match {pattern!r}, not one")
+    return found[0]
+
+
+def save_line(words, saves_dir):
+    """Runs one of the scenario lines that read or change save files. Returns a message when a check fails, or None.
+    Lines that aren't about saves give False."""
+    command = words[0]
+    counts = {"save-format": 2, "save-has-record": 2, "save-no-record": 2, "save-strip": 3, "save-set-format": 2}
+    if command not in counts:
+        return False
+    if len(words) != counts[command] + 1:
+        raise HarnessError(f"{command} takes {counts[command]} argument(s)")
+    if saves_dir is None:
+        raise HarnessError(f"{command} needs the profile's saves folder, which only scenarios know")
+    path = find_save(saves_dir, words[1])
+    data = path.read_bytes()
+    try:
+        if command == "save-format":
+            version = savefile.format_version(data)
+            return None if version == int(words[2]) else f"{path.name} is at format {version}"
+        if command in ("save-has-record", "save-no-record"):
+            has = any(name == words[2] for name, _, _ in savefile.records(data))
+            if has != (command == "save-has-record"):
+                return f"{path.name} {'has no' if not has else 'has a'} {words[2]} record"
+            return None
+        if command == "save-strip":
+            out = saves_dir / words[3]
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_bytes(savefile.strip(data, words[2]))
+            return None
+        path.write_bytes(savefile.set_format_version(data, int(words[2])))
+        return None
+    except savefile.SaveFileError as error:
+        raise HarnessError(f"{path}: {error}")
+
+
 def lua_output(reply):
     """The text a lua command printed, without the empty line its output ends with."""
     return "\n".join(line for line in reply.get("output", []) if line).strip()
@@ -937,7 +981,7 @@ def take_shot(connection, out_dir, name, timeout, scale=None):
     return out_dir / f"{name}.png"
 
 
-def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, log=None):
+def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, log=None, saves_dir=None):
     """Runs script lines against a running game. Besides server commands, a script can use:
 
     click-text TEXT   click the visible widget that shows TEXT
@@ -964,6 +1008,16 @@ def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, l
                 raise HarnessError(f"{where}: shot takes one name, and needs an output folder")
             shots.append(take_shot(connection, out_dir, words[1], timeout))
             result = str(shots[-1])
+        elif words[0].startswith("save-"):
+            try:
+                failure = save_line(words, saves_dir)
+            except HarnessError as error:
+                raise HarnessError(f"{where}: {error}")
+            if failure is False:
+                raise HarnessError(f"{where}: unknown save line {words[0]!r}")
+            if failure:
+                raise HarnessError(f"{where}: {failure}")
+            result = "ok"
         elif words[0].startswith(("expect-", "wait-")):
             try:
                 failure = check_line(connection, words, timeout, log)
@@ -992,7 +1046,8 @@ def cmd_run(args):
     out_dir = Path(args.out) if args.out else profile.root / "shots"
     connection = connect(profile)
     try:
-        run_lines(connection, lines, script, args.timeout, out_dir, args.verbose)
+        run_lines(connection, lines, script, args.timeout, out_dir, args.verbose,
+                  saves_dir=profile.data_dir / "saves")
     finally:
         connection.close()
 
@@ -1038,7 +1093,8 @@ def run_scenario(parser, name, resolution, args):
     try:
         connection = connect(profile)
         try:
-            shots = run_lines(connection, lines[1:], path, args.timeout, out_dir, args.verbose, log)
+            shots = run_lines(connection, lines[1:], path, args.timeout, out_dir, args.verbose, log,
+                              profile.data_dir / "saves")
             errors = log.errors()
             if errors:
                 raise HarnessError(f"{path}: the game logged errors: {errors[:3]}")

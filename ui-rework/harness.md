@@ -114,6 +114,15 @@ Scenarios can check what the game shows. A check that fails stops the scenario w
 - `expect-lua CODE VALUE [context=NAME]`: running the Lua code prints VALUE, such as `expect-lua "print(1 + 1)" 2 context=player`.
 - `wait-text TEXT [timeout=SECONDS]` and `wait-mode MODE [timeout=SECONDS]`: wait until the text shows or the mode is on top, checking every five frames, for up to 10 seconds unless a timeout is given. They are better than a fixed `wait`, which is too long on a fast machine and too short on a slow one.
 
+Scenarios can read and change save files in the profile's saves folder, `.automation/profiles/<profile>/data/saves/`, with `ui-rework/tools/savefile.py`. Paths are relative to that folder, and a `*` matches one name, since save file names come from the save's description. Each pattern must match exactly one file.
+
+- `save-format PATH VERSION`: the save is at that format version.
+- `save-has-record PATH NAME` and `save-no-record PATH NAME`: the save has a record of that name, such as `UIST`, the controller menus' record, or has none.
+- `save-strip PATH NAME OUT`: writes a copy of the save to OUT without the records of that name. A copy without `UIST` is what an OpenMW version without the controller menus writes.
+- `save-set-format PATH VERSION`: changes the save's format version in place, such as to 44 to see that a save too new is refused.
+
+`savefile.py` also works on its own: `savefile.py records FILE`, `savefile.py format FILE [VERSION]` and `savefile.py strip FILE NAME -o OUT`.
+
 A scenario also fails when the game logs an error: a line at OpenMW's error level, or one with `Error in frame`, `Bad LiveCellRef` or `Fatal error`. The check runs at the end of the scenario, and at an `expect-log-clean` line. `ui-rework/tools/log-allowlist.txt` lists errors that are harmless, each with the reason. A scenario that causes an error on purpose says so with `expect-log TEXT`, which fails when no line has TEXT, and lets the lines that have it pass the check.
 
 For example, `barter.txt`:
