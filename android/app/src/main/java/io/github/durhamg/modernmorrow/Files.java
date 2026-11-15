@@ -4,14 +4,11 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Environment;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +64,7 @@ final class Files {
         File dataFiles = findDataFiles(context);
         if (dataFiles == null)
             return false;
-        writeUserConfig(context, dataFiles);
+        GameConfig.writeUserConfig(userConfigDir(context), dataFiles);
         return true;
     }
 
@@ -84,32 +81,12 @@ final class Files {
         return null;
     }
 
-    /**
-     * The user openmw.cfg lists the data folder and the game files in it. It is written again on each start, so it
-     * follows the data if the player moves it. Settings live in settings.cfg, which this leaves alone.
-     */
-    private static void writeUserConfig(Context context, File dataFiles) throws IOException {
-        File dir = userConfigDir(context);
-        if (!dir.isDirectory() && !dir.mkdirs())
-            throw new IOException("can't create " + dir);
-        try (PrintWriter cfg = new PrintWriter(new File(dir, "openmw.cfg"), "UTF-8")) {
-            cfg.println("# Written by the app on each start. Changes here are lost.");
-            cfg.println("data=\"" + dataFiles.getAbsolutePath() + "\"");
-            for (String name : new String[] { "Morrowind", "Tribunal", "Bloodmoon" }) {
-                if (new File(dataFiles, name + ".esm").isFile())
-                    cfg.println("content=" + name + ".esm");
-                if (new File(dataFiles, name + ".bsa").isFile())
-                    cfg.println("fallback-archive=" + name + ".bsa");
-            }
-        }
-    }
-
     private static void copyAssetsIfChanged(Context context) throws IOException {
         AssetManager assets = context.getAssets();
         String version = readAsset(assets, "version");
         File global = new File(globalDir(context), "files");
         File stamp = new File(global, "assets-version");
-        if (stamp.isFile() && version.equals(readFile(stamp)))
+        if (stamp.isFile() && version.equals(GameConfig.readFile(stamp)))
             return;
 
         File resources = new File(global, "resources");
@@ -119,25 +96,10 @@ final class Files {
         File config = globalConfigDir(context);
         deleteRecursively(config);
         copyAssetTree(assets, "config", config);
-        fixGlobalConfig(new File(config, "openmw.cfg"), resources);
+        GameConfig.fixGlobalConfig(new File(config, "openmw.cfg"), resources);
 
         try (OutputStream out = new FileOutputStream(stamp)) {
             out.write(version.getBytes(StandardCharsets.UTF_8));
-        }
-    }
-
-    /** The build's openmw.cfg points at ./resources. The engine needs the folder the app copied them to. */
-    private static void fixGlobalConfig(File cfg, File resources) throws IOException {
-        StringBuilder text = new StringBuilder();
-        for (String line : readFile(cfg).split("\n", -1)) {
-            if (line.startsWith("resources="))
-                line = "resources=\"" + resources.getAbsolutePath() + "\"";
-            else if (line.startsWith("data=./resources/"))
-                line = "data=\"" + resources.getAbsolutePath() + line.substring("data=./resources".length()) + "\"";
-            text.append(line).append('\n');
-        }
-        try (OutputStream out = new FileOutputStream(cfg)) {
-            out.write(text.toString().getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -172,22 +134,7 @@ final class Files {
 
     private static String readAsset(AssetManager assets, String path) throws IOException {
         try (InputStream in = assets.open(path)) {
-            return readStream(in);
+            return GameConfig.readStream(in);
         }
-    }
-
-    private static String readFile(File file) throws IOException {
-        try (InputStream in = new java.io.FileInputStream(file)) {
-            return readStream(in);
-        }
-    }
-
-    private static String readStream(InputStream in) throws IOException {
-        StringBuilder text = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-        String line;
-        while ((line = reader.readLine()) != null)
-            text.append(line).append('\n');
-        return text.toString();
     }
 }
