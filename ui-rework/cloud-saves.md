@@ -2,7 +2,7 @@
 
 Cloud saves move a game from one device to another, such as from a PC to a Steam Deck. They are not a backup. A player types a phrase once on each device, and the phrase is the only key. There are no accounts.
 
-This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phases 1 and 2 have one, and phase 1 is done.
+This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phases 1 and 2 have one, and both are done.
 
 ## How players use it
 
@@ -34,7 +34,7 @@ The detailed plan is below, in [Phase 1 in detail](#phase-1-in-detail). [cloudsa
 
 The detailed plan is below, in [Phase 2 in detail](#phase-2-in-detail).
 
-- **Done when** a game saved to the cloud on one Windows profile loads on another, and the scenarios pass.
+- **Done** on 2026-11-16. The `cloud-saves` scenario saves a game to the cloud in one profile, and loads it in a profile with no saves, against the Worker run on this computer. The game's requests also worked against the deployed Worker, through `openmw-tests`' transport test.
 
 ### 3. Linux and the Steam Deck
 
@@ -63,7 +63,7 @@ The detailed plan is below, in [Phase 2 in detail](#phase-2-in-detail).
 The save and load screens already have tabs for Modern Morrow's own saves and OpenMW's, switched with L1 and R1. A third tab, Cloud, sits after them.
 
 - **The tabs always show,** since the Cloud tab is always there. Today they only show when an OpenMW install was found.
-- **The main menu's Load always shows.** Today it hides when the device has no saves, which is exactly the case on a new device.
+- **The main menu's Load always shows** in controller menus mode. It used to hide when the device had no saves, which is exactly the case on a new device. With nothing to load from Modern Morrow's or OpenMW's saves, the load screen opens on the Cloud tab.
 - **Saving, on the Cloud tab.** The tab has one entry, "Save to the cloud". Its details on the right say what the phrase holds now: the character, level, cell and upload time. Pressing A makes a new local save in this game's own folder, as the new save entry on the first tab does, then uploads that file. The screen shows the upload's progress, then that it worked, or what went wrong.
 - **Loading, on the Cloud tab.** Opening the tab asks the Worker for the phrase's save details, and shows them as the tab's one entry. Pressing A asks first, as loading does when a game is running. Then it downloads the save and loads it. A phrase that holds nothing shows a message saying so.
 - **The phrase.** The first time the Cloud tab is used on a device, the game asks for the phrase, with the text input dialog. In controller menus mode, that dialog draws the on-screen keyboard from naming a character. The Cloud tab shows the phrase, and Y changes it. The phrase is never written to the log.
@@ -96,10 +96,10 @@ The download is written into this game's own saves folder, in the folder for the
 ### Tests in the game
 
 - **A stand-in for `CloudSaves`** in `openmw-tests` tests the thread that runs requests, and what the screens do with each result.
-- **Harness scenarios** run against the Worker on this machine. `omw.py` starts it with `npm run dev`, which serves it at `http://localhost:8787` with a local bucket, and points the profile's `cloud address` setting at it. So the scenarios never touch Cloudflare. Every run of `prerelease.py` also checks that the Worker accepts a save the current build wrote.
-  - `cloud-save`: start a game, type a phrase on the on-screen keyboard, save to the cloud, and check the success message and the tab's details.
-  - `cloud-load`: in a second profile with no saves, open Load from the main menu, type the same phrase, load the cloud save, and check the character and cell. Then save, and check that the save went to that character's folder.
-  - `cloud-errors`: a phrase that holds nothing, and the Worker stopped, so the request can't connect.
+- **Harness scenarios** run against the Worker on this computer. A launch line with `--cloud` points the profile's `cloud address` at `http://127.0.0.1:8788`, and the scenario starts the Worker there with Wrangler and an empty bucket. Every other launch points it at a port where nothing listens, so a test run never touches Cloudflare. Every run of `prerelease.py` also checks that the Worker accepts a save the current build wrote.
+  - `cloud-saves`: start a game, type a phrase on the on-screen keyboard, and save to the cloud. Then remove the saves to stand in for a second device, load the cloud save from the main menu, and check that a quicksave goes to that character's folder. Last, loading from the cloud while playing asks first.
+  - `cloud-errors`: a phrase that holds nothing, and no Worker to reach.
+- **An opt-in test in `openmw-tests`** sends real requests through the platform's transport, when `OPENMW_CLOUD_TEST_ADDRESS` names a Worker.
 - **CI** builds and runs the unit tests, as for the rest of the game. The scenarios need Morrowind's data, so they run in `prerelease.py`.
 
 ### The commits
