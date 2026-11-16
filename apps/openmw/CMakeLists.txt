@@ -115,12 +115,12 @@ add_openmw_dir (mwstate
     statemanagerimp charactermanager character quicksavemanager questlists savefolders autosave cloudsaves cloudrequests
     )
 
-# Each platform sends cloud saves' requests its own way: WinHTTP on Windows, and the system's libcurl, loaded when it
-# is first needed, on Linux and macOS. Platforms without one yet say cloud saves aren't available.
+# Each platform sends cloud saves' requests its own way: WinHTTP on Windows, the app's Java class CloudRequest through
+# JNI on Android, and the system's libcurl, loaded when it is first needed, on Linux and macOS.
 if (WIN32)
     add_openmw_dir (mwstate cloudtransportwinhttp)
 elseif (ANDROID)
-    add_openmw_dir (mwstate cloudtransportnone)
+    add_openmw_dir (mwstate cloudtransportandroid)
 else()
     add_openmw_dir (mwstate cloudtransportcurl)
 endif()

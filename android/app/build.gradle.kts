@@ -52,6 +52,7 @@ android {
             }
         }
         release {
+            // Turning this on would need a keep rule for CloudRequest, which only the engine calls, through JNI.
             isMinifyEnabled = false
             if (releaseKeystore != null) {
                 signingConfig = signingConfigs.getByName("release")
