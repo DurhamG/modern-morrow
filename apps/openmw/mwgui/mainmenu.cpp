@@ -20,6 +20,7 @@
 
 #include "backgroundimage.hpp"
 #include "confirmationdialog.hpp"
+#include "mainmenubuttons.hpp"
 #include "pausemenu.hpp"
 #include "savegamedialog.hpp"
 #include "settingswindow.hpp"
@@ -400,6 +401,9 @@ namespace MWGui
                 maxwidth = requested.width;
         }
 
+        const float buttonScale = mainMenuButtonScale(Settings::gui().mControllerMenus, mHeight);
+        maxwidth = static_cast<int>(maxwidth * buttonScale);
+
         // Now show and position the ones we want
         for (const std::string& buttonId : buttons)
         {
@@ -418,9 +422,10 @@ namespace MWGui
             // TODO: perhaps do this within ImageButton?
             int height = requested.height;
             button->setImageTile(MyGUI::IntSize(requested.width, static_cast<int>(requested.height - 16 * scale)));
-            button->setCoord(static_cast<int>((maxwidth - requested.width / scale) / 2), curH,
-                static_cast<int>(requested.width / scale), static_cast<int>(height / scale - 16));
-            curH += static_cast<int>(height / scale - 16);
+            const int width = static_cast<int>(requested.width / scale * buttonScale);
+            const int drawnHeight = static_cast<int>((height / scale - 16) * buttonScale);
+            button->setCoord((maxwidth - width) / 2, curH, width, drawnHeight);
+            curH += drawnHeight;
         }
 
         // The main menu covers the screen, on a layer above the pause menu's, so it lets the mouse through to the pause
@@ -438,7 +443,7 @@ namespace MWGui
         if (state == MWBase::StateManager::State_NoGame)
         {
             // Align with the background image
-            int bottomPadding = 24;
+            const int bottomPadding = static_cast<int>(24 * buttonScale);
             mButtonBox->setCoord(mWidth / 2 - maxwidth / 2, mHeight - curH - bottomPadding, maxwidth, curH);
         }
         else
