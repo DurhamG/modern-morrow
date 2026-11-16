@@ -59,7 +59,30 @@ jobs:
     - name: Run components tests
       run: ./components-tests
 
+    # openmw-tests sends real cloud save requests through the system's libcurl, to the Worker from cloudsaves/ run
+    # here with a local bucket.
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24
+        cache: npm
+        cache-dependency-path: cloudsaves/package-lock.json
+
+    - name: Start the cloud saves Worker
+      working-directory: cloudsaves
+      run: |
+        npm ci
+        nohup npx wrangler dev --ip 127.0.0.1 --port 8787 --show-interactive-dev-session=false > "$RUNNER_TEMP/wrangler.log" 2>&1 &
+        for _ in $(seq 60); do
+          if curl -s -o /dev/null http://127.0.0.1:8787/; then exit 0; fi
+          sleep 1
+        done
+        cat "$RUNNER_TEMP/wrangler.log"
+        exit 1
+
     - name: Run OpenMW tests
+      env:
+        OPENMW_CLOUD_TEST_ADDRESS: http://127.0.0.1:8787
+        OPENMW_CLOUD_TEST_SAVE: cloudsaves/test/saves/modern-morrow.omwsave
       run: ./openmw-tests
 
     - name: Run OpenMW-CS tests
