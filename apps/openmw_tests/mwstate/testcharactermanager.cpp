@@ -143,6 +143,31 @@ namespace MWState
             EXPECT_EQ(characters.createCharacter("J. Doe")->getPath(), savesDir() / "J__Doe");
         }
 
+        TEST(MWStateCharacterFolderNameTest, shouldKeepAsciiLettersAndDigits)
+        {
+            EXPECT_EQ(characterFolderName("Lendias"), "Lendias");
+            EXPECT_EQ(characterFolderName("Vivec2"), "Vivec2");
+        }
+
+        TEST(MWStateCharacterFolderNameTest, shouldReplaceOtherCharactersWithUnderscores)
+        {
+            EXPECT_EQ(characterFolderName("J. Doe"), "J__Doe");
+            EXPECT_EQ(characterFolderName("a/b\\c:d"), "a_b_c_d");
+        }
+
+        TEST(MWStateCharacterFolderNameTest, shouldReplaceEachLetterOutsideAsciiWithOneUnderscore)
+        {
+            // "Séverine" in UTF-8, where é is two bytes.
+            EXPECT_EQ(characterFolderName("S\xc3\xa9verine"), "S_verine");
+        }
+
+        TEST(MWStateCharacterFolderNameTest, shouldBeTheFolderACharacterIsCreatedIn)
+        {
+            CharacterManager characters(savesDir(), sContentFiles);
+            EXPECT_EQ(characters.createCharacter("Fargoth the Elder")->getPath(),
+                savesDir() / characterFolderName("Fargoth the Elder"));
+        }
+
         TEST(MWStateCharacterManagerTest, currentCharacterShouldBeTheOneSet)
         {
             CharacterManager characters(savesDir(), sContentFiles);
