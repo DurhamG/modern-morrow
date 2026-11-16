@@ -2,6 +2,7 @@
 #define OPENMW_MWGUI_SAVEGAMEDIALOG_H
 
 #include <memory>
+#include <vector>
 
 #include "../mwbase/statemanager.hpp"
 
@@ -16,6 +17,7 @@ namespace MWState
 
 namespace MWGui
 {
+    class CloudTab;
 
     class SaveGameDialog : public MWGui::WindowModal
     {
@@ -80,10 +82,19 @@ namespace MWGui
         bool mOkButtonFocus = true;
 
         // In controller menus mode, a full screen panel shows the saves instead of this window. When saving, the
-        // first entry is a new save with the name the dialog made up. When an OpenMW install was found, tabs switch
-        // between this game's saves and OpenMW's, so a game can be loaded from OpenMW or saved into its folder.
+        // first entry is a new save with the name the dialog made up. Tabs switch between this game's saves, OpenMW's
+        // when an OpenMW install was found, and the cloud's. OpenMW's tab loads a game from OpenMW or saves it into
+        // its folder. The Cloud tab moves a game to another device.
+        enum class Tab
+        {
+            Own,
+            OpenMW,
+            Cloud,
+        };
         MyGUI::Widget* mPanel = nullptr;
+        Tab mTab = Tab::Own;
         MWBase::StateManager::SaveFolder mFolder = MWBase::StateManager::SaveFolder::Own;
+        std::unique_ptr<CloudTab> mCloud;
         ControllerList mList;
         std::string mNewSaveName;
         std::size_t panelEntryCount() const;
@@ -91,8 +102,9 @@ namespace MWGui
         void showPanel();
         void drawPanel();
         void changeCharacter(int delta);
-        bool showFolderTabs() const;
-        void changeFolder();
+        std::vector<Tab> tabs() const;
+        void selectTab(Tab tab);
+        void changeTab(int delta);
         bool onControllerTrigger(bool right) override;
 
     public:

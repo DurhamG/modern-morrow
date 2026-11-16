@@ -85,6 +85,21 @@ namespace MWState
             EXPECT_FALSE(parseCloudDetails(R"({"playerName":"a"})").has_value());
         }
 
+        TEST(MWStateCloudTimeTest, shouldReadTheServicesUploadTime)
+        {
+            EXPECT_EQ(parseCloudTime("2026-11-15T12:00:00.000Z"), std::time_t(1794744000));
+            EXPECT_EQ(parseCloudTime("2024-02-29T23:59:59.999Z"), std::time_t(1709251199));
+        }
+
+        TEST(MWStateCloudTimeTest, shouldRefuseSomethingElse)
+        {
+            EXPECT_FALSE(parseCloudTime("").has_value());
+            EXPECT_FALSE(parseCloudTime("yesterday").has_value());
+            EXPECT_FALSE(parseCloudTime("2026-11-15 12:00:00").has_value());
+            EXPECT_FALSE(parseCloudTime("2026-02-30T12:00:00.000Z").has_value());
+            EXPECT_FALSE(parseCloudTime("2026-11-15T25:00:00.000Z").has_value());
+        }
+
         TEST(MWStateCloudFailureTest, shouldNameWhatWentWrong)
         {
             EXPECT_EQ(cloudFailure(CloudReply{ true, 200, "" }), CloudFailure::None);

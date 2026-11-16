@@ -2,6 +2,7 @@
 #define GAME_STATE_CLOUDSAVES_H
 
 #include <cstdint>
+#include <ctime>
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -66,6 +67,9 @@ namespace MWState
     /// character with the same number, which this turns back into the bytes. Returns nothing when the JSON isn't
     /// the details.
     std::optional<CloudSaveDetails> parseCloudDetails(std::string_view json);
+
+    /// Reads the time a save was uploaded, which the service gives in UTC, such as "2026-11-15T12:00:00.000Z".
+    std::optional<std::time_t> parseCloudTime(std::string_view uploaded);
 
     CloudFailure cloudFailure(const CloudReply& reply);
 

@@ -1,7 +1,9 @@
 #include "savegamedialog.hpp"
 
+#include <algorithm>
 #include <format>
 #include <sstream>
+#include <tuple>
 
 #include <MyGUI_ComboBox.h>
 #include <MyGUI_Gui.h>
@@ -31,6 +33,7 @@
 
 #include "../mwstate/character.hpp"
 
+#include "cloudtab.hpp"
 #include "confirmationdialog.hpp"
 
 namespace MWGui
@@ -74,6 +77,8 @@ namespace MWGui
                 mPanel = MyGUI::Gui::getInstance().createWidget<MyGUI::Widget>(
                     "", MyGUI::IntCoord(MyGUI::IntPoint(), layer->getSize()), MyGUI::Align::Default, "ControllerModal");
                 mPanel->setVisible(false);
+                mCloud = std::make_unique<CloudTab>();
+                mCloud->mRedraw = [this] { drawPanel(); };
             }
     }
 
@@ -97,6 +102,8 @@ namespace MWGui
 
     std::size_t SaveGameDialog::panelEntryCount() const
     {
+        if (mTab == Tab::Cloud)
+            return mCloud->entryCount();
         return mSaveList->getItemCount() + (mSaving ? 1 : 0);
     }
 
@@ -106,6 +113,8 @@ namespace MWGui
         const std::size_t count = panelEntryCount();
         const std::size_t focus = count == 0 ? 0 : std::min(static_cast<std::size_t>(mList.getFocus()), count - 1);
         mList.setFocus(static_cast<int>(focus));
+        if (mTab == Tab::Cloud)
+            return;
         if (mSaving && focus == 0)
         {
             mSaveList->setIndexSelected(MyGUI::ITEM_NONE);
@@ -134,24 +143,48 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
     }
 
-    bool SaveGameDialog::showFolderTabs() const
+    std::vector<SaveGameDialog::Tab> SaveGameDialog::tabs() const
     {
+        std::vector<Tab> result{ Tab::Own };
+        if (mPanel == nullptr)
+            return result;
         // Saving can create OpenMW's first save. Loading needs saves there to load.
         using SaveFolder = MWBase::StateManager::SaveFolder;
         MWBase::StateManager* mgr = MWBase::Environment::get().getStateManager();
-        return mPanel != nullptr && mgr->hasSaveFolder(SaveFolder::OpenMW)
-            && (mSaving || mgr->characterBegin(SaveFolder::OpenMW) != mgr->characterEnd(SaveFolder::OpenMW));
+        if (mgr->hasSaveFolder(SaveFolder::OpenMW)
+            && (mSaving || mgr->characterBegin(SaveFolder::OpenMW) != mgr->characterEnd(SaveFolder::OpenMW)))
+            result.push_back(Tab::OpenMW);
+        if (mSaving)
+            result.push_back(Tab::Cloud);
+        return result;
     }
 
-    void SaveGameDialog::changeFolder()
+    void SaveGameDialog::selectTab(Tab tab)
     {
-        using SaveFolder = MWBase::StateManager::SaveFolder;
-        if (!showFolderTabs())
+        if (tab == mTab || (mTab == Tab::Cloud && mCloud->busy()))
             return;
-        mFolder = mFolder == SaveFolder::Own ? SaveFolder::OpenMW : SaveFolder::Own;
-        fillCharacters();
+        mTab = tab;
         mList.reset();
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        if (tab == Tab::Cloud)
+        {
+            mCurrentSlot = nullptr;
+            mCloud->open(mSaving, mNewSaveName);
+            return;
+        }
+        mFolder = tab == Tab::Own ? MWBase::StateManager::SaveFolder::Own : MWBase::StateManager::SaveFolder::OpenMW;
+        fillCharacters();
+    }
+
+    void SaveGameDialog::changeTab(int delta)
+    {
+        const std::vector<Tab> shown = tabs();
+        if (shown.size() < 2)
+            return;
+        std::size_t index = 0;
+        while (index < shown.size() && shown[index] != mTab)
+            ++index;
+        selectTab(shown[wrap(index == shown.size() ? 0 : index, shown.size(), delta)]);
     }
 
     bool SaveGameDialog::onControllerTrigger(bool right)
@@ -169,6 +202,8 @@ namespace MWGui
     {
         if (mPanel == nullptr || !mPanel->getVisible())
             return;
+        if (mTab == Tab::Cloud && mCloud->update())
+            drawPanel();
         // The confirmations that loading, saving over a save and deleting ask for take the controller meanwhile.
         if (MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() != this)
         {
@@ -222,25 +257,23 @@ namespace MWGui
             addPointerTarget(mPanel, gx - 4, y + 16, 30, 30, nullptr, [this] { onControllerTrigger(false); });
         }
 
-        // The tabs for this game's saves and OpenMW's, switched with L1 and R1. Clicking a glyph or the other tab
-        // presses the shoulder button.
+        // The tabs, switched with L1 and R1. Clicking a glyph presses the shoulder button, and clicking a tab chooses
+        // it.
         int contentTop = y + 64;
-        if (showFolderTabs())
+        if (const std::vector<Tab> shown = tabs(); shown.size() > 1)
         {
-            using SaveFolder = MWBase::StateManager::SaveFolder;
             const int ty = y + 52;
             int tx = x + 24;
             addGlyph(mPanel, tx, ty + 9, 22, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
             addPointerTarget(
                 mPanel, tx - 4, ty + 4, 30, 32, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER); });
             tx += 34;
-            const std::pair<SaveFolder, std::string> tabs[] = {
-                { SaveFolder::Own, "#{Interface:SavesFolderOwn}" },
-                { SaveFolder::OpenMW, "#{Interface:SavesFolderOpenMW}" },
-            };
-            for (const auto& [folder, caption] : tabs)
+            for (const Tab tab : shown)
             {
-                const bool selected = folder == mFolder;
+                const std::string caption = tab == Tab::Own ? "#{Interface:SavesFolderOwn}"
+                    : tab == Tab::OpenMW                    ? "#{Interface:SavesFolderOpenMW}"
+                                                            : "#{Interface:SavesFolderCloud}";
+                const bool selected = tab == mTab;
                 MyGUI::TextBox* label = addText(mPanel, tx, ty, 200, 40, caption, sFontNormal,
                     selected ? sBrightColour : sDimColour, MyGUI::Align::Left | MyGUI::Align::VCenter);
                 const int labelW = label->getTextSize().width + 24;
@@ -249,8 +282,10 @@ namespace MWGui
                 if (selected)
                     addRect(mPanel, tx + 8, ty + 34, labelW - 16, 2, sAccentColour);
                 else
-                    addPointerTarget(
-                        mPanel, tx, ty, labelW, 40, nullptr, [] { pressButton(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER); });
+                    addPointerTarget(mPanel, tx, ty, labelW, 40, nullptr, [this, tab] {
+                        selectTab(tab);
+                        drawPanel();
+                    });
                 tx += labelW + 6;
             }
             addGlyph(mPanel, tx + 4, ty + 9, 22, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
@@ -277,7 +312,9 @@ namespace MWGui
             }
             std::string name;
             std::string subtitle;
-            if (mSaving && i == 0)
+            if (mTab == Tab::Cloud)
+                std::tie(name, subtitle) = mCloud->entry(row);
+            else if (mSaving && i == 0)
             {
                 name = "#{Interface:SavesNewSave}";
                 subtitle = escaped(mNewSaveName);
@@ -306,12 +343,14 @@ namespace MWGui
                 }))
         {
             // With no saves of this game's own to load, the message points at OpenMW's tab, when there is one.
+            const std::vector<Tab> shown = tabs();
             const bool pointAtOpenMW
-                = !mSaving && mFolder == MWBase::StateManager::SaveFolder::Own && showFolderTabs();
+                = !mSaving && mTab == Tab::Own && std::find(shown.begin(), shown.end(), Tab::OpenMW) != shown.end();
+            const std::string message = mTab == Tab::Cloud ? mCloud->emptyMessage()
+                : pointAtOpenMW                            ? "#{Interface:SavesNoneSeeOpenMW}"
+                                                           : "#{Interface:SavesNone}";
             int ty = contentTop;
-            for (const std::string& line : wrapText(mPanel,
-                     localised(pointAtOpenMW ? "#{Interface:SavesNoneSeeOpenMW}" : "#{Interface:SavesNone}"),
-                     listW - 24, sFontNormal, 4))
+            for (const std::string& line : wrapText(mPanel, localised(message), listW - 24, sFontNormal, 4))
             {
                 addText(mPanel, listX + 12, ty, listW - 24, 30, escaped(line), sFontNormal, sDimColour);
                 ty += 26;
@@ -321,7 +360,9 @@ namespace MWGui
         // The highlighted save's screenshot and details on the right.
         const int dx = x + static_cast<int>(w * 0.5f) + 16;
         const int dw = x + w - 24 - dx;
-        if (mCurrentSlot != nullptr)
+        if (mTab == Tab::Cloud)
+            mCloud->drawDetails(mPanel, dx, contentTop, dw, listBottom);
+        else if (mCurrentSlot != nullptr)
         {
             const int shotH = dw * 9 / 16;
             addRect(mPanel, dx, contentTop, dw, shotH, MyGUI::Colour::Black);
@@ -370,6 +411,12 @@ namespace MWGui
             addPointerTarget(mPanel, hx, hintY, hintW, 30, nullptr, [button] { pressButton(button); });
             hx += hintW + 22;
         };
+        if (mTab == Tab::Cloud)
+        {
+            for (const auto& [button, label] : mCloud->hints())
+                hint(button, label);
+            return;
+        }
         if (count > 0)
             hint(SDL_CONTROLLER_BUTTON_A, mSaving ? "#{Interface:SavesSave}" : "#{Interface:SavesLoad}");
         // OpenMW's saves can't be deleted from here, since they may be the only copy of a game played there.
@@ -500,6 +547,7 @@ namespace MWGui
 
         // OpenMW may have changed its saves while this game ran. The screen always opens on this game's own saves.
         MWBase::Environment::get().getStateManager()->rescanSaveFolder(MWBase::StateManager::SaveFolder::OpenMW);
+        mTab = Tab::Own;
         mFolder = MWBase::StateManager::SaveFolder::Own;
 
         fillCharacters();
@@ -845,26 +893,41 @@ namespace MWGui
         if (mPanel != nullptr)
         {
             MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+            // While a cloud request runs, the screen waits for it.
+            if (mTab == Tab::Cloud && mCloud->busy())
+                return true;
             switch (arg.button)
             {
                 case SDL_CONTROLLER_BUTTON_A:
                     if (panelEntryCount() > 0)
                     {
                         winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
-                        accept();
+                        if (mTab == Tab::Cloud)
+                        {
+                            mCloud->activate();
+                            drawPanel();
+                        }
+                        else
+                            accept();
                     }
                     break;
                 case SDL_CONTROLLER_BUTTON_X:
-                    if (!mSaving && mCurrentSlot != nullptr && mFolder == MWBase::StateManager::SaveFolder::Own)
+                    if (!mSaving && mCurrentSlot != nullptr && mTab == Tab::Own)
                         confirmDeleteSave();
+                    break;
+                case SDL_CONTROLLER_BUTTON_Y:
+                    if (mTab == Tab::Cloud)
+                    {
+                        winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
+                        mCloud->changePhrase();
+                    }
                     break;
                 case SDL_CONTROLLER_BUTTON_B:
                     onCancelButtonClicked(mCancelButton);
                     break;
                 case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
                 case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
-                    // With two tabs, either shoulder button switches to the other one.
-                    changeFolder();
+                    changeTab(arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER ? 1 : -1);
                     drawPanel();
                     break;
                 default:

@@ -1,6 +1,8 @@
 #include "cloudsaves.hpp"
 
 #include <array>
+#include <charconv>
+#include <chrono>
 #include <stdexcept>
 #include <utility>
 
@@ -94,6 +96,32 @@ namespace MWState
         if (const MWAutomation::Json* uploaded = root.find("uploaded"); uploaded != nullptr && uploaded->isString())
             details.mUploaded = uploaded->asString();
         return details;
+    }
+
+    std::optional<std::time_t> parseCloudTime(std::string_view uploaded)
+    {
+        // The service writes JavaScript's Date.toISOString(): YYYY-MM-DDTHH:MM:SS, then milliseconds and Z.
+        const auto number = [&](std::size_t at, std::size_t length) -> std::optional<int> {
+            int value = 0;
+            if (uploaded.size() < at + length)
+                return std::nullopt;
+            const auto [end, error] = std::from_chars(uploaded.data() + at, uploaded.data() + at + length, value);
+            if (error != std::errc() || end != uploaded.data() + at + length)
+                return std::nullopt;
+            return value;
+        };
+        const std::optional<int> year = number(0, 4), month = number(5, 2), day = number(8, 2), hour = number(11, 2),
+                                 minute = number(14, 2), second = number(17, 2);
+        if (!year || !month || !day || !hour || !minute || !second || uploaded[4] != '-' || uploaded[7] != '-'
+            || uploaded[10] != 'T' || uploaded[13] != ':' || uploaded[16] != ':')
+            return std::nullopt;
+        const std::chrono::year_month_day date{ std::chrono::year(*year), std::chrono::month(*month),
+            std::chrono::day(*day) };
+        if (!date.ok() || *hour > 23 || *minute > 59 || *second > 60)
+            return std::nullopt;
+        const std::chrono::sys_seconds time = std::chrono::sys_days(date) + std::chrono::hours(*hour)
+            + std::chrono::minutes(*minute) + std::chrono::seconds(*second);
+        return std::chrono::system_clock::to_time_t(time);
     }
 
     CloudFailure cloudFailure(const CloudReply& reply)
