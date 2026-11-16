@@ -994,6 +994,10 @@ def check_line(connection, words, timeout, log=None):
         if command == "expect-no-name" and found:
             return f"a visible {found[0]['type']} is named {words[1]!r}"
         return None
+    if command == "expect-focus":
+        need(1)
+        focus = request(cmd="ui").get("keyFocus")
+        return None if focus == words[1] else f"the key focus is on {focus or 'nothing'}"
     if command == "expect-order":
         if len(words) < 3:
             raise HarnessError("expect-order takes two or more texts")

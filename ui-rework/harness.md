@@ -109,6 +109,7 @@ Scenarios can check what the game shows. A check that fails stops the scenario w
 
 - `expect-text TEXT` and `expect-no-text TEXT`: a visible widget shows TEXT, or none does.
 - `expect-name NAME` and `expect-no-name NAME`: a visible widget has the name, as the UI dump shows it.
+- `expect-focus NAME`: the widget with the key focus has the name, or the type when it has no name, as the UI dump's first line shows it. Typed text goes to that widget.
 - `expect-order TEXT TEXT ...`: the texts are on the screen in reading order, each lower than the one before, or on the same row and further right.
 - `expect-mode MODE` and `expect-no-mode`: the topmost UI mode, as `state` names it, such as `Inventory` or `MainMenu`, or no menu open.
 - `expect-state STATE`: `menu`, `running` or `ended`.
