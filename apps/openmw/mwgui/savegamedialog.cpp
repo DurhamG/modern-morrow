@@ -79,6 +79,11 @@ namespace MWGui
                 mPanel->setVisible(false);
                 mCloud = std::make_unique<CloudTab>();
                 mCloud->mRedraw = [this] { drawPanel(); };
+                mCloud->mLoad = [this](const std::filesystem::path& file) {
+                    setVisible(false);
+                    MWBase::Environment::get().getWindowManager()->removeGuiMode(MWGui::GM_MainMenu);
+                    MWBase::Environment::get().getStateManager()->loadCloudSave(file);
+                };
             }
     }
 
@@ -133,7 +138,7 @@ namespace MWGui
     void SaveGameDialog::changeCharacter(int delta)
     {
         const std::size_t count = mCharacterSelection->getItemCount();
-        if (mSaving || count < 2)
+        if (mSaving || mTab == Tab::Cloud || count < 2)
             return;
         std::size_t index = mCharacterSelection->getIndexSelected();
         index = wrap(index == MyGUI::ITEM_NONE ? 0 : index, count, delta);
@@ -154,8 +159,7 @@ namespace MWGui
         if (mgr->hasSaveFolder(SaveFolder::OpenMW)
             && (mSaving || mgr->characterBegin(SaveFolder::OpenMW) != mgr->characterEnd(SaveFolder::OpenMW)))
             result.push_back(Tab::OpenMW);
-        if (mSaving)
-            result.push_back(Tab::Cloud);
+        result.push_back(Tab::Cloud);
         return result;
     }
 
@@ -235,12 +239,13 @@ namespace MWGui
         // The title, and the character whose saves these are. Loading can switch characters with L2 and R2.
         addText(mPanel, x + 24, y + 12, w - 48, 36,
             mSaving ? "#{Interface:SavesSaveTitle}" : "#{Interface:SavesLoadTitle}", sFontTitle, sBrightColour);
+        // The Cloud tab has no character of its own.
         const std::size_t character = mCharacterSelection->getIndexSelected();
         std::string characterName;
-        if (character != MyGUI::ITEM_NONE && character < mCharacterSelection->getItemCount())
+        if (mTab != Tab::Cloud && character != MyGUI::ITEM_NONE && character < mCharacterSelection->getItemCount())
             characterName = mCharacterSelection->getItemNameAt(character).asUTF8();
         // Clicking a trigger's glyph does what pressing the trigger does.
-        const bool switchCharacters = !mSaving && mCharacterSelection->getItemCount() > 1;
+        const bool switchCharacters = !mSaving && mTab != Tab::Cloud && mCharacterSelection->getItemCount() > 1;
         int cx = x + w - 24;
         if (switchCharacters)
         {
@@ -551,6 +556,20 @@ namespace MWGui
         mFolder = MWBase::StateManager::SaveFolder::Own;
 
         fillCharacters();
+        // On a device with no saves to load, such as a new one, the screen opens on the Cloud tab.
+        if (mCloud != nullptr && !mSaving)
+        {
+            MWBase::StateManager* mgr = MWBase::Environment::get().getStateManager();
+            if (mgr->characterBegin(MWBase::StateManager::SaveFolder::Own)
+                    == mgr->characterEnd(MWBase::StateManager::SaveFolder::Own)
+                && mgr->characterBegin(MWBase::StateManager::SaveFolder::OpenMW)
+                    == mgr->characterEnd(MWBase::StateManager::SaveFolder::OpenMW))
+            {
+                mTab = Tab::Cloud;
+                mCurrentSlot = nullptr;
+                mCloud->open(mSaving, mNewSaveName);
+            }
+        }
         showPanel();
     }
 

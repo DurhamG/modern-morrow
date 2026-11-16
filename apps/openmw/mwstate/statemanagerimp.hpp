@@ -121,6 +121,10 @@ namespace MWState
         /** Used for quickload **/
         void quickLoad() override;
 
+        std::filesystem::path cloudSavePath(std::string_view playerName, std::string_view description) override;
+
+        void loadCloudSave(const std::filesystem::path& file) override;
+
         void loadGame(const std::filesystem::path& filepath) override;
         ///< Load a saved game directly from the given file path. This will search the CharacterManager
         /// for a Character containing this save file, and set this Character current if one was found.

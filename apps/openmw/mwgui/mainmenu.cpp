@@ -357,7 +357,9 @@ namespace MWGui
         // The load screen also shows the saves of an OpenMW install, so it is offered when only those exist.
         MWBase::StateManager* stateManager = MWBase::Environment::get().getStateManager();
         using SaveFolder = MWBase::StateManager::SaveFolder;
-        if (stateManager->characterBegin(SaveFolder::Own) != stateManager->characterEnd(SaveFolder::Own)
+        // In controller menus mode, Load always shows, since its Cloud tab can load a game on a device with no saves.
+        if (Settings::gui().mControllerMenus
+            || stateManager->characterBegin(SaveFolder::Own) != stateManager->characterEnd(SaveFolder::Own)
             || stateManager->characterBegin(SaveFolder::OpenMW) != stateManager->characterEnd(SaveFolder::OpenMW))
             buttons.emplace_back("loadgame");
 

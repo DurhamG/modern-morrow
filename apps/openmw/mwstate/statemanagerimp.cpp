@@ -54,6 +54,7 @@
 #include "../mwscript/globalscripts.hpp"
 
 #include "autosave.hpp"
+#include "cloudsaves.hpp"
 #include "questlists.hpp"
 #include "quicksavemanager.hpp"
 #include "savefolders.hpp"
@@ -558,6 +559,17 @@ std::vector<const MWState::Slot*> MWState::StateManager::findSaves(std::string_v
         }
     }
     return saves;
+}
+
+std::filesystem::path MWState::StateManager::cloudSavePath(std::string_view playerName, std::string_view description)
+{
+    const Character* character = mCharacterManager.findOrCreateCharacter(characterFolderName(playerName));
+    return cloudDownloadPath(character->getPath(), description);
+}
+
+void MWState::StateManager::loadCloudSave(const std::filesystem::path& file)
+{
+    loadGame(mCharacterManager.addSave(file), file);
 }
 
 void MWState::StateManager::loadGame(const std::filesystem::path& filepath)

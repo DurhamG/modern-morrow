@@ -1,6 +1,7 @@
 #ifndef OPENMW_MWGUI_CLOUDTAB_H
 #define OPENMW_MWGUI_CLOUDTAB_H
 
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -59,10 +60,12 @@ namespace MWGui
         /// The button hints the tab shows.
         std::vector<std::pair<SDL_GameControllerButton, std::string>> hints() const;
 
-        /// A saves to the cloud. Y changes the phrase.
+        /// A saves to the cloud or loads the cloud save. Y changes the phrase.
         void activate();
         void changePhrase();
 
+        /// Called with the downloaded file when a cloud save is ready to load, so the screen can close first.
+        std::function<void(const std::filesystem::path&)> mLoad;
         /// Called when the tab must be drawn again outside update, such as after the phrase dialog.
         std::function<void()> mRedraw;
 
@@ -72,6 +75,7 @@ namespace MWGui
             Idle,
             Checking,
             Uploading,
+            Downloading,
         };
 
         enum class AfterPhrase
@@ -85,6 +89,8 @@ namespace MWGui
         void onPhraseDone(WindowBase* sender);
         void checkDetails();
         void saveToCloud();
+        void load(bool reallySure);
+        void onLoadConfirmed();
 
         bool mSaving = false;
         std::string mNewSaveName;

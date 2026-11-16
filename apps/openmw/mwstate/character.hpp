@@ -26,12 +26,14 @@ namespace MWState
         std::filesystem::path mPath;
         std::vector<Slot> mSlots;
 
-        void addSlot(const std::filesystem::path& path, const std::string& game);
-
         void addSlot(const ESM::SavedGame& profile);
 
     public:
         Character(const std::filesystem::path& saves, const std::string& game);
+
+        /// Adds a save file in this character's folder, such as a downloaded cloud save, as the newest slot. A file
+        /// that isn't a save of this game is ignored.
+        void addSlot(const std::filesystem::path& path, const std::string& game);
 
         void cleanup();
         ///< Delete the directory we used, if it is empty

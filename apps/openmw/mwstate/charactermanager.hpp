@@ -58,6 +58,10 @@ namespace MWState
         /// The folder that holds a folder for each character.
         const std::filesystem::path& getPath() const { return mPath; }
 
+        /// Adds a save file to the character whose folder holds it, which is made when there is none, and returns that
+        /// character. The file must be in a character's folder in this saves folder.
+        Character* addSave(const std::filesystem::path& file);
+
         void setCurrentCharacter(const Character* character);
 
         std::list<Character>::const_iterator begin() const;

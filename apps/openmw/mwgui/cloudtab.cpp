@@ -13,6 +13,7 @@
 #include "../mwstate/character.hpp"
 #include "../mwstate/cloudrequests.hpp"
 
+#include "confirmationdialog.hpp"
 #include "controllerscreen.hpp"
 #include "textinput.hpp"
 
@@ -81,15 +82,21 @@ namespace MWGui
     {
         if (mRequests == nullptr)
             return false;
-        // An upload's progress changes while it runs, so the tab draws again each frame meanwhile.
+        // The progress of an upload or download changes while it runs, so the tab draws again each frame meanwhile.
         std::optional<MWState::CloudRequests::Finished> finished = mRequests->takeResult();
         if (!finished)
-            return mStatus == Status::Uploading;
+            return mStatus == Status::Uploading || mStatus == Status::Downloading;
 
         mStatus = Status::Idle;
         mFailure = finished->mResult.mFailure;
         if (mFailure == MWState::CloudFailure::None)
         {
+            if (finished->mKind == MWState::CloudRequests::Kind::Download)
+            {
+                if (mLoad)
+                    mLoad(finished->mFile);
+                return true;
+            }
             mDetails = finished->mResult.mDetails;
             mSaved = finished->mKind == MWState::CloudRequests::Kind::Upload;
         }
@@ -100,17 +107,31 @@ namespace MWGui
 
     std::size_t CloudTab::entryCount() const
     {
-        return mSaving ? 1 : 0;
+        if (mSaving)
+            return 1;
+        return mDetails ? 1 : 0;
     }
 
     std::pair<std::string, std::string> CloudTab::entry(std::size_t /*index*/) const
     {
-        return { "#{Interface:CloudSaveEntry}", ControllerUi::escaped(mNewSaveName) };
+        if (mSaving || !mDetails)
+            return { "#{Interface:CloudSaveEntry}", ControllerUi::escaped(mNewSaveName) };
+        std::string subtitle = mDetails->mCell.empty() ? std::string() : std::format("#{{sCell={}}}", mDetails->mCell);
+        if (const std::string uploaded = uploadedText(*mDetails); !uploaded.empty())
+            subtitle += (subtitle.empty() ? "" : ",  ") + uploaded;
+        return { ControllerUi::escaped(mDetails->mDescription), subtitle };
     }
 
     std::string CloudTab::emptyMessage() const
     {
-        return "#{Interface:SavesNone}";
+        // Loading lists the phrase's save. Without one, the list says why.
+        if (phrase().empty())
+            return "#{Interface:CloudNoPhraseYet}";
+        if (mStatus == Status::Checking)
+            return "#{Interface:CloudChecking}";
+        if (mFailure == MWState::CloudFailure::None || mFailure == MWState::CloudFailure::NoSave)
+            return "#{Interface:CloudHoldsNothing}";
+        return std::format("#{{Interface:{}}}", MWState::cloudFailureMessage(mFailure));
     }
 
     void CloudTab::drawDetails(MyGUI::Widget* panel, int x, int y, int w, int bottom) const
@@ -138,19 +159,20 @@ namespace MWGui
             y += 40;
         }
 
-        // What is happening, or what went wrong.
-        if (mStatus == Status::Checking)
+        // What is happening, or what went wrong. When loading, the list on the left already says why it is empty.
+        if (mStatus == Status::Checking && mSaving)
             paragraph("#{Interface:CloudChecking}", sFontNormal, sTextColour);
-        else if (mStatus == Status::Uploading)
+        else if (mStatus == Status::Uploading || mStatus == Status::Downloading)
         {
             const MWState::CloudRequests::Progress progress = mRequests->progress();
             const int percent = progress.mTotal == 0 ? 0 : static_cast<int>(progress.mDone * 100 / progress.mTotal);
-            paragraph(
-                localised("#{Interface:CloudUploading}") + std::format(" {}%", percent), sFontNormal, sBrightColour);
+            const std::string doing
+                = mStatus == Status::Uploading ? "#{Interface:CloudUploading}" : "#{Interface:CloudDownloading}";
+            paragraph(localised(doing) + std::format(" {}%", percent), sFontNormal, sBrightColour);
         }
         else if (mSaved)
             paragraph("#{Interface:CloudSaved}", sFontNormal, sBrightColour);
-        else if (mFailure != MWState::CloudFailure::None && mFailure != MWState::CloudFailure::NoSave)
+        else if (mSaving && mFailure != MWState::CloudFailure::None && mFailure != MWState::CloudFailure::NoSave)
             paragraph(
                 std::format("#{{Interface:{}}}", MWState::cloudFailureMessage(mFailure)), sFontNormal, sBrightColour);
 
@@ -179,11 +201,11 @@ namespace MWGui
             }
             y += 8;
         }
-        else if (mFailure == MWState::CloudFailure::NoSave)
+        else if (mSaving && mFailure == MWState::CloudFailure::NoSave)
             paragraph("#{Interface:CloudHoldsNothing}", sFontNormal, sTextColour);
 
-        if (mSaving && !busy())
-            paragraph("#{Interface:CloudSaveText}", sFontNormal, sTextColour);
+        if (!busy())
+            paragraph(mSaving ? "#{Interface:CloudSaveText}" : "#{Interface:CloudLoadText}", sFontNormal, sTextColour);
     }
 
     std::vector<std::pair<SDL_GameControllerButton, std::string>> CloudTab::hints() const
@@ -192,7 +214,7 @@ namespace MWGui
         if (busy())
             return result;
         if (entryCount() > 0)
-            result.emplace_back(SDL_CONTROLLER_BUTTON_A, "#{Interface:SavesSave}");
+            result.emplace_back(SDL_CONTROLLER_BUTTON_A, mSaving ? "#{Interface:SavesSave}" : "#{Interface:SavesLoad}");
         result.emplace_back(SDL_CONTROLLER_BUTTON_Y,
             phrase().empty() ? "#{Interface:CloudTypePhrase}" : "#{Interface:CloudChangePhrase}");
         return result;
@@ -200,9 +222,11 @@ namespace MWGui
 
     void CloudTab::activate()
     {
-        if (busy() || !mSaving)
+        if (busy())
             return;
-        if (phrase().empty())
+        if (!mSaving)
+            load(false);
+        else if (phrase().empty())
             askPhrase(AfterPhrase::Save);
         else
             saveToCloud();
@@ -243,6 +267,34 @@ namespace MWGui
         }
         if (mRedraw)
             mRedraw();
+    }
+
+    void CloudTab::load(bool reallySure)
+    {
+        if (!mDetails || busy())
+            return;
+        // Loading ends a game that is running, so it asks first, as loading a local save does.
+        MWBase::StateManager* states = MWBase::Environment::get().getStateManager();
+        if (states->getState() == MWBase::StateManager::State_Running && !reallySure)
+        {
+            ConfirmationDialog* dialog = MWBase::Environment::get().getWindowManager()->getConfirmationDialog();
+            dialog->askForConfirmation("#{OMWEngine:LoadGameConfirmation}");
+            dialog->eventOkClicked.clear();
+            dialog->eventOkClicked += MyGUI::newDelegate(this, &CloudTab::onLoadConfirmed);
+            dialog->eventCancelClicked.clear();
+            return;
+        }
+        mFailure = MWState::CloudFailure::None;
+        const std::filesystem::path file = states->cloudSavePath(mDetails->mPlayerName, mDetails->mDescription);
+        if (requests().download(phrase(), file))
+            mStatus = Status::Downloading;
+        if (mRedraw)
+            mRedraw();
+    }
+
+    void CloudTab::onLoadConfirmed()
+    {
+        load(true);
     }
 
     void CloudTab::saveToCloud()

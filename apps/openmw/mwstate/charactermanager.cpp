@@ -115,6 +115,17 @@ MWState::Character* MWState::CharacterManager::findOrCreateCharacter(const std::
     return &mCharacters.emplace_front(mPath / folderName, mGame);
 }
 
+MWState::Character* MWState::CharacterManager::addSave(const std::filesystem::path& file)
+{
+    Character* character = findOrCreateCharacter(file.parent_path().filename());
+    // A character made just now has already read the file from its folder.
+    for (const Slot& slot : *character)
+        if (slot.mPath == file)
+            return character;
+    character->addSlot(file, mGame);
+    return character;
+}
+
 std::list<MWState::Character>::iterator MWState::CharacterManager::findCharacter(const MWState::Character* character)
 {
     std::list<Character>::iterator it = mCharacters.begin();

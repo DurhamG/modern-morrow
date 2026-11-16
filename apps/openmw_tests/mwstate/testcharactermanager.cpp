@@ -9,6 +9,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -166,6 +167,28 @@ namespace MWState
             CharacterManager characters(savesDir(), sContentFiles);
             EXPECT_EQ(characters.createCharacter("Fargoth the Elder")->getPath(),
                 savesDir() / characterFolderName("Fargoth the Elder"));
+        }
+
+        TEST(MWStateCharacterManagerTest, addSaveShouldAddTheFileAsTheCharactersNewestSave)
+        {
+            writeSave(savesDir() / "Lendias" / "1.omwsave");
+            CharacterManager characters(savesDir(), sContentFiles);
+            writeSave(savesDir() / "Lendias" / "Cloud.omwsave");
+            const Character* character = characters.addSave(savesDir() / "Lendias" / "Cloud.omwsave");
+            EXPECT_EQ(character, characters.findCharacter("Lendias"));
+            ASSERT_NE(character->begin(), character->end());
+            EXPECT_EQ(character->begin()->mPath, savesDir() / "Lendias" / "Cloud.omwsave");
+            EXPECT_EQ(std::distance(character->begin(), character->end()), 2);
+        }
+
+        TEST(MWStateCharacterManagerTest, addSaveShouldMakeTheCharacterWhenThereIsNone)
+        {
+            CharacterManager characters(savesDir(), sContentFiles);
+            writeSave(savesDir() / "Vivec" / "Cloud.omwsave");
+            const Character* character = characters.addSave(savesDir() / "Vivec" / "Cloud.omwsave");
+            EXPECT_EQ(character->getPath(), savesDir() / "Vivec");
+            EXPECT_EQ(characters.findCharacter("Vivec"), character);
+            EXPECT_EQ(std::distance(character->begin(), character->end()), 1);
         }
 
         TEST(MWStateCharacterManagerTest, currentCharacterShouldBeTheOneSet)

@@ -90,6 +90,15 @@ namespace MWBase
         /// @note May return null.
         virtual const MWState::Character* getSaveCharacter(SaveFolder folder) = 0;
 
+        /// The file a cloud save is downloaded to, in this game's own folder for the character of that name. The
+        /// character's folder is named as a new character's folder is, and is made when there is none. The file is
+        /// named after the save's description, and never replaces a save.
+        virtual std::filesystem::path cloudSavePath(std::string_view playerName, std::string_view description) = 0;
+
+        /// Adds a downloaded cloud save, at the path cloudSavePath gave, to its character's saves, then loads it. The
+        /// game's later saves go to that character.
+        virtual void loadCloudSave(const std::filesystem::path& file) = 0;
+
         virtual void loadGame(const std::filesystem::path& filepath) = 0;
         ///< Load a saved game directly from the given file path. This will search the CharacterManager
         /// for a Character containing this save file, and set this Character current if one was found.
