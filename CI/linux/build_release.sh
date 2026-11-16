@@ -74,6 +74,18 @@ cp -P /usr/lib64/libopenal.so.1* AppDir/lib/openal-fallback/
 rm -f AppDir/lib/libSDL2-2.0.so*
 cp -P sdl-install/lib/libSDL2-2.0.so.0* sdl-install/lib/libSDL3.so.0* AppDir/lib/
 
+# Cloud saves load the system's libcurl. A process only loads a library once, so when the game has already loaded a copy
+# from the AppImage, libcurl uses that copy in place of the system's. zlib, zstd and brotli keep the same interface in
+# every version, so their copies do no harm. A copy of a TLS or HTTP library could break libcurl, so the build stops.
+echo "The AppImage's libraries:"
+ls AppDir/lib
+risky=$(cd AppDir/lib && ls | grep -E '^lib(curl|ssl|crypto|gnutls|nettle|nghttp[23]|ssh2?|idn2|psl|gssapi|krb5)[.-]' || true)
+if [[ -n $risky ]]; then
+    echo "The AppImage carries libraries that would replace the system's own for libcurl, and could break cloud saves:"
+    echo "$risky"
+    exit 1
+fi
+
 if [[ ! -x appimagetool ]]; then
     curl --fail --retry 3 -L -o appimagetool \
         https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
