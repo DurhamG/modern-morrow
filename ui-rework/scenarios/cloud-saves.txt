@@ -16,6 +16,8 @@ expect-order "Modern Morrow" "OpenMW" "Cloud"
 pad button=y
 wait-text "Space"
 shot phrase-keyboard
+# A real keyboard types the phrase too.
+expect-focus TextEdit
 pad button=a
 pad button=dpright
 pad button=a

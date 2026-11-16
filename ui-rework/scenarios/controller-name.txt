@@ -5,6 +5,8 @@ wait frames=10
 wait-mode ChargenName
 shot keyboard
 expect-mode ChargenName
+# The edit box behind the on-screen keyboard has the key focus, so a real keyboard types into it too.
+expect-focus TextEdit
 pad button=dpright
 pad button=dpright
 pad button=dpright

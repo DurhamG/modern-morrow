@@ -266,11 +266,10 @@ namespace MWGui
     void TextInputDialog::onOpen()
     {
         WindowModal::onOpen();
-        // Make sure the edit box has focus
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTextEdit);
 
         if (mPanel != nullptr)
         {
+            // Hiding the window's contents takes the key focus from the edit box, so the focus is set after this.
             ControllerUi::hideWindow(mMainWidget);
             mKeyRow = 0;
             mKeyColumn = 0;
@@ -280,6 +279,9 @@ namespace MWGui
             MyGUI::LayerManager::getInstance().upLayerItem(mPanel);
             drawPanel();
         }
+
+        // Make sure the edit box has focus, so a real keyboard types into it
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTextEdit);
     }
 
     // widget controls
