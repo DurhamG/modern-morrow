@@ -12,6 +12,9 @@
 # The build runs one compile per core, and the Lua binding files need over a gigabyte each. On a machine with many
 # cores, that can use more memory than Docker's virtual machine has, and the build stalls. Limiting the container to
 # some of the cores, with an option such as --cpuset-cpus=0-11, limits the compiles too.
+#
+# ccache keeps each compiled file in ccache/, so a later build only compiles what changed. linux.yml saves that folder
+# between runs.
 
 set -euo pipefail
 
@@ -25,7 +28,7 @@ export OPENMW_LOCAL_INSTALL=1
 export CI_OPENMW_USE_VCPKG=true
 
 dnf install -y epel-release
-dnf install -y git binutils gcc-toolset-13 cmake unzip pkg-config p7zip p7zip-plugins python3-pip xz file \
+dnf install -y git binutils gcc-toolset-13 ccache cmake unzip pkg-config p7zip p7zip-plugins python3-pip xz file \
     mesa-libGL-devel libxkbcommon-devel mesa-libEGL-devel fontconfig openal-soft
 
 # The newer compiler comes from a toolset that its own script turns on. The script reads unset variables.
@@ -34,12 +37,15 @@ source /opt/rh/gcc-toolset-13/enable
 set -u
 
 CI/linux/before_install_for_vcpkg.sh
-CI/before_script.linux.sh
+export CCACHE_DIR="$PWD/ccache"
+ccache --zero-stats --max-size 1G
+CI/before_script.linux.sh -C
 
 cd build
 # Modern Morrow doesn't ship OpenMW-CS, the editor, so the build leaves it out.
 cmake -D BUILD_OPENCS=OFF .
 cmake --build . -- -j "$(nproc)"
+ccache --show-stats
 cpack -G TXZ -D CPACK_STRIP_FILES=ON -D CPACK_THREADS=0 -D CPACK_INCLUDE_TOPLEVEL_DIRECTORY=0
 package=$(ls ModernMorrow*-Linux-x86_64.tar.xz)
 

@@ -24,11 +24,20 @@ jobs:
       appimage: ${{ steps.files.outputs.appimage }}
 
     steps:
-    # Checking out needs git, which the container doesn't have yet.
-    - name: Install git
-      run: dnf install -y git
+    # Checking out needs git, and keeping the cache needs tar. The container has neither yet.
+    - name: Install git and tar
+      run: dnf install -y git tar
 
     - uses: actions/checkout@v6
+
+    # The compiler cache that build_release.sh keeps in ccache/. A tag's release run can only read caches saved on
+    # master or on that same tag.
+    - name: Keep the compiler cache
+      uses: actions/cache@v4
+      with:
+        path: ccache
+        key: linux-release-ccache-${{ github.sha }}
+        restore-keys: linux-release-ccache-
 
     - name: Build
       run: CI/linux/build_release.sh "${{ inputs.label }}"
