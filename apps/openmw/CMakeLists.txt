@@ -112,7 +112,7 @@ add_openmw_dir (mwmechanics
     )
 
 add_openmw_dir (mwstate
-    statemanagerimp charactermanager character quicksavemanager questlists savefolders autosave cloudsaves
+    statemanagerimp charactermanager character quicksavemanager questlists savefolders autosave cloudsaves cloudrequests
     )
 
 # Each platform sends cloud saves' requests its own way. Platforms without one yet say cloud saves aren't available.

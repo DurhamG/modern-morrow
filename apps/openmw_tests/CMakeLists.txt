@@ -41,6 +41,7 @@ file(GLOB UNITTEST_SRC_FILES
 
     mwstate/testautosave.cpp
     mwstate/testcharactermanager.cpp
+    mwstate/testcloudrequests.cpp
     mwstate/testcloudsaves.cpp
     mwstate/testquestlists.cpp
     mwstate/testquicksavemanager.cpp

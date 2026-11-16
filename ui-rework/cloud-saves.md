@@ -81,7 +81,7 @@ The download is written into this game's own saves folder, in the folder for the
 
 - **An interface, `CloudSaves`,** with the three requests as blocking calls: upload a file, read the details, and download to a file. Each call returns a result: the details, or an error with the HTTP status and the Worker's message.
 - **The Windows implementation uses WinHTTP,** which ships with Windows, so the build needs no new library.
-- **Requests run on a thread of their own,** one at a time. The menus look for the result each frame, so the game keeps drawing while a request runs. Leaving the screen doesn't cancel an upload.
+- **Requests run on a thread of their own,** one at a time, in `MWState::CloudRequests`. The menus look for the result each frame, so the game keeps drawing while a request runs. The screen shows the request's progress and waits for it to finish, so only the screen ever needs the result. If the game quits meanwhile, the request finishes on its own and its result is dropped.
 - **Every request sends a `User-Agent`,** `ModernMorrow/<version>`, because of the browser check on `workers.dev`.
 - **Two settings,** in the `[Saves]` section: `cloud address`, which defaults to `https://saves.durhamg.workers.dev`, and `cloud phrase`, which starts empty. The harness points `cloud address` at the Worker running locally. The phrase sits in the player's `settings.cfg` as plain text. That's acceptable, because the phrase isn't meant to keep anything safe, but a player who shares their `settings.cfg` in a bug report shares their phrase too.
 
