@@ -2,7 +2,7 @@
 
 Cloud saves move a game from one device to another, such as from a PC to a Steam Deck. They are not a backup. A player types a phrase once on each device, and the phrase is the only key. There are no accounts.
 
-This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phases 1 to 3 have one, and phases 1 and 2 are done.
+This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phases 1 to 4 have one, and phases 1 and 2 are done.
 
 ## How players use it
 
@@ -44,6 +44,8 @@ The detailed plan is below, in [Phase 3 in detail](#phase-3-in-detail).
 
 ### 4. Android
 
+The detailed plan is below, in [Phase 4 in detail](#phase-4-in-detail).
+
 - **An implementation of the requests for Android,** through Java's built-in HTTPS client, called from the engine. The APK needs no new library.
 - **Typing the phrase** uses the game's own on-screen keyboard with a gamepad, as on the other platforms.
 - **Done when** a game moves between Android and a PC.
@@ -55,6 +57,50 @@ The detailed plan is below, in [Phase 3 in detail](#phase-3-in-detail).
 - The README section for players, and the release notes.
 - Where to watch usage and cost on Cloudflare.
 - Optionally, a Cloudflare API token or Cloudflare's MCP server, so an agent can manage the Worker and the bucket. CI could then deploy the Worker.
+
+## Phase 4 in detail
+
+### Requests on Android
+
+A Java class sends each request with `java.net.HttpURLConnection`, and the engine calls it through JNI.
+
+- **Nothing new in the APK.** `HttpURLConnection` is part of Android, and it checks HTTPS with the system's certificates. The manifest already asks for `android.permission.INTERNET`.
+- **The Java half, `CloudRequest`,** uses nothing from Android, so the JVM unit tests run it on the Mac. It takes the file paths as UTF-8 bytes, because the text JNI makes from C++ can't hold characters such as emoji, and a save's file name comes from its description. It returns the status and the body as bytes. It doesn't log, because `android.util.Log` doesn't work in the JVM tests. The engine logs instead.
+- **The C++ half, `cloudtransportandroid.cpp`,** looks up the Java class when the transport is made, on the game's main thread. A thread the game starts itself can only find Android's own classes. The request thread gets its connection to Java from SDL, which attaches the thread and detaches it when the thread ends. Each request frees what it made in Java afterwards, since that thread lasts as long as the game. A Java exception is logged and cleared, so the next call doesn't stop the app.
+- **If the class can't be found,** the Cloud tab says cloud saves aren't available on this device, as it does today.
+- The transport does what the others do: it sends the `User-Agent`, gives up connecting after 15 seconds and reading after 60 seconds without data, and streams an upload from its file with its progress. A download goes to a `.part` file that is renamed once complete, and the reply holds the Worker's error text when the status isn't 200. The log names a failure without the address or the phrase.
+- **Plain HTTP in debug builds.** Android refuses `http://` addresses. Debug builds allow them for `127.0.0.1` and `10.0.2.2`, which is how the emulator reaches the Mac, so the emulator can use the Worker run on the Mac. Release builds still refuse them.
+
+### Typing the phrase
+
+Nothing new with a gamepad. The phrase dialog draws the game's own on-screen keyboard, the one from naming a character. Phase 4 checks what happens with touch only and no gamepad, and records it. A fix, if one is needed, is for a later phase.
+
+### Tests
+
+- **JVM unit tests** for `CloudRequest`, run with `android/build.sh test`, against a server the test starts on `127.0.0.1` with the JDK's own `HttpServer`:
+  - an upload arrives byte for byte, with its length and both headers, and its progress ends at the file's size,
+  - a 200 download writes the file and leaves no `.part` file,
+  - a 404 download writes no file, and the reply holds the server's text,
+  - a port where nothing listens gives status 0,
+  - a server that stops sending makes the request time out, with shorter limits so the test doesn't take a minute.
+- These run the JDK's `HttpURLConnection`, and Android has its own. So the emulator checks below are what show it works on Android.
+- **The emulator against the Worker run on the Mac.** Save to the cloud, remove the saves, load from the Cloud tab and play on. Then a phrase that holds nothing, and the Worker stopped. The failure lines in `adb logcat` show neither the address nor the phrase.
+- **The deployed Worker over HTTPS,** from the emulator and the Fold, with a test phrase. That checks the system's certificates.
+- **Done when** a game moves between Android and a PC:
+  1. On Windows, save to the cloud with a phrase.
+  2. On the Fold with a Bluetooth controller, load from the Cloud tab. Play a little, then save to the cloud.
+  3. On Windows, load from the Cloud tab, and check that the game carries on from the Fold.
+
+`openmw-tests`' transport test can't run on Android, which has no test executable. The JVM tests and the emulator checks take its place.
+
+### The commits
+
+1. **Plan the phase,** in this document.
+2. **Allow plain HTTP to the Mac's Worker in debug builds.**
+3. **Add the Java request class.**
+4. **Test it** with JVM unit tests.
+5. **Add the Android transport,** built in place of the one that says cloud saves aren't available, which goes.
+6. **Record the phase** in this document and in `progress.md`, after a game moves between Android and a PC, with what touch-only typing does.
 
 ## Phase 3 in detail
 
