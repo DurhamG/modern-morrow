@@ -18,7 +18,7 @@ This document lists the phases at a high level. Each phase gets a detailed plan 
 - **The Worker's code lives in this repository,** in `cloudsaves/`, so CI can test its save check against saves from the same commit's build.
 - **One save per phrase.** An upload replaces the previous one. Nothing is versioned.
 - **The phrase is hashed.** The bucket stores each save under a plain SHA-256 hash of the phrase, so the phrase a player typed doesn't show in the dashboard. There is no secret in the hash. The phrase isn't meant to keep anything safe, and a secret would have to be kept forever, since losing it would lose every save. The game sends the phrase in a request header, never in the URL.
-- **Saves are kept for a year after their last upload.** An R2 lifecycle rule deletes each object 365 days after it was written, and every upload writes a new object.
+- **Saves are kept for 90 days after their last upload.** An R2 lifecycle rule deletes each object 90 days after it was written, and every upload writes a new object. The rule first kept saves for a year, and was shortened to 90 days on 2026-11-16, since a cloud save is only a way to move a game.
 - **Only saves from current Modern Morrow builds are accepted.** The Worker checks that the file is a save of format 37 or later that ends with Modern Morrow's `UIST` record. That record holds what the controller menus remember. The check rejects other files, saves from other OpenMW builds, and the saves at formats 42 and 43 that early Modern Morrow builds wrote. It doesn't compare tags against a list, so saves from later OpenMW formats still pass.
 - **Cloudflare setup is done by hand first.** The project owner does each setup step, with instructions, to learn how it works. An API token or Cloudflare's MCP server can come later.
 
@@ -238,7 +238,7 @@ Claude gives the instructions for each step at the time, and explains what it do
 2. **Turn on R2,** under Storage & databases, then R2. Cloudflare asks for a payment method even for the free tier. The project owner enters it.
 3. **Install the tools.** `npm install` in `cloudsaves/` downloads Wrangler, Vitest and TypeScript into that folder only. Then `npx wrangler login` connects Wrangler to the account through the browser, and `npx wrangler whoami` shows that it worked.
 4. **Make the bucket** `modern-morrow-saves`, once in the dashboard to see where buckets live, or with `npx wrangler r2 bucket create`.
-5. **Add the lifecycle rule** that deletes objects 365 days after they're written, in the bucket's settings or with `npx wrangler r2 bucket lifecycle add`.
+5. **Add the lifecycle rule** that deletes objects 90 days after they're written, in the bucket's settings or with `npx wrangler r2 bucket lifecycle add`.
 6. **Deploy the Worker** with `npx wrangler deploy`, and look at it in the dashboard.
 7. **Try it with `curl`.** Upload a save, read its details, download it, and compare the two files' SHA-256. Then send the files it must refuse. `npx wrangler tail` shows the Worker's log live while this runs.
 8. **Look around the dashboard:** the object in the bucket, the Worker's requests and CPU time, and R2's usage.

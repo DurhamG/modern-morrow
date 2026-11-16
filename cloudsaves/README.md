@@ -33,11 +33,11 @@ These are the steps that set up the Cloudflare account, in order, so they can be
    ```
    `npm install` puts Wrangler, TypeScript, Vitest and Cloudflare's Vitest plugin in `node_modules`, at the versions in `package-lock.json`. `wrangler login` lets Wrangler manage the account, through the browser.
 4. **The bucket.** It was made in the dashboard: R2 Object Storage, Create bucket, named `modern-morrow-saves`, with an automatic location and the Standard storage class. The free tier only covers Standard. `wrangler.jsonc` names the bucket.
-5. **The lifecycle rule,** which deletes each file a year after it was written:
+5. **The lifecycle rule,** which deletes each file 90 days after it was written:
    ```bash
-   npx wrangler r2 bucket lifecycle add modern-morrow-saves delete-after-a-year --expire-days 365
+   npx wrangler r2 bucket lifecycle add modern-morrow-saves delete-after-90-days --expire-days 90
    ```
-   The bucket's Settings tab in the dashboard lists it.
+   The bucket's Settings tab in the dashboard lists it. The rule first deleted files after 365 days, and was changed to 90 days in the dashboard on 2026-11-16.
 6. **The Worker:**
    ```bash
    npx wrangler deploy
