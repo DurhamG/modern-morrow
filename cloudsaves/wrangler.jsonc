@@ -1,0 +1,9 @@
+// Wrangler's settings for the cloud saves Worker. See ui-rework/cloud-saves.md.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The Worker's address is https://saves.<account subdomain>.workers.dev.
+  "name": "saves",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true
+}
