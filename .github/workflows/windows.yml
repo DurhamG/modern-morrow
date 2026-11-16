@@ -112,6 +112,9 @@ jobs:
     # a .pdb file that every compile writes to, which is /Zi. The CMP0141 policy lets
     # CMAKE_MSVC_DEBUG_INFORMATION_FORMAT choose /Z7. The linker still writes a .pdb file for each program, as before.
     # Precompiled headers are off, since ccache takes their place.
+    #
+    # Link-time optimisation is off. Its object files are larger, and together with /Z7 they made openmw-lib.lib larger
+    # than the 4 GB a Windows library file can hold. The Linux and Android builds don't use it either.
     - name: Configure OpenMW
       run: >
         cmake
@@ -135,7 +138,7 @@ jobs:
         -D BUILD_OPENCS=OFF
         -D OPENMW_USE_SYSTEM_SQLITE3=OFF
         -D OPENMW_USE_SYSTEM_YAML_CPP=OFF
-        -D OPENMW_LTO_BUILD=ON
+        -D OPENMW_LTO_BUILD=OFF
         ${{ inputs.package && '-D "VCREDIST64=$env:VCToolsRedistDir/vc_redist.x64.exe"' || '' }}
         -D CMAKE_EXPORT_COMPILE_COMMANDS=ON
         -D CUSTOM_CPACK_LABEL="${{ inputs.label }}"
