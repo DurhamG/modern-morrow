@@ -135,8 +135,10 @@ namespace MWState
                     return noReply("reading the reply's status");
                 DWORD length = 0;
                 DWORD lengthSize = sizeof(length);
-                WinHttpQueryHeaders(request.get(), WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
-                    WINHTTP_HEADER_NAME_BY_INDEX, &length, &lengthSize, WINHTTP_NO_HEADER_INDEX);
+                const bool hasLength
+                    = WinHttpQueryHeaders(request.get(), WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
+                          WINHTTP_HEADER_NAME_BY_INDEX, &length, &lengthSize, WINHTTP_NO_HEADER_INDEX)
+                    != FALSE;
 
                 // A download goes to a file beside its destination first, so a download cut short leaves nothing.
                 const bool toFile = downloadTo != nullptr && status == 200;
@@ -176,6 +178,20 @@ namespace MWState
                     }
                     else
                         reply.mBody.append(buffer.data(), read);
+                }
+                // When the connection closes before the whole body has come, WinHTTP ends the body as if it were
+                // complete. So the bytes that came are counted against the length the reply gave.
+                if (hasLength && received != length)
+                {
+                    if (toFile)
+                    {
+                        file.close();
+                        std::error_code ec;
+                        std::filesystem::remove(partial, ec);
+                    }
+                    Log(Debug::Warning) << "Cloud saves: the reply ended after " << received << " of its " << length
+                                        << " bytes";
+                    return CloudReply{};
                 }
                 if (toFile)
                 {
