@@ -31,6 +31,9 @@ jobs:
 
     env:
       archive: FAILEDTODOWNLOAD
+      # The start of the artifacts' names. A push to master runs both the test build and the release build, and two
+      # artifacts in one run can't have the same name.
+      artifact: openmw-windows-${{ inputs.msvc }}${{ inputs.package && '-package' || '' }}
 
     steps:
     - name: Install NSIS
@@ -217,25 +220,25 @@ jobs:
     - name: Store OpenMW archived pdb files
       uses: actions/upload-artifact@v6
       with:
-        name: openmw-windows-${{ inputs.msvc }}-pdb-${{ github.sha }}
+        name: ${{ env.artifact }}-pdb-${{ github.sha }}
         path: ${{ github.workspace }}/pdb/*
 
     - name: Store OpenMW build artifacts
       uses: actions/upload-artifact@v6
       with:
-        name: openmw-windows-${{ inputs.msvc }}-${{ github.sha }}
+        name: ${{ env.artifact }}-${{ github.sha }}
         path: ${{ github.workspace }}/install/*
 
     - name: Store symbol server artifacts
       uses: actions/upload-artifact@v6
       with:
-        name: openmw-windows-${{ inputs.msvc }}-sym-store-${{ github.sha }}
+        name: ${{ env.artifact }}-sym-store-${{ github.sha }}
         path: ${{ github.workspace }}/SymStore/*
 
     - name: Store log etc. artifacts
       uses: actions/upload-artifact@v6
       with:
-        name: openmw-windows-${{ inputs.msvc }}-logs-and-stuff-${{ github.sha }}
+        name: ${{ env.artifact }}-logs-and-stuff-${{ github.sha }}
         path: |
           ${{ github.workspace }}/build/compile_commands.json
           ${{ github.workspace }}/build/**/*.log

@@ -50,7 +50,7 @@ jobs:
     - name: Fetch the Windows files
       uses: actions/download-artifact@v5
       with:
-        name: openmw-windows-2022-${{ github.sha }}
+        name: openmw-windows-2022-package-${{ github.sha }}
         path: windows
 
     - name: Fetch the AppImage

@@ -26,7 +26,7 @@ To roll back, edit the older release and tick "Set as the latest release". The u
 
 To rebuild a published release, move its tag with `git tag -f v0.1.0 <commit>` and `git push -f origin v0.1.0`. The workflow then replaces the release's files, and keeps it published with the same pre-release and latest marks. If it is the latest release, the update script's users get the new build right away, so make a new tag for anything that should be tried first. A release that is still a draft can't be found by its tag, so moving the tag of a draft makes a second draft. Delete the old draft by hand.
 
-To try the builds without a release, start the Release workflow by hand from the Actions tab. The files are then on the run's page, under Artifacts.
+To try the builds without a release, start the Release workflow by hand from the Actions tab. The files are then on the run's page, under Artifacts. Every push to master also builds the Windows and Linux files, which are under Artifacts on that push's Build and test run. Those runs also save the compiler caches that the Release workflow's Windows and Linux builds read. A run for a tag can only read caches saved on master, so without them a release would compile everything again.
 
 The builds aren't signed, so Windows SmartScreen warns the first time someone runs the installer. "More info" and "Run anyway" get past it.
 

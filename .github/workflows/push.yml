@@ -1,7 +1,7 @@
 name: Build and test
 
-# Branch pushes and pull requests build and test on Linux and Windows, and build the Android debug APK. Release tags
-# are built by release.yml instead.
+# Branch pushes and pull requests build and test on Linux and Windows, and build the Android debug APK. Pushes to
+# master also build the Windows and Linux release files. Release tags are built by release.yml instead.
 on:
   push:
     branches:
@@ -174,6 +174,21 @@ jobs:
     uses: ./.github/workflows/windows.yml
     with:
       image: ${{ matrix.image }}
+
+  # Pushes to master also build the release files, as release.yml does, without making a release. The release builds
+  # keep compiler caches, and a tag's release run can only read caches saved on master, so these runs keep the release
+  # builds fast. Testers can also take the files from the run's page, under Artifacts.
+  Windows-Release-Files:
+    if: github.ref == 'refs/heads/master'
+    uses: ./.github/workflows/windows.yml
+    with:
+      image: "2022"
+      build-type: Release
+      package: true
+
+  Linux-Release-Files:
+    if: github.ref == 'refs/heads/master'
+    uses: ./.github/workflows/linux.yml
 
   # Packages: write lets it keep the Android dependency image in the container registry.
   Android:
