@@ -118,6 +118,31 @@ jobs:
     - name: Check the workflows
       run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color -shellcheck= -pyflakes=
 
+  Cloud-saves:
+    name: Cloud saves Worker
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloudsaves
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24
+        cache: npm
+        cache-dependency-path: cloudsaves/package-lock.json
+
+    - name: Install the Worker's tools
+      run: npm ci
+
+    - name: Type-check the Worker
+      run: npm run check
+
+    - name: Test the Worker
+      run: npm test
+
   Windows:
     strategy:
       fail-fast: true
