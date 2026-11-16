@@ -2,7 +2,7 @@
 
 Cloud saves move a game from one device to another, such as from a PC to a Steam Deck. They are not a backup. A player types a phrase once on each device, and the phrase is the only key. There are no accounts.
 
-This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phase 1 has one.
+This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phase 1 has one, and is done.
 
 ## How players use it
 
@@ -26,9 +26,9 @@ This document lists the phases at a high level. Each phase gets a detailed plan 
 
 ### 1. Cloudflare setup and the server
 
-The detailed plan is below, in [Phase 1 in detail](#phase-1-in-detail).
+The detailed plan is below, in [Phase 1 in detail](#phase-1-in-detail). [cloudsaves/README.md](../cloudsaves/README.md) records how the account was set up.
 
-- **Done when** a save uploaded with `curl` from this machine downloads byte for byte, the deployed Worker refuses a zip, a cut-short save and an old 42 or 43 save, and a refused upload leaves the phrase's save as it was.
+- **Done** on 2026-11-15. A save uploaded with `curl` downloads byte for byte. The deployed Worker refuses a zip, a cut-short save, an upstream save and an old format 43 save, and a refused upload leaves the phrase's save as it was. A 15 MB upload takes 2 to 12 ms of CPU time.
 
 ### 2. The game's cloud saves, on Windows
 
