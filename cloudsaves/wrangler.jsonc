@@ -6,6 +6,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
+  // Workers Logs: one log entry for each request, with its CPU time, in the dashboard for 3 days.
+  "observability": { "enabled": true },
   // The bucket that holds the saves. The Worker reaches it as env.SAVES.
   "r2_buckets": [{ "binding": "SAVES", "bucket_name": "modern-morrow-saves" }],
   // Requests per IP address in each minute. Each Cloudflare location counts on its own, and only roughly. The
