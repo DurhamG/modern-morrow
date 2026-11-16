@@ -2,7 +2,7 @@
 
 Cloud saves move a game from one device to another, such as from a PC to a Steam Deck. They are not a backup. A player types a phrase once on each device, and the phrase is the only key. There are no accounts.
 
-This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phases 1 to 4 have one, and phases 1 and 2 are done.
+This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phases 1 to 4 have one, and phases 1, 2 and 4 are done.
 
 ## How players use it
 
@@ -48,7 +48,7 @@ The detailed plan is below, in [Phase 4 in detail](#phase-4-in-detail).
 
 - **An implementation of the requests for Android,** through Java's built-in HTTPS client, called from the engine. The APK needs no new library.
 - **Typing the phrase** uses the game's own on-screen keyboard with a gamepad, as on the other platforms.
-- **Done when** a game moves between Android and a PC.
+- **Done** on 2026-11-16. A game moved from Windows to the Fold 8 with a Bluetooth controller and back, through the deployed Worker. In the emulator, a save went up to the Worker on the Mac and came back byte for byte, a phrase that holds nothing and a stopped Worker showed their messages, and the log named neither the address nor the phrase.
 
 ### 5. Launch
 
@@ -75,6 +75,8 @@ A Java class sends each request with `java.net.HttpURLConnection`, and the engin
 
 Nothing new with a gamepad. The phrase dialog draws the game's own on-screen keyboard, the one from naming a character. Phase 4 checks what happens with touch only and no gamepad, and records it. A fix, if one is needed, is for a later phase.
 
+With touch only, it works: Change phrase opens the same keyboard, its keys and Done take taps, and Android's own keyboard doesn't open.
+
 ### Tests
 
 - **JVM unit tests** for `CloudRequest`, run with `android/build.sh test`, against a server the test starts on `127.0.0.1` with the JDK's own `HttpServer`:
@@ -92,6 +94,12 @@ Nothing new with a gamepad. The phrase dialog draws the game's own on-screen key
   3. On Windows, load from the Cloud tab, and check that the game carries on from the Fold.
 
 `openmw-tests`' transport test can't run on Android, which has no test executable. The JVM tests and the emulator checks take its place.
+
+What the work found beyond the plan:
+
+- `HttpURLConnection` only limits how long a read waits. Writing an upload can wait until the system gives up on the connection, which takes many minutes. So `CloudRequest` runs a watchdog that closes the connection when a block of the upload waits 60 seconds. A test with a server that never reads checks it.
+- The JVM tests compile against Android's classes, which lack the JDK's `HttpServer`, so they use a small HTTP server on a socket instead.
+- In the emulator, the harness's virtual gamepad presses buttons, but its d-pad and left stick don't move the controller menus' focus. Taps on the screen did instead. This is still to look into.
 
 ### The commits
 
