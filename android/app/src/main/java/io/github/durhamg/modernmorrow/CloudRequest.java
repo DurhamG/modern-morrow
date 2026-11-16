@@ -1,6 +1,7 @@
 package io.github.durhamg.modernmorrow;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -187,6 +188,9 @@ final class CloudRequest {
                 if (progress != null && size > 0)
                     progress.report(done, size);
             }
+            // Java's own HttpURLConnection on Linux ends a body cut short as if it were complete.
+            if (size >= 0 && done != size)
+                throw new EOFException();
         } finally {
             out.close();
         }
