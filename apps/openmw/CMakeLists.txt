@@ -115,11 +115,14 @@ add_openmw_dir (mwstate
     statemanagerimp charactermanager character quicksavemanager questlists savefolders autosave cloudsaves cloudrequests
     )
 
-# Each platform sends cloud saves' requests its own way. Platforms without one yet say cloud saves aren't available.
+# Each platform sends cloud saves' requests its own way: WinHTTP on Windows, and the system's libcurl, loaded when it
+# is first needed, on Linux and macOS. Platforms without one yet say cloud saves aren't available.
 if (WIN32)
     add_openmw_dir (mwstate cloudtransportwinhttp)
-else()
+elseif (ANDROID)
     add_openmw_dir (mwstate cloudtransportnone)
+else()
+    add_openmw_dir (mwstate cloudtransportcurl)
 endif()
 
 add_openmw_dir (mwbase
@@ -247,6 +250,11 @@ endif()
 if (WIN32)
     # Sockets for the automation server, and HTTP for cloud saves
     target_link_libraries(openmw-lib ws2_32 winhttp)
+endif()
+
+if (UNIX AND NOT ANDROID)
+    # dlopen, which loads libcurl for cloud saves
+    target_link_libraries(openmw-lib ${CMAKE_DL_LIBS})
 endif()
 
 # Fix for not visible pthreads functions for linker with glibc 2.15
