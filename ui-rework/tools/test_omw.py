@@ -73,6 +73,46 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(sections["GUI"]["scaling factor"], "2")
 
 
+class CloudSettingsTest(unittest.TestCase):
+    def settings(self, *launch_args):
+        with tempfile.TemporaryDirectory() as folder:
+            profile = type("FakeProfile", (), {})()
+            profile.config_dir = Path(folder) / "config"
+            profile.data_dir = Path(folder) / "data"
+            profile.config_dir.mkdir()
+            args = omw.build_parser().parse_args(["launch", *launch_args])
+            omw.write_settings_cfg(profile, args)
+            return omw.read_settings_cfg(profile.config_dir / "settings.cfg")
+
+    def test_a_launch_never_reaches_the_real_cloud(self):
+        self.assertEqual(self.settings()["Saves"]["cloud address"], omw.NO_CLOUD_ADDRESS)
+
+    def test_cloud_points_at_the_worker_on_this_computer(self):
+        self.assertEqual(self.settings("--cloud")["Saves"]["cloud address"], omw.CLOUD_SERVICE_ADDRESS)
+
+    def test_set_comes_last(self):
+        sections = self.settings("--cloud", "--set", "Saves.cloud address=http://example.test")
+        self.assertEqual(sections["Saves"]["cloud address"], "http://example.test")
+
+
+class FileLineTest(unittest.TestCase):
+    def test_remove_files_deletes_the_matching_files_only(self):
+        with tempfile.TemporaryDirectory() as folder:
+            data = Path(folder)
+            (data / "saves" / "player").mkdir(parents=True)
+            (data / "saves" / "player" / "Quicksave.omwsave").write_bytes(b"x")
+            (data / "saves" / "player" / "notes.txt").write_bytes(b"x")
+            self.assertIsNone(omw.file_line(["remove-files", "saves/*/*.omwsave"], data))
+            self.assertFalse((data / "saves" / "player" / "Quicksave.omwsave").exists())
+            self.assertTrue((data / "saves" / "player" / "notes.txt").exists())
+            self.assertEqual(omw.file_line(["expect-file", "saves/*/*.omwsave"], data),
+                             f"no file in {data} matches 'saves/*/*.omwsave'")
+
+    def test_remove_files_with_no_match_is_fine(self):
+        with tempfile.TemporaryDirectory() as folder:
+            self.assertIsNone(omw.file_line(["remove-files", "saves/*/*.omwsave"], Path(folder)))
+
+
 class WidgetTest(unittest.TestCase):
     dump = {"widgets": [
         widget("Window", name="_Main", children=[

@@ -1,0 +1,59 @@
+# Saving a game to the cloud, then loading it on a device with no saves. The cloud saves Worker runs on this computer
+# with an empty bucket, which --cloud starts.
+launch --cloud --openmw-saves --start "Balmora, Caius Cosades' House" --set "GUI.controller menus=true"
+pad button=start
+wait frames=10
+pad button=a
+wait frames=10
+wait-mode MainMenu
+# The tabs are Modern Morrow, OpenMW and Cloud. L1 goes round to the last.
+pad button=leftshoulder
+wait-text "Save to the cloud"
+shot save-tab
+expect-text "Press Y to type a phrase."
+expect-order "Modern Morrow" "OpenMW" "Cloud"
+# Types "ab" on the on-screen keyboard.
+pad button=y
+wait-text "Space"
+shot phrase-keyboard
+pad button=a
+pad button=dpright
+pad button=a
+pad button=start
+wait-text "This phrase holds no cloud save yet."
+shot phrase-typed
+pad button=a
+wait-text "Saved to the cloud."
+shot saved
+expect-text "The phrase holds"
+expect-text "Balmora, Caius Cosades' House"
+expect-file "saves/player/*.omwsave"
+# Another device: no saves, and the phrase typed there already.
+remove-files "saves/*/*.omwsave"
+relaunch --cloud --openmw-saves --set "GUI.controller menus=true" --set "Saves.cloud phrase=ab"
+wait-mode MainMenu
+pad button=a
+wait-text "The phrase holds"
+shot load-tab
+expect-text "Day 1 - 16 Last Seed 9 a.m."
+expect-no-text "Modern Morrow saves"
+pad button=a
+wait-no-mode timeout=60
+expect-state running
+expect-file "saves/player/Day_1___16_Last_Seed_9_a_m_.omwsave"
+# Later saves go to the same character.
+key key=F5
+wait frames=30
+expect-file "saves/player/Quicksave.omwsave"
+# Loading from the cloud while playing asks first.
+pad button=start
+wait frames=10
+pad button=dpdown
+pad button=a
+wait frames=10
+wait-mode MainMenu
+pad button=leftshoulder
+wait-text "The phrase holds"
+pad button=a
+wait-text "Do you want to load"
+shot load-confirm

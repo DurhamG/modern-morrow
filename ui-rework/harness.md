@@ -125,8 +125,11 @@ Scenarios can read and change save files with `ui-rework/tools/savefile.py`. Pat
 - `save-set-format PATH VERSION`: changes the save's format version in place, such as to 44 to see that a save too new is refused.
 
 - `expect-file PATTERN` and `expect-no-file PATTERN`: a file in the profile's data folder matches the pattern, or none does, such as `backups/OpenMW/*/*.omwsave`.
+- `remove-files PATTERN` deletes the files in the profile's data folder that match the pattern, such as `saves/*/*.omwsave`. A scenario uses it to stand in for a second device with no saves.
 
 `launch --openmw-saves` makes an empty folder in the profile, `data/openmw-saves`, and uses it as OpenMW's saves folder, so the save screens show an OpenMW tab without touching OpenMW's real saves. A scenario puts saves there with `save-strip`.
+
+Cloud saves never reach the real service from a test run. Each launch points the `cloud address` setting at a port on this computer where nothing listens, unless it has `--user-settings`. `launch --cloud` points it at the cloud saves Worker from `cloudsaves/` instead, run on this computer at `http://127.0.0.1:8788`. A scenario with `--cloud` on any of its launch lines starts the Worker before its first launch, with an empty bucket, and stops it at the end. That needs Node.js, and `npm install` run once in `cloudsaves/`. The Worker's log is `.automation/cloud-service/wrangler.log`.
 
 `savefile.py` also works on its own: `savefile.py records FILE`, `savefile.py format FILE [VERSION]` and `savefile.py strip FILE NAME -o OUT`.
 

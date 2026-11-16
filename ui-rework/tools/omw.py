@@ -29,6 +29,11 @@ AUTOMATION_DIR = REPO_ROOT / ".automation"
 PROFILES_DIR = AUTOMATION_DIR / "profiles"
 SCENARIOS_DIR = REPO_ROOT / "ui-rework" / "scenarios"
 OUTPUT_DIR = AUTOMATION_DIR / "out"
+# The cloud saves Worker, when a scenario runs it on this computer. See CloudService.
+CLOUD_SERVICE_PORT = 8788
+CLOUD_SERVICE_ADDRESS = f"http://127.0.0.1:{CLOUD_SERVICE_PORT}"
+# Nothing listens here, so a game the harness starts never reaches the real cloud saves service by mistake.
+NO_CLOUD_ADDRESS = "http://127.0.0.1:9"
 LOG_ALLOWLIST = REPO_ROOT / "ui-rework" / "tools" / "log-allowlist.txt"
 # Stored UI dumps for the golden lines. They hold Morrowind's text, so they stay out of the repository, and compare a
 # run with an earlier one on the same machine.
@@ -229,6 +234,10 @@ def write_settings_cfg(profile, args):
     if not args.user_settings:
         # Keep test runs light. With the user's settings, keep their frame rate and vsync.
         harness_settings["Video"].update({"framerate limit": 60, "vsync mode": 0})
+        # Test runs use the Worker on this computer, or none. With the user's settings, keep their cloud saves.
+        harness_settings["Saves"] = {"cloud address": NO_CLOUD_ADDRESS}
+    if getattr(args, "cloud", False):
+        harness_settings.setdefault("Saves", {})["cloud address"] = CLOUD_SERVICE_ADDRESS
     if args.scale is not None or not args.user_settings:
         harness_settings["GUI"] = {"scaling factor": args.scale if args.scale is not None else 1.0}
     for section, values in harness_settings.items():
@@ -894,16 +903,21 @@ def find_save(data_dir, pattern):
 
 
 def file_line(words, data_dir):
-    """Runs expect-file or expect-no-file, which check for files in the profile's data folder. Returns a message when
-    the check fails, or None. Other lines give False."""
+    """Runs expect-file or expect-no-file, which check for files in the profile's data folder, or remove-files, which
+    deletes them. Returns a message when a check fails, or None. Other lines give False."""
     command = words[0]
-    if command not in ("expect-file", "expect-no-file"):
+    if command not in ("expect-file", "expect-no-file", "remove-files"):
         return False
     if len(words) != 2:
         raise HarnessError(f"{command} takes one pattern")
     if data_dir is None:
         raise HarnessError(f"{command} needs the profile's data folder")
     found = sorted(data_dir.glob(words[1]))
+    if command == "remove-files":
+        for path in found:
+            if path.is_file():
+                path.unlink()
+        return None
     if command == "expect-file" and not found:
         return f"no file in {data_dir} matches {words[1]!r}"
     if command == "expect-no-file" and found:
@@ -1105,7 +1119,7 @@ def run_lines(connection, lines, source, timeout, out_dir=None, verbose=False, l
             if failure:
                 raise HarnessError(f"{where}: {failure}")
             result = "ok"
-        elif words[0].startswith("save-") or words[0] in ("expect-file", "expect-no-file"):
+        elif words[0].startswith("save-") or words[0] in ("expect-file", "expect-no-file", "remove-files"):
             try:
                 failure = file_line(words, data_dir)
                 if failure is False:
@@ -1168,6 +1182,65 @@ def scenario_path(name):
     return path
 
 
+class CloudService:
+    """The cloud saves Worker from cloudsaves/, run on this computer with Wrangler and a bucket of its own, for the
+    scenarios whose launch lines say --cloud. Each run starts with an empty bucket."""
+
+    def __init__(self):
+        self.process = None
+        self.log = None
+        self.folder = AUTOMATION_DIR / "cloud-service"
+
+    def start(self, timeout=60):
+        project = REPO_ROOT / "cloudsaves"
+        wrangler = project / "node_modules" / "wrangler" / "bin" / "wrangler.js"
+        node = shutil.which("node")
+        if node is None or not wrangler.is_file():
+            raise HarnessError("Cloud scenarios need Node.js and cloudsaves/node_modules. Run npm install in "
+                               "cloudsaves/ first.")
+        # Each run gets an empty bucket of its own, in a new folder.
+        shutil.rmtree(self.folder, ignore_errors=True)
+        self.folder.mkdir(parents=True, exist_ok=True)
+        state = self.folder / f"state-{os.getpid()}-{time.time_ns()}"
+        self.log = open(self.folder / "wrangler.log", "w", encoding="utf-8")
+        self.process = subprocess.Popen(
+            [node, str(wrangler), "dev", "--ip", "127.0.0.1", "--port", str(CLOUD_SERVICE_PORT), "--persist-to",
+             str(state), "--show-interactive-dev-session=false"],
+            cwd=project, stdout=self.log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+            start_new_session=sys.platform != "win32")
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if self.process.poll() is not None:
+                raise HarnessError(f"The cloud saves Worker stopped as it started. See {self.folder / 'wrangler.log'}.")
+            try:
+                with socket.create_connection(("127.0.0.1", CLOUD_SERVICE_PORT), timeout=1):
+                    return
+            except OSError:
+                time.sleep(0.5)
+        self.stop()
+        raise HarnessError(f"The cloud saves Worker didn't start in {timeout} s. See {self.folder / 'wrangler.log'}.")
+
+    def stop(self):
+        if self.process is not None and self.process.poll() is None:
+            # Wrangler runs the Worker in a process of its own, which must stop too.
+            if sys.platform == "win32":
+                subprocess.run(["taskkill", "/PID", str(self.process.pid), "/T", "/F"], capture_output=True)
+            else:
+                os.killpg(self.process.pid, 15)
+            self.process.wait(timeout=10)
+        if self.log is not None:
+            self.log.close()
+            self.log = None
+        # The next scenario's Worker needs the port.
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            try:
+                with socket.create_connection(("127.0.0.1", CLOUD_SERVICE_PORT), timeout=0.5):
+                    time.sleep(0.2)
+            except OSError:
+                return
+
+
 def run_scenario(parser, name, resolution, args):
     """Launches the game as the scenario's first line says, runs the rest of the scenario, and quits. A relaunch line
     quits the game and launches it again with that line's options, in the same profile. Returns the screenshots it
@@ -1195,6 +1268,20 @@ def run_scenario(parser, name, resolution, args):
     # Saves from an earlier run would change what the save screens show, so each run starts without them.
     for folder in ("saves", "backups"):
         shutil.rmtree(Profile(profile_name).data_dir / folder, ignore_errors=True)
+    cloud = CloudService() if any("--cloud" in words for words, _ in parts) else None
+    if cloud is not None:
+        cloud.start()
+    try:
+        shots = run_parts(parser, name, resolution, args, path, parts, profile_name, out_dir)
+    finally:
+        if cloud is not None:
+            cloud.stop()
+    print(f"{name} at {resolution}: {len(shots)} shots in {time.monotonic() - start:.1f} s -> {out_dir}")
+    return shots
+
+
+def run_parts(parser, name, resolution, args, path, parts, profile_name, out_dir):
+    """Runs each part of a scenario in a launch of the game of its own, and returns the screenshots taken."""
     shots = []
     for index, (launch_words, part_lines) in enumerate(parts):
         launch_args = parser.parse_args(["launch", *launch_words, "-p", profile_name, "-r", resolution,
@@ -1219,7 +1306,6 @@ def run_scenario(parser, name, resolution, args):
             if not (args.keep and last):
                 quit_args = argparse.Namespace(profile=profile_name, timeout=10, kill=False)
                 cmd_quit(quit_args)
-    print(f"{name} at {resolution}: {len(shots)} shots in {time.monotonic() - start:.1f} s -> {out_dir}")
     return shots
 
 
@@ -1358,6 +1444,9 @@ def build_parser():
     p.add_argument("--set", action="append", metavar="Section.key=value", help="extra setting; repeatable")
     p.add_argument("--openmw-saves", action="store_true",
                    help="use an empty folder in the profile, data/openmw-saves, as OpenMW's saves folder")
+    p.add_argument("--cloud", action="store_true",
+                   help=f"point cloud saves at the Worker run on this computer, at {CLOUD_SERVICE_ADDRESS}; a "
+                        "scenario that uses this starts the Worker itself")
     start = p.add_mutually_exclusive_group()
     start.add_argument("--save", help="load this save file")
     start.add_argument("--new-game", action="store_true", help="start a new game with character creation")
