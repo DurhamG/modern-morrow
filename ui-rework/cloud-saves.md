@@ -2,7 +2,7 @@
 
 Cloud saves move a game from one device to another, such as from a PC to a Steam Deck. They are not a backup. A player types a phrase once on each device, and the phrase is the only key. There are no accounts.
 
-This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phases 1 and 2 have one, and both are done.
+This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phases 1 to 3 have one, and phases 1 and 2 are done.
 
 ## How players use it
 
@@ -38,8 +38,8 @@ The detailed plan is below, in [Phase 2 in detail](#phase-2-in-detail).
 
 ### 3. Linux and the Steam Deck
 
-- **An implementation of the requests for Linux,** for the AppImage. It probably uses libcurl. That phase decides whether the AppImage brings its own copy or uses the system's, and where it finds the certificates for HTTPS on SteamOS.
-- **Typing the phrase in Game Mode** needs nothing new. Controller screens draw the game's own on-screen keyboard, the one from naming a character, and the game already tells SDL not to open Steam's.
+The detailed plan is below, in [Phase 3 in detail](#phase-3-in-detail).
+
 - **Done when** a game moves from Windows to a Steam Deck and back.
 
 ### 4. Android
@@ -55,6 +55,38 @@ The detailed plan is below, in [Phase 2 in detail](#phase-2-in-detail).
 - The README section for players, and the release notes.
 - Where to watch usage and cost on Cloudflare.
 - Optionally, a Cloudflare API token or Cloudflare's MCP server, so an agent can manage the Worker and the bucket. CI could then deploy the Worker.
+
+## Phase 3 in detail
+
+### Requests on Linux
+
+The game loads the system's libcurl when the Cloud tab first needs it, with `dlopen("libcurl.so.4")`, and sends the requests through it.
+
+- **Nothing new in the build.** The AppImage is built on AlmaLinux from vcpkg's libraries, which have no HTTPS client. Building one in would also mean carrying OpenSSL and keeping it patched. Instead, the game declares the dozen libcurl functions and option numbers it uses, which libcurl keeps stable for every `libcurl.so.4`, and needs no headers.
+- **The system's certificates.** A system's libcurl already knows where that system keeps its certificates for HTTPS. A copy built on AlmaLinux would look in AlmaLinux's place, which SteamOS doesn't have.
+- **Every common desktop Linux has libcurl,** and so does SteamOS, whose package manager uses it. Without it, the Cloud tab says cloud saves aren't available on this device, as it does today.
+- **The AppImage mustn't hand libcurl its own copies of the system's libraries.** A process only loads a library once. So when the game has already loaded a copy from the AppImage's `lib` folder, libcurl uses that copy in place of the system's. zlib, zstd and brotli keep the same interface in every version, so their copies do no harm. A copy of a TLS or HTTP library, such as OpenSSL or nghttp2, could break libcurl. Commit 3 makes the release build check that folder, since nothing has checked it yet.
+- **macOS** gets the same transport, with `libcurl.4.dylib`, since macOS has libcurl. The fork ships no macOS build, but upstream's CI builds one.
+- The transport does what the Windows one does: uploads report their progress, a download goes to a `.part` file that is renamed once complete, and the log names a failure without the address or the phrase.
+
+### Typing the phrase in Game Mode
+
+Nothing new. Controller screens draw the game's own on-screen keyboard, the one from naming a character, and the game already tells SDL not to open Steam's. Phase 3 checks it on a Deck.
+
+### Tests
+
+- **CI runs `openmw-tests`' transport test on Linux** against the Worker, which the Ubuntu job starts with Wrangler from `cloudsaves/`. That sends real requests through the system's libcurl on every push. The Windows transport is checked the same way by hand, since the Windows job has no Node.
+- **The Steam Deck check,** done by the project owner with the AppImage from a run of the release workflow started by hand, which makes no release:
+  1. On Windows, save to the cloud with a phrase.
+  2. On the Deck in Game Mode, start the AppImage. Load from the Cloud tab, typing the phrase with the on-screen keyboard. Play a little, then save to the cloud.
+  3. On Windows, load from the Cloud tab, and check that the game carries on from the Deck.
+
+### The commits
+
+1. **Add the libcurl transport,** for Linux and macOS. The others keep the transport that says cloud saves aren't available.
+2. **Run the transport test in Linux CI,** against the Worker started in the Ubuntu job.
+3. **List the AppImage's libraries in the release build's log,** and fail the build if it carries a TLS or HTTP library that libcurl would use in place of the system's.
+4. **Record the phase,** after the Steam Deck check.
 
 ## Phase 2 in detail
 
