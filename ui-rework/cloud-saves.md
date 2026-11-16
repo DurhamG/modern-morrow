@@ -2,7 +2,7 @@
 
 Cloud saves move a game from one device to another, such as from a PC to a Steam Deck. They are not a backup. A player types a phrase once on each device, and the phrase is the only key. There are no accounts.
 
-This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phase 1 has one, and is done.
+This document lists the phases at a high level. Each phase gets a detailed plan of its own when work on it starts. Phases 1 and 2 have one, and phase 1 is done.
 
 ## How players use it
 
@@ -32,26 +32,20 @@ The detailed plan is below, in [Phase 1 in detail](#phase-1-in-detail). [cloudsa
 
 ### 2. The game's cloud saves, on Windows
 
-- **A small interface for the three requests,** with one implementation per platform. Windows uses WinHTTP, which ships with Windows, so the build needs no new library. Requests run off the main thread, and the result is handed back to the main loop. Every request sends a `User-Agent` such as `ModernMorrow/0.2.0`. See the note on `workers.dev` below.
-- **The menus:**
-  - the Cloud save entry, with its progress and its errors,
-  - the Cloud tab in the load menu,
-  - typing the phrase, with a controller as well as a keyboard,
-  - remembering the phrase on this device, and never writing it to the log.
-- **The rules as plain functions with Google Tests.** These include cleaning up the phrase and choosing the character folder for a loaded cloud save.
-- **Harness scenarios** against the Worker run on this machine with `npm run dev`, which uses a local bucket. So the scenarios don't need Cloudflare, and every run of `prerelease.py` checks that the Worker accepts a save the current build wrote.
+The detailed plan is below, in [Phase 2 in detail](#phase-2-in-detail).
+
 - **Done when** a game saved to the cloud on one Windows profile loads on another, and the scenarios pass.
 
 ### 3. Linux and the Steam Deck
 
 - **An implementation of the requests for Linux,** for the AppImage. It probably uses libcurl. That phase decides whether the AppImage brings its own copy or uses the system's, and where it finds the certificates for HTTPS on SteamOS.
-- **Typing the phrase in Game Mode,** where there is no keyboard. Check whether `SDL_StartTextInput` opens Steam's on-screen keyboard, and find another way if it doesn't.
+- **Typing the phrase in Game Mode** needs nothing new. Controller screens draw the game's own on-screen keyboard, the one from naming a character, and the game already tells SDL not to open Steam's.
 - **Done when** a game moves from Windows to a Steam Deck and back.
 
 ### 4. Android
 
 - **An implementation of the requests for Android,** through Java's built-in HTTPS client, called from the engine. The APK needs no new library.
-- **Typing the phrase with a gamepad** through Android's keyboard. That's already an open question in [android.md](android.md).
+- **Typing the phrase** uses the game's own on-screen keyboard with a gamepad, as on the other platforms.
 - **Done when** a game moves between Android and a PC.
 
 ### 5. Launch
@@ -61,6 +55,66 @@ The detailed plan is below, in [Phase 1 in detail](#phase-1-in-detail). [cloudsa
 - The README section for players, and the release notes.
 - Where to watch usage and cost on Cloudflare.
 - Optionally, a Cloudflare API token or Cloudflare's MCP server, so an agent can manage the Worker and the bucket. CI could then deploy the Worker.
+
+## Phase 2 in detail
+
+### What the player sees
+
+The save and load screens already have tabs for Modern Morrow's own saves and OpenMW's, switched with L1 and R1. A third tab, Cloud, sits after them.
+
+- **The tabs always show,** since the Cloud tab is always there. Today they only show when an OpenMW install was found.
+- **The main menu's Load always shows.** Today it hides when the device has no saves, which is exactly the case on a new device.
+- **Saving, on the Cloud tab.** The tab has one entry, "Save to the cloud". Its details on the right say what the phrase holds now: the character, level, cell and upload time. Pressing A makes a new local save in this game's own folder, as the new save entry on the first tab does, then uploads that file. The screen shows the upload's progress, then that it worked, or what went wrong.
+- **Loading, on the Cloud tab.** Opening the tab asks the Worker for the phrase's save details, and shows them as the tab's one entry. Pressing A asks first, as loading does when a game is running. Then it downloads the save and loads it. A phrase that holds nothing shows a message saying so.
+- **The phrase.** The first time the Cloud tab is used on a device, the game asks for the phrase, with the text input dialog. In controller menus mode, that dialog draws the on-screen keyboard from naming a character. The Cloud tab shows the phrase, and Y changes it. The phrase is never written to the log.
+- **Errors** name what went wrong in words a player understands: no connection, the Worker can't be reached, too many uploads in a minute, or the save was refused. The Worker's short JSON errors map to localised messages.
+
+### Where a loaded cloud save goes
+
+The download is written into this game's own saves folder, in the folder for the save's character. Then it loads from there like any other save. So the player's later saves go to that character. The load screen lists the downloaded save, and "load newest save" at the next start finds it, even if the player quits without saving.
+
+- **The character's folder** is found the way a new game names one. Its name is the character's name, with anything other than a letter or digit changed to `_`. If that folder exists, the save joins it. If not, the game makes it.
+- **The downloaded file** is named after the save's description, with a suffix if that name is taken, so it never replaces a local save.
+- If this device already has a different playthrough under the same name, the cloud game joins its folder, as the plan above says.
+
+### Requests
+
+- **An interface, `CloudSaves`,** with the three requests as blocking calls: upload a file, read the details, and download to a file. Each call returns a result: the details, or an error with the HTTP status and the Worker's message.
+- **The Windows implementation uses WinHTTP,** which ships with Windows, so the build needs no new library.
+- **Requests run on a thread of their own,** one at a time. The menus look for the result each frame, so the game keeps drawing while a request runs. Leaving the screen doesn't cancel an upload.
+- **Every request sends a `User-Agent`,** `ModernMorrow/<version>`, because of the browser check on `workers.dev`.
+- **Two settings,** in a new `[Cloud saves]` section: `address`, which defaults to `https://saves.durhamg.workers.dev`, and `phrase`, which starts empty. The harness points `address` at the Worker running locally. The phrase sits in the player's `settings.cfg` as plain text. That's acceptable, because the phrase isn't meant to keep anything safe, but a player who shares their `settings.cfg` in a bug report shares their phrase too.
+
+### Rules, as plain functions with Google Tests
+
+- The character folder's name from the character's name. It moves out of `CharacterManager::createCharacter`, which a new game uses, so both use the same rule.
+- The phrase as the header sends it: UTF-8, with every byte other than letters, digits and `-._~` percent-encoded. The tests use the same phrases as the Worker's own tests, so the two sides can't drift apart.
+- Reading the details JSON. The Worker sends each byte of the save's legacy 8-bit strings as the character with the same number. The game turns those back into bytes and decodes them with the game's own encoding, as it does when it reads a save.
+- The message for each error: the HTTP status, a missing connection, or a timeout.
+- The downloaded file's name in the character's folder.
+
+### Tests in the game
+
+- **A stand-in for `CloudSaves`** in `openmw-tests` tests the thread that runs requests, and what the screens do with each result.
+- **Harness scenarios** run against the Worker on this machine. `omw.py` starts it with `npm run dev`, which serves it at `http://localhost:8787` with a local bucket, and points the profile's `address` setting at it. So the scenarios never touch Cloudflare. Every run of `prerelease.py` also checks that the Worker accepts a save the current build wrote.
+  - `cloud-save`: start a game, type a phrase on the on-screen keyboard, save to the cloud, and check the success message and the tab's details.
+  - `cloud-load`: in a second profile with no saves, open Load from the main menu, type the same phrase, load the cloud save, and check the character and cell. Then save, and check that the save went to that character's folder.
+  - `cloud-errors`: a phrase that holds nothing, and the Worker stopped, so the request can't connect.
+- **CI** builds and runs the unit tests, as for the rest of the game. The scenarios need Morrowind's data, so they run in `prerelease.py`.
+
+### The commits
+
+1. **Move the character folder name rule** out of `createCharacter` into a function, with no change in behaviour.
+2. **Test it.**
+3. **Add the `[Cloud saves]` settings,** with their defaults in `settings-default.cfg` and their description in the settings documentation.
+4. **Add the `CloudSaves` interface, its WinHTTP implementation, and its rules.** That covers encoding the phrase, reading the details and the error messages, with their tests.
+5. **Run the requests on their own thread,** with tests against the stand-in.
+6. **Add the Cloud tab to the save screen,** with the phrase dialog and the upload. Its texts go in the localisation files.
+7. **Add the Cloud tab to the load screen,** with the download and the folder choice, and always show the main menu's Load.
+8. **Run the Worker locally in the harness,** and add the three scenarios.
+9. **Record the phase** in this document and in `progress.md`.
+
+The Linux and Android builds don't have an implementation until phases 3 and 4. Until then, they build with one that answers every request with "cloud saves aren't available on this platform yet", and the Cloud tab says so.
 
 ## Phase 1 in detail
 
