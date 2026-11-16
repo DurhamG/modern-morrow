@@ -112,8 +112,15 @@ add_openmw_dir (mwmechanics
     )
 
 add_openmw_dir (mwstate
-    statemanagerimp charactermanager character quicksavemanager questlists savefolders autosave
+    statemanagerimp charactermanager character quicksavemanager questlists savefolders autosave cloudsaves
     )
+
+# Each platform sends cloud saves' requests its own way. Platforms without one yet say cloud saves aren't available.
+if (WIN32)
+    add_openmw_dir (mwstate cloudtransportwinhttp)
+else()
+    add_openmw_dir (mwstate cloudtransportnone)
+endif()
 
 add_openmw_dir (mwbase
     environment world scriptmanager dialoguemanager journal soundmanager mechanicsmanager
@@ -238,8 +245,8 @@ if (NOT UNIX)
 endif()
 
 if (WIN32)
-    # Sockets for the automation server
-    target_link_libraries(openmw-lib ws2_32)
+    # Sockets for the automation server, and HTTP for cloud saves
+    target_link_libraries(openmw-lib ws2_32 winhttp)
 endif()
 
 # Fix for not visible pthreads functions for linker with glibc 2.15
