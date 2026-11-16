@@ -94,7 +94,21 @@ jobs:
 
     - uses: seanmiddleditch/gha-setup-ninja@master
 
+    # ccache keeps each compiled file, so a later build only compiles what changed. The test builds and the release
+    # builds compile with different options, so each keeps a cache of its own. A tag's release run can only read caches
+    # saved on master or on that same tag.
+    - name: Keep the compiler cache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: windows-${{ inputs.msvc }}-${{ inputs.build-type }}${{ inputs.package && '-package' || '' }}
+        max-size: 2G
+
     # Modern Morrow doesn't ship OpenMW-CS, the editor, so the build leaves it out.
+    #
+    # ccache can only keep a compile whose debug information goes into its own object file, which is /Z7, and not into
+    # a .pdb file that every compile writes to, which is /Zi. The CMP0141 policy lets
+    # CMAKE_MSVC_DEBUG_INFORMATION_FORMAT choose /Z7. The linker still writes a .pdb file for each program, as before.
+    # Precompiled headers are off, since ccache takes their place.
     - name: Configure OpenMW
       run: >
         cmake
@@ -104,7 +118,11 @@ jobs:
         -D CMAKE_BUILD_TYPE=${{ inputs.build-type }}
         -D CMAKE_TOOLCHAIN_FILE='${{ github.workspace }}/deps/vcpkg-x64-windows-${{ inputs.msvc }}-${{ env.VCPKG_TAG }}/scripts/buildsystems/vcpkg.cmake'
         -D CMAKE_PREFIX_PATH='${{ github.workspace }}/deps/Qt/${{ env.QT_VER }}/msvc2019_64'
-        ${{ inputs.package && '-D CMAKE_CXX_FLAGS_RELEASE="/O2 /Ob2 /DNDEBUG /Zi"' || '' }}
+        -D CMAKE_C_COMPILER_LAUNCHER=ccache
+        -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
+        -D CMAKE_POLICY_DEFAULT_CMP0141=NEW
+        -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded
+        -D PRECOMPILE_HEADERS_WITH_MSVC=OFF
         ${{ inputs.package && '-D "CMAKE_EXE_LINKER_FLAGS_RELEASE=/DEBUG /OPT:REF /OPT:ICF /INCREMENTAL:NO"' || '' }}
         -D LuaJit_INCLUDE_DIR='${{ github.workspace }}/deps/vcpkg-x64-windows-${{ inputs.msvc }}-${{ env.VCPKG_TAG }}/installed/x64-windows/include/luajit'
         -D LuaJit_LIBRARY='${{ github.workspace }}/deps/vcpkg-x64-windows-${{ inputs.msvc }}-${{ env.VCPKG_TAG }}/installed/x64-windows/lib/lua51.lib'
@@ -119,7 +137,11 @@ jobs:
         -D CMAKE_EXPORT_COMPILE_COMMANDS=ON
         -D CUSTOM_CPACK_LABEL="${{ inputs.label }}"
 
+    # In depend mode, ccache reads which headers a file includes from the compiler's /showIncludes output, which Ninja
+    # asks for anyway, rather than running the preprocessor first. OpenMW's GitLab pipeline does the same.
     - name: Build OpenMW
+      env:
+        CCACHE_DEPEND: "true"
       run: cmake --build ${{ github.workspace }}/build
 
     - name: Copy missing DLLs
