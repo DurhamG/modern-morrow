@@ -28,6 +28,18 @@
 
 namespace MWGui
 {
+    namespace
+    {
+        // Whether there's a save to load. The load screen also shows the saves of an OpenMW install.
+        bool hasSaves()
+        {
+            MWBase::StateManager* stateManager = MWBase::Environment::get().getStateManager();
+            using SaveFolder = MWBase::StateManager::SaveFolder;
+            return stateManager->characterBegin(SaveFolder::Own) != stateManager->characterEnd(SaveFolder::Own)
+                || stateManager->characterBegin(SaveFolder::OpenMW) != stateManager->characterEnd(SaveFolder::OpenMW);
+        }
+    }
+
     void MenuVideo::run()
     {
         Misc::FrameRateLimiter frameRateLimiter
@@ -155,12 +167,8 @@ namespace MWGui
         if (visible)
         {
             if (isMainMenu)
-            {
-                if (mButtons["loadgame"]->getVisible())
-                    MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mButtons["loadgame"]);
-                else
-                    MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mButtons["newgame"]);
-            }
+                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(
+                    mButtons.find(mainMenuFirstButton(hasSaves()))->second);
             else
                 MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mButtons["return"]);
         }
@@ -355,13 +363,8 @@ namespace MWGui
             && MWBase::Environment::get().getWindowManager()->isSavingAllowed())
             buttons.emplace_back("savegame");
 
-        // The load screen also shows the saves of an OpenMW install, so it is offered when only those exist.
-        MWBase::StateManager* stateManager = MWBase::Environment::get().getStateManager();
-        using SaveFolder = MWBase::StateManager::SaveFolder;
         // In controller menus mode, Load always shows, since its Cloud tab can load a game on a device with no saves.
-        if (Settings::gui().mControllerMenus
-            || stateManager->characterBegin(SaveFolder::Own) != stateManager->characterEnd(SaveFolder::Own)
-            || stateManager->characterBegin(SaveFolder::OpenMW) != stateManager->characterEnd(SaveFolder::OpenMW))
+        if (Settings::gui().mControllerMenus || hasSaves())
             buttons.emplace_back("loadgame");
 
         if (pauseMenu)

@@ -1,6 +1,8 @@
 # What the Cloud tab says when the phrase holds nothing, and when the cloud can't be reached.
 launch --cloud --openmw-saves --set "GUI.controller menus=true" --set "Saves.cloud phrase=nothing here"
 wait-mode MainMenu
+# With no saves, the main menu highlights New, though Load shows for its Cloud tab.
+expect-focus MainMenu_newgame
 click-name MainMenu_loadgame
 wait-text "saves yet"
 pad button=leftshoulder

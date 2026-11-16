@@ -34,6 +34,8 @@ expect-file "saves/player/*.omwsave"
 remove-files "saves/*/*.omwsave"
 relaunch --cloud --openmw-saves --set "GUI.controller menus=true" --set "Saves.cloud phrase=ab"
 wait-mode MainMenu
+# With no saves, the main menu highlights New, though Load shows for its Cloud tab.
+expect-focus MainMenu_newgame
 # The load screen opens on this device's own saves, even with none, and L1 goes round to the Cloud tab.
 click-name MainMenu_loadgame
 wait-text "saves yet"

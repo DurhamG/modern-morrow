@@ -27,5 +27,11 @@ namespace MWGui
             EXPECT_FLOAT_EQ(mainMenuButtonScale(false, 1080), 1.f);
             EXPECT_FLOAT_EQ(mainMenuButtonScale(false, 2160), 1.f);
         }
+
+        TEST(MWGuiMainMenuButtonsTest, firstButtonShouldBeLoadOnlyWithSavesToLoad)
+        {
+            EXPECT_EQ(mainMenuFirstButton(true), "loadgame");
+            EXPECT_EQ(mainMenuFirstButton(false), "newgame");
+        }
     }
 }
