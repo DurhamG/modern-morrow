@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { cloudflareTest } from "@cloudflare/vitest-plugin";
 import { defineConfig } from "vitest/config";
 
 // The test saves, by name, in base64. Vitest hands them to the tests, which get them with test/saves.ts. The tests of
@@ -15,6 +16,11 @@ export default defineConfig({
       {
         // Tests of plain functions.
         test: { name: "unit", include: ["test/unit/**/*.test.ts"], environment: "node", provide: { saves } },
+      },
+      {
+        // Tests of the Worker's requests, in Cloudflare's runtime with a local copy of R2 and the rate limits.
+        plugins: [cloudflareTest({ wrangler: { configPath: "./wrangler.jsonc" } })],
+        test: { name: "worker", include: ["test/worker/**/*.test.ts"], provide: { saves } },
       },
     ],
   },
