@@ -3,11 +3,17 @@
 
 #include <filesystem>
 #include <list>
+#include <string>
+#include <string_view>
 
 #include "character.hpp"
 
 namespace MWState
 {
+    /// The name of the folder for a new character's saves: the character's name, with every character other than an
+    /// ASCII letter or digit changed to an underscore.
+    std::string characterFolderName(std::string_view name);
+
     class CharacterManager
     {
         std::filesystem::path mPath;
