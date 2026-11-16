@@ -65,6 +65,19 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    testOptions {
+        unitTests.all {
+            // android/build.sh runs Gradle with --quiet, so a failing test is logged at that level too, with why it
+            // failed, so CI's log names it.
+            it.testLogging {
+                quiet {
+                    events("failed")
+                    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+                }
+            }
+        }
+    }
+
     packaging {
         jniLibs {
             // Installs the libraries as files, which gl4es and OpenMW's library loading expect.
