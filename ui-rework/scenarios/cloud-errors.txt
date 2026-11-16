@@ -1,13 +1,17 @@
 # What the Cloud tab says when the phrase holds nothing, and when the cloud can't be reached.
 launch --cloud --openmw-saves --set "GUI.controller menus=true" --set "Saves.cloud phrase=nothing here"
 wait-mode MainMenu
-pad button=a
+click-name MainMenu_loadgame
+wait-text "saves yet"
+pad button=leftshoulder
 wait-text "This phrase holds no cloud save yet."
 shot no-save
 expect-no-text "Day 1"
 # No cloud: the address points at a port where nothing listens.
 relaunch --openmw-saves --set "GUI.controller menus=true" --set "Saves.cloud phrase=nothing here"
 wait-mode MainMenu
-pad button=a
+click-name MainMenu_loadgame
+wait-text "saves yet"
+pad button=leftshoulder
 wait-text "Couldn't reach the cloud." timeout=60
 shot no-connection

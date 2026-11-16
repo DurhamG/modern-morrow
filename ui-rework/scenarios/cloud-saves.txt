@@ -34,7 +34,11 @@ expect-file "saves/player/*.omwsave"
 remove-files "saves/*/*.omwsave"
 relaunch --cloud --openmw-saves --set "GUI.controller menus=true" --set "Saves.cloud phrase=ab"
 wait-mode MainMenu
-pad button=a
+# The load screen opens on this device's own saves, even with none, and L1 goes round to the Cloud tab.
+click-name MainMenu_loadgame
+wait-text "saves yet"
+expect-no-text "The phrase holds"
+pad button=leftshoulder
 wait-text "The phrase holds"
 shot load-tab
 expect-text "Day 1 - 16 Last Seed 9 a.m."

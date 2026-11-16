@@ -550,26 +550,13 @@ namespace MWGui
             mCancelButton->setStateSelected(false);
         }
 
-        // OpenMW may have changed its saves while this game ran. The screen always opens on this game's own saves.
+        // OpenMW may have changed its saves while this game ran. The screen always opens on this game's own saves, even
+        // when there are none, so the Cloud tab doesn't look like the usual way to keep a game.
         MWBase::Environment::get().getStateManager()->rescanSaveFolder(MWBase::StateManager::SaveFolder::OpenMW);
         mTab = Tab::Own;
         mFolder = MWBase::StateManager::SaveFolder::Own;
 
         fillCharacters();
-        // On a device with no saves to load, such as a new one, the screen opens on the Cloud tab.
-        if (mCloud != nullptr && !mSaving)
-        {
-            MWBase::StateManager* mgr = MWBase::Environment::get().getStateManager();
-            if (mgr->characterBegin(MWBase::StateManager::SaveFolder::Own)
-                    == mgr->characterEnd(MWBase::StateManager::SaveFolder::Own)
-                && mgr->characterBegin(MWBase::StateManager::SaveFolder::OpenMW)
-                    == mgr->characterEnd(MWBase::StateManager::SaveFolder::OpenMW))
-            {
-                mTab = Tab::Cloud;
-                mCurrentSlot = nullptr;
-                mCloud->open(mSaving, mNewSaveName);
-            }
-        }
         showPanel();
     }
 
