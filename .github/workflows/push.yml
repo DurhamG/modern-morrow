@@ -42,6 +42,7 @@ jobs:
         key: ubuntu-${{ env.BUILD_TYPE }}
         max-size: 1000M
 
+    # Modern Morrow doesn't ship OpenMW-CS, the editor, so the build leaves it out.
     - name: Configure
       run: >
         cmake .
@@ -50,7 +51,7 @@ jobs:
         -D USE_SYSTEM_TINYXML=ON
         -D BUILD_COMPONENTS_TESTS=ON
         -D BUILD_OPENMW_TESTS=ON
-        -D BUILD_OPENCS_TESTS=ON
+        -D BUILD_OPENCS=OFF
         -D CMAKE_INSTALL_PREFIX=install
 
     - name: Build
@@ -84,9 +85,6 @@ jobs:
         OPENMW_CLOUD_TEST_ADDRESS: http://127.0.0.1:8787
         OPENMW_CLOUD_TEST_SAVE: cloudsaves/test/saves/modern-morrow.omwsave
       run: ./openmw-tests
-
-    - name: Run OpenMW-CS tests
-      run: ./openmw-cs-tests
 
     # Upstream's Lua tests of the real engine, run against OpenMW's free example-suite game data as upstream's GitLab
     # CI runs them. They only run on Linux. On Windows, the example suite's player model crashes OpenSceneGraph while

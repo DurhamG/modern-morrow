@@ -37,6 +37,8 @@ CI/linux/before_install_for_vcpkg.sh
 CI/before_script.linux.sh
 
 cd build
+# Modern Morrow doesn't ship OpenMW-CS, the editor, so the build leaves it out.
+cmake -D BUILD_OPENCS=OFF .
 cmake --build . -- -j "$(nproc)"
 cpack -G TXZ -D CPACK_STRIP_FILES=ON -D CPACK_THREADS=0 -D CPACK_INCLUDE_TOPLEVEL_DIRECTORY=0
 package=$(ls ModernMorrow*-Linux-x86_64.tar.xz)

@@ -94,6 +94,7 @@ jobs:
 
     - uses: seanmiddleditch/gha-setup-ninja@master
 
+    # Modern Morrow doesn't ship OpenMW-CS, the editor, so the build leaves it out.
     - name: Configure OpenMW
       run: >
         cmake
@@ -110,7 +111,7 @@ jobs:
         -D BUILD_BENCHMARKS=${{ ! inputs.package }}
         -D BUILD_COMPONENTS_TESTS=${{ ! inputs.package }}
         -D BUILD_OPENMW_TESTS=${{ ! inputs.package }}
-        -D BUILD_OPENCS_TESTS=${{ ! inputs.package }}
+        -D BUILD_OPENCS=OFF
         -D OPENMW_USE_SYSTEM_SQLITE3=OFF
         -D OPENMW_USE_SYSTEM_YAML_CPP=OFF
         -D OPENMW_LTO_BUILD=ON
@@ -243,10 +244,6 @@ jobs:
     - name: Run OpenMW tests
       if: ${{ ! inputs.package }}
       run: build/openmw-tests.exe
-
-    - name: Run OpenMW-CS tests
-      if: ${{ ! inputs.package }}
-      run: build/openmw-cs-tests.exe
 
     - name: Run detournavigator navmeshtilescache benchmark
       if: ${{ ! inputs.package }}

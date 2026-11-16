@@ -121,7 +121,7 @@ These are in the tables above, and are listed here so they aren't overlooked.
 ### Rules for every commit
 
 - Each commit builds and passes all tests on its own. Build with `cmake --build MSVC2022_64 --config RelWithDebInfo --target openmw-tests` or `--target components-tests`. Add `-- //p:CL_MPCount=8` if memory is short. Run with `MSVC2022_64/RelWithDebInfo/openmw-tests.exe --gtest_filter='Suite.*'`.
-- GitHub CI already runs the whole of `components-tests`, `openmw-tests` and `openmw-cs-tests` on Linux and Windows for every push (`.github/workflows/push.yml` and `windows.yml`). A new Google Test needs no workflow change. Only commits marked "CI change" touch a workflow.
+- GitHub CI already runs the whole of `components-tests` and `openmw-tests` on Linux and Windows for every push (`.github/workflows/push.yml` and `windows.yml`). A new Google Test needs no workflow change. Only commits marked "CI change" touch a workflow.
 - A commit that moves logic changes no behaviour and adds no tests. The tests come in the next commit. This keeps the move easy to review.
 - New C++ files have lowercase names with no underscores. A new `.cpp`/`.hpp` pair in `apps/openmw/<dir>/` is added by its base name to that directory's `add_openmw_dir(...)` list in `apps/openmw/CMakeLists.txt`. One in `components/<dir>/` goes in the `add_component_dir(...)` list in `components/CMakeLists.txt`. A new test file is added to the `file(GLOB UNITTEST_SRC_FILES ...)` list in `apps/openmw_tests/CMakeLists.txt` or `apps/components_tests/CMakeLists.txt`.
 - Tests include the code under test as `"apps/openmw/mwstate/questlists.hpp"`, as the existing tests do.
