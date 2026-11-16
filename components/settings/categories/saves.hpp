@@ -25,6 +25,8 @@ namespace Settings
         SettingValue<int> mAutosaveInterval{ mIndex, "Saves", "autosave interval", makeMaxSanitizerInt(0) };
         SettingValue<bool> mLoadNewestSave{ mIndex, "Saves", "load newest save" };
         SettingValue<std::string> mOpenMWSavesFolder{ mIndex, "Saves", "openmw saves folder" };
+        SettingValue<std::string> mCloudAddress{ mIndex, "Saves", "cloud address" };
+        SettingValue<std::string> mCloudPhrase{ mIndex, "Saves", "cloud phrase" };
     };
 }
 

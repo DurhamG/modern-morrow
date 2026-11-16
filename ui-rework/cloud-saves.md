@@ -83,7 +83,7 @@ The download is written into this game's own saves folder, in the folder for the
 - **The Windows implementation uses WinHTTP,** which ships with Windows, so the build needs no new library.
 - **Requests run on a thread of their own,** one at a time. The menus look for the result each frame, so the game keeps drawing while a request runs. Leaving the screen doesn't cancel an upload.
 - **Every request sends a `User-Agent`,** `ModernMorrow/<version>`, because of the browser check on `workers.dev`.
-- **Two settings,** in a new `[Cloud saves]` section: `address`, which defaults to `https://saves.durhamg.workers.dev`, and `phrase`, which starts empty. The harness points `address` at the Worker running locally. The phrase sits in the player's `settings.cfg` as plain text. That's acceptable, because the phrase isn't meant to keep anything safe, but a player who shares their `settings.cfg` in a bug report shares their phrase too.
+- **Two settings,** in the `[Saves]` section: `cloud address`, which defaults to `https://saves.durhamg.workers.dev`, and `cloud phrase`, which starts empty. The harness points `cloud address` at the Worker running locally. The phrase sits in the player's `settings.cfg` as plain text. That's acceptable, because the phrase isn't meant to keep anything safe, but a player who shares their `settings.cfg` in a bug report shares their phrase too.
 
 ### Rules, as plain functions with Google Tests
 
@@ -96,7 +96,7 @@ The download is written into this game's own saves folder, in the folder for the
 ### Tests in the game
 
 - **A stand-in for `CloudSaves`** in `openmw-tests` tests the thread that runs requests, and what the screens do with each result.
-- **Harness scenarios** run against the Worker on this machine. `omw.py` starts it with `npm run dev`, which serves it at `http://localhost:8787` with a local bucket, and points the profile's `address` setting at it. So the scenarios never touch Cloudflare. Every run of `prerelease.py` also checks that the Worker accepts a save the current build wrote.
+- **Harness scenarios** run against the Worker on this machine. `omw.py` starts it with `npm run dev`, which serves it at `http://localhost:8787` with a local bucket, and points the profile's `cloud address` setting at it. So the scenarios never touch Cloudflare. Every run of `prerelease.py` also checks that the Worker accepts a save the current build wrote.
   - `cloud-save`: start a game, type a phrase on the on-screen keyboard, save to the cloud, and check the success message and the tab's details.
   - `cloud-load`: in a second profile with no saves, open Load from the main menu, type the same phrase, load the cloud save, and check the character and cell. Then save, and check that the save went to that character's folder.
   - `cloud-errors`: a phrase that holds nothing, and the Worker stopped, so the request can't connect.
@@ -106,7 +106,7 @@ The download is written into this game's own saves folder, in the folder for the
 
 1. **Move the character folder name rule** out of `createCharacter` into a function, with no change in behaviour.
 2. **Test it.**
-3. **Add the `[Cloud saves]` settings,** with their defaults in `settings-default.cfg` and their description in the settings documentation.
+3. **Add the cloud settings to `[Saves]`,** with their defaults in `settings-default.cfg` and their description in the settings documentation.
 4. **Add the `CloudSaves` interface, its WinHTTP implementation, and its rules.** That covers encoding the phrase, reading the details and the error messages, with their tests.
 5. **Run the requests on their own thread,** with tests against the stand-in.
 6. **Add the Cloud tab to the save screen,** with the phrase dialog and the upload. Its texts go in the localisation files.

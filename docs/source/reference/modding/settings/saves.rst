@@ -74,3 +74,22 @@ Saves Settings
    so a game can be loaded from OpenMW or saved into its folder.
    Empty looks for OpenMW in its usual folders, and on Linux in the folder of its Flatpak too.
    When several are installed, the one saved to most recently is shown.
+
+.. omw-setting::
+   :title: cloud address
+   :type: string
+   :default: https://saves.durhamg.workers.dev
+
+   The address of the service that keeps cloud saves.
+   A cloud save moves a game from one device to another:
+   the save and load menus' Cloud tab uploads a save on one device and loads it on another.
+   Tests point it at a copy of the service running on the same computer.
+
+.. omw-setting::
+   :title: cloud phrase
+   :type: string
+   :default: ""
+
+   The phrase that names the player's cloud save.
+   The game asks for it the first time the Cloud tab is used, and keeps the last one typed.
+   It is kept as plain text, and anyone with the phrase can load or replace the save.
