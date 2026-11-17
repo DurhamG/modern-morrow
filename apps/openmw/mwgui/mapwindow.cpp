@@ -36,7 +36,6 @@ namespace
 {
 
     constexpr int cellSize = Constants::CellSizeInUnits;
-    constexpr float speed = 1.08f; // the zoom speed, it should be greater than 1
 
     enum LocalMapWidgetDepth
     {
@@ -58,29 +57,6 @@ namespace
 
 namespace MWGui
 {
-    /// @brief A widget that changes its color when hovered.
-    class MarkerWidget final : public MyGUI::Widget
-    {
-        MYGUI_RTTI_DERIVED(MarkerWidget)
-
-    public:
-        void setNormalColour(const MyGUI::Colour& colour)
-        {
-            mNormalColour = colour;
-            setColour(colour);
-        }
-
-        void setHoverColour(const MyGUI::Colour& colour) { mHoverColour = colour; }
-
-    private:
-        MyGUI::Colour mNormalColour;
-        MyGUI::Colour mHoverColour;
-
-        void onMouseLostFocus(MyGUI::Widget* /*newWidget*/) override { setColour(mNormalColour); }
-
-        void onMouseSetFocus(MyGUI::Widget* /*oldWidget*/) override { setColour(mHoverColour); }
-    };
-
     MyGUI::IntRect createRect(const MyGUI::IntPoint& center, int radius)
     {
         return { center.left - radius, center.top - radius, center.left + radius, center.top + radius };
@@ -289,22 +265,90 @@ namespace MWGui
         return MyGUI::IntCoord(position.left - halfMarkerSize, position.top - halfMarkerSize, markerSize, markerSize);
     }
 
-    MarkerWidget* LocalMapBase::createDoorMarker(const std::string& name, float x, float y) const
+    MarkerWidget* LocalMapBase::createDoorMarkerWidget(
+        MyGUI::Widget* parent, const MyGUI::IntCoord& coord, MarkerUserData data)
     {
-        MarkerUserData data(mLocalMapRender);
-        data.caption = name;
-        MarkerWidget* markerWidget = mLocalMap->createWidget<MarkerWidget>(
-            "MarkerButton", getMarkerCoordinates(x, y, data, 8), MyGUI::Align::Default);
+        MarkerWidget* markerWidget = parent->createWidget<MarkerWidget>("MarkerButton", coord, MyGUI::Align::Default);
         markerWidget->setNormalColour(
             MyGUI::Colour::parse(MyGUI::LanguageManager::getInstance().replaceTags("#{fontcolour=normal}")));
         markerWidget->setHoverColour(
             MyGUI::Colour::parse(MyGUI::LanguageManager::getInstance().replaceTags("#{fontcolour=normal_over}")));
-        markerWidget->setDepth(Local_MarkerLayer);
         markerWidget->setNeedMouseFocus(true);
         // Used by tooltips to not show the tooltip if marker is hidden by fog of war
         markerWidget->setUserString("ToolTipType", "MapMarker");
 
-        markerWidget->setUserData(data);
+        markerWidget->setUserData(std::move(data));
+        return markerWidget;
+    }
+
+    std::vector<std::string> LocalMapBase::getNotes(const CustomMarkerCollection& markers, const ESM::RefId& cell)
+    {
+        std::vector<std::string> notes;
+        CustomMarkerCollection::RangeType range = markers.getMarkers(cell);
+        for (auto iter = range.first; iter != range.second; ++iter)
+            notes.push_back(iter->second.mNote);
+        return notes;
+    }
+
+    MarkerWidget* LocalMapBase::createCustomMarkerWidget(
+        MyGUI::Widget* parent, const MyGUI::IntCoord& coord, const ESM::CustomMarker& marker)
+    {
+        MarkerWidget* markerWidget
+            = parent->createWidget<MarkerWidget>("CustomMarkerButton", coord, MyGUI::Align::Default);
+        markerWidget->setUserString("ToolTipType", "Layout");
+        markerWidget->setUserString("ToolTipLayout", "TextToolTipOneLine");
+        markerWidget->setUserString("Caption_TextOneLine", MyGUI::TextIterator::toTagsString(marker.mNote));
+        markerWidget->setNormalColour(MyGUI::Colour(0.6f, 0.6f, 0.6f));
+        markerWidget->setHoverColour(MyGUI::Colour(1.0f, 1.0f, 1.0f));
+        markerWidget->setUserData(marker);
+        markerWidget->setNeedMouseFocus(true);
+        return markerWidget;
+    }
+
+    std::vector<LocalMapBase::MagicMarker> LocalMapBase::getMagicMarkers(ESM::RefId worldspace)
+    {
+        std::vector<MagicMarker> result;
+        MWBase::World* world = MWBase::Environment::get().getWorld();
+        constexpr std::pair<MWBase::World::DetectionType, std::string_view> detections[] = {
+            { MWBase::World::Detect_Creature, "textures\\detect_animal_icon.dds" },
+            { MWBase::World::Detect_Key, "textures\\detect_key_icon.dds" },
+            { MWBase::World::Detect_Enchantment, "textures\\detect_enchantment_icon.dds" },
+        };
+        for (const auto& [type, texture] : detections)
+        {
+            std::vector<MWWorld::Ptr> markers;
+            world->listDetectedReferences(world->getPlayerPtr(), markers, type);
+            for (const MWWorld::Ptr& ptr : markers)
+                result.push_back({ ptr.getRefData().getPosition().asVec3(), texture, true });
+        }
+
+        // Add marker for the spot marked with Mark magic effect
+        MWWorld::CellStore* markedCell = nullptr;
+        ESM::Position markedPosition;
+        world->getPlayer().getMarkedPosition(markedCell, markedPosition);
+        if (markedCell && markedCell->getCell()->getWorldSpace() == worldspace)
+            result.push_back({ markedPosition.asVec3(), "textures\\menu_map_smark.dds", false });
+        return result;
+    }
+
+    MyGUI::ImageBox* LocalMapBase::createMagicMarkerWidget(
+        MyGUI::Widget* parent, const MyGUI::IntCoord& coord, const MagicMarker& marker)
+    {
+        MyGUI::ImageBox* markerWidget = parent->createWidget<MyGUI::ImageBox>("ImageBox", coord, MyGUI::Align::Default);
+        markerWidget->setImageTexture(marker.mTexture);
+        if (marker.mCropped)
+            markerWidget->setImageCoord(MyGUI::IntCoord(0, 0, sMarkerSize, sMarkerSize));
+        markerWidget->setNeedMouseFocus(false);
+        return markerWidget;
+    }
+
+    MarkerWidget* LocalMapBase::createDoorMarker(const std::string& name, float x, float y) const
+    {
+        MarkerUserData data(mLocalMapRender);
+        data.caption = name;
+        const MyGUI::IntCoord coord = getMarkerCoordinates(x, y, data, sMarkerSize);
+        MarkerWidget* markerWidget = createDoorMarkerWidget(mLocalMap, coord, std::move(data));
+        markerWidget->setDepth(Local_MarkerLayer);
         return markerWidget;
     }
 
@@ -341,16 +385,9 @@ namespace MWGui
             {
                 const ESM::CustomMarker& marker = it->second;
                 MarkerUserData markerPos(mLocalMapRender);
-                MarkerWidget* markerWidget = mLocalMap->createWidget<MarkerWidget>("CustomMarkerButton",
-                    getMarkerCoordinates(marker.mWorldX, marker.mWorldY, markerPos, 16), MyGUI::Align::Default);
+                MarkerWidget* markerWidget = createCustomMarkerWidget(mLocalMap,
+                    getMarkerCoordinates(marker.mWorldX, marker.mWorldY, markerPos, sCustomMarkerSize), marker);
                 markerWidget->setDepth(Local_MarkerAboveFogLayer);
-                markerWidget->setUserString("ToolTipType", "Layout");
-                markerWidget->setUserString("ToolTipLayout", "TextToolTipOneLine");
-                markerWidget->setUserString("Caption_TextOneLine", MyGUI::TextIterator::toTagsString(marker.mNote));
-                markerWidget->setNormalColour(MyGUI::Colour(0.6f, 0.6f, 0.6f));
-                markerWidget->setHoverColour(MyGUI::Colour(1.0f, 1.0f, 1.0f));
-                markerWidget->setUserData(marker);
-                markerWidget->setNeedMouseFocus(true);
                 customMarkerCreated(markerWidget);
                 mCustomMarkerWidgets.push_back(markerWidget);
             }
@@ -487,7 +524,7 @@ namespace MWGui
         mNeedDoorMarkersUpdate = true;
 
         for (MyGUI::Widget* widget : currentDoorMarkersWidgets())
-            updateMarkerCoordinates(widget, 8);
+            updateMarkerCoordinates(widget, sMarkerSize);
 
         updateMagicMarkers();
         updateCustomMarkers();
@@ -544,43 +581,6 @@ namespace MWGui
         mLastDirectionY = y;
     }
 
-    void LocalMapBase::addDetectionMarkers(int type)
-    {
-        std::vector<MWWorld::Ptr> markers;
-        MWBase::World* world = MWBase::Environment::get().getWorld();
-        world->listDetectedReferences(world->getPlayerPtr(), markers, MWBase::World::DetectionType(type));
-        if (markers.empty())
-            return;
-
-        std::string_view markerTexture;
-        if (type == MWBase::World::Detect_Creature)
-        {
-            markerTexture = "textures\\detect_animal_icon.dds";
-        }
-        if (type == MWBase::World::Detect_Key)
-        {
-            markerTexture = "textures\\detect_key_icon.dds";
-        }
-        if (type == MWBase::World::Detect_Enchantment)
-        {
-            markerTexture = "textures\\detect_enchantment_icon.dds";
-        }
-
-        for (const MWWorld::Ptr& ptr : markers)
-        {
-            const ESM::Position& worldPos = ptr.getRefData().getPosition();
-            MarkerUserData markerPos(mLocalMapRender);
-            MyGUI::ImageBox* markerWidget = mLocalMap->createWidget<MyGUI::ImageBox>("ImageBox",
-                getMarkerCoordinates(worldPos.pos[0], worldPos.pos[1], markerPos, 8), MyGUI::Align::Default);
-            markerWidget->setDepth(Local_MarkerAboveFogLayer);
-            markerWidget->setImageTexture(markerTexture);
-            markerWidget->setImageCoord(MyGUI::IntCoord(0, 0, 8, 8));
-            markerWidget->setNeedMouseFocus(false);
-            markerWidget->setUserData(markerPos);
-            mMagicMarkerWidgets.push_back(markerWidget);
-        }
-    }
-
     void LocalMapBase::onFrame(float dt)
     {
         if (mNeedDoorMarkersUpdate)
@@ -591,7 +591,7 @@ namespace MWGui
 
         mMarkerUpdateTimer += dt;
 
-        if (mMarkerUpdateTimer >= 0.25)
+        if (mMarkerUpdateTimer >= sMarkerUpdateInterval)
         {
             mMarkerUpdateTimer = 0;
             updateMagicMarkers();
@@ -678,10 +678,7 @@ namespace MWGui
         // Create a widget for each marker
         for (MWBase::World::DoorMarker& marker : doors)
         {
-            std::vector<std::string> destNotes;
-            CustomMarkerCollection::RangeType markers = mCustomMarkers.getMarkers(marker.dest);
-            for (auto iter = markers.first; iter != markers.second; ++iter)
-                destNotes.push_back(iter->second.mNote);
+            std::vector<std::string> destNotes = getNotes(mCustomMarkers, marker.dest);
 
             MarkerWidget* markerWidget = nullptr;
             MarkerUserData* data;
@@ -700,7 +697,7 @@ namespace MWGui
                 data = markerWidget->getUserData<MarkerUserData>();
                 data->notes = std::move(destNotes);
                 data->caption = marker.name;
-                markerWidget->setCoord(getMarkerCoordinates(marker.x, marker.y, *data, 8));
+                markerWidget->setCoord(getMarkerCoordinates(marker.x, marker.y, *data, sMarkerSize));
                 markerWidget->setVisible(true);
             }
 
@@ -710,7 +707,7 @@ namespace MWGui
         }
 
         for (MyGUI::Widget* widget : currentDoorMarkersWidgets())
-            updateMarkerCoordinates(widget, 8);
+            updateMarkerCoordinates(widget, sMarkerSize);
     }
 
     void LocalMapBase::updateMagicMarkers()
@@ -720,23 +717,13 @@ namespace MWGui
             MyGUI::Gui::getInstance().destroyWidget(widget);
         mMagicMarkerWidgets.clear();
 
-        addDetectionMarkers(MWBase::World::Detect_Creature);
-        addDetectionMarkers(MWBase::World::Detect_Key);
-        addDetectionMarkers(MWBase::World::Detect_Enchantment);
-
-        // Add marker for the spot marked with Mark magic effect
-        MWWorld::CellStore* markedCell = nullptr;
-        ESM::Position markedPosition;
-        MWBase::Environment::get().getWorld()->getPlayer().getMarkedPosition(markedCell, markedPosition);
-        if (markedCell && markedCell->getCell()->getWorldSpace() == mActiveCell->getWorldSpace())
+        for (const MagicMarker& marker : getMagicMarkers(mActiveCell->getWorldSpace()))
         {
             MarkerUserData markerPos(mLocalMapRender);
-            MyGUI::ImageBox* markerWidget = mLocalMap->createWidget<MyGUI::ImageBox>("ImageBox",
-                getMarkerCoordinates(markedPosition.pos[0], markedPosition.pos[1], markerPos, 8),
-                MyGUI::Align::Default);
+            const MyGUI::IntCoord coord
+                = getMarkerCoordinates(marker.mPosition.x(), marker.mPosition.y(), markerPos, sMarkerSize);
+            MyGUI::ImageBox* markerWidget = createMagicMarkerWidget(mLocalMap, coord, marker);
             markerWidget->setDepth(Local_MarkerAboveFogLayer);
-            markerWidget->setImageTexture("textures\\menu_map_smark.dds");
-            markerWidget->setNeedMouseFocus(false);
             markerWidget->setUserData(markerPos);
             mMagicMarkerWidgets.push_back(markerWidget);
         }
@@ -762,16 +749,16 @@ namespace MWGui
 
         MarkerUserData markerPos(mLocalMapRender);
         for (MyGUI::Widget* widget : currentDoorMarkersWidgets())
-            updateMarkerCoordinates(widget, 8);
+            updateMarkerCoordinates(widget, sMarkerSize);
 
         for (MyGUI::Widget* widget : mCustomMarkerWidgets)
         {
             const auto& marker = *widget->getUserData<ESM::CustomMarker>();
-            widget->setCoord(getMarkerCoordinates(marker.mWorldX, marker.mWorldY, markerPos, 16));
+            widget->setCoord(getMarkerCoordinates(marker.mWorldX, marker.mWorldY, markerPos, sCustomMarkerSize));
         }
 
         for (MyGUI::Widget* widget : mMagicMarkerWidgets)
-            updateMarkerCoordinates(widget, 8);
+            updateMarkerCoordinates(widget, sMarkerSize);
     }
 
     // ------------------------------------------------------------------------------------------
@@ -934,7 +921,7 @@ namespace MWGui
         const int localWidgetSize = Settings::map().mLocalMapWidgetSize;
         const bool zoomOut = rel < 0;
         const bool zoomIn = !zoomOut;
-        const float speedDiff = zoomOut ? 1.f / speed : speed;
+        const float speedDiff = zoomOut ? 1.f / sZoomStep : sZoomStep;
 
         const float currentMinLocalMapZoom
             = std::max({ (float(Settings::map().mGlobalMapCellSize) * 4.f) / float(localWidgetSize),
@@ -950,7 +937,7 @@ namespace MWGui
 
             mGlobalMapZoom *= speedDiff;
 
-            if (zoomIn && mGlobalMapZoom > 4.f)
+            if (zoomIn && mGlobalMapZoom > sMaxZoom)
             {
                 mGlobalMapZoom = currentGlobalZoom;
                 return;
@@ -967,7 +954,7 @@ namespace MWGui
             auto const currentLocalZoom = mLocalMapZoom;
             mLocalMapZoom *= speedDiff;
 
-            if (zoomIn && mLocalMapZoom > 4.0f)
+            if (zoomIn && mLocalMapZoom > sMaxZoom)
             {
                 mLocalMapZoom = currentLocalZoom;
                 return;

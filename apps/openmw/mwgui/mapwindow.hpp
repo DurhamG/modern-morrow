@@ -4,10 +4,15 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include <osg/Vec2f>
+#include <osg/Vec3f>
 
 #include <MyGUI_ITexture.h>
+#include <MyGUI_Widget.h>
 
 #include "windowpinnablebase.hpp"
 
@@ -44,7 +49,28 @@ namespace SceneUtil
 
 namespace MWGui
 {
-    class MarkerWidget;
+    /// @brief A widget that changes its color when hovered.
+    class MarkerWidget final : public MyGUI::Widget
+    {
+        MYGUI_RTTI_DERIVED(MarkerWidget)
+
+    public:
+        void setNormalColour(const MyGUI::Colour& colour)
+        {
+            mNormalColour = colour;
+            setColour(colour);
+        }
+
+        void setHoverColour(const MyGUI::Colour& colour) { mHoverColour = colour; }
+
+    private:
+        MyGUI::Colour mNormalColour;
+        MyGUI::Colour mHoverColour;
+
+        void onMouseLostFocus(MyGUI::Widget* /*newWidget*/) override { setColour(mNormalColour); }
+
+        void onMouseSetFocus(MyGUI::Widget* /*oldWidget*/) override { setColour(mHoverColour); }
+    };
 
     class CustomMarkerCollection
     {
@@ -110,6 +136,38 @@ namespace MWGui
             std::vector<std::string> notes;
             std::string caption;
         };
+
+        // The sizes of the markers, in widget units: doors and what magic shows, and custom markers.
+        static constexpr int sMarkerSize = 8;
+        static constexpr int sCustomMarkerSize = 16;
+        // How much each turn of the mouse wheel zooms the maps, and how far they zoom in at most.
+        static constexpr float sZoomStep = 1.08f;
+        static constexpr float sMaxZoom = 4.f;
+        // How often the markers that move, such as what magic shows, are updated, in seconds.
+        static constexpr float sMarkerUpdateInterval = 0.25f;
+
+        /// Makes a door marker: a small button whose tooltip shows the door's name and the notes left on where it
+        /// leads.
+        static MarkerWidget* createDoorMarkerWidget(
+            MyGUI::Widget* parent, const MyGUI::IntCoord& coord, MarkerUserData data);
+        /// The notes of the custom markers in a cell, such as the cell a door leads to.
+        static std::vector<std::string> getNotes(const CustomMarkerCollection& markers, const ESM::RefId& cell);
+        /// Makes a custom marker, with its note as its tooltip. The widget holds the marker.
+        static MarkerWidget* createCustomMarkerWidget(
+            MyGUI::Widget* parent, const MyGUI::IntCoord& coord, const ESM::CustomMarker& marker);
+
+        /// Something the player's magic shows on the map: what a detection spell finds, or the place Mark marked.
+        struct MagicMarker
+        {
+            osg::Vec3f mPosition;
+            std::string_view mTexture;
+            // Detection icons show the top left corner of their textures, the size of a marker.
+            bool mCropped;
+        };
+        /// What the player's magic shows. The place Mark marked shows only in its own worldspace.
+        static std::vector<MagicMarker> getMagicMarkers(ESM::RefId worldspace);
+        static MyGUI::ImageBox* createMagicMarkerWidget(
+            MyGUI::Widget* parent, const MyGUI::IntCoord& coord, const MagicMarker& marker);
 
     protected:
         void updateLocalMap();
@@ -178,7 +236,6 @@ namespace MWGui
         void updateRequiredMaps();
 
         void updateMagicMarkers();
-        void addDetectionMarkers(int type);
 
         void redraw();
         float getWidgetSize() const;
