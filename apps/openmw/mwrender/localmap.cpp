@@ -821,44 +821,35 @@ namespace MWRender
         setDepthBufferInternalFormat(GL_DEPTH24_STENCIL8);
     }
 
-    void LocalMapRenderToTexture::setDefaults(osg::Camera* camera)
+    void setupMapCamera(osg::Camera& camera, const osg::Vec2f& screenRes)
     {
         // Disable small feature culling, it's not going to be reliable for this camera
         osg::Camera::CullingMode cullingMode
             = (osg::Camera::DEFAULT_CULLING | osg::Camera::FAR_PLANE_CULLING) & ~(osg::Camera::SMALL_FEATURE_CULLING);
-        camera->setCullingMode(cullingMode);
+        camera.setCullingMode(cullingMode);
 
-        SceneUtil::setCameraClearDepth(camera);
-        camera->setComputeNearFarMode(osg::Camera::DO_NOT_COMPUTE_NEAR_FAR);
-        camera->setReferenceFrame(osg::Camera::ABSOLUTE_RF_INHERIT_VIEWPOINT);
-        camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT, osg::Camera::PIXEL_BUFFER_RTT);
-        camera->setClearColor(osg::Vec4(0.f, 0.f, 0.f, 1.f));
-        camera->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        camera->setRenderOrder(osg::Camera::PRE_RENDER);
+        SceneUtil::setCameraClearDepth(&camera);
+        camera.setComputeNearFarMode(osg::Camera::DO_NOT_COMPUTE_NEAR_FAR);
+        camera.setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT, osg::Camera::PIXEL_BUFFER_RTT);
+        camera.setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        camera.setRenderOrder(osg::Camera::PRE_RENDER);
 
-        camera->setCullMask(Mask_Scene | Mask_SimpleWater | Mask_Terrain | Mask_Object | Mask_Static);
-        camera->setCullMaskLeft(Mask_Scene | Mask_SimpleWater | Mask_Terrain | Mask_Object | Mask_Static);
-        camera->setCullMaskRight(Mask_Scene | Mask_SimpleWater | Mask_Terrain | Mask_Object | Mask_Static);
-        camera->setNodeMask(Mask_RenderToTexture);
-        camera->setProjectionMatrix(mProjectionMatrix);
-        camera->setViewMatrix(mViewMatrix);
+        camera.setCullMask(Mask_Scene | Mask_SimpleWater | Mask_Terrain | Mask_Object | Mask_Static);
+        camera.setCullMaskLeft(Mask_Scene | Mask_SimpleWater | Mask_Terrain | Mask_Object | Mask_Static);
+        camera.setCullMaskRight(Mask_Scene | Mask_SimpleWater | Mask_Terrain | Mask_Object | Mask_Static);
+        camera.setNodeMask(Mask_RenderToTexture);
 
-        auto* stateset = camera->getOrCreateStateSet();
+        auto* stateset = camera.getOrCreateStateSet();
 
         stateset->setAttribute(new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::FILL),
             osg::StateAttribute::OVERRIDE);
-        stateset->addUniform(new osg::Uniform("projectionMatrix", static_cast<osg::Matrixf>(mProjectionMatrix)),
-            osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-
-        if (Stereo::getMultiview())
-            Stereo::setMultiviewMatrices(stateset, { mProjectionMatrix, mProjectionMatrix });
 
         SceneUtil::disableFog(*stateset, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
         // turn of sky blending
         stateset->addUniform(new osg::Uniform("far", 10000000.0f));
         stateset->addUniform(new osg::Uniform("skyBlendingStart", 8000000.0f));
-        stateset->addUniform(new osg::Uniform("screenRes", osg::Vec2f{ 1, 1 }));
+        stateset->addUniform(new osg::Uniform("screenRes", screenRes));
 
         SceneUtil::Light light;
         light.setPosition(osg::Vec4(-0.3f, -0.3f, 0.7f, 0.f));
@@ -873,6 +864,22 @@ namespace MWRender
 
         // override sun for local map
         SceneUtil::configureStateSetSunOverride(&light, stateset);
+    }
+
+    void LocalMapRenderToTexture::setDefaults(osg::Camera* camera)
+    {
+        setupMapCamera(*camera, osg::Vec2f(1, 1));
+        camera->setReferenceFrame(osg::Camera::ABSOLUTE_RF_INHERIT_VIEWPOINT);
+        camera->setClearColor(osg::Vec4(0.f, 0.f, 0.f, 1.f));
+        camera->setProjectionMatrix(mProjectionMatrix);
+        camera->setViewMatrix(mViewMatrix);
+
+        auto* stateset = camera->getOrCreateStateSet();
+        stateset->addUniform(new osg::Uniform("projectionMatrix", static_cast<osg::Matrixf>(mProjectionMatrix)),
+            osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+
+        if (Stereo::getMultiview())
+            Stereo::setMultiviewMatrices(stateset, { mProjectionMatrix, mProjectionMatrix });
 
         camera->addChild(mSceneRoot);
     }

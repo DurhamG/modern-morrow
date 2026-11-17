@@ -10,6 +10,7 @@
 #include <MyGUI_Types.h>
 #include <osg/BoundingBox>
 #include <osg/Quat>
+#include <osg/Vec2f>
 #include <osg/Vec3f>
 #include <osg/ref_ptr>
 
@@ -42,6 +43,11 @@ namespace osg
 namespace MWRender
 {
     class LocalMapRenderToTexture;
+
+    /// Sets up a camera that draws a map into a texture: what it draws, and how. It draws the scene without fog,
+    /// shadows or the sky, lit by a fixed light, so the time of day and the weather don't change the map. The camera
+    /// still needs its reference frame, clear colour and matrices.
+    void setupMapCamera(osg::Camera& camera, const osg::Vec2f& screenRes);
 
     ///
     /// \brief Local map rendering
