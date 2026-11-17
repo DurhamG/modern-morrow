@@ -112,6 +112,7 @@ namespace MWRender
     class InventoryPreview;
     class RaceSelectionPreview;
     class LocalMap;
+    class Map3D;
 
     class RenderingManager : public MWRender::RenderingInterface
     {
@@ -131,6 +132,7 @@ namespace MWRender
         std::unique_ptr<InventoryPreview> createInventoryPreview(const MWWorld::Ptr& character);
         std::unique_ptr<RaceSelectionPreview> createRaceSelectionPreview();
         std::unique_ptr<LocalMap> createLocalMap();
+        std::unique_ptr<Map3D> createMap3D(int width, int height);
 
         const std::shared_ptr<SceneUtil::WorkQueue>& getWorkQueue() const;
         Terrain::World* getTerrain();
