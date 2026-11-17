@@ -38,6 +38,8 @@ file(GLOB UNITTEST_SRC_FILES
     mwlua/testobjectcache.cpp
     mwlua/testmwscriptbindings.cpp
 
+    mwrender/testlinemeetsland.cpp
+
     mwscript/testscripts.cpp
 
     mwstate/testautosave.cpp
