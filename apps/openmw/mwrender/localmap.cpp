@@ -1,5 +1,7 @@
 #include "localmap.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 
 #include <osg/ComputeBoundsVisitor>
@@ -29,6 +31,7 @@
 #include "../mwbase/windowmanager.hpp"
 
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/worldmodel.hpp"
 
 #include "util.hpp"
 #include "vismask.hpp"
@@ -73,6 +76,67 @@ namespace MWRender
     public:
         void operator()(LocalMapRenderToTexture* node, osg::NodeVisitor* nv);
     };
+
+    namespace
+    {
+        // Reads a cell's saved fog of war. Its first row is the cell's north edge. Returns nullptr when it can't.
+        osg::ref_ptr<osg::Image> readFogImage(const ESM::FogTexture& esm)
+        {
+            const std::vector<char>& data = esm.mImageData;
+
+            // Saves at or below ESM::MaxOldFogOfWarFormatVersion hold TGA here, newer ones PNG.
+            // Decoding the legacy format directly is why components/esm3 no longer has to
+            // transcode it to PNG on load, which cost a decode and a re-encode per tile.
+            const std::string extension = esm.mLegacyTgaImageData ? "tga" : "png";
+
+            osgDB::ReaderWriter* readerwriter = osgDB::Registry::instance()->getReaderWriterForExtension(extension);
+            if (!readerwriter)
+            {
+                Log(Debug::Error) << "Error: Unable to load fog, can't find a " << extension << " ReaderWriter";
+                return nullptr;
+            }
+
+            Files::IMemStream in(data.data(), data.size());
+
+            osgDB::ReaderWriter::ReadResult result = readerwriter->readImage(in);
+            if (!result.success())
+            {
+                Log(Debug::Error) << "Error: Failed to read fog: " << result.message() << " code " << result.status();
+                return nullptr;
+            }
+
+            osg::ref_ptr<osg::Image> image = result.getImage();
+            image->flipVertical();
+            return image;
+        }
+
+        // Makes an image with one channel, unexplored everywhere, for a grid of segments.
+        osg::ref_ptr<osg::Image> makeUnexploredImage(int columns, int rows, int resolution)
+        {
+            osg::ref_ptr<osg::Image> image = new osg::Image;
+            image->allocateImage(columns * resolution, rows * resolution, 1, GL_RED, GL_UNSIGNED_BYTE);
+            image->setInternalTextureFormat(GL_R8);
+            std::fill(image->data(), image->data() + image->getTotalSizeInBytes(), 255);
+            return image;
+        }
+
+        // Copies one segment's fog into its place in a grid image. A segment's own fog keeps its fogginess in the
+        // alpha of 32 bit pixels, with the north edge first, and the grid image's first row is at the south.
+        void copyFogSegment(osg::Image& image, int column, int row, const osg::Image& fog, int resolution)
+        {
+            if (column < 0 || row < 0 || (column + 1) * resolution > image.s() || (row + 1) * resolution > image.t())
+                return;
+            if (fog.s() != resolution || fog.t() != resolution || fog.getPixelSizeInBits() != 32)
+                return;
+            const std::uint32_t* source = reinterpret_cast<const std::uint32_t*>(fog.data());
+            for (int texV = 0; texV < resolution; ++texV)
+            {
+                unsigned char* target = image.data(column * resolution, row * resolution + resolution - 1 - texV);
+                for (int texU = 0; texU < resolution; ++texU)
+                    target[texU] = static_cast<unsigned char>(source[texV * resolution + texU] >> 24);
+            }
+        }
+    }
 
     LocalMap::LocalMap(osg::Group* root)
         : mRoot(root)
@@ -474,7 +538,7 @@ namespace MWRender
         const std::uint32_t clr
             = reinterpret_cast<const uint32_t*>(segment.mFogOfWarImage->data())[texV * sFogOfWarResolution + texU];
         uint8_t alpha = (clr >> 24);
-        return alpha < 200;
+        return alpha < sExploredFogLimit;
     }
 
     osg::Group* LocalMap::getRoot()
@@ -593,6 +657,68 @@ namespace MWRender
         return result;
     }
 
+    LocalMap::FogImage LocalMap::makeExteriorFogImage(int westX, int southY, int cells, ESM::RefId worldspace) const
+    {
+        osg::ref_ptr<osg::Image> image = makeUnexploredImage(cells, cells, sFogOfWarResolution);
+        const auto copyCell = [&](int cellX, int cellY, const osg::Image& fog) {
+            copyFogSegment(*image, cellX - westX, cellY - southY, fog, sFogOfWarResolution);
+        };
+
+        // The cells the player left keep their fog in their saved state.
+        MWBase::Environment::get().getWorldModel()->forEachLoadedCellStore([&](MWWorld::CellStore& cell) {
+            if (!cell.isExterior() || cell.getCell()->getWorldSpace() != worldspace)
+                return;
+            const ESM::FogState* fog = cell.getFog();
+            if (fog == nullptr || fog->mFogTextures.empty() || fog->mFogTextures.back().mImageData.empty())
+                return;
+            if (const osg::ref_ptr<osg::Image> fogImage = readFogImage(fog->mFogTextures.back()))
+                copyCell(cell.getCell()->getGridX(), cell.getCell()->getGridY(), *fogImage);
+        });
+
+        // The loaded cells' fog changes as the player explores, so it comes from the map itself, replacing the saved
+        // copy.
+        for (const auto& [position, segment] : mExteriorSegments)
+            if (segment.mFogOfWarImage != nullptr)
+                copyCell(position.first, position.second, *segment.mFogOfWarImage);
+
+        const float size = static_cast<float>(cells * mMapWorldSize);
+        return { image, osg::Vec3f(1.f / size, 0.f, -westX * mMapWorldSize / size),
+            osg::Vec3f(0.f, 1.f / size, -southY * mMapWorldSize / size) };
+    }
+
+    void LocalMap::updateExteriorFogImage(osg::Image& image, int westX, int southY) const
+    {
+        for (const auto& [position, segment] : mExteriorSegments)
+            if (segment.mFogOfWarImage != nullptr)
+                copyFogSegment(image, position.first - westX, position.second - southY, *segment.mFogOfWarImage,
+                    sFogOfWarResolution);
+        image.dirty();
+    }
+
+    LocalMap::FogImage LocalMap::makeInteriorFogImage() const
+    {
+        if (!mInterior || mInteriorSegments.empty())
+            return {};
+        const auto [columns, rows] = divideIntoSegments(mBounds, mMapWorldSize);
+        osg::ref_ptr<osg::Image> image = makeUnexploredImage(columns, rows, sFogOfWarResolution);
+        for (const auto& [position, segment] : mInteriorSegments)
+            if (segment.mFogOfWarImage != nullptr)
+                copyFogSegment(*image, position.first, position.second, *segment.mFogOfWarImage, sFogOfWarResolution);
+
+        // The grid turns about mCenter by mAngle, as in worldToInteriorMapPosition, and starts at the bounds' corner.
+        // Where the turn takes a step east and a step north gives the transform. The steps are a segment long, so
+        // the subtractions keep their precision.
+        const float step = static_cast<float>(mMapWorldSize);
+        const osg::Vec2f east = (rotatePoint(mCenter + osg::Vec2f(step, 0.f), mCenter, mAngle) - mCenter) / step;
+        const osg::Vec2f north = (rotatePoint(mCenter + osg::Vec2f(0.f, step), mCenter, mAngle) - mCenter) / step;
+        const osg::Vec2f origin
+            = mCenter - east * mCenter.x() - north * mCenter.y() - osg::Vec2f(mBounds.xMin(), mBounds.yMin());
+        const float width = static_cast<float>(columns * mMapWorldSize);
+        const float height = static_cast<float>(rows * mMapWorldSize);
+        return { image, osg::Vec3f(east.x(), north.x(), origin.x()) / width,
+            osg::Vec3f(east.y(), north.y(), origin.y()) / height };
+    }
+
     MyGUI::IntRect LocalMap::getInteriorGrid() const
     {
         auto segments = divideIntoSegments(mBounds, mMapWorldSize);
@@ -631,36 +757,15 @@ namespace MWRender
 
     void LocalMap::MapSegment::loadFogOfWar(const ESM::FogTexture& esm)
     {
-        const std::vector<char>& data = esm.mImageData;
-        if (data.empty())
+        if (esm.mImageData.empty())
         {
             initFogOfWar();
             return;
         }
 
-        // Saves at or below ESM::MaxOldFogOfWarFormatVersion hold TGA here, newer ones PNG.
-        // Decoding the legacy format directly is why components/esm3 no longer has to
-        // transcode it to PNG on load, which cost a decode and a re-encode per tile.
-        const std::string extension = esm.mLegacyTgaImageData ? "tga" : "png";
-
-        osgDB::ReaderWriter* readerwriter = osgDB::Registry::instance()->getReaderWriterForExtension(extension);
-        if (!readerwriter)
-        {
-            Log(Debug::Error) << "Error: Unable to load fog, can't find a " << extension << " ReaderWriter";
+        mFogOfWarImage = readFogImage(esm);
+        if (mFogOfWarImage == nullptr)
             return;
-        }
-
-        Files::IMemStream in(data.data(), data.size());
-
-        osgDB::ReaderWriter::ReadResult result = readerwriter->readImage(in);
-        if (!result.success())
-        {
-            Log(Debug::Error) << "Error: Failed to read fog: " << result.message() << " code " << result.status();
-            return;
-        }
-
-        mFogOfWarImage = result.getImage();
-        mFogOfWarImage->flipVertical();
         mFogOfWarImage->dirty();
 
         createFogOfWarTexture();

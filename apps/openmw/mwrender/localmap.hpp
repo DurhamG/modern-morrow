@@ -10,7 +10,10 @@
 #include <MyGUI_Types.h>
 #include <osg/BoundingBox>
 #include <osg/Quat>
+#include <osg/Vec3f>
 #include <osg/ref_ptr>
+
+#include <components/esm/refid.hpp>
 
 namespace MyGUI
 {
@@ -102,6 +105,9 @@ namespace MWRender
 
         osg::Vec2f interiorMapToWorldPosition(float nX, float nY, int x, int y) const;
 
+        /// A place counts as explored where its fog is below this, from 0 where explored to 255 where unexplored.
+        static constexpr std::uint8_t sExploredFogLimit = 200;
+
         /**
          * Check if a given position is explored by the player (i.e. not obscured by fog of war)
          */
@@ -110,6 +116,27 @@ namespace MWRender
         osg::Group* getRoot();
 
         MyGUI::IntRect getInteriorGrid() const;
+
+        /// An image of the places the player has explored, with one channel: 255 where unexplored and 0 where
+        /// explored. A place's texture coordinates come from its world position x, y as dot(mToU, (x, y, 1)) and
+        /// dot(mToV, (x, y, 1)). The image is nullptr when there is nothing to show.
+        struct FogImage
+        {
+            osg::ref_ptr<osg::Image> mImage;
+            osg::Vec3f mToU;
+            osg::Vec3f mToV;
+        };
+
+        /// Makes the fog image of a square of exterior cells, with the cell at westX, southY in its south west corner.
+        FogImage makeExteriorFogImage(int westX, int southY, int cells, ESM::RefId worldspace) const;
+
+        /// Copies the fog of the cells around the player into an image from makeExteriorFogImage again, since it
+        /// changes as the player explores them. The cells the player has left don't change.
+        void updateExteriorFogImage(osg::Image& image, int westX, int southY) const;
+
+        /// Makes the fog image of the interior the map was last drawn for. Its grid turns with the cell's north marker,
+        /// as the flat map does.
+        FogImage makeInteriorFogImage() const;
 
     private:
         osg::ref_ptr<osg::Group> mRoot;
