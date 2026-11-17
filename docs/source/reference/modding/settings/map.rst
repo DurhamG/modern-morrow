@@ -65,3 +65,16 @@ Map Settings
 
    Controls viewing distance on the local map when 'distant terrain' is enabled.
    Increasing this may increase cell load times.
+
+.. omw-setting::
+   :title: 3d local map
+   :type: boolean
+   :range: true, false
+   :default: false
+
+   If true, the map window draws the local map in 3D, seen from above at an angle, instead of from straight above.
+   The map shows the same markers and fog of war, and follows the player.
+   Drag it with the mouse to look elsewhere, and zoom with the mouse wheel when 'allow zooming' is on.
+   With 'distant terrain' on, the land and buildings beyond the loaded cells show too.
+   The HUD map stays flat.
+   Drawing the scene a second time costs some performance while the map window shows.

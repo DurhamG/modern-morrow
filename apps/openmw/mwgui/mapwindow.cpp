@@ -29,7 +29,9 @@
 #include "../mwrender/localmap.hpp"
 
 #include "confirmationdialog.hpp"
+#include "localmap3dview.hpp"
 
+#include <cmath>
 #include <numeric>
 
 namespace
@@ -833,8 +835,17 @@ namespace MWGui
 
         LocalMapBase::init(mLocalMap, mPlayerArrowLocal, getLocalViewingDistance());
 
+        if (Settings::map().m3DLocalMap)
+        {
+            mLocalMap3D = std::make_unique<LocalMap3DView>(
+                mLocalMap->getParent(), mLocalMap->getCoord(), localMapRender, customMarkers);
+            mLocalMap3D->eventGroundDoubleClicked += MyGUI::newDelegate(this, &MapWindow::onMap3DGroundDoubleClicked);
+            mLocalMap3D->eventCustomMarkerDoubleClicked
+                += MyGUI::newDelegate(this, &MapWindow::onCustomMarkerDoubleClicked);
+        }
+
         mGlobalMap->setVisible(global);
-        mLocalMap->setVisible(!global);
+        setLocalMapVisible(!global);
 
         if (Settings::gui().mControllerMenus)
         {
@@ -905,11 +916,23 @@ namespace MWGui
             worldPos.y() = (y + (1.0f - nY)) * cellSize;
         }
 
+        startNewNote(worldPos, getCellIdInWorldSpace(*mActiveCell, x, y));
+    }
+
+    void MapWindow::onMap3DGroundDoubleClicked(float x, float y)
+    {
+        if (mActiveCell == nullptr)
+            return;
+        const int cellX = static_cast<int>(std::floor(x / cellSize));
+        const int cellY = static_cast<int>(std::floor(y / cellSize));
+        startNewNote(osg::Vec2f(x, y), getCellIdInWorldSpace(*mActiveCell, cellX, cellY));
+    }
+
+    void MapWindow::startNewNote(const osg::Vec2f& worldPos, const ESM::RefId& cell)
+    {
         mEditingMarker.mWorldX = worldPos.x();
         mEditingMarker.mWorldY = worldPos.y();
-        ESM::RefId clickedId = getCellIdInWorldSpace(*mActiveCell, x, y);
-
-        mEditingMarker.mCell = clickedId;
+        mEditingMarker.mCell = cell;
 
         mEditNoteDialog.setVisible(true);
         mEditNoteDialog.showDeleteButton(false);
@@ -1021,9 +1044,22 @@ namespace MWGui
         mLastScrollWindowCoordinates = currentCoordinates;
     }
 
+    void MapWindow::setLocalMapVisible(bool visible)
+    {
+        if (mLocalMap3D == nullptr)
+        {
+            mLocalMap->setVisible(visible);
+            return;
+        }
+        mLocalMap->setVisible(false);
+        mLocalMap3D->setVisible(visible);
+    }
+
     void MapWindow::setVisible(bool visible)
     {
         WindowBase::setVisible(visible);
+        if (mLocalMap3D != nullptr)
+            mLocalMap3D->updateDrawing();
         MWGui::GuiMode mode = MWBase::Environment::get().getWindowManager()->getMode();
         mButton->setVisible(visible && mode != MWGui::GM_None);
 
@@ -1137,6 +1173,8 @@ namespace MWGui
     {
         LocalMapBase::onFrame(dt);
         NoDrop::onFrame(dt);
+        if (mLocalMap3D != nullptr)
+            mLocalMap3D->onFrame(dt, mFogOfWarToggled && mFogOfWarEnabled);
     }
 
     void MapWindow::setGlobalMapMarkerTooltip(MyGUI::Widget* markerWidget, int x, int y)
@@ -1187,6 +1225,8 @@ namespace MWGui
     void MapWindow::updateCustomMarkers()
     {
         LocalMapBase::updateCustomMarkers();
+        if (mLocalMap3D != nullptr)
+            mLocalMap3D->updateCustomMarkers();
 
         for (auto& [widgetPair, ignore] : mGlobalMapMarkers)
             setGlobalMapMarkerTooltip(widgetPair.widget, static_cast<int>(widgetPair.position.x()),
@@ -1225,7 +1265,7 @@ namespace MWGui
         Settings::map().mGlobal.set(global);
 
         mGlobalMap->setVisible(global);
-        mLocalMap->setVisible(!global);
+        setLocalMapVisible(!global);
 
         mButton->setCaptionWithReplacing(global ? "#{sLocal}" : "#{sWorld}");
         mControllerButtons.mX = global ? "#{Interface:Local}" : "#{Interface:World}";
@@ -1276,6 +1316,8 @@ namespace MWGui
     void MapWindow::centerView()
     {
         LocalMapBase::centerView();
+        if (mLocalMap3D != nullptr)
+            mLocalMap3D->centerOnPlayer();
         // set the view offset so that player is in the center
         MyGUI::IntSize viewsize = mGlobalMap->getSize();
         MyGUI::IntPoint pos = mPlayerArrowGlobal->getPosition() + MyGUI::IntPoint{ 16, 16 };
@@ -1331,6 +1373,9 @@ namespace MWGui
             MyGUI::Gui::getInstance().destroyWidget(widgetPair.first.widget);
         mGlobalMapMarkers.clear();
         mGlobalMapMarkersByName.clear();
+
+        if (mLocalMap3D != nullptr)
+            mLocalMap3D->clear();
     }
 
     void MapWindow::write(ESM::ESMWriter& writer, Loading::Listener& progress)
@@ -1369,7 +1414,7 @@ namespace MWGui
         NoDrop::setAlpha(alpha);
         // can't allow showing map with partial transparency, as the fog of war will also go transparent
         // and reveal parts of the map you shouldn't be able to see
-        mLocalMap->setVisible(!mGlobalMap->getVisible() && alpha == 1);
+        setLocalMapVisible(!mGlobalMap->getVisible() && alpha == 1);
     }
 
     void MapWindow::customMarkerCreated(MyGUI::Widget* marker)
@@ -1430,6 +1475,8 @@ namespace MWGui
             mNeedDoorMarkersUpdate = true;
             mLocalMap->setViewOffset(
                 MyGUI::IntPoint(mLocalMap->getViewOffset().left + dx, mLocalMap->getViewOffset().top + dy));
+            if (mLocalMap3D != nullptr)
+                mLocalMap3D->pan(dx, dy);
         }
         else
         {

@@ -49,6 +49,8 @@ namespace SceneUtil
 
 namespace MWGui
 {
+    class LocalMap3DView;
+
     /// @brief A widget that changes its color when hovered.
     class MarkerWidget final : public MyGUI::Widget
     {
@@ -340,6 +342,11 @@ namespace MWGui
         void zoomOnCursor(float speedDiff);
         void updateGlobalMap();
         void onCustomMarkerDoubleClicked(MyGUI::Widget* sender);
+        void onMap3DGroundDoubleClicked(float x, float y);
+        /// Opens the dialog for a new custom marker at a place in a cell.
+        void startNewNote(const osg::Vec2f& worldPos, const ESM::RefId& cell);
+        /// Shows or hides the local map: the flat one, or the 3D one when it is on.
+        void setLocalMapVisible(bool visible);
         void onNoteEditOk();
         void onNoteEditDelete();
         void onNoteEditDeleteConfirm();
@@ -386,6 +393,9 @@ namespace MWGui
 
         std::map<std::string, MapMarkerType> mGlobalMapMarkersByName;
         std::map<MapMarkerType, std::vector<MapMarkerType>> mGlobalMapMarkers;
+
+        // The 3D view of the local map, when it is on. It shows in place of the flat map, which still runs behind it.
+        std::unique_ptr<LocalMap3DView> mLocalMap3D;
 
         EditNoteDialog mEditNoteDialog;
         ESM::CustomMarker mEditingMarker;
