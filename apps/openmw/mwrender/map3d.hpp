@@ -83,6 +83,10 @@ namespace MWRender
         /// false when the point looks at the sky.
         bool pictureToGround(const osg::Vec2f& picture, float height, osg::Vec3f& ground) const;
 
+        /// Returns the line the camera looks along through a point of the picture, from 0 to 1 across and down. It
+        /// runs from the near plane to the far plane.
+        void pictureToLine(const osg::Vec2f& picture, osg::Vec3f& nearPoint, osg::Vec3f& farPoint) const;
+
     private:
         /// Starts building the pieces for where the view is now, and switches to them once they are built.
         void updateTerrainPieces();

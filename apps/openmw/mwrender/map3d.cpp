@@ -102,14 +102,21 @@ namespace MWRender
         /// position.
         osg::Matrixd getPictureToWorld() const { return osg::Matrixd::inverse(mViewMatrix * mProjectionMatrix); }
 
-        bool pictureToGround(const osg::Vec2f& picture, float height, osg::Vec3f& ground) const
+        void pictureToLine(const osg::Vec2f& picture, osg::Vec3d& nearPoint, osg::Vec3d& farPoint) const
         {
-            // A ray from the near plane to the far plane through the point, met with the level ground.
             const osg::Matrixd toWorld = osg::Matrixd::inverse(mViewMatrix * mPlainProjection);
             const double x = picture.x() * 2.0 - 1.0;
             const double y = 1.0 - picture.y() * 2.0;
-            const osg::Vec3d nearPoint = osg::Vec3d(x, y, -1.0) * toWorld;
-            const osg::Vec3d farPoint = osg::Vec3d(x, y, 1.0) * toWorld;
+            nearPoint = osg::Vec3d(x, y, -1.0) * toWorld;
+            farPoint = osg::Vec3d(x, y, 1.0) * toWorld;
+        }
+
+        bool pictureToGround(const osg::Vec2f& picture, float height, osg::Vec3f& ground) const
+        {
+            // A ray from the near plane to the far plane through the point, met with the level ground.
+            osg::Vec3d nearPoint;
+            osg::Vec3d farPoint;
+            pictureToLine(picture, nearPoint, farPoint);
             const osg::Vec3d direction = farPoint - nearPoint;
             if (std::abs(direction.z()) < 1e-6)
                 return false;
@@ -505,5 +512,14 @@ namespace MWRender
     bool Map3D::pictureToGround(const osg::Vec2f& picture, float height, osg::Vec3f& ground) const
     {
         return mRtt->pictureToGround(picture, height, ground);
+    }
+
+    void Map3D::pictureToLine(const osg::Vec2f& picture, osg::Vec3f& nearPoint, osg::Vec3f& farPoint) const
+    {
+        osg::Vec3d nearDouble;
+        osg::Vec3d farDouble;
+        mRtt->pictureToLine(picture, nearDouble, farDouble);
+        nearPoint = osg::Vec3f(nearDouble);
+        farPoint = osg::Vec3f(farDouble);
     }
 }

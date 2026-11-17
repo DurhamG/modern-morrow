@@ -29,6 +29,7 @@
 #include "../mwworld/worldmodel.hpp"
 
 #include "../mwrender/globalmap.hpp"
+#include "../mwrender/linemeetsland.hpp"
 #include "../mwrender/localmap.hpp"
 #include "../mwrender/map3d.hpp"
 #include "../mwrender/renderingmanager.hpp"
@@ -1169,7 +1170,7 @@ namespace MWGui
         // The view looks down at its focus, so moving the focus towards the pinch by the zoom's share keeps the ground
         // under the pinch where it was.
         osg::Vec3f ground;
-        if (after != before && map3DPointToGround(point, ground))
+        if (after != before && map3DPointToLand(point, ground))
         {
             const float kept = after / before;
             mMap3DFocus.x() = ground.x() + (mMap3DFocus.x() - ground.x()) * kept;
@@ -2023,17 +2024,40 @@ namespace MWGui
         return marker;
     }
 
-    bool MapWindow::map3DPointToGround(MyGUI::IntPoint point, osg::Vec3f& ground) const
+    bool MapWindow::map3DPointToPicture(MyGUI::IntPoint point, osg::Vec2f& picture) const
     {
         if (mMap3D == nullptr || mMap3DImage == nullptr)
             return false;
         const MyGUI::IntCoord image = mMap3DImage->getAbsoluteCoord();
         if (image.width <= 0 || image.height <= 0)
             return false;
-        const osg::Vec2f picture(static_cast<float>(point.left - image.left) / image.width,
+        picture = osg::Vec2f(static_cast<float>(point.left - image.left) / image.width,
             static_cast<float>(point.top - image.top) / image.height);
-        // The ground is taken as level at the height the view looks at, which is close enough near the middle.
-        return mMap3D->pictureToGround(picture, mMap3DFocus.z(), ground);
+        return true;
+    }
+
+    bool MapWindow::map3DPointToGround(MyGUI::IntPoint point, float height, osg::Vec3f& ground) const
+    {
+        osg::Vec2f picture;
+        return map3DPointToPicture(point, picture) && mMap3D->pictureToGround(picture, height, ground);
+    }
+
+    bool MapWindow::map3DPointToLand(MyGUI::IntPoint point, osg::Vec3f& land) const
+    {
+        osg::Vec2f picture;
+        if (mActiveCell == nullptr || !map3DPointToPicture(point, picture))
+            return false;
+        osg::Vec3f nearPoint;
+        osg::Vec3f farPoint;
+        mMap3D->pictureToLine(picture, nearPoint, farPoint);
+        // A thousandth of the camera's distance is about a pixel of the picture where the view looks.
+        const float distance = mActiveCell->isExterior() ? mMap3DDistance : mMap3DInteriorDistance;
+        const std::optional<osg::Vec3f> found = MWRender::findWhereLineMeetsLand(
+            nearPoint, farPoint, distance / 1000.f, [this](float x, float y) { return getMap3DGroundHeight(x, y); });
+        if (!found)
+            return false;
+        land = *found;
+        return true;
     }
 
     void MapWindow::togglePinAtMap3DPoint(MyGUI::IntPoint point)
@@ -2061,9 +2085,9 @@ namespace MWGui
             return;
         }
 
-        osg::Vec3f ground;
-        if (map3DPointToGround(point, ground))
-            mCustomMarkers.addMarker(getMap3DPinAt(ground.x(), ground.y()));
+        osg::Vec3f land;
+        if (map3DPointToLand(point, land))
+            mCustomMarkers.addMarker(getMap3DPinAt(land.x(), land.y()));
     }
 
     void MapWindow::onMap3DMousePressed(MyGUI::Widget* /*sender*/, int left, int top, MyGUI::MouseButton id)
@@ -2073,6 +2097,10 @@ namespace MWGui
         mMap3DPressedAt = MyGUI::IntPoint(left, top);
         mMap3DDraggedTo = mMap3DPressedAt;
         mMap3DDragging = false;
+        // The drag moves the view on level ground at the height of the land that was under the pointer, so that land
+        // stays under it.
+        osg::Vec3f land;
+        mMap3DDragHeight = map3DPointToLand(mMap3DPressedAt, land) ? land.z() : mMap3DFocus.z();
     }
 
     void MapWindow::onMap3DMouseDrag(MyGUI::Widget* /*sender*/, int left, int top, MyGUI::MouseButton id)
@@ -2090,7 +2118,8 @@ namespace MWGui
         // The ground that was under the pointer stays under it.
         osg::Vec3f from;
         osg::Vec3f to;
-        if (map3DPointToGround(mMap3DDraggedTo, from) && map3DPointToGround(point, to))
+        if (map3DPointToGround(mMap3DDraggedTo, mMap3DDragHeight, from)
+            && map3DPointToGround(point, mMap3DDragHeight, to))
         {
             mMap3DFocus.x() += from.x() - to.x();
             mMap3DFocus.y() += from.y() - to.y();

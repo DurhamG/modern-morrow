@@ -353,8 +353,12 @@ namespace MWGui
         ESM::CustomMarker getMap3DPinAt(float x, float y) const;
         /// Places a pin, or removes the pin under it, at the point of the 3D view a widget's absolute point shows.
         void togglePinAtMap3DPoint(MyGUI::IntPoint point);
-        /// Where a widget's absolute point shows on the ground in the 3D view.
-        bool map3DPointToGround(MyGUI::IntPoint point, osg::Vec3f& ground) const;
+        /// Where a widget's absolute point is in the 3D view's picture, from 0 to 1 across and down.
+        bool map3DPointToPicture(MyGUI::IntPoint point, osg::Vec2f& picture) const;
+        /// Where a widget's absolute point shows on level ground at a height in the 3D view.
+        bool map3DPointToGround(MyGUI::IntPoint point, float height, osg::Vec3f& ground) const;
+        /// Where a widget's absolute point shows on the land in the 3D view.
+        bool map3DPointToLand(MyGUI::IntPoint point, osg::Vec3f& land) const;
         void onMap3DMousePressed(MyGUI::Widget* sender, int left, int top, MyGUI::MouseButton id);
         void onMap3DMouseDrag(MyGUI::Widget* sender, int left, int top, MyGUI::MouseButton id);
         void onMap3DMouseReleased(MyGUI::Widget* sender, int left, int top, MyGUI::MouseButton id);
@@ -410,6 +414,8 @@ namespace MWGui
         MyGUI::IntPoint mMap3DPressedAt;
         MyGUI::IntPoint mMap3DDraggedTo;
         bool mMap3DDragging = false;
+        // The height of the land the drag started on.
+        float mMap3DDragHeight = 0.f;
         // Where the mouse pointer is over the 3D view, until it leaves the view or the right stick pans it.
         std::optional<MyGUI::IntPoint> mMap3DPointer;
         // The label that names a door or pin, and the marker it names.
