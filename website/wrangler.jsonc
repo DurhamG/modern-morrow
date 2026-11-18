@@ -1,0 +1,13 @@
+// Wrangler's settings for the website. It is a Worker with only static assets: Cloudflare serves the files in
+// public/ directly, with no Worker code. It is separate from the cloud saves Worker in cloudsaves/, so deploying the
+// site never touches the save service.
+{
+  "$schema": "../cloudsaves/node_modules/wrangler/config-schema.json",
+  // The site's address is https://modern-morrow.<account subdomain>.workers.dev.
+  "name": "modern-morrow",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public"
+  }
+}

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Getting Started with Modern Morrow</title>
+<meta name="description" content="How to install Modern Morrow on Windows, Steam Deck, Linux and Android.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="banner">
+  <div class="banner-text">
+    <a class="title" href="index.html">Modern Morrow</a>
+    <p class="tagline">Morrowind with a modern interface.</p>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Site">
+  <div class="tabs-inner">
+    <a class="tab" href="index.html">Home</a>
+    <a class="tab active" href="getting-started.html" aria-current="page">Getting Started</a>
+    <a class="tab" href="https://github.com/DurhamG/modern-morrow">GitHub</a>
+  </div>
+</nav>
+
+<main>
+
+  <section class="section-head">
+    <h1 class="page-title">Getting Started</h1>
+    <p>You need your own copy of Morrowind, from Steam or GOG. Modern Morrow plays Morrowind's game files, and doesn't come with them. Pick your device:</p>
+  </section>
+
+  <nav class="platforms" aria-label="Devices">
+    <a href="#windows">Windows</a>
+    <a href="#steam-deck">Steam Deck</a>
+    <a href="#linux">Linux</a>
+    <a href="#android">Android</a>
+  </nav>
+
+  <section class="frame downloads">
+    <h2>Downloads</h2>
+    <p>Every file is on the <a href="https://github.com/DurhamG/modern-morrow/releases">Releases page</a>. Take them from the newest release.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Device</th><th scope="col">File</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Windows</td><td><code>ModernMorrow-…-Windows-x64.exe</code>, the installer. <code>ModernMorrow-…-Windows-x64.zip</code> has the same files without an installer.</td></tr>
+          <tr><td>Steam Deck and Linux</td><td><code>ModernMorrow-AutoUpdate.sh</code>, which keeps the game up to date by itself. <code>ModernMorrow-…-Linux-x86_64.AppImage</code> is the game alone, to update by hand.</td></tr>
+          <tr><td>Android</td><td><code>ModernMorrow-…-Android-arm64.apk</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="frame guide" id="windows">
+    <h2>Windows</h2>
+    <ol class="steps">
+      <li><strong>Install Morrowind</strong> from Steam or GOG.</li>
+      <li><strong>Download the installer</strong>, <code>ModernMorrow-…-Windows-x64.exe</code>, from the <a href="https://github.com/DurhamG/modern-morrow/releases">Releases page</a>.</li>
+      <li><strong>Run it.</strong> The builds aren't signed, so Windows SmartScreen may warn you the first time. Choose More info, then Run anyway.</li>
+      <li><strong>Set up the game data.</strong> When the installer finishes, it opens the Modern Morrow Launcher, which offers to run the setup wizard the first time. Choose to use an existing installation, and pick your copy of Morrowind. If it isn't listed, browse to <code>Morrowind.esm</code> in its <code>Data Files</code> folder. Steam keeps Morrowind in <code>C:\Program Files (x86)\Steam\steamapps\common\Morrowind</code>, and GOG Galaxy in <code>C:\Program Files (x86)\GOG Galaxy\Games\Morrowind</code>.</li>
+      <li><strong>Play.</strong> From now on, start the game with the Modern Morrow shortcut in the Start menu.</li>
+    </ol>
+    <p class="note">Rather not install anything? Unpack the zip anywhere, and run <code>openmw-launcher.exe</code> the first time to set up the game data. After that, <code>openmw.exe</code> starts the game.</p>
+  </section>
+
+  <section class="frame guide" id="steam-deck">
+    <h2>Steam Deck</h2>
+    <p class="lead">The game runs straight on SteamOS, without Proton. The steps are the same on a Steam Machine.</p>
+    <ol class="steps">
+      <li><strong>Install Morrowind</strong> from your Steam library.</li>
+      <li><strong>Switch to Desktop Mode.</strong> Press the Steam button, choose Power, then Switch to Desktop.</li>
+      <li><strong>Download Modern Morrow.</strong> Make a folder for it. In a web browser, open the <a href="https://github.com/DurhamG/modern-morrow/releases">Releases page</a> and download one of these into your folder:
+        <ul>
+          <li><code>ModernMorrow-AutoUpdate.sh</code>, to keep the game up to date by itself. Each time it starts, it downloads a newer build if there is one. Without an internet connection, it starts the copy it already has.</li>
+          <li><code>ModernMorrow-…-Linux-x86_64.AppImage</code>, to update by hand.</li>
+        </ul>
+      </li>
+      <li><strong>Make it executable.</strong> In the Dolphin file manager, right-click the file, choose Properties, then Permissions, and tick <em>Allow executing file as program</em>.</li>
+      <li><strong>Add it to Steam.</strong> In Steam, choose Games, then Add a Non-Steam Game to My Library. Choose Browse, set the file type to All Files, and add the file you downloaded. Leave the other options alone.</li>
+      <li><strong>Start it once in Desktop Mode.</strong> Start Modern Morrow from your Steam library. With the update script, this first start needs an internet connection. The setup wizard opens: choose to use an existing installation. It finds Morrowind on the internal drive by itself. If Morrowind is on a microSD card, browse to <code>steamapps/common/Morrowind</code> on the card instead.</li>
+      <li><strong>Play in Game Mode.</strong> Go back to Gaming Mode and start Modern Morrow from your library. From now on, it goes straight into the game.</li>
+    </ol>
+    <p class="note">Start Modern Morrow from Steam rather than by double-clicking it in Dolphin, which refuses to start some AppImages.</p>
+  </section>
+
+  <section class="frame guide" id="linux">
+    <h2>Linux</h2>
+    <ol class="steps">
+      <li><strong>Install Morrowind</strong> from Steam or GOG.</li>
+      <li><strong>Download</strong> <code>ModernMorrow-AutoUpdate.sh</code> or <code>ModernMorrow-…-Linux-x86_64.AppImage</code> from the <a href="https://github.com/DurhamG/modern-morrow/releases">Releases page</a> into a folder of its own.</li>
+      <li><strong>Make it executable</strong>, with <code>chmod +x</code> or your file manager's permissions.</li>
+      <li><strong>Start it.</strong> The first time, the setup wizard opens. Choose to use an existing installation, and pick your copy of Morrowind. After that, the file goes straight into the game.</li>
+    </ol>
+  </section>
+
+  <section class="frame guide" id="android">
+    <h2>Android</h2>
+    <ol class="steps">
+      <li><strong>Install the app.</strong> On your phone or tablet, download <code>ModernMorrow-…-Android-arm64.apk</code> from the <a href="https://github.com/DurhamG/modern-morrow/releases">Releases page</a> and open it.</li>
+      <li><strong>Start Modern Morrow.</strong> It asks for Morrowind's <code>Data Files</code> folder.</li>
+      <li><strong>Give it the game data</strong>, in one of three ways:
+        <ul>
+          <li><strong>From the device</strong>, such as from Downloads. Tap "Choose folder" and pick <code>Data Files</code> or the folder that holds it, or tap "Choose zip file" and pick a zip of either. The app copies the files in.</li>
+          <li><strong>From a computer.</strong> Connect the device over USB, and copy <code>Data Files</code> into <code>Android/data/io.github.durhamg.modernmorrow/files/Morrowind</code>. Then tap "Check again".</li>
+          <li><strong>From the top of the device's storage.</strong> Put <code>Data Files</code> in a <code>Morrowind</code> folder there, and tap "Allow access to all files".</li>
+        </ul>
+      </li>
+    </ol>
+    <p class="note">Uninstalling the app deletes its folder, with your saves and the game data the first two ways put there. To update, install the new APK over the old one.</p>
+  </section>
+
+  <section class="columns" aria-label="More help">
+    <div class="frame">
+      <h3>Controls</h3>
+      <p>Modern Morrow is made for a gamepad, and every screen works with one. Mouse and keyboard work too, with some rough edges. On Android, a new game starts by showing how the touch controls work.</p>
+    </div>
+    <div class="frame">
+      <h3>Coming from OpenMW</h3>
+      <p>Modern Morrow keeps its settings and saves apart from OpenMW's. To bring a game over, use the Load menu, which can import saves from OpenMW. The Save menu can export a save back. You need OpenMW 0.52 or newer.</p>
+    </div>
+    <div class="frame">
+      <h3>Coming from the original game</h3>
+      <p>First convert the save with OpenMW's <code>openmw-essimporter</code> tool, and put the result in a character folder in OpenMW's saves folder. Then import it from the Load menu. The converted save keeps your quest progress, but not your journal entries.</p>
+    </div>
+    <div class="frame">
+      <h3>Mods and settings</h3>
+      <p>The Modern Morrow Launcher sets up mods and settings. On Windows, it's in the Start menu. On the Steam Deck, set the shortcut's launch options to <code>--launcher</code> for one start, or <code>--wizard</code> to run the setup wizard again.</p>
+    </div>
+    <div class="frame">
+      <h3>Where your files are</h3>
+      <p>Settings and saves are in <code>Documents/My Games/Modern Morrow</code> on Windows, and in <code>~/.config/modern-morrow</code> and <code>~/.local/share/modern-morrow</code> on Linux and the Steam Deck.</p>
+    </div>
+    <div class="frame">
+      <h3>Something wrong?</h3>
+      <p>Report it on the <a href="https://github.com/DurhamG/modern-morrow/issues">Modern Morrow GitHub</a>. If the Steam Deck's update script isn't working, <code>ModernMorrow-AutoUpdate.log</code> in its folder says what the last check did.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>Modern Morrow is a fork of OpenMW. The OpenMW team hasn't reviewed it, so please report its bugs on the <a href="https://github.com/DurhamG/modern-morrow/issues">Modern Morrow GitHub</a> rather than to OpenMW. Modern Morrow is not affiliated with or endorsed by Bethesda Softworks or ZeniMax Media. Morrowind and The Elder Scrolls are trademarks of ZeniMax Media Inc. Modern Morrow is free software under the GPLv3.</p>
+</footer>
+
+</body>
+</html>

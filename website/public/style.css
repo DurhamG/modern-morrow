@@ -1,0 +1,485 @@
+/* Modern Morrow's website. The pages are parchment and ink, with a dark title band and Modern Morrow's own tab
+   bar. Content sits in framed parchment cards, two across on wide screens. */
+
+@font-face {
+    font-family: "Mystic Cards";
+    src: url("fonts/MysticCards.ttf") format("truetype");
+    font-display: swap;
+}
+
+:root {
+    --paper: #e8dcc0;
+    --card: #f2e9d3;
+    --ink: #2a2018;
+    --ink-soft: #5a4a38;
+    --gold: #9c7a34;
+    --gold-light: #c9a45c;
+    --rubric: #7b2a1c;
+    --band: #2b1e13;
+    --tab-bar: #0d0b08;
+    --tab: #b39b6e;
+    --tab-active: #f6eedb;
+    --title: #f3e6c4;
+    --display: "Mystic Cards", Georgia, serif;
+    --body: "EB Garamond", Georgia, "Times New Roman", serif;
+    --gutter-left: max(16px, env(safe-area-inset-left, 0px));
+    --gutter-right: max(16px, env(safe-area-inset-right, 0px));
+    color-scheme: light;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+img {
+    max-width: 100%;
+}
+
+body {
+    margin: 0;
+    background-color: var(--paper);
+    color: var(--ink);
+    font: 19px/1.5 var(--body);
+    /* A faint grain over the parchment, darker towards the edges. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35  0 0 0 0 .25  0 0 0 0 .1  0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E"),
+        radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(120, 85, 40, .18));
+    background-attachment: fixed;
+}
+
+a {
+    color: var(--rubric);
+}
+
+a:focus-visible,
+.tab:focus-visible {
+    outline: 2px solid var(--gold-light);
+    outline-offset: 2px;
+}
+
+/* The title band. The front page shows a screenshot behind it; the other pages show the plain band. */
+
+.banner {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    background-color: var(--band);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .9  0 0 0 0 .75  0 0 0 0 .5  0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E"),
+        radial-gradient(ellipse at 50% 0%, rgba(201, 164, 92, .22), transparent 70%);
+    border-bottom: 3px double var(--gold);
+    padding-block: clamp(28px, 5vw, 52px);
+    padding-left: var(--gutter-left);
+    padding-right: var(--gutter-right);
+}
+
+.banner.photo {
+    background: var(--band);
+    padding-block: clamp(72px, 13vw, 170px);
+}
+
+.banner.photo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(30, 20, 12, .3), rgba(30, 20, 12, .55)),
+        url("img/banner.jpg") 50% 32% / cover no-repeat;
+}
+
+.banner-text {
+    position: relative;
+    max-width: 72rem;
+    margin: 0 auto;
+    border-block: 3px double rgba(201, 164, 92, .7);
+    padding-block: clamp(16px, 3vw, 26px);
+}
+
+.banner.photo .banner-text {
+    border-color: rgba(232, 210, 160, .8);
+}
+
+.banner h1,
+.banner .title {
+    font: 400 clamp(30px, 10vw, 104px)/1 var(--display);
+    margin: 0;
+    white-space: nowrap;
+    color: var(--title);
+    text-decoration: none;
+    letter-spacing: .02em;
+    text-shadow: 0 2px 0 #3a2a14, 0 0 24px rgba(0, 0, 0, .6);
+}
+
+.banner .title {
+    font-size: clamp(28px, 7vw, 64px);
+}
+
+.tagline {
+    margin: 10px auto 0;
+    max-width: 36em;
+    color: #efe2c2;
+    font-style: italic;
+    font-size: clamp(16px, 2.2vw, 21px);
+}
+
+/* The tab bar, styled like the tabs in Modern Morrow's menus. */
+
+.tabs {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    background: var(--tab-bar);
+    border-bottom: 1px solid var(--gold);
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px);
+    z-index: 10;
+    background: var(--tab-bar);
+}
+
+.tabs-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 28px;
+    max-width: 72rem;
+    margin: 0 auto;
+    padding-block: 10px;
+    padding-left: var(--gutter-left);
+    padding-right: var(--gutter-right);
+}
+
+.tab {
+    font: 22px/1.2 var(--display);
+    color: var(--tab);
+    text-decoration: none;
+    padding: 4px 2px;
+    border-bottom: 3px solid transparent;
+}
+
+.tab.active {
+    color: var(--tab-active);
+    border-bottom-color: var(--gold-light);
+}
+
+.tab:hover {
+    color: var(--tab-active);
+}
+
+/* Page body. */
+
+main {
+    max-width: 72rem;
+    margin: 0 auto;
+    display: grid;
+    gap: 52px;
+    padding-block: 40px 72px;
+    padding-left: var(--gutter-left);
+    padding-right: var(--gutter-right);
+}
+
+h2,
+.page-title {
+    font: 400 34px/1.1 var(--display);
+    margin: 0 0 6px;
+    color: var(--ink);
+    text-wrap: balance;
+}
+
+h3 {
+    font: 400 24px/1.2 var(--display);
+    margin: 0 0 4px;
+    color: var(--rubric);
+}
+
+p {
+    margin: 0;
+}
+
+.section-head p {
+    color: var(--ink-soft);
+}
+
+.intro {
+    display: grid;
+    gap: 28px;
+}
+
+.intro .lede {
+    display: grid;
+    gap: 12px;
+}
+
+.intro .lede p {
+    max-width: 38em;
+    font-size: 21px;
+}
+
+.who {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 16px;
+}
+
+.who div {
+    border-left: 2px solid var(--gold);
+    padding: 2px 0 2px 14px;
+}
+
+.who h3 {
+    font-size: 20px;
+}
+
+.who p {
+    color: var(--ink-soft);
+    font-size: 17px;
+}
+
+/* Framed parchment cards. */
+
+.frame {
+    background: var(--card);
+    border: 1px solid var(--gold);
+    outline: 1px solid rgba(156, 122, 52, .4);
+    outline-offset: 3px;
+    box-shadow: 0 2px 10px rgba(90, 60, 20, .12);
+    min-width: 0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
+    gap: 28px;
+}
+
+.feature {
+    display: grid;
+    grid-template-rows: auto 1fr;
+}
+
+.feature img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-bottom: 1px solid var(--gold);
+}
+
+.feature .text {
+    padding: 14px 18px 18px;
+}
+
+.feature p {
+    font-size: 18px;
+}
+
+.diamonds {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 10px 28px;
+}
+
+.diamonds li {
+    position: relative;
+    padding-left: 18px;
+}
+
+.diamonds li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .6em;
+    width: 7px;
+    height: 7px;
+    background: var(--gold);
+    transform: rotate(45deg);
+}
+
+.android {
+    display: grid;
+    gap: 24px;
+    align-items: start;
+}
+
+.android .shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.android .points {
+    display: grid;
+    gap: 16px;
+}
+
+.android h3 {
+    font-size: 22px;
+}
+
+footer {
+    border-top: 3px double var(--gold);
+    color: var(--ink-soft);
+    font-size: 15px;
+    padding-block: 28px 44px;
+    padding-left: var(--gutter-left);
+    padding-right: var(--gutter-right);
+}
+
+footer p {
+    max-width: 72rem;
+    margin: 0 auto;
+}
+
+/* Getting Started. */
+
+.platforms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.platforms a {
+    font: 20px/1.2 var(--display);
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--gold);
+    padding: 8px 16px;
+}
+
+.platforms a:hover {
+    color: var(--rubric);
+    border-color: var(--rubric);
+}
+
+.downloads {
+    padding: 18px 20px;
+    display: grid;
+    gap: 12px;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 17px;
+}
+
+th,
+td {
+    text-align: left;
+    vertical-align: top;
+    padding: 8px 12px 8px 0;
+    border-bottom: 1px solid rgba(156, 122, 52, .45);
+}
+
+th {
+    font: 400 18px/1.2 var(--display);
+    color: var(--ink-soft);
+}
+
+code {
+    font-family: Consolas, "DejaVu Sans Mono", monospace;
+    font-size: .85em;
+    background: rgba(156, 122, 52, .14);
+    padding: 1px 4px;
+    overflow-wrap: anywhere;
+}
+
+.guide {
+    padding: 20px 22px 24px;
+    display: grid;
+    gap: 14px;
+    scroll-margin-top: 70px;
+}
+
+.guide .lead {
+    color: var(--ink-soft);
+}
+
+.steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+    display: grid;
+    gap: 12px;
+}
+
+.steps > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 44px;
+    min-width: 0;
+}
+
+.steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    font: 400 18px/1 var(--display);
+    color: var(--title);
+    background: var(--band);
+    border: 1px solid var(--gold);
+}
+
+.steps strong {
+    font-weight: 600;
+}
+
+.steps ul {
+    margin: 6px 0 0;
+    padding-left: 1.1em;
+}
+
+.note {
+    border-left: 3px solid var(--rubric);
+    padding: 4px 0 4px 14px;
+    color: var(--ink-soft);
+    font-size: 17px;
+}
+
+.columns {
+    display: grid;
+    gap: 28px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+}
+
+.columns .frame {
+    padding: 18px 20px 22px;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+}
+
+@media (min-width: 860px) {
+    .intro {
+        grid-template-columns: 1.4fr 1fr;
+    }
+
+    .who {
+        grid-template-columns: 1fr;
+    }
+
+    .android {
+        grid-template-columns: 1.3fr 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
