@@ -379,4 +379,54 @@ namespace
         const std::vector<Objective> expected{ Objective{ .mTask = Task::Visit, .mObject = id("bm_bear_be_unique") } };
         EXPECT_EQ(ways[0].mObjectives, expected);
     }
+
+    TEST(MWGuiQuestTargetsScriptJournalCallsTest, anEarlyReturnGuardsTheCommandsAfterIt)
+    {
+        const std::vector<ScriptJournalCall> calls = scriptJournalCalls(
+            "if ( GetJournalIndex FG_RatHunt < 50 )\nreturn\nendif\n"
+            "if ( GetPCCell \"Pelagiad, Halfway Tavern\" == 1 )\nJournal FG_RatHunt 70\nendif");
+        ASSERT_EQ(calls.size(), 1u);
+        ASSERT_EQ(calls[0].mGuards.size(), 1u);
+        const std::vector<ESM::DialogueCondition> checks = stageChecks(calls[0]);
+        ASSERT_EQ(checks.size(), 1u);
+        EXPECT_EQ(checks[0].mComparison, DialogueCondition::Comp_Ge);
+        EXPECT_FALSE(allowsStage(checks, quest, 10));
+        EXPECT_TRUE(allowsStage(checks, quest, 50));
+    }
+
+    TEST(MWGuiQuestTargetsScriptJournalCallsTest, aBlockWithAnElseIsNoGuard)
+    {
+        const std::vector<ScriptJournalCall> calls = scriptJournalCalls(
+            "if ( GetJournalIndex FG_RatHunt < 50 )\nreturn\nelse\nset x to 1\nendif\n"
+            "Journal FG_RatHunt 70");
+        ASSERT_EQ(calls.size(), 1u);
+        EXPECT_TRUE(calls[0].mGuards.empty());
+    }
+
+    TEST(MWGuiQuestTargetsIndexTest, aScriptsStageChecksRuleOutStages)
+    {
+        Index index;
+        index.addScript(
+            "if ( GetJournalIndex FG_RatHunt < 50 )\nreturn\nendif\n"
+            "if ( GetPCCell \"Pelagiad, Halfway Tavern\" == 1 )\nJournal FG_RatHunt 70\nendif",
+            { Index::Carrier{ id("itermerel"), true } });
+        index.addDialogue(line("itermerel", "Journal FG_RatHunt 50"));
+        const std::vector<Way> early = index.waysForward(quest, 10, Rule::All);
+        ASSERT_EQ(early.size(), 1u);
+        EXPECT_EQ(early[0].mObjectives, std::vector<Objective>{ talk("itermerel") });
+        const std::vector<Way> later = index.waysForward(quest, 50, Rule::All);
+        ASSERT_EQ(later.size(), 1u);
+        EXPECT_EQ(later[0].mToStage, 70);
+    }
+
+    TEST(MWGuiQuestTargetsIndexTest, aScriptsCheckOnAnotherQuestIsCheckedWhilePlaying)
+    {
+        Index index;
+        index.addScript("if ( GetJournalIndex Other_Quest >= 100 )\nJournal FG_RatHunt 70\nendif",
+            { Index::Carrier{ id("itermerel"), true } });
+        const std::vector<Way> ways = index.waysForward(quest, 10, Rule::All);
+        ASSERT_EQ(ways.size(), 1u);
+        ASSERT_EQ(ways[0].mChecks.size(), 1u);
+        EXPECT_EQ(ways[0].mChecks[0].mVariable, "other_quest");
+    }
 }

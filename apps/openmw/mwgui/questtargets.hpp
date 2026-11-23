@@ -98,6 +98,9 @@ namespace MWGui
             ESM::RefId mQuest;
             int mStage = 0;
             std::vector<std::vector<std::string>> mConditions;
+            // The conditions of the blocks before the command that return when they hold, such as
+            // `if ( GetJournalIndex MG_EscortScholar2 < 50 ) return endif`. The command only runs when they don't.
+            std::vector<std::vector<std::string>> mGuards;
         };
 
         /// The Journal and SetJournalIndex commands in a script. A command can be run on another object, the quest
@@ -124,6 +127,11 @@ namespace MWGui
 
         /// Reads what a script's conditions wait for.
         CallTargets callTargets(const std::vector<std::vector<std::string>>& conditions);
+
+        /// The checks on quests' stages in a script's conditions, such as `GetJournalIndex MG_EscortScholar2 >= 50`, as
+        /// a line of dialogue would have them. A guard's check is turned around, since the command only runs when the
+        /// guard doesn't hold.
+        std::vector<ESM::DialogueCondition> stageChecks(const ScriptJournalCall& call);
 
         /// Whether a line's conditions on a quest's stage allow the stage. A line with no condition on the quest
         /// allows every stage.

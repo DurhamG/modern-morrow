@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <optional>
 #include <string>
 #include <variant>
 
@@ -184,6 +185,97 @@ namespace MWGui::QuestTargets
             return arrow == std::string_view::npos ? std::string_view() : word.substr(0, arrow);
         }
 
+        // The early returns at the top level of a script: an if block that holds a return, and no elseif or else.
+        // Each is the line its block ends on, and its condition.
+        std::vector<std::pair<std::size_t, std::vector<std::string>>> earlyReturns(
+            const std::vector<std::vector<std::string>>& lines)
+        {
+            std::vector<std::pair<std::size_t, std::vector<std::string>>> guards;
+            int depth = 0;
+            for (std::size_t l = 0; l < lines.size(); ++l)
+            {
+                if (lines[l].empty())
+                    continue;
+                const std::string& first = lines[l][0];
+                if (first == "if" || first == "while")
+                {
+                    if (depth == 0)
+                    {
+                        bool returns = false;
+                        bool branches = false;
+                        int inner = 0;
+                        std::size_t end = l + 1;
+                        for (; end < lines.size(); ++end)
+                        {
+                            if (lines[end].empty())
+                                continue;
+                            const std::string& word = lines[end][0];
+                            if (word == "if" || word == "while")
+                                ++inner;
+                            else if (word == "endif" || word == "endwhile")
+                            {
+                                if (inner == 0)
+                                    break;
+                                --inner;
+                            }
+                            else if (inner == 0 && (word == "elseif" || word == "else"))
+                                branches = true;
+                            else if (inner == 0 && word == "return")
+                                returns = true;
+                        }
+                        if (returns && !branches && first == "if")
+                            guards.emplace_back(end, lines[l]);
+                    }
+                    ++depth;
+                }
+                else if (first == "endif" || first == "endwhile")
+                    depth = std::max(0, depth - 1);
+            }
+            return guards;
+        }
+
+        // A comparison as a script writes it, such as ">=", turned around when the condition must not hold.
+        std::optional<ESM::DialogueCondition::Comparison> comparisonOf(std::string_view op, bool negated)
+        {
+            using C = ESM::DialogueCondition;
+            if (op == "==" || op == "=")
+                return negated ? C::Comp_Ne : C::Comp_Eq;
+            if (op == "!=")
+                return negated ? C::Comp_Eq : C::Comp_Ne;
+            if (op == "<")
+                return negated ? C::Comp_Ge : C::Comp_Ls;
+            if (op == "<=")
+                return negated ? C::Comp_Gt : C::Comp_Le;
+            if (op == ">")
+                return negated ? C::Comp_Le : C::Comp_Gt;
+            if (op == ">=")
+                return negated ? C::Comp_Ls : C::Comp_Ge;
+            return std::nullopt;
+        }
+
+        void addStageChecks(
+            const std::vector<std::string>& words, bool negated, std::vector<ESM::DialogueCondition>& checks)
+        {
+            for (std::size_t i = 0; i + 3 < words.size(); ++i)
+            {
+                if (!isCommand(words[i], "getjournalindex"))
+                    continue;
+                const std::optional<ESM::DialogueCondition::Comparison> comparison
+                    = comparisonOf(words[i + 2], negated);
+                const std::string& number = words[i + 3];
+                int value = 0;
+                const auto [end, error] = std::from_chars(number.data(), number.data() + number.size(), value);
+                if (!comparison || error != std::errc() || end != number.data() + number.size())
+                    continue;
+                ESM::DialogueCondition check;
+                check.mFunction = ESM::DialogueCondition::Function_Journal;
+                check.mVariable = words[i + 1];
+                check.mComparison = *comparison;
+                check.mValue = value;
+                checks.push_back(std::move(check));
+            }
+        }
+
         void addUnique(std::vector<ESM::RefId>& ids, const ESM::RefId& id)
         {
             if (std::find(ids.begin(), ids.end(), id) == ids.end())
@@ -194,6 +286,7 @@ namespace MWGui::QuestTargets
     std::vector<ScriptJournalCall> scriptJournalCalls(std::string_view script)
     {
         const std::vector<std::vector<std::string>> lines = scriptWords(script);
+        const std::vector<std::pair<std::size_t, std::vector<std::string>>> guards = earlyReturns(lines);
         std::vector<ScriptJournalCall> calls;
         for (std::size_t l = 0; l < lines.size(); ++l)
         {
@@ -207,8 +300,12 @@ namespace MWGui::QuestTargets
                 const auto [end, error] = std::from_chars(stage.data(), stage.data() + stage.size(), value);
                 if (error != std::errc() || end != stage.data() + stage.size())
                     continue;
-                calls.push_back(
-                    ScriptJournalCall{ ESM::RefId::stringRefId(words[i + 1]), value, enclosingConditions(lines, l) });
+                ScriptJournalCall call{ ESM::RefId::stringRefId(words[i + 1]), value, enclosingConditions(lines, l),
+                    {} };
+                for (const auto& [guardEnd, condition] : guards)
+                    if (guardEnd < l)
+                        call.mGuards.push_back(condition);
+                calls.push_back(std::move(call));
             }
         }
         return calls;
@@ -259,6 +356,16 @@ namespace MWGui::QuestTargets
             }
         }
         return targets;
+    }
+
+    std::vector<ESM::DialogueCondition> stageChecks(const ScriptJournalCall& call)
+    {
+        std::vector<ESM::DialogueCondition> checks;
+        for (const std::vector<std::string>& words : call.mConditions)
+            addStageChecks(words, false, checks);
+        for (const std::vector<std::string>& words : call.mGuards)
+            addStageChecks(words, true, checks);
+        return checks;
     }
 
     bool compare(const ESM::DialogueCondition& condition, float value)
@@ -325,6 +432,9 @@ namespace MWGui::QuestTargets
             source.mToStage = call.mStage;
             source.mCarriers = carriers;
             source.mTargets = call.mConditions.empty() ? whole : callTargets(call.mConditions);
+            // Checks on quests' stages work as a dialogue line's do: on this quest they rule stages out, and on
+            // others the game checks them while playing.
+            source.mConditions = stageChecks(call);
             mSources[call.mQuest].push_back(std::move(source));
         }
     }
@@ -451,7 +561,7 @@ namespace MWGui::QuestTargets
         {
             if (source.mToStage <= stage)
                 continue;
-            if (source.mDialogue && !allowsStage(source.mConditions, quest, stage))
+            if (!allowsStage(source.mConditions, quest, stage))
                 continue;
             Way way{ source.mToStage, objectivesOf(quest, source) };
             if (way.mObjectives.empty())
