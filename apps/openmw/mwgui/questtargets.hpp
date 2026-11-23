@@ -113,6 +113,9 @@ namespace MWGui
         /// The quest and stage of every Journal or SetJournalIndex command in a script.
         std::vector<std::pair<ESM::RefId, int>> journalChanges(std::string_view script);
 
+        /// The items a script takes from the player, and how many, such as `Player->RemoveItem "misc_box" 1`.
+        std::vector<std::pair<ESM::RefId, int>> itemsTaken(std::string_view script);
+
         /// What the conditions around a script's Journal command wait for.
         struct CallTargets
         {
@@ -208,6 +211,8 @@ namespace MWGui
                 ESM::RefId mFaction;
                 ESM::RefId mCell;
                 int mRank = -1;
+                // The items the line's result takes from the player.
+                std::vector<std::pair<ESM::RefId, int>> mTaken;
                 // The objects a script is on, and what the script waits for.
                 std::vector<Carrier> mCarriers;
                 CallTargets mTargets;

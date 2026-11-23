@@ -216,6 +216,35 @@ namespace
         EXPECT_EQ(ways[0].mObjectives, expected);
     }
 
+    TEST(MWGuiQuestTargetsItemsTakenTest, findsItemsTakenFromThePlayer)
+    {
+        const std::vector<std::pair<ESM::RefId, int>> taken = itemsTaken(
+            "Player->RemoveItem \"ebony_bow_auriel\" 1\nRemoveItem misc_other 1\nplayer->removeitem, gold_001, 500");
+        const std::vector<std::pair<ESM::RefId, int>> expected{ { id("ebony_bow_auriel"), 1 }, { id("gold_001"), 500 } };
+        EXPECT_EQ(taken, expected);
+    }
+
+    TEST(MWGuiQuestTargetsIndexTest, anItemTheLineTakesIsAFetch)
+    {
+        Index index;
+        index.addDialogue(line("therana",
+            "Player->RemoveItem \"ebony_bow_auriel\" 1\nPlayer->RemoveItem gold_001 100\nJournal FG_RatHunt 100",
+            { condition(DialogueCondition::Function_Item, "ebony_bow_auriel", DialogueCondition::Comp_Ge, 1) }));
+        index.addDialogue(line("eydis fire-eye", "Player->RemoveItem misc_box 2\nJournal FG_RatHunt 50"));
+        const std::vector<Way> ways = index.waysForward(quest, 10, Rule::All);
+        ASSERT_EQ(ways.size(), 2u);
+        const std::vector<Objective> box{
+            Objective{ .mTask = Task::Fetch, .mObject = id("misc_box"), .mCount = 2 },
+            talk("eydis fire-eye"),
+        };
+        EXPECT_EQ(ways[0].mObjectives, box);
+        const std::vector<Objective> bow{
+            Objective{ .mTask = Task::Fetch, .mObject = id("ebony_bow_auriel") },
+            talk("therana"),
+        };
+        EXPECT_EQ(ways[1].mObjectives, bow);
+    }
+
     TEST(MWGuiQuestTargetsIndexTest, needingAQuestSpeakerDeadIsAFailure)
     {
         Index index;

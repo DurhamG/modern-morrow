@@ -364,6 +364,23 @@ namespace MWGui::QuestTargets
         return changes;
     }
 
+    std::vector<std::pair<ESM::RefId, int>> itemsTaken(std::string_view script)
+    {
+        std::vector<std::pair<ESM::RefId, int>> taken;
+        for (const std::vector<std::string>& words : scriptWords(script))
+            for (std::size_t i = 0; i + 2 < words.size(); ++i)
+            {
+                if (!isCommand(words[i], "removeitem") || caller(words[i]) != "player")
+                    continue;
+                const std::string& number = words[i + 2];
+                int count = 0;
+                const auto [end, error] = std::from_chars(number.data(), number.data() + number.size(), count);
+                if (error == std::errc() && end == number.data() + number.size() && count > 0)
+                    taken.emplace_back(ESM::RefId::stringRefId(words[i + 1]), count);
+            }
+        return taken;
+    }
+
     CallTargets callTargets(const std::vector<std::vector<std::string>>& conditions)
     {
         CallTargets targets;
@@ -451,6 +468,7 @@ namespace MWGui::QuestTargets
 
     void Index::addDialogue(const ESM::DialInfo& info)
     {
+        const std::vector<std::pair<ESM::RefId, int>> taken = itemsTaken(info.mResultScript);
         for (const auto& [quest, stage] : journalChanges(info.mResultScript))
         {
             Source source;
@@ -461,6 +479,7 @@ namespace MWGui::QuestTargets
             source.mFaction = info.mFaction;
             source.mCell = info.mCell;
             source.mRank = info.mData.mRank;
+            source.mTaken = taken;
             mSources[quest].push_back(std::move(source));
             if (!info.mActor.empty())
                 mSpeakers[quest].insert(info.mActor);
@@ -559,6 +578,7 @@ namespace MWGui::QuestTargets
             return objectives;
         }
 
+        const ESM::RefId gold = ESM::RefId::stringRefId("gold_001");
         for (const ESM::DialogueCondition& condition : source.mConditions)
         {
             const int count = countNeeded(condition);
@@ -567,9 +587,18 @@ namespace MWGui::QuestTargets
             const ESM::RefId id = ESM::RefId::stringRefId(condition.mVariable);
             if (condition.mFunction == ESM::DialogueCondition::Function_Dead)
                 objectives.push_back(Objective{ .mTask = Task::Kill, .mObject = id, .mCount = count });
-            else if (condition.mFunction == ESM::DialogueCondition::Function_Item
-                && id != ESM::RefId::stringRefId("gold_001"))
+            else if (condition.mFunction == ESM::DialogueCondition::Function_Item && id != gold)
                 objectives.push_back(Objective{ .mTask = Task::Fetch, .mObject = id, .mCount = count });
+        }
+        // A line can take an item from the player without a condition that the player has it, such as Therana
+        // taking Auriel's Bow.
+        for (const auto& [item, count] : source.mTaken)
+        {
+            const bool known = std::any_of(objectives.begin(), objectives.end(), [&](const Objective& objective) {
+                return objective.mTask == Task::Fetch && objective.mObject == item;
+            });
+            if (!known && item != gold)
+                objectives.push_back(Objective{ .mTask = Task::Fetch, .mObject = item, .mCount = count });
         }
         if (!source.mSpeaker.empty())
             objectives.push_back(Objective{ .mTask = Task::Talk, .mObject = source.mSpeaker });
