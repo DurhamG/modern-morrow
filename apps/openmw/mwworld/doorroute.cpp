@@ -57,4 +57,21 @@ namespace MWWorld
         }
         return std::nullopt;
     }
+
+    const DoorLink* findDoorInto(std::span<const DoorLink> doors, const ESM::RefId& from, const ESM::RefId& cell)
+    {
+        if (const auto route = findDoorRoute(doors, from, cell); route && !route->empty())
+            return route->back();
+        const DoorLink* any = nullptr;
+        for (const DoorLink& door : doors)
+        {
+            if (routePlace(door.mDestCell) != routePlace(cell))
+                continue;
+            if (routePlace(door.mCell) == ESM::Cell::sDefaultWorldspaceId)
+                return &door;
+            if (any == nullptr)
+                any = &door;
+        }
+        return any;
+    }
 }

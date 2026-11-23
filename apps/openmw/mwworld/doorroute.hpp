@@ -28,6 +28,11 @@ namespace MWWorld
     /// same place, and nothing when no doors lead there, such as to Mournhold, which the player is teleported to.
     std::optional<std::vector<const DoorLink*>> findDoorRoute(
         std::span<const DoorLink> doors, const ESM::RefId& from, const ESM::RefId& to);
+
+    /// The door the player comes into a cell through from another cell: the last door of the route there, or else a
+    /// door from outdoors, or else any door into it. A cell has doors from its own rooms too, such as an inn's
+    /// bedrooms, and coming out of one of those isn't arriving. Nothing when no door leads there.
+    const DoorLink* findDoorInto(std::span<const DoorLink> doors, const ESM::RefId& from, const ESM::RefId& cell);
 }
 
 #endif

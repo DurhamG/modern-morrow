@@ -213,9 +213,10 @@ namespace MWGui
         const std::string name = cellId.getRefIdString();
         if (const ESM::Cell* cell = store.get<ESM::Cell>().search(name); cell != nullptr && !cell->isExterior())
         {
-            for (const MWWorld::DoorLink& door : store.getTeleportDoors())
-                if (door.mDestCell == cell->mId)
-                    return Target{ task, cell->mName, door.mDestPos, cell->mId };
+            // The place is where the player comes in, not where a door from one of its own rooms comes out.
+            if (const MWWorld::DoorLink* door
+                = MWWorld::findDoorInto(store.getTeleportDoors(), mLastPlayerCell, cell->mId))
+                return Target{ task, cell->mName, door->mDestPos, cell->mId };
             return std::nullopt;
         }
         // An exterior place, such as "Gnaar Mok", is the middle of its first cell, at the player's height.

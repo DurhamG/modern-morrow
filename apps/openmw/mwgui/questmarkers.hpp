@@ -78,7 +78,7 @@ namespace MWGui
         std::vector<MWWorld::Ptr> findPlaced(const ESM::RefId& id) const;
         // The faction member, of the rank the objective needs, whom the player can reach through the fewest doors.
         std::vector<MWWorld::Ptr> nearestMember(const QuestTargets::Objective& objective) const;
-        // Where a cell is: inside the door into it, or the middle of an exterior cell of that name.
+        // Where a cell is: inside the door the player comes in through, or the middle of an exterior cell of that name.
         std::optional<Target> placeOfCell(const ESM::RefId& cell, QuestTargets::Task task) const;
 
         std::optional<QuestTargets::Index> mIndex;

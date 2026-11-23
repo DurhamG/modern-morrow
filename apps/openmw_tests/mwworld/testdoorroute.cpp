@@ -66,4 +66,33 @@ namespace
     {
         EXPECT_FALSE(findDoorRoute(doors, outsideA, mournhold).has_value());
     }
+
+    TEST(MWWorldDoorRouteTest, theDoorIntoACellIsTheLastOfTheRoute)
+    {
+        const std::vector<DoorLink> inn{
+            door(outsideA, guild, 1),
+            door(guildUpstairs, guild, 2),
+            door(guild, guildUpstairs, 3),
+        };
+        // From upstairs, the player comes down through the upstairs door.
+        const DoorLink* fromUpstairs = findDoorInto(inn, guildUpstairs, guild);
+        ASSERT_NE(fromUpstairs, nullptr);
+        EXPECT_EQ(fromUpstairs->mPos.x(), 2);
+        // From anywhere else, through the door from outside, not the one from upstairs.
+        const DoorLink* fromOutside = findDoorInto(inn, outsideB, guild);
+        ASSERT_NE(fromOutside, nullptr);
+        EXPECT_EQ(fromOutside->mPos.x(), 1);
+    }
+
+    TEST(MWWorldDoorRouteTest, inTheCellAlreadyTheDoorFromOutsideWins)
+    {
+        const std::vector<DoorLink> inn{
+            door(guildUpstairs, guild, 2),
+            door(outsideA, guild, 1),
+        };
+        const DoorLink* door = findDoorInto(inn, guild, guild);
+        ASSERT_NE(door, nullptr);
+        EXPECT_EQ(door->mPos.x(), 1);
+        EXPECT_EQ(findDoorInto(inn, guild, mournhold), nullptr);
+    }
 }
