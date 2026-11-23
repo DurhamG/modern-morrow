@@ -7,6 +7,7 @@
 #include <components/debug/debuglog.hpp>
 
 #include <components/esm/records.hpp>
+#include <components/esm/util.hpp>
 #include <components/esm3/esmreader.hpp>
 #include <components/esm3/esmwriter.hpp>
 #include <components/esm3/readerscache.hpp>
@@ -22,11 +23,15 @@
 
 namespace
 {
+    constexpr std::size_t noDoor = std::numeric_limits<std::size_t>::max();
+
     struct Ref
     {
         ESM::RefNum mRefNum;
         std::size_t mRefID;
         std::size_t mCellIndex;
+        // The ref's place in the list of doors that lead elsewhere, or noDoor.
+        std::size_t mDoor = noDoor;
 
         Ref(ESM::RefNum refNum, std::size_t refID, std::size_t cellIndex)
             : mRefNum(refNum)
@@ -38,8 +43,26 @@ namespace
 
     constexpr std::size_t deletedRefID = std::numeric_limits<std::size_t>::max();
 
+    // Notes the door if the ref is one that takes the player somewhere else.
+    void addDoor(const ESM::Cell& cell, const ESM::CellRef& ref, Ref& added, std::vector<MWWorld::DoorLink>& doors)
+    {
+        if (!ref.mTeleport)
+            return;
+        ESM::RefId dest;
+        if (!ref.mDestCell.empty())
+            dest = ESM::RefId::stringRefId(ref.mDestCell);
+        else
+        {
+            const ESM::ExteriorCellLocation location
+                = ESM::positionToExteriorCellLocation(ref.mDoorDest.pos[0], ref.mDoorDest.pos[1]);
+            dest = ESM::RefId::esm3ExteriorCell(location.mX, location.mY);
+        }
+        added.mDoor = doors.size();
+        doors.push_back(MWWorld::DoorLink{ cell.mId, ref.mPos.asVec3(), dest, ref.mDoorDest.asVec3() });
+    }
+
     void readRefs(const ESM::Cell& cell, std::size_t cellIndex, std::vector<Ref>& refs, std::vector<ESM::RefId>& refIDs,
-        std::set<ESM::RefId>& keyIDs, ESM::ReadersCache& readers)
+        std::set<ESM::RefId>& keyIDs, std::vector<MWWorld::DoorLink>& doors, ESM::ReadersCache& readers)
     {
         // TODO: we have many similar copies of this code.
         for (size_t i = 0; i < cell.mContextList.size(); i++)
@@ -58,7 +81,7 @@ namespace
                 {
                     if (!ref.mKey.empty())
                         keyIDs.insert(std::move(ref.mKey));
-                    refs.emplace_back(ref.mRefNum, refIDs.size(), cellIndex);
+                    addDoor(cell, ref, refs.emplace_back(ref.mRefNum, refIDs.size(), cellIndex), doors);
                     refIDs.push_back(std::move(ref.mRefID));
                 }
             }
@@ -71,7 +94,7 @@ namespace
             {
                 if (!value.mKey.empty())
                     keyIDs.insert(std::move(value.mKey));
-                refs.emplace_back(value.mRefNum, refIDs.size(), cellIndex);
+                addDoor(cell, value, refs.emplace_back(value.mRefNum, refIDs.size(), cellIndex), doors);
                 refIDs.push_back(value.mRefID);
             }
         }
@@ -565,12 +588,13 @@ namespace MWWorld
         std::vector<Ref> refs;
         std::set<ESM::RefId> keyIDs;
         std::vector<ESM::RefId> refIDs;
+        std::vector<DoorLink> doors;
         const Store<ESM::Cell>& cells = get<ESM::Cell>();
         const std::size_t cellCount = cells.getSize();
         const std::size_t interiorCellCount = cells.getIntSize();
         const std::size_t exteriorCellCount = cells.getExtSize();
         for (std::size_t i = 0; i < cellCount; ++i)
-            readRefs(*cells.at(i), i, refs, refIDs, keyIDs, readers);
+            readRefs(*cells.at(i), i, refs, refIDs, keyIDs, doors, readers);
         const auto lessByRefNum = [](const Ref& l, const Ref& r) { return l.mRefNum < r.mRefNum; };
         std::stable_sort(refs.begin(), refs.end(), lessByRefNum);
         const auto equalByRefNum = [](const Ref& l, const Ref& r) { return l.mRefNum == r.mRefNum; };
@@ -586,6 +610,8 @@ namespace MWWorld
             RefInfo& info = mRefInfo[refId];
             ++info.mCount;
             refsPerCell[value.mCellIndex].push_back(&info);
+            if (value.mDoor != noDoor)
+                mTeleportDoors.push_back(doors[value.mDoor]);
         });
         // Exteriors first, matching world lookup order.
         for (std::size_t i = 0; i < cellCount; ++i)
@@ -611,6 +637,11 @@ namespace MWWorld
         if (it == mRefInfo.end())
             return 0;
         return it->second.mCount;
+    }
+
+    std::span<const DoorLink> ESMStore::getTeleportDoors() const
+    {
+        return mTeleportDoors;
     }
 
     std::span<const ESM::Cell* const> ESMStore::getRefCells(const ESM::RefId& id) const

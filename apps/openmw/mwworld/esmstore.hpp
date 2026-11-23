@@ -14,6 +14,7 @@
 #include <components/esm3/loadgmst.hpp>
 #include <components/misc/tuplemeta.hpp>
 
+#include "doorroute.hpp"
 #include "store.hpp"
 
 namespace Loading
@@ -172,6 +173,7 @@ namespace MWWorld
         };
 
         std::unordered_map<ESM::RefId, RefInfo> mRefInfo;
+        std::vector<DoorLink> mTeleportDoors;
 
         std::vector<StoreBase*> mStores;
         std::vector<DynamicStore*> mDynamicStores;
@@ -310,6 +312,9 @@ namespace MWWorld
 
         /// @return Cells defining the ref, exteriors first.
         std::span<const ESM::Cell* const> getRefCells(const ESM::RefId& id) const;
+
+        /// @return The doors placed in the base files that take the player to another place.
+        std::span<const DoorLink> getTeleportDoors() const;
 
         /// Actors with the same ID share spells, abilities, etc.
         /// @return The shared spell list to use for this actor and whether or not it has already been initialized.
