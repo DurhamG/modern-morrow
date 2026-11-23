@@ -75,6 +75,8 @@ namespace MWGui
         void addTargets(const ESM::RefId& quest, int stage, std::vector<Target>& targets);
         // Adds where an objective's targets are now. Returns whether there were any.
         bool addObjectiveTargets(const QuestTargets::Objective& objective, std::vector<Target>& targets);
+        // Whether a way needs an item that the player doesn't carry and that can't be found anywhere.
+        bool isOutOfReach(const QuestTargets::Way& way);
         std::vector<MWWorld::Ptr> findPlaced(const ESM::RefId& id) const;
         // The faction member, of the rank the objective needs, whom the player can reach through the fewest doors.
         std::vector<MWWorld::Ptr> nearestMember(const QuestTargets::Objective& objective) const;

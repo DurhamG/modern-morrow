@@ -612,8 +612,9 @@ namespace MWGui::QuestTargets
 
     std::vector<Way> chooseWays(std::vector<Way> ways, Rule rule)
     {
-        if (std::any_of(ways.begin(), ways.end(), [](const Way& way) { return !way.mFailure; }))
-            std::erase_if(ways, [](const Way& way) { return way.mFailure; });
+        const auto setAside = [](const Way& way) { return way.mFailure || way.mOutOfReach; };
+        if (!std::all_of(ways.begin(), ways.end(), setAside))
+            std::erase_if(ways, setAside);
         if (rule != Rule::All && !ways.empty())
         {
             const auto [low, high] = std::minmax_element(

@@ -283,6 +283,19 @@ namespace
         EXPECT_EQ(ways[0].mToStage, 90);
     }
 
+    TEST(MWGuiQuestTargetsChooseWaysTest, waysOutOfReachOnlyCountWithoutAnother)
+    {
+        // Almalexia wants the reforged blade, which doesn't exist until Radac has the Pyroil Tar.
+        Way tar{ .mToStage = 80, .mObjectives = { talk("dwarven ghost_radac") } };
+        Way blade{ .mToStage = 100, .mObjectives = { talk("almalexia") }, .mOutOfReach = true };
+        const std::vector<Way> ways = chooseWays({ tar, blade }, Rule::LowestAndHighest);
+        ASSERT_EQ(ways.size(), 1u);
+        EXPECT_EQ(ways[0].mToStage, 80);
+        const std::vector<Way> only = chooseWays({ blade }, Rule::LowestAndHighest);
+        ASSERT_EQ(only.size(), 1u);
+        EXPECT_EQ(only[0].mToStage, 100);
+    }
+
     TEST(MWGuiQuestTargetsIndexTest, aScriptCanMakeAnotherActorACompanion)
     {
         Index index;

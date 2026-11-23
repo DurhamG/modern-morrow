@@ -291,6 +291,22 @@ namespace MWGui
         return added;
     }
 
+    bool QuestMarkers::isOutOfReach(const QuestTargets::Way& way)
+    {
+        const MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
+        std::vector<Target> found;
+        for (const QuestTargets::Objective& objective : way.mObjectives)
+        {
+            if (objective.mTask != QuestTargets::Task::Fetch || objective.mObject.empty())
+                continue;
+            if (player.getClass().getContainerStore(player).count(objective.mObject) >= objective.mCount)
+                continue;
+            if (!addObjectiveTargets(objective, found))
+                return true;
+        }
+        return false;
+    }
+
     void QuestMarkers::addTargets(const ESM::RefId& quest, int stage, std::vector<Target>& targets)
     {
         using QuestTargets::Task;
@@ -329,6 +345,8 @@ namespace MWGui
                     static_cast<float>(journal->getJournalIndex(ESM::RefId::stringRefId(condition.mVariable))));
             });
         });
+        for (QuestTargets::Way& way : ways)
+            way.mOutOfReach = isOutOfReach(way);
         for (const QuestTargets::Way& way : QuestTargets::chooseWays(std::move(ways), rule))
         {
             // Kills, fetches and visits come first. The talk they lead to is marked once they're done.
