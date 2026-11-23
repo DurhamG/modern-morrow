@@ -767,6 +767,11 @@ namespace MWInput
         const float scale = MWBase::Environment::get().getWindowManager()->getScalingFactor();
         const int x = static_cast<int>(finger.mStart.left / scale);
         const int y = static_cast<int>(finger.mStart.top / scale);
+        // The list scrolled is the one where the finger went down. The focus goes to the row under the finger now,
+        // so it moves with the rows the finger drags rather than staying where the finger started, or where the last
+        // tap was.
+        const MyGUI::IntPoint now = toGui(finger.mPosition);
+        MWGui::ControllerUi::fingerAt(now.left, now.top);
         MWBase::InputManager* input = MWBase::Environment::get().getInputManager();
         for (int i = 0; i < std::abs(steps); ++i)
         {

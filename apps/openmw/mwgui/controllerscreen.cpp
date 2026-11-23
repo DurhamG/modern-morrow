@@ -650,6 +650,11 @@ namespace MWGui
             return true;
         }
 
+        void fingerAt(int x, int y)
+        {
+            sMovedTo = MyGUI::IntPoint(x, y);
+        }
+
         MyGUI::IntPoint pointerPoint()
         {
             return sMovedTo.value_or(sWheelPoint);
@@ -773,8 +778,11 @@ namespace MWGui
                 const int scroll = std::clamp(mScroll - steps, 0, maxScroll);
                 if (scroll == mScroll)
                     return;
+                // A finger that scrolls the list can have moved past its edge, and the row at that edge is the one it
+                // drags.
                 const MyGUI::IntPoint point = ControllerUi::pointerPoint();
-                const int pointY = (layer != nullptr ? layer->getPosition(point.left, point.top).top : point.top) - top;
+                const int pointY = std::clamp(
+                    (layer != nullptr ? layer->getPosition(point.left, point.top).top : point.top) - top, 0, h - 1);
                 const int focusRow = ListScroll::itemRowAt(all, scroll, h, pointY);
                 if (focusRow < 0)
                     return;

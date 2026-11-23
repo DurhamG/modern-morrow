@@ -204,6 +204,9 @@ namespace MWGui
             MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void(int steps)> onWheel);
         /// Turns the wheel over the area under the mouse. Returns true when an area took it.
         bool pointerWheel(int x, int y, int steps);
+        /// Notes where a finger that scrolls a list is now, without pointing at anything there. The list then gives the
+        /// focus to the row under the finger, so the focus stays with what the finger drags.
+        void fingerAt(int x, int y);
         /// Where the mouse is, as the menus last saw it move, for an area's onWheel. Before it has moved, where it was
         /// when the wheel last turned. A mouse move gives the same position that pointing at targets uses.
         MyGUI::IntPoint pointerPoint();
