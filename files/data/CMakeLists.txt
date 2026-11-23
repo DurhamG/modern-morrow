@@ -41,6 +41,9 @@ set(BUILTIN_DATA_FILES
     textures/omw_xbox_button_rb.dds
     textures/omw_xbox_button_rt.dds
     textures/omw/water_nm.png
+    textures/omw/quest_marker.png
+    textures/omw/quest_arrow_up.png
+    textures/omw/quest_arrow_down.png
 
     fonts/DejaVuFontLicense.txt
     fonts/DejaVuLGCSansMono.ttf

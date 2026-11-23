@@ -156,6 +156,8 @@ namespace MWGui
         std::map<std::pair<int, int>, std::vector<MarkerWidget*>> mExteriorDoorsByCell;
         std::vector<MarkerWidget*> mInteriorDoorMarkerWidgets;
         std::vector<MyGUI::Widget*> mMagicMarkerWidgets;
+        // The tracked quests' markers, which are bigger than the magic ones.
+        std::vector<MyGUI::Widget*> mQuestMarkerWidgets;
         std::vector<MyGUI::Widget*> mCustomMarkerWidgets;
         std::vector<MarkerWidget*> mDoorMarkersToRecycle;
 
@@ -453,6 +455,8 @@ namespace MWGui
 
         // The pins in exterior cells, drawn on the global map, with their positions in the world.
         std::vector<std::pair<MyGUI::Widget*, osg::Vec2f>> mGlobalMapPins;
+        // The quest markers were last drawn for this set of markers.
+        unsigned int mQuestMarkerGeneration = 0;
 
         MyGUI::IntCoord mLastScrollWindowCoordinates;
 

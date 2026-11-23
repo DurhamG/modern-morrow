@@ -36,6 +36,7 @@
 
 #include "confirmationdialog.hpp"
 #include "controllerscreen.hpp"
+#include "questmarkers.hpp"
 
 #include <numeric>
 
@@ -753,6 +754,25 @@ namespace MWGui
             mMagicMarkerWidgets.push_back(markerWidget);
         }
 
+        // The tracked quests' markers: their targets here, and the doors on the way to the others.
+        for (MyGUI::Widget* widget : mQuestMarkerWidgets)
+            MyGUI::Gui::getInstance().destroyWidget(widget);
+        mQuestMarkerWidgets.clear();
+        if (const QuestMarkers* quests = MWBase::Environment::get().getWindowManager()->getQuestMarkers())
+        {
+            for (const QuestMarkers::Marker& quest : quests->getLocalMarkers())
+            {
+                MarkerUserData markerPos(mLocalMapRender);
+                MyGUI::ImageBox* markerWidget = mLocalMap->createWidget<MyGUI::ImageBox>("ImageBox",
+                    getMarkerCoordinates(quest.mPos.x(), quest.mPos.y(), markerPos, 16), MyGUI::Align::Default);
+                markerWidget->setDepth(Local_MarkerAboveFogLayer);
+                markerWidget->setImageTexture("textures\\omw\\quest_marker.png");
+                markerWidget->setNeedMouseFocus(false);
+                markerWidget->setUserData(markerPos);
+                mQuestMarkerWidgets.push_back(markerWidget);
+            }
+        }
+
         redraw();
     }
 
@@ -784,6 +804,8 @@ namespace MWGui
 
         for (MyGUI::Widget* widget : mMagicMarkerWidgets)
             updateMarkerCoordinates(widget, 8);
+        for (MyGUI::Widget* widget : mQuestMarkerWidgets)
+            updateMarkerCoordinates(widget, 16);
     }
 
     // ------------------------------------------------------------------------------------------
@@ -1070,6 +1092,20 @@ namespace MWGui
             pin->setDepth(Global_CompassLayer);
             mGlobalMapPins.emplace_back(pin, osg::Vec2f(marker.mWorldX, marker.mWorldY));
         }
+        // The tracked quests' targets outdoors, and the doors into the places of the others.
+        if (const QuestMarkers* quests = MWBase::Environment::get().getWindowManager()->getQuestMarkers())
+        {
+            for (const QuestMarkers::Marker& quest : quests->getWorldMarkers())
+            {
+                MyGUI::ImageBox* pin
+                    = mGlobalMap->createWidget<MyGUI::ImageBox>("ImageBox", MyGUI::IntCoord(), MyGUI::Align::Default);
+                pin->setImageTexture("textures\\omw\\quest_marker.png");
+                pin->setNeedMouseFocus(false);
+                pin->setDepth(Global_CompassLayer);
+                mGlobalMapPins.emplace_back(pin, osg::Vec2f(quest.mPos.x(), quest.mPos.y()));
+            }
+            mQuestMarkerGeneration = quests->getGeneration();
+        }
         placeGlobalMapPins();
     }
 
@@ -1349,6 +1385,10 @@ namespace MWGui
     {
         LocalMapBase::onFrame(dt);
         NoDrop::onFrame(dt);
+
+        const QuestMarkers* quests = MWBase::Environment::get().getWindowManager()->getQuestMarkers();
+        if (quests != nullptr && quests->getGeneration() != mQuestMarkerGeneration)
+            createGlobalMapPins();
 
         if (Settings::gui().mControllerMenus && !Settings::map().mGlobal
             && MWBase::Environment::get().getWindowManager()->getActiveControllerWindow() == this)
@@ -1880,8 +1920,8 @@ namespace MWGui
             MyGUI::Gui::getInstance().destroyWidget(marker.mWidget);
         mMap3DMagicMarkers.clear();
 
-        const int size = getMap3DMarkerSize(10);
-        const auto addMarker = [&](const osg::Vec3f& position, std::string_view texture) {
+        const auto addMarker = [&](const osg::Vec3f& position, std::string_view texture, int canvasSize = 10) {
+            const int size = getMap3DMarkerSize(canvasSize);
             MyGUI::ImageBox* widget = mMap3DImage->createWidget<MyGUI::ImageBox>(
                 "ImageBox", MyGUI::IntCoord(0, 0, size, size), MyGUI::Align::Default);
             widget->setImageTexture(texture);
@@ -1909,6 +1949,10 @@ namespace MWGui
         world->getPlayer().getMarkedPosition(markedCell, markedPosition);
         if (markedCell != nullptr && markedCell->getCell()->getWorldSpace() == mActiveCell->getWorldSpace())
             addMarker(markedPosition.asVec3(), "textures\\menu_map_smark.dds");
+
+        if (const QuestMarkers* quests = MWBase::Environment::get().getWindowManager()->getQuestMarkers())
+            for (const QuestMarkers::Marker& quest : quests->getLocalMarkers())
+                addMarker(quest.mPos, "textures\\omw\\quest_marker.png", 24);
     }
 
     void MapWindow::addMap3DDoors()
