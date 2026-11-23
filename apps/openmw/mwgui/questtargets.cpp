@@ -139,11 +139,65 @@ namespace MWGui::QuestTargets
         }
     }
 
-    std::vector<std::pair<ESM::RefId, int>> journalChanges(std::string_view script)
+    namespace
     {
-        std::vector<std::pair<ESM::RefId, int>> changes;
-        for (const std::vector<std::string>& words : scriptWords(script))
+        // The conditions of the if blocks around a line, innermost first. In an elseif block, that line's condition
+        // counts, and the conditions of the chain's other branches don't. An else block adds none.
+        std::vector<std::vector<std::string>> enclosingConditions(
+            const std::vector<std::vector<std::string>>& lines, std::size_t line)
         {
+            std::vector<std::vector<std::string>> conditions;
+            int depth = 0;
+            bool inChain = false;
+            for (std::size_t j = line; j-- > 0;)
+            {
+                if (lines[j].empty())
+                    continue;
+                const std::string& first = lines[j][0];
+                if (first == "endif" || first == "endwhile")
+                    ++depth;
+                else if (first == "if" || first == "while")
+                {
+                    if (depth > 0)
+                        --depth;
+                    else
+                    {
+                        if (!inChain)
+                            conditions.push_back(lines[j]);
+                        inChain = false;
+                    }
+                }
+                else if ((first == "elseif" || first == "else") && depth == 0)
+                {
+                    if (!inChain && first == "elseif")
+                        conditions.push_back(lines[j]);
+                    inChain = true;
+                }
+            }
+            return conditions;
+        }
+
+        // The object a command runs on, such as "player" in "player->getdistance", or empty for the script's own.
+        std::string_view caller(std::string_view word)
+        {
+            const std::size_t arrow = word.rfind("->");
+            return arrow == std::string_view::npos ? std::string_view() : word.substr(0, arrow);
+        }
+
+        void addUnique(std::vector<ESM::RefId>& ids, const ESM::RefId& id)
+        {
+            if (std::find(ids.begin(), ids.end(), id) == ids.end())
+                ids.push_back(id);
+        }
+    }
+
+    std::vector<ScriptJournalCall> scriptJournalCalls(std::string_view script)
+    {
+        const std::vector<std::vector<std::string>> lines = scriptWords(script);
+        std::vector<ScriptJournalCall> calls;
+        for (std::size_t l = 0; l < lines.size(); ++l)
+        {
+            const std::vector<std::string>& words = lines[l];
             for (std::size_t i = 0; i + 2 < words.size(); ++i)
             {
                 if (!isCommand(words[i], "journal") && !isCommand(words[i], "setjournalindex"))
@@ -153,77 +207,88 @@ namespace MWGui::QuestTargets
                 const auto [end, error] = std::from_chars(stage.data(), stage.data() + stage.size(), value);
                 if (error != std::errc() || end != stage.data() + stage.size())
                     continue;
-                changes.emplace_back(ESM::RefId::stringRefId(words[i + 1]), value);
+                calls.push_back(
+                    ScriptJournalCall{ ESM::RefId::stringRefId(words[i + 1]), value, enclosingConditions(lines, l) });
             }
         }
+        return calls;
+    }
+
+    std::vector<std::pair<ESM::RefId, int>> journalChanges(std::string_view script)
+    {
+        std::vector<std::pair<ESM::RefId, int>> changes;
+        for (const ScriptJournalCall& call : scriptJournalCalls(script))
+            changes.emplace_back(call.mQuest, call.mStage);
         return changes;
     }
 
-    ScriptEvent scriptEvent(std::string_view script)
+    CallTargets callTargets(const std::vector<std::vector<std::string>>& conditions)
     {
-        for (const std::vector<std::string>& words : scriptWords(script))
+        CallTargets targets;
+        for (const std::vector<std::string>& words : conditions)
         {
-            for (const std::string& word : words)
+            for (std::size_t i = 0; i < words.size(); ++i)
             {
-                if (isCommand(word, "ondeath") || isCommand(word, "gethealth"))
-                    return ScriptEvent::Death;
-                if (isCommand(word, "onpcadd"))
-                    return ScriptEvent::PickUp;
+                const std::string& word = words[i];
+                const std::string_view on = caller(word);
+                const std::string* argument = i + 1 < words.size() ? &words[i + 1] : nullptr;
+                if (targets.mEvent == ScriptEvent::Other
+                    && (isCommand(word, "ondeath") || isCommand(word, "gethealth")))
+                    targets.mEvent = ScriptEvent::Death;
+                else if (targets.mEvent == ScriptEvent::Other && isCommand(word, "onpcadd"))
+                    targets.mEvent = ScriptEvent::PickUp;
+                else if (isCommand(word, "getdistance") && argument != nullptr)
+                {
+                    // The player's distance to something, or something's distance to the player.
+                    std::string_view near;
+                    if (on == "player")
+                        near = *argument;
+                    else if (*argument == "player")
+                        near = on;
+                    else if (on.empty())
+                        near = *argument;
+                    if (!near.empty() && near != "player")
+                        addUnique(targets.mNear, ESM::RefId::stringRefId(near));
+                }
+                else if (isCommand(word, "getpccell") && argument != nullptr)
+                    addUnique(targets.mCells, ESM::RefId::stringRefId(*argument));
+                else if (isCommand(word, "getdeadcount") && argument != nullptr)
+                    addUnique(targets.mKills, ESM::RefId::stringRefId(*argument));
+                else if (isCommand(word, "getitemcount") && argument != nullptr && on == "player")
+                    addUnique(targets.mFetches, ESM::RefId::stringRefId(*argument));
             }
         }
-        return ScriptEvent::Other;
+        return targets;
     }
 
-    std::vector<ESM::RefId> deadCountTargets(std::string_view script)
+    bool compare(const ESM::DialogueCondition& condition, float value)
     {
-        std::vector<ESM::RefId> targets;
-        for (const std::vector<std::string>& words : scriptWords(script))
-            for (std::size_t i = 0; i + 1 < words.size(); ++i)
-                if (isCommand(words[i], "getdeadcount"))
-                {
-                    const ESM::RefId id = ESM::RefId::stringRefId(words[i + 1]);
-                    if (std::find(targets.begin(), targets.end(), id) == targets.end())
-                        targets.push_back(id);
-                }
-        return targets;
+        const float wanted = valueOf(condition);
+        switch (condition.mComparison)
+        {
+            case ESM::DialogueCondition::Comp_Eq:
+                return value == wanted;
+            case ESM::DialogueCondition::Comp_Ne:
+                return value != wanted;
+            case ESM::DialogueCondition::Comp_Gt:
+                return value > wanted;
+            case ESM::DialogueCondition::Comp_Ge:
+                return value >= wanted;
+            case ESM::DialogueCondition::Comp_Ls:
+                return value < wanted;
+            case ESM::DialogueCondition::Comp_Le:
+                return value <= wanted;
+            default:
+                return true;
+        }
     }
 
     bool allowsStage(const std::vector<ESM::DialogueCondition>& conditions, const ESM::RefId& quest, int stage)
     {
         for (const ESM::DialogueCondition& condition : conditions)
-        {
-            if (condition.mFunction != ESM::DialogueCondition::Function_Journal
-                || !sameQuest(condition.mVariable, quest))
-                continue;
-            const float value = valueOf(condition);
-            const float at = static_cast<float>(stage);
-            bool allowed = true;
-            switch (condition.mComparison)
-            {
-                case ESM::DialogueCondition::Comp_Eq:
-                    allowed = at == value;
-                    break;
-                case ESM::DialogueCondition::Comp_Ne:
-                    allowed = at != value;
-                    break;
-                case ESM::DialogueCondition::Comp_Gt:
-                    allowed = at > value;
-                    break;
-                case ESM::DialogueCondition::Comp_Ge:
-                    allowed = at >= value;
-                    break;
-                case ESM::DialogueCondition::Comp_Ls:
-                    allowed = at < value;
-                    break;
-                case ESM::DialogueCondition::Comp_Le:
-                    allowed = at <= value;
-                    break;
-                default:
-                    break;
-            }
-            if (!allowed)
+            if (condition.mFunction == ESM::DialogueCondition::Function_Journal && sameQuest(condition.mVariable, quest)
+                && !compare(condition, static_cast<float>(stage)))
                 return false;
-        }
         return true;
     }
 
@@ -238,6 +303,7 @@ namespace MWGui::QuestTargets
             source.mSpeaker = info.mActor;
             source.mFaction = info.mFaction;
             source.mCell = info.mCell;
+            source.mRank = info.mData.mRank;
             mSources[quest].push_back(std::move(source));
             if (!info.mActor.empty())
                 mSpeakers[quest].insert(info.mActor);
@@ -246,21 +312,49 @@ namespace MWGui::QuestTargets
 
     void Index::addScript(std::string_view text, const std::vector<Carrier>& carriers)
     {
-        const std::vector<std::pair<ESM::RefId, int>> changes = journalChanges(text);
-        if (changes.empty())
+        const std::vector<ScriptJournalCall> calls = scriptJournalCalls(text);
+        if (calls.empty())
             return;
-        const ScriptEvent event = scriptEvent(text);
-        const std::vector<ESM::RefId> deadCounts
-            = carriers.empty() ? deadCountTargets(text) : std::vector<ESM::RefId>();
-        for (const auto& [quest, stage] : changes)
+        // A Journal command outside any if block, such as one in a script that a dialogue starts, waits for whatever
+        // the whole script waits for. One inside if blocks waits only for what those conditions say, so a counter
+        // or a flag doesn't turn a friendly actor's OnDeath elsewhere in the script into a kill.
+        const CallTargets whole = callTargets(scriptWords(text));
+        for (const ScriptJournalCall& call : calls)
         {
             Source source;
-            source.mToStage = stage;
+            source.mToStage = call.mStage;
             source.mCarriers = carriers;
-            source.mEvent = event;
-            source.mDeadCountTargets = deadCounts;
-            mSources[quest].push_back(std::move(source));
+            source.mTargets = call.mConditions.empty() ? whole : callTargets(call.mConditions);
+            mSources[call.mQuest].push_back(std::move(source));
         }
+    }
+
+    void Index::addHolder(const ESM::RefId& item, const ESM::RefId& holder)
+    {
+        addUnique(mHolders[item], holder);
+    }
+
+    void Index::addMember(const ESM::RefId& faction, const ESM::RefId& person, int rank)
+    {
+        mMembers[faction].push_back(Member{ person, rank });
+    }
+
+    const std::vector<ESM::RefId>& Index::holdersOf(const ESM::RefId& item) const
+    {
+        static const std::vector<ESM::RefId> none;
+        const auto it = mHolders.find(item);
+        return it != mHolders.end() ? it->second : none;
+    }
+
+    std::vector<ESM::RefId> Index::membersOf(const ESM::RefId& faction, int rank) const
+    {
+        std::vector<ESM::RefId> members;
+        const auto it = mMembers.find(faction);
+        if (it != mMembers.end())
+            for (const Member& member : it->second)
+                if (member.mRank >= rank)
+                    members.push_back(member.mId);
+        return members;
     }
 
     std::vector<Objective> Index::objectivesOf(const ESM::RefId& quest, const Source& source) const
@@ -268,20 +362,31 @@ namespace MWGui::QuestTargets
         std::vector<Objective> objectives;
         if (!source.mDialogue)
         {
+            // What the conditions around the Journal command name comes first: where to go, what to get, what to
+            // kill. Without any, the objects the script is on are the targets.
+            const CallTargets& targets = source.mTargets;
+            for (const ESM::RefId& cell : targets.mCells)
+                objectives.push_back(Objective{ .mTask = Task::Visit, .mCell = cell });
+            for (const ESM::RefId& near : targets.mNear)
+                objectives.push_back(Objective{ .mTask = Task::Visit, .mObject = near });
+            for (const ESM::RefId& item : targets.mFetches)
+                objectives.push_back(Objective{ .mTask = Task::Fetch, .mObject = item });
+            for (const ESM::RefId& target : targets.mKills)
+                objectives.push_back(Objective{ .mTask = Task::Kill, .mObject = target });
+            if (!objectives.empty())
+                return objectives;
             for (const Carrier& carrier : source.mCarriers)
             {
                 Objective objective;
                 objective.mObject = carrier.mId;
-                if (carrier.mActor && source.mEvent == ScriptEvent::Death)
+                if (carrier.mActor && targets.mEvent == ScriptEvent::Death)
                     objective.mTask = Task::Kill;
-                else if (!carrier.mActor && source.mEvent == ScriptEvent::PickUp)
+                else if (!carrier.mActor && targets.mEvent == ScriptEvent::PickUp)
                     objective.mTask = Task::Fetch;
                 else
                     objective.mTask = Task::Visit;
                 objectives.push_back(objective);
             }
-            for (const ESM::RefId& target : source.mDeadCountTargets)
-                objectives.push_back(Objective{ .mTask = Task::Kill, .mObject = target });
             return objectives;
         }
 
@@ -306,13 +411,37 @@ namespace MWGui::QuestTargets
         if (!source.mSpeaker.empty())
             objectives.push_back(Objective{ .mTask = Task::Talk, .mObject = source.mSpeaker });
         else if (!source.mFaction.empty())
-            objectives.push_back(Objective{ .mTask = Task::Talk, .mFaction = source.mFaction });
+            objectives.push_back(Objective{
+                .mTask = Task::Talk, .mFaction = source.mFaction, .mCell = source.mCell, .mRank = source.mRank });
         else if (!source.mCell.empty())
             objectives.push_back(Objective{ .mTask = Task::Talk, .mCell = source.mCell });
         return objectives;
     }
 
+    std::vector<Way> chooseWays(std::vector<Way> ways, Rule rule)
+    {
+        // An answer in a conversation only comes up while talking to that person already, so it isn't somewhere to
+        // go unless there's nothing else.
+        if (std::any_of(ways.begin(), ways.end(), [](const Way& way) { return !way.mChoice; }))
+            std::erase_if(ways, [](const Way& way) { return way.mChoice; });
+        if (rule != Rule::All && !ways.empty())
+        {
+            const auto [low, high] = std::minmax_element(
+                ways.begin(), ways.end(), [](const Way& l, const Way& r) { return l.mToStage < r.mToStage; });
+            const int lowest = low->mToStage;
+            const int highest = rule == Rule::LowestAndHighest ? high->mToStage : lowest;
+            std::erase_if(ways, [&](const Way& way) { return way.mToStage != lowest && way.mToStage != highest; });
+        }
+        std::stable_sort(ways.begin(), ways.end(), [](const Way& l, const Way& r) { return l.mToStage < r.mToStage; });
+        return ways;
+    }
+
     std::vector<Way> Index::waysForward(const ESM::RefId& quest, int stage, Rule rule) const
+    {
+        return chooseWays(waysForward(quest, stage), rule);
+    }
+
+    std::vector<Way> Index::waysForward(const ESM::RefId& quest, int stage) const
     {
         std::vector<Way> ways;
         const auto it = mSources.find(quest);
@@ -327,20 +456,24 @@ namespace MWGui::QuestTargets
             Way way{ source.mToStage, objectivesOf(quest, source) };
             if (way.mObjectives.empty())
                 continue;
+            for (const ESM::DialogueCondition& condition : source.mConditions)
+            {
+                if (condition.mFunction == ESM::DialogueCondition::Function_Choice)
+                    way.mChoice = true;
+                else if (condition.mFunction == ESM::DialogueCondition::Function_Global
+                    || condition.mFunction == ESM::DialogueCondition::Function_Local
+                    || (condition.mFunction == ESM::DialogueCondition::Function_Journal
+                        && !sameQuest(condition.mVariable, quest)))
+                    way.mChecks.push_back(condition);
+            }
+            way.mSpeaker = source.mSpeaker;
             const bool known = std::any_of(ways.begin(), ways.end(), [&](const Way& other) {
-                return other.mToStage == way.mToStage && other.mObjectives == way.mObjectives;
+                return other.mToStage == way.mToStage && other.mObjectives == way.mObjectives
+                    && other.mChoice == way.mChoice;
             });
             if (!known)
                 ways.push_back(std::move(way));
         }
-        if (rule == Rule::Lowest && !ways.empty())
-        {
-            const int lowest = std::min_element(ways.begin(), ways.end(), [](const Way& l, const Way& r) {
-                return l.mToStage < r.mToStage;
-            })->mToStage;
-            std::erase_if(ways, [&](const Way& way) { return way.mToStage != lowest; });
-        }
-        std::stable_sort(ways.begin(), ways.end(), [](const Way& l, const Way& r) { return l.mToStage < r.mToStage; });
         return ways;
     }
 
@@ -379,6 +512,20 @@ namespace MWGui::QuestTargets
             const auto it = carriers.find(script.mId);
             index.addScript(script.mScriptText, it != carriers.end() ? it->second : none);
         }
+
+        for (const ESM::NPC& npc : store.get<ESM::NPC>())
+        {
+            for (const ESM::ContItem& item : npc.mInventory.mList)
+                index.addHolder(item.mItem, npc.mId);
+            if (!npc.mFaction.empty())
+                index.addMember(npc.mFaction, npc.mId, npc.getFactionRank());
+        }
+        for (const ESM::Creature& creature : store.get<ESM::Creature>())
+            for (const ESM::ContItem& item : creature.mInventory.mList)
+                index.addHolder(item.mItem, creature.mId);
+        for (const ESM::Container& container : store.get<ESM::Container>())
+            for (const ESM::ContItem& item : container.mInventory.mList)
+                index.addHolder(item.mItem, container.mId);
         return index;
     }
 }

@@ -2,9 +2,13 @@
 
 #include <algorithm>
 #include <chrono>
+#include <limits>
+#include <optional>
 
 #include <components/debug/debuglog.hpp>
+#include <components/esm/util.hpp>
 #include <components/esm3/loadcell.hpp>
+#include <components/misc/strings/algorithm.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -15,11 +19,14 @@
 
 #include "../mwmechanics/creaturestats.hpp"
 
+#include "../mwscript/locals.hpp"
+
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
 #include "../mwworld/doorroute.hpp"
 #include "../mwworld/esmstore.hpp"
+#include "../mwworld/manualref.hpp"
 #include "../mwworld/worldmodel.hpp"
 
 namespace MWGui
@@ -173,35 +180,163 @@ namespace MWGui
         return found;
     }
 
-    void QuestMarkers::addTargets(const ESM::RefId& quest, int stage, std::vector<Target>& targets)
+    std::vector<MWWorld::Ptr> QuestMarkers::nearestMember(const QuestTargets::Objective& objective) const
+    {
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+        const std::string cellPrefix = objective.mCell.empty() ? std::string() : objective.mCell.getRefIdString();
+        ESM::RefId best;
+        std::size_t bestDoors = std::numeric_limits<std::size_t>::max();
+        for (const ESM::RefId& member : mIndex->membersOf(objective.mFaction, objective.mRank))
+        {
+            if (store.getRefCount(member) != 1)
+                continue;
+            const ESM::Cell* cell = store.getRefCells(member).front();
+            // A line can be limited to the cells whose names start with some text, such as "Mournhold".
+            if (!cellPrefix.empty() && !Misc::StringUtils::ciStartsWith(cell->mName, cellPrefix))
+                continue;
+            const auto route = MWWorld::findDoorRoute(store.getTeleportDoors(), mLastPlayerCell, cell->mId);
+            if (route && route->size() < bestDoors)
+            {
+                best = member;
+                bestDoors = route->size();
+            }
+        }
+        if (best.empty())
+            return {};
+        return findPlaced(best);
+    }
+
+    std::optional<QuestMarkers::Target> QuestMarkers::placeOfCell(
+        const ESM::RefId& cellId, QuestTargets::Task task) const
+    {
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+        const std::string name = cellId.getRefIdString();
+        if (const ESM::Cell* cell = store.get<ESM::Cell>().search(name); cell != nullptr && !cell->isExterior())
+        {
+            for (const MWWorld::DoorLink& door : store.getTeleportDoors())
+                if (door.mDestCell == cell->mId)
+                    return Target{ task, cell->mName, door.mDestPos, cell->mId };
+            return std::nullopt;
+        }
+        // An exterior place, such as "Gnaar Mok", is the middle of its first cell, at the player's height.
+        const MWWorld::Store<ESM::Cell>& cells = store.get<ESM::Cell>();
+        for (auto it = cells.extBegin(); it != cells.extEnd(); ++it)
+        {
+            if (!Misc::StringUtils::ciEqual(it->mName, name))
+                continue;
+            const osg::Vec2f centre = ESM::indexToPosition(
+                ESM::ExteriorCellLocation(it->getGridX(), it->getGridY(), ESM::Cell::sDefaultWorldspaceId), true);
+            const float height
+                = MWBase::Environment::get().getWorld()->getPlayerPtr().getRefData().getPosition().asVec3().z();
+            return Target{ task, it->mName, osg::Vec3f(centre.x(), centre.y(), height), it->mId };
+        }
+        return std::nullopt;
+    }
+
+    bool QuestMarkers::addObjectiveTargets(const QuestTargets::Objective& objective, std::vector<Target>& targets)
     {
         using QuestTargets::Task;
         const MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
-        const QuestTargets::Rule rule
-            = Settings::gui().mQuestMarkerRule == 1 ? QuestTargets::Rule::All : QuestTargets::Rule::Lowest;
-        for (const QuestTargets::Way& way : mIndex->waysForward(quest, stage, rule))
+        if (objective.mTask == Task::Fetch && !objective.mObject.empty()
+            && player.getClass().getContainerStore(player).count(objective.mObject) >= objective.mCount)
+            return false;
+        const auto add = [&](const MWWorld::Ptr& ptr, Task task, std::string name) {
+            if (!isAlive(ptr) || ptr.getCell() == nullptr)
+                return false;
+            targets.push_back(Target{
+                task, std::move(name), ptr.getRefData().getPosition().asVec3(), ptr.getCell()->getCell()->getId() });
+            return true;
+        };
+
+        bool added = false;
+        if (!objective.mObject.empty())
+        {
+            for (const MWWorld::Ptr& ptr : findPlaced(objective.mObject))
+                added |= add(ptr, objective.mTask, std::string(ptr.getClass().getName(ptr)));
+            // An item that isn't lying anywhere can be on someone, or in a container.
+            if (!added && objective.mTask == Task::Fetch)
+            {
+                const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+                if (store.find(objective.mObject) == 0)
+                    return false;
+                const MWWorld::ManualRef item(store, objective.mObject);
+                const std::string itemName(item.getPtr().getClass().getName(item.getPtr()));
+                // A holder can be a corpse, such as the one that carries a pipe someone wants back.
+                for (const ESM::RefId& holder : mIndex->holdersOf(objective.mObject))
+                    for (const MWWorld::Ptr& ptr : findPlaced(holder))
+                    {
+                        if (!ptr.getRefData().isEnabled() || ptr.getCell() == nullptr
+                            || ptr.getClass().getContainerStore(ptr).count(objective.mObject) <= 0)
+                            continue;
+                        targets.push_back(Target{ Task::Fetch, itemName, ptr.getRefData().getPosition().asVec3(),
+                            ptr.getCell()->getCell()->getId() });
+                        added = true;
+                    }
+            }
+        }
+        else if (!objective.mFaction.empty())
+        {
+            for (const MWWorld::Ptr& ptr : nearestMember(objective))
+                added |= add(ptr, objective.mTask, std::string(ptr.getClass().getName(ptr)));
+        }
+        else if (!objective.mCell.empty())
+        {
+            if (const std::optional<Target> place = placeOfCell(objective.mCell, objective.mTask))
+            {
+                targets.push_back(*place);
+                added = true;
+            }
+        }
+        return added;
+    }
+
+    void QuestMarkers::addTargets(const ESM::RefId& quest, int stage, std::vector<Target>& targets)
+    {
+        using QuestTargets::Task;
+        MWBase::World* world = MWBase::Environment::get().getWorld();
+        MWBase::Journal* journal = MWBase::Environment::get().getJournal();
+        QuestTargets::Rule rule = QuestTargets::Rule::Lowest;
+        if (Settings::gui().mQuestMarkerRule == 1)
+            rule = QuestTargets::Rule::All;
+        else if (Settings::gui().mQuestMarkerRule == 2)
+            rule = QuestTargets::Rule::LowestAndHighest;
+        // A way whose line needs a global variable, another quest's stage or the speaker's local variable that
+        // doesn't hold yet isn't one, such as a branch for when the player killed someone. Those are left out before
+        // the rule chooses, so the next way along takes their place.
+        std::vector<QuestTargets::Way> ways = mIndex->waysForward(quest, stage);
+        std::erase_if(ways, [&](const QuestTargets::Way& way) {
+            return !std::all_of(way.mChecks.begin(), way.mChecks.end(), [&](const auto& condition) {
+                if (condition.mFunction == ESM::DialogueCondition::Function_Global)
+                {
+                    if (world->getGlobalVariableType(condition.mVariable) == ' ')
+                        return true;
+                    return QuestTargets::compare(condition, world->getGlobalFloat(condition.mVariable));
+                }
+                if (condition.mFunction == ESM::DialogueCondition::Function_Local)
+                {
+                    const std::vector<MWWorld::Ptr> speaker
+                        = way.mSpeaker.empty() ? std::vector<MWWorld::Ptr>() : findPlaced(way.mSpeaker);
+                    if (speaker.empty())
+                        return true;
+                    const ESM::RefId script = speaker.front().getClass().getScript(speaker.front());
+                    MWScript::Locals& locals = speaker.front().getRefData().getLocals();
+                    if (script.empty() || !locals.hasVar(script, condition.mVariable))
+                        return true;
+                    return QuestTargets::compare(condition, locals.getFloatVar(script, condition.mVariable));
+                }
+                return QuestTargets::compare(condition,
+                    static_cast<float>(journal->getJournalIndex(ESM::RefId::stringRefId(condition.mVariable))));
+            });
+        });
+        for (const QuestTargets::Way& way : QuestTargets::chooseWays(std::move(ways), rule))
         {
             // Kills, fetches and visits come first. The talk they lead to is marked once they're done.
             bool before = false;
             for (const QuestTargets::Objective& objective : way.mObjectives)
             {
-                if (objective.mObject.empty())
-                    continue;
                 if (objective.mTask == Task::Talk && before)
                     continue;
-                if (objective.mTask == Task::Fetch
-                    && player.getClass().getContainerStore(player).count(objective.mObject) >= objective.mCount)
-                    continue;
-                bool added = false;
-                for (const MWWorld::Ptr& ptr : findPlaced(objective.mObject))
-                {
-                    if (!isAlive(ptr) || ptr.getCell() == nullptr)
-                        continue;
-                    targets.push_back(Target{ objective.mTask, std::string(ptr.getClass().getName(ptr)),
-                        ptr.getRefData().getPosition().asVec3(), ptr.getCell()->getCell()->getId() });
-                    added = true;
-                }
-                if (added && objective.mTask != Task::Talk)
+                if (addObjectiveTargets(objective, targets) && objective.mTask != Task::Talk)
                     before = true;
             }
         }
