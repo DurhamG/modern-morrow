@@ -12,6 +12,10 @@
 #include <SDL_video.h>
 
 #include <components/debug/debuglog.hpp>
+#include <components/esm3/loadcell.hpp>
+#include <components/esm3/loaddial.hpp>
+#include <components/esm3/loadglob.hpp>
+#include <components/esm3/loadinfo.hpp>
 #include <components/files/conversion.hpp>
 #include <components/misc/strings/algorithm.hpp>
 #include <components/misc/strings/lower.hpp>
@@ -24,7 +28,9 @@
 #include "../mwbase/world.hpp"
 
 #include "../mwgui/mode.hpp"
+#include "../mwgui/questtargets.hpp"
 
+#include "../mwworld/esmstore.hpp"
 #include "../mwworld/ptr.hpp"
 
 #include "gamepad.hpp"
@@ -626,6 +632,118 @@ namespace MWAutomation
                 if (const Json* modes = state.find("modes"))
                     result.set("modes", *modes);
                 return result;
+            };
+        };
+
+        // Writes to "path" what the quest markers would mark at every stage of every quest, by both rules, for
+        // reviewing them in bulk. Each target lists the cells that place it.
+        mHandlers["quest-targets"] = [](const Json& request) -> Poll {
+            const std::string path = request.getString("path");
+            if (path.empty())
+                throw std::runtime_error("quest-targets needs a \"path\"");
+            return [path]() -> std::optional<Json> {
+                using namespace MWGui::QuestTargets;
+                const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+                const Index index = Index::build(store);
+                const auto taskName = [](Task task) {
+                    switch (task)
+                    {
+                        case Task::Talk:
+                            return "talk";
+                        case Task::Kill:
+                            return "kill";
+                        case Task::Fetch:
+                            return "fetch";
+                        case Task::Visit:
+                            return "visit";
+                    }
+                    return "";
+                };
+                const auto describeWays = [&](const std::vector<Way>& ways) {
+                    Json::Array result;
+                    for (const Way& way : ways)
+                    {
+                        Json::Array objectives;
+                        for (const Objective& objective : way.mObjectives)
+                        {
+                            Json::Array cells;
+                            if (!objective.mObject.empty())
+                                for (const ESM::Cell* cell : store.getRefCells(objective.mObject))
+                                    cells.emplace_back(cell->isExterior()
+                                            ? std::to_string(cell->getGridX()) + "," + std::to_string(cell->getGridY())
+                                            : cell->mName);
+                            // Who can hold an item that isn't lying anywhere, and the faction members a line
+                            // without a speaker can be said by, each with how often it's placed.
+                            Json::Array holders;
+                            if (objective.mTask == Task::Fetch && !objective.mObject.empty())
+                                for (const ESM::RefId& holder : index.holdersOf(objective.mObject))
+                                    holders.push_back(Json::object(
+                                        { { "id", holder.serializeText() }, { "placed", store.getRefCount(holder) } }));
+                            Json::Array members;
+                            if (!objective.mFaction.empty())
+                                for (const ESM::RefId& member : index.membersOf(objective.mFaction, objective.mRank))
+                                    members.push_back(Json::object(
+                                        { { "id", member.serializeText() }, { "placed", store.getRefCount(member) } }));
+                            objectives.push_back(Json::object({
+                                { "task", taskName(objective.mTask) },
+                                { "object", objective.mObject.serializeText() },
+                                { "faction", objective.mFaction.serializeText() },
+                                { "cell", objective.mCell.serializeText() },
+                                { "rank", objective.mRank },
+                                { "count", objective.mCount },
+                                { "placed", store.getRefCount(objective.mObject) },
+                                { "cells", Json(std::move(cells)) },
+                                { "holders", Json(std::move(holders)) },
+                                { "members", Json(std::move(members)) },
+                            }));
+                        }
+                        // Each check, and whether it holds when a new game starts, with every quest at stage 0,
+                        // every global at its value in the content, and every local variable at 0.
+                        Json::Array checks;
+                        for (const ESM::DialogueCondition& check : way.mChecks)
+                        {
+                            float atStart = 0.f;
+                            if (check.mFunction == ESM::DialogueCondition::Function_Global)
+                                if (const ESM::Global* global
+                                    = store.get<ESM::Global>().search(ESM::RefId::stringRefId(check.mVariable)))
+                                    atStart = global->mValue.getFloat();
+                            checks.push_back(Json::object({ { "variable", check.mVariable },
+                                { "holdsAtStart", MWGui::QuestTargets::compare(check, atStart) } }));
+                        }
+                        result.push_back(
+                            Json::object({ { "to", way.mToStage }, { "objectives", Json(std::move(objectives)) },
+                                { "choice", way.mChoice }, { "checks", Json(std::move(checks)) } }));
+                    }
+                    return Json(std::move(result));
+                };
+                Json::Object quests;
+                std::size_t stageCount = 0;
+                for (const ESM::Dialogue& dialogue : store.get<ESM::Dialogue>())
+                {
+                    if (dialogue.mType != ESM::Dialogue::Journal)
+                        continue;
+                    Json::Array stages;
+                    for (const ESM::DialInfo& info : dialogue.mInfo)
+                    {
+                        const int stage = info.mData.mJournalIndex;
+                        stages.push_back(Json::object({
+                            { "stage", stage },
+                            { "finished", info.mQuestStatus == ESM::DialInfo::QS_Finished },
+                            { "lowest", describeWays(index.waysForward(dialogue.mId, stage, Rule::Lowest)) },
+                            { "all", describeWays(index.waysForward(dialogue.mId, stage, Rule::All)) },
+                            { "ends", describeWays(index.waysForward(dialogue.mId, stage, Rule::LowestAndHighest)) },
+                            // Every way forward, before the game's checks and the rule choose.
+                            { "every", describeWays(index.waysForward(dialogue.mId, stage)) },
+                        }));
+                        ++stageCount;
+                    }
+                    quests.emplace_back(dialogue.mStringId, Json(std::move(stages)));
+                }
+                std::ofstream stream(Files::pathFromUnicodeString(path));
+                if (!stream)
+                    throw std::runtime_error("can't write " + path);
+                stream << Json(std::move(quests)).dump();
+                return Json::object({ { "stages", static_cast<double>(stageCount) } });
             };
         };
     }
