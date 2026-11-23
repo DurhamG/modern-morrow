@@ -1,0 +1,13 @@
+# Quest markers and the compass are off unless the player turns them on. The journal then offers no tracking, and
+# the Options' Prefs tab has a setting for each.
+launch --start "Balmora"
+console "command=journal fg_rathunt 10"
+wait frames=900
+shot hud
+key key=J
+wait frames=20
+wait-mode Interface
+expect-text "Exterminator"
+expect-no-text "Stop tracking"
+expect-no-text "Track"
+shot journal

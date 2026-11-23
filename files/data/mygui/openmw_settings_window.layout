@@ -224,7 +224,27 @@
                         <Property key="Caption" value="#{OMWEngine:WarnBeforeExclusiveChoices}"/>
                     </Widget>
                 </Widget>
-                <Widget type="HBox" position="4 610 340 28" name="ShowTouchesRow">
+                <Widget type="HBox" position="4 610 340 28">
+                    <Widget type="AutoSizedButton" skin="MW_Button" position="0 0 24 24" align="Left Top">
+                        <UserString key="SettingCategory" value="GUI"/>
+                        <UserString key="SettingName" value="quest markers"/>
+                        <UserString key="SettingType" value="CheckButton"/>
+                    </Widget>
+                    <Widget type="AutoSizedTextBox" skin="SandText" position="28 4 89 16" align="Left Top">
+                        <Property key="Caption" value="#{OMWEngine:QuestMarkers}"/>
+                    </Widget>
+                </Widget>
+                <Widget type="HBox" position="4 640 340 28">
+                    <Widget type="AutoSizedButton" skin="MW_Button" position="0 0 24 24" align="Left Top">
+                        <UserString key="SettingCategory" value="GUI"/>
+                        <UserString key="SettingName" value="quest compass"/>
+                        <UserString key="SettingType" value="CheckButton"/>
+                    </Widget>
+                    <Widget type="AutoSizedTextBox" skin="SandText" position="28 4 89 16" align="Left Top">
+                        <Property key="Caption" value="#{OMWEngine:QuestCompass}"/>
+                    </Widget>
+                </Widget>
+                <Widget type="HBox" position="4 670 340 28" name="ShowTouchesRow">
                     <Widget type="AutoSizedButton" skin="MW_Button" position="0 0 24 24" align="Left Top">
                         <UserString key="SettingCategory" value="Input"/>
                         <UserString key="SettingName" value="show touches"/>

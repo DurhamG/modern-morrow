@@ -238,7 +238,8 @@ GUI Settings
    :title: quest markers
    :type: boolean
    :range: true, false
-   :default: true
+   :default: false
+   :location: :bdg-info:`In Game > Options > Prefs`
 
    Marks where tracked quests go next, on the local map, the world map and the compass.
    The places are worked out from what in the game's content moves each quest on, so they can be wrong.
@@ -266,7 +267,8 @@ GUI Settings
    :title: quest compass
    :type: boolean
    :range: true, false
-   :default: true
+   :default: false
+   :location: :bdg-info:`In Game > Options > Prefs`
 
    Shows a compass at the top of the screen, with a marker for each tracked quest's target,
    or for the door on the way to it.

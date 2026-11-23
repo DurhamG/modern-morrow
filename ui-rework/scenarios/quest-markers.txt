@@ -1,6 +1,6 @@
 # Quest markers. A quest that starts is tracked, and its marker shows on the compass and the maps. The journal
 # marks the tracked quest beside its name, and Back stops tracking it or tracks it again.
-launch --start "Balmora"
+launch --start "Balmora" --set "GUI.quest markers=true" --set "GUI.quest compass=true"
 console "command=journal fg_rathunt 10"
 console "command=journal a1_2_antabolisinformant 5"
 # Wait for the "journal updated" messages to go away.

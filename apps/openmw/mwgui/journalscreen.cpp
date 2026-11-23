@@ -15,6 +15,8 @@
 #include <components/misc/strings/lower.hpp>
 #include <components/translation/translation.hpp>
 
+#include <components/settings/values.hpp>
+
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
 #include "../mwbase/journal.hpp"
@@ -30,8 +32,11 @@ namespace MWGui
     namespace
     {
         // Whether the player tracks any of the quest's IDs. The main quest's parts each have IDs of their own.
+        // Tracking only shows while quest markers are on.
         bool isTracked(const QuestLog::Quest& quest)
         {
+            if (!Settings::gui().mQuestMarkers)
+                return false;
             const QuestMarkers* markers = MWBase::Environment::get().getWindowManager()->getQuestMarkers();
             return std::any_of(
                 quest.mIds.begin(), quest.mIds.end(), [&](const ESM::RefId& id) { return markers->isTracked(id); });
@@ -445,7 +450,7 @@ namespace MWGui
                 SDL_CONTROLLER_BUTTON_X, quest.mPinned ? "#{Interface:JournalUnpin}" : "#{Interface:JournalPin}");
             hints.emplace_back(SDL_CONTROLLER_BUTTON_LEFTSTICK,
                 quest.mArchived ? "#{Interface:JournalUnarchive}" : "#{Interface:JournalArchive}");
-            if (!quest.mFinished && !quest.mNote)
+            if (Settings::gui().mQuestMarkers && !quest.mFinished && !quest.mNote)
                 hints.emplace_back(SDL_CONTROLLER_BUTTON_BACK,
                     isTracked(quest) ? "#{Interface:JournalUntrack}" : "#{Interface:JournalTrack}");
             if (groups)
@@ -732,7 +737,7 @@ namespace MWGui
         for (QuestLog::Quest& quest : mQuests)
             if (quest.mName == mSelected)
             {
-                if (quest.mFinished || quest.mNote)
+                if (!Settings::gui().mQuestMarkers || quest.mFinished || quest.mNote)
                     return;
                 markers->setTracked(quest.mIds, !isTracked(quest));
                 MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
