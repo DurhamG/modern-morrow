@@ -10,6 +10,8 @@ This page is the plan. The numbers in it come from a throwaway analysis of Morro
 - marks the nearest faction member of the right rank for a line with no speaker, and a cell by the door into it;
 - treats a way that needs a quest's speaker or a companion dead as a failure, marked only when there's no other
   way;
+- marks an item that a line takes from the player;
+- sets aside, while playing, a way that needs an item that doesn't exist yet;
 - checks a line's conditions on global variables, other quests' stages and the speaker's local variables while
   playing.
 
@@ -206,11 +208,11 @@ A harness command, `quest-targets`, lists what the markers' analysis gives at ev
 their first required step at 2,071 stages of the base game and the two expansions. "Agrees" means their step is among
 the markers the game would show.
 
-| Rule | Agrees, first version | Agrees, now | Markers when there are any |
-|---|---|---|---|
-| A: the lowest next stage | 60% | 61% | 1.2 |
-| C: the lowest and the highest | 69% | 70% | 1.9 |
-| B: every way forward | 75% | 75% | 2.9 |
+| Rule | Agrees, first version | After the first audit | After the second audit | Markers when there are any |
+|---|---|---|---|---|
+| A: the lowest next stage | 60% | 61% | 64% | 1.1 |
+| C: the lowest and the highest | 69% | 70% | 75% | 2.0 |
+| B: every way forward | 75% | 75% | 80% | 3.4 |
 
 Agreement isn't correctness, so 50 random stages where rule C disagreed with them were judged by hand from the game's
 own data:
@@ -227,3 +229,38 @@ Most of the gain doesn't show in the table above, because it comes from checks o
 as global variables and which faction member is nearest. The stages neither side can fix from the content are about
 9% of the total. At those, nothing in the content moves the quest on, the task isn't in any condition, or only the
 journal's text says where to go.
+
+### The second audit
+
+After fixes for "Escort Itermerel", a second audit judged 50 new random stages where rule C disagreed with them, and
+20 where it agreed. Ours was right, or as good as theirs, in only 24 of the 50. Two of the 20 agreements were also
+wrong, since both marked killing an escorted companion. So the first audit's estimate of 87% was too high, and the
+real figure was nearer 78%.
+
+These causes were found and fixed:
+- **Answers in a conversation**, at 7 of the 50. They only counted when there was no other way, which hid the person
+  a quest was going to whenever only answers moved it on, such as Caius Cosades. They now count like any other line.
+  This alone raised rule C's agreement from 70.6% to 73.9%.
+- **An escorted companion's death**, at 5, including the 2 agreements. A way that needs a companion dead is now a
+  failure. A companion is an actor that a line or a script tells to follow or escort the player. Failures, which
+  also cover a quest's speaker dying, are now marked only when every way forward is one. Before, a speaker's death
+  was never marked, which hid the report after killing Hanarai Assutlanipal, who attacks the player.
+- **Items a line takes from the player**, at 3. A line can run `Player->RemoveItem` without a condition that the
+  player has the item, such as Therana taking Auriel's Bow. 203 lines that move a quest on do this.
+- **A script's test that something isn't so**, at 3, such as `GetPCCell "Bal Isra" == 0`, which waits for the player
+  to be away from the stronghold. It had been read as a place to go.
+- **An item that doesn't exist yet**, at 1, such as the reforged blade in "The Blade of Nerevar". While playing, a
+  way that needs an item the player doesn't carry, and that nothing in the world has, is set aside like a failure.
+
+After the fixes, ours is right or as good in about 35 of the 50, partly right in 5, and theirs alone in 10. 19 of the
+20 agreements are right. Weighting the two samples by how many stages each stands for, ours is right at about 88% of
+stages. With 70 stages judged, that could be several points either way.
+
+What's left, by what the content would need:
+- The next step is in another quest's journal, such as "Trade Mission to the Zainab" waiting on a helper quest that
+  the wise woman's line starts. 16 quests have helper quests like this.
+- Stages that can come in any order, such as returning the stolen goods in Ald'ruhn, where each stage's lines need
+  the earlier ones done.
+- An answer that only comes up once the player has done something no condition names, such as having the slave's
+  testimony in "Imperial Cult: Donation from Cunius Pelelius".
+- Only the journal's text says where to go, or nothing in the content moves the quest on at all.

@@ -290,3 +290,17 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
     78% right to 87%, against about 90% for theirs.
   - Quest markers and the compass are off by default, with a row for each on the Options' Prefs tab. The journal hides
     tracking while markers are off.
+- A second round of quest marker fixes, on the `quest-markers` branch. In "Escort Itermerel", the markers pointed at
+  the wrong door into the Halfway Tavern, and marked the tavern before the escort had started. A cell is now marked
+  where the player comes into it, and a script's checks on quest stages and its early returns now rule stages out.
+  A second audit against Comprehensive Objective Mod then judged 50 new stages where the markers disagreed with it, and
+  found the first audit's estimate too high. These fixes followed, each with Google Tests:
+  - Answers in a conversation are ways forward like any other line, so Caius Cosades is marked from the start.
+  - A way that needs an escorted companion dead, such as Pemenie on the way to Gnaar Mok, is a failure. Failures are
+    marked only when every way forward is one, which brings back the report after killing Hanarai Assutlanipal.
+  - An item that a line takes with `Player->RemoveItem` is something to fetch, such as Auriel's Bow.
+  - A script's test that something isn't so, such as `GetPCCell "Bal Isra" == 0`, is no longer a place to go.
+  - While playing, a way that needs an item that doesn't exist yet is set aside, such as the reforged blade.
+  - Rule C now agrees with Comprehensive Objective Mod at 75% of stages, up from 70%. By the hand audit, the markers
+    are right at about 88% of stages, up from about 78%. [design/quest-markers.md](design/quest-markers.md) has the
+    details and what's left.
