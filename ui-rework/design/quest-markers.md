@@ -4,6 +4,15 @@ GitHub issue 2 asks for map markers for every kind of quest. This is an experime
 
 This page is the plan. The numbers in it come from a throwaway analysis of Morrowind.esm, Tribunal.esm and Bloodmoon.esm.
 
+**Status.** A first prototype is built, as section 5's list describes up to the compass, with these left for later:
+- Conditions inside scripts, and conditions implied by dialogue order.
+- Items carried by actors and containers.
+- Faction, class and cell speakers.
+- Door tooltips, a colour for each quest, and an objective line.
+- Saving the tracked quests.
+
+Rule A is the default, and the `quest marker rule` setting switches to rule B.
+
 ## 1. Where a quest goes next
 
 Morrowind's journal keeps one number for each quest, its stage, such as 10 for "Eydis Fire-Eye told me to talk to Drarayne Thelas". Nothing in a save says where the player should go next. That has to be worked out from the game's content, which is possible because something in the content always moves a quest from one stage to the next.

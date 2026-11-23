@@ -261,3 +261,12 @@ GUI Settings
    Which ways forward from a quest's stage to mark.
    0 marks only the ones that lead to the next stage, which follows the journal's hints one at a time.
    1 marks every way forward at once.
+
+.. omw-setting::
+   :title: quest compass
+   :type: boolean
+   :range: true, false
+   :default: true
+
+   Shows a compass at the top of the screen, with a marker for each tracked quest's target,
+   or for the door on the way to it.

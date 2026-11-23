@@ -15,6 +15,7 @@ namespace MWWorld
 namespace MWGui
 {
     class DragAndDrop;
+    class QuestCompass;
     class ItemWidget;
     class SpellWidget;
 
@@ -119,6 +120,7 @@ namespace MWGui
 
         float mCellNameTimer = 0.f;
         MyGUI::Widget* mQuickKeyBox = nullptr;
+        std::unique_ptr<QuestCompass> mQuestCompass;
         float mQuickKeyTimer = 0.f;
         float mEnemyHealthTimer = -1;
         float mDrowningFlashTheta = 0.f;

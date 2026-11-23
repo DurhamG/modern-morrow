@@ -45,6 +45,7 @@ namespace Settings
         SettingValue<bool> mQuestMarkers{ mIndex, "GUI", "quest markers" };
         SettingValue<bool> mQuestMarkersAutoTrack{ mIndex, "GUI", "quest markers auto track" };
         SettingValue<int> mQuestMarkerRule{ mIndex, "GUI", "quest marker rule", makeClampSanitizerInt(0, 1) };
+        SettingValue<bool> mQuestCompass{ mIndex, "GUI", "quest compass" };
     };
 }
 

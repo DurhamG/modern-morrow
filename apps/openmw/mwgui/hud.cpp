@@ -32,10 +32,14 @@
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/npcstats.hpp"
 
+#include "../mwrender/camera.hpp"
+
 #include "controllerscreen.hpp"
 #include "draganddrop.hpp"
 #include "inventorywindow.hpp"
 #include "itemwidget.hpp"
+#include "questcompass.hpp"
+#include "questmarkers.hpp"
 #include "spellicons.hpp"
 #include "worlditemmodel.hpp"
 
@@ -145,6 +149,8 @@ namespace MWGui
         mLocalMapZoom = 0.5f;
 
         LocalMapBase::init(mMinimap, mCompass);
+
+        mQuestCompass = std::make_unique<QuestCompass>(mMainWidget);
 
         mMainWidget->eventMouseButtonClick += MyGUI::newDelegate(this, &HUD::onWorldClicked);
         mMainWidget->eventMouseMove += MyGUI::newDelegate(this, &HUD::onWorldMouseOver);
@@ -379,6 +385,22 @@ namespace MWGui
     void HUD::onFrame(float dt)
     {
         LocalMapBase::onFrame(dt);
+
+        // The compass follows the camera, and shows the tracked quests' markers here.
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        const bool compass = Settings::gui().mQuestCompass && !winMgr->isGuiMode()
+            && MWBase::Environment::get().getStateManager()->getState() == MWBase::StateManager::State_Running;
+        mQuestCompass->setVisible(compass);
+        if (compass)
+        {
+            const MWWorld::Ptr player = MWMechanics::getPlayer();
+            const float heading = osg::RadiansToDegrees(-MWBase::Environment::get().getWorld()->getCamera()->getYaw());
+            std::vector<osg::Vec3f> targets;
+            if (const QuestMarkers* quests = winMgr->getQuestMarkers())
+                for (const QuestMarkers::Marker& marker : quests->getLocalMarkers())
+                    targets.push_back(marker.mPos);
+            mQuestCompass->update(heading, player.getRefData().getPosition().asVec3(), targets);
+        }
 
         if (mQuickKeyBox != nullptr)
         {
