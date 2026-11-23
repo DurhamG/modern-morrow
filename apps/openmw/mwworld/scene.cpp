@@ -1159,7 +1159,7 @@ namespace MWWorld
         if (mPreloadEnabled)
         {
             if (mPreloadDoors)
-                preloadTeleportDoorDestinations(playerPos, predictedPos);
+                preloadTeleportDoorDestinations(playerPos, predictedPos, exteriorPositions);
             if (mPreloadExteriorGrid)
                 preloadExteriorGrid(playerPos, predictedPos);
             if (mPreloadFastTravel)
@@ -1169,7 +1169,8 @@ namespace MWWorld
         mPreloader->setTerrainPreloadPositions(exteriorPositions);
     }
 
-    void Scene::preloadTeleportDoorDestinations(const osg::Vec3f& playerPos, const osg::Vec3f& predictedPos)
+    void Scene::preloadTeleportDoorDestinations(
+        const osg::Vec3f& playerPos, const osg::Vec3f& predictedPos, std::vector<PositionCellGrid>& exteriorPositions)
     {
         std::vector<MWWorld::ConstPtr> teleportDoors;
         for (const MWWorld::CellStore* cellStore : mActiveCells)
@@ -1195,8 +1196,18 @@ namespace MWWorld
             if (sqrDistToPlayer < mPreloadDistance * mPreloadDistance)
             {
                 CellStore* dest = mWorld.getWorldModel().findCell(door.getCellRef().getDestCell());
-                if (dest != nullptr)
-                    preloadCellWithSurroundings(*dest);
+                if (dest == nullptr)
+                    continue;
+                preloadCellWithSurroundings(*dest);
+                // Going outside builds the distant terrain around the door's destination behind the loading screen,
+                // unless it was built here first. changeToExteriorCell checks for the destination's position with the
+                // grid around the destination's cell. Terrain is only built for the worldspace it belongs to.
+                if (dest->isExterior() && dest->getCell()->getWorldSpace() == mRendering.getTerrain()->getWorldspace())
+                {
+                    const osg::Vec2i destCell(dest->getCell()->getGridX(), dest->getCell()->getGridY());
+                    addTerrainPreloadPosition(exteriorPositions,
+                        PositionCellGrid{ door.getCellRef().getDoorDest().asVec3(), gridCenterToBounds(destCell) });
+                }
             }
         }
     }

@@ -1,8 +1,10 @@
 #include "positioncellgrid.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include <components/esm/util.hpp>
+#include <components/misc/constants.hpp>
 
 namespace MWWorld
 {
@@ -23,5 +25,16 @@ namespace MWWorld
             positions.push_back(PositionCellGrid{ snapped, grid });
         }
         return positions;
+    }
+
+    void addTerrainPreloadPosition(std::vector<PositionCellGrid>& positions, const PositionCellGrid& position)
+    {
+        constexpr float tolerance = Constants::CellSizeInUnits;
+        const bool covered = std::ranges::any_of(positions, [&](const PositionCellGrid& existing) {
+            return existing.mCellBounds == position.mCellBounds
+                && (existing.mPosition - position.mPosition).length2() < tolerance * tolerance;
+        });
+        if (!covered)
+            positions.push_back(position);
     }
 }

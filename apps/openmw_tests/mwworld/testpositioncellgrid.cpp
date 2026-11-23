@@ -2,6 +2,7 @@
 
 #include <components/esm/util.hpp>
 #include <components/esm3/loadcell.hpp>
+#include <components/misc/constants.hpp>
 
 #include <gtest/gtest.h>
 
@@ -64,6 +65,42 @@ namespace MWWorld
                 = terrainPreloadPositions(player, player, camera, true, grid, ESM::Cell::sDefaultWorldspaceId);
             ASSERT_EQ(positions.size(), 1u);
             EXPECT_EQ(positions[0].mPosition, player);
+        }
+
+        TEST(AddTerrainPreloadPositionTest, AddsTheFirstPosition)
+        {
+            std::vector<PositionCellGrid> positions;
+            addTerrainPreloadPosition(positions, PositionCellGrid{ player, grid });
+            ASSERT_EQ(positions.size(), 1u);
+            EXPECT_EQ(positions[0].mPosition, player);
+            EXPECT_EQ(positions[0].mCellBounds, grid);
+        }
+
+        TEST(AddTerrainPreloadPositionTest, SkipsAPositionLessThanACellAwayWithTheSameGrid)
+        {
+            std::vector<PositionCellGrid> positions{ PositionCellGrid{ player, grid } };
+            const osg::Vec3f nearby = player + osg::Vec3f(Constants::CellSizeInUnits - 1.f, 0.f, 0.f);
+            addTerrainPreloadPosition(positions, PositionCellGrid{ nearby, grid });
+            ASSERT_EQ(positions.size(), 1u);
+            EXPECT_EQ(positions[0].mPosition, player);
+        }
+
+        TEST(AddTerrainPreloadPositionTest, AddsAPositionACellAway)
+        {
+            std::vector<PositionCellGrid> positions{ PositionCellGrid{ player, grid } };
+            const osg::Vec3f far = player + osg::Vec3f(0.f, Constants::CellSizeInUnits, 0.f);
+            addTerrainPreloadPosition(positions, PositionCellGrid{ far, grid });
+            ASSERT_EQ(positions.size(), 2u);
+            EXPECT_EQ(positions[1].mPosition, far);
+        }
+
+        TEST(AddTerrainPreloadPositionTest, AddsANearbyPositionWithAnotherGrid)
+        {
+            std::vector<PositionCellGrid> positions{ PositionCellGrid{ player, grid } };
+            const osg::Vec4i otherGrid(0, -1, 3, 2);
+            addTerrainPreloadPosition(positions, PositionCellGrid{ player, otherGrid });
+            ASSERT_EQ(positions.size(), 2u);
+            EXPECT_EQ(positions[1].mCellBounds, otherGrid);
         }
     }
 }
