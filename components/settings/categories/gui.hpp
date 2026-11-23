@@ -42,6 +42,9 @@ namespace Settings
         SettingValue<MyGUI::Colour> mColorTopicExhausted{ mIndex, "GUI", "color topic exhausted" };
         SettingValue<MyGUI::Colour> mColorTopicExhaustedOver{ mIndex, "GUI", "color topic exhausted over" };
         SettingValue<MyGUI::Colour> mColorTopicExhaustedPressed{ mIndex, "GUI", "color topic exhausted pressed" };
+        SettingValue<bool> mQuestMarkers{ mIndex, "GUI", "quest markers" };
+        SettingValue<bool> mQuestMarkersAutoTrack{ mIndex, "GUI", "quest markers auto track" };
+        SettingValue<int> mQuestMarkerRule{ mIndex, "GUI", "quest marker rule", makeClampSanitizerInt(0, 1) };
     };
 }
 

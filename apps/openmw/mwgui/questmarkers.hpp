@@ -1,0 +1,91 @@
+#ifndef MWGUI_QUESTMARKERS_H
+#define MWGUI_QUESTMARKERS_H
+
+#include <map>
+#include <optional>
+#include <set>
+#include <string>
+#include <vector>
+
+#include <osg/Vec3f>
+
+#include <components/esm/refid.hpp>
+
+#include "questtargets.hpp"
+
+namespace MWWorld
+{
+    class Ptr;
+}
+
+namespace MWGui
+{
+    /// The quests the player tracks, and where their markers go. A quest that starts or moves on is tracked, as in
+    /// Skyrim, and one that finishes stops being tracked. The markers are worked out from the content by QuestTargets,
+    /// and placed where the targets are now. See ui-rework/design/quest-markers.md.
+    class QuestMarkers
+    {
+    public:
+        struct Marker
+        {
+            // The quest's name, and what to do there, such as "Talk to Caius Cosades".
+            std::string mQuest;
+            std::string mObjective;
+            QuestTargets::Task mTask = QuestTargets::Task::Talk;
+            // Where the marker goes, and the cell that is in. For a target in another place, the marker goes on the
+            // first door of the way there.
+            osg::Vec3f mPos;
+            ESM::RefId mCell;
+            bool mDoor = false;
+        };
+
+        QuestMarkers();
+        ~QuestMarkers();
+
+        /// Looks at the journal for quests that moved on, and works out the markers again, a few times a second.
+        void update(float dt);
+
+        /// Forgets the tracked quests, such as when a game starts or loads. The newest quest is tracked again.
+        void clear();
+
+        bool isTracked(const ESM::RefId& quest) const;
+        void setTracked(const std::vector<ESM::RefId>& quests, bool tracked);
+
+        /// The markers in the place the player is in: the targets there, and the doors on the way to the others.
+        const std::vector<Marker>& getLocalMarkers() const { return mLocalMarkers; }
+
+        /// The markers outdoors, for the world map: the targets outdoors, and the doors into the others.
+        const std::vector<Marker>& getWorldMarkers() const { return mWorldMarkers; }
+
+        /// The number the markers have been worked out, so a map knows when to draw them again.
+        unsigned int getGeneration() const { return mGeneration; }
+
+    private:
+        // A target of an objective, where it is now.
+        struct Target
+        {
+            QuestTargets::Task mTask;
+            std::string mName;
+            osg::Vec3f mPos;
+            ESM::RefId mCell;
+        };
+
+        void pollJournal();
+        void computeMarkers();
+        void addTargets(const ESM::RefId& quest, int stage, std::vector<Target>& targets);
+        std::vector<MWWorld::Ptr> findPlaced(const ESM::RefId& id) const;
+
+        std::optional<QuestTargets::Index> mIndex;
+        std::set<ESM::RefId> mTracked;
+        // Each quest's stage when the journal was last looked at, to see which quests moved on.
+        std::map<ESM::RefId, int> mStages;
+        bool mJournalSeen = false;
+        float mTimer = 0.f;
+        ESM::RefId mLastPlayerCell;
+        std::vector<Marker> mLocalMarkers;
+        std::vector<Marker> mWorldMarkers;
+        unsigned int mGeneration = 0;
+    };
+}
+
+#endif

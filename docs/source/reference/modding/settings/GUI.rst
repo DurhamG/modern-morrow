@@ -233,3 +233,31 @@ GUI Settings
    "Pressed" color for dialogue topics meeting "color topic exhausted".
    Four floating point values; alpha ignored.
    Active GUI element receiving sustained input.
+
+.. omw-setting::
+   :title: quest markers
+   :type: boolean
+   :range: true, false
+   :default: true
+
+   Marks where tracked quests go next, on the local map, the world map and the compass.
+   The places are worked out from what in the game's content moves each quest on, so they can be wrong.
+
+.. omw-setting::
+   :title: quest markers auto track
+   :type: boolean
+   :range: true, false
+   :default: true
+
+   Tracks a quest when it starts or moves on, and the quest with the newest journal entry when a game starts or loads.
+   A finished quest stops being tracked.
+
+.. omw-setting::
+   :title: quest marker rule
+   :type: int
+   :range: 0, 1
+   :default: 0
+
+   Which ways forward from a quest's stage to mark.
+   0 marks only the ones that lead to the next stage, which follows the journal's hints one at a time.
+   1 marks every way forward at once.

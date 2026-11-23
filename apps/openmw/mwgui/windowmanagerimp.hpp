@@ -92,6 +92,7 @@ namespace Gui
 namespace MWGui
 {
     class HUD;
+    class QuestMarkers;
     class MapWindow;
     class MainMenu;
     class StatsWindow;
@@ -193,6 +194,7 @@ namespace MWGui
         MWGui::ConfirmationDialog* getConfirmationDialog() override;
         MWGui::TradeWindow* getTradeWindow() override;
         MWGui::HUD* getHud() override;
+        MWGui::QuestMarkers* getQuestMarkers() override;
         MWGui::PostProcessorHud* getPostProcessorHud() override;
         std::vector<MWGui::WindowBase*> getGuiModeWindows(GuiMode mode) override;
 
@@ -455,6 +457,7 @@ namespace MWGui
         // Markers placed manually by the player. Must be shared between both map views (the HUD map and the map
         // window).
         CustomMarkerCollection mCustomMarkers;
+        std::unique_ptr<QuestMarkers> mQuestMarkers;
 
         HUD* mHud;
         MapWindow* mMap;

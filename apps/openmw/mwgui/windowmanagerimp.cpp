@@ -115,6 +115,7 @@
 #include "mainmenu.hpp"
 #include "merchantrepair.hpp"
 #include "postprocessorhud.hpp"
+#include "questmarkers.hpp"
 #include "quickkeysmenu.hpp"
 #include "recharge.hpp"
 #include "repair.hpp"
@@ -435,6 +436,7 @@ namespace MWGui
         trackWindow(mContainerWindow, makeContainerWindowSettingValues());
         mGuiModeStates[GM_Container] = GuiModeState({ mContainerWindow, mInventoryWindow });
 
+        mQuestMarkers = std::make_unique<QuestMarkers>();
         auto hud = std::make_unique<HUD>(mCustomMarkers, mDragAndDrop.get(), mLocalMapRender.get());
         mHud = hud.get();
         mWindows.push_back(std::move(hud));
@@ -1086,6 +1088,8 @@ namespace MWGui
 
         if (gameRunning)
             updateMap();
+        if (MWBase::Environment::get().getStateManager()->getState() == MWBase::StateManager::State_Running)
+            mQuestMarkers->update(frameDuration);
 
         if (!mGuiModes.empty())
         {
@@ -1787,6 +1791,11 @@ namespace MWGui
     {
         return mHud;
     }
+
+    MWGui::QuestMarkers* WindowManager::getQuestMarkers()
+    {
+        return mQuestMarkers.get();
+    }
     MWGui::TradeWindow* WindowManager::getTradeWindow()
     {
         return mTradeWindow;
@@ -2178,6 +2187,7 @@ namespace MWGui
 
         mSelectedSpell = ESM::RefId();
         mCustomMarkers.clear();
+        mQuestMarkers->clear();
 
         mForceHidden = GW_None;
         mRestAllowed = true;
