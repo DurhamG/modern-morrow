@@ -23,8 +23,21 @@
 #include "../mwdialogue/journalentry.hpp"
 #include "../mwdialogue/topic.hpp"
 
+#include "questmarkers.hpp"
+
 namespace MWGui
 {
+    namespace
+    {
+        // Whether the player tracks any of the quest's IDs. The main quest's parts each have IDs of their own.
+        bool isTracked(const QuestLog::Quest& quest)
+        {
+            const QuestMarkers* markers = MWBase::Environment::get().getWindowManager()->getQuestMarkers();
+            return std::any_of(
+                quest.mIds.begin(), quest.mIds.end(), [&](const ESM::RefId& id) { return markers->isTracked(id); });
+        }
+    }
+
     namespace
     {
         using namespace ControllerUi;
@@ -148,6 +161,10 @@ namespace MWGui
             case SDL_CONTROLLER_BUTTON_LEFTSTICK:
                 if (!mInDetails)
                     toggleArchived();
+                break;
+            case SDL_CONTROLLER_BUTTON_BACK:
+                if (!mInDetails)
+                    toggleTracked();
                 break;
             case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
                 changeTab(-1);
@@ -297,6 +314,14 @@ namespace MWGui
         const int columnsX = x + w - 8 - sPlaceColumnWidth - sFactionColumnWidth;
         const int nameW = columnsX - x - 16 - 12;
         addText(mContent, x + 12, y + 4, nameW, 26, escaped(shortName(quest)), sFontNormal, nameColour);
+        // A tracked quest has the quest marker beside its name.
+        if (isTracked(quest))
+        {
+            MyGUI::ImageBox* marker = mContent->createWidget<MyGUI::ImageBox>(
+                "ImageBox", MyGUI::IntCoord(columnsX - 28, y + 8, 18, 18), MyGUI::Align::Default);
+            marker->setImageTexture("textures\\omw\\quest_marker.png");
+            marker->setNeedMouseFocus(false);
+        }
         addText(mContent, x + 12, y + 29, nameW, 20, escaped(QuestLog::timestamp(*quest.mEntries.back())), sFontSmall,
             sDimColour);
         addText(mContent, columnsX, y, sPlaceColumnWidth - 8, h, escaped(quest.mTown), sFontSmall, sTextColour);
@@ -420,6 +445,9 @@ namespace MWGui
                 SDL_CONTROLLER_BUTTON_X, quest.mPinned ? "#{Interface:JournalUnpin}" : "#{Interface:JournalPin}");
             hints.emplace_back(SDL_CONTROLLER_BUTTON_LEFTSTICK,
                 quest.mArchived ? "#{Interface:JournalUnarchive}" : "#{Interface:JournalArchive}");
+            if (!quest.mFinished && !quest.mNote)
+                hints.emplace_back(SDL_CONTROLLER_BUTTON_BACK,
+                    isTracked(quest) ? "#{Interface:JournalUntrack}" : "#{Interface:JournalTrack}");
             if (groups)
                 hints.emplace_back(SDL_CONTROLLER_BUTTON_Y, "#{Interface:MagicNextGroup}");
         }
@@ -692,6 +720,21 @@ namespace MWGui
             if (quest.mName == mSelected)
             {
                 QuestLog::setPinned(quest, !quest.mPinned);
+                MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+                redraw();
+                return;
+            }
+    }
+
+    void JournalScreen::toggleTracked()
+    {
+        QuestMarkers* markers = MWBase::Environment::get().getWindowManager()->getQuestMarkers();
+        for (QuestLog::Quest& quest : mQuests)
+            if (quest.mName == mSelected)
+            {
+                if (quest.mFinished || quest.mNote)
+                    return;
+                markers->setTracked(quest.mIds, !isTracked(quest));
                 MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
                 redraw();
                 return;

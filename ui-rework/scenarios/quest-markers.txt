@@ -1,0 +1,24 @@
+# Quest markers. A quest that starts is tracked, and its marker shows on the compass and the maps. The journal
+# marks the tracked quest beside its name, and Back stops tracking it or tracks it again.
+launch --start "Balmora"
+console "command=journal fg_rathunt 10"
+console "command=journal a1_2_antabolisinformant 5"
+# Wait for the "journal updated" messages to go away.
+wait frames=900
+shot compass
+key key=J
+wait frames=20
+wait-mode Interface
+expect-text "Stop tracking"
+shot journal
+pad button=back
+wait frames=5
+expect-text "Track"
+expect-no-text "Stop tracking"
+pad button=back
+wait frames=5
+expect-text "Stop tracking"
+pad axis=righttrigger value=1 hold=4
+wait frames=60
+expect-text "World"
+shot map

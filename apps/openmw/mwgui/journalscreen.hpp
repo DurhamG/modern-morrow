@@ -117,6 +117,8 @@ namespace MWGui
         void togglePinned();
         // Moves the highlighted quest to the Archived group, or back out of it.
         void toggleArchived();
+        // Tracks the highlighted quest, which marks where it goes next, or stops tracking it.
+        void toggleTracked();
         // Moves the focus into the details, onto the first topic, or opens the highlighted topic.
         void activateDetails();
         // Steps back from a topic's page, or moves the focus back to the list. Returns false when the list has it.
