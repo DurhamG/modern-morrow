@@ -640,7 +640,13 @@ namespace MWGui
             const std::size_t count = combo->getItemCount();
             if (count == 0)
                 return;
-            const std::size_t current = combo->getIndexSelected() == MyGUI::ITEM_NONE ? 0 : combo->getIndexSelected();
+            // Some lists are set up with only their caption, such as texture filtering, so the item that matches the
+            // caption is the current one.
+            std::size_t current = combo->getIndexSelected();
+            if (current == MyGUI::ITEM_NONE)
+                current = combo->findItemIndexWith(combo->getCaption());
+            if (current == MyGUI::ITEM_NONE)
+                current = 0;
             const std::size_t next = wrap(current, count, delta);
             combo->setIndexSelected(next);
             combo->eventComboChangePosition(combo, next);

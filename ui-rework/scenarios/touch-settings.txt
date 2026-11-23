@@ -18,20 +18,20 @@ touch action=drag path=[[700,451],[740,451],[900,452],[1100,452]] frames=2
 wait frames=5
 expect-text "Menu Transparency"
 
+# The field of view runs from 30 to 110 degrees, which its label shows.
 touch action=tap x=440 y=78
 wait-text "Field of View"
 touch action=drag path=[[900,451],[930,452],[1050,452],[1250,452]] frames=2
 wait frames=5
-expect-text "100%"
+expect-text "Field of View (110.00)"
 touch action=drag path=[[1100,451],[1070,452],[900,452],[600,452]] frames=2
 wait frames=5
-expect-no-text "100%"
-expect-text "0%"
+expect-text "Field of View (30.00)"
 
-# Anisotropy goes from 4x to 8x.
+# Texture filtering goes from trilinear to the next choice, bilinear.
 touch action=tap x=300 y=656
 wait frames=5
 touch action=tap x=1100 y=656
 wait frames=5
-expect-text "8x"
+expect-text "Bilinear"
 shot video
