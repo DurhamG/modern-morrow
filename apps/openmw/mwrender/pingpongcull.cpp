@@ -15,15 +15,11 @@ namespace MWRender
 {
 
     PingPongCull::PingPongCull(PostProcessor* pp)
-        : mViewportStateset(nullptr)
+        : mViewportStateset(new osg::StateSet)
+        , mViewport(new osg::Viewport)
         , mPostProcessor(pp)
     {
-        if (Stereo::getStereo())
-        {
-            mViewportStateset = new osg::StateSet();
-            mViewport = new osg::Viewport;
-            mViewportStateset->setAttribute(mViewport);
-        }
+        mViewportStateset->setAttribute(mViewport);
     }
 
     PingPongCull::~PingPongCull()
@@ -69,7 +65,13 @@ namespace MWRender
                 Stereo::setMultiviewMSAAResolveCallback(renderStage);
         }
 
-        if (mViewportStateset)
+        // The world is drawn at its own size when that isn't the screen's, such as for each eye in VR, or at a render
+        // scale below 1.
+        const osg::Viewport* screen = cv->getCurrentCamera()->getViewport();
+        const bool ownSize = Stereo::getStereo() || screen == nullptr
+            || static_cast<int>(screen->width()) != mPostProcessor->renderWidth()
+            || static_cast<int>(screen->height()) != mPostProcessor->renderHeight();
+        if (ownSize)
         {
             mViewport->setViewport(0, 0, mPostProcessor->renderWidth(), mPostProcessor->renderHeight());
             renderStage->setViewport(mViewport);

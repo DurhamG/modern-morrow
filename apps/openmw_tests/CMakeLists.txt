@@ -39,6 +39,7 @@ file(GLOB UNITTEST_SRC_FILES
     mwlua/testmwscriptbindings.cpp
 
     mwrender/testlinemeetsland.cpp
+    mwrender/testrenderscale.cpp
 
     mwscript/testscripts.cpp
 

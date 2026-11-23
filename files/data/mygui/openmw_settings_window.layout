@@ -402,9 +402,35 @@
                             <Property key="Caption" value="#{OMWEngine:FieldOfViewHigh}"/>
                             <Property key="TextAlign" value="Right"/>
                         </Widget>
-                        <Widget type="TextBox" skin="NormalText" position="0 308 352 18" align="Left Top" name="GammaText">
+                        <Widget type="TextBox" skin="NormalText" position="0 308 352 18" align="Left Top" name="RenderScaleText">
+                            <UserString key="ToolTipType" value="Layout"/>
+                            <UserString key="ToolTipLayout" value="TextToolTip"/>
+                            <UserString key="Caption_Text" value="#{OMWEngine:RenderScaleTooltip}"/>
                         </Widget>
-                        <Widget type="ScrollBar" skin="MW_HScroll" position="0 332 352 18" align="HStretch Top" name="GammaSlider">
+                        <Widget type="ScrollBar" skin="MW_HScroll" position="0 332 352 18" align="HStretch Top">
+                            <Property key="Range" value="76"/>
+                            <Property key="Page" value="5"/>
+                            <Property key="WheelPage" value="5"/>
+                            <UserString key="SettingType" value="Slider"/>
+                            <UserString key="SettingCategory" value="Video"/>
+                            <UserString key="SettingName" value="render scale"/>
+                            <UserString key="SettingValueType" value="Float"/>
+                            <UserString key="SettingMin" value="0.25"/>
+                            <UserString key="SettingMax" value="1.0"/>
+                            <UserString key="SettingLabelWidget" value="RenderScaleText"/>
+                            <UserString key="SettingLabelCaption" value="RenderScaleValue"/>
+                        </Widget>
+                        <Widget type="TextBox" skin="SandText" position="0 356 352 18" align="Left Top">
+                            <Property key="Caption" value="#{OMWEngine:RenderScaleFaster}"/>
+                            <Property key="TextAlign" value="Left"/>
+                        </Widget>
+                        <Widget type="TextBox" skin="SandText" position="0 356 352 18" align="Right Top">
+                            <Property key="Caption" value="#{OMWEngine:RenderScaleSharper}"/>
+                            <Property key="TextAlign" value="Right"/>
+                        </Widget>
+                        <Widget type="TextBox" skin="NormalText" position="0 378 352 18" align="Left Top" name="GammaText">
+                        </Widget>
+                        <Widget type="ScrollBar" skin="MW_HScroll" position="0 402 352 18" align="HStretch Top" name="GammaSlider">
                             <Property key="Range" value="10000"/>
                             <Property key="Page" value="300"/>
                             <Property key="WheelPage" value="300"/>
@@ -417,11 +443,11 @@
                             <UserString key="SettingLabelWidget" value="GammaText"/>
                             <UserString key="SettingLabelCaption" value="GammaCorrectionValue"/>
                         </Widget>
-                        <Widget type="TextBox" skin="SandText" position="0 356 352 18" align="Left Top" name="GammaTextDark">
+                        <Widget type="TextBox" skin="SandText" position="0 426 352 18" align="Left Top" name="GammaTextDark">
                             <Property key="Caption" value="#{OMWEngine:GammaDark}"/>
                             <Property key="TextAlign" value="Left"/>
                         </Widget>
-                        <Widget type="TextBox" skin="SandText" position="0 356 352 18" align="Right Top" name="GammaTextLight">
+                        <Widget type="TextBox" skin="SandText" position="0 426 352 18" align="Right Top" name="GammaTextLight">
                             <Property key="Caption" value="#{OMWEngine:GammaLight}"/>
                             <Property key="TextAlign" value="Right"/>
                         </Widget>

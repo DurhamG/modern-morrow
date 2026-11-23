@@ -36,6 +36,7 @@
 #include "pingpongcull.hpp"
 #include "renderbin.hpp"
 #include "renderingmanager.hpp"
+#include "renderscale.hpp"
 #include "sky.hpp"
 #include "transparentpass.hpp"
 #include "vismask.hpp"
@@ -335,8 +336,13 @@ namespace MWRender
 
         size_t frame = cv->getTraversalNumber();
 
-        mStateUpdater->setResolution(osg::Vec2f(
-            static_cast<float>(cv->getViewport()->width()), static_cast<float>(cv->getViewport()->height())));
+        // The world can be drawn smaller than the screen, at the render scale setting's fraction of it.
+        if (Stereo::getStereo())
+            mStateUpdater->setResolution(osg::Vec2f(
+                static_cast<float>(cv->getViewport()->width()), static_cast<float>(cv->getViewport()->height())));
+        else
+            mStateUpdater->setResolution(
+                osg::Vec2f(static_cast<float>(renderWidth()), static_cast<float>(renderHeight())));
 
         // per-frame data
         if (frame != mLastFrameNumber)
@@ -888,14 +894,14 @@ namespace MWRender
     {
         if (Stereo::getStereo())
             return Stereo::Manager::instance().eyeResolution().x();
-        return mWidth;
+        return scaledRenderSize(mWidth, Settings::video().mRenderScale);
     }
 
     int PostProcessor::renderHeight() const
     {
         if (Stereo::getStereo())
             return Stereo::Manager::instance().eyeResolution().y();
-        return mHeight;
+        return scaledRenderSize(mHeight, Settings::video().mRenderScale);
     }
 
     void PostProcessor::triggerShaderReload()

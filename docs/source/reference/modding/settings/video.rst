@@ -172,3 +172,15 @@ Video Settings
    .. warning::
 
       This setting is only supported on Windows platform. The setting will not be displayed in the in-game menu if not available.
+
+.. omw-setting::
+   :title: render scale
+   :type: float32
+   :range: 0.25 to 1.0
+   :default: 1.0
+   :location: :bdg-info:`In Game > Options > Video`
+
+   This setting draws the world at a fraction of the screen's width and height, then stretches it to fill the screen.
+   At 0.5, the world has a quarter of the screen's pixels, which makes it blurrier but much faster to draw,
+   such as on a phone with a high-resolution screen. The menus are always drawn at the screen's own resolution.
+   The setting has no effect in VR, where the headset sets the resolution.

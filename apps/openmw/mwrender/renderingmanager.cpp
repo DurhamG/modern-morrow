@@ -1317,6 +1317,10 @@ namespace MWRender
             setScreenRes(res.x(), res.y());
             Stereo::Manager::instance().setMasterProjectionMatrix(mPerViewUniformStateUpdater->getProjectionMatrix());
         }
+        else if (mPostProcessor != nullptr)
+        {
+            setScreenRes(mPostProcessor->renderWidth(), mPostProcessor->renderHeight());
+        }
         else
         {
             setScreenRes(width, height);
@@ -1440,6 +1444,10 @@ namespace MWRender
             else if (it->first == "Video" && (it->second == "resolution x" || it->second == "resolution y"))
             {
                 updateProjection = true;
+            }
+            else if (it->first == "Video" && it->second == "render scale")
+            {
+                mPostProcessor->resize();
             }
             else if (it->first == "Camera" && it->second == "viewing distance")
             {

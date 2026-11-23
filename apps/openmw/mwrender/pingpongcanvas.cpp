@@ -172,11 +172,10 @@ namespace MWRender
 
             mLuminanceCalculator->dirty(mTextureScene->getTextureWidth(), mTextureScene->getTextureHeight());
 
-            if (Stereo::getStereo())
-                mRenderViewport
-                    = new osg::Viewport(0, 0, mTextureScene->getTextureWidth(), mTextureScene->getTextureHeight());
-            else
-                mRenderViewport = nullptr;
+            // The passes draw at the scene's size, which can be smaller than the screen, such as for each eye in VR,
+            // or at a render scale below 1. The last pass then stretches it to the screen.
+            mRenderViewport
+                = new osg::Viewport(0, 0, mTextureScene->getTextureWidth(), mTextureScene->getTextureHeight());
 
             mDirty = false;
         }
