@@ -35,3 +35,59 @@ touch action=tap x=1100 y=656
 wait frames=5
 expect-text "Bilinear"
 shot video
+
+# Toggling an option keeps the list where it was. The Prefs tab is scrolled to its last row, which moves Menu
+# Transparency out of view, then Auto-Save when Rest, still in view, is toggled. Menu Transparency's row is the only
+# one at 30%, which the classic window behind the panel doesn't show.
+touch action=tap x=117 y=78
+wait-text "30%"
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+pad button=dpdown
+wait frames=3
+expect-no-text "30%"
+pad button=dpup
+wait frames=3
+pad button=dpup
+wait frames=3
+pad button=dpup
+wait frames=3
+pad button=dpup
+wait frames=3
+pad button=dpup
+wait frames=3
+pad button=dpup
+wait frames=3
+pad button=dpup
+wait frames=3
+pad button=dpup
+wait frames=3
+pad button=dpup
+wait frames=3
+expect-no-text "30%"
+pad button=a
+wait frames=5
+expect-no-text "30%"
+shot prefs-toggled

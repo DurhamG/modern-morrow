@@ -703,12 +703,15 @@ namespace MWGui
                 list->eventListSelectAccept(list, list->getIndexSelected());
         }
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
-        // A setting can show or hide others, such as the shadow settings. The d-pad direction that changed the setting
-        // may still be held, and must not count as a new press that changes it back.
+        // A setting can show or hide others, such as the shadow settings, so the panel is built again. The list stays
+        // where it was, with the same setting focused. The d-pad direction that changed the setting may still be
+        // held, and must not count as a new press that changes it back.
         const int focus = mList.getFocus();
+        const int scroll = mList.getScroll();
         const HeldDirection held = mHeldDirection;
         showPanelOrWindow();
         mList.setFocus(focus);
+        mList.setScroll(scroll);
         mHeldDirection = held;
         drawPanel();
     }
