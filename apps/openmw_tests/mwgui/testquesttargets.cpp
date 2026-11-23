@@ -140,6 +140,26 @@ namespace
         EXPECT_EQ(targets.mFetches, std::vector<ESM::RefId>{ id("misc_box") });
     }
 
+    TEST(MWGuiQuestTargetsCallTargetsTest, aTestThatSomethingIsNotSoIsNoTarget)
+    {
+        // The Bal Isra stronghold's builder waits for the player to be somewhere else, and Dilborn's script for Thrud
+        // to be alive.
+        const CallTargets targets = targetsOfFirstCall(
+            "if ( GetPCCell \"Bal Isra\" == 0 )\n"
+            "if ( GetDeadCount \"thrud\" == 0 )\n"
+            "if ( Player->GetItemCount \"misc_box\" < 1 )\n"
+            "if ( GetDistance \"ex_door\" > 400 )\n"
+            "Journal X 90\n");
+        EXPECT_TRUE(targets.mCells.empty());
+        EXPECT_TRUE(targets.mKills.empty());
+        EXPECT_TRUE(targets.mFetches.empty());
+        EXPECT_TRUE(targets.mNear.empty());
+        EXPECT_EQ(targetsOfFirstCall("if ( OnDeath == 0 )\nJournal X 80\nendif").mEvent, ScriptEvent::Other);
+        EXPECT_EQ(targetsOfFirstCall("if ( GetHealth > 50 )\nJournal X 80\nendif").mEvent, ScriptEvent::Other);
+        EXPECT_EQ(targetsOfFirstCall("if ( GetPCCell \"Gnaar Mok\" )\nJournal X 90\nendif").mCells,
+            std::vector<ESM::RefId>{ id("gnaar mok") });
+    }
+
     TEST(MWGuiQuestTargetsAllowsStageTest, checksConditionsOnTheQuestOnly)
     {
         const std::vector<DialogueCondition> conditions{ stageIs(DialogueCondition::Comp_Ge, 10),

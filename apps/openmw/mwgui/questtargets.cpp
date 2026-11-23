@@ -178,6 +178,29 @@ namespace MWGui::QuestTargets
             return conditions;
         }
 
+        // Whether the comparison at words[op] holds only when the command before it answers no or none, such as the
+        // "== 0" in `GetPCCell "Bal Isra" == 0`. A test like that waits for something not to be so, which isn't a
+        // place to go, someone to kill or something to carry.
+        bool testsForNone(const std::vector<std::string>& words, std::size_t op)
+        {
+            if (op + 1 >= words.size())
+                return false;
+            const std::string& comparison = words[op];
+            const std::string& value = words[op + 1];
+            if (value == "0")
+                return comparison == "==" || comparison == "=" || comparison == "<=";
+            if (value == "1")
+                return comparison == "<" || comparison == "!=";
+            return false;
+        }
+
+        // Whether the comparison at words[op] holds for small values only, such as the "< 512" in
+        // `GetDistance Player < 512`.
+        bool testsForAtMost(const std::vector<std::string>& words, std::size_t op)
+        {
+            return op < words.size() && (words[op] == "<" || words[op] == "<=");
+        }
+
         // The object a command runs on, such as "player" in "player->getdistance", or empty for the script's own.
         std::string_view caller(std::string_view word)
         {
@@ -329,12 +352,15 @@ namespace MWGui::QuestTargets
                 const std::string& word = words[i];
                 const std::string_view on = caller(word);
                 const std::string* argument = i + 1 < words.size() ? &words[i + 1] : nullptr;
-                if (targets.mEvent == ScriptEvent::Other
-                    && (isCommand(word, "ondeath") || isCommand(word, "gethealth")))
+                if (targets.mEvent == ScriptEvent::Other && isCommand(word, "ondeath") && !testsForNone(words, i + 1))
                     targets.mEvent = ScriptEvent::Death;
-                else if (targets.mEvent == ScriptEvent::Other && isCommand(word, "onpcadd"))
+                else if (targets.mEvent == ScriptEvent::Other && isCommand(word, "gethealth")
+                    && testsForAtMost(words, i + 1))
+                    targets.mEvent = ScriptEvent::Death;
+                else if (targets.mEvent == ScriptEvent::Other && isCommand(word, "onpcadd")
+                    && !testsForNone(words, i + 1))
                     targets.mEvent = ScriptEvent::PickUp;
-                else if (isCommand(word, "getdistance") && argument != nullptr)
+                else if (isCommand(word, "getdistance") && argument != nullptr && testsForAtMost(words, i + 2))
                 {
                     // The player's distance to something, or something's distance to the player.
                     std::string_view near;
@@ -347,11 +373,13 @@ namespace MWGui::QuestTargets
                     if (!near.empty() && near != "player")
                         addUnique(targets.mNear, ESM::RefId::stringRefId(near));
                 }
-                else if (isCommand(word, "getpccell") && argument != nullptr)
+                else if (argument == nullptr || testsForNone(words, i + 2))
+                    continue;
+                else if (isCommand(word, "getpccell"))
                     addUnique(targets.mCells, ESM::RefId::stringRefId(*argument));
-                else if (isCommand(word, "getdeadcount") && argument != nullptr)
+                else if (isCommand(word, "getdeadcount"))
                     addUnique(targets.mKills, ESM::RefId::stringRefId(*argument));
-                else if (isCommand(word, "getitemcount") && argument != nullptr && on == "player")
+                else if (isCommand(word, "getitemcount") && on == "player")
                     addUnique(targets.mFetches, ESM::RefId::stringRefId(*argument));
             }
         }
