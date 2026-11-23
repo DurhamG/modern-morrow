@@ -256,12 +256,14 @@ GUI Settings
 .. omw-setting::
    :title: quest marker rule
    :type: int
-   :range: 0, 1
-   :default: 0
+   :range: 0, 1, 2
+   :default: 2
 
    Which ways forward from a quest's stage to mark.
    0 marks only the ones that lead to the next stage, which follows the journal's hints one at a time.
    1 marks every way forward at once.
+   2 marks the ones to the next stage and the ones to the furthest stage, which adds where the quest is going to the
+   next hint.
 
 .. omw-setting::
    :title: quest compass
