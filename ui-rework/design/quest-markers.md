@@ -4,14 +4,20 @@ GitHub issue 2 asks for map markers for every kind of quest. This is an experime
 
 This page is the plan. The numbers in it come from a throwaway analysis of Morrowind.esm, Tribunal.esm and Bloodmoon.esm.
 
-**Status.** A first prototype is built, as section 5's list describes up to the compass, with these left for later:
-- Conditions inside scripts, and conditions implied by dialogue order.
-- Items carried by actors and containers.
-- Faction, class and cell speakers.
-- Door tooltips, a colour for each quest, and an objective line.
-- Saving the tracked quests.
+**Status.** A prototype is built, as section 5's list describes up to the compass. Since the first version it also:
+- reads the if blocks around each Journal command in a script;
+- finds items on whoever carries them;
+- marks the nearest faction member of the right rank for a line with no speaker, and a cell by the door into it;
+- leaves out answers to conversation choices when there's another way;
+- checks a line's conditions on global variables, other quests' stages and the speaker's local variables while
+  playing.
 
-Rule A is the default, and the `quest marker rule` setting switches to rule B.
+These are left for later:
+- conditions implied by dialogue order;
+- door tooltips, a colour for each quest, and an objective line;
+- saving the tracked quests.
+
+Rule C, the lowest and the highest next stage, is the default. Section 8 has how it was chosen.
 
 ## 1. Where a quest goes next
 
@@ -187,3 +193,36 @@ Their known failures are also worth guarding against:
 - Step 2 adds `PositionCell` destinations, disabled objects and doors, and a cap on how many places one target can mark.
 - Step 4 adds the edge pinning, the above and below arrows, and a colour for each quest. Step 5 adds the objective text line.
 - The hand-labelled stages stay the deciding test. If no rule reaches Skyrim-like accuracy, the fallback is Quest Guider's honest approach: several markers, labelled as possible next steps.
+
+## 8. Measured against Comprehensive Objective Mod
+
+Comprehensive Objective Mod has a hand-written objective for every stage of the official quests, apparently written by
+an AI from UESP's walkthroughs. Its five vanilla files were downloaded at commit 8ec80bb, with the project owner's
+permission. They were read only as data, to measure the markers, and nothing from them is in this repository, since
+the repository has no licence.
+
+A harness command, `quest-targets`, lists what the markers' analysis gives at every stage. A script compared it with
+their first required step at 2,071 stages of the base game and the two expansions. "Agrees" means their step is among
+the markers the game would show.
+
+| Rule | Agrees, first version | Agrees, now | Markers when there are any |
+|---|---|---|---|
+| A: the lowest next stage | 60% | 61% | 1.2 |
+| C: the lowest and the highest | 69% | 70% | 1.9 |
+| B: every way forward | 75% | 75% | 2.9 |
+
+Agreement isn't correctness, so 50 random stages where rule C disagreed with them were judged by hand from the game's
+own data:
+- Theirs was right in 33.
+- Ours was right in 12. Seven of those were mistakes in their data, mostly stage ranges that point at a step the
+  journal says is done.
+- Both were reasonable in 3, and 2 were unclear.
+
+19 of their 33 wins had causes the content can fix, and most of those are fixed now. Re-judging the 50 with the
+current analysis, ours is right in about 26 and theirs alone in about 19. As a rough estimate over all stages, their
+data is right about 90% of the time, and ours went from about 78% to about 87%.
+
+Most of the gain doesn't show in the table above, because it comes from checks only the running game can make, such
+as global variables and which faction member is nearest. The stages neither side can fix from the content are about
+9% of the total. At those, nothing in the content moves the quest on, the task isn't in any condition, or only the
+journal's text says where to go.

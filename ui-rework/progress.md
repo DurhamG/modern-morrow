@@ -270,3 +270,23 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   - **What the player sees.** The markers show on the 2D and 3D local maps, the HUD's minimap and the world map. A compass along the top of the HUD shows them too. A marker past the compass's ends stays at the nearer end, and an arrow says whether the target is above or below. The controller journal marks a tracked quest beside its name, and Back tracks or stops tracking the highlighted quest.
   - **Settings.** Four GUI settings: whether markers show, whether quests are tracked by themselves, which ways forward are marked (the next stage's only, or all of them), and the compass.
   - **Tests and limits.** Google Tests cover the analysis, the door routes and the compass's arithmetic. The `quest-markers` scenario checks tracking from the journal. The tracked quests aren't saved yet: they're rebuilt from the journal when a game loads.
+- Quest markers measured against Comprehensive Objective Mod's hand-written objectives, which the project owner allowed
+  downloading for that purpose only. A 50-stage hand audit of the disagreements found the causes that the content can
+  fix, and these are fixed:
+  - `QuestTargets` now reads the if blocks around each `Journal` command in a script, for what the player has to be near
+    (`GetDistance`), which cell they have to be in (`GetPCCell`), what has to die (`OnDeath`, `GetDeadCount`), and what
+    they have to carry (`GetItemCount`, `OnPCAdd`).
+  - An item lying nowhere in the world is found on whoever starts with it, including a corpse, such as the skooma pipe
+    on Ernil Omoran.
+  - A line with no speaker marks the nearest faction member of the line's rank, such as a Morag Tong master. A line
+    limited to a cell marks the door into it.
+  - Answers to conversation choices only count when there's no other way. While playing, a way is left out when its
+    line's conditions on global variables, other quests' stages or the speaker's local variables don't hold, before the
+    rule chooses.
+  - The default rule is now the lowest and the highest next stage.
+  - The `quest-targets` harness command writes the analysis for every stage, for comparisons like this one.
+  - [design/quest-markers.md](design/quest-markers.md) has the numbers. On the audited stages, ours went from right in
+    12 to right in about 26, and theirs alone from 33 to about 19. The estimate over all stages is that ours went from
+    78% right to 87%, against about 90% for theirs.
+  - Quest markers and the compass are off by default, with a row for each on the Options' Prefs tab. The journal hides
+    tracking while markers are off.
