@@ -159,8 +159,8 @@ namespace MWGui
         void showPanelOrWindow();
         void drawPanel();
         void changePanelRow(int delta);
-        /// Sets a slider to the point along its bar that the mouse clicked.
-        void clickPanelSlider(int item, int barX, int barWidth);
+        /// Sets a slider to a point along its bar, from 0 at its left end to 1 at its right end.
+        void setPanelSlider(int item, float fraction);
         void activatePanelRow();
     };
 }

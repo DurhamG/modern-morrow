@@ -614,11 +614,9 @@ namespace MWGui
                 addRect(mRoot, x + 20, ry + 36, w - 40, 6, MyGUI::Colour::Black, 0.6f);
                 addRect(
                     mRoot, x + 20, ry + 36, std::max(2, static_cast<int>((w - 40) * fraction)), 6, sAccentColour, 0.8f);
-                // Clicking the bar sets the value to the point clicked.
-                const int barX = x + 20;
-                const int barW = w - 40;
-                addPointerTarget(mRoot, barX, ry + 28, barW, 22, nullptr,
-                    [this, index, barX, barW] { setValueAtPointer(index, barX, barW); });
+                // Clicking the bar sets the value to the point clicked, and a finger can drag along it.
+                addSliderPointerTarget(mRoot, x + 20, ry + 28, w - 40, 22, nullptr,
+                    [this, index](float fraction) { setValueAt(index, fraction); });
             }
             ry += sSettingHeight;
         }
@@ -1191,10 +1189,10 @@ namespace MWGui
         playSound("Menu Click");
     }
 
-    void EffectCraftPanel::setValueAtPointer(int setting, int barX, int barW)
+    void EffectCraftPanel::setValueAt(int setting, float fraction)
     {
         const std::vector<Setting> all = settings();
-        if (setting < 0 || setting >= static_cast<int>(all.size()) || barW <= 0)
+        if (setting < 0 || setting >= static_cast<int>(all.size()))
             return;
         const EditEffectDialog& dialog = mEditor.mAddEffectDialog;
         const MyGUI::ScrollBar* slider = nullptr;
@@ -1218,8 +1216,6 @@ namespace MWGui
         mSettingFocus = setting;
         if (slider != nullptr && slider->getScrollRange() > 1)
         {
-            const int mouseX = MyGUI::InputManager::getInstance().getMousePosition().left - mRoot->getAbsoluteLeft();
-            const float fraction = std::clamp(static_cast<float>(mouseX - barX) / barW, 0.f, 1.f);
             const int position = static_cast<int>(std::lround(fraction * (slider->getScrollRange() - 1)));
             adjust(position - static_cast<int>(slider->getScrollPosition()));
         }

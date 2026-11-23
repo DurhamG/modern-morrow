@@ -568,8 +568,8 @@ namespace MWGui
             [] { pressButton(SDL_CONTROLLER_BUTTON_A); });
 
         // Some values have mouse areas of their own, on top of their rows. Clicking a slider's bar sets the slider to
-        // that point. Clicking an arrow beside the focused setting's value changes it, as left and right on the d-pad
-        // do.
+        // that point. Clicking the left or right half of the focused setting's value changes it, as left and right on
+        // the d-pad do. Halves are big enough for a finger, where the arrows at the ends aren't.
         const int barW = valueW - 70;
         for (const std::pair<int, int>& drawn : drawnItems)
         {
@@ -581,7 +581,7 @@ namespace MWGui
             if (row->isType<MyGUI::ScrollBar>())
             {
                 if (barW > 0)
-                    addPointerTarget(
+                    addSliderPointerTarget(
                         mPanel, vx, ry, barW, rowH - 6,
                         [this, item] {
                             if (mList.getFocus() == item)
@@ -589,15 +589,16 @@ namespace MWGui
                             mList.setFocus(item);
                             drawPanel();
                         },
-                        [this, item, vx, barW] { clickPanelSlider(item, vx, barW); });
+                        [this, item](float fraction) { setPanelSlider(item, fraction); });
             }
             else if (!row->isType<MyGUI::Button>() && item == mList.getFocus())
             {
-                addPointerTarget(mPanel, vx, ry, 28, rowH - 6, nullptr, [this, item] {
+                const int half = valueW / 2;
+                addPointerTarget(mPanel, vx, ry, half, rowH - 6, nullptr, [this, item] {
                     mList.setFocus(item);
                     changePanelRow(-1);
                 });
-                addPointerTarget(mPanel, vx + valueW - 28, ry, 28, rowH - 6, nullptr, [this, item] {
+                addPointerTarget(mPanel, vx + half, ry, valueW - half, rowH - 6, nullptr, [this, item] {
                     mList.setFocus(item);
                     changePanelRow(1);
                 });
@@ -662,23 +663,24 @@ namespace MWGui
         drawPanel();
     }
 
-    void SettingsWindow::clickPanelSlider(int item, int barX, int barWidth)
+    void SettingsWindow::setPanelSlider(int item, float fraction)
     {
         mList.setFocus(item);
         MyGUI::Widget* row = panelRow(item);
         MyGUI::ScrollBar* slider = row != nullptr ? row->castType<MyGUI::ScrollBar>(false) : nullptr;
-        if (slider == nullptr || barWidth <= 0)
+        if (slider == nullptr)
             return;
-        // The point clicked along the bar, from 0 at its left end to 1 at its right end.
-        const int mouseX = MyGUI::InputManager::getInstance().getMousePosition().left - mPanel->getAbsoluteLeft();
-        const float fraction = std::clamp(static_cast<float>(mouseX - barX) / barWidth, 0.f, 1.f);
         const int range = static_cast<int>(slider->getScrollRange());
         const int position
             = std::clamp(static_cast<int>(std::lround(fraction * (range - 1))), 0, std::max(0, range - 1));
-        // The change goes through the same event as dragging the slider, so the window applies it as before.
-        slider->setScrollPosition(position);
-        slider->eventScrollChangePosition(slider, position);
-        MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        // A finger dragging along the bar sets the slider many times, and only a change clicks.
+        if (position != static_cast<int>(slider->getScrollPosition()))
+        {
+            // The change goes through the same event as dragging the slider, so the window applies it as before.
+            slider->setScrollPosition(position);
+            slider->eventScrollChangePosition(slider, position);
+            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        }
         drawPanel();
     }
 

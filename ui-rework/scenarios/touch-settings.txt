@@ -1,0 +1,37 @@
+# The settings with touch controls. A tap on a slider's bar sets it to that point, and a sideways drag along the bar
+# follows the finger, even past the bar's ends. A sideways drag elsewhere doesn't switch tabs. Tapping the right half
+# of the focused choice's value picks the next one. The controller menus are drawn on a canvas 720 units tall, so the
+# deck's 800 pixels check that a tap's pixels are converted to the canvas.
+launch --set "Input.touch controls=true"
+wait-mode MainMenu
+wait frames=30
+touch action=tap x=636 y=640
+wait-text "Menu Transparency"
+
+# Menu Transparency's bar runs from 716 to 1149 pixels across, so 30% of the way is at 846.
+touch action=tap x=846 y=144
+wait frames=5
+expect-text "30%"
+
+# A sideways drag on a row that isn't a slider stays on the tab.
+touch action=drag path=[[700,451],[740,451],[900,452],[1100,452]] frames=2
+wait frames=5
+expect-text "Menu Transparency"
+
+touch action=tap x=440 y=78
+wait-text "Field of View"
+touch action=drag path=[[900,451],[930,452],[1050,452],[1250,452]] frames=2
+wait frames=5
+expect-text "100%"
+touch action=drag path=[[1100,451],[1070,452],[900,452],[600,452]] frames=2
+wait frames=5
+expect-no-text "100%"
+expect-text "0%"
+
+# Anisotropy goes from 4x to 8x.
+touch action=tap x=300 y=656
+wait frames=5
+touch action=tap x=1100 y=656
+wait frames=5
+expect-text "8x"
+shot video

@@ -170,6 +170,18 @@ namespace MWGui
         void addRowPointerTarget(MyGUI::Widget* parent, int x, int y, int w, int h, bool selected,
             std::function<void()> onPoint, std::function<void()> onClick, std::function<void(int steps)> onWheel);
 
+        /// A slider's bar. Clicking or tapping it sets the slider to that point, and a finger can drag along it. onSet
+        /// gets the point along the bar, from 0 at its left end to 1 at its right end.
+        void addSliderPointerTarget(MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void()> onPoint,
+            std::function<void(float fraction)> onSet);
+        /// Starts a finger's drag on the slider bar under it, and sets the slider to that point. Returns false when
+        /// there is no slider bar there.
+        bool pointerSlideStart(int x, int y);
+        /// Sets the slider being dragged to where the finger is now. A finger past the bar's end sets the slider to
+        /// that end.
+        void pointerSlide(int x, int y);
+        void pointerSlideEnd();
+
         /// Points at the target under the mouse, when it is a different one than before. The mouse manager calls it
         /// when the mouse moves in controller menus mode.
         void pointerMoved(int x, int y);

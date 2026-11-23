@@ -11,7 +11,9 @@
 #include <string>
 
 #include <MyGUI_InputManager.h>
+#include <MyGUI_LayerManager.h>
 #include <MyGUI_ScrollBar.h>
+#include <MyGUI_ScrollView.h>
 
 #include <SDL_gamecontroller.h>
 #include <SDL_timer.h>
@@ -99,6 +101,21 @@ namespace MWInput
         {
             return point.left >= box.left - margin && point.left <= box.right() + margin
                 && point.top >= box.top - margin && point.top <= box.bottom() + margin;
+        }
+
+        // The page that scrolls under a point in GUI units, such as the script settings, or none. A scroll bar is
+        // dragged on its own, so there is no page under it.
+        MyGUI::ScrollView* scrollViewAt(const MyGUI::IntPoint& point)
+        {
+            MyGUI::Widget* widget = MyGUI::LayerManager::getInstance().getWidgetFromPoint(point.left, point.top);
+            for (; widget != nullptr; widget = widget->getParent())
+            {
+                if (widget->isType<MyGUI::ScrollBar>())
+                    return nullptr;
+                if (MyGUI::ScrollView* view = widget->castType<MyGUI::ScrollView>(false))
+                    return view;
+            }
+            return nullptr;
         }
     }
 
@@ -367,11 +384,24 @@ namespace MWInput
                 if (!finger->mDecided)
                 {
                     finger->mDecided = true;
-                    finger->mTabSwipe
-                        = std::abs(position.left - finger->mStart.left) > std::abs(position.top - finger->mStart.top)
-                        && canSwipeTabs(*finger);
+                    const bool sideways
+                        = std::abs(position.left - finger->mStart.left) > std::abs(position.top - finger->mStart.top);
+                    const MyGUI::IntPoint start = toGui(finger->mStart);
+                    finger->mSliding = sideways && mMouseManager->usesControllerMenus()
+                        && MWGui::ControllerUi::pointerSlideStart(start.left, start.top);
+                    finger->mTabSwipe = sideways && !finger->mSliding && canSwipeTabs(*finger);
+                    finger->mDraggingPage = !sideways && finger->mMouse
+                        && MWBase::Environment::get().getWindowManager()->isSettingsWindowVisible()
+                        && scrollViewAt(start) != nullptr;
                 }
-                if (finger->mTabSwipe)
+                if (finger->mSliding)
+                {
+                    const MyGUI::IntPoint now = toGui(position);
+                    MWGui::ControllerUi::pointerSlide(now.left, now.top);
+                }
+                else if (finger->mDraggingPage)
+                    menuDragPage(*finger, MyGUI::FloatPoint(position.left - delta.left, position.top - delta.top));
+                else if (finger->mTabSwipe)
                     menuSwipeTabs(*finger);
                 else if (!finger->mMouse)
                     menuScroll(*finger);
@@ -448,7 +478,9 @@ namespace MWInput
                     nextTutorialPage();
                 break;
             case Role::Menu:
-                if (finger.mPressed)
+                if (finger.mSliding)
+                    MWGui::ControllerUi::pointerSlideEnd();
+                else if (finger.mPressed)
                 {
                     const MyGUI::IntPoint at = toGui(finger.mPosition);
                     MyGUI::InputManager::getInstance().injectMouseRelease(at.left, at.top, MyGUI::MouseButton::Left);
@@ -745,11 +777,23 @@ namespace MWInput
         }
     }
 
+    void TouchManager::menuDragPage(const Finger& finger, const MyGUI::FloatPoint& previous)
+    {
+        MyGUI::ScrollView* view = scrollViewAt(toGui(finger.mStart));
+        if (view == nullptr)
+            return;
+        // The page follows the finger, so dragging up shows what is below. The view keeps the page within its ends.
+        const int moved = toGui(finger.mPosition).top - toGui(previous).top;
+        const MyGUI::IntPoint offset = view->getViewOffset();
+        view->setViewOffset(MyGUI::IntPoint(offset.left, offset.top + moved));
+    }
+
     bool TouchManager::canSwipeTabs(const Finger& finger) const
     {
-        // The map pans when dragged, and its tabs can be tapped instead.
+        // The map pans when dragged, and its tabs can be tapped instead. The settings are mostly sliders and choices
+        // that a finger can miss, so their tabs are only tapped too.
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
-        return mMouseManager->usesControllerMenus() && !finger.mOnSlider
+        return mMouseManager->usesControllerMenus() && !finger.mOnSlider && !winMgr->isSettingsWindowVisible()
             && dynamic_cast<MWGui::MapWindow*>(winMgr->getActiveControllerWindow()) == nullptr;
     }
 
@@ -956,6 +1000,7 @@ namespace MWInput
     void TouchManager::reset()
     {
         mFingers.clear();
+        MWGui::ControllerUi::pointerSlideEnd();
         mPending.clear();
         stopMovement();
         pressUse(false);

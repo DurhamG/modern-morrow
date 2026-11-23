@@ -26,8 +26,8 @@ namespace MWInput
     /// Plays the game with fingers on a touch screen, as ui-rework/design/touch.md describes. During play the left
     /// thumb walks like a stick, and the right thumb looks and taps to act in the current mode. Swiping in from the
     /// left edge opens the inventory, and from the right edge picks the mode or a quick key. Corners quicksave,
-    /// quickload and sneak. In menus a tap clicks, a drag scrolls, a sideways drag switches tabs, and swiping in from
-    /// either edge goes back. A tutorial of two pages explains this to players who may not know it.
+    /// quickload and sneak. In menus a tap clicks, a drag scrolls, a sideways drag switches tabs or moves a slider, and
+    /// swiping in from either edge goes back. A tutorial of two pages explains this to players who may not know it.
     class TouchManager : public SDLUtil::TouchListener
     {
     public:
@@ -75,7 +75,7 @@ namespace MWInput
             Pinch,
             /// A finger tapping the quick keys radial.
             Radial,
-            /// A finger in a menu: a tap clicks, a drag scrolls, a sideways drag switches tabs.
+            /// A finger in a menu: a tap clicks, a drag scrolls, a sideways drag switches tabs or moves a slider.
             Menu,
             /// A finger on a tutorial page, which a tap turns.
             Tutorial,
@@ -125,6 +125,11 @@ namespace MWInput
             /// How many tabs a tab swipe has moved, to the right.
             int mTabsMoved = 0;
             bool mOnSlider = false;
+            /// Whether the finger is dragging along a slider's bar in the controller menus.
+            bool mSliding = false;
+            /// Whether the finger is dragging a page of the settings window that the controller menus don't draw, such
+            /// as the script settings, up or down.
+            bool mDraggingPage = false;
         };
 
         struct PendingAction
@@ -175,6 +180,8 @@ namespace MWInput
         MyGUI::IntPoint toGui(const MyGUI::FloatPoint& point) const;
         void menuTap(const MyGUI::FloatPoint& point);
         void menuScroll(Finger& finger);
+        /// Moves the settings window's page under a finger with the finger.
+        void menuDragPage(const Finger& finger, const MyGUI::FloatPoint& previous);
         bool canSwipeTabs(const Finger& finger) const;
         /// Switches tabs as a sideways drag goes along.
         void menuSwipeTabs(Finger& finger);

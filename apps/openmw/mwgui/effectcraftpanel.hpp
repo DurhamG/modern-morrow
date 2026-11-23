@@ -151,8 +151,8 @@ namespace MWGui
         void pickSoulGem(const MWWorld::Ptr& gem);
         void focusNextLine();
         void adjust(int delta);
-        /// Sets a setting's value to where the mouse is on its bar, which starts at barX and is barW wide.
-        void setValueAtPointer(int setting, int barX, int barW);
+        /// Sets a setting's value to a point along its bar, from 0 at its left end to 1 at its right end.
+        void setValueAt(int setting, float fraction);
         void rename();
         void onRenameDone(WindowBase* sender);
     };

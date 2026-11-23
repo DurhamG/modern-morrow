@@ -51,7 +51,44 @@ namespace MWGui
             std::function<void(int)> mOnWheel;
             // A list row that isn't selected, which a tap selects rather than clicks.
             bool mTapSelects = false;
+            // A slider's bar, which a click sets to the point clicked, from 0 at its left end to 1 at its right end.
+            std::function<void(float)> mOnSlide;
         };
+
+        // A slider bar that a finger is dragging along. The bar's widget is drawn again as the slider changes, so its
+        // place is kept here rather than the widget.
+        struct Slide
+        {
+            std::function<void(float)> mOnSlide;
+            MyGUI::ILayer* mLayer = nullptr;
+            int mLeft = 0;
+            int mWidth = 0;
+        };
+        std::optional<Slide> sSlide;
+
+        // Where a point in screen pixels is along a slider's bar, from 0 at its left end to 1 at its right end. The
+        // bar's layer can be scaled, so the layer converts the point to the units the bar is drawn in first.
+        float slideFraction(const Slide& slide, int x, int y)
+        {
+            const int left = slide.mLayer != nullptr ? slide.mLayer->getPosition(x, y).left : x;
+            if (slide.mWidth <= 0)
+                return 0.f;
+            return std::clamp(static_cast<float>(left - slide.mLeft) / slide.mWidth, 0.f, 1.f);
+        }
+
+        Slide slideFor(const PointerTarget& target, MyGUI::Widget* widget)
+        {
+            MyGUI::Widget* root = widget;
+            while (root->getParent() != nullptr)
+                root = root->getParent();
+            return Slide{ target.mOnSlide, root->getLayer(), widget->getAbsoluteLeft(), widget->getWidth() };
+        }
+
+        void queueSlide(const Slide& slide, int x, int y)
+        {
+            sPointerActions.emplace_back(
+                [onSlide = slide.mOnSlide, fraction = slideFraction(slide, x, y)] { onSlide(fraction); });
+        }
 
         // The pointer target at a point. The targets are found here rather than through MyGUI's mouse focus, because
         // MyGUI keeps the mouse within a modal window, and the controller menus draw a modal window's panel apart
@@ -534,6 +571,40 @@ namespace MWGui
             area->setUserData(PointerTarget{ std::move(onPoint), std::move(onClick), std::move(onWheel), !selected });
         }
 
+        void addSliderPointerTarget(MyGUI::Widget* parent, int x, int y, int w, int h, std::function<void()> onPoint,
+            std::function<void(float fraction)> onSet)
+        {
+            passPointerThrough(parent);
+            blockPointerUnder(parent);
+            MyGUI::Widget* area
+                = parent->createWidget<MyGUI::Widget>("", MyGUI::IntCoord(x, y, w, h), MyGUI::Align::Default);
+            area->setNeedMouseFocus(true);
+            area->setUserData(PointerTarget{ std::move(onPoint), nullptr, nullptr, false, std::move(onSet) });
+        }
+
+        bool pointerSlideStart(int x, int y)
+        {
+            sSlide.reset();
+            MyGUI::Widget* widget = nullptr;
+            const PointerTarget* target = findPointerTarget(x, y, widget);
+            if (target == nullptr || !target->mOnSlide)
+                return false;
+            sSlide = slideFor(*target, widget);
+            pointerSlide(x, y);
+            return true;
+        }
+
+        void pointerSlide(int x, int y)
+        {
+            if (sSlide)
+                queueSlide(*sSlide, x, y);
+        }
+
+        void pointerSlideEnd()
+        {
+            sSlide.reset();
+        }
+
         void pointerMoved(int x, int y)
         {
             // Only a pointer that moves points at things, so a resting one doesn't fight the d-pad when the panel
@@ -592,6 +663,8 @@ namespace MWGui
                 return false;
             if (target->mOnClick)
                 sPointerActions.emplace_back(target->mOnClick);
+            if (target->mOnSlide)
+                queueSlide(slideFor(*target, widget), x, y);
             return true;
         }
 
@@ -631,6 +704,8 @@ namespace MWGui
             const std::function<void()>& action = target->mTapSelects ? target->mOnPoint : target->mOnClick;
             if (action)
                 sPointerActions.emplace_back(action);
+            if (target->mOnSlide)
+                queueSlide(slideFor(*target, widget), x, y);
             return true;
         }
 
