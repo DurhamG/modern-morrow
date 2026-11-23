@@ -216,7 +216,7 @@ namespace
         EXPECT_EQ(ways[0].mObjectives, expected);
     }
 
-    TEST(MWGuiQuestTargetsIndexTest, needingAQuestSpeakerDeadIsAFailureBranch)
+    TEST(MWGuiQuestTargetsIndexTest, needingAQuestSpeakerDeadIsAFailure)
     {
         Index index;
         index.addDialogue(line("drarayne thelas", "Journal FG_RatHunt 50"));
@@ -225,6 +225,44 @@ namespace
         const std::vector<Way> ways = index.waysForward(quest, 10, Rule::Lowest);
         ASSERT_EQ(ways.size(), 1u);
         EXPECT_EQ(ways[0].mToStage, 50);
+    }
+
+    TEST(MWGuiQuestTargetsIndexTest, aFailureCountsWhenItIsTheOnlyWay)
+    {
+        // Hanarai Assutlanipal attacks the player, and the quest goes on once she is dead.
+        Index index;
+        index.addDialogue(line("hanarai assutlanipal", "Journal FG_RatHunt 80"));
+        index.addDialogue(line("lloros sarano", "Journal FG_RatHunt 100",
+            { condition(DialogueCondition::Function_Dead, "hanarai assutlanipal", DialogueCondition::Comp_Ge, 1) }));
+        const std::vector<Way> ways = index.waysForward(quest, 80, Rule::Lowest);
+        ASSERT_EQ(ways.size(), 1u);
+        EXPECT_TRUE(ways[0].mFailure);
+        EXPECT_EQ(ways[0].mToStage, 100);
+    }
+
+    TEST(MWGuiQuestTargetsIndexTest, aCompanionDyingIsAFailure)
+    {
+        // Pemenie follows the player to Gnaar Mok. Her death is one way forward, and arriving is the other.
+        Index index;
+        index.addDialogue(line("pemenie", "AiFollow Player 0 0 0 0\nJournal Other_Quest 10"));
+        index.addScript("if ( OnDeath == 1 )\nJournal FG_RatHunt 110\nendif\n"
+                        "if ( GetPCCell \"Gnaar Mok\" == 1 )\nJournal FG_RatHunt 90\nendif",
+            { Index::Carrier{ id("pemenie"), true } });
+        EXPECT_TRUE(index.isCompanion(id("pemenie")));
+        const std::vector<Way> ways = index.waysForward(quest, 60, Rule::LowestAndHighest);
+        ASSERT_EQ(ways.size(), 1u);
+        EXPECT_EQ(ways[0].mToStage, 90);
+    }
+
+    TEST(MWGuiQuestTargetsIndexTest, aScriptCanMakeAnotherActorACompanion)
+    {
+        Index index;
+        index.addScript("\"rabinna\"->AiFollow, player, 0, 0, 0, 0", {});
+        index.addScript("AiEscort Player 0 100 200 300", { Index::Carrier{ id("fonus rathryon"), true } });
+        index.addScript("AiFollow \"guar_white\" 0 0 0 0", { Index::Carrier{ id("scamp"), true } });
+        EXPECT_TRUE(index.isCompanion(id("rabinna")));
+        EXPECT_TRUE(index.isCompanion(id("fonus rathryon")));
+        EXPECT_FALSE(index.isCompanion(id("scamp")));
     }
 
     TEST(MWGuiQuestTargetsIndexTest, aDeadConditionThatNeedsSomeoneAliveIsNoKill)

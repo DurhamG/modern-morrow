@@ -8,6 +8,8 @@ This page is the plan. The numbers in it come from a throwaway analysis of Morro
 - reads the if blocks around each Journal command in a script;
 - finds items on whoever carries them;
 - marks the nearest faction member of the right rank for a line with no speaker, and a cell by the door into it;
+- treats a way that needs a quest's speaker or a companion dead as a failure, marked only when there's no other
+  way;
 - checks a line's conditions on global variables, other quests' stages and the speaker's local variables while
   playing.
 

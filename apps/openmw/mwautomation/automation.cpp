@@ -712,7 +712,8 @@ namespace MWAutomation
                         }
                         result.push_back(
                             Json::object({ { "to", way.mToStage }, { "objectives", Json(std::move(objectives)) },
-                                { "choice", way.mChoice }, { "checks", Json(std::move(checks)) } }));
+                                { "choice", way.mChoice }, { "failure", way.mFailure },
+                                { "checks", Json(std::move(checks)) } }));
                     }
                     return Json(std::move(result));
                 };

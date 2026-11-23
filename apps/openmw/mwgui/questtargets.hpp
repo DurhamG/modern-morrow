@@ -63,6 +63,9 @@ namespace MWGui
             // Whether the way is an answer to a question in a conversation. The marker is the same, on the person who
             // asks.
             bool mChoice = false;
+            // Whether the way needs someone dead who talks in the quest, or who follows the player somewhere. That
+            // is usually how the quest fails, such as the quest giver or an escorted pilgrim dying.
+            bool mFailure = false;
             // The line's conditions on global variables, other quests' stages and the speaker's local variables,
             // which only the game while it runs can check.
             std::vector<ESM::DialogueCondition> mChecks;
@@ -140,7 +143,8 @@ namespace MWGui
         /// Whether a condition holds for a value, such as a global variable's.
         bool compare(const ESM::DialogueCondition& condition, float value);
 
-        /// Chooses the ways forward to mark, by the rule. The ways come out in stage order.
+        /// Chooses the ways forward to mark, by the rule. Failures only count when every way forward is one, such
+        /// as after the escorted pilgrim has died. The ways come out in stage order.
         std::vector<Way> chooseWays(std::vector<Way> ways, Rule rule);
 
         /// The ways forward of every quest in the content.
@@ -173,6 +177,9 @@ namespace MWGui
 
             /// Notes a person's faction and rank.
             void addMember(const ESM::RefId& faction, const ESM::RefId& person, int rank);
+
+            /// Whether the content has an actor follow or escort the player, from a line they say or a script.
+            bool isCompanion(const ESM::RefId& actor) const { return mCompanions.contains(actor); }
 
             /// Every way forward from a stage of a quest. The game leaves out the ones whose checks don't hold, then
             /// chooses among the rest with chooseWays.
@@ -209,9 +216,10 @@ namespace MWGui
             std::vector<Objective> objectivesOf(const ESM::RefId& quest, const Source& source) const;
 
             std::unordered_map<ESM::RefId, std::vector<Source>> mSources;
-            // The people who move each quest on by talking. A line that needs one of them dead is a failure branch,
-            // such as the quest giver dying, and not an objective.
+            // The people who move each quest on by talking.
             std::unordered_map<ESM::RefId, std::unordered_set<ESM::RefId>> mSpeakers;
+            // The actors who follow or escort the player.
+            std::unordered_set<ESM::RefId> mCompanions;
             std::unordered_map<ESM::RefId, std::vector<ESM::RefId>> mHolders;
             std::unordered_map<ESM::RefId, std::vector<Member>> mMembers;
         };

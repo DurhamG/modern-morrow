@@ -299,6 +299,28 @@ namespace MWGui::QuestTargets
             }
         }
 
+        // Adds the actors a script tells to follow or escort the player, such as `AiFollow Player 0 0 0 0`. The
+        // command without an object is run on `self`, the speaker or the actors the script is on.
+        void addCompanions(
+            std::string_view script, const std::vector<ESM::RefId>& self, std::unordered_set<ESM::RefId>& companions)
+        {
+            for (const std::vector<std::string>& words : scriptWords(script))
+                for (std::size_t i = 0; i + 1 < words.size(); ++i)
+                {
+                    if (words[i + 1] != "player"
+                        || (!isCommand(words[i], "aifollow") && !isCommand(words[i], "aiescort")))
+                        continue;
+                    // A quoted object comes out as a word of its own, before the "->".
+                    std::string_view on = caller(words[i]);
+                    if (on.empty() && words[i].starts_with("->") && i > 0)
+                        on = words[i - 1];
+                    if (on.empty())
+                        companions.insert(self.begin(), self.end());
+                    else
+                        companions.insert(ESM::RefId::stringRefId(on));
+                }
+        }
+
         void addUnique(std::vector<ESM::RefId>& ids, const ESM::RefId& id)
         {
             if (std::find(ids.begin(), ids.end(), id) == ids.end())
@@ -443,10 +465,19 @@ namespace MWGui::QuestTargets
             if (!info.mActor.empty())
                 mSpeakers[quest].insert(info.mActor);
         }
+        std::vector<ESM::RefId> speaker;
+        if (!info.mActor.empty())
+            speaker.push_back(info.mActor);
+        addCompanions(info.mResultScript, speaker, mCompanions);
     }
 
     void Index::addScript(std::string_view text, const std::vector<Carrier>& carriers)
     {
+        std::vector<ESM::RefId> actors;
+        for (const Carrier& carrier : carriers)
+            if (carrier.mActor)
+                actors.push_back(carrier.mId);
+        addCompanions(text, actors, mCompanions);
         const std::vector<ScriptJournalCall> calls = scriptJournalCalls(text);
         if (calls.empty())
             return;
@@ -528,7 +559,6 @@ namespace MWGui::QuestTargets
             return objectives;
         }
 
-        const auto speakers = mSpeakers.find(quest);
         for (const ESM::DialogueCondition& condition : source.mConditions)
         {
             const int count = countNeeded(condition);
@@ -536,12 +566,7 @@ namespace MWGui::QuestTargets
                 continue;
             const ESM::RefId id = ESM::RefId::stringRefId(condition.mVariable);
             if (condition.mFunction == ESM::DialogueCondition::Function_Dead)
-            {
-                // Needing someone who speaks in the quest dead is a failure branch, such as the quest giver dying.
-                if (speakers != mSpeakers.end() && speakers->second.contains(id))
-                    return {};
                 objectives.push_back(Objective{ .mTask = Task::Kill, .mObject = id, .mCount = count });
-            }
             else if (condition.mFunction == ESM::DialogueCondition::Function_Item
                 && id != ESM::RefId::stringRefId("gold_001"))
                 objectives.push_back(Objective{ .mTask = Task::Fetch, .mObject = id, .mCount = count });
@@ -558,6 +583,8 @@ namespace MWGui::QuestTargets
 
     std::vector<Way> chooseWays(std::vector<Way> ways, Rule rule)
     {
+        if (std::any_of(ways.begin(), ways.end(), [](const Way& way) { return !way.mFailure; }))
+            std::erase_if(ways, [](const Way& way) { return way.mFailure; });
         if (rule != Rule::All && !ways.empty())
         {
             const auto [low, high] = std::minmax_element(
@@ -590,6 +617,12 @@ namespace MWGui::QuestTargets
             Way way{ source.mToStage, objectivesOf(quest, source) };
             if (way.mObjectives.empty())
                 continue;
+            const auto speakers = mSpeakers.find(quest);
+            way.mFailure = std::any_of(way.mObjectives.begin(), way.mObjectives.end(), [&](const Objective& objective) {
+                return objective.mTask == Task::Kill
+                    && (mCompanions.contains(objective.mObject)
+                        || (speakers != mSpeakers.end() && speakers->second.contains(objective.mObject)));
+            });
             for (const ESM::DialogueCondition& condition : source.mConditions)
             {
                 if (condition.mFunction == ESM::DialogueCondition::Function_Choice)
@@ -603,7 +636,7 @@ namespace MWGui::QuestTargets
             way.mSpeaker = source.mSpeaker;
             const bool known = std::any_of(ways.begin(), ways.end(), [&](const Way& other) {
                 return other.mToStage == way.mToStage && other.mObjectives == way.mObjectives
-                    && other.mChoice == way.mChoice;
+                    && other.mChoice == way.mChoice && other.mFailure == way.mFailure;
             });
             if (!known)
                 ways.push_back(std::move(way));
