@@ -293,22 +293,18 @@ namespace
         EXPECT_EQ(ways[0].mObjectives, expected);
     }
 
-    TEST(MWGuiQuestTargetsIndexTest, answersToChoicesOnlyCountWithoutAnotherWay)
+    TEST(MWGuiQuestTargetsIndexTest, answersToChoicesAreWaysForward)
     {
+        // Caius Cosades only moves the quest on through answers, and he is where it goes, past Bacola's directions.
         Index index;
-        index.addDialogue(line("gadayn andarys", "Journal FG_RatHunt 30",
-            { condition(DialogueCondition::Function_Choice, "", DialogueCondition::Comp_Eq, 2) }));
-        index.addDialogue(line("eraldil", "Journal FG_RatHunt 40"));
-        const std::vector<Way> ways = index.waysForward(quest, 20, Rule::Lowest);
-        ASSERT_EQ(ways.size(), 1u);
-        EXPECT_EQ(ways[0].mObjectives, std::vector<Objective>{ talk("eraldil") });
-
-        Index choicesOnly;
-        choicesOnly.addDialogue(line("ashibaal", "Journal FG_RatHunt 50",
-            { condition(DialogueCondition::Function_Choice, "", DialogueCondition::Comp_Eq, 1) }));
-        const std::vector<Way> answers = choicesOnly.waysForward(quest, 20, Rule::Lowest);
-        ASSERT_EQ(answers.size(), 1u);
-        EXPECT_TRUE(answers[0].mChoice);
+        index.addDialogue(line("caius cosades", "Journal FG_RatHunt 14",
+            { condition(DialogueCondition::Function_Choice, "", DialogueCondition::Comp_Eq, 3) }));
+        index.addDialogue(line("bacola closcius", "Journal FG_RatHunt 10"));
+        const std::vector<Way> ways = index.waysForward(quest, 2, Rule::LowestAndHighest);
+        ASSERT_EQ(ways.size(), 2u);
+        EXPECT_EQ(ways[0].mObjectives, std::vector<Objective>{ talk("bacola closcius") });
+        EXPECT_EQ(ways[1].mObjectives, std::vector<Objective>{ talk("caius cosades") });
+        EXPECT_TRUE(ways[1].mChoice);
     }
 
     TEST(MWGuiQuestTargetsIndexTest, keepsConditionsOnGlobalsAndOtherQuestsToCheckWhilePlaying)

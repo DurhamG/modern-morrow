@@ -60,8 +60,8 @@ namespace MWGui
         {
             int mToStage = 0;
             std::vector<Objective> mObjectives;
-            // Whether the way is an answer to a question in a conversation, which only comes up while the player is
-            // already talking to that person.
+            // Whether the way is an answer to a question in a conversation. The marker is the same, on the person who
+            // asks.
             bool mChoice = false;
             // The line's conditions on global variables, other quests' stages and the speaker's local variables,
             // which only the game while it runs can check.
@@ -140,8 +140,7 @@ namespace MWGui
         /// Whether a condition holds for a value, such as a global variable's.
         bool compare(const ESM::DialogueCondition& condition, float value);
 
-        /// Chooses the ways forward to mark, by the rule. Answers to conversation choices only count when there's no
-        /// other way forward. The ways come out in stage order.
+        /// Chooses the ways forward to mark, by the rule. The ways come out in stage order.
         std::vector<Way> chooseWays(std::vector<Way> ways, Rule rule);
 
         /// The ways forward of every quest in the content.

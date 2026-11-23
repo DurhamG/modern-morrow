@@ -530,10 +530,6 @@ namespace MWGui::QuestTargets
 
     std::vector<Way> chooseWays(std::vector<Way> ways, Rule rule)
     {
-        // An answer in a conversation only comes up while talking to that person already, so it isn't somewhere to
-        // go unless there's nothing else.
-        if (std::any_of(ways.begin(), ways.end(), [](const Way& way) { return !way.mChoice; }))
-            std::erase_if(ways, [](const Way& way) { return way.mChoice; });
         if (rule != Rule::All && !ways.empty())
         {
             const auto [low, high] = std::minmax_element(
