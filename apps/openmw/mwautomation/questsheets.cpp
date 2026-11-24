@@ -2,9 +2,11 @@
 
 #include <algorithm>
 #include <fstream>
+#include <functional>
 #include <map>
 #include <sstream>
 #include <stdexcept>
+#include <unordered_map>
 
 #include <components/esm3/loadcell.hpp>
 #include <components/esm3/loaddial.hpp>
@@ -20,6 +22,7 @@
 #include "../mwgui/questreview.hpp"
 #include "../mwgui/questtargets.hpp"
 
+#include "../mwworld/doorroute.hpp"
 #include "../mwworld/esmstore.hpp"
 
 namespace MWAutomation
@@ -137,6 +140,61 @@ namespace MWAutomation
             return name + " " + comparison(condition.mComparison) + " " + value;
         }
 
+        // The places that doors join together, with the places outdoors as one. Each place maps to a place that
+        // stands for its group, and the outdoors' group has the key outdoors.
+        struct DoorGroups
+        {
+            std::unordered_map<ESM::RefId, ESM::RefId> mGroup;
+            std::unordered_map<ESM::RefId, std::size_t> mSizes;
+            ESM::RefId mOutdoors;
+        };
+
+        DoorGroups doorGroups(const MWWorld::ESMStore& store)
+        {
+            std::unordered_map<ESM::RefId, ESM::RefId> parent;
+            const std::function<ESM::RefId(const ESM::RefId&)> root = [&](const ESM::RefId& place) -> ESM::RefId {
+                const ESM::RefId up = parent.try_emplace(place, place).first->second;
+                if (up == place)
+                    return place;
+                const ESM::RefId top = root(up);
+                parent[place] = top;
+                return top;
+            };
+            const ESM::RefId outdoors = MWWorld::routePlace(ESM::RefId::esm3ExteriorCell(0, 0));
+            root(outdoors);
+            for (const MWWorld::DoorLink& door : store.getTeleportDoors())
+            {
+                const ESM::RefId from = root(MWWorld::routePlace(door.mCell));
+                const ESM::RefId to = root(MWWorld::routePlace(door.mDestCell));
+                if (from != to)
+                    parent[from] = to;
+            }
+            DoorGroups groups;
+            std::vector<ESM::RefId> places;
+            for (const auto& [place, up] : parent)
+                places.push_back(place);
+            for (const ESM::RefId& place : places)
+            {
+                groups.mGroup[place] = root(place);
+                ++groups.mSizes[root(place)];
+            }
+            groups.mOutdoors = root(outdoors);
+            return groups;
+        }
+
+        // A note on a cell whose targets the markers can't reach from outdoors, or nothing. The markers only show a
+        // target the player can reach through doors from where they are.
+        std::string reachNote(const MWWorld::ESMStore& store, const ESM::Cell& cell)
+        {
+            static const DoorGroups groups = doorGroups(store);
+            const auto group = groups.mGroup.find(MWWorld::routePlace(cell.mId));
+            if (group == groups.mGroup.end() || groups.mSizes.at(group->second) <= 1)
+                return ", where no door leads, so it gets no marker";
+            if (group->second != groups.mOutdoors)
+                return ", which no door joins to the outdoors, so it is only marked while the player is there";
+            return {};
+        }
+
         // The cells an object is placed in, by name, separated by semicolons.
         std::string cellsOf(const MWWorld::ESMStore& store, const ESM::RefId& id)
         {
@@ -147,6 +205,7 @@ namespace MWAutomation
                 result += cell->isExterior() && cell->mName.empty()
                     ? std::to_string(cell->getGridX()) + "," + std::to_string(cell->getGridY())
                     : cell->mName;
+                result += reachNote(store, *cell);
             }
             return result;
         }
