@@ -1,6 +1,7 @@
 #ifndef MWGUI_QUESTTARGETS_H
 #define MWGUI_QUESTTARGETS_H
 
+#include <map>
 #include <set>
 #include <string>
 #include <string_view>
@@ -77,6 +78,10 @@ namespace MWGui
             std::vector<ESM::DialogueCondition> mChecks;
             // Who says the line, whose local variables the checks can name.
             ESM::RefId mSpeaker;
+            // The faction the player must belong to for the line, and the lowest rank in it, or -1 for any. The game
+            // checks these while playing.
+            ESM::RefId mPlayerFaction;
+            int mPlayerRank = -1;
         };
 
         /// Which ways forward to mark.
@@ -164,6 +169,10 @@ namespace MWGui
         /// Whether a condition holds for a value, such as a global variable's.
         bool compare(const ESM::DialogueCondition& condition, float value);
 
+        /// Whether the player's ranks in factions allow a way's line, as the game tests them in a conversation: the
+        /// player must belong to the faction the line names, at its rank or higher.
+        bool playerRankAllows(const Way& way, const std::map<ESM::RefId, int>& ranks);
+
         /// Chooses the ways forward to mark, by the rule. Failures and ways out of reach only count when every way
         /// forward is one, such as after the escorted pilgrim has died. The ways come out in stage order.
         std::vector<Way> chooseWays(std::vector<Way> ways, Rule rule);
@@ -248,6 +257,8 @@ namespace MWGui
                 ESM::RefId mFaction;
                 ESM::RefId mCell;
                 int mRank = -1;
+                ESM::RefId mPlayerFaction;
+                int mPlayerRank = -1;
                 // The items the line's result takes from the player.
                 std::vector<std::pair<ESM::RefId, int>> mTaken;
                 // The objects a script is on, and what the script waits for.

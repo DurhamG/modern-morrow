@@ -20,6 +20,7 @@
 #include "../mwdialogue/quest.hpp"
 
 #include "../mwmechanics/creaturestats.hpp"
+#include "../mwmechanics/npcstats.hpp"
 
 #include "../mwscript/locals.hpp"
 
@@ -370,6 +371,11 @@ namespace MWGui
         // doesn't hold yet isn't one, such as a branch for when the player killed someone. Those are left out before
         // the rule chooses, so the next way along takes their place.
         std::vector<QuestTargets::Way> ways = mIndex->waysForward(quest, stage);
+        // A line for players of a faction rank the player doesn't have isn't a way, such as a councilor's line for
+        // the house's own members.
+        const MWWorld::Ptr player = world->getPlayerPtr();
+        const std::map<ESM::RefId, int>& ranks = player.getClass().getNpcStats(player).getFactionRanks();
+        std::erase_if(ways, [&](const QuestTargets::Way& way) { return !QuestTargets::playerRankAllows(way, ranks); });
         std::erase_if(ways, [&](const QuestTargets::Way& way) {
             return !std::all_of(way.mChecks.begin(), way.mChecks.end(), [&](const auto& condition) {
                 if (condition.mFunction == ESM::DialogueCondition::Function_Global)

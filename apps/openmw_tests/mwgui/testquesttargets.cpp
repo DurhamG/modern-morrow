@@ -375,6 +375,42 @@ namespace
         EXPECT_EQ(index.stagesSet(quest), (std::set<int>{ 50, 110, 200 }));
     }
 
+    TEST(MWGuiQuestTargetsIndexTest, aWayKeepsTheFactionRankItsLineNeedsOfThePlayer)
+    {
+        ESM::DialInfo master = line("llunela hleran", "Journal FG_RatHunt 210");
+        master.mPcFaction = id("telvanni");
+        master.mData.mPCrank = 6;
+        // A rank without a faction means the speaker's faction.
+        ESM::DialInfo member = line("aryon", "Journal FG_RatHunt 220");
+        member.mFaction = id("telvanni");
+        member.mData.mPCrank = 2;
+        Index index;
+        index.addDialogue(master);
+        index.addDialogue(member);
+        index.addDialogue(line("vedam dren", "Journal FG_RatHunt 100"));
+        const std::vector<Way> ways = index.waysForward(quest, 10, Rule::All);
+        ASSERT_EQ(ways.size(), 3u);
+        EXPECT_TRUE(ways[0].mPlayerFaction.empty());
+        EXPECT_EQ(ways[1].mPlayerFaction, id("telvanni"));
+        EXPECT_EQ(ways[1].mPlayerRank, 6);
+        EXPECT_EQ(ways[2].mPlayerFaction, id("telvanni"));
+        EXPECT_EQ(ways[2].mPlayerRank, 2);
+    }
+
+    TEST(MWGuiQuestTargetsTest, thePlayersRankMustAllowTheWay)
+    {
+        Way way;
+        EXPECT_TRUE(playerRankAllows(way, {}));
+        way.mPlayerFaction = id("telvanni");
+        way.mPlayerRank = 6;
+        EXPECT_FALSE(playerRankAllows(way, {}));
+        EXPECT_FALSE(playerRankAllows(way, { { id("telvanni"), 5 } }));
+        EXPECT_TRUE(playerRankAllows(way, { { id("telvanni"), 6 } }));
+        way.mPlayerRank = -1;
+        EXPECT_TRUE(playerRankAllows(way, { { id("telvanni"), 0 } }));
+        EXPECT_FALSE(playerRankAllows(way, { { id("redoran"), 9 } }));
+    }
+
     TEST(MWGuiQuestTargetsIndexTest, aFailureCountsWhenItIsTheOnlyWay)
     {
         // Hanarai Assutlanipal attacks the player, and the quest goes on once she is dead.

@@ -568,6 +568,10 @@ namespace MWGui::QuestTargets
             source.mFaction = info.mFaction;
             source.mCell = info.mCell;
             source.mRank = info.mData.mRank;
+            // A line that names a rank but no faction for the player means the speaker's faction.
+            source.mPlayerFaction
+                = info.mPcFaction.empty() && info.mData.mPCrank != -1 ? info.mFaction : info.mPcFaction;
+            source.mPlayerRank = info.mData.mPCrank;
             source.mTaken = taken;
             mSources[quest].push_back(std::move(source));
             if (!info.mActor.empty())
@@ -707,6 +711,14 @@ namespace MWGui::QuestTargets
         return objectives;
     }
 
+    bool playerRankAllows(const Way& way, const std::map<ESM::RefId, int>& ranks)
+    {
+        if (way.mPlayerFaction.empty())
+            return true;
+        const auto it = ranks.find(way.mPlayerFaction);
+        return it != ranks.end() && it->second >= way.mPlayerRank;
+    }
+
     std::vector<Way> chooseWays(std::vector<Way> ways, Rule rule)
     {
         const auto setAside = [](const Way& way) { return way.mFailure || way.mOutOfReach; };
@@ -761,10 +773,13 @@ namespace MWGui::QuestTargets
                     way.mChecks.push_back(condition);
             }
             way.mSpeaker = source.mSpeaker;
+            way.mPlayerFaction = source.mPlayerFaction;
+            way.mPlayerRank = source.mPlayerFaction.empty() ? -1 : source.mPlayerRank;
             // Lines with other checks are other ways, since the game can leave out one and not the other.
             const bool known = std::any_of(ways.begin(), ways.end(), [&](const Way& other) {
                 return other.mToStage == way.mToStage && other.mObjectives == way.mObjectives
                     && other.mChoice == way.mChoice && other.mFailure == way.mFailure
+                    && other.mPlayerFaction == way.mPlayerFaction && other.mPlayerRank == way.mPlayerRank
                     && std::equal(other.mChecks.begin(), other.mChecks.end(), way.mChecks.begin(), way.mChecks.end(),
                         [](const ESM::DialogueCondition& l, const ESM::DialogueCondition& r) {
                             return l.mFunction == r.mFunction && l.mVariable == r.mVariable
