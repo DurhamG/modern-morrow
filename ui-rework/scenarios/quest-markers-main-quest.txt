@@ -1,7 +1,18 @@
 # What the quest markers mark in the main quest. Each check sets a quest's stage with the console, then looks at the
 # markers worked out for it.
 launch --start "Balmora" --set "GUI.quest markers=true"
-# The first stage: the player is to report to Caius Cosades in Balmora. Elone in Seyda Neen only gives directions.
+# The first stage: the player is to report to Caius Cosades in Balmora. Elone in Seyda Neen only gives directions,
+# so she isn't marked.
 console "command=journal a1_1_findspymaster 1"
 expect-marker "caius cosades" quest=a1_1_findspymaster
+expect-no-marker elone
+# Being told to ask Bacola Closcius doesn't change where Caius is.
+console "command=journal a1_1_findspymaster 5"
+expect-marker "caius cosades" quest=a1_1_findspymaster
+expect-no-marker "bacola closcius"
+# With Caius gone, the other ways forward are marked, so the player isn't left with nothing.
+console "command=setjournalindex a1_1_findspymaster 1"
+console "command=coc \"Balmora, Caius Cosades' House\""
+console "command=\"caius cosades\"->disable"
 expect-marker elone quest=a1_1_findspymaster
+expect-no-marker "caius cosades"

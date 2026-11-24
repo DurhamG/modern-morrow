@@ -304,3 +304,15 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   - Rule C now agrees with Comprehensive Objective Mod at 75% of stages, up from 70%. By the hand audit, the markers
     are right at about 88% of stages, up from about 78%. [design/quest-markers.md](design/quest-markers.md) has the
     details and what's left.
+- Hand-made corrections to the quest markers, on the `quest-markers` branch.
+  [design/quest-marker-corrections.md](design/quest-marker-corrections.md) has the plan, which the user approved:
+  optional steps as hollow, smaller markers left off the compass, no objective text for now, and the feature can ship
+  once the main quest and the guilds are reviewed. The first milestone is done:
+  - The `quest-markers` harness command lists the markers shown now, and the `expect-marker` and `expect-no-marker`
+    scenario checks use it. `quest-markers-main-quest` is the scenario for the main quest's markers.
+  - `files/data/questcorrections.yaml` says, at the stages that need it, which ways forward to mark (`next`) and which
+    never to mark (`hide`). Entries that can't be read, or that name quests or journal indices the loaded content
+    doesn't have, are left out with a warning in the log.
+  - The first entries are for "Report to Caius Cosades". At its first stage, Caius is marked and Elone in Seyda Neen,
+    who only gives directions, isn't.
+  - A way whose person to talk to is dead or disabled is set aside, so the other ways are marked instead.

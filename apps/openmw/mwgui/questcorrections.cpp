@@ -2,10 +2,19 @@
 
 #include <algorithm>
 #include <charconv>
+#include <iterator>
 #include <optional>
 #include <stdexcept>
 
 #include <yaml-cpp/yaml.h>
+
+#include <components/debug/debuglog.hpp>
+#include <components/esm3/loaddial.hpp>
+#include <components/esm3/loadinfo.hpp>
+#include <components/vfs/manager.hpp>
+#include <components/vfs/pathutil.hpp>
+
+#include "../mwworld/esmstore.hpp"
 
 namespace MWGui::QuestCorrections
 {
@@ -225,6 +234,29 @@ namespace MWGui::QuestCorrections
             else
                 ++quest;
         }
+    }
+
+    Corrections load(const VFS::Manager& vfs, const MWWorld::ESMStore& store)
+    {
+        constexpr VFS::Path::NormalizedView path("questcorrections.yaml");
+        if (!vfs.exists(path))
+            return {};
+        const std::string text(std::istreambuf_iterator<char>(*vfs.get(path)), {});
+        std::vector<std::string> problems;
+        Corrections corrections = parse(text, problems);
+        Content content;
+        for (const ESM::Dialogue& dialogue : store.get<ESM::Dialogue>())
+        {
+            if (dialogue.mType != ESM::Dialogue::Journal)
+                continue;
+            std::set<int>& stages = content.mStages[dialogue.mId];
+            for (const ESM::DialInfo& info : dialogue.mInfo)
+                stages.insert(info.mData.mJournalIndex);
+        }
+        check(corrections, content, problems);
+        for (const std::string& problem : problems)
+            Log(Debug::Warning) << "Quest marker corrections: " << problem;
+        return corrections;
     }
 
     std::vector<QuestTargets::Way> chooseWays(

@@ -11,6 +11,16 @@
 
 #include "questtargets.hpp"
 
+namespace MWWorld
+{
+    class ESMStore;
+}
+
+namespace VFS
+{
+    class Manager;
+}
+
 namespace MWGui
 {
     /// Hand-made corrections to the quest markers, read from questcorrections.yaml. QuestTargets works out each
@@ -66,6 +76,10 @@ namespace MWGui
         /// must have at least one of them. A mod that renumbers a quest then gets the markers worked out from the
         /// content, not wrong ones.
         void check(Corrections& corrections, const Content& content, std::vector<std::string>& problems);
+
+        /// Reads questcorrections.yaml from the data files, and checks it against the loaded content. Each problem
+        /// goes in the log as a warning. A game without the file has no corrections.
+        Corrections load(const VFS::Manager& vfs, const MWWorld::ESMStore& store);
 
         /// Chooses the ways forward to mark, as QuestTargets::chooseWays does, with a stage's entry if it has one. The
         /// ways to the entry's hidden stages are left out. If the entry has next stages, only the ways to them are

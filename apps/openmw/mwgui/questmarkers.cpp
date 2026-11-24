@@ -9,6 +9,7 @@
 #include <components/esm/util.hpp>
 #include <components/esm3/loadcell.hpp>
 #include <components/misc/strings/algorithm.hpp>
+#include <components/resource/resourcesystem.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -308,7 +309,17 @@ namespace MWGui
         std::vector<Target> found;
         for (const QuestTargets::Objective& objective : way.mObjectives)
         {
-            if (objective.mTask != QuestTargets::Task::Fetch || objective.mObject.empty())
+            if (objective.mObject.empty())
+                continue;
+            // Someone to talk to who is dead, or gone, such as a person a script disabled.
+            if (objective.mTask == QuestTargets::Task::Talk)
+            {
+                const std::vector<MWWorld::Ptr> placed = findPlaced(objective.mObject);
+                if (!placed.empty() && std::none_of(placed.begin(), placed.end(), isAlive))
+                    return true;
+                continue;
+            }
+            if (objective.mTask != QuestTargets::Task::Fetch)
                 continue;
             if (player.getClass().getContainerStore(player).count(objective.mObject) >= objective.mCount)
                 continue;
@@ -358,7 +369,8 @@ namespace MWGui
         });
         for (QuestTargets::Way& way : ways)
             way.mOutOfReach = isOutOfReach(way);
-        for (const QuestTargets::Way& way : QuestTargets::chooseWays(std::move(ways), rule))
+        for (const QuestTargets::Way& way :
+            QuestCorrections::chooseWays(std::move(ways), mCorrections.find(quest, stage), rule))
         {
             // Kills, fetches and visits come first. The talk they lead to is marked once they're done.
             bool before = false;
@@ -383,6 +395,7 @@ namespace MWGui
             {
                 const auto start = std::chrono::steady_clock::now();
                 mIndex = QuestTargets::Index::build(store);
+                mCorrections = QuestCorrections::load(*MWBase::Environment::get().getResourceSystem()->getVFS(), store);
                 Log(Debug::Info)
                     << "Worked out the quests' ways forward in "
                     << std::chrono::duration<float, std::milli>(std::chrono::steady_clock::now() - start).count()

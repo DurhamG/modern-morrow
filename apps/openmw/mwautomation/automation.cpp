@@ -19,6 +19,7 @@
 #include <components/files/conversion.hpp>
 #include <components/misc/strings/algorithm.hpp>
 #include <components/misc/strings/lower.hpp>
+#include <components/resource/resourcesystem.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -28,6 +29,7 @@
 #include "../mwbase/world.hpp"
 
 #include "../mwgui/mode.hpp"
+#include "../mwgui/questcorrections.hpp"
 #include "../mwgui/questmarkers.hpp"
 #include "../mwgui/questtargets.hpp"
 
@@ -675,6 +677,8 @@ namespace MWAutomation
                 using namespace MWGui::QuestTargets;
                 const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
                 const Index index = Index::build(store);
+                const MWGui::QuestCorrections::Corrections corrections
+                    = MWGui::QuestCorrections::load(*MWBase::Environment::get().getResourceSystem()->getVFS(), store);
                 const auto describeWays = [&](const std::vector<Way>& ways) {
                     Json::Array result;
                     for (const Way& way : ways)
@@ -751,6 +755,11 @@ namespace MWAutomation
                             { "ends", describeWays(index.waysForward(dialogue.mId, stage, Rule::LowestAndHighest)) },
                             // Every way forward, before the game's checks and the rule choose.
                             { "every", describeWays(index.waysForward(dialogue.mId, stage)) },
+                            // The ways the markers choose by default, with the stage's correction, if it has one.
+                            { "corrected",
+                                describeWays(MWGui::QuestCorrections::chooseWays(index.waysForward(dialogue.mId, stage),
+                                    corrections.find(dialogue.mId, stage), Rule::LowestAndHighest)) },
+                            { "hasCorrection", corrections.find(dialogue.mId, stage) != nullptr },
                         }));
                         ++stageCount;
                     }

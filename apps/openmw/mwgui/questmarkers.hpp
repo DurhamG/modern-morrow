@@ -11,6 +11,7 @@
 
 #include <components/esm/refid.hpp>
 
+#include "questcorrections.hpp"
 #include "questtargets.hpp"
 
 namespace MWWorld
@@ -85,7 +86,8 @@ namespace MWGui
         void addTargets(const ESM::RefId& quest, int stage, std::vector<Target>& targets);
         // Adds where an objective's targets are now. Returns whether there were any.
         bool addObjectiveTargets(const QuestTargets::Objective& objective, std::vector<Target>& targets);
-        // Whether a way needs an item that the player doesn't carry and that can't be found anywhere.
+        // Whether a way needs someone to talk to who is dead or gone, or an item that the player doesn't carry and that
+        // can't be found anywhere.
         bool isOutOfReach(const QuestTargets::Way& way);
         std::vector<MWWorld::Ptr> findPlaced(const ESM::RefId& id) const;
         // The faction member, of the rank the objective needs, whom the player can reach through the fewest doors.
@@ -94,6 +96,7 @@ namespace MWGui
         std::optional<Target> placeOfCell(const ESM::RefId& cell, QuestTargets::Task task) const;
 
         std::optional<QuestTargets::Index> mIndex;
+        QuestCorrections::Corrections mCorrections;
         std::set<ESM::RefId> mTracked;
         // Each quest's stage when the journal was last looked at, to see which quests moved on.
         std::map<ESM::RefId, int> mStages;

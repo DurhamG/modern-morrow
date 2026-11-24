@@ -67,7 +67,8 @@ namespace MWGui
             // is usually how the quest fails, such as the quest giver or an escorted pilgrim dying.
             bool mFailure = false;
             // Whether the way needs an item that the player doesn't carry and that isn't anywhere in the world yet,
-            // such as a blade that a later stage makes. Only the game while it runs can tell.
+            // such as a blade that a later stage makes, or someone to talk to who is dead or gone. Only the game
+            // while it runs can tell.
             bool mOutOfReach = false;
             // The line's conditions on global variables, other quests' stages and the speaker's local variables,
             // which only the game while it runs can check.

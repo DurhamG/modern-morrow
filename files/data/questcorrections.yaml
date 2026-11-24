@@ -1,0 +1,34 @@
+# Hand-made corrections to the quest markers, for Morrowind, Tribunal and Bloodmoon.
+#
+# The game works out each stage's ways forward from the content files. A way is a line of dialogue or a script
+# that moves a quest's journal to a higher index. Some of those ways are side steps that shouldn't be marked, such
+# as someone who only gives directions. This file says, at the stages that need it, which ways to mark. Quests and
+# stages not listed here keep the default rule.
+#
+# Each quest has a list of entries. The keys of an entry are:
+#   stages  The journal indices the entry is for: an index, a range such as 10-20, or a list of them.
+#   next    Mark only the ways that lead to these journal indices. If none of them is left after the checks made
+#           while playing, such as when the person to talk to has died, the default rule chooses instead.
+#   hide    Never mark the ways that lead to these journal indices. The default rule chooses among the rest.
+#
+# The file holds no text for players, only quest IDs and journal indices. An entry whose quest or journal indices
+# aren't in the loaded content is left out, with a warning in the log, so a mod that renumbers a quest gets the
+# default rule rather than wrong markers.
+#
+# The comments say where each fact comes from in the content files: journal entries, lines of dialogue with their
+# speakers, conditions and results, and where objects are placed.
+
+version: 1
+quests:
+
+  A1_1_FindSpymaster:
+    # At stage 1 the default rule marks Elone, whose line leads to 2, and Caius Cosades, whose lines lead to 11, 12
+    # and 14. Journal 1 tells the player to report to Caius in Balmora. Elone's line in the topic "Balmora" has no
+    # conditions and only gives directions. Caius's answers to "Report to Caius Cosades" lead to 11, 12 and 14,
+    # and need only A1_2_AntabolisInformant below 1, so they work from stage 1.
+    - stages: 1-2
+      next: 14
+    # Journal 5 names Bacola Closcius as someone who knows where Caius lives. Caius is placed once, in his house in
+    # Balmora, and the player can go straight there.
+    - stages: 5
+      next: 14
