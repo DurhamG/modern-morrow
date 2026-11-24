@@ -20,7 +20,8 @@
 #             after condition holds, or all of them when after is a list, and until its done condition holds.
 #             Without them, it is marked as long as the entry applies. A condition is one of
 #             { quest: ID, atLeast: N }, { quest: ID, started: true }, { quest: ID, finished: true },
-#             { dead: ID } for someone who has died, { carried: ID } for an item the player carries, and
+#             { dead: ID } for someone who has died, { carried: ID } for an item the player carries, with
+#             atLeast: N for several of it, and
 #             { global: NAME, atLeast: N } for a global variable.
 #   follow    Quests that help with this one, such as one for each person the journal sends the player to. While
 #             one has started and not finished, what it marks is marked too, even if the player doesn't track it.

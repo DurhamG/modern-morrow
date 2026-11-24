@@ -692,4 +692,25 @@ namespace
         progress.mStage = [](const ESM::RefId&) { return 10; };
         EXPECT_TRUE(targetWays(entry, &progress).empty());
     }
+
+    TEST(MWGuiQuestCorrectionsTest, aCarriedConditionCanNeedSeveralOfAnItem)
+    {
+        std::vector<std::string> problems;
+        Corrections corrections = read(R"(
+  A1_V_VivecInformants:
+    - stages: 1
+      targets:
+        - { task: talk, object: huleeya, after: { carried: bk_progressoftruth, atLeast: 4 } }
+)",
+            problems);
+        check(corrections, vivecContent(), problems);
+        ASSERT_TRUE(problems.empty()) << problems.front();
+        const Entry& entry = *corrections.find(vivec, 1);
+        int carried = 3;
+        Progress progress = progressOf({});
+        progress.mCarried = [&](const ESM::RefId&) { return carried; };
+        EXPECT_TRUE(targetWays(entry, &progress).empty());
+        carried = 4;
+        EXPECT_EQ(targetWays(entry, &progress).size(), 1);
+    }
 }

@@ -351,7 +351,7 @@ namespace MWGui
         };
         progress.mCarried = [](const ESM::RefId& id) {
             const MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
-            return player.getClass().getContainerStore(player).count(id) > 0;
+            return player.getClass().getContainerStore(player).count(id);
         };
         return progress;
     }

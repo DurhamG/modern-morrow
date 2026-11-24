@@ -100,8 +100,8 @@ namespace MWGui::QuestCorrections
         }
 
         // A target's condition: { quest: ID, atLeast: N }, { quest: ID, started: true },
-        // { quest: ID, finished: true }, { dead: ID }, { carried: ID } or { global: NAME, atLeast: N }. Returns the
-        // problem with it, or nothing when it was read.
+        // { quest: ID, finished: true }, { dead: ID }, { carried: ID } with optionally atLeast: N, or
+        // { global: NAME, atLeast: N }. Returns the problem with it, or nothing when it was read.
         std::optional<std::string> readCondition(const YAML::Node& node, const std::string& name, Condition& condition)
         {
             if (!node.IsMap())
@@ -143,6 +143,7 @@ namespace MWGui::QuestCorrections
                 + (condition.mCarried.empty() ? 0 : 1) + (condition.mGlobal.empty() ? 0 : 1);
             const bool stagesRight = !condition.mQuest.empty() ? stages == 1
                 : !condition.mGlobal.empty()                   ? stages == 1 && atLeast
+                : !condition.mCarried.empty()                  ? stages == 0 || (stages == 1 && atLeast)
                                                                : stages == 0;
             if (kinds != 1 || !stagesRight)
                 return "a \"" + name
@@ -577,7 +578,7 @@ namespace MWGui::QuestCorrections
         if (!condition.mDead.empty())
             return progress.mDead && progress.mDead(condition.mDead);
         if (!condition.mCarried.empty())
-            return progress.mCarried && progress.mCarried(condition.mCarried);
+            return progress.mCarried && progress.mCarried(condition.mCarried) >= std::max(1, condition.mAtLeast);
         if (!condition.mGlobal.empty())
             return progress.mGlobal && progress.mGlobal(condition.mGlobal) >= static_cast<float>(condition.mAtLeast);
         if (progress.mFinished && progress.mFinished(condition.mQuest))

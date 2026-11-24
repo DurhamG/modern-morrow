@@ -50,7 +50,7 @@ namespace MWGui
         {
             ESM::RefId mQuest;
             // The stage the quest must reach, or 0 when only finishing counts. For a global variable, the value it
-            // must reach.
+            // must reach, and for a carried item, how many the player must carry, where 0 counts as 1.
             int mAtLeast = 0;
             bool mFinished = false;
             // Someone who must have died.
@@ -132,8 +132,8 @@ namespace MWGui
             std::function<bool(const ESM::RefId&)> mFinished;
             // Whether anyone of the ID has died.
             std::function<bool(const ESM::RefId&)> mDead;
-            // Whether the player carries the item.
-            std::function<bool(const ESM::RefId&)> mCarried;
+            // How many of the item the player carries.
+            std::function<int(const ESM::RefId&)> mCarried;
             // A global variable's value.
             std::function<float(std::string_view)> mGlobal;
         };
