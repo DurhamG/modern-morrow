@@ -1,0 +1,123 @@
+#include "apps/openmw/mwgui/questcorrections.hpp"
+
+#include <gtest/gtest.h>
+
+namespace
+{
+    using namespace MWGui::QuestCorrections;
+
+    const ESM::RefId quest = ESM::RefId::stringRefId("A1_1_FindSpymaster");
+
+    Corrections read(const std::string& text, std::vector<std::string>& problems)
+    {
+        return parse("version: 1\nquests:\n" + text, problems);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, anEntryShouldBeReadWithItsStages)
+    {
+        std::vector<std::string> problems;
+        const Corrections corrections = read(R"(
+  A1_1_FindSpymaster:
+    - stages: 1-2
+      next: [14]
+      hide: 5
+)",
+            problems);
+        EXPECT_TRUE(problems.empty());
+        const Entry* entry = corrections.find(quest, 1);
+        ASSERT_NE(entry, nullptr);
+        EXPECT_EQ(entry->mStages, (std::vector<Range>{ { 1, 2 } }));
+        EXPECT_EQ(entry->mNext, (std::vector<Range>{ { 14, 14 } }));
+        EXPECT_EQ(entry->mHide, (std::vector<Range>{ { 5, 5 } }));
+        EXPECT_EQ(corrections.find(quest, 2), entry);
+        EXPECT_EQ(corrections.find(quest, 10), nullptr);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, questIdsShouldIgnoreCase)
+    {
+        std::vector<std::string> problems;
+        const Corrections corrections = read("  a1_1_findspymaster:\n    - stages: 1\n", problems);
+        EXPECT_NE(corrections.find(quest, 1), nullptr);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, stagesShouldTakeAListOfIndicesAndRanges)
+    {
+        std::vector<std::string> problems;
+        const Corrections corrections = read("  A1_1_FindSpymaster:\n    - stages: [1, 10-12]\n", problems);
+        EXPECT_TRUE(problems.empty());
+        EXPECT_NE(corrections.find(quest, 1), nullptr);
+        EXPECT_EQ(corrections.find(quest, 2), nullptr);
+        EXPECT_NE(corrections.find(quest, 11), nullptr);
+        EXPECT_NE(corrections.find(quest, 12), nullptr);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, laterEntriesShouldCoverOtherStages)
+    {
+        std::vector<std::string> problems;
+        const Corrections corrections = read(R"(
+  A1_1_FindSpymaster:
+    - stages: 1
+      next: 14
+    - stages: 14
+      next: 18
+)",
+            problems);
+        EXPECT_TRUE(problems.empty());
+        ASSERT_NE(corrections.find(quest, 14), nullptr);
+        EXPECT_EQ(corrections.find(quest, 14)->mNext, (std::vector<Range>{ { 18, 18 } }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, anEntryThatCantBeReadShouldBeLeftOutWithAProblem)
+    {
+        std::vector<std::string> problems;
+        const Corrections corrections = read(R"(
+  A1_1_FindSpymaster:
+    - stages: 1
+      nxet: 14
+    - stages: 2
+      next: soon
+    - next: 14
+    - stages: 20-10
+    - stages: 14
+)",
+            problems);
+        EXPECT_EQ(problems.size(), 4);
+        EXPECT_EQ(corrections.find(quest, 1), nullptr);
+        EXPECT_EQ(corrections.find(quest, 2), nullptr);
+        EXPECT_EQ(corrections.find(quest, 15), nullptr);
+        EXPECT_NE(corrections.find(quest, 14), nullptr);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, anEntryForStagesAlreadyCoveredShouldBeLeftOut)
+    {
+        std::vector<std::string> problems;
+        const Corrections corrections = read(R"(
+  A1_1_FindSpymaster:
+    - stages: 1-5
+      next: 14
+    - stages: 5
+      next: 10
+)",
+            problems);
+        ASSERT_EQ(problems.size(), 1);
+        EXPECT_NE(problems[0].find("earlier entry"), std::string::npos);
+        EXPECT_EQ(corrections.find(quest, 5)->mNext, (std::vector<Range>{ { 14, 14 } }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aFileThatIsntVersionOneShouldGiveNoCorrections)
+    {
+        std::vector<std::string> problems;
+        const Corrections corrections
+            = parse("version: 2\nquests:\n  A1_1_FindSpymaster:\n    - stages: 1\n", problems);
+        EXPECT_EQ(problems.size(), 1);
+        EXPECT_TRUE(corrections.mQuests.empty());
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aFileThatIsntYamlShouldGiveNoCorrections)
+    {
+        std::vector<std::string> problems;
+        const Corrections corrections = parse("version: 1\nquests: [\n", problems);
+        EXPECT_EQ(problems.size(), 1);
+        EXPECT_TRUE(corrections.mQuests.empty());
+    }
+}

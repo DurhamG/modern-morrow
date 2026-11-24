@@ -45,7 +45,7 @@ add_openmw_dir (mwgui
     recharge mode videowidget backgroundimage itemwidget screenfader debugwindow spellmodel spellview
     draganddrop timeadvancer jailscreen itemchargeview keyboardnavigation textcolours statswatcher
     postprocessorhud settings worlditemmodel itemtransfer inventorytabsoverlay controllerscreen inventoryscreen
-    magicscreen statsscreen dialoguepanel pausemenu itemdetails lootpanel barterpanel questlog questtargets questmarkers questcompass
+    magicscreen statsscreen dialoguepanel pausemenu itemdetails lootpanel barterpanel questlog questtargets questcorrections questmarkers questcompass
     journalscreen journallinks servicepanel controllerdialog readingpanel companionpanel choicescreen quickkeyslots
     quickkeyassigner alchemypanel effectcraftpanel toolpanel createclasspanel touchoverlay touchtrace listscroll
     textpacking mainmenubuttons

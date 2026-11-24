@@ -27,6 +27,7 @@ file(GLOB UNITTEST_SRC_FILES
     mwgui/testlistscroll.cpp
     mwgui/testmainmenubuttons.cpp
     mwgui/testquestcompass.cpp
+    mwgui/testquestcorrections.cpp
     mwgui/testquestlog.cpp
     mwgui/testquesttargets.cpp
     mwgui/testquickkeyslots.cpp
