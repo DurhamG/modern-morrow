@@ -31,7 +31,7 @@ pad button=dpdown
 pad button=dpdown
 pad button=dpright
 wait frames=5
-expect-text "Retroactive Health"
+expect-text "Endurance Retroactively Raises Health"
 pad button=b
 pad button=b
 wait-no-mode
@@ -65,7 +65,7 @@ pad button=dpdown
 pad button=dpdown
 pad button=dpright
 wait frames=5
-expect-text "Retroactive Health"
+expect-text "Endurance Retroactively Raises Health"
 pad button=b
 pad button=b
 wait-no-mode
@@ -89,7 +89,7 @@ pad button=dpdown
 pad button=dpdown
 pad button=dpright
 wait frames=5
-expect-text "Retroactive Health"
+expect-text "Endurance Retroactively Raises Health"
 pad button=b
 pad button=b
 wait-no-mode
@@ -135,7 +135,7 @@ pad button=dpdown
 pad button=dpdown
 pad button=dpright
 wait frames=5
-expect-text "Retroactive Health"
+expect-text "Endurance Retroactively Raises Health"
 pad button=b
 pad button=b
 wait-no-mode
