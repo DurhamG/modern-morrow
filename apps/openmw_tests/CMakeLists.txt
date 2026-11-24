@@ -29,6 +29,7 @@ file(GLOB UNITTEST_SRC_FILES
     mwgui/testquestcompass.cpp
     mwgui/testquestcorrections.cpp
     mwgui/testquestlog.cpp
+    mwgui/testquestreview.cpp
     mwgui/testquesttargets.cpp
     mwgui/testquickkeyslots.cpp
     mwgui/testrunfatiguechoices.cpp
