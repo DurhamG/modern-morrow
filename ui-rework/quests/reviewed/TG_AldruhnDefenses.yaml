@@ -1,0 +1,8 @@
+# The reviewed quest markers of TG_AldruhnDefenses.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_AldruhnDefenses
+stages:
+  - stage: 10
+    verdict: right  # Scrap metal is placed too often to mark, so the markers show the alchemists who sell it and a few centurions that carry it, then Aengoth.
+    marked: ["aengoth", "ingred_scrap_metal_01"]

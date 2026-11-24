@@ -1,0 +1,8 @@
+# The reviewed quest markers of TG_DartsJudgement.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_DartsJudgement
+stages:
+  - stage: 10
+    verdict: corrected  # The darts in Llethri Manor are marked first, and Aengoth only once the player has them.
+    marked: ["aengoth", "dart_uniq_judgement"]

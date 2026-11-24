@@ -1,0 +1,15 @@
+# The reviewed quest markers of TG_Hostage.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_Hostage
+stages:
+  - stage: 10
+    verdict: corrected  # Hrundi is marked, with the cornerclub as a side step, and his lover stays unnamed.
+    marked: ["hrundi"]
+    optional: ["cell:sadrith mora, fara's hole in the wall"]
+  - stage: 60
+    verdict: right  # Hrundi is marked, now that the player knows his lover.
+    marked: ["hrundi"]
+  - stage: 70
+    verdict: right  # Stacey is marked for the report.
+    marked: ["stacey"]

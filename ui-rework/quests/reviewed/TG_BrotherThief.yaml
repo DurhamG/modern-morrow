@@ -1,0 +1,22 @@
+# The reviewed quest markers of TG_BrotherThief.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_BrotherThief
+stages:
+  - stage: 10
+    verdict: corrected  # The two people in the Elven Nations Cornerclub who answer about Nads are marked, not his home.
+    marked: ["gadela andus", "sovali uvayn"]
+  - stage: 20
+    verdict: corrected  # Arvama Rathri, whom the journal names, is marked, and Gadela Andus is a side step.
+    marked: ["arvama rathri"]
+    optional: ["gadela andus"]
+  - stage: 25
+    verdict: corrected  # The key Nads Tharen carries in his canalworks home is marked, then Stacey.
+    marked: ["key_tgbt", "stacey"]
+  - stage: 30
+    verdict: corrected  # No line sets this stage. It is treated like 25, with the key and Stacey marked.
+    marked: ["key_tgbt", "stacey"]
+  - stage: 50
+    verdict: corrected  # The key in Nads Tharen's home, then Stacey, with Gadela as an optional lead for a player who skipped her
+    marked: ["key_tgbt", "stacey"]
+    optional: ["gadela andus"]

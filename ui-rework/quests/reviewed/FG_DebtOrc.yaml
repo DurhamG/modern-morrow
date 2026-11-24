@@ -1,0 +1,11 @@
+# The reviewed quest markers of FG_DebtOrc.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_DebtOrc
+stages:
+  - stage: 10
+    verdict: right  # Nar, who carries the ring, then Lorbumol once the player has it
+    marked: ["juicedaw ring", "lorbumol gro-aglakh", "nar gro-shagramph"]
+  - stage: 50
+    verdict: right  # Lorbumol is marked to hand over the ring
+    marked: ["juicedaw ring", "lorbumol gro-aglakh"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of MG_Flowers.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Flowers
+stages:
+  - stage: 10
+    verdict: unfixable  # the journal sends the player to gather around Lake Amaya, a whole region; the markers show merchants who sell the flowers
+    marked: ["ajira", "ingred_gold_kanet_01", "ingred_heather_01", "ingred_stoneflower_petals_01", "ingred_willow_anther_01"]

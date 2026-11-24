@@ -1,0 +1,26 @@
+# The reviewed quest markers of FG_DissaplaMine.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_DissaplaMine
+stages:
+  - stage: 10
+    verdict: corrected  # Only Novor Drethan is marked, since the journal hasn't named Teres yet
+    marked: ["novor drethan"]
+  - stage: 30
+    verdict: right  # Teres is marked; Novor's choice can't come up again at this stage, and the ways that need someone dead are set aside
+    marked: ["novor drethan", "teres arothan"]
+  - stage: 40
+    verdict: right  # Teres is marked
+    marked: ["teres arothan"]
+  - stage: 50
+    verdict: right  # Novor is marked as the escort's destination while Teres follows
+    marked: ["novor drethan"]
+  - stage: 55
+    verdict: corrected  # Only Hrundi is marked to report the failure, instead of Novor
+    marked: ["hrundi"]
+  - stage: 70
+    verdict: right  # Novor for his thanks and Hrundi for the pay
+    marked: ["hrundi", "novor drethan"]
+  - stage: 90
+    verdict: right  # Hrundi is marked for the pay
+    marked: ["hrundi"]

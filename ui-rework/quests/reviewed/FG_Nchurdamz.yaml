@@ -1,0 +1,26 @@
+# The reviewed quest markers of FG_Nchurdamz.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_Nchurdamz
+stages:
+  - stage: 10
+    verdict: corrected  # Only Larienna is marked, since the journal hasn't mentioned the Daedroth
+    marked: ["larienna macrina"]
+  - stage: 11
+    verdict: corrected  # Same as 10, Larienna can still be asked again
+    marked: ["larienna macrina"]
+  - stage: 20
+    verdict: right  # The Daedroth she seeks is marked
+    marked: ["daedroth_fg_nchur"]
+  - stage: 23
+    verdict: right  # The Daedroth is still the goal
+    marked: ["daedroth_fg_nchur"]
+  - stage: 55
+    verdict: corrected  # Hrundi is marked to report her death, as the journal says
+    marked: ["hrundi", "larienna macrina"]
+  - stage: 60
+    verdict: corrected  # Same as 55
+    marked: ["hrundi", "larienna macrina"]
+  - stage: 90
+    verdict: right  # Hrundi is marked for the report
+    marked: ["hrundi"]

@@ -1,0 +1,20 @@
+# The reviewed quest markers of MT_WritVendu.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_WritVendu
+stages:
+  - stage: 10
+    verdict: right  # Ethal Seloth and Idroso Vendu are both marked in the Temporary Telvanni Housing
+    marked: ["ethal seloth", "idroso vendu"]
+  - stage: 75
+    verdict: right  # one target is dead and the one still alive is marked to kill
+    marked: ["ethal seloth", "idroso vendu"]
+  - stage: 80
+    verdict: right  # both targets are dead, so the nearest Morag Tong master is marked to report to
+    marked: ["ethal seloth", "faction:morag tong", "idroso vendu"]
+  - stage: 85
+    verdict: right  # one target is dead and the one still alive is marked to kill
+    marked: ["ethal seloth", "idroso vendu"]
+  - stage: 90
+    verdict: right  # both targets are dead, so the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of TG_GrandmasterRetort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_GrandmasterRetort
+stages:
+  - stage: 10
+    verdict: right  # Berwen's retort and the three other placed ones are marked, which matches Big Helende's line, then Big Helende.
+    marked: ["apparatus_g_retort_01", "big helende"]

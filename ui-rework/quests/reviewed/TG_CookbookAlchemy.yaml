@@ -1,0 +1,11 @@
+# The reviewed quest markers of TG_CookbookAlchemy.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_CookbookAlchemy
+stages:
+  - stage: 10
+    verdict: corrected  # Anis Seloth's shop is marked until the player has the recipe, then Tusamircil, and his death is never marked.
+    marked: ["cell:sadrith mora, anis seloth: alchemist", "tusamircil"]
+  - stage: 50
+    verdict: right  # Big Helende is marked for the report.
+    marked: ["big helende"]

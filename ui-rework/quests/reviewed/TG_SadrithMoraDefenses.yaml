@@ -1,0 +1,14 @@
+# The reviewed quest markers of TG_SadrithMoraDefenses.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_SadrithMoraDefenses
+stages:
+  - stage: 10
+    verdict: right  # Only Arielle Phiencel is marked, as her death is the only other way and it is set aside.
+    marked: ["arielle phiencel"]
+  - stage: 50
+    verdict: corrected  # Anis Seloth's shop, which holds four pieces of raw ebony, is marked, then Arielle, instead of dead wizards in Kogoruhn and Endusal.
+    marked: ["arielle phiencel", "cell:sadrith mora, anis seloth: alchemist"]
+  - stage: 70
+    verdict: right  # Big Helende is marked for the report.
+    marked: ["big helende"]

@@ -1,0 +1,11 @@
+# The reviewed quest markers of MT_S_Sublime.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_S_Sublime
+stages:
+  - stage: 10
+    verdict: right  # Anel Rethelas, who carries the ring, is marked in Yasammidan, then Eno Hlaalu once the player has it
+    marked: ["eno hlaalu", "sanguineringsublimew"]
+  - stage: 100
+    verdict: right  # the ring has been handed back to Eno Hlaalu, and nothing is left to do
+    marked: []

@@ -1,0 +1,14 @@
+# The reviewed quest markers of MT_WritMavon.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_WritMavon
+stages:
+  - stage: 10
+    verdict: right  # the writ's target, Mavon Drenim in the Telvanni Tower, is marked to kill
+    marked: ["mavon drenim"]
+  - stage: 80
+    verdict: right  # the target is dead, so the kill marks nothing and the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong", "mavon drenim"]
+  - stage: 90
+    verdict: right  # the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong"]

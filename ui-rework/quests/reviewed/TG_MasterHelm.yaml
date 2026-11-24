@@ -1,0 +1,8 @@
+# The reviewed quest markers of TG_MasterHelm.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_MasterHelm
+stages:
+  - stage: 10
+    verdict: right  # The helm in Arobar Manor is marked, as the journal says, then Aengoth.
+    marked: ["aengoth", "redoran_master_helm"]

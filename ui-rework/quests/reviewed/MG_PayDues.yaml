@@ -1,0 +1,17 @@
+# The reviewed quest markers of MG_PayDues.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_PayDues
+stages:
+  - stage: 10
+    verdict: corrected  # marks Manwe in Punabi, without Ranis's answer for paying the dues yourself
+    marked: ["manwe"]
+  - stage: 30
+    verdict: corrected  # marks Manwe, who still has to be persuaded
+    marked: ["manwe"]
+  - stage: 40
+    verdict: right  # marks Manwe to persuade and Ranis to pay her yourself, as the journal suggests
+    marked: ["manwe", "ranis athrys"]
+  - stage: 50
+    verdict: right  # marks Ranis to deliver the gold to
+    marked: ["ranis athrys"]

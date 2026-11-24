@@ -25,8 +25,8 @@ stages:
     verdict: corrected  # Sonummu Zabamat is marked, as Kaushad told the player; the early escort to the yurt is hidden
     marked: ["sonummu zabamat"]
   - stage: 20
-    verdict: corrected  # Kaushad is marked and the escort is hidden; the same line moves the journal on to 22, so 20 is never the current stage in play
-    marked: ["kaushad"]
+    verdict: corrected  # Kaushad is marked and the escort is hidden; Calvario is listed but already dead, so unmarked in play, and 20 is never current in play
+    marked: ["calvario", "kaushad"]
   - stage: 5
     verdict: corrected  # Calvario is marked in Nerano Ancestral Tomb, and Kaushad only once Calvario is dead
     marked: ["calvario", "kaushad"]

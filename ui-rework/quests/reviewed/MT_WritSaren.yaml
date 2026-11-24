@@ -1,0 +1,14 @@
+# The reviewed quest markers of MT_WritSaren.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_WritSaren
+stages:
+  - stage: 10
+    verdict: right  # the writ's target, Toris Saren in Saren Manor, is marked to kill
+    marked: ["toris saren"]
+  - stage: 80
+    verdict: right  # the target is dead, so the kill marks nothing and the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong", "toris saren"]
+  - stage: 90
+    verdict: right  # the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong"]

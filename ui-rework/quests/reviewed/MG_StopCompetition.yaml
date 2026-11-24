@@ -1,0 +1,14 @@
+# The reviewed quest markers of MG_StopCompetition.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_StopCompetition
+stages:
+  - stage: 10
+    verdict: right  # marks Only-He-Stands-There at the South Wall Cornerclub
+    marked: ["onlyhestandsthere"]
+  - stage: 50
+    verdict: corrected  # marks Ranis to report to; his training deal is no longer offered
+    marked: ["ranis athrys"]
+  - stage: 70
+    verdict: right  # marks Ranis to report to
+    marked: ["ranis athrys"]

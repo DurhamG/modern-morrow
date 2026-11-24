@@ -1,0 +1,8 @@
+# The reviewed quest markers of MG_Science.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Science
+stages:
+  - stage: 10
+    verdict: corrected  # marks Arkngthunch-Sturdumz until the player has a tube, then Edwinna; the chests and desks that hold other tubes are left out
+    marked: ["cell:arkngthunch-sturdumz", "edwinna elbert"]

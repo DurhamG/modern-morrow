@@ -1,0 +1,11 @@
+# The reviewed quest markers of TG_SS_Yngling.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_SS_Yngling
+stages:
+  - stage: 10
+    verdict: corrected  # The ledger in Yngling Manor is marked, then Stacey, and giving it to Yngling is left out.
+    marked: ["bk_ynglingledger", "stacey"]
+  - stage: 50
+    verdict: corrected  # The ledger was destroyed, so only Stacey is marked.
+    marked: ["stacey"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of FG_Sanit.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_Sanit
+stages:
+  - stage: 10
+    verdict: right  # No line or script starts or ends this quest, so there is nothing to mark
+    marked: []

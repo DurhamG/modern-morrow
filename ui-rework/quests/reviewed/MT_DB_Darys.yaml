@@ -1,0 +1,11 @@
+# The reviewed quest markers of MT_DB_Darys.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_DB_Darys
+stages:
+  - stage: 10
+    verdict: right  # Movis Darys is marked, whether the player persuades him or kills him
+    marked: ["movis darys"]
+  - stage: 50
+    verdict: right  # Movis Darys agreed to meet, so Eno Hlaalu is marked to report to
+    marked: ["eno hlaalu"]

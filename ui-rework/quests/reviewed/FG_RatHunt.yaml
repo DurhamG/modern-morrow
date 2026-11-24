@@ -1,0 +1,14 @@
+# The reviewed quest markers of FG_RatHunt.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_RatHunt
+stages:
+  - stage: 10
+    verdict: right  # Drarayne and the rats in her house
+    marked: ["drarayne thelas", "rat_cave_fgrh"]
+  - stage: 50
+    verdict: right  # The rats, then Drarayne
+    marked: ["drarayne thelas", "rat_cave_fgrh"]
+  - stage: 100
+    verdict: right  # Eydis is marked for the report
+    marked: ["eydis fire-eye"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of FG_SilenceMagistrate.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_SilenceMagistrate
+stages:
+  - stage: 10
+    verdict: right  # Rufinus Alleius in Ebonheart, then Lorbumol
+    marked: ["lorbumol gro-aglakh", "rufinus alleius"]

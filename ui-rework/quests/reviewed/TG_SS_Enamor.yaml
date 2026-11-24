@@ -1,0 +1,8 @@
+# The reviewed quest markers of TG_SS_Enamor.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_SS_Enamor
+stages:
+  - stage: 10
+    verdict: corrected  # Salyn Sarethi's chest in Ghostgate is marked while the player carries Enamor, and Stacey once both items are in it.
+    marked: ["de_p_chest_02salynsaret", "stacey"]

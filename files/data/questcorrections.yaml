@@ -44,17 +44,17 @@ fingerprints:
   A1_1_FindSpymaster: d1ed1e20ebfa0d6a
   A1_2_AntabolisInformant: d7c7d83e7d64f26a
   A1_4_MuzgobInformant: 9ed76f94d7df466a
-  A1_6_AddhiranirrInformant: 1eef9b29c7e8257f
+  A1_6_AddhiranirrInformant: 5257b3edc9e83f1b
   A1_7HuleeyaInformant: 1ea1a3cb7c09c115
   A1_SleepersAwake: 7b8b4262590d78ed
   A1_V_VivecInformants: c4c1a65109e8bf3c
   A2_1_Kurapli_Zallay: 79acc65145eeb161
   A2_1_MeetSulMatuul: 66069d694547d5aa
-  A2_2_6thHouse: a3dafcd250d10b04
-  A2_3_CorprusCure: 99bf49ff4f872562
+  A2_2_6thHouse: e2061bbb661593f1
+  A2_3_CorprusCure: 08d55087c0df6142
   A2_3_CorprusKiller: be9c5df4db9f7b29
   A2_3_CorprusSafe: f9ccf650cbf98e9a
-  A2_4_MiloGone: f77a606ee2491939
+  A2_4_MiloGone: 8bb9dc9868550ef5
   A2_6_Incarnate: 0471e85550e2b7d1
   B2_AhemmusaSafe: 0a8161a63895a85a
   B2_AhemmusaWalk: 2ff92e2a8cb3c2e2
@@ -83,12 +83,72 @@ fingerprints:
   B8_BackDoor4: 592d9673789d31a7
   B8_BackDoor5: 76567487ac78b6a8
   B8_BackDoor6: 646e7f84549e80e1
-  B8_MeetVivec: 4c3b84bf83ed52ed
+  B8_MeetVivec: 1964f3b918e1e672
   B8_Nibani_2_Vivec: 4a87f3f2889b4098
   C0_Act_C: 1ddc5211ddd5da16
   C0_Act_C_Expo: d740bb3c16398018
   C3_DestroyDagoth: d9b495fa0ea19552
   CX_BackPath: f767cf1ca4fb7e5d
+  FG_AlofsFarm: 009ea078dda15b18
+  FG_BeneranBounty: 193a56d06ae49df2
+  FG_BigBosses: ea5f7a555c81a18d
+  FG_CorprusStalker: b4045f55190b557e
+  FG_DebtStoine: c7cfea3839c8df05
+  FG_DeseleDebt: 3f4096d247bb2862
+  FG_DissaplaMine: c6677e82db883fd5
+  FG_Egg_Poachers: a754cd9ee8b78ba5
+  FG_KhajiitBounty: a8140dff9efaa3ba
+  FG_KillCronies: 7a618974b5a5a9d2
+  FG_Nchurdamz: c33d5eb8af973439
+  FG_SilenceTaxgirl: 2b176767beed6a14
+  FG_SuranBandits: 0847c061b2cbf21a
+  FG_Telasero: cb505fcfc7b09c6b
+  FG_TenimBounty: cd17dc4559c0b382
+  FG_Vas: cf790b9aafdacf59
+  MG_Advancement: 7bd1f81926b1b7d5
+  MG_Apprentice: 84b993e662455650
+  MG_Bethamez: 47d4b98b9d527a0b
+  MG_Dwarves: 33164dea47acbb2a
+  MG_EscortScholar1: f9e21a023c01784c
+  MG_Excavation: b0dbb51170dbc673
+  MG_Guildmaster: f04083dd62573bc6
+  MG_KillNecro2: c41c007f4b5c748b
+  MG_Mzuleft: 33189dfc6d43d263
+  MG_PayDues: 2a2abbd2b7799a97
+  MG_Potion: 45003683f34d4b49
+  MG_ReturnBook: 2735dd4e0d4c3cfc
+  MG_Sabotage: 5a8e6e19874ad3bf
+  MG_Science: 57c7b2468bf78495
+  MG_Sharn_Necro: e24a6afe1ffaea9f
+  MG_SoulGem2: 61e139681a483b97
+  MG_SpyCatch: bcee13f4ce918b79
+  MG_StopCompetition: 7bec1b49970bb565
+  MG_VampireCure: 33f59692f64e1a52
+  MG_WiseWoman: 711919db9dbec36c
+  MT_DB_Contact: abb040e0b1f9c328
+  TG_BalmoraDefenses: 8623480e07a6c7cd
+  TG_BitterBribe: 4ca1f039ecd06dbd
+  TG_BrotherBragor: 496247d798e7fff9
+  TG_BrotherThief: 2c8b675fcf467059
+  TG_CookbookAlchemy: 05594f03bcc96943
+  TG_DartsJudgement: da004abbc7abb2ca
+  TG_Diamonds: a7605b947ed9ce05
+  TG_EbonyStaff: c73f5e505a11f89d
+  TG_Hostage: 0a7ad62f73f2f247
+  TG_LootAldruhnMG: 88da30103ffd4a6a
+  TG_ManorKey: 48df017f86482166
+  TG_OverduePayments: 568fcc9ec12f882f
+  TG_RedoranCookbook: d2888ce1de7178e2
+  TG_SadrithMoraDefenses: e4f69e76b7acf0dc
+  TG_SS_ChurchPolice: f8dcbb92fe76c5a9
+  TG_SS_Enamor: b3989232d72c9bb5
+  TG_SS_Generosity1: c9bc3cb3b0178a21
+  TG_SS_Generosity2: 33c7fc7464953f23
+  TG_SS_GreedySlaver: 96e53e7108550db1
+  TG_SS_Plutocrats: ccbde1cb715452fb
+  TG_SS_Yngling: ac1a1385310d916e
+  TG_VintageBrandy: 2525774471537d4b
+  TG_Withershins: 85675bc107445913
 
 quests:
 
@@ -828,3 +888,716 @@ quests:
     # At 5 the answer in "Kagrenac's Journals", leading to 10, is still a side step.
     - stages: 5
       optional: 10
+
+  FG_AlofsFarm:
+    # Journal 10 sends the player to Alof the Easterner at his farm, who saw Orcs at a ruin nearby. His answer in
+    # "Orcs at a Daedric ruin" has no conditions and leads to 30, where he names Ashunartes and the leader Burub
+    # gra-Bamog. The default rule also marks Burub, through the ways to 50 and 100 that need him dead, before the
+    # journal has named him.
+    - stages: 10
+      next: 30
+
+  FG_BeneranBounty:
+    # Journal 10 says Nerer Beneran hides in the cavern of Sargon, where he is placed. The Scouts in Maar Gan answer
+    # "Sargon" with directions and ShowMap Vas, which leads to 50. Persius Mercius's own "Sargon" answer suggests
+    # asking there, so it is a side step, and the kill stays the goal.
+    - stages: 10
+      next: 100
+      optional: 50
+
+  FG_BigBosses:
+    # Journal 10 asks the player to kill Gentleman Jim Stacey in Simine Fralinie's bookstore. Sjoring Hard-Heart's
+    # choices in "master thief" that lead to 110 come from his line for a player who is already Master Thief, which
+    # needs rank 9 in the Thieves Guild. The analysis doesn't see that rank, so the default rule marks Sjoring from
+    # the start as the furthest way.
+    - stages: 10
+      next: 100
+
+  FG_CorprusStalker:
+    # Berwen starts this quest at 1 herself, in "Corprus Stalker", when the player offers to kill the beast. Journal
+    # 1 names only Berwen. Her line that leads to 89 needs this quest at 1 and corprus_stalker_fgcs dead, and the
+    # stalker is placed in her shop. The default rule marks Hrundi instead of her, through his line that leads to
+    # 10 and needs FG_DissaplaMine at 100, and his line that leads to 100 once the stalker is dead. Journal 1
+    # doesn't mention him.
+    - stages: 1
+      next: 89
+
+  FG_DebtStoine:
+    # Journal 10 says Lirielle Stoine at The Rat in the Pot owes the client 2000 gold. Her answer in "debt money"
+    # leads to 50. Lorbumol gro-Aglakh's choice that leads to 100 is only offered when the player carries 2000 gold,
+    # which the analysis doesn't see, so the default rule marks him at once.
+    - stages: 10
+      next: 50
+    # Journal 50 says Lirielle's brother Ruran Stoine died in Mallapi. Ruran Stoine is placed in Mallapi and
+    # carries 500 gold and a random amount more. His record has no health, so he lies there dead, and a dead actor
+    # gets no marker. No line names the cave as a step, so the cave Mallapi is an optional target until the debt is
+    # paid. Lorbumol stays marked, because his line takes 2000 gold from wherever it came.
+    - stages: 50
+      targets:
+        - { task: visit, cell: "Mallapi", optional: true, done: { quest: FG_DebtStoine, atLeast: 100 } }
+
+  FG_DeseleDebt:
+    # Journal 10 asks the player to get the 200 gold from Helviane Desele in Suran. Her answer in "debt money"
+    # leads to 70. The default rule marks Persius Mercius, whose line leads to 30, and the journal doesn't mention
+    # him. It also marks Eydis Fire-Eye, whose choice that leads to 100 is only offered at stage 30 or more with
+    # 200 gold carried.
+    - stages: 10
+      next: 70
+
+  FG_DissaplaMine:
+    # Journal 10 says to do what Novor Drethan in the Dissapla Mine asks. His answers in "Dissapla Mine" lead to 30
+    # and need stage below 30. Teres Arothan's answer in "travel together" leads to 50, but the journal hasn't
+    # named him yet.
+    - stages: 10
+      next: 30
+    # Journal 55 records that Teres Arothan died. The escort script teresArothanScript that sets 70 only runs
+    # while Teres follows the player, so the visit to Novor Drethan leads nowhere. Hrundi's lines that lead to 110
+    # need Teres or Novor dead, so they count as failures. Marking them would also mark Novor as one to kill. So
+    # only Hrundi is marked, as the one to report to.
+    - stages: 55
+      hide: [70, 110]
+      targets:
+        - { task: talk, object: hrundi, done: { quest: FG_DissaplaMine, atLeast: 110 } }
+
+  FG_Egg_Poachers:
+    # Journal 1 asks the player to kill Sevilo Othan and Daynila Valas, placed in Shulk Egg Mine, and report back
+    # to Eydis Fire-Eye. Her answer in "Shulk Egg Mine" that leads to 10 only gives directions to the mine, so it
+    # is a side step.
+    - stages: 1
+      next: 100
+      optional: 10
+
+  FG_KhajiitBounty:
+    # Journal 10 says Dro'Sakhar hides in Vivec, probably in St. Olms, and he is placed in St. Olms Canal
+    # South-Two. Journal 30 gives that house, though no line sets 30. Persius Mercius's answer in "Dro'Sakhar"
+    # leads to 60 and only says the bounty is lawful. Neither journal mentions him, so his way is left out.
+    - stages: [10, 30]
+      hide: 60
+
+  FG_KillCronies:
+    # Journal 10 asks the player to kill Eydis Fire-Eye and report to Persius Mercius. His line in "Eydis Fire-Eye"
+    # that leads to 40 needs her dead. His line in "Lorbumol gro-Aglakh" that leads to 15 has no conditions, and
+    # the ways to 60 and 100 need Lorbumol gro-Aglakh dead, whom journal 10 doesn't name. The stages 40 and 60 have
+    # no journal entry. With those ways hidden, Eydis is marked, then Persius.
+    - stages: 10
+      hide: [15, 60-100]
+
+  FG_Nchurdamz:
+    # Journals 10 and 11 send the player to Larienna Macrina at Nchurdamz. Her choice in "explore together" that
+    # leads to 20 needs stage 10 or 11. The default rule also marks the Daedroth daedroth_fg_nchur, whose script
+    # BILL_FG_Hrelvesuu sets 90 when it dies. Journal 20 is the first to mention the beast.
+    - stages: [10, 11]
+      next: 20
+    # Journals 55 and 60 record that Larienna died and say to tell Hrundi. His line in "Nchurdamz" that needs her
+    # dead leads to 110. It counts as a failure, so the default rule marks the Daedroth instead. Killing it sets 90,
+    # but Hrundi's line for her death still comes first.
+    - stages: [55, 60]
+      next: 110
+
+  FG_SilenceTaxgirl:
+    # Journal 10 gives a bounty on Adraria Vandacia, placed in the Census and Excise Warehouse in Seyda Neen.
+    # Persius Mercius's answer in "Adraria Vandacia" leads to 50, but the journal doesn't mention him, and the
+    # default rule marks him solid as the lowest way.
+    - stages: 10
+      hide: 50
+
+  FG_SuranBandits:
+    # Journal 10 sends the player to Avon Oran in Suran. His answer in "bandits in Suran" leads to 30 and needs
+    # FG_BeneranBounty at 100, which held when this quest started. The default rule also marks the kill of Daldur
+    # Sarys, whom journal 30 names first.
+    - stages: 10
+      next: 30
+
+  FG_Telasero:
+    # At 50 Sondaale of Shimmerene follows the player, and the script sondaaleFollow sets 70 once the player has
+    # left both "Telasero, Lower Level" and "Telasero, Upper Level" with her. So the goal is the way out. The
+    # exterior cell outside the dungeon is named "Telasero", so a visit to it marks the first door on the way out.
+    # The way to 70 would only mark Sondaale beside the player. Hrundi's line that leads to 110 needs her dead, and
+    # with the way to 70 hidden it would be the only way left, so it is hidden too.
+    - stages: 50
+      hide: [70, 110]
+      targets:
+        - { task: visit, cell: "Telasero", done: { quest: FG_Telasero, atLeast: 70 } }
+    # At 70 Sondaale of Shimmerene is at the entrance of Telasero. Her greeting that leads to 75 only thanks the
+    # player. Hrundi pays the contract in "Sondaale of Shimmerene" from 70 on, so he stays the goal.
+    - stages: 70
+      next: 100
+      optional: 75
+
+  FG_TenimBounty:
+    # Journal 10 says Rels Tenim was last seen near Vos. The farmers in Vos answer "Rels Tenim" with a pointer to
+    # the Ahemmusa Camp, and journal 40 says the same, though no line sets 40. Anyone in the Ahemmusa Camp can
+    # answer "Rels Tenim" with the way to Shallit, which leads to 60. The default rule also marks Rels Tenim in
+    # Shallit, which the journal only names at 60. The camp is marked from 10, though journal 10 names only Vos,
+    # because the farmers' pointer sets no stage, so no condition could clear a marker on Vos once they have answered.
+    - stages: [10, 40]
+      next: 60
+
+  FG_Vas:
+    # Journal 10 asks the player to aid Ulyne Henim at Vas. Her answer in "fight together" leads to 50. The default
+    # rule also marks the Necromancer Daris Adram, through the ways to 80 and 85 that need him dead. Journal 50 is
+    # the first to name him.
+    - stages: 10
+      next: 50
+
+  MG_Advancement:
+    # Journal 10 says to pay the guild dues. The answer in "Advancement" that leads to 20 takes the 200 gold. The
+    # ways to 60 and 70 are about the Wizard's Staff, which the journal only asks for at 50.
+    - stages: 10
+      next: 20
+    # At 20 the dues are paid and the rank is raised. The line that leads to 50 only comes when the player meets the
+    # next rank's requirements, and the staff ways to 60 and 70 aren't mentioned yet, so there is nothing to go to.
+    - stages: 20
+      hide: [50, 60, 70]
+    # Journal 50 asks for a Wizard's Staff without saying where. A senior guild member sells one in the topic
+    # "Wizard's Staff", which leads to 60. The way to 70 fetches one of the two placed staffs, in "Ramimilk,
+    # Shrine" and "Urshilaku, Laterus Burial", which no journal entry mentions, so it is hidden. A staff found
+    # anywhere is still accepted in the same topic, from the same guild members the way to 60 marks.
+    - stages: 50
+      hide: 70
+
+  MG_Apprentice:
+    # Journal 10 asks the player to stop the disturbance at Huleen's hut in Maar Gan. The scamp scamp_mg_apprentice is
+    # placed there, and Edwinna Elbert's line in "Huleen's hut" that leads to 20 needs it dead. Her answers to the
+    # choice that leads to 100 and 200 come after a line that needs Listien Bierles dead, so they count as failures
+    # and are left out. Listien hides in the same hut, and his lines that lead to 40 also need the scamp dead. The
+    # journal hasn't named him, so he is optional.
+    - stages: 10
+      next: 20
+      optional: 40
+
+  MG_Bethamez:
+    # Journal 10 sends the player to the lower levels of the Gnisis Eggmine, into the Dwemer ruin of Bethamez, for
+    # the plans. The plans misc_dwrv_artifact20 are placed in "Gnisis, Bethamez", but also in "Tel Vos, Central
+    # Tower" and in "Bamz-Amschend, Hall of Wails", and the fetch would mark all three. So the ruin is marked until
+    # the player carries the plans, and then Edwinna Elbert, who takes them in the topic "Bethamez".
+    - stages: 10
+      hide: 100
+      targets:
+        - { task: visit, cell: "Gnisis, Bethamez", done: { carried: misc_dwrv_artifact20 } }
+        - { task: talk, object: edwinna elbert, after: { carried: misc_dwrv_artifact20 }, done: { quest: MG_Bethamez, atLeast: 100 } }
+
+  MG_Dwarves:
+    # Journal 10 says Trebonius gave almost nothing to go on. The way to 70 fetches the three books
+    # bk_eggoftime, bk_divinemetaphysics and bk_hanginggardenswasten from Mzuleft, Bethamez and Nchuleftingth, and
+    # takes them to Baladas Demnevanni or Yagrum Bagarn. No journal entry names the books' places or the two
+    # translators. Edwinna Elbert, Hasphat Antabolis and Divayth Fyr only hint at them once the player holds a book.
+    # Marking them would give the whole search away, so nothing is marked.
+    - stages: 10
+      hide: 70
+
+  MG_EscortScholar1:
+    # Tenyeminwe's script tenyeminweFollow sets 70 near Gals Arethi, but only while she follows the player. The
+    # follow starts with her answer in "travel together", which leads to 30. So the docks aren't marked until then.
+    - stages: 10
+      hide: 70
+    # Once she follows the player, the next step is Gals Arethi's ship at the docks, where the script sets 70.
+    # Skink-in-Tree's-Shade's line in "Tenyeminwe" that leads to 100 needs only stage 50 or more, so at 50 the
+    # default rule would also mark him before she is safe.
+    - stages: 30-50
+      next: 70
+    # Journal 70 says Tenyeminwe reached the ship, and the player should report to Skink, whose line leads to 100.
+    # Her answer in "travel together" that leads to 80 is a reward the player can skip.
+    - stages: 70
+      next: 100
+      optional: 80
+
+  MG_Excavation:
+    # Journals 1 and 10 send the player to Senilias Cadiusus in Nchuleftingth. His answers in "excavation report"
+    # and "Anes Vendu" lead to 20 and 30. The default rule also marks the report bk_seniliasreport and Edwinna Elbert,
+    # through the way to 100, but the journal doesn't mention the report being lost until 20 and 30. At 1 it would
+    # also mark Edwinna's line that starts her own errand to 10. Journal 20 says the report is late, and Senilias's
+    # answer in "Anes Vendu" leads to 30.
+    - stages: 1-20
+      next: [20, 30]
+    # Journal 30 asks the player to find out what happened to Anes Vendu in the lower levels, and journal 40 says
+    # his body was found. The report is carried by Anes Vendu, placed in "Nchuleftingth, Lower Levels". Senilias,
+    # who asked, takes it in "excavation report" and leads to 50, and journal 50 then sends the player to Edwinna.
+    # The default rule marks Edwinna instead of Senilias once the report is found.
+    - stages: 30-40
+      next: 50
+
+  MG_Guildmaster:
+    # Journal 10 says Edwinna Elbert asked the player to talk to Trebonius, whose answer in "Arch-Mage" leads to 50.
+    # Skink-in-Tree's-Shade's line in "duties" that leads to 20 is another start of this quest, which the journal
+    # doesn't mention.
+    - stages: 10
+      next: 50
+    # Journal 50 sets a duel with Trebonius in the Arena. vivecArenaScript, on a ring placed in "Vivec, Arena Pit",
+    # moves him into the pit when the player enters it at this stage. treboniusScript only sets 100 when he dies
+    # with the player in the Arena. The analysis marks him in the Vivec guild hall, where killing him does nothing
+    # for the quest. The pit is marked instead.
+    - stages: 50
+      hide: 100
+      targets:
+        - { task: visit, cell: "Vivec, Arena Pit", done: { quest: MG_Guildmaster, atLeast: 100 } }
+
+  MG_KillNecro2:
+    # Journal 10 asks the player to kill Tashpi Ashibael in her hut in Maar Gan. Her lines in "necromancy" and
+    # "plan" lead to 40 and 50, where she offers to flee instead. Stage 40 has no journal entry. The kill is set
+    # aside as a failure because she speaks in the quest. Ranis Athrys's answer that leads to 100 without a death is
+    # the player's lie, which comes after a line that needs this quest at 40, and the analysis doesn't see that. So
+    # Tashpi is marked, and once she is dead the default rule marks Ranis.
+    - stages: 10-40
+      next: 40-50
+
+  MG_Mzuleft:
+    # Journal 10 sends the player to the ruins of Mzuleft for scarab plans. The plans misc_dwrv_artifact10 are placed
+    # in "Mzuleft", but also in "Dagon Fel, Vacant Tower" and "Tel Vos, Central Tower", and the fetch would mark all
+    # three. So Mzuleft is marked until the player carries the plans, and then Edwinna Elbert, who takes them in the
+    # topic "blueprints".
+    - stages: 10
+      hide: 100
+      targets:
+        - { task: visit, cell: "Mzuleft", done: { carried: misc_dwrv_artifact10 } }
+        - { task: talk, object: edwinna elbert, after: { carried: misc_dwrv_artifact10 }, done: { quest: MG_Mzuleft, atLeast: 100 } }
+
+  MG_PayDues:
+    # Journal 10 sends the player to Manwe in Punabi to collect her dues, and Ranis Athrys said to kill her if
+    # she won't pay. Manwe's lines in "Guild Dues" lead to 40 and 50. Ranis's answer that leads to 100 by paying
+    # the dues yourself comes after a line that needs this quest at 30 and 2000 gold, which the analysis doesn't see.
+    # Journal 30 says Manwe refuses, and still points at her. If Manwe is dead, her ways are left out, and the
+    # default rule marks Ranis.
+    - stages: [10, 30]
+      next: [40, 50]
+
+  MG_Potion:
+    # Journal 10 sends the player to Skink-in-Tree's-Shade in Sadrith Mora for the potion. His answers in
+    # "Detect Creatures Potion" lead to 50 and give the potion. His line in "Ancestral Tomb", which leads to 30, is
+    # unrelated. The way to 100 would mark the seven placed copies of p_detect_creatures_s, in shrines and ruins.
+    - stages: 10
+      next: 50
+
+  MG_ReturnBook:
+    # Journal 10 asks the player to return Chimarvamidium to the Vivec guild. Edwinna Elbert told the player to put
+    # it back where it was found, in the chest de_p_chest_02_sirilonwe. Her line that leads to 100 needs her local
+    # bookInBox at 1, which is set once the book is back in the chest. Until then the default rule marks Sirilonwe,
+    # whose answer in "Chimarvamidium" takes the book and leads to 30. Without this entry it would also mark the
+    # chest after the book is back, through the way to 30.
+    - stages: 10
+      next: 100
+
+  MG_Sabotage:
+    # Journal 10 asks the player to put the fake soul gem in Galbedir's desk. Ajira's line that leads to 100 needs
+    # her local gemInDesk at 1, set once the gem is in the desk, so nothing is marked until then. The desk
+    # de_p_desk_01_galbedir is placed in "Balmora, Guild of Mages", in the same hall as Ajira.
+    - stages: 10
+      targets:
+        - { task: visit, object: de_p_desk_01_galbedir }
+
+  MG_Science:
+    # Journal 10 asks for a Dwemer Tube from Arkngthunch-Sturdumz. The tube misc_dwrv_artifact60 is placed 20 times,
+    # so the fetch would mark the containers that carry one: com_chest_02_ra'zhid, de_p_desk_hlevala and
+    # dwrv_chest_fals. So the ruin is marked until the player carries a tube, and then Edwinna Elbert, who takes it
+    # in the topic "Dwemer Tube".
+    - stages: 10
+      hide: 100
+      targets:
+        - { task: visit, cell: "Arkngthunch-Sturdumz", done: { carried: misc_dwrv_artifact60 } }
+        - { task: talk, object: edwinna elbert, after: { carried: misc_dwrv_artifact60 }, done: { quest: MG_Science, atLeast: 100 } }
+
+  MG_Sharn_Necro:
+    # Journal 1 says Sharn gra-Muzgob denies being a necromancer. Her answers in "necromancers" that lead to 10
+    # come after a line that needs her book bk_sharnslegionsofthedead, so that way fetches the book first. The book
+    # is in her chest de_r_chest_01_sharn, and it is first named in journal 10, so marking the chest gives it away.
+    # The other way to 10 needs Random100 at 101, which never holds. Asking her again only repeats the denial, so
+    # nothing is marked until the player holds the book, and then Sharn.
+    - stages: 1
+      hide: 10
+      targets:
+        - { task: talk, object: sharn gra-muzgob, after: { carried: bk_sharnslegionsofthedead }, done: { quest: MG_Sharn_Necro, atLeast: 10 } }
+
+  MG_SoulGem2:
+    # Journal 10 asks for the soul of an ash ghoul, and names Yakin as the nearest place with one. Skink-in-Tree's-
+    # Shade's line that leads to 100 needs his local soulAshGhoul at 1, so nothing is marked until the soul is
+    # caught. The creature ash_ghoul is placed twice, both in "Yakin". Each is marked until it dies.
+    - stages: 10
+      targets:
+        - { task: kill, object: ash_ghoul }
+
+  MG_SpyCatch:
+    # Journal 10 asks the player to question guild members in Ald'ruhn, Vivec and Sadrith Mora. Trebonius's answer in
+    # "credentials" leads to 80, but the player only learns to ask him from Tiram Gadar in the Vivec hall. The way
+    # to 110, where the player accuses Ranis Athrys to Trebonius in "Telvanni spy", needs this quest at 80. The way
+    # to 100 needs the credentials. So the three guild halls are marked until the player has the credentials.
+    - stages: 10
+      hide: [80, 100, 110]
+      targets:
+        - { task: visit, cell: "Ald-ruhn, Guild of Mages", done: { quest: MG_SpyCatch, atLeast: 80 } }
+        - { task: visit, cell: "Vivec, Guild of Mages", done: { quest: MG_SpyCatch, atLeast: 80 } }
+        - { task: visit, cell: "Sadrith Mora, Wolverine Hall: Mage's Guild", done: { quest: MG_SpyCatch, atLeast: 80 } }
+    # Journal 35 says Ranis Athrys believes there is another spy, in Vivec or Sadrith Mora.
+    - stages: 35
+      hide: [80, 100, 110]
+      targets:
+        - { task: visit, cell: "Vivec, Guild of Mages", done: { quest: MG_SpyCatch, atLeast: 80 } }
+        - { task: visit, cell: "Sadrith Mora, Wolverine Hall: Mage's Guild", done: { quest: MG_SpyCatch, atLeast: 80 } }
+    # Journals 50, 60 and 70 point at Tiram Gadar's ties to Trebonius, who hands over the credentials in
+    # "credentials" and leads to 80. Ranis Athrys's line that leads to 100 needs those credentials, which only
+    # Trebonius gives, so reporting to her comes after him.
+    - stages: 50-70
+      next: 80
+    # Journal 80 says the credentials are forged. Ranis Athrys asked for a report and takes them in "Telvanni spy",
+    # which leads to 100. Accusing Ranis to Trebonius, which leads to 110, is a choice the journal doesn't offer.
+    - stages: 80
+      next: 100
+
+  MG_StopCompetition:
+    # Journal 50 says Only-He-Stands-There agreed to stop, so the player reports to Ranis Athrys, whose answer in
+    # "unsanctioned training" leads to 100. His answer that leads to 70 needs a choice that he no longer offers
+    # at 50, because his line for 50 or more comes before the line that offers it.
+    - stages: 50
+      next: 100
+
+  MG_VampireCure:
+    # Journal 10 asks for Galur Rithari's papers, and Skink-in-Tree's-Shade said to ask booksellers and scholars.
+    # The papers are placed in "Galom Daeus, Observatory", "Tureynulal, Kagrenac's Library" and "Vivec, Hall of
+    # Justice Secret Library", and the fetch would mark all three. Jobasha and Simine Fralinie, booksellers in
+    # Vivec, answer in "Galur Rithari's papers" that a copy is in the Hall of Justice library. They are optional
+    # until the player holds the papers, and then Skink is marked.
+    - stages: 10
+      hide: 100
+      targets:
+        - { task: talk, object: jobasha, optional: true, done: { carried: "bk_galur_rithari's_papers" } }
+        - { task: talk, object: simine fralinie, optional: true, done: { carried: "bk_galur_rithari's_papers" } }
+        - { task: talk, object: skinkintreesshade, after: { carried: "bk_galur_rithari's_papers" }, done: { quest: MG_VampireCure, atLeast: 100 } }
+
+  MG_WiseWoman:
+    # Skink-in-Tree's-Shade advised speaking with the Ahemmusa first. Sinnammu Mirpal's answer in "arrange a
+    # meeting" leads to 30. Nibani Maesa (25), Manirai (26) and Sonummu Zabamat (27) only refuse or send the player
+    # to Kaushad, who refuses too. Sinnammu's answers that lead to 80 come after a line that needs this quest at 70.
+    # Journals 25 and 26 record refusals, and Sinnammu is still the way on.
+    - stages: 10-26
+      next: 30
+    # Journal 27 says Sonummu Zabamat will only meet if Ashkhan Kaushad allows it, and his answer leads to 28.
+    # Journal 28 says he refused, which leaves Sinnammu Mirpal, whose answer leads to 30. Minabibi Assardarainat's
+    # line that leads to 70 needs a ghost in the Favel Ancestral Tomb dead, and the journal only names the tomb at 30.
+    - stages: 27-28
+      next: [28, 30]
+    # Journal 30 sends the player to her apprentice Minabibi Assardarainat in the Favel Ancestral Tomb. Her answer in
+    # "arrange a meeting" leads to 40.
+    - stages: 30
+      next: 40
+
+  TG_BalmoraDefenses:
+    # Journal 5 only says Sugar-Lips Habasi has a job about the South Wall and a master of security. Her answer in
+    # "South Wall" at stage 5 leads to 10. Hecerinde's line in "South Wall" leads to 50, but the journal hasn't named
+    # him, and finding out who he is is the task.
+    - stages: 5
+      next: 10
+    # Journal 10 says to find an Altmer in Balmora. Anyone in Balmora can answer the topic "Altmer", which leads to 20,
+    # so asking around is a side step. Hecerinde is still unnamed, so the way to 50 is left out.
+    - stages: 10
+      optional: 20
+      hide: 50
+    # Journal 20 lists six Altmer: Culumaire in the Lucky Lockup, Estirdalin in the Guild of Mages, Imare in the
+    # Hlaalu Council Manor, Nalcarya in her shop, and Hecerinde and Tyermaillin in their houses. Each is placed once
+    # in Balmora. Only Hecerinde's "South Wall" line leads to 50, so marking him alone gives the answer away. All six
+    # are marked instead.
+    - stages: 20
+      hide: 50
+      targets:
+        - { task: talk, object: culumaire, done: { quest: TG_BalmoraDefenses, atLeast: 50 } }
+        - { task: talk, object: estirdalin, done: { quest: TG_BalmoraDefenses, atLeast: 50 } }
+        - { task: talk, object: imare, done: { quest: TG_BalmoraDefenses, atLeast: 50 } }
+        - { task: talk, object: nalcarya of white haven, done: { quest: TG_BalmoraDefenses, atLeast: 50 } }
+        - { task: talk, object: hecerinde, done: { quest: TG_BalmoraDefenses, atLeast: 50 } }
+        - { task: talk, object: tyermaillin, done: { quest: TG_BalmoraDefenses, atLeast: 50 } }
+
+  TG_BitterBribe:
+    # The bittercup script sets 25 or 30 when the player drinks from the cup, and then disables the cup. Journals 25
+    # and 30 say the cup is gone, so the way to 50, which fetches it, can't be taken. Gentleman Jim Stacey's answer
+    # in "Bitter Cup" that leads to 110 is the only step left.
+    - stages: 25-30
+      next: 110
+
+  TG_BrotherBragor:
+    # Journal 10 says to steal a Dwemer artifact from Mebestien Ence's shop in Pelagiad and show it to Shadbak
+    # gra-Burbug in Fort Pelagiad. Shadbak's answer in "New-Shoes Bragor" that leads to 50 follows her line that needs
+    # misc_dwrv_artifact50, but the analysis doesn't see that condition. The artifact is in the chest
+    # chest_small_01_tgbb in the shop. It is placed nine more times, so a fetch would mark its holders, which include
+    # chests in Tureynulal and Endusal. New-Shoes Bragor's offer of his shoes (70) only comes once he is freed, and the
+    # way to 110 needs Shadbak dead. So the shop is marked until the player carries the artifact, and Shadbak from
+    # then on.
+    - stages: 10
+      hide: [50, 70, 110]
+      targets:
+        - { task: visit, cell: "Pelagiad, Mebestien Ence: Trader", done: { carried: misc_dwrv_artifact50 } }
+        - { task: talk, object: shadbak gra-burbug, after: { carried: misc_dwrv_artifact50 } }
+    # Journal 50 says Shadbak agreed to release New-Shoes Bragor, and Habasi's answer in "New-Shoes Bragor" leads to
+    # 100. New-Shoes's gift of his shoes (70) is a reward the journal hasn't mentioned.
+    - stages: 50
+      hide: 70
+
+  TG_BrotherThief:
+    # Journal 10 says Nads Tharen used to visit the Elven Nations Cornerclub. Sovali Uvayn (20) and Gadela Andus (25),
+    # both placed there, answer "Nads Tharen". The way to 100 fetches his key from his body in his home in St. Delyn,
+    # which the journal hasn't mentioned. Arvama Rathri's answer (50) is a lie the journal hasn't pointed to yet.
+    - stages: 10
+      next: [20, 25]
+    # Journal 20 says Nads Tharen last spoke with Arvama Rathri, whose answer leads to 50. Sovali's line also sends
+    # the player to Gadela Andus, who knows where he lives, so she is a side step. His home is still unknown.
+    - stages: 20
+      next: 50
+      optional: 25
+    # Journal 25 says Nads Tharen lives in the St. Delyn canalworks. He is placed in "Vivec, St. Delyn Canal
+    # South-Two" and carries key_tgbt, and the way to 100 fetches the key and takes it to Stacey. No line sets 30,
+    # which says the same of Arvama.
+    - stages: 25-30
+      next: 100
+    # Journal 50 says Arvama Rathri denied speaking with Nads Tharen. A player can reach it from 10 or 20 without
+    # having heard Gadela Andus say where he lives, and her line sets 25, which is below 50, so no condition can tell
+    # whether she was heard. The key on his body stays marked, and Gadela is an optional target until the player
+    # carries the key.
+    - stages: 50
+      targets:
+        - { task: talk, object: gadela andus, optional: true, done: { carried: key_tgbt } }
+
+  TG_CookbookAlchemy:
+    # Journal 10 says the recipe is probably in Anis Seloth's shop in Sadrith Mora. Big Helende's line adds
+    # bk_dispelrecipe_tgca to the crate there when it sets 10, so the content places it nowhere, and the fetch marks
+    # nothing. With the fetch out of reach, the default rule would also mark the way to 110, which needs Tusamircil
+    # dead. So the shop is marked until the player carries the recipe, and Tusamircil, who takes it, from then on.
+    - stages: 10
+      hide: [50, 110]
+      targets:
+        - { task: visit, cell: "Sadrith Mora, Anis Seloth: Alchemist", done: { carried: bk_dispelrecipe_tgca } }
+        - { task: talk, object: tusamircil, after: { carried: bk_dispelrecipe_tgca } }
+
+  TG_DartsJudgement:
+    # Journal 10 says Eindel at Llethri Manor has four Darts of Judgement, which lie in "Ald-ruhn, Llethri Guard
+    # Quarters". The way to 105, Aengoth's answer for keeping them, has no fetch in the analysis, so the default rule
+    # marks him before the player has the darts. The ways to 100 fetch the darts first, and Aengoth is marked once
+    # the player has them.
+    - stages: 10
+      next: 100
+
+  TG_Diamonds:
+    # Journal 10 names Nalcarya of White Haven's shop in Balmora as the place to get a diamond. Diamonds are placed 59
+    # times, so the fetch marks everyone who starts with one, about twenty holders across the map, from tombs to
+    # Tureynulal and Solstheim. The shop is marked until the player carries a diamond, and Habasi from then on.
+    - stages: 10
+      hide: 100
+      targets:
+        - task: visit
+          cell: "Balmora, Nalcarya of White Haven: Fine Alchemist"
+          done: { carried: ingred_diamond_01 }
+        - { task: talk, object: habasi, after: { carried: ingred_diamond_01 } }
+
+  TG_EbonyStaff:
+    # Journal 20 sends the player to Felen Maryon in Tel Branora, where the staff lies in "Tel Branora, Upper Tower:
+    # Therana's Chamber". The ways to 105 and 110, Big Helende's answers for keeping the staff or passing on the job,
+    # have no fetch in the analysis, so the default rule marks her at once. The way to 100 fetches the staff first,
+    # and she is marked once the player has it.
+    - stages: 20
+      next: 100
+
+  TG_Hostage:
+    # Journal 10 says to talk Hrundi round, or else find his Dunmer lover. Hrundi's answer in "join our cause" leads to
+    # 70. Falena Hlaren's line, and anyone's line in Fara's Hole in the Wall, lead to 60. The journal hasn't named
+    # Falena, so the way to 60 is left out. Stacey's line says to ask around town, so the cornerclub is a side step
+    # until the player learns who she is.
+    - stages: 10
+      hide: 60
+      targets:
+        - task: visit
+          cell: "Sadrith Mora, Fara's Hole in the Wall"
+          optional: true
+          done: { quest: TG_Hostage, atLeast: 60 }
+
+  TG_LootAldruhnMG:
+    # Journal 10 sends the player into the Guild of Mages in Ald'ruhn for Anareren's Devil Tanto. Aengoth's line adds
+    # devil_tanto_tgamg to the chest there when it sets 10, so the content places it nowhere, and the fetch marks
+    # nothing. Without this entry only Aengoth is marked. The guild is marked until the player carries the tanto, and
+    # Aengoth from then on.
+    - stages: 10
+      hide: 100
+      targets:
+        - { task: visit, cell: "Ald-ruhn, Guild of Mages", done: { carried: devil_tanto_tgamg } }
+        - { task: talk, object: aengoth, after: { carried: devil_tanto_tgamg } }
+
+  TG_ManorKey:
+    # Journal 50 says Sovor Trandel gave the player the key, so the next step is Habasi, whose answer leads to 100.
+    # Ondres Nerano's answer in "Sovor Trandel", which leads to 70, gives Sovor away, which the journal doesn't suggest.
+    - stages: 50
+      hide: 70
+
+  TG_OverduePayments:
+    # Journal 10 sends the player to Ra'Zhid at Fatleg's Drop Off in Hla Oad for a Dwemer tube, goblet and bowl. All
+    # three are in his chest there, com_chest_02_ra'zhid. Each is placed 20 to 40 times, so the fetches mark the
+    # holders instead, which include crates in Arkngthand and a chest in Tureynulal. Fatleg's Drop Off is marked until
+    # the player carries the tube, the rarest of the three, and Habasi from then on. No line sets 30, and at 50 Habasi
+    # sends the player back to Hla Oad.
+    - stages: 10-50
+      hide: 100
+      targets:
+        - { task: visit, cell: "Hla Oad, Fatleg's Drop Off", done: { carried: misc_dwrv_artifact60 } }
+        - { task: talk, object: habasi, after: { carried: misc_dwrv_artifact60 } }
+
+  TG_RedoranCookbook:
+    # Journal 10 asks the player to steal the book from Llethri Manor, where it is in Dinara Othrelas's chest.
+    # Dinara's answer that leads to 30 hands the book over, which the journal doesn't suggest. The book can go to Fara
+    # (50) or to Big Helende (100).
+    - stages: 10
+      hide: 30
+
+  TG_SS_ChurchPolice:
+    # Journal 10 says Berel Sala's goblet is in the Justice Offices in Vivec, and to give it to Danso Indules.
+    # misc_dwrv_goblet10_tgcp has one copy there and three in Druscashti, and the default rule also marks Danso at once
+    # through her refusal (60), which needs no goblet. The Justice Offices are marked until the player carries the
+    # goblet, and Danso from then on.
+    - stages: 10
+      hide: [50, 55, 60]
+      targets:
+        - { task: visit, cell: "Vivec, Justice Offices", done: { carried: misc_dwrv_goblet10_tgcp } }
+        - { task: talk, object: danso indules, after: { carried: misc_dwrv_goblet10_tgcp } }
+    # Journals 50 and 55 say Danso took the goblet, so the next step is Stacey's answer in "Dwemer goblet" (100). The
+    # other ways give her the goblet again, or refuse it.
+    - stages: [50, 55]
+      next: 100
+
+  TG_SS_Enamor:
+    # Journal 10 says to put Enamor and the note in Salyn Sarethi's chest in Ghostgate. Stacey's script staceyScript
+    # sets his local enamorInChest once de_p_chest_02salynsaret, placed in "Ghostgate, Tower of Dusk Lower Level",
+    # holds both, and his line to 100 needs it. Until then nothing is marked. The chest is marked while the player
+    # carries the blade, which Stacey gives at stage 10.
+    - stages: 10
+      targets:
+        - { task: visit, object: de_p_chest_02salynsaret, after: { carried: glass_dagger_enamor } }
+
+  TG_SS_Generosity1:
+    # Journal 1 says to wear the gloves and speak with Stacey again. His answer in "Hlervu Locket" leads to 10. The
+    # locket and Braynas Hlervu aren't mentioned yet.
+    - stages: 1
+      next: 10
+    # Journal 10 says to take the locket from Venim Manor to Braynas Hlervu. Handing it back to Bolvyn Venim (30) is
+    # not what the journal asks.
+    - stages: 10
+      next: [50, 55]
+    # Journal 30 says the player gave the locket back to Bolvyn Venim, who now carries it. The journal asks for
+    # nothing more, and the ways left would mark Braynas, or his death, without the locket.
+    - stages: 30
+      hide: [50, 55, 110]
+    # Journal 50 says Braynas accepted the locket, so the next step is Stacey's answer (100). The way to 55 would give
+    # it to him again.
+    - stages: 50
+      next: 100
+
+  TG_SS_Generosity2:
+    # Journal 10 says to take the forged deed from the Library of Vivec to Indrele Rathryon in Seyda Neen. Giving it
+    # to Velanda Omani (30) is not what the journal asks.
+    - stages: 10
+      next: [50, 55]
+    # Journal 30 says the player gave the deed back to Velanda Omani, who now has it. The journal asks for nothing
+    # more, and the ways left would mark Indrele without the deed.
+    - stages: 30
+      hide: [50, 55]
+    # Journal 50 says Indrele took the deed, so the next step is Stacey's answer in "forged land deed" (100).
+    - stages: 50
+      next: 100
+
+  TG_SS_GreedySlaver:
+    # Journal 5 only hints at a job about a slaver. Stacey's answer in "Brallion's Ring" leads to 10. Brallion and
+    # Ilmeni Dren aren't named yet.
+    - stages: 5
+      next: 10
+    # Journals 10 and 20 say to steal Brallion's ring, or that it was stolen, and to give it to Ilmeni Dren. The fetch
+    # marks Brallion, who carries the ring, until the player has it. His answer that sells the ring (30) is a way the
+    # journal doesn't suggest, and the default rule would mark him for it even after the theft. No line sets 20.
+    - stages: [10, 20]
+      next: [50, 55]
+    # Journal 50 says Ilmeni took the ring, so the next step is Stacey's answer (100). The way to 55 gives it again.
+    - stages: 50
+      next: 100
+
+  TG_SS_Plutocrats:
+    # Journal 10 asks for Odral Helvi's own copies, which are all in com_chest_02_helvi in "Caldera, Governor's Hall".
+    # Vala Catraso's answer that leads to 30 takes ordinary copies of the four volumes, placed 43 to 64 times each,
+    # which the journal doesn't ask for. Journal 30 says Vala took ordinary copies, and her answers that lead to 50
+    # still want Helvi's. Tribunal also places copies of volume 3, bk_briefhistoryempire3_oh, in two houses in
+    # Mournhold, and the fetch marks a placed copy before the chest that holds one, so the ways to 50 would send the
+    # player to Mournhold. So the ways to 30 and 50 are hidden. Helvi's chest is marked until the player carries all
+    # four volumes, and Vala from then on.
+    - stages: [10, 30]
+      hide: [30, 50]
+      targets:
+        - { task: fetch, object: bk_briefhistoryempire1_oh, done: { carried: bk_briefhistoryempire1_oh } }
+        - { task: fetch, object: bk_briefhistoryempire2_oh, done: { carried: bk_briefhistoryempire2_oh } }
+        - { task: fetch, object: bk_briefhistoryempire4_oh, done: { carried: bk_briefhistoryempire4_oh } }
+        - { task: visit, object: com_chest_02_helvi, done: { carried: bk_briefhistoryempire3_oh } }
+        - task: talk
+          object: vala catraso
+          after:
+            - { carried: bk_briefhistoryempire1_oh }
+            - { carried: bk_briefhistoryempire2_oh }
+            - { carried: bk_briefhistoryempire3_oh }
+            - { carried: bk_briefhistoryempire4_oh }
+          done: { quest: TG_SS_Plutocrats, atLeast: 50 }
+
+  TG_SS_Yngling:
+    # Journal 10 says to bring Yngling Half-Troll's ledger to Stacey. Giving it to Yngling (50) is not what the journal
+    # asks.
+    - stages: 10
+      next: 100
+    # Journal 50 says Yngling destroyed the ledger, so it can't be fetched. Stacey's answer in "corruption" leads to
+    # 110 when the player has no ledger.
+    - stages: 50
+      next: 110
+
+  TG_SadrithMoraDefenses:
+    # Journal 50 asks for four pieces of raw ebony, without naming a place. Raw ebony is placed 37 times, so the fetch
+    # marks its holders, which include dead wizards in Kogoruhn and in Endusal. The chest chest_small_02_Anis_Uni in
+    # Anis Seloth's shop in Sadrith Mora holds four pieces, the number Arielle asks for. The shop is marked until the
+    # player carries raw ebony, and Arielle from then on. The way to 110 needs her dead.
+    - stages: 50
+      hide: [70, 110]
+      targets:
+        - { task: visit, cell: "Sadrith Mora, Anis Seloth: Alchemist", done: { carried: ingred_raw_ebony_01 } }
+        - { task: talk, object: arielle phiencel, after: { carried: ingred_raw_ebony_01 } }
+
+  TG_VintageBrandy:
+    # Journal 10 asks for Ralen Hlaalo's bottle from Hlaalo Manor in Balmora. Habasi's line also puts one in the
+    # drawers there. The brandy has seven placed copies, so the fetch also marks places such as Saturan, Odirniran and
+    # Mournhold. Hlaalo Manor is marked until the player carries the brandy, and Habasi from then on.
+    - stages: 10
+      hide: 100
+      targets:
+        - { task: visit, cell: "Balmora, Hlaalo Manor", done: { carried: p_vintagecomberrybrandy1 } }
+        - { task: talk, object: habasi, after: { carried: p_vintagecomberrybrandy1 } }
+
+  TG_Withershins:
+    # Journal 10 says Miles Gloriosus at the tradehouse in Maar Gan has a copy of "Withershins". His copy is in his
+    # chest de_p_chest_02_miles in "Maar Gan, Andus Tradehouse". Three other copies are placed, in Alas Ancestral
+    # Tomb, the Ald-ruhn Guild of Mages and a shop in Sadrith Mora, so the fetch marks only those and not his. Neither
+    # the journal nor Aengoth mentions them, so the way to 100 is hidden. The tradehouse is marked until the player
+    # carries the book, and Aengoth from then on.
+    - stages: 10
+      hide: 100
+      targets:
+        - { task: visit, cell: "Maar Gan, Andus Tradehouse", done: { carried: bookskill_restoration1 } }
+        - { task: talk, object: aengoth, after: { carried: bookskill_restoration1 } }
+
+  MT_DB_Contact:
+    # Journal 10 sends the player to Miun-Gei at his enchanter's shop, to get a name to bring back to Eno Hlaalu.
+    # His line in the topic "Dark Brotherhood" has no conditions and leads to 50. The default rule also marks the
+    # note bk_miungei, which is in a drawer of his shop, because Eno Hlaalu's line that leads to 100 accepts the
+    # note. Journal 10 never mentions the note, and taking it is a theft the player hasn't been told about.
+    - stages: 10
+      next: 50
+    # Journal 50 says Miun-Gei named Tsrazami, and that the player should report her name to Eno Hlaalu. Eno's line
+    # that needs stage 50 or more leads to 100, but so does the way that fetches the note from Miun-Gei's drawer,
+    # which the player no longer needs. So every way to 100 is hidden, and Eno is a target until the quest ends.
+    # Tsrazami's answer in "Dark Brotherhood" leads to 70 and earns a better reward, so she is optional. The way to
+    # 60 needs Tsrazami dead and only sends the player back to Miun-Gei, so it is hidden too.
+    - stages: 50
+      hide: [60, 100]
+      optional: 70
+      targets:
+        - { task: talk, object: eno hlaalu, done: { quest: MT_DB_Contact, atLeast: 100 } }
+    # Journal 60 says Tsrazami is dead, and journal 70 says she agreed to meet Eno Hlaalu. Both say to report to Eno,
+    # whose lines lead to 100. The note in Miun-Gei's drawer is hidden for the same reason as at 50. At 60 the way to
+    # 70 needs a talk with Tsrazami, who is dead.
+    - stages: 60-70
+      hide: [70, 100]
+      targets:
+        - { task: talk, object: eno hlaalu, done: { quest: MT_DB_Contact, atLeast: 100 } }

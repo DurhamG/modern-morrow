@@ -1,0 +1,14 @@
+# The reviewed quest markers of FG_TenimBounty.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_TenimBounty
+stages:
+  - stage: 10
+    verdict: corrected  # The Ahemmusa Camp is marked instead of the hideout; Vos isn't, as the farmers' pointer sets no stage that could clear it
+    marked: ["cell:ahemmusa camp"]
+  - stage: 40
+    verdict: corrected  # The journal names the Ahemmusa Camp, which is marked instead of the hideout
+    marked: ["cell:ahemmusa camp"]
+  - stage: 60
+    verdict: right  # Rels Tenim in Shallit, then Hrundi
+    marked: ["hrundi", "rels tenim"]

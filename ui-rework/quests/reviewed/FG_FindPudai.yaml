@@ -1,0 +1,8 @@
+# The reviewed quest markers of FG_FindPudai.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_FindPudai
+stages:
+  - stage: 10
+    verdict: right  # The journal names the Pudai Egg Mine, where the seven eggs are placed, then Hrundi
+    marked: ["hrundi", "misc_uniq_egg_of_gold"]

@@ -1,0 +1,11 @@
+# The reviewed quest markers of FG_Egg_Poachers.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_Egg_Poachers
+stages:
+  - stage: 1
+    verdict: corrected  # The two poachers are the goal and Eydis's directions are optional
+    marked: ["daynila valas", "eydis fire-eye", "sevilo othan"]
+  - stage: 10
+    verdict: right  # The two poachers, then Eydis
+    marked: ["daynila valas", "eydis fire-eye", "sevilo othan"]

@@ -1,0 +1,11 @@
+# The reviewed quest markers of MG_KillNecro2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_KillNecro2
+stages:
+  - stage: 10
+    verdict: corrected  # marks Tashpi in Maar Gan, without Ranis's answer to a lie; Ranis is marked once Tashpi is dead
+    marked: ["tashpi ashibael"]
+  - stage: 50
+    verdict: right  # marks Ranis to report to
+    marked: ["ranis athrys"]

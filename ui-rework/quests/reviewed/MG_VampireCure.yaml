@@ -1,0 +1,9 @@
+# The reviewed quest markers of MG_VampireCure.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_VampireCure
+stages:
+  - stage: 10
+    verdict: corrected  # the booksellers Jobasha and Simine Fralinie, who know where a copy is, are hollow side steps; Skink once the player has the papers
+    marked: ["skinkintreesshade"]
+    optional: ["jobasha", "simine fralinie"]

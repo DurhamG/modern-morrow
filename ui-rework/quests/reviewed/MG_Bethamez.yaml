@@ -1,0 +1,8 @@
+# The reviewed quest markers of MG_Bethamez.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Bethamez
+stages:
+  - stage: 10
+    verdict: corrected  # marks the Bethamez ruin until the player has the plans, then Edwinna; the copies in Tel Vos and Mournhold are left out
+    marked: ["cell:gnisis, bethamez", "edwinna elbert"]

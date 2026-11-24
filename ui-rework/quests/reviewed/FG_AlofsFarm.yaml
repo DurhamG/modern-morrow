@@ -1,0 +1,17 @@
+# The reviewed quest markers of FG_AlofsFarm.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_AlofsFarm
+stages:
+  - stage: 10
+    verdict: corrected  # Only Alof is marked, since the journal hasn't named the Orc leader yet
+    marked: ["alof the easterner"]
+  - stage: 15
+    verdict: right  # Alof is dead, so his ways drop out and the Orc leader in the nearby ruin is marked, then Eydis
+    marked: ["alof the easterner", "burub gra-bamog", "eydis fire-eye"]
+  - stage: 30
+    verdict: right  # The leader Alof named is marked, then Alof or Eydis to report
+    marked: ["alof the easterner", "burub gra-bamog", "eydis fire-eye"]
+  - stage: 50
+    verdict: right  # Eydis is marked for the pay
+    marked: ["burub gra-bamog", "eydis fire-eye"]

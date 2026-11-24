@@ -1,0 +1,14 @@
+# The reviewed quest markers of FG_KhajiitBounty.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_KhajiitBounty
+stages:
+  - stage: 10
+    verdict: corrected  # Dro'Sakhar in St. Olms is marked without Persius, whom the journal doesn't mention
+    marked: ["dro'sakhar", "lorbumol gro-aglakh"]
+  - stage: 30
+    verdict: corrected  # Same as 10, the house the journal names is where he is
+    marked: ["dro'sakhar", "lorbumol gro-aglakh"]
+  - stage: 60
+    verdict: right  # Dro'Sakhar, then Lorbumol
+    marked: ["dro'sakhar", "lorbumol gro-aglakh"]

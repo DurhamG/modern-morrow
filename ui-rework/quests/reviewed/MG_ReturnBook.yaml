@@ -1,0 +1,11 @@
+# The reviewed quest markers of MG_ReturnBook.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_ReturnBook
+stages:
+  - stage: 10
+    verdict: corrected  # marks Sirilonwe until the book is back in its chest, then only Edwinna
+    marked: ["edwinna elbert"]
+  - stage: 30
+    verdict: right  # marks Edwinna to report to
+    marked: ["edwinna elbert"]

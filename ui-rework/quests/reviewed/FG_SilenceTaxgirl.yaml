@@ -1,0 +1,11 @@
+# The reviewed quest markers of FG_SilenceTaxgirl.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_SilenceTaxgirl
+stages:
+  - stage: 10
+    verdict: corrected  # The kill and Lorbumol, without Persius whom the journal doesn't mention
+    marked: ["adraria vandacia", "lorbumol gro-aglakh"]
+  - stage: 50
+    verdict: right  # The kill and Lorbumol, while sparing her needs no marker
+    marked: ["adraria vandacia", "lorbumol gro-aglakh"]

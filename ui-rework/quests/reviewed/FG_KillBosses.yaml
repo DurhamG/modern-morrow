@@ -1,0 +1,8 @@
+# The reviewed quest markers of FG_KillBosses.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_KillBosses
+stages:
+  - stage: 10
+    verdict: right  # The three bosses, then Sjoring
+    marked: ["aengoth", "big helende", "habasi", "sjoring hard-heart"]

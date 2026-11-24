@@ -1,0 +1,14 @@
+# The reviewed quest markers of TG_RedoranCookbook.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_RedoranCookbook
+stages:
+  - stage: 10
+    verdict: corrected  # The book in Llethri Manor is marked, then Fara or Big Helende, and Dinara handing it over is left out.
+    marked: ["big helende", "bk_redorancookingsecrets", "fara"]
+  - stage: 30
+    verdict: right  # The player has the book, so Fara and Big Helende are marked.
+    marked: ["big helende", "bk_redorancookingsecrets", "fara"]
+  - stage: 50
+    verdict: right  # Big Helende is marked. The book fetch has nothing left to mark while playing.
+    marked: ["big helende", "bk_redorancookingsecrets"]

@@ -1,0 +1,11 @@
+# The reviewed quest markers of MG_Dwarves.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Dwarves
+stages:
+  - stage: 10
+    verdict: unfixable  # the journal gives no lead; the books and translators would give the whole search away, so nothing is marked
+    marked: []
+  - stage: 70
+    verdict: right  # marks Trebonius to report the translated books to
+    marked: ["trebonius artorius"]

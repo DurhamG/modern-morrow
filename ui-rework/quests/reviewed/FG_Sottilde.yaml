@@ -1,0 +1,14 @@
+# The reviewed quest markers of FG_Sottilde.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_Sottilde
+stages:
+  - stage: 10
+    verdict: right  # Sottilde, who has the book, then Eydis
+    marked: ["bk_sottildescodebook", "eydis fire-eye", "sottilde"]
+  - stage: 30
+    verdict: right  # Sottilde, who has the book, then Eydis
+    marked: ["bk_sottildescodebook", "eydis fire-eye", "sottilde"]
+  - stage: 50
+    verdict: right  # Eydis is marked to hand over the book
+    marked: ["bk_sottildescodebook", "eydis fire-eye"]

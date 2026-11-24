@@ -1,0 +1,14 @@
+# The reviewed quest markers of MG_VampVol2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_VampVol2
+stages:
+  - stage: 10
+    verdict: right  # marks Jobasha, the rare bookseller who stocks the book, then Skink
+    marked: ["bk_vampiresofvvardenfell2", "skinkintreesshade"]
+  - stage: 30
+    verdict: right  # marks Jobasha, whom the journal names, then Skink
+    marked: ["bk_vampiresofvvardenfell2", "skinkintreesshade"]
+  - stage: 50
+    verdict: right  # marks Jobasha, who stocks the book, then Skink
+    marked: ["bk_vampiresofvvardenfell2", "skinkintreesshade"]

@@ -1,0 +1,14 @@
+# The reviewed quest markers of TG_BrotherBragor.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_BrotherBragor
+stages:
+  - stage: 10
+    verdict: corrected  # Mebestien Ence's shop is marked until the player has the Dwemer artifact, then Shadbak.
+    marked: ["cell:pelagiad, mebestien ence: trader", "shadbak gra-burbug"]
+  - stage: 50
+    verdict: corrected  # Habasi is marked, and New-Shoes Bragor's gift of his shoes is left out.
+    marked: ["habasi"]
+  - stage: 70
+    verdict: right  # Habasi is marked for the report.
+    marked: ["habasi"]

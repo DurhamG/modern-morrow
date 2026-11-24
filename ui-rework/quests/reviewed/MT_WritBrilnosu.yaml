@@ -1,0 +1,14 @@
+# The reviewed quest markers of MT_WritBrilnosu.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_WritBrilnosu
+stages:
+  - stage: 10
+    verdict: right  # the writ's target, Brilnosu Llarys in Hlormaren, is marked to kill
+    marked: ["brilnosu llarys"]
+  - stage: 80
+    verdict: right  # the target is dead, so the kill marks nothing and the nearest Morag Tong master is marked to report to
+    marked: ["brilnosu llarys", "faction:morag tong"]
+  - stage: 90
+    verdict: right  # the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong"]

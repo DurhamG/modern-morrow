@@ -1,0 +1,17 @@
+# The reviewed quest markers of MG_EscortScholar2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_EscortScholar2
+stages:
+  - stage: 10
+    verdict: right  # marks Itermerel, who is both the escort and the holder of the notes; Ranis only once the player has the notes
+    marked: ["bk_itermerelsnotes", "itermerel", "ranis athrys"]
+  - stage: 50
+    verdict: right  # marks the Halfway Tavern in Pelagiad for the escort, and Ranis only once the player has the notes
+    marked: ["bk_itermerelsnotes", "cell:pelagiad, halfway tavern", "itermerel", "ranis athrys"]
+  - stage: 70
+    verdict: right  # marks Itermerel, who gives his notes, and Ranis once the player has them
+    marked: ["bk_itermerelsnotes", "itermerel", "ranis athrys"]
+  - stage: 80
+    verdict: right  # marks Ranis to deliver the notes to
+    marked: ["bk_itermerelsnotes", "ranis athrys"]

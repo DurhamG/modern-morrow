@@ -1,0 +1,17 @@
+# The reviewed quest markers of TG_ManorKey.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_ManorKey
+stages:
+  - stage: 10
+    verdict: right  # Sovor Trandel is marked, and so are he and Ondres Nerano as the holders of the key, then Habasi.
+    marked: ["habasi", "key_neranomanor", "sovor trandel"]
+  - stage: 30
+    verdict: right  # Sovor Trandel is marked for the bribe, and the key holders, then Habasi.
+    marked: ["habasi", "key_neranomanor", "sovor trandel"]
+  - stage: 50
+    verdict: corrected  # Habasi is marked, and telling Ondres Nerano on Sovor is left out.
+    marked: ["habasi", "key_neranomanor"]
+  - stage: 70
+    verdict: right  # Ondres Nerano took the key back, so he is marked as its holder, then Habasi.
+    marked: ["habasi", "key_neranomanor"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of TG_LootAldruhnMG.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_LootAldruhnMG
+stages:
+  - stage: 10
+    verdict: corrected  # The Ald'ruhn Guild of Mages is marked until the player has the tanto, then Aengoth.
+    marked: ["aengoth", "cell:ald-ruhn, guild of mages"]

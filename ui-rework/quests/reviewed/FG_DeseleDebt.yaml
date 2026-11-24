@@ -1,0 +1,14 @@
+# The reviewed quest markers of FG_DeseleDebt.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_DeseleDebt
+stages:
+  - stage: 10
+    verdict: corrected  # Only Desele is marked, since the journal doesn't mention Persius and Eydis's choice needs stage 30
+    marked: ["helviane desele"]
+  - stage: 30
+    verdict: right  # Desele, and Eydis for the choice to pay the debt yourself
+    marked: ["eydis fire-eye", "helviane desele"]
+  - stage: 70
+    verdict: right  # Eydis is marked to hand over the money
+    marked: ["eydis fire-eye"]

@@ -1,0 +1,11 @@
+# The reviewed quest markers of MG_Potion.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Potion
+stages:
+  - stage: 10
+    verdict: corrected  # marks Skink, without the placed potions in shrines and ruins
+    marked: ["skinkintreesshade"]
+  - stage: 50
+    verdict: right  # marks Edwinna to deliver the potion to
+    marked: ["edwinna elbert", "p_detect_creatures_s"]

@@ -1,0 +1,11 @@
+# The reviewed quest markers of FG_ElithPalSupply.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_ElithPalSupply
+stages:
+  - stage: 10
+    verdict: right  # Only Dangor is marked, as the only way at this stage is the delivery to him
+    marked: ["dangor", "potion_cyro_whiskey_01"]
+  - stage: 50
+    verdict: right  # Persius Mercius is marked for the pay
+    marked: ["persius mercius"]

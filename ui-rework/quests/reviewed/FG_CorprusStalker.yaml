@@ -1,0 +1,14 @@
+# The reviewed quest markers of FG_CorprusStalker.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_CorprusStalker
+stages:
+  - stage: 1
+    verdict: corrected  # The stalker and Berwen are marked rather than Hrundi, whom the journal doesn't mention
+    marked: ["berwen", "corprus_stalker_fgcs"]
+  - stage: 10
+    verdict: right  # Berwen and the stalker in her shop, then Hrundi
+    marked: ["berwen", "corprus_stalker_fgcs", "hrundi"]
+  - stage: 30
+    verdict: right  # The stalker, then Berwen or Hrundi to report
+    marked: ["berwen", "corprus_stalker_fgcs", "hrundi"]

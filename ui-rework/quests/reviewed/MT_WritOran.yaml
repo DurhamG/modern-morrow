@@ -1,0 +1,14 @@
+# The reviewed quest markers of MT_WritOran.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_WritOran
+stages:
+  - stage: 10
+    verdict: right  # Feruren Oran is marked to kill in the Elven Nations Cornerclub, then Eno Hlaalu to report to
+    marked: ["eno hlaalu", "feruren oran"]
+  - stage: 80
+    verdict: right  # Feruren Oran is dead, so Eno Hlaalu is marked to report to
+    marked: ["eno hlaalu", "feruren oran"]
+  - stage: 90
+    verdict: right  # Feruren Oran is dead, so Eno Hlaalu is marked to report to
+    marked: ["eno hlaalu", "feruren oran"]

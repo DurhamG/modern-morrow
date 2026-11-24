@@ -1,0 +1,8 @@
+# The reviewed quest markers of MG_Sharn_Necro.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Sharn_Necro
+stages:
+  - stage: 1
+    verdict: corrected  # nothing is marked until the player holds Sharn's book, which the journal hasn't named, then Sharn
+    marked: ["sharn gra-muzgob"]

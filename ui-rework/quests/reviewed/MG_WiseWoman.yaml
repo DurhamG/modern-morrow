@@ -1,0 +1,32 @@
+# The reviewed quest markers of MG_WiseWoman.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_WiseWoman
+stages:
+  - stage: 10
+    verdict: corrected  # marks Sinnammu Mirpal of the Ahemmusa, as Skink advised, without the wise women who refuse
+    marked: ["sinnammu mirpal"]
+  - stage: 25
+    verdict: corrected  # marks Sinnammu Mirpal, without Manirai, who also refuses
+    marked: ["sinnammu mirpal"]
+  - stage: 26
+    verdict: corrected  # marks Sinnammu Mirpal, without Sonummu Zabamat, whose way ends in a refusal
+    marked: ["sinnammu mirpal"]
+  - stage: 27
+    verdict: corrected  # marks Kaushad, whom the journal names, and Sinnammu Mirpal, without the tomb the journal hasn't named
+    marked: ["kaushad", "sinnammu mirpal"]
+  - stage: 28
+    verdict: corrected  # marks Sinnammu Mirpal after Kaushad refused, without the tomb the journal hasn't named
+    marked: ["sinnammu mirpal"]
+  - stage: 30
+    verdict: corrected  # marks Minabibi in the Favel Ancestral Tomb, without going back to Sinnammu early
+    marked: ["minabibi assardarainat"]
+  - stage: 40
+    verdict: right  # marks the ghost in the tomb, then Minabibi, as the only way at this stage
+    marked: ["ancestor_mg_wisewoman", "minabibi assardarainat"]
+  - stage: 70
+    verdict: right  # marks Sinnammu Mirpal to arrange the meeting
+    marked: ["sinnammu mirpal"]
+  - stage: 80
+    verdict: right  # marks Skink to report to
+    marked: ["skinkintreesshade"]

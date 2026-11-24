@@ -353,3 +353,10 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   kill named as next is marked, loading a game tracks every quest of the newest quest's name, and the sheets show who
   carries an item. Two steps can't be marked yet: the last step of the Hlaalu and Telvanni Hortator chapters, which
   need conditions on several quests at once or on a global variable.
+- The guilds are reviewed, the second batch: the Fighters Guild, Mages Guild, Thieves Guild and Morag Tong, 332 stages
+  in 146 quests. 217 were right without a correction, 112 have one, and 3 can't be marked well, such as gathering
+  ingredients across a whole region. Second reviewers checked 279 stages and disagreed at 8. Engine changes that came
+  out of it: a conversation's answers now get the conditions and speaker of the lines that offer the choice, which
+  made six corrections unnecessary; targets can wait for several conditions at once, a global variable, or several of
+  an item; and a quest's warning about a changed fingerprint gives the new one. With these, the last steps of the
+  Hlaalu and Telvanni Hortator chapters could be marked, but they still need entries.

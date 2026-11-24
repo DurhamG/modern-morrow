@@ -1,0 +1,23 @@
+# The reviewed quest markers of MG_Excavation.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Excavation
+stages:
+  - stage: 1
+    verdict: corrected  # marks Senilias in Nchuleftingth, to whom the letter is addressed, without the report or Edwinna
+    marked: ["senilias cadiusus"]
+  - stage: 10
+    verdict: corrected  # marks Senilias, without the report or Edwinna
+    marked: ["senilias cadiusus"]
+  - stage: 20
+    verdict: corrected  # marks Senilias, who explains about the missing guide
+    marked: ["senilias cadiusus"]
+  - stage: 30
+    verdict: corrected  # marks the report on Anes Vendu's body in the lower levels, then Senilias, who asked
+    marked: ["bk_seniliasreport", "senilias cadiusus"]
+  - stage: 40
+    verdict: corrected  # marks the report on the body, then Senilias rather than Edwinna
+    marked: ["bk_seniliasreport", "senilias cadiusus"]
+  - stage: 50
+    verdict: right  # marks Edwinna to deliver the report to
+    marked: ["bk_seniliasreport", "edwinna elbert"]

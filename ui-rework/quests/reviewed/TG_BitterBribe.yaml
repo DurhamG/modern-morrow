@@ -1,0 +1,17 @@
+# The reviewed quest markers of TG_BitterBribe.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_BitterBribe
+stages:
+  - stage: 10
+    verdict: right  # The cup in Ald Redaynia is marked, and Eydis Fire-Eye once the player has it.
+    marked: ["artifact_bittercup_01", "eydis fire-eye"]
+  - stage: 25
+    verdict: corrected  # The cup was drunk and is gone, so only Stacey is marked.
+    marked: ["stacey"]
+  - stage: 30
+    verdict: corrected  # The cup was drunk and is gone, so only Stacey is marked.
+    marked: ["stacey"]
+  - stage: 50
+    verdict: right  # Stacey is marked for the report.
+    marked: ["stacey"]

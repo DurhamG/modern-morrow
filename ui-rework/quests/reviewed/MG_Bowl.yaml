@@ -1,0 +1,8 @@
+# The reviewed quest markers of MG_Bowl.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Bowl
+stages:
+  - stage: 10
+    verdict: right  # marks Ra'Virr, who sells the bowl, then Ajira once the player has one
+    marked: ["ajira", "misc_de_bowl_orange_green_01"]

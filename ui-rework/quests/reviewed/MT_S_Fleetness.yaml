@@ -1,0 +1,11 @@
+# The reviewed quest markers of MT_S_Fleetness.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_S_Fleetness
+stages:
+  - stage: 10
+    verdict: right  # Hrordis, who carries the belt, is marked at the Halfway Tavern in Pelagiad, then Eno Hlaalu once the player has it
+    marked: ["eno hlaalu", "sanguinebeltfleetness"]
+  - stage: 100
+    verdict: right  # the belt has been handed back to Eno Hlaalu, and nothing is left to do
+    marked: []

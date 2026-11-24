@@ -1,0 +1,8 @@
+# The reviewed quest markers of MG_SoulGem2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_SoulGem2
+stages:
+  - stage: 10
+    verdict: corrected  # marks the two ash ghouls in Yakin, and Skink once the soul is caught
+    marked: ["ash_ghoul", "skinkintreesshade"]

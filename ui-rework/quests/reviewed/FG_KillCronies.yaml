@@ -1,0 +1,11 @@
+# The reviewed quest markers of FG_KillCronies.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_KillCronies
+stages:
+  - stage: 10
+    verdict: corrected  # Eydis, then Persius, without Lorbumol whom the journal hasn't named
+    marked: ["eydis fire-eye", "persius mercius"]
+  - stage: 15
+    verdict: right  # Both supporters must die for the reward, then Persius
+    marked: ["eydis fire-eye", "lorbumol gro-aglakh", "persius mercius"]

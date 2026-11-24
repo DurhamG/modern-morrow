@@ -1,0 +1,17 @@
+# The reviewed quest markers of TG_EnemyParley.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_EnemyParley
+stages:
+  - stage: 10
+    verdict: right  # Percius Mercius is marked, as the journal asks.
+    marked: ["persius mercius"]
+  - stage: 50
+    verdict: right  # Percius Mercius has more to tell, so he stays marked.
+    marked: ["persius mercius"]
+  - stage: 60
+    verdict: right  # Percius Mercius has more to tell, so he stays marked.
+    marked: ["persius mercius"]
+  - stage: 70
+    verdict: right  # Stacey is marked for the report.
+    marked: ["stacey"]

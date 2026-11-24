@@ -1,0 +1,14 @@
+# The reviewed quest markers of FG_TongueToad.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_TongueToad
+stages:
+  - stage: 10
+    verdict: right  # Tongue-Toad, to kill or to talk round
+    marked: ["tongue_toad"]
+  - stage: 50
+    verdict: right  # Tongue-Toad, to convince him to leave
+    marked: ["tongue_toad"]
+  - stage: 70
+    verdict: right  # Lorbumol is marked for the report
+    marked: ["lorbumol gro-aglakh"]

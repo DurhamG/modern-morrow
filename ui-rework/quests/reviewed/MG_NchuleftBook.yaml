@@ -1,0 +1,14 @@
+# The reviewed quest markers of MG_NchuleftBook.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_NchuleftBook
+stages:
+  - stage: 10
+    verdict: right  # marks the two booksellers who stock the book, then Edwinna once the player has it
+    marked: ["bk_chroniclesnchuleft", "edwinna elbert"]
+  - stage: 20
+    verdict: right  # marks the booksellers, one of them Jobasha in Vivec, then Edwinna
+    marked: ["bk_chroniclesnchuleft", "edwinna elbert"]
+  - stage: 30
+    verdict: right  # marks Jobasha among the booksellers, then Edwinna
+    marked: ["bk_chroniclesnchuleft", "edwinna elbert"]

@@ -1,0 +1,18 @@
+# The reviewed quest markers of MT_DB_Contact.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_DB_Contact
+stages:
+  - stage: 10
+    verdict: corrected  # only Miun-Gei is marked; the note in his drawer that the journal never mentions is left out
+    marked: ["miun_gei"]
+  - stage: 50
+    verdict: corrected  # Eno Hlaalu is marked to report Tsrazami's name, Tsrazami is optional for the better reward, and the note is left out
+    marked: ["eno hlaalu"]
+    optional: ["tsrazami"]
+  - stage: 60
+    verdict: corrected  # Tsrazami is dead, so only Eno Hlaalu is marked to report to
+    marked: ["eno hlaalu"]
+  - stage: 70
+    verdict: corrected  # Tsrazami agreed to meet, so only Eno Hlaalu is marked to report to; the note is left out
+    marked: ["eno hlaalu"]

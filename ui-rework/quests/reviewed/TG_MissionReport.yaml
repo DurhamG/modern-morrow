@@ -1,0 +1,8 @@
+# The reviewed quest markers of TG_MissionReport.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_MissionReport
+stages:
+  - stage: 10
+    verdict: right  # Nothing starts this quest or moves it on, so there is nothing to mark.
+    marked: []

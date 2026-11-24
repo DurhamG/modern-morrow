@@ -1,0 +1,18 @@
+# The reviewed quest markers of TG_BalmoraDefenses.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_BalmoraDefenses
+stages:
+  - stage: 5
+    verdict: corrected  # Only Habasi is marked, because the journal hasn't named the master of security yet.
+    marked: ["habasi"]
+  - stage: 10
+    verdict: corrected  # Asking around Balmora is a side step, and Hecerinde is left out until the journal names him.
+    marked: []
+    optional: ["cell:balmora"]
+  - stage: 20
+    verdict: corrected  # All six Altmer the journal lists are marked, not only the right one.
+    marked: ["culumaire", "estirdalin", "hecerinde", "imare", "nalcarya of white haven", "tyermaillin"]
+  - stage: 50
+    verdict: right  # Habasi is marked for the report.
+    marked: ["habasi"]

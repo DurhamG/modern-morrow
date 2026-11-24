@@ -1,0 +1,14 @@
+# The reviewed quest markers of MG_Guildmaster.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Guildmaster
+stages:
+  - stage: 10
+    verdict: corrected  # marks Trebonius, without Skink's letter, which is another start of the quest
+    marked: ["trebonius artorius"]
+  - stage: 20
+    verdict: right  # marks Trebonius to deliver the letter to
+    marked: ["trebonius artorius"]
+  - stage: 50
+    verdict: corrected  # marks the Arena Pit, where the duel script brings Trebonius; killing him elsewhere does nothing
+    marked: ["cell:vivec, arena pit"]

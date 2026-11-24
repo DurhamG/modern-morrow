@@ -1,0 +1,8 @@
+# The reviewed quest markers of MG_StealBook.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_StealBook
+stages:
+  - stage: 10
+    verdict: right  # marks the chest in the Vivec guild that holds the book, then Edwinna
+    marked: ["bookskill_heavy armor3", "edwinna elbert"]

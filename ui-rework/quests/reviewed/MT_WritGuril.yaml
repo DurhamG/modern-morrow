@@ -1,0 +1,14 @@
+# The reviewed quest markers of MT_WritGuril.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_WritGuril
+stages:
+  - stage: 10
+    verdict: right  # the writ's target, Guril Retheran in the Flowers of Gold, is marked to kill
+    marked: ["guril retheran"]
+  - stage: 80
+    verdict: right  # the target is dead, so the kill marks nothing and the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong", "guril retheran"]
+  - stage: 90
+    verdict: right  # the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong"]

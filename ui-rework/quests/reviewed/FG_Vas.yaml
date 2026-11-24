@@ -1,0 +1,20 @@
+# The reviewed quest markers of FG_Vas.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_Vas
+stages:
+  - stage: 10
+    verdict: corrected  # Only Ulyne Henim is marked, since the journal hasn't named the Necromancer
+    marked: ["ulyne henim"]
+  - stage: 50
+    verdict: right  # Daris Adram, then Ulyne
+    marked: ["daris adram", "ulyne henim"]
+  - stage: 70
+    verdict: right  # Ulyne nearby for her thanks and Persius for the pay
+    marked: ["daris adram", "persius mercius", "ulyne henim"]
+  - stage: 80
+    verdict: right  # Persius is marked for the pay
+    marked: ["persius mercius"]
+  - stage: 85
+    verdict: right  # Persius is marked for the pay
+    marked: ["persius mercius"]

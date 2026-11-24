@@ -1,0 +1,11 @@
+# The reviewed quest markers of MG_KillNecro1.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_KillNecro1
+stages:
+  - stage: 10
+    verdict: right  # marks Telura Ulver to kill, then Skink
+    marked: ["skinkintreesshade", "telura ulver"]
+  - stage: 50
+    verdict: right  # marks Skink to report to
+    marked: ["skinkintreesshade", "telura ulver"]

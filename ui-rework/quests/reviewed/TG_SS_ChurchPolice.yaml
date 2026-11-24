@@ -1,0 +1,17 @@
+# The reviewed quest markers of TG_SS_ChurchPolice.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_SS_ChurchPolice
+stages:
+  - stage: 10
+    verdict: corrected  # The Justice Offices are marked until the player has the goblet, then Danso Indules.
+    marked: ["cell:vivec, justice offices", "danso indules"]
+  - stage: 50
+    verdict: corrected  # Danso has the goblet, so only Stacey is marked.
+    marked: ["stacey"]
+  - stage: 55
+    verdict: corrected  # Danso has the goblet, so only Stacey is marked.
+    marked: ["stacey"]
+  - stage: 60
+    verdict: right  # Stacey is marked for the report.
+    marked: ["stacey"]

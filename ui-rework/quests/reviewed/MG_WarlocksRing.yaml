@@ -1,0 +1,8 @@
+# The reviewed quest markers of MG_WarlocksRing.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_WarlocksRing
+stages:
+  - stage: 10
+    verdict: right  # marks Vindamea Drethan in Ashirbadon, who carries the ring, then Ajira
+    marked: ["ajira", "ring_warlock_unique"]

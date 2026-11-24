@@ -1,0 +1,8 @@
+# The reviewed quest markers of TG_Withershins.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_Withershins
+stages:
+  - stage: 10
+    verdict: corrected  # Miles Gloriosus's tradehouse in Maar Gan is marked, then Aengoth, without the other placed copies.
+    marked: ["aengoth", "cell:maar gan, andus tradehouse"]

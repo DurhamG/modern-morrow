@@ -1,0 +1,11 @@
+# The reviewed quest markers of TG_VintageBrandy.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_VintageBrandy
+stages:
+  - stage: 5
+    verdict: right  # Only Habasi is marked, as hers is the only way at this stage.
+    marked: ["habasi"]
+  - stage: 10
+    verdict: corrected  # Hlaalo Manor is marked until the player has the brandy, then Habasi, instead of every bottle in the game.
+    marked: ["cell:balmora, hlaalo manor", "habasi"]

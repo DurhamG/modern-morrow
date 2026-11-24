@@ -1,0 +1,11 @@
+# The reviewed quest markers of TG_EbonyStaff.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_EbonyStaff
+stages:
+  - stage: 10
+    verdict: right  # Nothing is marked; the line that sets 10 offers the choice, and the conversation can't be left until it is answered
+    marked: ["big helende"]
+  - stage: 20
+    verdict: corrected  # The staff in Therana's tower is marked first, and Big Helende only once the player has it.
+    marked: ["big helende", "ebony staff caper"]

@@ -1,0 +1,20 @@
+# The reviewed quest markers of TG_SS_Generosity1.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_SS_Generosity1
+stages:
+  - stage: 1
+    verdict: corrected  # Only Stacey is marked, as the journal says to speak with him again.
+    marked: ["stacey"]
+  - stage: 10
+    verdict: corrected  # The locket in Venim Manor and Braynas Hlervu are marked, and giving it back to Bolvyn Venim is left out.
+    marked: ["braynas hlervu", "exquisite_amulet_hlervu1"]
+  - stage: 30
+    verdict: corrected  # Nothing is marked, because Bolvyn Venim has the locket and the journal asks for nothing more.
+    marked: []
+  - stage: 50
+    verdict: corrected  # Braynas has the locket, so only Stacey is marked.
+    marked: ["stacey"]
+  - stage: 55
+    verdict: right  # Stacey is marked for the report.
+    marked: ["stacey"]

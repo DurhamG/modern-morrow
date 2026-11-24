@@ -1,0 +1,21 @@
+# The reviewed quest markers of FG_Telasero.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_Telasero
+stages:
+  - stage: 10
+    verdict: right  # Sondaale in Telasero
+    marked: ["sondaale of shimmerene"]
+  - stage: 30
+    verdict: right  # Sondaale is marked to agree to the escort
+    marked: ["sondaale of shimmerene"]
+  - stage: 50
+    verdict: corrected  # The way out of Telasero is marked through its exterior cell, instead of Sondaale who follows the player
+    marked: ["cell:telasero"]
+  - stage: 70
+    verdict: corrected  # Hrundi is the goal and Sondaale's thanks is optional
+    marked: ["hrundi"]
+    optional: ["sondaale of shimmerene"]
+  - stage: 75
+    verdict: right  # Hrundi is marked for the pay
+    marked: ["hrundi"]

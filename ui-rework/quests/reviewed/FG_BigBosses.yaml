@@ -1,0 +1,8 @@
+# The reviewed quest markers of FG_BigBosses.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_BigBosses
+stages:
+  - stage: 10
+    verdict: corrected  # Only the kill of Stacey is marked, since Sjoring's Master Thief choice needs a Thieves Guild rank the journal never mentions
+    marked: ["sjoring hard-heart", "stacey"]

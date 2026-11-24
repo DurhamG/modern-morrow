@@ -1,0 +1,8 @@
+# The reviewed quest markers of MT_DB_Assernerairan.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_DB_Assernerairan
+stages:
+  - stage: 10
+    verdict: right  # Durus Marius is marked to kill in Assernerairan, then Eno Hlaalu to report back
+    marked: ["durus marius", "eno hlaalu"]

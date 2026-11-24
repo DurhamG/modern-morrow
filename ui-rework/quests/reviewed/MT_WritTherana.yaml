@@ -1,0 +1,14 @@
+# The reviewed quest markers of MT_WritTherana.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_WritTherana
+stages:
+  - stage: 10
+    verdict: right  # the writ's target, Therana in her chamber in Tel Branora, is marked to kill
+    marked: ["therana"]
+  - stage: 80
+    verdict: right  # the target is dead, so the kill marks nothing and the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong", "therana"]
+  - stage: 90
+    verdict: right  # the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong"]

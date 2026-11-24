@@ -1,0 +1,8 @@
+# The reviewed quest markers of TG_Diamonds.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_Diamonds
+stages:
+  - stage: 10
+    verdict: corrected  # Nalcarya's shop is marked until the player has a diamond, then Habasi, instead of every diamond holder.
+    marked: ["cell:balmora, nalcarya of white haven: fine alchemist", "habasi"]

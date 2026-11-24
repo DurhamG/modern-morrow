@@ -1,0 +1,17 @@
+# The reviewed quest markers of TG_SS_Generosity2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_SS_Generosity2
+stages:
+  - stage: 10
+    verdict: corrected  # The deed in the Library of Vivec and Indrele Rathryon are marked, and giving it to Velanda Omani is left out.
+    marked: ["bk_indreledeed", "indrele rathryon"]
+  - stage: 30
+    verdict: corrected  # Nothing is marked, because Velanda Omani has the deed and the journal asks for nothing more.
+    marked: []
+  - stage: 50
+    verdict: corrected  # Indrele has the deed, so only Stacey is marked.
+    marked: ["stacey"]
+  - stage: 55
+    verdict: right  # Stacey is marked for the report.
+    marked: ["stacey"]

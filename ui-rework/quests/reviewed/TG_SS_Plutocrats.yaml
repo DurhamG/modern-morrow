@@ -1,0 +1,14 @@
+# The reviewed quest markers of TG_SS_Plutocrats.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_SS_Plutocrats
+stages:
+  - stage: 10
+    verdict: corrected  # Odral Helvi's chest in Caldera is marked, then Vala Catraso, without the ordinary copies or the Mournhold copies of volume 3.
+    marked: ["bk_briefhistoryempire1_oh", "bk_briefhistoryempire2_oh", "bk_briefhistoryempire4_oh", "com_chest_02_helvi", "vala catraso"]
+  - stage: 30
+    verdict: corrected  # Vala still wants Helvi's copies, so his chest and then Vala are marked, without the Mournhold copies of volume 3.
+    marked: ["bk_briefhistoryempire1_oh", "bk_briefhistoryempire2_oh", "bk_briefhistoryempire4_oh", "com_chest_02_helvi", "vala catraso"]
+  - stage: 50
+    verdict: right  # Stacey is marked for the report.
+    marked: ["stacey"]

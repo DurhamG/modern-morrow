@@ -1,0 +1,8 @@
+# The reviewed quest markers of TG_KillHardHeart.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_KillHardHeart
+stages:
+  - stage: 10
+    verdict: right  # Sjoring Hard-Heart in the Vivec Fighters Guild is marked, then Stacey.
+    marked: ["sjoring hard-heart", "stacey"]

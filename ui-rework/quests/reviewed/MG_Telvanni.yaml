@@ -1,0 +1,8 @@
+# The reviewed quest markers of MG_Telvanni.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Telvanni
+stages:
+  - stage: 10
+    verdict: right  # nothing in the content starts or moves this quest on, so there is nothing to mark
+    marked: []

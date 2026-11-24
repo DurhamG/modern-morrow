@@ -1,0 +1,15 @@
+# The reviewed quest markers of MG_Apprentice.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Apprentice
+stages:
+  - stage: 10
+    verdict: corrected  # marks the scamp in Huleen's hut and then Edwinna; Listien in the same hut is a hollow side step; the answers that need him dead are left out
+    marked: ["edwinna elbert", "scamp_mg_apprentice"]
+    optional: ["listien bierles"]
+  - stage: 20
+    verdict: right  # marks Listien in the hut; Edwinna's answers that need him dead are failures and set aside
+    marked: ["listien bierles", "scamp_mg_apprentice"]
+  - stage: 40
+    verdict: right  # marks Edwinna to report to
+    marked: ["edwinna elbert"]

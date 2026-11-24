@@ -1,0 +1,14 @@
+# The reviewed quest markers of TG_OverduePayments.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_OverduePayments
+stages:
+  - stage: 10
+    verdict: corrected  # Fatleg's Drop Off in Hla Oad is marked until the player has the tube, then Habasi, instead of every holder of each artifact.
+    marked: ["cell:hla oad, fatleg's drop off", "habasi"]
+  - stage: 30
+    verdict: corrected  # No line sets this stage. Hla Oad and Habasi are marked as at 10.
+    marked: ["cell:hla oad, fatleg's drop off", "habasi"]
+  - stage: 50
+    verdict: corrected  # Habasi sends the player back to Hla Oad, which is marked until the player has the tube, then Habasi.
+    marked: ["cell:hla oad, fatleg's drop off", "habasi"]

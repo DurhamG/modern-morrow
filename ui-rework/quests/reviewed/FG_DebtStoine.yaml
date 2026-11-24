@@ -1,0 +1,18 @@
+# The reviewed quest markers of FG_DebtStoine.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_DebtStoine
+stages:
+  - stage: 5
+    verdict: right  # Lorbumol, who gives the details
+    marked: ["lorbumol gro-aglakh"]
+  - stage: 10
+    verdict: corrected  # Only Lirielle is marked, since Lorbumol's choice needs 2000 gold carried
+    marked: ["lirielle stoine"]
+  - stage: 30
+    verdict: right  # Lirielle and Lorbumol, since the journal suggests paying the debt yourself
+    marked: ["lirielle stoine", "lorbumol gro-aglakh"]
+  - stage: 50
+    verdict: corrected  # The cave Mallapi, where the journal says the brother died, is an optional lead, since his corpse gets no marker; Lorbumol stays marked
+    marked: ["lorbumol gro-aglakh"]
+    optional: ["cell:mallapi"]

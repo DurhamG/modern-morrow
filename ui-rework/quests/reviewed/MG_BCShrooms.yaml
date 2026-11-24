@@ -1,0 +1,8 @@
+# The reviewed quest markers of MG_BCShrooms.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_BCShrooms
+stages:
+  - stage: 10
+    verdict: unfixable  # the journal sends the player to gather on the Bitter Coast, a whole region; the markers show merchants who sell the mushrooms and tombs that hold one
+    marked: ["ajira", "ingred_bc_bungler's_bane", "ingred_bc_hypha_facia", "ingred_coprinus_01", "ingred_russula_01"]

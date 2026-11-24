@@ -1,0 +1,11 @@
+# The reviewed quest markers of MT_DB_Carecalmo.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_DB_Carecalmo
+stages:
+  - stage: 10
+    verdict: right  # Carecalmo is marked to hear the ultimatum; killing him outright is set aside as a failure
+    marked: ["carecalmo"]
+  - stage: 50
+    verdict: right  # Carecalmo has refused and attacked; Eno Hlaalu is marked to report to, and pays from stage 50
+    marked: ["eno hlaalu"]

@@ -1,0 +1,23 @@
+# The reviewed quest markers of MG_SpyCatch.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_SpyCatch
+stages:
+  - stage: 10
+    verdict: corrected  # marks the guild halls of Ald'ruhn, Vivec and Sadrith Mora, without Trebonius, whom only the spy's answer leads to
+    marked: ["cell:ald-ruhn, guild of mages", "cell:sadrith mora, wolverine hall: mage's guild", "cell:vivec, guild of mages"]
+  - stage: 35
+    verdict: corrected  # marks the guild halls of Vivec and Sadrith Mora
+    marked: ["cell:sadrith mora, wolverine hall: mage's guild", "cell:vivec, guild of mages"]
+  - stage: 50
+    verdict: corrected  # marks Trebonius, whom the spy named, without Ranis, who needs the credentials he hands over
+    marked: ["trebonius artorius"]
+  - stage: 60
+    verdict: corrected  # marks Trebonius, whom the journal names, without Ranis before the credentials
+    marked: ["trebonius artorius"]
+  - stage: 70
+    verdict: corrected  # marks Trebonius, who holds the credentials, without Ranis before he hands them over
+    marked: ["trebonius artorius"]
+  - stage: 80
+    verdict: corrected  # marks Ranis to report to, without accusing her to Trebonius
+    marked: ["bk_tiramgadarscredentials", "ranis athrys"]

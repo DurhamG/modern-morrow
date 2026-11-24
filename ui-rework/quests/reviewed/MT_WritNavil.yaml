@@ -1,0 +1,20 @@
+# The reviewed quest markers of MT_WritNavil.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_WritNavil
+stages:
+  - stage: 10
+    verdict: right  # Navil Ienith is marked in Dren's Villa; Ranes is not placed until the player attacks Navil, and then appears beside the player
+    marked: ["navil ienith", "ranes ienith"]
+  - stage: 75
+    verdict: right  # if Navil is still alive he is marked to kill; Ranes cannot be marked, but he appears beside the player during the fight with Navil
+    marked: ["navil ienith", "ranes ienith"]
+  - stage: 80
+    verdict: right  # both brothers are dead, so the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong", "navil ienith", "ranes ienith"]
+  - stage: 85
+    verdict: right  # if Navil is still alive he is marked to kill; Ranes cannot be marked, but he appears beside the player during the fight with Navil
+    marked: ["navil ienith", "ranes ienith"]
+  - stage: 90
+    verdict: right  # both brothers are dead, so the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong"]

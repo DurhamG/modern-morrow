@@ -1,0 +1,8 @@
+# The reviewed quest markers of MG_StaffMagnus.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_StaffMagnus
+stages:
+  - stage: 10
+    verdict: right  # marks Dreveni Hlaren in Assu, who carries the staff, then Ajira
+    marked: ["ajira", "staff_magnus_unique"]

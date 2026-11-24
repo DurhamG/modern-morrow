@@ -1,0 +1,8 @@
+# The reviewed quest markers of MT_S_Smiting.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_S_Smiting
+stages:
+  - stage: 100
+    verdict: right  # the item has been handed back to Eno Hlaalu, and nothing is left to do
+    marked: []

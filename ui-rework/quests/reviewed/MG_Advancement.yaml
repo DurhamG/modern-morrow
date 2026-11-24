@@ -1,0 +1,20 @@
+# The reviewed quest markers of MG_Advancement.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MG_Advancement
+stages:
+  - stage: 10
+    verdict: corrected  # marks a senior guild member to pay the dues; the Wizard's Staff isn't mentioned until 50
+    marked: ["faction:mages guild"]
+  - stage: 20
+    verdict: corrected  # nothing is marked, as the next step waits until the player meets the next rank's requirements
+    marked: []
+  - stage: 50
+    verdict: corrected  # marks a guild member who sells a staff; the dungeon staffs the journal never mentions are hidden
+    marked: ["faction:mages guild"]
+  - stage: 60
+    verdict: right  # the player holds the bought staff, so a guild member is marked to show it to
+    marked: ["ebony wizard's staff", "faction:mages guild"]
+  - stage: 70
+    verdict: right  # the staff was shown and nothing is left to do
+    marked: []

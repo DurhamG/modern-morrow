@@ -1,0 +1,23 @@
+# The reviewed quest markers of TG_SS_GreedySlaver.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TG_SS_GreedySlaver
+stages:
+  - stage: 5
+    verdict: corrected  # Only Stacey is marked, because the slaver and the ring aren't named yet.
+    marked: ["stacey"]
+  - stage: 10
+    verdict: corrected  # Brallion is marked as the holder of the ring, then Ilmeni Dren.
+    marked: ["exquisite_ring_brallion", "ilmeni dren"]
+  - stage: 20
+    verdict: corrected  # No line sets this stage. The player has the ring, so Ilmeni Dren is marked.
+    marked: ["exquisite_ring_brallion", "ilmeni dren"]
+  - stage: 30
+    verdict: right  # The player bought the ring, so Ilmeni Dren is marked.
+    marked: ["exquisite_ring_brallion", "ilmeni dren"]
+  - stage: 50
+    verdict: corrected  # Ilmeni has the ring, so only Stacey is marked.
+    marked: ["stacey"]
+  - stage: 55
+    verdict: right  # Stacey is marked for the report.
+    marked: ["stacey"]

@@ -1,0 +1,11 @@
+# The reviewed quest markers of FG_SuranBandits.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_SuranBandits
+stages:
+  - stage: 10
+    verdict: corrected  # Only Avon Oran is marked, since the journal hasn't named the bandit leader
+    marked: ["avon oran"]
+  - stage: 30
+    verdict: right  # Daldur Sarys in Saturan, then Avon Oran
+    marked: ["avon oran", "daldur sarys"]

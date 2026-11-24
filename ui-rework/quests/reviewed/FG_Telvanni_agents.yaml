@@ -1,0 +1,8 @@
+# The reviewed quest markers of FG_Telvanni_agents.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: FG_Telvanni_agents
+stages:
+  - stage: 1
+    verdict: right  # The four agents, then Eydis
+    marked: ["alveleg", "alynu aralen", "eydis fire-eye", "fothyna herothran", "sathasa nerothren"]

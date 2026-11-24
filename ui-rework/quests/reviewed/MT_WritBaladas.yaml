@@ -1,0 +1,14 @@
+# The reviewed quest markers of MT_WritBaladas.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MT_WritBaladas
+stages:
+  - stage: 10
+    verdict: right  # the writ's target, Baladas Demnevanni in Arvs-Drelen, is marked to kill
+    marked: ["baladas demnevanni"]
+  - stage: 80
+    verdict: right  # the target is dead, so the kill marks nothing and the nearest Morag Tong master is marked to report to
+    marked: ["baladas demnevanni", "faction:morag tong"]
+  - stage: 90
+    verdict: right  # the nearest Morag Tong master is marked to report to
+    marked: ["faction:morag tong"]
