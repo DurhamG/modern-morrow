@@ -43,15 +43,20 @@ namespace MWGui
 
         bool contains(const std::vector<Range>& ranges, int index);
 
-        /// When a target no longer needs marking: when a quest has reached a stage, or has finished.
-        struct Done
+        /// Something that holds or not while playing, for when a target starts or stops needing a marker: a quest has
+        /// reached a stage or has finished, someone is dead, or the player carries an item. Exactly one is named.
+        struct Condition
         {
             ESM::RefId mQuest;
             // The stage the quest must reach, or 0 when only finishing counts.
             int mAtLeast = 0;
             bool mFinished = false;
+            // Someone who must have died.
+            ESM::RefId mDead;
+            // An item the player must carry.
+            ESM::RefId mCarried;
 
-            bool operator==(const Done& other) const = default;
+            bool operator==(const Condition& other) const = default;
         };
 
         /// Something to do that no line or script in the content names, such as talking to the people a journal entry
@@ -63,7 +68,12 @@ namespace MWGui
             ESM::RefId mCell;
             // How many of the object must be dead or carried, for Kill and Fetch.
             int mCount = 1;
-            std::optional<Done> mDone;
+            // Whether the target is a side step, marked as optional.
+            bool mOptional = false;
+            // The target is marked only once this holds.
+            std::optional<Condition> mAfter;
+            // The target isn't marked once this holds.
+            std::optional<Condition> mDone;
 
             bool operator==(const Target& other) const = default;
         };
@@ -108,12 +118,17 @@ namespace MWGui
             std::function<std::string(const ESM::RefId&)> mFingerprint;
         };
 
-        /// How far the player's quests have got, for working out whether a target is done.
+        /// How far the player has got, for working out whether a target's conditions hold. A function left empty
+        /// counts as false.
         struct Progress
         {
             // A quest's stage, 0 if it hasn't started.
             std::function<int(const ESM::RefId&)> mStage;
             std::function<bool(const ESM::RefId&)> mFinished;
+            // Whether anyone of the ID has died.
+            std::function<bool(const ESM::RefId&)> mDead;
+            // Whether the player carries the item.
+            std::function<bool(const ESM::RefId&)> mCarried;
         };
 
         /// Reads the corrections from the text of questcorrections.yaml. An entry that can't be read is left out, and
@@ -147,17 +162,20 @@ namespace MWGui
         /// Chooses the ways forward to mark, as QuestTargets::chooseWays does, with a stage's entry if it has one. The
         /// ways to the entry's hidden stages are left out. The ways to its optional stages are marked as optional,
         /// unless they are failures or out of reach. Of the other ways, if the entry has next stages, only the ways to
-        /// them are marked, leaving out failures and ways out of reach. When none of those is left, such as when the
-        /// person to talk to is dead, the rule chooses among the other ways.
+        /// them are marked, leaving out ways out of reach, and failures unless every one of them is a failure. So a
+        /// kill the journal asks for, of someone who talks in the quest, is marked when the entry names its stage. When
+        /// none of those is left, such as when the person to talk to is dead, the rule chooses among the other ways.
         std::vector<QuestTargets::Way> chooseWays(
             std::vector<QuestTargets::Way> ways, const Entry* entry, QuestTargets::Rule rule);
 
-        /// Whether a target's done condition holds. A target without one is never done.
-        bool isDone(const Target& target, const Progress& progress);
+        /// Whether a condition holds.
+        bool holds(const Condition& condition, const Progress& progress);
 
-        /// A way to mark for each of an entry's targets that isn't done. Each way has the target as its only
-        /// objective, and leads to no stage, since the content doesn't say what it leads to.
-        std::vector<QuestTargets::Way> targetWays(const Entry& entry, const Progress& progress);
+        /// A way to mark for each of an entry's targets whose after condition holds, if it has one, and whose done
+        /// condition doesn't. Without progress, every target counts, as when reviewing what a stage can mark. Each
+        /// way has the target as its only objective, and leads to no stage, since the content doesn't say what it
+        /// leads to.
+        std::vector<QuestTargets::Way> targetWays(const Entry& entry, const Progress* progress);
 
         /// The entries that change nothing the rule would mark at any of their stages that the content has, and
         /// have no targets and follow no quests. Each is named by its quest and the first of its stages.

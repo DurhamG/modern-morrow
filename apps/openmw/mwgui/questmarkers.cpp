@@ -14,6 +14,7 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/journal.hpp"
+#include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/world.hpp"
 
 #include "../mwdialogue/quest.hpp"
@@ -149,7 +150,8 @@ namespace MWGui
         }
         if (mJournalSeen)
             return;
-        // When a game starts or loads, the quest with the newest entry is tracked.
+        // When a game starts or loads, the quest with the newest entry is tracked. The journal shows the quests that
+        // share its name as one, such as the steps of a main quest's chapter, so those are tracked too.
         mJournalSeen = true;
         if (!autoTrack)
             return;
@@ -157,11 +159,10 @@ namespace MWGui
         for (auto it = entries.rbegin(); it != entries.rend(); ++it)
         {
             const auto quest = journal->getQuests().find(it->mTopic);
-            if (quest != journal->getQuests().end() && !quest->second.isFinished())
-            {
-                mTracked.insert(it->mTopic);
-                break;
-            }
+            if (quest == journal->getQuests().end() || quest->second.isFinished())
+                continue;
+            mTracked.insert(it->mTopic);
+            break;
         }
     }
 
@@ -338,6 +339,13 @@ namespace MWGui
             const auto it = journal->getQuests().find(quest);
             return it != journal->getQuests().end() && it->second.isFinished();
         };
+        progress.mDead = [](const ESM::RefId& id) {
+            return MWBase::Environment::get().getMechanicsManager()->countDeaths(id) > 0;
+        };
+        progress.mCarried = [](const ESM::RefId& id) {
+            const MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
+            return player.getClass().getContainerStore(player).count(id) > 0;
+        };
         return progress;
     }
 
@@ -385,7 +393,8 @@ namespace MWGui
         std::vector<QuestTargets::Way> chosen = QuestCorrections::chooseWays(std::move(ways), entry, rule);
         if (entry != nullptr)
         {
-            std::vector<QuestTargets::Way> extra = QuestCorrections::targetWays(*entry, questProgress());
+            const QuestCorrections::Progress progress = questProgress();
+            std::vector<QuestTargets::Way> extra = QuestCorrections::targetWays(*entry, &progress);
             chosen.insert(chosen.end(), std::make_move_iterator(extra.begin()), std::make_move_iterator(extra.end()));
         }
         for (const QuestTargets::Way& way : chosen)

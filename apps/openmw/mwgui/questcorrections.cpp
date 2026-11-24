@@ -98,38 +98,48 @@ namespace MWGui::QuestCorrections
             return node.IsScalar() && node.Scalar() == "true";
         }
 
-        // When a target is done: { quest: ID, atLeast: N }, { quest: ID, started: true } or
-        // { quest: ID, finished: true }. Returns the problem with it, or nothing when it was read.
-        std::optional<std::string> readDone(const YAML::Node& node, Done& done)
+        // A target's condition: { quest: ID, atLeast: N }, { quest: ID, started: true },
+        // { quest: ID, finished: true }, { dead: ID } or { carried: ID }. Returns the problem with it, or nothing
+        // when it was read.
+        std::optional<std::string> readCondition(const YAML::Node& node, const std::string& name, Condition& condition)
         {
             if (!node.IsMap())
-                return "a \"done\" that isn't a map";
-            int conditions = 0;
+                return "a \"" + name + "\" that isn't a map";
+            int stages = 0;
             for (const auto& field : node)
             {
                 const std::string key = field.first.as<std::string>();
-                if (key == "quest" && field.second.IsScalar())
-                    done.mQuest = ESM::RefId::stringRefId(field.second.Scalar());
+                const std::string value = field.second.IsScalar() ? field.second.Scalar() : std::string();
+                if (key == "quest" && !value.empty())
+                    condition.mQuest = ESM::RefId::stringRefId(value);
                 else if (key == "atLeast" && readNumber(field.second))
                 {
-                    done.mAtLeast = *readNumber(field.second);
-                    ++conditions;
+                    condition.mAtLeast = *readNumber(field.second);
+                    ++stages;
                 }
                 else if (key == "started" && isTrue(field.second))
                 {
-                    done.mAtLeast = 1;
-                    ++conditions;
+                    condition.mAtLeast = 1;
+                    ++stages;
                 }
                 else if (key == "finished" && isTrue(field.second))
                 {
-                    done.mFinished = true;
-                    ++conditions;
+                    condition.mFinished = true;
+                    ++stages;
                 }
+                else if (key == "dead" && !value.empty())
+                    condition.mDead = ESM::RefId::stringRefId(value);
+                else if (key == "carried" && !value.empty())
+                    condition.mCarried = ESM::RefId::stringRefId(value);
                 else
-                    return "a \"done\" with a wrong \"" + key + "\"";
+                    return "a \"" + name + "\" with a wrong \"" + key + "\"";
             }
-            if (done.mQuest.empty() || conditions != 1)
-                return "a \"done\" without a quest and one of atLeast, started or finished";
+            const bool quest = !condition.mQuest.empty() && stages == 1;
+            const int kinds
+                = (quest ? 1 : 0) + (condition.mDead.empty() ? 0 : 1) + (condition.mCarried.empty() ? 0 : 1);
+            if (kinds != 1 || (condition.mQuest.empty() != (stages == 0)))
+                return "a \"" + name
+                    + "\" without exactly one of a quest with atLeast, started or finished, dead, or carried";
             return std::nullopt;
         }
 
@@ -164,12 +174,14 @@ namespace MWGui::QuestCorrections
                     target.mCell = ESM::RefId::stringRefId(value);
                 else if (key == "count" && readNumber(field.second) && *readNumber(field.second) > 0)
                     target.mCount = *readNumber(field.second);
-                else if (key == "done")
+                else if (key == "optional" && (isTrue(field.second) || value == "false"))
+                    target.mOptional = isTrue(field.second);
+                else if (key == "done" || key == "after")
                 {
-                    Done done;
-                    if (std::optional<std::string> problem = readDone(field.second, done))
+                    Condition condition;
+                    if (std::optional<std::string> problem = readCondition(field.second, key, condition))
                         return problem;
-                    target.mDone = std::move(done);
+                    (key == "done" ? target.mDone : target.mAfter) = std::move(condition);
                 }
                 else
                     return "a target with a wrong \"" + key + "\"";
@@ -383,8 +395,16 @@ namespace MWGui::QuestCorrections
                             return "the object " + target.mObject.getRefIdString();
                         if (!target.mCell.empty() && !(content.mHasCell && content.mHasCell(target.mCell)))
                             return "the cell " + target.mCell.getRefIdString();
-                        if (target.mDone && !content.mStages.contains(target.mDone->mQuest))
-                            return "the quest " + target.mDone->mQuest.getRefIdString();
+                        for (const std::optional<Condition>& condition : { target.mAfter, target.mDone })
+                        {
+                            if (!condition)
+                                continue;
+                            if (!condition->mQuest.empty() && !content.mStages.contains(condition->mQuest))
+                                return "the quest " + condition->mQuest.getRefIdString();
+                            for (const ESM::RefId& object : { condition->mDead, condition->mCarried })
+                                if (!object.empty() && !(content.mHasObject && content.mHasObject(object)))
+                                    return "the object " + object.getRefIdString();
+                        }
                     }
                     for (const ESM::RefId& followed : entry.mFollow)
                         if (!content.mStages.contains(followed))
@@ -506,8 +526,10 @@ namespace MWGui::QuestCorrections
         std::vector<QuestTargets::Way> chosen;
         if (!entry->mNext.empty())
             for (const QuestTargets::Way& way : rest)
-                if (contains(entry->mNext, way.mToStage) && !setAside(way))
+                if (contains(entry->mNext, way.mToStage) && !way.mOutOfReach)
                     chosen.push_back(way);
+        if (!std::all_of(chosen.begin(), chosen.end(), [](const QuestTargets::Way& way) { return way.mFailure; }))
+            std::erase_if(chosen, [](const QuestTargets::Way& way) { return way.mFailure; });
         if (chosen.empty())
             chosen = QuestTargets::chooseWays(std::move(rest), rule);
         chosen.insert(chosen.end(), std::make_move_iterator(optional.begin()), std::make_move_iterator(optional.end()));
@@ -516,22 +538,25 @@ namespace MWGui::QuestCorrections
         return chosen;
     }
 
-    bool isDone(const Target& target, const Progress& progress)
+    bool holds(const Condition& condition, const Progress& progress)
     {
-        if (!target.mDone)
-            return false;
-        const Done& done = *target.mDone;
-        if (progress.mFinished(done.mQuest))
+        if (!condition.mDead.empty())
+            return progress.mDead && progress.mDead(condition.mDead);
+        if (!condition.mCarried.empty())
+            return progress.mCarried && progress.mCarried(condition.mCarried);
+        if (progress.mFinished && progress.mFinished(condition.mQuest))
             return true;
-        return !done.mFinished && progress.mStage(done.mQuest) >= done.mAtLeast;
+        return !condition.mFinished && progress.mStage && progress.mStage(condition.mQuest) >= condition.mAtLeast;
     }
 
-    std::vector<QuestTargets::Way> targetWays(const Entry& entry, const Progress& progress)
+    std::vector<QuestTargets::Way> targetWays(const Entry& entry, const Progress* progress)
     {
         std::vector<QuestTargets::Way> ways;
         for (const Target& target : entry.mTargets)
         {
-            if (isDone(target, progress))
+            if (progress != nullptr
+                && ((target.mAfter && !holds(*target.mAfter, *progress))
+                    || (target.mDone && holds(*target.mDone, *progress))))
                 continue;
             QuestTargets::Way way;
             QuestTargets::Objective objective;
@@ -540,6 +565,7 @@ namespace MWGui::QuestCorrections
             objective.mCell = target.mCell;
             objective.mCount = target.mCount;
             way.mObjectives.push_back(std::move(objective));
+            way.mOptional = target.mOptional;
             ways.push_back(std::move(way));
         }
         return ways;

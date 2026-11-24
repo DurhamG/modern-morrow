@@ -66,10 +66,7 @@ namespace MWGui::QuestReview
             = QuestCorrections::chooseWays(index.waysForward(quest, stage), entry, rule);
         if (entry != nullptr)
         {
-            QuestCorrections::Progress none;
-            none.mStage = [](const ESM::RefId&) { return 0; };
-            none.mFinished = [](const ESM::RefId&) { return false; };
-            for (QuestTargets::Way& way : QuestCorrections::targetWays(*entry, none))
+            for (QuestTargets::Way& way : QuestCorrections::targetWays(*entry, nullptr))
                 ways.push_back(std::move(way));
         }
         Shown shown;

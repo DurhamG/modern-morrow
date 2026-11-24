@@ -50,8 +50,8 @@ namespace MWGui
         std::string targetOf(const QuestTargets::Objective& objective);
 
         /// What a stage of a quest marks, by the rule and the stage's correction, from the content files alone. The
-        /// checks made while playing aren't made, so every way the rule chooses counts, and a correction's targets
-        /// count as not done.
+        /// checks made while playing aren't made, so every way the rule chooses counts, and so does every one of a
+        /// correction's targets, whatever its conditions.
         Shown shownAt(const QuestTargets::Index& index, const QuestCorrections::Corrections& corrections,
             const ESM::RefId& quest, int stage, QuestTargets::Rule rule);
 
