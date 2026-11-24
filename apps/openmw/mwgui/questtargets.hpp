@@ -10,11 +10,7 @@
 
 #include <components/esm/refid.hpp>
 #include <components/esm3/dialoguecondition.hpp>
-
-namespace ESM
-{
-    struct DialInfo;
-}
+#include <components/esm3/loadinfo.hpp>
 
 namespace MWWorld
 {
@@ -121,6 +117,18 @@ namespace MWGui
 
         /// The quest and stage of every Journal or SetJournalIndex command in a script.
         std::vector<std::pair<ESM::RefId, int>> journalChanges(std::string_view script);
+
+        /// The numbers of the answers a Choice command in a script offers, such as 1 and 2 for
+        /// `Choice "Yes" 1 "No" 2`.
+        std::vector<int> choicesOffered(std::string_view script);
+
+        /// The lines of a topic, in order, with what each answer in a conversation inherits from the lines that offer
+        /// its choice. The game only gives the answer after one of those lines, so the answer needs what they all
+        /// need: their shared conditions, other than choices and the stages of quests those lines move on, and their
+        /// speaker, faction and cell where the answer names none. For example, an answer that hands over an item needs
+        /// the item when the line offering it does. A line that isn't an answer, or whose choice no line offers, stays
+        /// as it is.
+        std::vector<ESM::DialInfo> withOfferingConditions(const std::vector<ESM::DialInfo>& lines);
 
         /// The items a script takes from the player, and how many, such as `Player->RemoveItem "misc_box" 1`.
         std::vector<std::pair<ESM::RefId, int>> itemsTaken(std::string_view script);

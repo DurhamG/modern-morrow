@@ -226,6 +226,82 @@ namespace
         EXPECT_EQ(taken, expected);
     }
 
+    TEST(MWGuiQuestTargetsTest, choicesOfferedAreTheAnswersNumbers)
+    {
+        EXPECT_EQ(choicesOffered("Choice \"Yes, here it is.\" 1 \"Not yet.\" 2"), (std::vector<int>{ 1, 2 }));
+        EXPECT_EQ(choicesOffered("ModDisposition 5\nchoice, \"Take it\", 3 ; a comment"), (std::vector<int>{ 3 }));
+        EXPECT_TRUE(choicesOffered("Journal FG_RatHunt 10").empty());
+    }
+
+    TEST(MWGuiQuestTargetsTest, anAnswerInheritsTheConditionsOfTheLineThatOffersIt)
+    {
+        // Shadbak asks for the item only once the player carries it, and the answer moves the quest on.
+        const DialogueCondition carries
+            = condition(DialogueCondition::Function_Item, "misc_skull_llevule", DialogueCondition::Comp_Ge, 1);
+        const DialogueCondition answerOne
+            = condition(DialogueCondition::Function_Choice, "", DialogueCondition::Comp_Eq, 1);
+        const std::vector<ESM::DialInfo> lines = withOfferingConditions({
+            line("shadbak", "Choice \"Give it\" 1 \"Keep it\" 2", { carries }),
+            line("", "Journal FG_RatHunt 30", { answerOne }),
+        });
+        ASSERT_EQ(lines[1].mSelects.size(), 2u);
+        EXPECT_EQ(lines[1].mSelects[1].mVariable, "misc_skull_llevule");
+        EXPECT_EQ(lines[1].mActor, id("shadbak"));
+        // The offering line itself is unchanged.
+        EXPECT_EQ(lines[0].mSelects.size(), 1u);
+    }
+
+    TEST(MWGuiQuestTargetsTest, anAnswerOfferedByLinesWithOtherConditionsInheritsOnlyWhatTheyShare)
+    {
+        const DialogueCondition early = stageIs(DialogueCondition::Comp_Ls, 20);
+        const DialogueCondition late = stageIs(DialogueCondition::Comp_Ge, 20);
+        const DialogueCondition rich
+            = condition(DialogueCondition::Function_Item, "Gold_001", DialogueCondition::Comp_Ge, 100);
+        const DialogueCondition answerOne
+            = condition(DialogueCondition::Function_Choice, "", DialogueCondition::Comp_Eq, 1);
+        const std::vector<ESM::DialInfo> lines = withOfferingConditions({
+            line("shadbak", "Choice \"Pay\" 1", { early, rich }),
+            line("eydis fire-eye", "Choice \"Pay\" 1", { late, rich }),
+            line("", "Journal FG_RatHunt 30", { answerOne }),
+        });
+        ASSERT_EQ(lines[2].mSelects.size(), 2u);
+        EXPECT_EQ(lines[2].mSelects[1].mVariable, "Gold_001");
+        EXPECT_TRUE(lines[2].mActor.empty());
+    }
+
+    TEST(MWGuiQuestTargetsTest, anAnswerDoesntInheritTheStageOfAQuestTheOfferingLineMovesOn)
+    {
+        // Big Helende starts the quest and asks at once, so by the answer the quest is no longer at 0.
+        const std::vector<ESM::DialInfo> lines = withOfferingConditions({
+            line("big helende", "Journal FG_RatHunt 10\nChoice \"Yes\" 1", { stageIs(DialogueCondition::Comp_Eq, 0) }),
+            line("", "Journal FG_RatHunt 20",
+                { condition(DialogueCondition::Function_Choice, "", DialogueCondition::Comp_Eq, 1) }),
+        });
+        ASSERT_EQ(lines[1].mSelects.size(), 1u);
+        EXPECT_EQ(lines[1].mActor, id("big helende"));
+    }
+
+    TEST(MWGuiQuestTargetsIndexTest, anAnswerThatNeedsAnItemIsAFetchFirst)
+    {
+        Index index;
+        for (const ESM::DialInfo& info : withOfferingConditions({
+                 line("shadbak", "Choice \"Give it\" 1",
+                     { condition(
+                         DialogueCondition::Function_Item, "misc_skull_llevule", DialogueCondition::Comp_Ge, 1) }),
+                 line("", "Journal FG_RatHunt 30",
+                     { condition(DialogueCondition::Function_Choice, "", DialogueCondition::Comp_Eq, 1) }),
+             }))
+            index.addDialogue(info);
+        const std::vector<Way> ways = index.waysForward(quest, 10, Rule::All);
+        ASSERT_EQ(ways.size(), 1u);
+        const std::vector<Objective> skull{
+            Objective{ .mTask = Task::Fetch, .mObject = id("misc_skull_llevule") },
+            talk("shadbak"),
+        };
+        EXPECT_EQ(ways[0].mObjectives, skull);
+        EXPECT_TRUE(ways[0].mChoice);
+    }
+
     TEST(MWGuiQuestTargetsIndexTest, anItemTheLineTakesIsAFetch)
     {
         Index index;

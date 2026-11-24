@@ -366,6 +366,92 @@ namespace MWGui::QuestTargets
         return changes;
     }
 
+    std::vector<int> choicesOffered(std::string_view script)
+    {
+        std::vector<int> choices;
+        for (const std::vector<std::string>& words : scriptWords(script))
+        {
+            if (words.empty() || words[0] != "choice")
+                continue;
+            // The answers' texts and numbers alternate.
+            for (std::size_t i = 2; i < words.size(); i += 2)
+            {
+                int number = 0;
+                const std::string& word = words[i];
+                const auto [end, error] = std::from_chars(word.data(), word.data() + word.size(), number);
+                if (error == std::errc() && end == word.data() + word.size())
+                    choices.push_back(number);
+            }
+        }
+        return choices;
+    }
+
+    std::vector<ESM::DialInfo> withOfferingConditions(const std::vector<ESM::DialInfo>& lines)
+    {
+        const auto same = [](const ESM::DialogueCondition& l, const ESM::DialogueCondition& r) {
+            return l.mFunction == r.mFunction && l.mVariable == r.mVariable && l.mComparison == r.mComparison
+                && l.mValue == r.mValue;
+        };
+        std::vector<ESM::DialInfo> result = lines;
+        for (ESM::DialInfo& answer : result)
+        {
+            const auto choice = std::find_if(
+                answer.mSelects.begin(), answer.mSelects.end(), [](const ESM::DialogueCondition& condition) {
+                    return condition.mFunction == ESM::DialogueCondition::Function_Choice;
+                });
+            if (choice == answer.mSelects.end())
+                continue;
+            const int number = static_cast<int>(valueOf(*choice));
+            std::vector<const ESM::DialInfo*> offering;
+            for (const ESM::DialInfo& line : result)
+            {
+                const std::vector<int> offered = choicesOffered(line.mResultScript);
+                if (&line != &answer && std::find(offered.begin(), offered.end(), number) != offered.end())
+                    offering.push_back(&line);
+            }
+            if (offering.empty())
+                continue;
+            // The conditions every offering line has, as far as they are known by now.
+            std::vector<ESM::DialogueCondition> shared;
+            // A quest whose stage an offering line changes is at another stage by the time the player answers.
+            std::vector<ESM::RefId> moved;
+            for (const ESM::DialInfo* line : offering)
+                for (const auto& [quest, stage] : journalChanges(line->mResultScript))
+                    moved.push_back(quest);
+            for (const ESM::DialogueCondition& condition : offering.front()->mSelects)
+            {
+                if (condition.mFunction == ESM::DialogueCondition::Function_Choice)
+                    continue;
+                if (condition.mFunction == ESM::DialogueCondition::Function_Journal
+                    && std::find(moved.begin(), moved.end(), ESM::RefId::stringRefId(condition.mVariable))
+                        != moved.end())
+                    continue;
+                const bool everywhere
+                    = std::all_of(offering.begin() + 1, offering.end(), [&](const ESM::DialInfo* line) {
+                          return std::any_of(line->mSelects.begin(), line->mSelects.end(),
+                              [&](const ESM::DialogueCondition& other) { return same(condition, other); });
+                      });
+                const bool known = std::any_of(answer.mSelects.begin(), answer.mSelects.end(),
+                    [&](const ESM::DialogueCondition& other) { return same(condition, other); });
+                if (everywhere && !known)
+                    shared.push_back(condition);
+            }
+            answer.mSelects.insert(answer.mSelects.end(), shared.begin(), shared.end());
+            const auto inherit = [&](ESM::RefId ESM::DialInfo::*field) {
+                if (!(answer.*field).empty())
+                    return;
+                const ESM::RefId& first = offering.front()->*field;
+                if (std::all_of(offering.begin(), offering.end(),
+                        [&](const ESM::DialInfo* line) { return line->*field == first; }))
+                    answer.*field = first;
+            };
+            inherit(&ESM::DialInfo::mActor);
+            inherit(&ESM::DialInfo::mFaction);
+            inherit(&ESM::DialInfo::mCell);
+        }
+        return result;
+    }
+
     std::vector<std::pair<ESM::RefId, int>> itemsTaken(std::string_view script)
     {
         std::vector<std::pair<ESM::RefId, int>> taken;
@@ -737,7 +823,9 @@ namespace MWGui::QuestTargets
             if (dialogue.mType == ESM::Dialogue::Journal)
                 continue;
             const bool topic = dialogue.mType == ESM::Dialogue::Topic;
-            for (const ESM::DialInfo& info : dialogue.mInfo)
+            const std::vector<ESM::DialInfo> lines
+                = withOfferingConditions(std::vector<ESM::DialInfo>(dialogue.mInfo.begin(), dialogue.mInfo.end()));
+            for (const ESM::DialInfo& info : lines)
             {
                 index.addDialogue(info, topic ? std::string_view(dialogue.mStringId) : std::string_view());
                 if (topic && !journalChanges(info.mResultScript).empty())
