@@ -675,9 +675,15 @@ namespace MWGui::QuestTargets
                     way.mChecks.push_back(condition);
             }
             way.mSpeaker = source.mSpeaker;
+            // Lines with other checks are other ways, since the game can leave out one and not the other.
             const bool known = std::any_of(ways.begin(), ways.end(), [&](const Way& other) {
                 return other.mToStage == way.mToStage && other.mObjectives == way.mObjectives
-                    && other.mChoice == way.mChoice && other.mFailure == way.mFailure;
+                    && other.mChoice == way.mChoice && other.mFailure == way.mFailure
+                    && std::equal(other.mChecks.begin(), other.mChecks.end(), way.mChecks.begin(), way.mChecks.end(),
+                        [](const ESM::DialogueCondition& l, const ESM::DialogueCondition& r) {
+                            return l.mFunction == r.mFunction && l.mVariable == r.mVariable
+                                && l.mComparison == r.mComparison && l.mValue == r.mValue;
+                        });
             });
             if (!known)
                 ways.push_back(std::move(way));

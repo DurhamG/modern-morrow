@@ -273,6 +273,23 @@ namespace
         EXPECT_EQ(index.waysForward(quest, 20, Rule::All).size(), 2u);
     }
 
+    TEST(MWGuiQuestTargetsIndexTest, linesWithOtherChecksAreOtherWays)
+    {
+        // Velanda Omani answers once either of two other quests has got far enough. If the ways were one, the game
+        // would test only the first line's check, and leave her out while the second holds.
+        Index index;
+        index.addDialogue(line("velanda omani", "Journal FG_RatHunt 30",
+            { condition(DialogueCondition::Function_Journal, "HH_WinCamonna", DialogueCondition::Comp_Ge, 50) }));
+        index.addDialogue(line("velanda omani", "Journal FG_RatHunt 30",
+            { condition(DialogueCondition::Function_Journal, "B6_DrenHortator", DialogueCondition::Comp_Ge, 50) }));
+        index.addDialogue(line("velanda omani", "Journal FG_RatHunt 30",
+            { condition(DialogueCondition::Function_Journal, "B6_DrenHortator", DialogueCondition::Comp_Ge, 50) }));
+        const std::vector<Way> ways = index.waysForward(quest, 20);
+        ASSERT_EQ(ways.size(), 2u);
+        EXPECT_EQ(ways[0].mChecks[0].mVariable, "HH_WinCamonna");
+        EXPECT_EQ(ways[1].mChecks[0].mVariable, "B6_DrenHortator");
+    }
+
     TEST(MWGuiQuestTargetsIndexTest, aFailureCountsWhenItIsTheOnlyWay)
     {
         // Hanarai Assutlanipal attacks the player, and the quest goes on once she is dead.
