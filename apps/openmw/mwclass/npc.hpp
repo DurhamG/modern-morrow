@@ -48,6 +48,9 @@ namespace MWClass
 
         static const GMST& getGmst();
 
+        /// The actor's walk speed from their Speed, before a load or sneaking slows it.
+        float getUnloadedWalkSpeed(const MWWorld::Ptr& ptr) const;
+
     public:
         void insertObjectRendering(const MWWorld::Ptr& ptr, const std::string& model,
             MWRender::RenderingInterface& renderingInterface) const override;

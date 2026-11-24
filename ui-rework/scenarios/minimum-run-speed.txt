@@ -1,0 +1,37 @@
+# With the "minimum run speed" setting, the player runs at least 262.5 with nothing carried, half again as fast as
+# Morrowind's slowest runner at 175. A load slows them from there by the same share as in Morrowind, up to 30%. The
+# player has Speed and Athletics at 0, and their clothes make a small load. They run for two seconds with the keyboard
+# and get about 620 units with the setting and about 420 without. Four iron cuirasses make a heavy load, which slows
+# them by the same share as without the setting. Raising Speed and Athletics still makes them faster.
+launch --start "Seyda Neen" --set "Game.minimum run speed=true"
+console "command=player->setspeed 0"
+console "command=player->setathletics 0"
+wait frames=5
+expect-lua "local types = require('openmw.types'); local s = require('openmw.self'); local load = 1 - 0.3 * types.Actor.getEncumbrance(s) / types.Actor.getCapacity(s); print(math.abs(types.Actor.getRunSpeed(s) - 262.5 * load) < 0.1 and load > 0.95)" true context=player
+lua "code=local s = require('openmw.self'); _G.startPos = s.position" context=player
+key key="Left Shift" action=down
+key key=W action=down
+wait seconds=2
+key key=W action=up
+key key="Left Shift" action=up
+expect-lua "local s = require('openmw.self'); print((s.position - _G.startPos):length() > 520)" true context=player
+console "command=player->additem iron_cuirass 4"
+wait frames=5
+expect-lua "local types = require('openmw.types'); local s = require('openmw.self'); local load = 1 - 0.3 * types.Actor.getEncumbrance(s) / types.Actor.getCapacity(s); print(math.abs(types.Actor.getRunSpeed(s) - 262.5 * load) < 0.1 and load < 0.8)" true context=player
+console "command=player->setspeed 100"
+console "command=player->setathletics 100"
+wait frames=5
+expect-lua "print(require('openmw.types').Actor.getRunSpeed(require('openmw.self')) > 300)" true context=player
+
+launch --start "Seyda Neen"
+console "command=player->setspeed 0"
+console "command=player->setathletics 0"
+wait frames=5
+expect-lua "print(require('openmw.types').Actor.getRunSpeed(require('openmw.self')) < 176)" true context=player
+lua "code=local s = require('openmw.self'); _G.startPos = s.position" context=player
+key key="Left Shift" action=down
+key key=W action=down
+wait seconds=2
+key key=W action=up
+key key="Left Shift" action=up
+expect-lua "local s = require('openmw.self'); print((s.position - _G.startPos):length() < 520)" true context=player

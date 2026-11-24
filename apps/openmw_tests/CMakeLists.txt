@@ -36,6 +36,7 @@ file(GLOB UNITTEST_SRC_FILES
     mwmechanics/testglancingblows.cpp
     mwmechanics/testlevelling.cpp
     mwmechanics/testrunfatigue.cpp
+    mwmechanics/testrunspeed.cpp
 
     mwlua/testobjectcache.cpp
     mwlua/testmwscriptbindings.cpp

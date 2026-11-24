@@ -44,6 +44,7 @@
 #include "../mwmechanics/inventory.hpp"
 #include "../mwmechanics/movement.hpp"
 #include "../mwmechanics/npcstats.hpp"
+#include "../mwmechanics/runspeed.hpp"
 #include "../mwmechanics/setbaseaisetting.hpp"
 #include "../mwmechanics/spellcasting.hpp"
 #include "../mwmechanics/weapontype.hpp"
@@ -1379,16 +1380,22 @@ namespace MWClass
         MWMechanics::modifyBaseInventory<ESM::NPC>(actorId, itemId, amount);
     }
 
-    float Npc::getWalkSpeed(const MWWorld::Ptr& ptr) const
+    float Npc::getUnloadedWalkSpeed(const MWWorld::Ptr& ptr) const
     {
         const GMST& gmst = getGmst();
         const MWMechanics::NpcStats& stats = getNpcStats(ptr);
+        return gmst.fMinWalkSpeed->mValue.getFloat()
+            + 0.01f * stats.getAttribute(ESM::Attribute::Speed).getModified()
+            * (gmst.fMaxWalkSpeed->mValue.getFloat() - gmst.fMinWalkSpeed->mValue.getFloat());
+    }
+
+    float Npc::getWalkSpeed(const MWWorld::Ptr& ptr) const
+    {
+        const GMST& gmst = getGmst();
         const float normalizedEncumbrance = getNormalizedEncumbrance(ptr);
         const bool sneaking = MWBase::Environment::get().getMechanicsManager()->isSneaking(ptr);
 
-        float walkSpeed = gmst.fMinWalkSpeed->mValue.getFloat()
-            + 0.01f * stats.getAttribute(ESM::Attribute::Speed).getModified()
-                * (gmst.fMaxWalkSpeed->mValue.getFloat() - gmst.fMinWalkSpeed->mValue.getFloat());
+        float walkSpeed = getUnloadedWalkSpeed(ptr);
         walkSpeed *= 1.0f - gmst.fEncumberedMoveEffect->mValue.getFloat() * normalizedEncumbrance;
         walkSpeed = std::max(0.0f, walkSpeed);
         if (sneaking)
@@ -1400,9 +1407,16 @@ namespace MWClass
     float Npc::getRunSpeed(const MWWorld::Ptr& ptr) const
     {
         const GMST& gmst = getGmst();
-        return getWalkSpeed(ptr)
-            * (0.01f * getSkill(ptr, ESM::Skill::Athletics) * gmst.fAthleticsRunBonus->mValue.getFloat()
-                + gmst.fBaseRunMultiplier->mValue.getFloat());
+        const float runMultiplier
+            = 0.01f * getSkill(ptr, ESM::Skill::Athletics) * gmst.fAthleticsRunBonus->mValue.getFloat()
+            + gmst.fBaseRunMultiplier->mValue.getFloat();
+        if (!Settings::game().mMinimumRunSpeed || ptr != MWMechanics::getPlayer()
+            || MWBase::Environment::get().getMechanicsManager()->isSneaking(ptr))
+            return getWalkSpeed(ptr) * runMultiplier;
+        const float loadFactor
+            = std::max(0.0f, 1.0f - gmst.fEncumberedMoveEffect->mValue.getFloat() * getNormalizedEncumbrance(ptr));
+        return MWMechanics::runSpeedWithMinimum(getUnloadedWalkSpeed(ptr) * runMultiplier, loadFactor,
+            gmst.fMinWalkSpeed->mValue.getFloat(), gmst.fBaseRunMultiplier->mValue.getFloat());
     }
 
     float Npc::getSwimSpeed(const MWWorld::Ptr& ptr) const

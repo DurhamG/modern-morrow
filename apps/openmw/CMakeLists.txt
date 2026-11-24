@@ -108,7 +108,7 @@ add_openmw_dir (mwmechanics
     aicast aiescort aiface aiactivate aicombat recharge repair enchanting pathfinding pathgrid security spellcasting spellresistance
     disease pickpocket levelledlist combat steering obstacle autocalcspell difficultyscaling aicombataction summoning
     character actors objects aistate weaponpriority spellpriority weapontype spellutil
-    spelleffects runfatigue levelling glancingblows
+    spelleffects runfatigue levelling glancingblows runspeed
     )
 
 add_openmw_dir (mwstate

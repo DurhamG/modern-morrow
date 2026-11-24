@@ -392,6 +392,25 @@ Game Settings
    Other actors' attacks still miss.
 
 .. omw-setting::
+   :title: minimum run speed
+   :type: boolean
+   :range: true, false
+   :default: false
+   :location: :bdg-info:`In Game > Options > Prefs`
+
+   Whether the player runs at least a little faster than the slowest a character can run in Morrowind.
+   In Morrowind, run speed grows with Speed and Athletics, and carrying a load slows it.
+   A new character with low Speed and Athletics runs slowly, and more slowly still when carrying loot.
+
+   The slowest anyone runs is fMinWalkSpeed times fBaseRunMultiplier, at Speed 0 with no Athletics and nothing
+   carried. That is 175 with Morrowind's game settings.
+   When true, the player runs at least half again as fast as that, 262.5, when they carry nothing.
+   A load then slows them by the same share as in Morrowind, up to fEncumberedMoveEffect, from the raised speed.
+   A player who already runs faster is unchanged, so Speed and Athletics raise run speed as before.
+   Swimming while running is a share of run speed, so a slow runner also swims a little faster.
+   Sneaking, walking and actors other than the player are unchanged.
+
+.. omw-setting::
    :title: turn to movement direction
    :type: boolean
    :range: true, false
