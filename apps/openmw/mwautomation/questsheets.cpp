@@ -137,25 +137,44 @@ namespace MWAutomation
             return name + " " + comparison(condition.mComparison) + " " + value;
         }
 
-        // Where an objective's target is placed, by the names of the cells, or nothing.
-        std::string placeOf(const MWWorld::ESMStore& store, const QuestTargets::Objective& objective)
+        // The cells an object is placed in, by name, separated by semicolons.
+        std::string cellsOf(const MWWorld::ESMStore& store, const ESM::RefId& id)
+        {
+            std::string result;
+            for (const ESM::Cell* cell : store.getRefCells(id))
+            {
+                result += result.empty() ? "" : "; ";
+                result += cell->isExterior() && cell->mName.empty()
+                    ? std::to_string(cell->getGridX()) + "," + std::to_string(cell->getGridY())
+                    : cell->mName;
+            }
+            return result;
+        }
+
+        // Where an objective's target is placed, by the names of the cells, or nothing. An item that isn't placed
+        // anywhere can be carried, such as by a creature or in a container, and the markers then mark the holder.
+        std::string placeOf(
+            const MWWorld::ESMStore& store, const QuestTargets::Index& index, const QuestTargets::Objective& objective)
         {
             if (objective.mObject.empty())
                 return {};
             const int count = store.getRefCount(objective.mObject);
             if (count == 0)
-                return " (not placed)";
-            std::string result;
-            for (const ESM::Cell* cell : store.getRefCells(objective.mObject))
             {
-                result += result.empty() ? " (" : "; ";
-                result += cell->isExterior() && cell->mName.empty()
-                    ? std::to_string(cell->getGridX()) + "," + std::to_string(cell->getGridY())
-                    : cell->mName;
+                std::string holders;
+                for (const ESM::RefId& holder : index.holdersOf(objective.mObject))
+                {
+                    holders += holders.empty() ? "; carried by " : ", ";
+                    holders += holder.getRefIdString();
+                    const std::string cells = cellsOf(store, holder);
+                    holders += cells.empty() ? " (not placed)" : " in " + cells;
+                }
+                return " (not placed" + holders + ")";
             }
+            std::string result = " (" + cellsOf(store, objective.mObject);
             if (count > 1)
                 result += ", placed " + std::to_string(count) + " times";
-            return result.empty() ? result : result + ")";
+            return result + ")";
         }
 
         std::string rangesText(const std::vector<QuestCorrections::Range>& ranges)
@@ -249,7 +268,7 @@ namespace MWAutomation
                     out << "- to " << way.mToStage << ":";
                     for (const QuestTargets::Objective& objective : way.mObjectives)
                         out << " " << taskName(objective.mTask) << " " << QuestReview::targetOf(objective)
-                            << placeOf(store, objective) << ";";
+                            << placeOf(store, index, objective) << ";";
                     if (way.mChoice)
                         out << " an answer in a conversation;";
                     if (way.mFailure)
