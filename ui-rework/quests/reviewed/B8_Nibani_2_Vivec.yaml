@@ -1,0 +1,8 @@
+# The reviewed quest markers of B8_Nibani_2_Vivec.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B8_Nibani_2_Vivec
+stages:
+  - stage: 1
+    verdict: corrected  # Nothing was marked; now B8_MeetVivec's steps toward Saryoni and Vivec are followed, with Saryoni marked if that quest hasn't started.
+    marked: ["tholer saryoni"]

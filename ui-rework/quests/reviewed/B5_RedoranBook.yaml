@@ -1,0 +1,8 @@
+# The reviewed quest markers of B5_RedoranBook.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B5_RedoranBook
+stages:
+  - stage: 1
+    verdict: corrected  # the six councilors the Red Book lists are marked until each one's own quest starts, and those quests are followed
+    marked: ["athyn sarethi", "bolvyn venim", "brara morvayn", "garisa llethri", "hlaren ramoran", "miner arobar"]

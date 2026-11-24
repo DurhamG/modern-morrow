@@ -1,0 +1,8 @@
+# The reviewed quest markers of B8_Failed_Nerevarine.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B8_Failed_Nerevarine
+stages:
+  - stage: 1
+    verdict: right  # A failure record with nothing to go to; the back door quests guide the player on.
+    marked: []

@@ -1,0 +1,20 @@
+# The reviewed quest markers of B5_ArobarHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B5_ArobarHort
+stages:
+  - stage: 5
+    verdict: corrected  # nothing is marked; after a councilor dies Arobar only repeats his refusal, so the quest is a dead end
+    marked: []
+  - stage: 10
+    verdict: corrected  # nothing is marked; after a murder Arobar only repeats his refusal, so the quest is a dead end
+    marked: []
+  - stage: 20
+    verdict: corrected  # Arobar is marked only once Sarethi has vouched for the player; the House rank choice is hidden
+    marked: ["miner arobar"]
+  - stage: 50
+    verdict: corrected  # nothing is marked, as Arobar has already confirmed the player
+    marked: []
+  - stage: 60
+    verdict: right  # Arobar has confirmed the player, and nothing is left to do here
+    marked: []

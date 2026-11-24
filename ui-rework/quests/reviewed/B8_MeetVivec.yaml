@@ -1,0 +1,32 @@
+# The reviewed quest markers of B8_MeetVivec.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B8_MeetVivec
+stages:
+  - stage: 40
+    verdict: right  # Vivec asked the player to come back if they change their mind, and only Vivec is marked.
+    marked: ["misc_wraithguard_no_equip", "vivec_god"]
+  - stage: 38
+    verdict: right  # Vivec asked the player to come back if they change their mind, and only Vivec is marked.
+    marked: ["misc_wraithguard_no_equip", "vivec_god"]
+  - stage: 36
+    verdict: right  # Vivec asked the player to come back if they change their mind, and only Vivec is marked.
+    marked: ["misc_wraithguard_no_equip", "vivec_god"]
+  - stage: 34
+    verdict: right  # Vivec asked the player to come back if they change their mind, and only Vivec is marked.
+    marked: ["vivec_god"]
+  - stage: 30
+    verdict: right  # Saryoni sent the player to Vivec, who is marked.
+    marked: ["vivec_god"]
+  - stage: 25
+    verdict: corrected  # Vivec was marked before the journal names him; now only Saryoni, whose next answer gives the keys.
+    marked: ["tholer saryoni"]
+  - stage: 20
+    verdict: corrected  # Vivec was marked before the journal names him; now only Saryoni, whom the journal says to meet.
+    marked: ["tholer saryoni"]
+  - stage: 5
+    verdict: corrected  # Vivec and the Ordinators were marked; now only Saryoni in his quarters, as the journal says.
+    marked: ["tholer saryoni"]
+  - stage: 1
+    verdict: corrected  # Vivec was marked from the start; now only Danso Indules, and only once the player is Hortator and Nerevarine.
+    marked: ["danso indules"]

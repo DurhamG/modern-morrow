@@ -1,0 +1,17 @@
+# The reviewed quest markers of CX_BackPath.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CX_BackPath
+stages:
+  - stage: 25
+    verdict: right  # Yagrum asked the player to come back after a day, and he is marked once the day has passed.
+    marked: ["misc_wraithguard_no_equip", "yagrum bagarn"]
+  - stage: 10
+    verdict: right  # Both books are marked where they lie, and Yagrum once the player has them.
+    marked: ["bk_kagrenac'sjournal_excl", "bk_kagrenac'splans_excl", "misc_wraithguard_no_equip", "yagrum bagarn"]
+  - stage: 5
+    verdict: corrected  # Asking Yagrum about the journals is now optional, so the books are what is marked.
+    marked: ["bk_kagrenac'sjournal_excl", "bk_kagrenac'splans_excl", "misc_wraithguard_no_equip", "yagrum bagarn"]
+  - stage: 1
+    verdict: corrected  # Asking Yagrum where the books are is now optional, so the books are what is marked.
+    marked: ["bk_kagrenac'sjournal_excl", "bk_kagrenac'splans_excl", "misc_wraithguard_no_equip", "yagrum bagarn"]

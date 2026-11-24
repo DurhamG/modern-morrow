@@ -1,0 +1,29 @@
+# The reviewed quest markers of A1_11_ZainsubaniInformant.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A1_11_ZainsubaniInformant
+stages:
+  - stage: 1
+    verdict: right  # The journal sends the player to Hassour Zainsubani, and he is what is marked.
+    marked: ["hassour zainsubani"]
+  - stage: 10
+    verdict: right  # The hint about books in his room still leads to Hassour, who is marked.
+    marked: ["hassour zainsubani"]
+  - stage: 20
+    verdict: corrected  # Marks the two poetry books found in Ald'ruhn, and Hassour once one is held, instead of the no-gift talk.
+    marked: ["bk_ashland_hymns", "bk_words_of_the_wind", "hassour zainsubani"]
+  - stage: 31
+    verdict: corrected  # He has accepted a gift, so only his Ashlanders topic is marked, not the next poetry book.
+    marked: ["hassour zainsubani"]
+  - stage: 32
+    verdict: corrected  # He has accepted a gift, so only his Ashlanders topic is marked, not The Five Far Stars.
+    marked: ["hassour zainsubani"]
+  - stage: 33
+    verdict: right  # Every way forward is a talk with Hassour.
+    marked: ["hassour zainsubani"]
+  - stage: 34
+    verdict: right  # Every way forward is a talk with Hassour.
+    marked: ["hassour zainsubani"]
+  - stage: 35
+    verdict: right  # The only way forward is his Ashlanders topic.
+    marked: ["hassour zainsubani"]

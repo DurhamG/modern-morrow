@@ -1,0 +1,14 @@
+# The reviewed quest markers of B6_OmaniHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B6_OmaniHort
+stages:
+  - stage: 5
+    verdict: corrected  # a councilor is dead and Velanda's refusal line always wins; nothing is marked
+    marked: []
+  - stage: 20
+    verdict: corrected  # Orvas Dren is marked until he approves, then Velanda to return to; the kill-Dren way is hidden
+    marked: ["orvas dren druglord", "velanda omani"]
+  - stage: 50
+    verdict: right  # Velanda has voted
+    marked: []

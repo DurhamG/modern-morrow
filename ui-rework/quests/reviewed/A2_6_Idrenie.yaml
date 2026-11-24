@@ -1,0 +1,8 @@
+# The reviewed quest markers of A2_6_Idrenie.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A2_6_Idrenie
+stages:
+  - stage: 100
+    verdict: right  # The ghost's gift ends this side quest, so there is nothing left to mark.
+    marked: []

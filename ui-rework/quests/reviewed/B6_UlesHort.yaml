@@ -1,0 +1,14 @@
+# The reviewed quest markers of B6_UlesHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B6_UlesHort
+stages:
+  - stage: 5
+    verdict: corrected  # a councilor is dead and Nevena's refusal line always wins; nothing is marked
+    marked: []
+  - stage: 20
+    verdict: corrected  # the journal sends the player to Orvas Dren, marked until he approves, then Nevena; the kill-Dren way is hidden
+    marked: ["nevena ules", "orvas dren druglord"]
+  - stage: 50
+    verdict: right  # Nevena has voted
+    marked: []

@@ -1,0 +1,17 @@
+# The reviewed quest markers of B5_VenimHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B5_VenimHort
+stages:
+  - stage: 10
+    verdict: corrected  # nothing is marked, as Venim is dead and the quest cannot go on
+    marked: []
+  - stage: 20
+    verdict: right  # Venim is marked only once the other five councilors have confirmed the player, which is when he issues the challenge
+    marked: ["bolvyn venim"]
+  - stage: 30
+    verdict: corrected  # the Arena Pit in Vivec is marked; the kill was marked at Venim's manor, where killing him is a murder, and a script moves him into the pit
+    marked: ["cell:vivec, arena pit"]
+  - stage: 50
+    verdict: corrected  # Athyn Sarethi is marked, as the journal says to speak with him again to be named Hortator
+    marked: ["athyn sarethi"]

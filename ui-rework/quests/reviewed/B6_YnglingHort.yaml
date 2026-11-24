@@ -1,0 +1,20 @@
+# The reviewed quest markers of B6_YnglingHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B6_YnglingHort
+stages:
+  - stage: 5
+    verdict: corrected  # a councilor is dead and Yngling's refusal line always wins; the leftover kill way is hidden too
+    marked: []
+  - stage: 10
+    verdict: right  # Yngling wants a bribe and is the one marked
+    marked: ["yngling half-troll"]
+  - stage: 20
+    verdict: right  # Yngling wants a bigger bribe and is the one marked
+    marked: ["yngling half-troll"]
+  - stage: 50
+    verdict: corrected  # Yngling has voted; the only way left was killing him, which is now hidden
+    marked: []
+  - stage: 70
+    verdict: right  # Yngling is dead, which counts as his vote; nothing left in this quest
+    marked: []

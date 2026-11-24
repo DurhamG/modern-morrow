@@ -1,0 +1,8 @@
+# The reviewed quest markers of C0_Act_C_Expo.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: C0_Act_C_Expo
+stages:
+  - stage: 1
+    verdict: corrected  # the two tools are marked, and the door into Dagoth Ur's citadel once the player carries Keening
+    marked: ["cell:dagoth ur, outer facility", "keening", "sunder"]

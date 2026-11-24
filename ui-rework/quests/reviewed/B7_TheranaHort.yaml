@@ -1,0 +1,14 @@
+# The reviewed quest markers of B7_TheranaHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B7_TheranaHort
+stages:
+  - stage: 5
+    verdict: right  # the Mouth sends the player to Therana, who is marked
+    marked: ["therana"]
+  - stage: 30
+    verdict: right  # Therana lost interest; charming her and asking again is the way, and she is marked
+    marked: ["therana"]
+  - stage: 50
+    verdict: right  # Therana has voted
+    marked: []

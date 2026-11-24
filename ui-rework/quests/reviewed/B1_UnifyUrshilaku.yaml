@@ -1,0 +1,23 @@
+# The reviewed quest markers of B1_UnifyUrshilaku.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B1_UnifyUrshilaku
+stages:
+  - stage: 25
+    verdict: right  # Sul-Matuul names the player Nerevarine next.
+    marked: ["sul-matuul"]
+  - stage: 20
+    verdict: right  # Sul-Matuul continues his recital.
+    marked: ["sul-matuul"]
+  - stage: 15
+    verdict: right  # Sul-Matuul continues his recital.
+    marked: ["sul-matuul"]
+  - stage: 10
+    verdict: right  # Sul-Matuul continues his recital.
+    marked: ["sul-matuul"]
+  - stage: 5
+    verdict: right  # Sul-Matuul recites the needs of the Nerevarine.
+    marked: ["sul-matuul"]
+  - stage: 1
+    verdict: right  # Sul-Matuul is the one to speak with to be named Nerevarine.
+    marked: ["sul-matuul"]

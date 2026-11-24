@@ -1,0 +1,14 @@
+# The reviewed quest markers of B7_BaladasHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B7_BaladasHort
+stages:
+  - stage: 5
+    verdict: right  # the Mouth sends the player to Baladas, who is marked
+    marked: ["baladas demnevanni"]
+  - stage: 30
+    verdict: right  # Baladas refused for now; raising his opinion and asking again is the way, and he is marked
+    marked: ["baladas demnevanni"]
+  - stage: 50
+    verdict: right  # Baladas has voted
+    marked: []

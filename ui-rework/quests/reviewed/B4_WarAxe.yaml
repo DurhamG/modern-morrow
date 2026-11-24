@@ -1,0 +1,11 @@
+# The reviewed quest markers of B4_WarAxe.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B4_WarAxe
+stages:
+  - stage: 5
+    verdict: right  # the token was given back, and nothing is left to do in this quest
+    marked: []
+  - stage: 1
+    verdict: right  # Han-Ammu is marked only once the other two tokens are given, which is when the main Erabenimsun quest sends the player to him too
+    marked: ["han-ammu", "war_axe_airan_ammu"]

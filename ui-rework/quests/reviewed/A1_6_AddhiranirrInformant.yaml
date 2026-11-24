@@ -1,0 +1,27 @@
+# The reviewed quest markers of A1_6_AddhiranirrInformant.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A1_6_AddhiranirrInformant
+stages:
+  - stage: 5
+    verdict: corrected  # Addhiranirr in the underworks is marked, with the two people who say where she hides optional, and not the tax agent.
+    marked: ["addhiranirr"]
+    optional: ["aldyne arenim", "sevisa teran"]
+  - stage: 10
+    verdict: corrected  # Only Addhiranirr is marked; the tax agent isn't named yet and would show as the furthest way.
+    marked: ["addhiranirr"]
+  - stage: 12
+    verdict: right  # While playing only Duvianus is marked, the way to get rid of him; her listed ways need a late main quest stage.
+    marked: ["addhiranirr", "duvianus platorius"]
+  - stage: 15
+    verdict: corrected  # Only Addhiranirr is marked, not the agent's answer that would give her away.
+    marked: ["addhiranirr"]
+  - stage: 30
+    verdict: corrected  # Only her Sixth House topic is marked, not the agent if he is still around.
+    marked: ["addhiranirr"]
+  - stage: 53
+    verdict: right  # Every way forward is a talk with Addhiranirr.
+    marked: ["addhiranirr"]
+  - stage: 56
+    verdict: right  # Every way forward is a talk with Addhiranirr.
+    marked: ["addhiranirr"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of B8_All_Hortator.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B8_All_Hortator
+stages:
+  - stage: 50
+    verdict: right  # The entry only records a trial done; the next step belongs to B8_MeetVivec, so nothing to mark.
+    marked: []

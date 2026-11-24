@@ -1,0 +1,17 @@
+# The reviewed quest markers of A1_10_MehraMilo.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A1_10_MehraMilo
+stages:
+  - stage: 10
+    verdict: right  # Every way forward is a talk with Mehra Milo, and the marker follows her to the back of the library.
+    marked: ["mehra milo"]
+  - stage: 20
+    verdict: right  # She has agreed to answer questions, and every way forward is a talk with her.
+    marked: ["mehra milo"]
+  - stage: 30
+    verdict: right  # Every way forward is a talk with her, which leads on to her asking for the book.
+    marked: ["mehra milo"]
+  - stage: 40
+    verdict: right  # The only way forward is her topic about the Nerevarine cult.
+    marked: ["mehra milo"]

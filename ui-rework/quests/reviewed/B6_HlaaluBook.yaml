@@ -1,0 +1,12 @@
+# The reviewed quest markers of B6_HlaaluBook.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B6_HlaaluBook
+stages:
+  - stage: 1
+    verdict: corrected  # the book lists the councilors, so each one is marked until their quest starts; Nileno's paid hint is optional
+    marked: ["crassius curio", "nevena ules", "velanda omani", "yngling half-troll"]
+    optional: ["nileno dorvayn"]
+  - stage: 30
+    verdict: corrected  # journal names Curio and the book lists the rest, so each councilor is marked until their quest starts
+    marked: ["crassius curio", "nevena ules", "velanda omani", "yngling half-troll"]

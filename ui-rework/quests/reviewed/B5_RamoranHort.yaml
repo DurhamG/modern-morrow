@@ -1,0 +1,20 @@
+# The reviewed quest markers of B5_RamoranHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B5_RamoranHort
+stages:
+  - stage: 5
+    verdict: corrected  # nothing is marked; after a councilor dies Ramoran only repeats his refusal, so the quest is a dead end
+    marked: []
+  - stage: 10
+    verdict: corrected  # nothing is marked; after a murder Ramoran only repeats his refusal, so the quest is a dead end
+    marked: []
+  - stage: 20
+    verdict: corrected  # Ramoran is marked only once Sarethi has vouched for the player; the House membership choice is hidden
+    marked: ["hlaren ramoran"]
+  - stage: 50
+    verdict: corrected  # nothing is marked, as Ramoran has already confirmed the player
+    marked: []
+  - stage: 60
+    verdict: right  # Ramoran has confirmed the player, and nothing is left to do here
+    marked: []

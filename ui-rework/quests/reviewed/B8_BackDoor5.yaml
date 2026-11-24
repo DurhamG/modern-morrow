@@ -1,0 +1,8 @@
+# The reviewed quest markers of B8_BackDoor5.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B8_BackDoor5
+stages:
+  - stage: 1
+    verdict: corrected  # Nothing was marked; now Saryoni at the High Fane is marked until he sends the player to Vivec, then B8_MeetVivec is followed.
+    marked: ["tholer saryoni"]

@@ -1,0 +1,38 @@
+# The reviewed quest markers of B2_AhemmusaSafe.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B2_AhemmusaSafe
+stages:
+  - stage: 40
+    verdict: right  # Sinnammu names the player Nerevarine next.
+    marked: ["sinnammu mirpal"]
+  - stage: 35
+    verdict: corrected  # Sinnammu is marked until she follows the player, then her walk quest marks the statue; the shrine is hidden because going there alone does nothing
+    marked: ["sinnammu mirpal"]
+  - stage: 30
+    verdict: corrected  # Sinnammu is marked until she follows the player, then her walk quest marks the statue; the shrine is hidden because going there alone does nothing; the Ordinators are optional
+    marked: ["sinnammu mirpal"]
+    optional: ["bethes sarothril", "drores arvel", "faction:temple"]
+  - stage: 25
+    verdict: corrected  # Sinnammu is marked until she follows the player, then her walk quest marks the statue; the shrine is hidden because going there alone does nothing; the Ordinators are optional
+    marked: ["sinnammu mirpal"]
+    optional: ["bethes sarothril", "drores arvel", "faction:temple"]
+  - stage: 20
+    verdict: corrected  # Sinnammu is marked until she follows the player, then her walk quest marks the statue; the shrine is hidden because going there alone does nothing; the Ordinators are optional
+    marked: ["sinnammu mirpal"]
+    optional: ["bethes sarothril", "drores arvel", "faction:temple"]
+  - stage: 15
+    verdict: corrected  # Hlireni Indavel at Ald Daedroth is marked, since the shrine isn't safe yet.
+    marked: ["hlireni indavel"]
+  - stage: 10
+    verdict: corrected  # Hlireni Indavel at Ald Daedroth is marked, since the shrine isn't safe yet.
+    marked: ["hlireni indavel"]
+  - stage: 5
+    verdict: corrected  # Hlireni Indavel at Ald Daedroth is marked, since the shrine isn't safe yet.
+    marked: ["hlireni indavel"]
+  - stage: 4
+    verdict: corrected  # Hlireni Indavel at Ald Daedroth is marked, since the shrine isn't safe yet.
+    marked: ["hlireni indavel"]
+  - stage: 1
+    verdict: corrected  # Hlireni Indavel at Ald Daedroth is marked, since the shrine isn't safe yet.
+    marked: ["hlireni indavel"]

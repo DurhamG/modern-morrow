@@ -1,0 +1,35 @@
+# The reviewed quest markers of C0_Act_C.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: C0_Act_C
+stages:
+  - stage: 20
+    verdict: corrected  # whichever of Sunder and Keening the player lacks is marked, once Vivec or the back path has sent the player for them
+    marked: ["keening", "sunder"]
+  - stage: 15
+    verdict: corrected  # Keening is marked if the player doesn't hold it, once Vivec or the back path has sent the player for it
+    marked: ["keening", "sunder"]
+  - stage: 10
+    verdict: corrected  # Sunder's carrier Dagoth Vemyn is marked, once Vivec or the back path has sent the player for it
+    marked: ["keening", "sunder"]
+  - stage: 7
+    verdict: corrected  # Sunder's carrier Dagoth Vemyn and Keening are marked, once Vivec or the back path has sent the player for them
+    marked: ["keening", "sunder"]
+  - stage: 6
+    verdict: corrected  # Sunder's carrier Dagoth Vemyn and Keening are marked, once Vivec or the back path has sent the player for them
+    marked: ["keening", "sunder"]
+  - stage: 5
+    verdict: corrected  # Sunder's carrier Dagoth Vemyn and Keening are marked, once Vivec or the back path has sent the player for them
+    marked: ["keening", "sunder"]
+  - stage: 4
+    verdict: corrected  # Sunder's carrier Dagoth Vemyn and Keening are marked, once Vivec or the back path has sent the player for them
+    marked: ["keening", "sunder"]
+  - stage: 3
+    verdict: corrected  # Sunder's carrier Dagoth Vemyn and Keening are marked, once Vivec or the back path has sent the player for them
+    marked: ["keening", "sunder"]
+  - stage: 2
+    verdict: corrected  # Sunder's carrier Dagoth Vemyn and Keening are marked, once Vivec or the back path has sent the player for them
+    marked: ["keening", "sunder"]
+  - stage: 1
+    verdict: corrected  # Sunder's carrier Dagoth Vemyn and Keening are marked, once Vivec or the back path has sent the player for them
+    marked: ["keening", "sunder"]

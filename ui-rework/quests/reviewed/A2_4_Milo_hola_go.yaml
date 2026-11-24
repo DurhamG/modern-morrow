@@ -1,0 +1,8 @@
+# The reviewed quest markers of A2_4_Milo_hola_go.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A2_4_Milo_hola_go
+stages:
+  - stage: 1
+    verdict: right  # the boat is ready; nothing more for this quest
+    marked: []

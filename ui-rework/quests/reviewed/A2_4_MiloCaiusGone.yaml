@@ -1,0 +1,8 @@
+# The reviewed quest markers of A2_4_MiloCaiusGone.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A2_4_MiloCaiusGone
+stages:
+  - stage: 5
+    verdict: right  # Caius's gifts are given; nothing to go to
+    marked: []

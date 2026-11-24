@@ -1,0 +1,20 @@
+# The reviewed quest markers of A1_4_MuzgobInformant.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A1_4_MuzgobInformant
+stages:
+  - stage: 1
+    verdict: right  # Every way forward is a talk with Sharn gra-Muzgob.
+    marked: ["sharn gra-muzgob"]
+  - stage: 10
+    verdict: corrected  # The skull in Andrano Ancestral Tomb is marked, with Sharn optional for directions to the tomb.
+    marked: ["misc_skull_llevule", "sharn gra-muzgob"]
+  - stage: 12
+    verdict: right  # The skull is marked, then Sharn once it is fetched.
+    marked: ["misc_skull_llevule", "sharn gra-muzgob"]
+  - stage: 15
+    verdict: right  # Sharn is ready to talk about the Nerevarine, and she is marked.
+    marked: ["sharn gra-muzgob"]
+  - stage: 20
+    verdict: right  # Caius is marked to take Sharn's notes; his promotion line also needs only him.
+    marked: ["bk_a1_4_sharnsnotes", "caius cosades"]

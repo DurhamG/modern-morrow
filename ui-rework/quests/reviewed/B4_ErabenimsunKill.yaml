@@ -1,0 +1,8 @@
+# The reviewed quest markers of B4_ErabenimsunKill.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B4_ErabenimsunKill
+stages:
+  - stage: 1
+    verdict: right  # killing a peaceful Erabenimsun ends the trial, and nothing is marked
+    marked: []

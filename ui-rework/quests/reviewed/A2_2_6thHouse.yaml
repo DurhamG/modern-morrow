@@ -1,0 +1,41 @@
+# The reviewed quest markers of A2_2_6thHouse.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A2_2_6thHouse
+stages:
+  - stage: 1
+    verdict: corrected  # marks Caius for the next mission; Dagoth Gares is not named yet and is still disabled
+    marked: ["caius cosades"]
+  - stage: 2
+    verdict: corrected  # marks Caius for the next mission; Dagoth Gares is not named yet and is still disabled
+    marked: ["caius cosades"]
+  - stage: 5
+    verdict: corrected  # marks Raesa Pullia, as the journal asks, instead of Caius and Dagoth Gares
+    marked: ["raesa pullia"]
+  - stage: 7
+    verdict: corrected  # marks Raesa Pullia only
+    marked: ["raesa pullia"]
+  - stage: 10
+    verdict: corrected  # marks Dagoth Gares as the kill the orders ask for, not as talk
+    marked: ["dagoth gares"]
+  - stage: 20
+    verdict: corrected  # marks Dagoth Gares as the kill
+    marked: ["dagoth gares"]
+  - stage: 40
+    verdict: corrected  # marks Dagoth Gares as the kill; his talk topics are hidden
+    marked: ["dagoth gares"]
+  - stage: 42
+    verdict: corrected  # marks Dagoth Gares as the kill
+    marked: ["dagoth gares"]
+  - stage: 44
+    verdict: corrected  # marks Dagoth Gares as the kill
+    marked: ["dagoth gares"]
+  - stage: 46
+    verdict: corrected  # marks Dagoth Gares as the kill
+    marked: ["dagoth gares"]
+  - stage: 48
+    verdict: corrected  # marks Dagoth Gares as the kill
+    marked: ["dagoth gares"]
+  - stage: 49
+    verdict: right  # only the kill is left, and it is marked
+    marked: ["dagoth gares"]

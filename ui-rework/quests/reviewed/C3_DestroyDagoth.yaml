@@ -1,0 +1,14 @@
+# The reviewed quest markers of C3_DestroyDagoth.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: C3_DestroyDagoth
+stages:
+  - stage: 20
+    verdict: right  # The player must flee the chamber, and the way out passes Azura, who ends the quest.
+    marked: ["azura spirit"]
+  - stage: 10
+    verdict: corrected  # Azura was marked before she appears; now the Heart of Lorkhan in Akulakhan's Chamber is marked.
+    marked: ["heart_akulakhan"]
+  - stage: 5
+    verdict: corrected  # Azura was marked before she appears; now Dagoth Ur, whom the player must fight, is marked.
+    marked: ["dagoth_ur_1"]

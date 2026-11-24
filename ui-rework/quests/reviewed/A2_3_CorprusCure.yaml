@@ -1,0 +1,42 @@
+# The reviewed quest markers of A2_3_CorprusCure.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A2_3_CorprusCure
+stages:
+  - stage: 46
+    verdict: right  # Divayth Fyr gives the potion when the player is ready
+    marked: ["divayth fyr"]
+  - stage: 40
+    verdict: right  # the boots go to Divayth Fyr
+    marked: ["divayth fyr"]
+  - stage: 32
+    verdict: corrected  # marks Yagrum Bagarn for the boots, not Divayth's potion lines
+    marked: ["yagrum bagarn"]
+  - stage: 30
+    verdict: corrected  # marks Yagrum Bagarn for the boots
+    marked: ["yagrum bagarn"]
+  - stage: 28
+    verdict: corrected  # marks Yagrum Bagarn for the boots
+    marked: ["yagrum bagarn"]
+  - stage: 25
+    verdict: corrected  # marks Yagrum Bagarn, as the journal asks, before going back to Divayth Fyr
+    marked: ["yagrum bagarn"]
+  - stage: 20
+    verdict: right  # the talk with Divayth Fyr goes on
+    marked: ["divayth fyr"]
+  - stage: 15
+    verdict: right  # the talk with Divayth Fyr goes on
+    marked: ["divayth fyr"]
+  - stage: 12
+    verdict: right  # marks Divayth Fyr; the player still holds the artifact, so the fetch is already done while playing
+    marked: ["divayth fyr", "misc_dwrv_artifact50"]
+  - stage: 10
+    verdict: right  # marks Divayth Fyr; the player still holds the artifact
+    marked: ["divayth fyr", "misc_dwrv_artifact50"]
+  - stage: 5
+    verdict: right  # marks Divayth Fyr at Tel Fyr; the player holds the artifact Caius gave
+    marked: ["divayth fyr", "misc_dwrv_artifact50"]
+  - stage: 1
+    verdict: corrected  # marks Divayth Fyr; Caius's directions to Tel Fyr become a hollow side step
+    marked: ["divayth fyr", "misc_dwrv_artifact50"]
+    optional: ["caius cosades"]

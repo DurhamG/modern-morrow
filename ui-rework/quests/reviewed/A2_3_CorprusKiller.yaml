@@ -1,0 +1,14 @@
+# The reviewed quest markers of A2_3_CorprusKiller.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A2_3_CorprusKiller
+stages:
+  - stage: 10
+    verdict: corrected  # marks nothing instead of every inmate still alive as a kill
+    marked: []
+  - stage: 20
+    verdict: corrected  # marks nothing instead of every inmate still alive as a kill
+    marked: []
+  - stage: 30
+    verdict: right  # Divayth has forgiven the player; nothing to go to
+    marked: []

@@ -38,8 +38,55 @@ version: 1
 # after a mod rewrote it, the quest's entries are left out with a warning, and it gets the default rule. The
 # quest-review scenario lists a corrected quest without a fingerprint, with the value to add.
 fingerprints:
+  A1_11_ZainsubaniInformant: 98f2c7c13f0c471a
   A1_1_FindSpymaster: d1ed1e20ebfa0d6a
+  A1_2_AntabolisInformant: d7c7d83e7d64f26a
+  A1_4_MuzgobInformant: 9ed76f94d7df466a
+  A1_6_AddhiranirrInformant: 1eef9b29c7e8257f
+  A1_7HuleeyaInformant: 1ea1a3cb7c09c115
+  A1_SleepersAwake: 7b8b4262590d78ed
   A1_V_VivecInformants: c4c1a65109e8bf3c
+  A2_1_Kurapli_Zallay: 79acc65145eeb161
+  A2_1_MeetSulMatuul: 66069d694547d5aa
+  A2_2_6thHouse: a3dafcd250d10b04
+  A2_3_CorprusCure: 99bf49ff4f872562
+  A2_3_CorprusKiller: be9c5df4db9f7b29
+  A2_3_CorprusSafe: f9ccf650cbf98e9a
+  A2_4_MiloGone: f77a606ee2491939
+  A2_6_Incarnate: 0471e85550e2b7d1
+  B2_AhemmusaSafe: 0a8161a63895a85a
+  B2_AhemmusaWalk: 2ff92e2a8cb3c2e2
+  B3_ZainabBride: a2407b140f37a023
+  B4_KillWarLovers: 73a49523d6c101c7
+  B5_ArobarHort: 26825a38ebf0a65a
+  B5_LlethriHort: 7d7a2e9e2a5e3d79
+  B5_MorvaynHort: e31b23315843f576
+  B5_RamoranHort: 554cd2c01da20bfe
+  B5_RedoranBook: 183a33c56bf0bd48
+  B5_SarethiHort: 4dc8f4616333d40d
+  B5_VenimHort: 7a2cdb765938eced
+  B6_BeroHort: 7237680cfbb26b4d
+  B6_CurioHort: 35c2ed65c0fdff08
+  B6_HlaaluBook: 914d4a570876e665
+  B6_OmaniHort: 13a77f5df7b490b9
+  B6_UlesHort: 5ccaced2ba8300f5
+  B6_YnglingHort: 68c50c2a19d9ee10
+  B7_AryonHort: 8decf03b93a3c3b2
+  B7_DrathaHort: f519aa90e5e201e7
+  B7_GothrenHort: a556bc9a22084bc0
+  B7_TelvanniBook: a07042b0378300c0
+  B8_BackDoor1: 17f55e5cf2257887
+  B8_BackDoor2: d409a64c6b6edce6
+  B8_BackDoor3: 348d23c0d9ff626f
+  B8_BackDoor4: 592d9673789d31a7
+  B8_BackDoor5: 76567487ac78b6a8
+  B8_BackDoor6: 646e7f84549e80e1
+  B8_MeetVivec: 4c3b84bf83ed52ed
+  B8_Nibani_2_Vivec: 4a87f3f2889b4098
+  C0_Act_C: 1ddc5211ddd5da16
+  C0_Act_C_Expo: d740bb3c16398018
+  C3_DestroyDagoth: d9b495fa0ea19552
+  CX_BackPath: f767cf1ca4fb7e5d
 
 quests:
 
@@ -71,3 +118,711 @@ quests:
         - { task: talk, object: huleeya, done: { quest: A1_7HuleeyaInformant, started: true } }
         - { task: talk, object: mehra milo, done: { quest: A1_10_MehraMilo, started: true } }
       follow: [A1_6_AddhiranirrInformant, A1_7HuleeyaInformant, A1_10_MehraMilo]
+
+  A1_2_AntabolisInformant:
+    # At stage 1 the default rule marks Hasphat Antabolis and the Dwemer puzzle box in Arkngthand, because the way
+    # to 10 fetches the box. Journal 1 only says to talk to Hasphat at the Balmora Fighters Guild and do him a favor.
+    # The box is first named in journal 5, which his line in the topic "Favor" sets, with only the condition that
+    # the quest has started. So at stage 1 only the way to 5 is marked.
+    - stages: 1
+      next: 5
+
+  A1_4_MuzgobInformant:
+    # Journal 10 asks for the skull of Llevule Andrano from Andrano Ancestral Tomb, where the skull is placed. The
+    # default rule also marks Sharn gra-Muzgob in full, because her line in the topic "Andrano Ancestral Tomb" has no
+    # conditions and leads to 12. That line only gives directions to the tomb, so it is a side step. Her line in the
+    # topic "Errand" that leads to 15 needs the skull, so she is marked in full once the player has it.
+    - stages: 10
+      next: 15
+      optional: 12
+
+  A1_6_AddhiranirrInformant:
+    # Journal 5 says Addhiranirr is hiding, probably in the St. Olms underworks. Her line in the topic "Census and
+    # Excise agent" leads to 12 and needs only A1_V_VivecInformants at 1 or more. Aldyne Arenim in the waistworks and
+    # Sevisa Teran in the canalworks have lines in the topic "Addhiranirr" that lead to 10. They only say where she
+    # hides, so they are side steps. Without this entry, Duvianus Platorius would be marked as the furthest way while
+    # playing. Addhiranirr's own ways to 56 and 60 need A2_6_Incarnate at 53, which can't hold this early in the
+    # main quest, so the way to 53 through Duvianus would be the highest one left.
+    - stages: 5
+      next: 12
+      optional: 10
+    # Journal 10 says Addhiranirr hides in the underworks. Her line that leads to 12 needs only
+    # A1_V_VivecInformants at 1 or more. Duvianus Platorius, the tax agent, has two answers in the topic
+    # "Addhiranirr" with no checks. One leads to 15 and the other to 53, where the player gives her away. Journal 10
+    # doesn't name him yet, so only Addhiranirr is marked.
+    - stages: 10
+      next: 12
+    # At 15 the player has sent Duvianus away. Addhiranirr's greeting and her line in the topic "Census and Excise
+    # agent" lead to 30, and need only stage 15 or more. While playing, the default rule would also mark Duvianus,
+    # through his answer that leads to 53. He is still placed at 15, because only her greeting disables him. Giving
+    # her away after sending him off is not a step journal 15 asks for.
+    - stages: 15
+      next: 30
+    # At 30 Addhiranirr is ready to talk. Her line in the topic "Sixth House cult" needs stage 30 exactly and leads
+    # to 45. Duvianus's answer that leads to 53 has no checks, and he is still placed when the player reached 30
+    # through her topic rather than her greeting, so the default rule would mark him as the furthest way.
+    - stages: 30
+      next: 45
+
+  A1_7HuleeyaInformant:
+    # Huleeya's script HuleeyaFollow sets 20 when he reaches Jobasha's Rare Books while following the player. That
+    # follow starts only from his answers in the topic "travel together", which lead to 18. So going to the
+    # bookstore before 18 does nothing, and the cell isn't marked until then. With the ways to 20 hidden, the rule
+    # marks Huleeya at stage 1, through his topic "troublesome fools" that leads to 2 and his answers that lead to
+    # 18. At stage 2 it marks the three men bothering him, Ethys Savil, Favel Gobor and Urven Davor, whose lines in
+    # the topic "filthy lizard" lead to 15. It also marks Huleeya, since journal 2 lets the player leave with him and
+    # fight instead. At stage 15 it marks Huleeya.
+    - stages: 1-15
+      hide: 20
+
+  A1_11_ZainsubaniInformant:
+    # Journal 20 says Hassour Zainsubani loves poetry, and suggests a bookseller nearby. His lines in the topic
+    # "thoughtful gift" lead to 31, 32 and 33 when the player has "Ashland Hymns", "Words of the Wind" or "The Five
+    # Far Stars". The default rule also marks him in full through his line that leads to 34, which takes no gift and
+    # which journal 20 doesn't offer. Ashland Hymns and Words of the Wind both have a copy in Codus Callonus's
+    # bookshop in Ald'ruhn. The Five Far Stars is left out, because one of its three copies is in Skaal Village on
+    # Solstheim, and fetch markers show every copy.
+    - stages: 20
+      next: [31, 32]
+    # Journals 31 and 32 say Hassour has accepted a book and will answer questions about the Ashlanders. His line in
+    # the topic "Ashlanders" leads to 50 and needs stage 31 or more. The default rule would also mark the next poetry
+    # book as a way to 32 or 33, which the player no longer needs.
+    - stages: 31-32
+      next: 50
+
+  A1_SleepersAwake:
+    # The only ways forward are Caius Cosades's line in the topic "attacked while sleeping", which leads to 5, and
+    # the visit to Azura's spirit in the Facility Cavern under Red Mountain at the end of the game, which leads to
+    # 50. Journal 1 is about a raving Sleeper and asks nothing of the player. The topic for Caius is only added by
+    # the Sleepers script when cultists attack the player in bed, which sets 3. So nothing is marked at 1.
+    - stages: 1
+      hide: [5, 50]
+    # At 3 the player was attacked in bed in Balmora, Ald'ruhn or Vivec, and the Sleepers script added the topic
+    # Caius answers. Telling him only earns advice, so he is optional. The end of the game is never marked.
+    - stages: 3
+      optional: 5
+      hide: 50
+    # Journal 5 suggests finding a nearby cultist base, without naming one. Journal 7 is about an attack by a
+    # Sleeper and asks nothing. Neither should point at the end of the game.
+    - stages: 5-7
+      hide: 50
+
+  A2_1_Kurapli_Zallay:
+    # Journal 1 asks the player to find and kill Zallay Subaddamael, who is placed in Zallay's Yurt at
+    # Aharasaplit Camp. Kurapli's line in the topic "Zallay Subaddamael" has no conditions and only says where he
+    # hides, so it is a side step. Her line in "personal vengeance" that leads to 50 needs Zallay dead.
+    - stages: 1
+      next: 50
+      optional: 10
+
+  A2_1_MeetSulMatuul:
+    # Journal 1 sends the player to Urshilaku Camp to speak with its leaders. Any Ashlander in Urshilaku Camp can
+    # answer "Nerevarine prophecies" and send the player on to Zabamund, which leads to 20. The line that leads to 5
+    # is said by anyone in Maar Gan, and only gives directions to the camp. Zabamund's lines lead to 35 from
+    # stage 1, but the journal hasn't named him yet. Nibani Maesa's line in "Sleepers" that leads to 53 from here
+    # needs C3_DestroyDagoth at 50 or more, so it only holds after the main quest ends.
+    - stages: 1
+      next: 20
+      optional: 5
+    # Journals 5, 11 and 13 leave the player on the way to the camp, or in it after killing an Ashlander. Talking
+    # to an Ashlander in Urshilaku Camp still leads to 20. Zabamund's lines to 35 are left out for the reason above.
+    - stages: [5, 11, 13]
+      next: 20
+    # At 20, 35 and 42 the only way to 53 is Nibani Maesa's "Sleepers" line that needs C3_DestroyDagoth at 50 or
+    # more, which is the end of the main quest. Her other "Sleepers" lines need this quest at 45 or more. Journal 20
+    # sends the player to Zabamund, 35 to Sul-Matuul, and 42 to the burial caverns for the bow.
+    - stages: [20, 35, 42]
+      hide: 53
+    # Journal 40 asks for Sul-Senipul's bow from the Urshilaku Burial Caverns. Sul-Matuul takes the bow in the topic
+    # "initiation rite", which leads to 45. His line in "Urshilaku burial caverns" has no conditions and only gives
+    # directions, leading to 42.
+    - stages: 40
+      next: 45
+      optional: 42
+
+  A2_2_6thHouse:
+    # Journals 1 and 2 tell the player to come back to Caius Cosades when ready. Caius's answer in "Orders" that
+    # leads to 5 needs A2_1_MeetSulMatuul at 60 or more, which holds once this quest has started. Dagoth Gares is
+    # disabled until that answer enables him, and the journal hasn't named him yet.
+    - stages: 1-2
+      next: 5
+    # Journals 5 and 7 tell the player to speak to Raesa Pullia, placed in Buckmoth Legion Fort. Her answer in
+    # "Sixth House base" leads to 10 and needs this quest at 5 or more. Caius's line in the same topic leads to 7,
+    # and repeats what the player has already been told.
+    - stages: [5, 7]
+      next: 10
+    # From 10 on, the journal's task is to kill Dagoth Gares in Ilunibi. His lines in the topics "Dagoth Ur",
+    # "Ilunibi shrine", "Sixth House", "Sixth House servants", "our enemy" and "Lord's friendship" lead to 40 to 49.
+    # They are talk the player can skip. The script CorprusOnPC on him sets 50 when he dies. With the talk left
+    # out, the kill is the only way left, so it is marked.
+    - stages: 10-48
+      hide: [40, 42, 44, 46, 48, 49]
+
+  A2_3_CorprusCure:
+    # Journal 1 sends the player to Divayth Fyr at Tel Fyr. Caius's line in "Tel Fyr", which leads to 5, only
+    # gives directions, and the player has just spoken to him. Caius gave the player the Dwemer artifact that
+    # Divayth Fyr's lines ask for.
+    - stages: 1
+      optional: 5
+    # Journal 25 sends the player to Yagrum Bagarn in the Corprusarium Bowels for the boots. His line in "Dwemer
+    # boots" leads to 40. Divayth Fyr's answers in "potion" lead to 46 and 50, and need only this quest at 25 or
+    # more, but the journal says to bring the boots first. Journals 28, 30 and 32 are notes about the inmates and
+    # come before the boots.
+    - stages: 25-32
+      next: 40
+
+  A2_3_CorprusKiller:
+    # Journals 10 and 20 record that the player killed an inmate of the Corprusarium. Divayth Fyr's greetings
+    # that lead to 30 each need a different inmate dead, so the default rule marks every inmate still alive as
+    # one to kill. The player has nothing to do here. Divayth Fyr forgives the player in a greeting the next time
+    # they meet, and A2_3_CorprusCure marks him anyway.
+    - stages: 10-20
+      hide: 30
+
+  A2_3_CorprusSafe:
+    # Journal 10 asks the player to search for a guarskin drum around the Corprusarium. The drum misc_de_drum_02
+    # is placed 34 times, too many to mark, so the fetch marks the one creature that carries one, the scamp
+    # Creeper in Ghorak Manor in Caldera. That is far from where the journal points. Uupse Fyr, placed in the
+    # Corprusarium Bowels, takes the drum in the topic "guarskin drum", which leads to 100. She stays marked until
+    # the drum is handed over.
+    - stages: 10
+      hide: 100
+      targets:
+        - { task: talk, object: uupse fyr, done: { quest: A2_3_CorprusSafe, atLeast: 100 } }
+
+  A2_4_MiloGone:
+    # Journal 1 sends the player to Mehra Milo at the Hall of Wisdom, and says to look for a message under the code
+    # word 'amaya' if something has gone wrong. Caius's "Orders" line has already moved her to the Ministry of
+    # Truth's holding cells and enabled the note bk_notetoamaya in Milo's Quarters. Reading the note leads to 10.
+    # Gilvas Barelo's answer in "lost prophecies" leads to 50 from stage 1, but the journal hasn't named him yet.
+    - stages: 1
+      next: 10
+    # Journal 10 sends the player to Alvela Saram, placed in the Vivec Temple. Her answers in "visit anyone" lead
+    # to 15.
+    - stages: 10
+      next: 15
+    # Journal 15 sends the player into the Ministry of Truth to free Mehra Milo. Her answer in "Divine
+    # Intervention scrolls" takes a scroll and leads to 20. That way fetches sc_divineintervention first, and the
+    # only placed copies lie in the far-off dungeons Ashir-Dan, Shal and Thelas Ancestral Tomb, which no journal
+    # mentions. Journal 10 already told the player to bring the scrolls, and traders sell them. So the way is
+    # hidden, and Mehra Milo is marked until she reaches 20. Gilvas Barelo's lines to 49 and 50 come later.
+    - stages: 15
+      hide: 20-50
+      targets:
+        - { task: talk, object: mehra milo, done: { quest: A2_4_MiloGone, atLeast: 20 } }
+    # Journal 20 sends the player to Blatta Hateria at the East Docks in Ebonheart, where she is placed, and then
+    # to Vevrana Aryon at the Holamayan dock. Vevrana Aryon's greeting leads to 22. Blatta Hateria's answer in
+    # "go fishing" starts A2_4_Milo_hola_go instead of moving this quest on, and the player then still has to ask
+    # her for the boat ride. So she stays marked until Vevrana Aryon greets the player at Holamayan.
+    - stages: 20
+      next: 22
+      targets:
+        - { task: talk, object: blatta hateria, done: { quest: A2_4_MiloGone, atLeast: 22 } }
+
+  A2_6_Incarnate:
+    # Journal 1 has Nibani Maesa send the player away until some days have passed, and journal 3 says it is time to
+    # go back to her. Her "My judgement" answer leads to 5 once her local day count reaches 2, so while the player
+    # waits nothing is marked. The script NibaniWaitOneDay that would set 3 is never started, so stage 1 usually
+    # lasts until then. Sul-Matuul's "Third trial" answers that lead to 10 belong after her judgement, and the
+    # Moon-and-Star in the Cavern of the Incarnate (50) is a spoiler: neither has been mentioned yet.
+    - stages: 1-3
+      hide: [10, 50]
+    # Journal 5 sends the player to Sul-Matuul, whose "Third trial" answer leads to 10. The Cavern hasn't been
+    # mentioned yet.
+    - stages: 5
+      hide: 50
+    # Journal 10 asks for three tokens from Kogoruhn, to bring to Sul-Matuul. His answer that leads to 15 comes after
+    # a "Third trial" line that needs misc_goblet_dagoth, shadow_shield and ingred_corprus_weepings_01, but the
+    # analysis doesn't see those item conditions, so no line names the tokens as steps. The goblet is placed in
+    # "Kogoruhn, Dome of Pollock's Eve" and the shield in "Kogoruhn, Bleeding Heart". The corprus weepings are left
+    # out, because they are placed in several unrelated cells. One lies in the goblet's room, and the journal says to
+    # take them from a corprus beast. The Cavern is still unknown at this stage.
+    - stages: 10
+      hide: 50
+      targets:
+        - { task: fetch, object: shadow_shield, done: { quest: A2_6_Incarnate, atLeast: 15 } }
+        - { task: fetch, object: misc_goblet_dagoth, done: { quest: A2_6_Incarnate, atLeast: 15 } }
+    # Journal 15 sets the riddle and tells the player to ask the tribes for counsel. The Ashlanders' answers about the
+    # riddle lead to 20 and 22, and Nibani Maesa's answer to "the star is the key" leads to 26. Marking the
+    # Moon-and-Star in the Cavern (50) would give the riddle's answer away before the player has any lead. Only the
+    # Ashlanders' answers say where to look, in the Valley of the Wind. Nibani's answer needs only stage 15, and
+    # from 26 on the Cavern is marked, so going to her first would skip that lead. She is optional counsel here.
+    - stages: 15
+      hide: 50
+      optional: 26
+    # Journals 20, 22 and 24 come from Ashlanders who place the riddle in the Valley of the Wind, at the Needle and
+    # Airan's Teeth. The Cavern of the Incarnate lies there, so it is the place the journal now points to. More
+    # Ashlander answers (22, 24) and Nibani Maesa's answer about the star (26) remain as optional counsel.
+    - stages: 20-24
+      next: 50
+      optional: 22-26
+    # Journals 26 and 28 come from Nibani Maesa's answers about when the door can be seen. Her next answer, to "the
+    # dream is the door" (28) or "mouth of the cave" (29), only adds detail, so it is optional. The Cavern is marked
+    # as the goal, which fits a player who heard the Ashlanders at 20 to 24 first, as the markers at 15 lead them
+    # to. A player can also reach 26 straight from 15 through Nibani. The journal index never drops back to 20 to
+    # 24, so the two players can't be told apart, and for the second one the Cavern gives away where it lies.
+    - stages: 26-28
+      next: 50
+      optional: 28-29
+
+  B2_AhemmusaSafe:
+    # Journals 1, 4, 5, 10 and 15 tell the player to go to Ald Daedroth and make it safe before coming back to
+    # Sinnammu Mirpal. Hlireni Indavel, placed in "Ald Daedroth, Antechamber", is the priestess there. Her "Player of
+    # the Game" answers lead to 20 by persuasion and to 25 or 30 by threat. Sinnammu's own topics (5, 10, 15) only
+    # explain the task. Going back to her with the statue as the goal (40) comes after the shrine is safe. If Hlireni
+    # is dead, such as when the player cleared the shrine by force, her ways are left out and the default rule
+    # chooses among the rest, which include going back to Sinnammu.
+    - stages: 1-15
+      next: [20, 25, 30]
+    # Journals 20, 25 and 30 say Hlireni Indavel has promised her followers won't harm the Ahemmusa. The next step is
+    # to return to Sinnammu Mirpal in the Ahemmusa Camp and bring her to the statue in "Ald Daedroth, Inner Shrine".
+    # Her script mirpalFollow sets 40 only while she follows the player, which her "accompany you" answer starts
+    # along with B2_AhemmusaWalk at 10. So going to the shrine alone does nothing, and the ways to 40 are hidden.
+    # Sinnammu is marked until B2_AhemmusaWalk starts, and from then on that quest marks the statue. Hlireni's other
+    # answers (25, 30) are already behind the player. Hlireni warns in those answers that she can't speak for the
+    # Ordinators. The Ordinators' "who are you" answer, which leads to 35, is a side step that keeps them peaceful.
+    # Journal 35 records that talk, and the step after it is the same.
+    - stages: 20-35
+      hide: [25-30, 40]
+      optional: 35
+      targets:
+        - { task: talk, object: sinnammu mirpal, done: { quest: B2_AhemmusaWalk, started: true } }
+      follow: [B2_AhemmusaWalk]
+
+  B2_AhemmusaWalk:
+    # Journal 10 says Sinnammu Mirpal is following the player to the inner shrine of Ald Daedroth. Her "accompany you"
+    # answer gives her a follow package to "Ald Daedroth, Inner Shrine". Her script mirpalFollow then sets
+    # B2_AhemmusaSafe to 40 near the statue active_dae_sheogorath_ad, which is placed there. This quest has no
+    # line or script of its own that moves it on, so the statue is a target until B2_AhemmusaSafe reaches 40.
+    - stages: 10
+      targets:
+        - { task: visit, object: active_dae_sheogorath_ad, done: { quest: B2_AhemmusaSafe, atLeast: 40 } }
+
+  B3_ZainabBride:
+    # Journal 1 says Ashkhan Kaushad scoffed, and that raising his disposition might help, without naming anyone.
+    # Kaushad's choice lines in the topic "Nerevarine" lead to 5 at disposition 70, so asking him again is the
+    # main way. Sonummu Zabamat's line in "Counsel" leads to 3 and is only a tip, so it is optional. The way to 4
+    # needs the exquisite shoes that only her tip reveals. The way to 47 is FaluraScript, which runs only while
+    # Falura Llervu follows the player, long after this.
+    - stages: 1
+      next: 5
+      optional: 3
+    # Journal 3 tells the player to bring Kaushad exquisite shoes. His line in "exquisite shoes" leads to 4.
+    - stages: 3
+      next: 4
+    # Journal 4 records the gift. Asking Kaushad about "Nerevarine" again leads to 5.
+    - stages: 4
+      next: 5
+    # Journal 5 sets the task of killing the vampire Calvario in Nerano Ancestral Tomb, where he is placed. Kaushad's
+    # line that offers the choice leading to 20 and 22 needs Calvario dead, but no line or script names the kill.
+    # The answer to that choice has no check on Calvario, so Kaushad's ways would mark him from the start. They are
+    # hidden, and Kaushad is a target to report back to once Calvario is dead. The way to 47 is the escort at the
+    # end of the quest.
+    - stages: 5
+      hide: [20, 22, 47]
+      targets:
+        - { task: kill, object: calvario, done: { quest: B3_ZainabBride, atLeast: 20 } }
+        - { task: talk, object: kaushad, after: { dead: calvario }, done: { quest: B3_ZainabBride, atLeast: 20 } }
+    # From 20 to 40 the next step is each time one person or one set of items: Kaushad, Sonummu Zabamat in
+    # "Counsel", Savile Imayn and the exquisite clothes, the bug musk, then Falura Llervu with the presents. The way
+    # to 47 is FaluraScript, which only moves the quest while Falura follows the player after 45, so marking her and
+    # Kaushad's yurt before then gets ahead of the journal.
+    - stages: 20-40
+      hide: 47
+
+  B4_KillWarLovers:
+    # Journal 5 says to kill Ulath-Pal and the gulakhans Ahaz, Ranabi and Ashu-Ahhe, and then see Manirai. Her line in
+    # "Nerevarine prophecies" leads to 10 once all four are dead. That way counts as a failure, because Ulath-Pal
+    # speaks a line of this quest, so the default rule marks Han-Ammu's lines instead. Those need the tokens the
+    # four carry and only come after 10. With them hidden, the kills are the only way left, and they are marked.
+    - stages: 5
+      hide: [35, 40, 41, 42, 43]
+    # Journal 10 sends the player to persuade Han-Ammu in his yurt, and warns he will be hard to persuade. His lines
+    # in "want to be ashkhan" need one of the tokens that Ahaz, Ranabi and Ulath-Pal carried, which the journal
+    # hasn't mentioned. Without a token he only refuses. Each of those ways marks the token first, so Han-Ammu is a
+    # target here until he accepts. The token ways are optional, so the dead chiefs who carry the tokens get hollow
+    # markers as a hint.
+    - stages: 10
+      optional: [35, 40-43]
+      targets:
+        - { task: talk, object: han-ammu, done: { quest: B4_KillWarLovers, atLeast: 35 } }
+    # Journals 35 and 40 to 43 all say to ask Han-Ammu to name the player Nerevarine at once. His line in "name you
+    # Nerevarine" leads to 50. The other ways give him more tokens, which is no longer needed.
+    - stages: 35-43
+      next: 50
+
+  B5_ArobarHort:
+    # Journal 5 says Miner Arobar will never vote for the player after a councilor was killed. The councilor scripts
+    # set RedoranMurdered when one dies, and it never resets. Arobar's lines for it come first in "Redoran
+    # Hortator", so he gives no other answer from then on, and nothing can be done.
+    - stages: 5
+      hide: [10, 20, 50, 60]
+    # Journal 10 is the same dead end, for a murder.
+    - stages: 10
+      hide: [20, 50, 60]
+    # At 20 Arobar waits for the other councilors. His line leading to 50 needs B5_SarethiHort at 50. The choice
+    # leading to 60 needs a rank in House Redoran, and the journal never suggests it. At 50 he has already confirmed
+    # the player, so the way to 60 is only another wording of the same outcome.
+    - stages: [20, 50]
+      hide: 60
+
+  B5_LlethriHort:
+    # Journal 5 says Garisa Llethri refuses after a councilor was killed. His lines for RedoranMurdered come first in
+    # "Redoran Hortator" and the variable never resets, so nothing can be done.
+    - stages: 5
+      hide: [10, 20, 50, 60]
+    # Journal 10 is the same dead end, for a murder.
+    - stages: 10
+      hide: [20, 50, 60]
+    # At 20 Llethri will talk to the other councilors. His line leading to 50 needs B5_SarethiHort at 50. The choice
+    # leading to 60 needs House Redoran membership, which the journal never suggests. At 50 he has already confirmed
+    # the player.
+    - stages: [20, 50]
+      hide: 60
+
+  B5_MorvaynHort:
+    # Journal 5 says Brara Morvayn refuses after a councilor was killed. Her lines for RedoranMurdered come first in
+    # "Redoran Hortator" and the variable never resets, so nothing can be done.
+    - stages: 5
+      hide: [10, 20, 50, 60]
+    # Journal 10 is the same dead end, for a murder.
+    - stages: 10
+      hide: [20, 50, 60]
+    # At 20 Morvayn will share her concerns with the other councilors. Her line leading to 50 needs B5_SarethiHort at
+    # 50. The choices leading to 60 need House Redoran membership or HR_MorvaynManor done, which the journal never
+    # suggests. At 50 she has already confirmed the player.
+    - stages: [20, 50]
+      hide: 60
+
+  B5_RamoranHort:
+    # Journal 5 says Hlaren Ramoran refuses after a councilor was killed. His lines for RedoranMurdered come first in
+    # "Redoran Hortator" and the variable never resets, so nothing can be done.
+    - stages: 5
+      hide: [10, 20, 50, 60]
+    # Journal 10 is the same dead end, for a murder.
+    - stages: 10
+      hide: [20, 50, 60]
+    # At 20 Ramoran will talk to the other councilors. His line leading to 50 needs B5_SarethiHort at 50. The choice
+    # leading to 60 needs House Redoran membership, which the journal never suggests. At 50 he has already confirmed
+    # the player.
+    - stages: [20, 50]
+      hide: 60
+
+  B5_SarethiHort:
+    # Journal 5 says Athyn Sarethi refuses after a councilor was killed. His lines for RedoranMurdered come first in
+    # "Redoran Hortator" and the variable never resets, so nothing can be done.
+    - stages: 5
+      hide: [10, 50]
+    # Journal 10 is the same dead end, for a murder. The way to 25 is his answer in "Bolvyn Venim", which has no
+    # journal entry and doesn't help, so it is hidden with the ways to 50.
+    - stages: 10
+      hide: 25-50
+
+  B5_VenimHort:
+    # Journal 10 records the murder of Bolvyn Venim. Every way forward is a talk with him, so nothing is left to do.
+    - stages: 10
+      hide: [20, 30]
+    # Journal 30 says Venim challenged the player to a duel at the Arena in Vivec. vivecArenaScript, on a ring placed
+    # in "Vivec, Arena Pit", moves Venim into the pit when the player enters it at this stage. The only way forward is
+    # killing him, which the analysis marks at his manor in Ald-ruhn, where killing him is a murder. The pit is
+    # marked instead.
+    - stages: 30
+      hide: 50
+      targets:
+        - { task: visit, cell: "Vivec, Arena Pit", done: { quest: B5_VenimHort, atLeast: 50 } }
+    # Journal 50 says to speak with Athyn Sarethi again to be named Hortator. Reaching 30 needed the other five
+    # councilors' quests at 50, so his line in "Redoran Hortator" that names the player is open now. It moves
+    # B5_RedoranHort to 70, 50 and 60 at once.
+    - stages: 50
+      targets:
+        - { task: talk, object: athyn sarethi, done: { quest: B5_RedoranHort, atLeast: 50 } }
+
+  B5_RedoranBook:
+    # Journal 1 records being given the Red Book, which lists the six councilors and where they live. Each councilor
+    # starts a quest of their own when asked about "Redoran Hortator": B5_ArobarHort, B5_LlethriHort, B5_MorvaynHort,
+    # B5_RamoranHort, B5_SarethiHort and B5_VenimHort. Each is placed once in Ald-ruhn. Each is marked until their
+    # quest starts, and from then on what their quest marks is marked.
+    - stages: 1
+      targets:
+        - { task: talk, object: miner arobar, done: { quest: B5_ArobarHort, started: true } }
+        - { task: talk, object: garisa llethri, done: { quest: B5_LlethriHort, started: true } }
+        - { task: talk, object: brara morvayn, done: { quest: B5_MorvaynHort, started: true } }
+        - { task: talk, object: hlaren ramoran, done: { quest: B5_RamoranHort, started: true } }
+        - { task: talk, object: athyn sarethi, done: { quest: B5_SarethiHort, started: true } }
+        - { task: talk, object: bolvyn venim, done: { quest: B5_VenimHort, started: true } }
+      follow: [B5_ArobarHort, B5_LlethriHort, B5_MorvaynHort, B5_RamoranHort, B5_SarethiHort, B5_VenimHort]
+
+  B6_BeroHort:
+    # Stage 5 comes from Dram Bero's lines in the topic "Hlaalu Hortator" that need Crassius Curio, Nevena Ules or
+    # Velanda Omani dead. Those lines come before his answer that leads to 50 in the topic, and a death never undoes
+    # itself, so he refuses every time after. Marking him again sends the player to a dead end.
+    - stages: 5
+      hide: 50
+
+  B6_CurioHort:
+    # Stage 5 comes from Crassius Curio's lines in the topic "Hlaalu Hortator" that need Dram Bero, Nevena Ules or
+    # Velanda Omani dead. They come before his gift answers that lead to 50, 60 and 65, so after a councilor's death
+    # he always refuses, and the gift answers can't be reached.
+    - stages: 5
+      hide: [50, 60, 65]
+    # At 50 and 60 Curio has voted. His gift answers that lead to 60 and 65 come in two kinds. One kind needs
+    # B6_BeroHort, B6_OmaniHort, B6_UlesHort and B6_YnglingHort at 50 or more, and hands over the belt through
+    # B6_HlaaluHort 50. The other kind has no checks and only repeats his vote, for more gold. Both kinds lead to the
+    # same stages, so the repeat vote would keep him marked from the moment he voted. Those ways are hidden. A
+    # target's after condition can test only one quest, so the belt step can't wait for all four votes, and it is
+    # left unmarked.
+    - stages: [50, 60]
+      hide: [60, 65]
+
+  B6_HlaaluBook:
+    # Nileno Dorvayn hands over the Yellow Book in the topic "Hlaalu councilors" (stage 1). Journal 1 says the book
+    # lists the councilors and their homes. Her line to 30 only says whom to see first, for a 50 gold bribe, so it is a
+    # side step. Journal 30 names Crassius Curio. Each councilor's own quest starts when the player asks them about
+    # "Hlaalu Hortator": B6_CurioHort, B6_OmaniHort, B6_UlesHort and B6_YnglingHort. Dram Bero is left out, because
+    # Journal 50 of B6_BeroHort says that finding his home is the test.
+    - stages: [1, 30]
+      optional: 30
+      targets:
+        - { task: talk, object: crassius curio, done: { quest: B6_CurioHort, started: true } }
+        - { task: talk, object: velanda omani, done: { quest: B6_OmaniHort, started: true } }
+        - { task: talk, object: nevena ules, done: { quest: B6_UlesHort, started: true } }
+        - { task: talk, object: yngling half-troll, done: { quest: B6_YnglingHort, started: true } }
+      follow: [B6_BeroHort, B6_CurioHort, B6_OmaniHort, B6_UlesHort, B6_YnglingHort]
+
+  B6_OmaniHort:
+    # Stage 5 comes from Velanda Omani's lines in the topic "Hlaalu Hortator" that need another councilor dead. They
+    # come before every other line of hers in the topic, so she refuses from then on.
+    - stages: 5
+      hide: [20, 50]
+    # Journal 20 says she won't vote without Orvas Dren's approval. Orvas Dren, in Dren's Villa, gives it in the topic
+    # "Hlaalu Hortator", which sets B6_DrenHortator to 50. Her lines that lead to 50 need B6_DrenHortator at 50, or
+    # HH_WinCamonna at 50, or Orvas Dren dead. The way through his death marks him to be killed, which no journal
+    # entry suggests, and it leads to the same stage as the others, so all ways to 50 are hidden. Orvas Dren is marked
+    # to talk to until he agrees. Velanda Omani is marked to come back to once he has agreed, or once he is dead.
+    - stages: 20
+      hide: 50
+      targets:
+        - { task: talk, object: orvas dren druglord, done: { quest: B6_DrenHortator, atLeast: 50 } }
+        - { task: talk, object: velanda omani, after: { quest: B6_DrenHortator, atLeast: 50 } }
+        - { task: talk, object: velanda omani, after: { dead: orvas dren druglord } }
+
+  B6_UlesHort:
+    # Stage 5 comes from Nevena Ules's lines in the topic "Hlaalu Hortator" that need another councilor dead. They
+    # come before every other line of hers in the topic, so she refuses from then on.
+    - stages: 5
+      hide: [20, 50]
+    # Journal 20 sends the player to her advisor Orvas Dren. His approval in the topic "Hlaalu Hortator" sets
+    # B6_DrenHortator to 50. Her lines that lead to 50 need B6_DrenHortator at 50, or HH_WinCamonna at 50, or Orvas
+    # Dren dead. The way through his death marks him to be killed, which no journal entry suggests, and it leads to
+    # the same stage as the others, so all ways to 50 are hidden. Orvas Dren is marked until he agrees. Nevena Ules
+    # is marked to come back to once he has agreed, or once he is dead.
+    - stages: 20
+      hide: 50
+      targets:
+        - { task: talk, object: orvas dren druglord, done: { quest: B6_DrenHortator, atLeast: 50 } }
+        - { task: talk, object: nevena ules, after: { quest: B6_DrenHortator, atLeast: 50 } }
+        - { task: talk, object: nevena ules, after: { dead: orvas dren druglord } }
+
+  B6_YnglingHort:
+    # Stage 5 comes from Yngling Half-Troll's lines in the topic "Hlaalu Hortator" that need another councilor dead.
+    # They come before his bribe lines, so he refuses from then on. The way to 70 is his death, which his script
+    # writes, and it is set aside as a failure unless it is the only way left.
+    - stages: 5
+      hide: [10, 20, 50, 70]
+    # At 50 he has taken the bribe and voted. The only way left is his death, which leads to 70, so the default rule
+    # marks him to be killed after he has already given his vote.
+    - stages: 50
+      hide: 70
+
+  B7_AryonHort:
+    # Aryon's line in the topic "Archmagister Gothren" needs B7_AryonHort at 50 or more and Gothren alive, and adds
+    # journal entry 40. The Journal command never lowers a quest's index, so the stage stays at 50 or 55 and 40 is
+    # not normally the current stage. If it ever is, his answers that lead to 50 and 55 would only repeat the vote.
+    # Journals 40, 50 and 55 all say Aryon advises killing Gothren, who would otherwise put off the vote forever.
+    # Gothren is placed once, in the Upper Tower of Tel Aruhn. His marker goes away when he dies.
+    - stages: 40
+      hide: [50, 55]
+      targets:
+        - { task: kill, object: gothren }
+    # At 50 Aryon has voted. The way to 55 is his other answer to the same question, for the other sex, which can't
+    # come up again.
+    - stages: 50
+      hide: 55
+      targets:
+        - { task: kill, object: gothren }
+    - stages: 55
+      targets:
+        - { task: kill, object: gothren }
+
+  B7_DrathaHort:
+    # Stage 5 comes from Raven Omayn's answer in the topic "Telvanni Hortator" that has no condition on the player's
+    # sex. Her answer that leads to 10 needs a male player, and comes first, so a player at 5 is female and can't get
+    # it. Journal 5 sends the player to Dratha in Tel Mora.
+    - stages: 5
+      hide: 10
+    # At 50 Dratha has voted. The way to 60 is her answer after the player keeps telling the story, which only comes
+    # up when she first refuses to listen.
+    - stages: 50
+      hide: 60
+
+  B7_GothrenHort:
+    # At 50 Gothren has refused for good. The way to 60 is his other refusal in the topic "Telvanni Hortator", which
+    # leads to no vote either, so marking him again misleads.
+    - stages: 50
+      hide: 60
+
+  B7_TelvanniBook:
+    # Aryon hands over the Brown Book in the topic "Telvanni councilors" and marks the councilors' towers on the map.
+    # Journal 1 says the book lists the councilors and their homes. Each councilor's own quest starts at 5 when their
+    # Mouth in the Telvanni Council House sends the player on, or when the player asks the councilor about
+    # "Telvanni Hortator" directly: B7_AryonHort, B7_BaladasHort, B7_DrathaHort, B7_GothrenHort, B7_NelothHort and
+    # B7_TheranaHort.
+    - stages: 1
+      targets:
+        - { task: talk, object: aryon, done: { quest: B7_AryonHort, started: true } }
+        - { task: talk, object: baladas demnevanni, done: { quest: B7_BaladasHort, started: true } }
+        - { task: talk, object: dratha, done: { quest: B7_DrathaHort, started: true } }
+        - { task: talk, object: gothren, done: { quest: B7_GothrenHort, started: true } }
+        - { task: talk, object: neloth, done: { quest: B7_NelothHort, started: true } }
+        - { task: talk, object: therana, done: { quest: B7_TheranaHort, started: true } }
+      follow: [B7_AryonHort, B7_BaladasHort, B7_DrathaHort, B7_GothrenHort, B7_NelothHort, B7_TheranaHort]
+
+  B8_BackDoor1:
+    # Athyn Sarethi's greeting starts this quest when the player is level 20 or more, has reputation 50 or more
+    # and has A2_6_Incarnate at 50 or more. The journal sends the player to Archcanon Saryoni at
+    # the High Fane, but no line moves this quest on. Saryoni's answer in "Temple's doctrine" that needs the same
+    # level, reputation and A2_6_Incarnate checks gives the keys and sets B8_MeetVivec to 30. Saryoni is placed
+    # once, in "Vivec, High Fane". He is marked until B8_MeetVivec reaches 30, and B8_MeetVivec's own markers
+    # lead on to Vivec from there.
+    - stages: 1
+      targets:
+        - { task: talk, object: tholer saryoni, done: { quest: B8_MeetVivec, atLeast: 30 } }
+      follow: [B8_MeetVivec]
+
+  B8_BackDoor2:
+    # The same back door as B8_BackDoor1, started by Crassius Curio's greeting under the same checks.
+    - stages: 1
+      targets:
+        - { task: talk, object: tholer saryoni, done: { quest: B8_MeetVivec, atLeast: 30 } }
+      follow: [B8_MeetVivec]
+
+  B8_BackDoor3:
+    # The same back door as B8_BackDoor1, started by Divayth Fyr's greeting under the same checks.
+    - stages: 1
+      targets:
+        - { task: talk, object: tholer saryoni, done: { quest: B8_MeetVivec, atLeast: 30 } }
+      follow: [B8_MeetVivec]
+
+  B8_BackDoor4:
+    # The same back door as B8_BackDoor1, started by Mehra Milo's greeting under the same checks.
+    - stages: 1
+      targets:
+        - { task: talk, object: tholer saryoni, done: { quest: B8_MeetVivec, atLeast: 30 } }
+      follow: [B8_MeetVivec]
+
+  B8_BackDoor5:
+    # The same back door as B8_BackDoor1, started by Gilvas Barelo's greeting under the same checks.
+    - stages: 1
+      targets:
+        - { task: talk, object: tholer saryoni, done: { quest: B8_MeetVivec, atLeast: 30 } }
+      follow: [B8_MeetVivec]
+
+  B8_BackDoor6:
+    # The same back door as B8_BackDoor1, started by Nibani Maesa's greeting under the same checks.
+    - stages: 1
+      targets:
+        - { task: talk, object: tholer saryoni, done: { quest: B8_MeetVivec, atLeast: 30 } }
+      follow: [B8_MeetVivec]
+
+  B8_MeetVivec:
+    # Athyn Sarethi starts the quest at 1 in the topic "Redoran Hortator". Journal 1 says to see Danso Indules
+    # once the player is both Hortator and Nerevarine. Danso's line in "meet the archcanon" leads to 5 and needs
+    # B8_All_Hortator and B8_All_Nerevarine at 50, so it only shows once both are done. The default rule also marks
+    # Vivec, whose answers in "business" and "defeat Dagoth Ur" lead to 34 to 55 with no checks but the choice, and
+    # Saryoni, whose "Temple's doctrine" answers lead to 25 and 30. The journal hasn't mentioned either meeting yet.
+    # The players who can't become Nerevarine reach Saryoni through the B8_BackDoor quests, which mark him.
+    - stages: 1
+      hide: 25-55
+    # Journal 5, 20 and 25 all point at Archcanon Saryoni in his quarters at the High Fane. His answer to
+    # "Temple's doctrine" with choice 4 gives the keys and leads to 30. The Ordinators' line in "your plan",
+    # which leads to 20, is only a warning the player can skip. Vivec isn't named until journal 30.
+    - stages: 5-25
+      next: 30
+
+  B8_Nibani_2_Vivec:
+    # Nibani Maesa's lines in "Seven trials", "Sixth trial" and "Seventh trial" start this quest once the player is
+    # Hortator and Nerevarine. Journal 1 sends the player to Saryoni to ask for a meeting with Vivec, and no line
+    # moves this quest on. B8_MeetVivec covers that meeting, from Danso Indules to Saryoni to Vivec, so its markers
+    # are followed. Saryoni, placed in "Vivec, High Fane", is marked for the rare case where B8_MeetVivec hasn't
+    # started, since his "Temple's doctrine" line to B8_MeetVivec 30 doesn't need it.
+    - stages: 1
+      targets:
+        - { task: talk, object: tholer saryoni, done: { quest: B8_MeetVivec, started: true } }
+      follow: [B8_MeetVivec]
+
+  C0_Act_C:
+    # This quest records each ash vampire killed (1 to 7) and each of Kagrenac's tools found (10 for Keening, 15 for
+    # Sunder). The scripts ouch_keening and ouch_sunder set 10 and 15 when the player first holds the item. The
+    # analysis reads those as visits to the items. Keening lies in "Odrosal, Tower", but Sunder isn't placed: the
+    # creature dagoth vemyn carries it, in "Vemynal, Hall of Torque". So the default rule never shows Sunder, and
+    # shows nothing at all once 10 or 15 is reached, even while the other tool is still missing. Fetching each
+    # tool marks where it lies or who carries it, until the player holds it. Both stop once C3_DestroyDagoth
+    # reaches 20, when the Heart is destroyed. A vampire can be killed, or a tool found, long before anyone sends
+    # the player for the tools. Vivec does that in B8_MeetVivec, which ends at 50 or 55. On the back path, Yagrum
+    # Bagarn starts CX_BackPath at 1 after reading the plans of Vivec and Dagoth Ur that the player brings him. So
+    # the tools are marked only once one of those two quests has got that far.
+    - stages: 1-20
+      targets:
+        - { task: fetch, object: sunder, after: { quest: B8_MeetVivec, atLeast: 50 },
+            done: { quest: C3_DestroyDagoth, atLeast: 20 } }
+        - { task: fetch, object: keening, after: { quest: B8_MeetVivec, atLeast: 50 },
+            done: { quest: C3_DestroyDagoth, atLeast: 20 } }
+        - { task: fetch, object: sunder, after: { quest: CX_BackPath, started: true },
+            done: { quest: C3_DestroyDagoth, atLeast: 20 } }
+        - { task: fetch, object: keening, after: { quest: CX_BackPath, started: true },
+            done: { quest: C3_DestroyDagoth, atLeast: 20 } }
+
+  C0_Act_C_Expo:
+    # The Buoyant Armigers at Ghostgate start this quest in "inside the Ghostfence", which needs B8_MeetVivec at 50
+    # or more. B8_MeetVivec finishes at 50 or 55, where Vivec sends the player for Sunder in Vemynal and Keening in
+    # Odrosal, and then to the Heart in Dagoth Ur's citadel. No quest marks those steps until C3_DestroyDagoth
+    # starts at 5, when the player speaks with Dagoth Ur. Sunder is carried by dagoth vemyn in "Vemynal, Hall of
+    # Torque" and Keening lies in "Odrosal, Tower". Each tool is marked until the player holds it or the Heart is
+    # destroyed at C3_DestroyDagoth 20. Vivec's order is Sunder first, then Keening, and only then the Heart. So the
+    # door into "Dagoth Ur, Outer Facility" is marked once the player carries Keening, the second tool, and until
+    # C3_DestroyDagoth starts. A target's after condition can test only one item, so a player who takes Keening
+    # first sees the door while Sunder is still marked.
+    - stages: 1
+      targets:
+        - { task: fetch, object: sunder, done: { quest: C3_DestroyDagoth, atLeast: 20 } }
+        - { task: fetch, object: keening, done: { quest: C3_DestroyDagoth, atLeast: 20 } }
+        - { task: visit, cell: "Dagoth Ur, Outer Facility", after: { carried: keening },
+            done: { quest: C3_DestroyDagoth, started: true } }
+
+  C3_DestroyDagoth:
+    # Dagoth Ur's last answer in "final questions" sets 5 and starts the fight. The only way the analysis finds from
+    # 5 and 10 is the AzuraEnd script on "azura spirit", which ends the game at 50 and only appears once the Heart
+    # is destroyed at 20, so marking it is a spoiler. Journal 5 says the fight comes next. The creature dagoth_ur_1
+    # is placed in "Dagoth Ur, Facility Cavern" and is marked until the quest reaches 10, when he flees.
+    - stages: 5
+      hide: 50
+      targets:
+        - { task: kill, object: dagoth_ur_1, done: { quest: C3_DestroyDagoth, atLeast: 10 } }
+    # Journal 10 says to destroy the enchantments on the Heart of Lorkhan. The Heart is the creature
+    # heart_akulakhan, placed in "Akulakhan's Chamber". The EndGame script sets 20 once it is struck down.
+    - stages: 10
+      hide: 50
+      targets:
+        - { task: kill, object: heart_akulakhan, done: { quest: C3_DestroyDagoth, atLeast: 20 } }
+
+  CX_BackPath:
+    # Yagrum Bagarn starts this quest at 1 in "mythopoeic enchantments". Journal 1 asks for Kagrenac's Planbook and
+    # Kagrenac's Journals. The way to 25 fetches both. The journals lie in "Endusal, Kagrenac's study", and the
+    # planbook is in the desk dwrv_desk_tureynul in "Tureynulal, Kagrenac's Library". Yagrum's answers in
+    # "Kagrenac's Planbook" and "Kagrenac's Journals" lead to 5 and 10, but only say he doesn't know where the books
+    # are. They are side steps.
+    - stages: 1
+      optional: [5, 10]
+    # At 5 the answer in "Kagrenac's Journals", leading to 10, is still a side step.
+    - stages: 5
+      optional: 10

@@ -1,0 +1,20 @@
+# The reviewed quest markers of A1_7HuleeyaInformant.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A1_7HuleeyaInformant
+stages:
+  - stage: 1
+    verdict: corrected  # Huleeya is marked; the bookstore waits until he follows.
+    marked: ["huleeya"]
+  - stage: 2
+    verdict: corrected  # The three men bothering Huleeya are marked, and Huleeya for leaving and fighting; the bookstore waits.
+    marked: ["ethys savil", "favel gobor", "huleeya", "urven davor"]
+  - stage: 15
+    verdict: corrected  # Huleeya is marked to agree to travel; the bookstore waits until he follows.
+    marked: ["huleeya"]
+  - stage: 18
+    verdict: right  # The bookstore is marked while Huleeya follows; the marker on him is next to the player.
+    marked: ["cell:vivec, jobasha's rare books", "huleeya"]
+  - stage: 20
+    verdict: right  # Huleeya is in the bookstore and marked to answer questions.
+    marked: ["huleeya"]

@@ -343,3 +343,13 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   journal indices and of who and what moves it on, from which stage to which. When the loaded content gives a
   different hash, such as after a mod rewrote the quest, its corrections are left out with a warning. The
   `quest_records.py` tool writes review records from the sheets and a file of verdicts.
+- The main quest is reviewed, the first batch of the quest marker review. Six agents judged its 306 stages in 100
+  quests, and two more checked every corrected stage and over half of the rest. They disagreed at 31 stages, and a
+  third agent resolved them. In all, 150 stages were right without a correction, 151 have one, and 5 can't be marked
+  well. On the static comparison with Comprehensive Objective Mod's first objective, which tests checks as at a new
+  game, the main quest's markers agree at 74.3% of 191 stages, up from 68.6%, and point somewhere else at 12.0%, down
+  from 21.5%. The review also led to these engine changes, each in its own commit: ways with different checks stay
+  apart, targets can be optional and wait for an after condition, conditions can test a death or a carried item, a
+  kill named as next is marked, loading a game tracks every quest of the newest quest's name, and the sheets show who
+  carries an item. Two steps can't be marked yet: the last step of the Hlaalu and Telvanni Hortator chapters, which
+  need conditions on several quests at once or on a global variable.

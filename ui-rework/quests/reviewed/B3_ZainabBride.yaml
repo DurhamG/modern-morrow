@@ -1,0 +1,42 @@
+# The reviewed quest markers of B3_ZainabBride.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B3_ZainabBride
+stages:
+  - stage: 47
+    verdict: right  # Kaushad is marked, and the journal says to present Falura Llervu to him
+    marked: ["kaushad"]
+  - stage: 45
+    verdict: right  # Falura Llervu, who now follows the player, and the door of Kaushad's yurt are marked, as the journal says
+    marked: ["cell:zainab camp, ashkhan's yurt", "falura llervu"]
+  - stage: 40
+    verdict: corrected  # only Falura Llervu is marked, to hand her the presents; the escort to the yurt comes after
+    marked: ["exquisite_shirt_01", "exquisite_shoes_01", "exquisite_skirt_01", "falura llervu", "potion_t_bug_musk_01"]
+  - stage: 35
+    verdict: corrected  # the bug musk and then Savile Imayn are marked; the early escort to the yurt is hidden
+    marked: ["potion_t_bug_musk_01", "savile imayn"]
+  - stage: 30
+    verdict: corrected  # the exquisite clothes and then Savile Imayn are marked; the early escort to the yurt is hidden
+    marked: ["exquisite_shirt_01", "exquisite_shoes_01", "exquisite_skirt_01", "savile imayn"]
+  - stage: 25
+    verdict: corrected  # Savile Imayn is marked; the early escort to the yurt is hidden
+    marked: ["savile imayn"]
+  - stage: 22
+    verdict: corrected  # Sonummu Zabamat is marked, as Kaushad told the player; the early escort to the yurt is hidden
+    marked: ["sonummu zabamat"]
+  - stage: 20
+    verdict: corrected  # Kaushad is marked and the escort is hidden; the same line moves the journal on to 22, so 20 is never the current stage in play
+    marked: ["kaushad"]
+  - stage: 5
+    verdict: corrected  # Calvario is marked in Nerano Ancestral Tomb, and Kaushad only once Calvario is dead
+    marked: ["calvario", "kaushad"]
+  - stage: 4
+    verdict: corrected  # Kaushad is marked, to ask again after the gift; the shoes way and the escort are hidden
+    marked: ["kaushad"]
+  - stage: 3
+    verdict: corrected  # the exquisite shoes and then Kaushad are marked, as the wise woman's tip says
+    marked: ["exquisite_shoes_01", "kaushad"]
+  - stage: 1
+    verdict: corrected  # Kaushad is marked to ask again, and the wise woman is an optional tip; the shoes way is not known yet
+    marked: ["kaushad"]
+    optional: ["sonummu zabamat"]

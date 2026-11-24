@@ -1,0 +1,11 @@
+# The reviewed quest markers of B6_BeroHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B6_BeroHort
+stages:
+  - stage: 5
+    verdict: corrected  # a councilor is dead, so Bero's refusal line always wins; marking him again leads nowhere, so nothing is marked
+    marked: []
+  - stage: 50
+    verdict: right  # Bero has voted; the councilors he mentions have their own quests
+    marked: []

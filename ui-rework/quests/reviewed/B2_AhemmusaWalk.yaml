@@ -1,0 +1,8 @@
+# The reviewed quest markers of B2_AhemmusaWalk.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B2_AhemmusaWalk
+stages:
+  - stage: 10
+    verdict: corrected  # The statue in the inner shrine of Ald Daedroth is marked until Sinnammu has seen it.
+    marked: ["active_dae_sheogorath_ad"]

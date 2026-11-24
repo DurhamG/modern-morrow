@@ -1,0 +1,17 @@
+# The reviewed quest markers of B7_AryonHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B7_AryonHort
+stages:
+  - stage: 5
+    verdict: right  # the Mouth sends the player to Aryon, who is marked
+    marked: ["aryon"]
+  - stage: 40
+    verdict: corrected  # the stage stays at 50 or 55 because the journal never goes down, but if 40 is current Gothren is marked to kill and the repeat vote is hidden
+    marked: ["gothren"]
+  - stage: 50
+    verdict: corrected  # Aryon has voted and advises killing Gothren; Gothren is marked to kill instead of Aryon
+    marked: ["gothren"]
+  - stage: 55
+    verdict: corrected  # Aryon has voted and advises killing Gothren; Gothren is marked to kill
+    marked: ["gothren"]

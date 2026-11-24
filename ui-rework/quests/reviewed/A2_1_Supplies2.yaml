@@ -1,0 +1,8 @@
+# The reviewed quest markers of A2_1_Supplies2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A2_1_Supplies2
+stages:
+  - stage: 5
+    verdict: right  # the scrolls are given; nothing left to go to
+    marked: []

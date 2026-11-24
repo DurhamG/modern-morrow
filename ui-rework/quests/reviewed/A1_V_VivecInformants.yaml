@@ -1,0 +1,8 @@
+# The reviewed quest markers of A1_V_VivecInformants.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A1_V_VivecInformants
+stages:
+  - stage: 1
+    verdict: corrected  # Existing entry marks the three informants until each one's quest starts, then follows those quests.
+    marked: ["addhiranirr", "caius cosades", "huleeya", "mehra milo"]

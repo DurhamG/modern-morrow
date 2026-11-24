@@ -1,0 +1,17 @@
+# The reviewed quest markers of B6_CurioHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B6_CurioHort
+stages:
+  - stage: 5
+    verdict: corrected  # a councilor is dead, so Curio's refusal line always wins over his gift answers; nothing is marked
+    marked: []
+  - stage: 50
+    verdict: unfixable  # the belt step needs all four other votes, which one after condition can't test; the repeat vote is hidden, so nothing is marked
+    marked: []
+  - stage: 60
+    verdict: unfixable  # same as 50: the repeat vote is hidden, and the belt step after the other votes can't be marked
+    marked: []
+  - stage: 65
+    verdict: unfixable  # Curio has voted; the belt step after the other four votes moves only B6_HlaaluHort and can't wait for all four, so nothing is marked
+    marked: []

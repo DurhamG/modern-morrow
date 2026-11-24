@@ -1,0 +1,17 @@
+# The reviewed quest markers of A1_Dreams.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A1_Dreams
+stages:
+  - stage: 1
+    verdict: right  # Dreams come from sleeping; nothing to go to.
+    marked: []
+  - stage: 5
+    verdict: right  # Dreams come from sleeping; nothing to go to.
+    marked: []
+  - stage: 10
+    verdict: right  # Dreams come from sleeping; nothing to go to.
+    marked: []
+  - stage: 15
+    verdict: right  # Dreams come from sleeping; nothing to go to.
+    marked: []

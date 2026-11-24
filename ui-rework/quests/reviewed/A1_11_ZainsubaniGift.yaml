@@ -1,0 +1,8 @@
+# The reviewed quest markers of A1_11_ZainsubaniGift.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A1_11_ZainsubaniGift
+stages:
+  - stage: 1
+    verdict: right  # A hint about books in Hassour's room with no way forward; the informant quest marks Hassour.
+    marked: []

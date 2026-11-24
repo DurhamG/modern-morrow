@@ -1,0 +1,20 @@
+# The reviewed quest markers of B7_DrathaHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B7_DrathaHort
+stages:
+  - stage: 5
+    verdict: corrected  # the male-only Mouth line can't apply to a player at 5, so only Dratha is marked
+    marked: ["dratha"]
+  - stage: 10
+    verdict: right  # the Mouth warned the player and sends them to Dratha, who is marked
+    marked: ["dratha"]
+  - stage: 30
+    verdict: right  # Dratha refused to listen; asking again is the way, and she is marked
+    marked: ["dratha"]
+  - stage: 50
+    verdict: corrected  # Dratha has voted; her other answer can't come up, so nothing is marked
+    marked: []
+  - stage: 60
+    verdict: right  # Dratha has voted
+    marked: []

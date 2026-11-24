@@ -1,0 +1,44 @@
+# The reviewed quest markers of A2_4_MiloGone.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A2_4_MiloGone
+stages:
+  - stage: 49
+    verdict: right  # Gilvas Barelo finishes handing over the prophecies
+    marked: ["gilvas barelo"]
+  - stage: 48
+    verdict: right  # the talk with Gilvas Barelo goes on
+    marked: ["gilvas barelo"]
+  - stage: 46
+    verdict: right  # the talk with Gilvas Barelo goes on
+    marked: ["gilvas barelo"]
+  - stage: 44
+    verdict: right  # the talk with Gilvas Barelo goes on
+    marked: ["gilvas barelo"]
+  - stage: 42
+    verdict: right  # the talk with Gilvas Barelo goes on
+    marked: ["gilvas barelo"]
+  - stage: 40
+    verdict: right  # the talk with Gilvas Barelo goes on
+    marked: ["gilvas barelo"]
+  - stage: 30
+    verdict: right  # the talk with Gilvas Barelo goes on
+    marked: ["gilvas barelo"]
+  - stage: 25
+    verdict: right  # the talk with Gilvas Barelo goes on
+    marked: ["gilvas barelo"]
+  - stage: 22
+    verdict: right  # Vevrana says Milo is in the library with Barelo, who is marked
+    marked: ["gilvas barelo"]
+  - stage: 20
+    verdict: corrected  # marks Blatta Hateria until the player reaches Holamayan, and Vevrana Aryon; Gilvas Barelo is left out
+    marked: ["blatta hateria", "vevrana aryon"]
+  - stage: 15
+    verdict: corrected  # marks Mehra Milo until she takes the scroll; the far-off dungeon copies of the scroll and Gilvas Barelo are left out
+    marked: ["mehra milo"]
+  - stage: 10
+    verdict: corrected  # marks Alvela Saram only; Gilvas Barelo is not named yet
+    marked: ["alvela saram"]
+  - stage: 1
+    verdict: corrected  # marks the note in Milo's Quarters only; Gilvas Barelo is not named yet
+    marked: ["bk_notetoamaya"]

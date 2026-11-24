@@ -1,0 +1,20 @@
+# The reviewed quest markers of B5_LlethriHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B5_LlethriHort
+stages:
+  - stage: 5
+    verdict: corrected  # nothing is marked; after a councilor dies Llethri only repeats his refusal, so the quest is a dead end
+    marked: []
+  - stage: 10
+    verdict: corrected  # nothing is marked; after a murder Llethri only repeats his refusal, so the quest is a dead end
+    marked: []
+  - stage: 20
+    verdict: corrected  # Llethri is marked only once Sarethi has vouched for the player; the House membership choice is hidden
+    marked: ["garisa llethri"]
+  - stage: 50
+    verdict: corrected  # nothing is marked, as Llethri has already confirmed the player
+    marked: []
+  - stage: 60
+    verdict: right  # Llethri has confirmed the player, and nothing is left to do here
+    marked: []

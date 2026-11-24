@@ -1,0 +1,18 @@
+# The reviewed quest markers of A1_SleepersAwake.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A1_SleepersAwake
+stages:
+  - stage: 1
+    verdict: corrected  # Nothing is marked; Caius's topic isn't known yet and the end of the game is a spoiler.
+    marked: []
+  - stage: 3
+    verdict: corrected  # Caius is optional for reporting the attack; the end of the game is hidden.
+    marked: []
+    optional: ["caius cosades"]
+  - stage: 5
+    verdict: unfixable  # The journal suggests finding some nearby cultist base without naming one; the end of the game is hidden.
+    marked: []
+  - stage: 7
+    verdict: corrected  # Nothing to do after a Sleeper's attack; the end of the game is hidden.
+    marked: []

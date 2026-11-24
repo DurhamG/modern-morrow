@@ -1,0 +1,14 @@
+# The reviewed quest markers of B5_SarethiHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B5_SarethiHort
+stages:
+  - stage: 5
+    verdict: corrected  # nothing is marked; after a councilor dies Sarethi only repeats his refusal, so the quest is a dead end
+    marked: []
+  - stage: 10
+    verdict: corrected  # a dead end after a murder; Sarethi's refusal always wins, so his ways to 25 and 50 are hidden and nothing is marked
+    marked: []
+  - stage: 50
+    verdict: right  # Sarethi has named the player; the next steps belong to the other councilors' quests
+    marked: []

@@ -1,28 +1,29 @@
-# Reviewed quest markers for "Report to Caius Cosades", the main quest's first quest. Each stage lists the targets
-# the markers should show, worked out from the content files and questcorrections.yaml, and the reviewer's verdict.
+# The reviewed quest markers of A1_1_FindSpymaster.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
 quest: A1_1_FindSpymaster
 stages:
   - stage: 1
-    verdict: corrected
+    verdict: corrected  # Existing entry marks Caius and leaves the South Wall cornerclub optional, not Elone's directions.
     marked: ["caius cosades"]
     optional: ["cell:balmora, south wall cornerclub"]
   - stage: 2
-    verdict: corrected
+    verdict: corrected  # Existing entry marks Caius, with the South Wall cornerclub optional.
     marked: ["caius cosades"]
     optional: ["cell:balmora, south wall cornerclub"]
   - stage: 5
-    verdict: corrected
+    verdict: corrected  # Existing entry marks Caius, with Bacola Closcius optional for directions.
     marked: ["caius cosades"]
     optional: ["bacola closcius"]
   - stage: 10
-    verdict: right
+    verdict: right  # Directions given; every way forward is a talk with Caius.
     marked: ["caius cosades"]
   - stage: 11
-    verdict: right
+    verdict: right  # The player still has to hand over the package to Caius, who is marked.
     marked: ["caius cosades"]
   - stage: 12
-    verdict: right
+    verdict: right  # The player has to give Caius an answer, and he is marked.
     marked: ["caius cosades"]
   - stage: 14
-    verdict: right
+    verdict: right  # Caius gives the first orders, and he is marked.
     marked: ["caius cosades"]

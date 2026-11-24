@@ -1,0 +1,17 @@
+# The reviewed quest markers of B7_GothrenHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B7_GothrenHort
+stages:
+  - stage: 5
+    verdict: right  # the Mouth sends the player to Gothren, who is marked
+    marked: ["gothren"]
+  - stage: 30
+    verdict: right  # Gothren said he needs time; going back to him brings his real answer, and he is marked
+    marked: ["gothren"]
+  - stage: 50
+    verdict: corrected  # Gothren has refused for good; his other refusal is hidden, so nothing is marked
+    marked: []
+  - stage: 60
+    verdict: right  # Gothren has refused for good; nothing left in this quest
+    marked: []

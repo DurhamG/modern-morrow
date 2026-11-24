@@ -1,0 +1,14 @@
+# The reviewed quest markers of B7_NelothHort.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: B7_NelothHort
+stages:
+  - stage: 5
+    verdict: right  # the Mouth sends the player to Neloth, who is marked
+    marked: ["neloth"]
+  - stage: 30
+    verdict: right  # Neloth shouted at the player; raising his opinion and asking again is the way, and he is marked
+    marked: ["neloth"]
+  - stage: 50
+    verdict: right  # Neloth has voted
+    marked: []

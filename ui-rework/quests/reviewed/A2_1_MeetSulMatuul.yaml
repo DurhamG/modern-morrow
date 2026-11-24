@@ -1,0 +1,51 @@
+# The reviewed quest markers of A2_1_MeetSulMatuul.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A2_1_MeetSulMatuul
+stages:
+  - stage: 1
+    verdict: corrected  # marks an Ashlander in Urshilaku Camp; the Maar Gan directions become a hollow side step; Zabamund and the end-game Nibani line are left out
+    marked: ["faction:ashlanders"]
+    optional: ["cell:maar gan"]
+  - stage: 5
+    verdict: corrected  # marks an Ashlander in Urshilaku Camp, without Zabamund, whom the journal hasn't named, or the end-game Nibani line
+    marked: ["faction:ashlanders"]
+  - stage: 11
+    verdict: corrected  # same as 5; the player is at the camp after killing an Ashlander
+    marked: ["faction:ashlanders"]
+  - stage: 13
+    verdict: corrected  # same as 5; the player is at the camp after killing an Ashlander
+    marked: ["faction:ashlanders"]
+  - stage: 20
+    verdict: corrected  # marks Zabamund only; Nibani's line to 53 needs the main quest finished
+    marked: ["zabamund"]
+  - stage: 35
+    verdict: corrected  # marks Sul-Matuul only; Nibani's line to 53 needs the main quest finished
+    marked: ["sul-matuul"]
+  - stage: 40
+    verdict: corrected  # marks the bow, then Sul-Matuul; his cavern directions become a hollow side step
+    marked: ["bonebiter_bow_unique", "sul-matuul"]
+  - stage: 42
+    verdict: corrected  # marks the bow, then Sul-Matuul; Nibani's end-game line left out
+    marked: ["bonebiter_bow_unique", "sul-matuul"]
+  - stage: 45
+    verdict: right  # journal sends the player to Nibani Maesa, who is marked
+    marked: ["nibani maesa"]
+  - stage: 51
+    verdict: right  # the test goes on with Nibani Maesa
+    marked: ["nibani maesa"]
+  - stage: 52
+    verdict: right  # the test goes on with Nibani Maesa
+    marked: ["nibani maesa"]
+  - stage: 53
+    verdict: right  # the test goes on with Nibani Maesa
+    marked: ["nibani maesa"]
+  - stage: 54
+    verdict: right  # the test goes on with Nibani Maesa
+    marked: ["nibani maesa"]
+  - stage: 55
+    verdict: right  # the test goes on with Nibani Maesa
+    marked: ["nibani maesa"]
+  - stage: 56
+    verdict: right  # Nibani Maesa's verdict on the test finishes the quest
+    marked: ["nibani maesa"]

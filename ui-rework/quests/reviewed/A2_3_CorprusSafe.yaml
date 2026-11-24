@@ -1,0 +1,11 @@
+# The reviewed quest markers of A2_3_CorprusSafe.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: A2_3_CorprusSafe
+stages:
+  - stage: 10
+    verdict: unfixable  # the drum in the Corprusarium is one of 34 copies and can't be singled out; Creeper in Caldera is hidden and Uupse Fyr is marked for the hand-in
+    marked: ["uupse fyr"]
+  - stage: 100
+    verdict: right  # the drum is handed over; nothing to go to
+    marked: []
