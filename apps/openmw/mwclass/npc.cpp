@@ -40,6 +40,7 @@
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/difficultyscaling.hpp"
 #include "../mwmechanics/disease.hpp"
+#include "../mwmechanics/glancingblows.hpp"
 #include "../mwmechanics/inventory.hpp"
 #include "../mwmechanics/movement.hpp"
 #include "../mwmechanics/npcstats.hpp"
@@ -596,7 +597,11 @@ namespace MWClass
             MWBase::Environment::get().getWindowManager()->setEnemy(victim);
 
         float damage = 0.0f;
-        if (!success)
+        // A glancing blow does a small share of a hit's damage, without the skill progress, critical strike or
+        // enchantment of a hit.
+        const bool glancing
+            = MWMechanics::isGlancingBlow(success, ptr == MWMechanics::getPlayer(), Settings::game().mGlancingBlows);
+        if (!success && !glancing)
         {
             MWBase::Environment::get().getLuaManager()->onHit(ptr, victim, weapon, MWWorld::Ptr(), type, attackStrength,
                 attackWindUp, damage, false, hitPosition, false, MWMechanics::DamageSourceType::Melee);
@@ -620,6 +625,8 @@ namespace MWClass
                 damage = attack[0] + ((attack[1] - attack[0]) * attackStrength);
             }
             MWMechanics::adjustWeaponDamage(damage, weapon, ptr);
+            if (glancing)
+                damage *= MWMechanics::sGlancingBlowDamageShare;
             MWMechanics::reduceWeaponCondition(damage, true, weapon, ptr);
             MWMechanics::resistNormalWeapon(victim, ptr, weapon, damage);
             MWMechanics::applyWerewolfDamageMult(victim, weapon, damage);
@@ -628,12 +635,14 @@ namespace MWClass
         else
         {
             MWMechanics::getHandToHandDamage(ptr, victim, damage, healthdmg, attackStrength);
+            if (glancing)
+                damage *= MWMechanics::sGlancingBlowDamageShare;
         }
 
         MWBase::World* world = MWBase::Environment::get().getWorld();
         const MWWorld::Store<ESM::GameSetting>& store = world->getStore().get<ESM::GameSetting>();
 
-        if (ptr == MWMechanics::getPlayer())
+        if (ptr == MWMechanics::getPlayer() && !glancing)
         {
             ESM::RefId weapskill = ESM::Skill::HandToHand;
             if (!weapon.isEmpty())
@@ -659,10 +668,13 @@ namespace MWClass
         if (othercls.getCreatureStats(victim).getKnockedDown())
             damage *= store.find("fCombatKODamageMult")->mValue.getFloat();
 
-        // Apply "On hit" enchanted weapons
-        MWMechanics::applyOnStrikeEnchantment(ptr, victim, weapon, hitPosition);
+        if (!glancing)
+        {
+            // Apply "On hit" enchanted weapons
+            MWMechanics::applyOnStrikeEnchantment(ptr, victim, weapon, hitPosition);
 
-        MWMechanics::applyElementalShields(ptr, victim);
+            MWMechanics::applyElementalShields(ptr, victim);
+        }
 
         if (MWMechanics::blockMeleeAttack(ptr, victim, weapon, damage, attackStrength))
             damage = 0;

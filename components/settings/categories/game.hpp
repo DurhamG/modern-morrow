@@ -56,6 +56,7 @@ namespace Settings
         SettingValue<float> mRunFatigue{ mIndex, "Game", "run fatigue", makeClampSanitizerFloat(0, 1) };
         SettingValue<bool> mRetroactiveHealth{ mIndex, "Game", "retroactive health" };
         SettingValue<bool> mKeepLevelUpProgress{ mIndex, "Game", "keep level up progress" };
+        SettingValue<bool> mGlancingBlows{ mIndex, "Game", "glancing blows" };
         SettingValue<bool> mTurnToMovementDirection{ mIndex, "Game", "turn to movement direction" };
         SettingValue<bool> mSmoothMovement{ mIndex, "Game", "smooth movement" };
         SettingValue<float> mSmoothMovementPlayerTurningDelay{ mIndex, "Game", "smooth movement player turning delay",

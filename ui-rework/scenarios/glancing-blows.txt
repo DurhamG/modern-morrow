@@ -1,0 +1,86 @@
+# With the "glancing blows" setting, the player's attacks that would miss do a tenth of a hit's damage. The player
+# has Short Blade, Agility and Luck at 0, so every attack with an iron dagger misses. AI is off, so the nix-hound in
+# front of them stands still. A hit with the dagger does 4 damage, so a glancing blow would do 0.4, but every hit in
+# Morrowind does at least 1. Six glancing blows do 6, and they don't train Short Blade. Without the setting, the same
+# attacks do nothing.
+launch --start "Balmora, Caius Cosades' House" --set "Game.glancing blows=true"
+console command=tai
+console "command=player->additem \"iron dagger\" 1"
+console "command=player->equip \"iron dagger\""
+console "command=player->setshortblade 0"
+console "command=player->setagility 0"
+console "command=player->setluck 0"
+console "command=placeatpc \"nix-hound\" 1 200 0"
+wait frames=10
+lua "code=local util = require('openmw.util'); local types = require('openmw.types'); local p = require('openmw.world').players[1]; for _, c in ipairs(p.cell:getAll(types.Creature)) do if c.recordId == 'nix-hound' then _G.hound = c; c:teleport(p.cell, p.position + p.rotation:apply(util.vector3(0, 1, 0)) * 90, c.rotation) end end" context=global
+lua "code=local types = require('openmw.types'); types.Actor.setStance(require('openmw.self'), types.Actor.STANCE.Weapon)" context=player
+wait frames=40
+lua "code=_G.startHealth = require('openmw.types').Actor.stats.dynamic.health(_G.hound).current" context=global
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+expect-lua "local lost = _G.startHealth - require('openmw.types').Actor.stats.dynamic.health(_G.hound).current; print(math.abs(lost - 6) < 0.01)" true context=global
+expect-lua "print(require('openmw.types').NPC.stats.skills.shortblade(require('openmw.self')).progress)" 0 context=player
+
+launch --start "Balmora, Caius Cosades' House"
+console command=tai
+console "command=player->additem \"iron dagger\" 1"
+console "command=player->equip \"iron dagger\""
+console "command=player->setshortblade 0"
+console "command=player->setagility 0"
+console "command=player->setluck 0"
+console "command=placeatpc \"nix-hound\" 1 200 0"
+wait frames=10
+lua "code=local util = require('openmw.util'); local types = require('openmw.types'); local p = require('openmw.world').players[1]; for _, c in ipairs(p.cell:getAll(types.Creature)) do if c.recordId == 'nix-hound' then _G.hound = c; c:teleport(p.cell, p.position + p.rotation:apply(util.vector3(0, 1, 0)) * 90, c.rotation) end end" context=global
+lua "code=local types = require('openmw.types'); types.Actor.setStance(require('openmw.self'), types.Actor.STANCE.Weapon)" context=player
+wait frames=40
+lua "code=_G.startHealth = require('openmw.types').Actor.stats.dynamic.health(_G.hound).current" context=global
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+pad axis=righttrigger value=1 hold=15
+wait frames=40
+expect-lua "local lost = _G.startHealth - require('openmw.types').Actor.stats.dynamic.health(_G.hound).current; print(lost)" 0 context=global
+
+# Arrows that would miss land as glancing blows too. The player turns to face the nix-hound, so the arrows fly at it.
+launch --start "Balmora, Caius Cosades' House" --set "Game.glancing blows=true"
+console command=tai
+console "command=player->additem \"long bow\" 1"
+console "command=player->additem \"iron arrow\" 20"
+console "command=player->equip \"long bow\""
+console "command=player->equip \"iron arrow\""
+console "command=player->setmarksman 0"
+console "command=player->setagility 0"
+console "command=player->setluck 0"
+console "command=placeatpc \"nix-hound\" 1 200 0"
+wait frames=10
+lua "code=local util = require('openmw.util'); local types = require('openmw.types'); local p = require('openmw.world').players[1]; for _, c in ipairs(p.cell:getAll(types.Creature)) do if c.recordId == 'nix-hound' then _G.hound = c; c:teleport(p.cell, p.position + p.rotation:apply(util.vector3(0, 1, 0)) * 150, c.rotation) end end" context=global
+wait frames=10
+lua "code=local util = require('openmw.util'); local p = require('openmw.world').players[1]; local d = _G.hound.position - p.position; p:teleport(p.cell, p.position, util.transform.rotateZ(math.atan2(d.x, d.y)))" context=global
+lua "code=local types = require('openmw.types'); types.Actor.setStance(require('openmw.self'), types.Actor.STANCE.Weapon)" context=player
+wait frames=60
+lua "code=_G.startHealth = require('openmw.types').Actor.stats.dynamic.health(_G.hound).current" context=global
+pad axis=righttrigger value=1 hold=40
+wait frames=60
+pad axis=righttrigger value=1 hold=40
+wait frames=60
+pad axis=righttrigger value=1 hold=40
+wait frames=60
+expect-lua "local lost = _G.startHealth - require('openmw.types').Actor.stats.dynamic.health(_G.hound).current; print(math.abs(lost - 3) < 0.01)" true context=global
+expect-lua "print(require('openmw.types').NPC.stats.skills.marksman(require('openmw.self')).progress)" 0 context=player

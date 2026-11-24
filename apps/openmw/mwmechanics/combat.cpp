@@ -27,6 +27,7 @@
 
 #include "actorutil.hpp"
 #include "difficultyscaling.hpp"
+#include "glancingblows.hpp"
 #include "movement.hpp"
 #include "npcstats.hpp"
 #include "pathfinding.hpp"
@@ -234,6 +235,9 @@ namespace MWMechanics
             weaponSkill = weapon.getClass().getEquipmentSkill(weapon);
 
         float damage = 0.f;
+        // A glancing blow does a small share of a hit's damage, without the skill progress, critical strike or
+        // enchantment of a hit.
+        bool glancing = false;
         if (validVictim)
         {
             if (attacker == getPlayer())
@@ -241,7 +245,10 @@ namespace MWMechanics
 
             int skillValue = static_cast<int>(attacker.getClass().getSkill(attacker, weaponSkill));
 
-            if (Misc::Rng::roll0to99(world->getPrng()) >= getHitChance(attacker, victim, skillValue))
+            const bool rolledToHit
+                = Misc::Rng::roll0to99(world->getPrng()) < getHitChance(attacker, victim, skillValue);
+            glancing = isGlancingBlow(rolledToHit, attacker == getPlayer(), Settings::game().mGlancingBlows);
+            if (!rolledToHit && !glancing)
             {
                 MWBase::Environment::get().getLuaManager()->onHit(attacker, victim, weapon, projectile, 0,
                     attackStrength, attackWindUp, damage, false, hitPosition, false,
@@ -261,6 +268,8 @@ namespace MWMechanics
                 damage += attack[0] + ((attack[1] - attack[0]) * attackStrength);
             }
             adjustWeaponDamage(damage, weapon, attacker);
+            if (glancing)
+                damage *= sGlancingBlowDamageShare;
         }
 
         reduceWeaponCondition(damage, validVictim, weapon, attacker);
@@ -272,11 +281,11 @@ namespace MWMechanics
                 resistNormalWeapon(victim, attacker, projectile, damage);
             applyWerewolfDamageMult(victim, projectile, damage);
 
-            if (attacker == getPlayer())
+            if (attacker == getPlayer() && !glancing)
                 attacker.getClass().skillUsageSucceeded(attacker, weaponSkill, ESM::Skill::Weapon_SuccessfulHit);
 
             const MWMechanics::AiSequence& sequence = victim.getClass().getCreatureStats(victim).getAiSequence();
-            bool unaware = attacker == getPlayer() && !sequence.isInCombat()
+            bool unaware = attacker == getPlayer() && !glancing && !sequence.isInCombat()
                 && !MWBase::Environment::get().getMechanicsManager()->awarenessCheck(attacker, victim);
             bool knockedDown = victim.getClass().getCreatureStats(victim).getKnockedDown();
             if (knockedDown || unaware)
@@ -290,11 +299,13 @@ namespace MWMechanics
         }
 
         // Apply "On hit" effect of the projectile
-        bool appliedEnchantment = applyOnStrikeEnchantment(attacker, victim, projectile, hitPosition, true);
+        bool appliedEnchantment
+            = !glancing && applyOnStrikeEnchantment(attacker, victim, projectile, hitPosition, true);
 
         if (validVictim)
         {
-            applyElementalShields(attacker, victim);
+            if (!glancing)
+                applyElementalShields(attacker, victim);
             // Non-enchanted arrows shot at enemies have a chance to turn up in their inventory
             if (victim != getPlayer() && !appliedEnchantment)
             {

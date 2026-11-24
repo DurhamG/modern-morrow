@@ -33,6 +33,7 @@ file(GLOB UNITTEST_SRC_FILES
     mwinput/testtouchgestures.cpp
     mwinput/testtouchtutorial.cpp
 
+    mwmechanics/testglancingblows.cpp
     mwmechanics/testlevelling.cpp
     mwmechanics/testrunfatigue.cpp
 

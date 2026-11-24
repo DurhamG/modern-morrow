@@ -372,6 +372,26 @@ Game Settings
    Only the player is affected.
 
 .. omw-setting::
+   :title: glancing blows
+   :type: boolean
+   :range: true, false
+   :default: false
+   :location: :bdg-info:`In Game > Options > Prefs`
+
+   Whether the player's attacks that would miss land as glancing blows.
+   In Morrowind, each melee, ranged or hand-to-hand attack that reaches its target rolls against a chance to hit,
+   which is low for a new character, and a miss does nothing. Players often don't know why their attacks pass
+   through an enemy.
+
+   When true, the player's attacks that lose that roll do a tenth of the damage a hit would do.
+   Armor and resistances then reduce that damage as they would a hit's.
+   Like any hit in Morrowind, a glancing blow that does health damage does at least 1 after armor,
+   so early in the game most glancing blows do 1.
+   A glancing blow doesn't train the weapon's skill, isn't a critical strike on an unaware target,
+   and doesn't cast the weapon's or the projectile's enchantment.
+   Other actors' attacks still miss.
+
+.. omw-setting::
    :title: turn to movement direction
    :type: boolean
    :range: true, false
