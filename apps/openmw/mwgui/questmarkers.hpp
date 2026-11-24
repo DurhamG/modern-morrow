@@ -88,6 +88,8 @@ namespace MWGui
         void pollJournal();
         void computeMarkers();
         void addTargets(const ESM::RefId& quest, int stage, std::vector<Target>& targets);
+        // How far the player's quests have got, for the corrections' targets.
+        static QuestCorrections::Progress questProgress();
         // Adds where an objective's targets are now. Returns whether there were any.
         bool addObjectiveTargets(const QuestTargets::Objective& objective, std::vector<Target>& targets);
         // Whether a way needs someone to talk to who is dead or gone, or an item that the player doesn't carry and that

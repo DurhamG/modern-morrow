@@ -12,10 +12,15 @@
 #   optional  Mark the ways that lead to these journal indices as optional: side steps the player can take or leave.
 #             They are drawn hollow and smaller on the maps, and the compass leaves them out.
 #   hide      Never mark the ways that lead to these journal indices. The default rule chooses among the rest.
+#   targets   Mark these too, for steps that no line or script in the content names, such as the people a journal
+#             entry sends the player to. Each has a task (talk, kill, fetch or visit), an object or a cell, and
+#             optionally a count and a done condition. The done condition names a quest and one of atLeast: N,
+#             started: true or finished: true. Once it holds, the target isn't marked. A target without one is
+#             marked as long as the entry applies.
 #
-# The file holds no text for players, only quest IDs and journal indices. An entry whose quest or journal indices
-# aren't in the loaded content is left out, with a warning in the log, so a mod that renumbers a quest gets the
-# default rule rather than wrong markers.
+# The file holds no text for players, only quest IDs, journal indices, object IDs and cell names. An entry that
+# names anything the loaded content doesn't have is left out, with a warning in the log, so a mod that renumbers a
+# quest gets the default rule rather than wrong markers.
 #
 # The comments say where each fact comes from in the content files: journal entries, lines of dialogue with their
 # speakers, conditions and results, and where objects are placed.
@@ -37,3 +42,16 @@ quests:
     - stages: 5
       next: 14
       optional: 10
+
+  A1_V_VivecInformants:
+    # Journal 1 sends the player to three informants in Vivec: Addhiranirr in St. Olms, Huleeya at the Black Shalk
+    # Cornerclub, and Mehra Milo at the Hall of Wisdom. The only line that moves the quest on is Caius Cosades's
+    # report, which needs A1_6_AddhiranirrInformant at 45 or 60, and A1_7HuleeyaInformant and A1_10_MehraMilo at 50
+    # or more. So until all three are done the content gives nothing to mark. Each informant starts a quest of their
+    # own when the player finds them: A1_6_AddhiranirrInformant at 5, A1_7HuleeyaInformant at 1 and A1_10_MehraMilo
+    # at 10. Each is marked until their quest starts.
+    - stages: 1
+      targets:
+        - { task: talk, object: addhiranirr, done: { quest: A1_6_AddhiranirrInformant, started: true } }
+        - { task: talk, object: huleeya, done: { quest: A1_7HuleeyaInformant, started: true } }
+        - { task: talk, object: mehra milo, done: { quest: A1_10_MehraMilo, started: true } }

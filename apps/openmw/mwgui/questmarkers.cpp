@@ -329,6 +329,18 @@ namespace MWGui
         return false;
     }
 
+    QuestCorrections::Progress QuestMarkers::questProgress()
+    {
+        MWBase::Journal* journal = MWBase::Environment::get().getJournal();
+        QuestCorrections::Progress progress;
+        progress.mStage = [journal](const ESM::RefId& quest) { return journal->getJournalIndex(quest); };
+        progress.mFinished = [journal](const ESM::RefId& quest) {
+            const auto it = journal->getQuests().find(quest);
+            return it != journal->getQuests().end() && it->second.isFinished();
+        };
+        return progress;
+    }
+
     void QuestMarkers::addTargets(const ESM::RefId& quest, int stage, std::vector<Target>& targets)
     {
         using QuestTargets::Task;
@@ -369,8 +381,14 @@ namespace MWGui
         });
         for (QuestTargets::Way& way : ways)
             way.mOutOfReach = isOutOfReach(way);
-        for (const QuestTargets::Way& way :
-            QuestCorrections::chooseWays(std::move(ways), mCorrections.find(quest, stage), rule))
+        const QuestCorrections::Entry* entry = mCorrections.find(quest, stage);
+        std::vector<QuestTargets::Way> chosen = QuestCorrections::chooseWays(std::move(ways), entry, rule);
+        if (entry != nullptr)
+        {
+            std::vector<QuestTargets::Way> extra = QuestCorrections::targetWays(*entry, questProgress());
+            chosen.insert(chosen.end(), std::make_move_iterator(extra.begin()), std::make_move_iterator(extra.end()));
+        }
+        for (const QuestTargets::Way& way : chosen)
         {
             // Kills, fetches and visits come first. The talk they lead to is marked once they're done.
             const std::size_t first = targets.size();
