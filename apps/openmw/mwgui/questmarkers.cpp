@@ -344,6 +344,11 @@ namespace MWGui
         progress.mDead = [](const ESM::RefId& id) {
             return MWBase::Environment::get().getMechanicsManager()->countDeaths(id) > 0;
         };
+        progress.mGlobal = [](std::string_view name) {
+            MWBase::World* world = MWBase::Environment::get().getWorld();
+            const std::string variable(name);
+            return world->getGlobalVariableType(variable) == ' ' ? 0.f : world->getGlobalFloat(variable);
+        };
         progress.mCarried = [](const ESM::RefId& id) {
             const MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
             return player.getClass().getContainerStore(player).count(id) > 0;

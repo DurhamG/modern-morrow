@@ -11,6 +11,7 @@
 #include <components/debug/debuglog.hpp>
 #include <components/esm3/loadcell.hpp>
 #include <components/esm3/loaddial.hpp>
+#include <components/esm3/loadglob.hpp>
 #include <components/esm3/loadinfo.hpp>
 #include <components/misc/strings/algorithm.hpp>
 #include <components/vfs/manager.hpp>
@@ -99,13 +100,14 @@ namespace MWGui::QuestCorrections
         }
 
         // A target's condition: { quest: ID, atLeast: N }, { quest: ID, started: true },
-        // { quest: ID, finished: true }, { dead: ID } or { carried: ID }. Returns the problem with it, or nothing
-        // when it was read.
+        // { quest: ID, finished: true }, { dead: ID }, { carried: ID } or { global: NAME, atLeast: N }. Returns the
+        // problem with it, or nothing when it was read.
         std::optional<std::string> readCondition(const YAML::Node& node, const std::string& name, Condition& condition)
         {
             if (!node.IsMap())
                 return "a \"" + name + "\" that isn't a map";
             int stages = 0;
+            bool atLeast = false;
             for (const auto& field : node)
             {
                 const std::string key = field.first.as<std::string>();
@@ -115,8 +117,11 @@ namespace MWGui::QuestCorrections
                 else if (key == "atLeast" && readNumber(field.second))
                 {
                     condition.mAtLeast = *readNumber(field.second);
+                    atLeast = true;
                     ++stages;
                 }
+                else if (key == "global" && !value.empty())
+                    condition.mGlobal = value;
                 else if (key == "started" && isTrue(field.second))
                 {
                     condition.mAtLeast = 1;
@@ -134,12 +139,15 @@ namespace MWGui::QuestCorrections
                 else
                     return "a \"" + name + "\" with a wrong \"" + key + "\"";
             }
-            const bool quest = !condition.mQuest.empty() && stages == 1;
-            const int kinds
-                = (quest ? 1 : 0) + (condition.mDead.empty() ? 0 : 1) + (condition.mCarried.empty() ? 0 : 1);
-            if (kinds != 1 || (condition.mQuest.empty() != (stages == 0)))
+            const int kinds = (condition.mQuest.empty() ? 0 : 1) + (condition.mDead.empty() ? 0 : 1)
+                + (condition.mCarried.empty() ? 0 : 1) + (condition.mGlobal.empty() ? 0 : 1);
+            const bool stagesRight = !condition.mQuest.empty() ? stages == 1
+                : !condition.mGlobal.empty()                   ? stages == 1 && atLeast
+                                                               : stages == 0;
+            if (kinds != 1 || !stagesRight)
                 return "a \"" + name
-                    + "\" without exactly one of a quest with atLeast, started or finished, dead, or carried";
+                    + "\" without exactly one of a quest with atLeast, started or finished, dead, carried, or a global "
+                      "with atLeast";
             return std::nullopt;
         }
 
@@ -176,12 +184,29 @@ namespace MWGui::QuestCorrections
                     target.mCount = *readNumber(field.second);
                 else if (key == "optional" && (isTrue(field.second) || value == "false"))
                     target.mOptional = isTrue(field.second);
-                else if (key == "done" || key == "after")
+                else if (key == "done")
                 {
                     Condition condition;
                     if (std::optional<std::string> problem = readCondition(field.second, key, condition))
                         return problem;
-                    (key == "done" ? target.mDone : target.mAfter) = std::move(condition);
+                    target.mDone = std::move(condition);
+                }
+                else if (key == "after")
+                {
+                    // One condition, or a list of them that must all hold.
+                    std::vector<YAML::Node> nodes;
+                    if (field.second.IsSequence())
+                        for (const YAML::Node& item : field.second)
+                            nodes.push_back(item);
+                    else
+                        nodes.push_back(field.second);
+                    for (const YAML::Node& item : nodes)
+                    {
+                        Condition condition;
+                        if (std::optional<std::string> problem = readCondition(item, key, condition))
+                            return problem;
+                        target.mAfter.push_back(std::move(condition));
+                    }
                 }
                 else
                     return "a target with a wrong \"" + key + "\"";
@@ -395,10 +420,16 @@ namespace MWGui::QuestCorrections
                             return "the object " + target.mObject.getRefIdString();
                         if (!target.mCell.empty() && !(content.mHasCell && content.mHasCell(target.mCell)))
                             return "the cell " + target.mCell.getRefIdString();
-                        for (const std::optional<Condition>& condition : { target.mAfter, target.mDone })
+                        std::vector<const Condition*> conditions;
+                        for (const Condition& condition : target.mAfter)
+                            conditions.push_back(&condition);
+                        if (target.mDone)
+                            conditions.push_back(&*target.mDone);
+                        for (const Condition* condition : conditions)
                         {
-                            if (!condition)
-                                continue;
+                            if (!condition->mGlobal.empty()
+                                && !(content.mHasGlobal && content.mHasGlobal(condition->mGlobal)))
+                                return "the global variable " + condition->mGlobal;
                             if (!condition->mQuest.empty() && !content.mStages.contains(condition->mQuest))
                                 return "the quest " + condition->mQuest.getRefIdString();
                             for (const ESM::RefId& object : { condition->mDead, condition->mCarried })
@@ -460,6 +491,9 @@ namespace MWGui::QuestCorrections
     {
         Content content;
         content.mHasObject = [&](const ESM::RefId& id) { return store.find(id) != 0; };
+        content.mHasGlobal = [&](std::string_view name) {
+            return store.get<ESM::Global>().search(ESM::RefId::stringRefId(name)) != nullptr;
+        };
         content.mHasCell = [&](const ESM::RefId& id) {
             const std::string& name = id.getRefIdString();
             if (store.get<ESM::Cell>().search(name) != nullptr)
@@ -544,6 +578,8 @@ namespace MWGui::QuestCorrections
             return progress.mDead && progress.mDead(condition.mDead);
         if (!condition.mCarried.empty())
             return progress.mCarried && progress.mCarried(condition.mCarried);
+        if (!condition.mGlobal.empty())
+            return progress.mGlobal && progress.mGlobal(condition.mGlobal) >= static_cast<float>(condition.mAtLeast);
         if (progress.mFinished && progress.mFinished(condition.mQuest))
             return true;
         return !condition.mFinished && progress.mStage && progress.mStage(condition.mQuest) >= condition.mAtLeast;
@@ -555,7 +591,8 @@ namespace MWGui::QuestCorrections
         for (const Target& target : entry.mTargets)
         {
             if (progress != nullptr
-                && ((target.mAfter && !holds(*target.mAfter, *progress))
+                && (!std::all_of(target.mAfter.begin(), target.mAfter.end(),
+                        [&](const Condition& condition) { return holds(condition, *progress); })
                     || (target.mDone && holds(*target.mDone, *progress))))
                 continue;
             QuestTargets::Way way;

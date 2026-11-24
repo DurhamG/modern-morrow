@@ -44,17 +44,21 @@ namespace MWGui
         bool contains(const std::vector<Range>& ranges, int index);
 
         /// Something that holds or not while playing, for when a target starts or stops needing a marker: a quest has
-        /// reached a stage or has finished, someone is dead, or the player carries an item. Exactly one is named.
+        /// reached a stage or has finished, someone is dead, the player carries an item, or a global variable has
+        /// reached a value. Exactly one is named.
         struct Condition
         {
             ESM::RefId mQuest;
-            // The stage the quest must reach, or 0 when only finishing counts.
+            // The stage the quest must reach, or 0 when only finishing counts. For a global variable, the value it
+            // must reach.
             int mAtLeast = 0;
             bool mFinished = false;
             // Someone who must have died.
             ESM::RefId mDead;
             // An item the player must carry.
             ESM::RefId mCarried;
+            // A global variable, such as one that counts votes.
+            std::string mGlobal;
 
             bool operator==(const Condition& other) const = default;
         };
@@ -70,8 +74,8 @@ namespace MWGui
             int mCount = 1;
             // Whether the target is a side step, marked as optional.
             bool mOptional = false;
-            // The target is marked only once this holds.
-            std::optional<Condition> mAfter;
+            // The target is marked only once all of these hold.
+            std::vector<Condition> mAfter;
             // The target isn't marked once this holds.
             std::optional<Condition> mDone;
 
@@ -114,6 +118,7 @@ namespace MWGui
             std::unordered_map<ESM::RefId, std::set<int>> mStages;
             std::function<bool(const ESM::RefId&)> mHasObject;
             std::function<bool(const ESM::RefId&)> mHasCell;
+            std::function<bool(std::string_view)> mHasGlobal;
             // A quest's fingerprint in the loaded content.
             std::function<std::string(const ESM::RefId&)> mFingerprint;
         };
@@ -129,6 +134,8 @@ namespace MWGui
             std::function<bool(const ESM::RefId&)> mDead;
             // Whether the player carries the item.
             std::function<bool(const ESM::RefId&)> mCarried;
+            // A global variable's value.
+            std::function<float(std::string_view)> mGlobal;
         };
 
         /// Reads the corrections from the text of questcorrections.yaml. An entry that can't be read is left out, and
@@ -171,8 +178,8 @@ namespace MWGui
         /// Whether a condition holds.
         bool holds(const Condition& condition, const Progress& progress);
 
-        /// A way to mark for each of an entry's targets whose after condition holds, if it has one, and whose done
-        /// condition doesn't. Without progress, every target counts, as when reviewing what a stage can mark. Each
+        /// A way to mark for each of an entry's targets whose after conditions all hold, and whose done condition
+        /// doesn't. Without progress, every target counts, as when reviewing what a stage can mark. Each
         /// way has the target as its only objective, and leads to no stage, since the content doesn't say what it
         /// leads to.
         std::vector<QuestTargets::Way> targetWays(const Entry& entry, const Progress* progress);

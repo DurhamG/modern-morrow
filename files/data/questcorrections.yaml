@@ -16,11 +16,12 @@
 #   hide      Never mark the ways that lead to these journal indices. The default rule chooses among the rest.
 #   targets   Mark these too, for steps that no line or script in the content names, such as the people a journal
 #             entry sends the player to. Each has a task (talk, kill, fetch or visit), an object or a cell, and
-#             optionally a count, optional: true for a side step, and two conditions. The target is marked once its
-#             after condition holds, and until its done condition holds. Without them, it is marked as long as the
-#             entry applies. A condition is one of { quest: ID, atLeast: N }, { quest: ID, started: true },
-#             { quest: ID, finished: true }, { dead: ID } for someone who has died, and { carried: ID } for an item
-#             the player carries.
+#             optionally a count, optional: true for a side step, and conditions. The target is marked once its
+#             after condition holds, or all of them when after is a list, and until its done condition holds.
+#             Without them, it is marked as long as the entry applies. A condition is one of
+#             { quest: ID, atLeast: N }, { quest: ID, started: true }, { quest: ID, finished: true },
+#             { dead: ID } for someone who has died, { carried: ID } for an item the player carries, and
+#             { global: NAME, atLeast: N } for a global variable.
 #   follow    Quests that help with this one, such as one for each person the journal sends the player to. While
 #             one has started and not finished, what it marks is marked too, even if the player doesn't track it.
 #

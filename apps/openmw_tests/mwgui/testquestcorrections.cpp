@@ -337,6 +337,7 @@ namespace
         content.mHasObject = [](const ESM::RefId& id) { return id != ESM::RefId::stringRefId("nobody"); };
         content.mHasCell
             = [](const ESM::RefId& id) { return id == ESM::RefId::stringRefId("Vivec, Library of Vivec"); };
+        content.mHasGlobal = [](std::string_view name) { return name == "HortatorVotes"; };
         return content;
     }
 
@@ -390,6 +391,9 @@ namespace
             "{ task: talk, object: huleeya, done: { quest: A1_7HuleeyaInformant, dead: huleeya } }",
             "{ task: talk, object: huleeya, after: { finished: true } }",
             "{ task: talk, object: huleeya, optional: maybe }",
+            "{ task: talk, object: huleeya, after: { global: HortatorVotes } }",
+            "{ task: talk, object: huleeya, after: { global: HortatorVotes, finished: true } }",
+            "{ task: talk, object: huleeya, after: [{ dead: huleeya }, { colour: green }] }",
         };
         for (const std::string& target : targets)
         {
@@ -409,6 +413,7 @@ namespace
             "{ task: talk, object: huleeya, done: { quest: MS_SomeoneElsesQuest, started: true } }",
             "{ task: talk, object: huleeya, after: { dead: nobody } }",
             "{ task: talk, object: huleeya, done: { carried: nobody } }",
+            "{ task: talk, object: huleeya, after: { global: NoSuchGlobal, atLeast: 1 } }",
         };
         for (const std::string& target : targets)
         {
@@ -613,7 +618,8 @@ namespace
         EXPECT_TRUE(entry.mTargets[0].mOptional);
         EXPECT_EQ(entry.mTargets[0].mDone, (Condition{ {}, 0, false, ESM::RefId::stringRefId("huleeya") }));
         EXPECT_FALSE(entry.mTargets[1].mOptional);
-        EXPECT_EQ(entry.mTargets[1].mAfter, (Condition{ {}, 0, false, ESM::RefId::stringRefId("huleeya") }));
+        EXPECT_EQ(entry.mTargets[1].mAfter,
+            (std::vector<Condition>{ Condition{ {}, 0, false, ESM::RefId::stringRefId("huleeya") } }));
         EXPECT_EQ(
             entry.mTargets[1].mDone, (Condition{ {}, 0, false, {}, ESM::RefId::stringRefId("bk_progressoftruth") }));
     }
@@ -628,7 +634,7 @@ namespace
         kill.mDone = Condition{ {}, 0, false, kill.mObject };
         Target report;
         report.mObject = ESM::RefId::stringRefId("addhiranirr");
-        report.mAfter = Condition{ {}, 0, false, kill.mObject };
+        report.mAfter = { Condition{ {}, 0, false, kill.mObject } };
         report.mDone = Condition{ {}, 0, false, {}, ESM::RefId::stringRefId("bk_progressoftruth") };
         entry.mTargets = { kill, report };
 
@@ -656,5 +662,34 @@ namespace
         const std::vector<Way> ways = targetWays(entry, nullptr);
         ASSERT_EQ(ways.size(), 1);
         EXPECT_TRUE(ways[0].mOptional);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aTargetShouldWaitForAllItsAfterConditions)
+    {
+        std::vector<std::string> problems;
+        Corrections corrections = read(R"(
+  A1_V_VivecInformants:
+    - stages: 1
+      targets:
+        - task: talk
+          object: huleeya
+          after: [{ quest: A1_6_AddhiranirrInformant, atLeast: 45 }, { global: HortatorVotes, atLeast: 6 }]
+)",
+            problems);
+        check(corrections, vivecContent(), problems);
+        ASSERT_TRUE(problems.empty()) << problems.front();
+        const Entry& entry = *corrections.find(vivec, 1);
+        ASSERT_EQ(entry.mTargets[0].mAfter.size(), 2);
+        EXPECT_EQ(entry.mTargets[0].mAfter[1].mGlobal, "HortatorVotes");
+        EXPECT_EQ(entry.mTargets[0].mAfter[1].mAtLeast, 6);
+
+        float votes = 5;
+        Progress progress = progressOf({ { addhiranirrQuest, 45 } });
+        progress.mGlobal = [&](std::string_view) { return votes; };
+        EXPECT_TRUE(targetWays(entry, &progress).empty());
+        votes = 6;
+        EXPECT_EQ(targetWays(entry, &progress).size(), 1);
+        progress.mStage = [](const ESM::RefId&) { return 10; };
+        EXPECT_TRUE(targetWays(entry, &progress).empty());
     }
 }

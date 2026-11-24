@@ -53,8 +53,8 @@ markers are right when they point where that player expects to go next.
 - **Steps the content doesn't name get targets.** When the journal sends the player to people or places that no line
   or script names as a step, add `targets`, each with a `done` condition so the marker goes away once the step is
   done. A target can be `optional: true` for a side step, and can wait for an `after` condition, such as a report
-  that only makes sense once someone is dead. Conditions can test a quest's stage, a death (`dead`), or an item the
-  player carries (`carried`).
+  that only makes sense once someone is dead, or for a list of conditions that must all hold. Conditions can test a
+  quest's stage, a death (`dead`), an item the player carries (`carried`), or a global variable (`global`).
 - **A kill the journal asks for can be next.** When the way the journal asks for needs someone who talks in the quest
   dead, name its stage in `next`. It is marked when every `next` way is such a kill.
 - **Helper quests are followed.** When a quest hands its steps to other quests, such as one per informant, add
