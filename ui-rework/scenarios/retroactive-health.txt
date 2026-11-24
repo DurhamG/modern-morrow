@@ -1,0 +1,18 @@
+# With the "retroactive health" setting, every level up counts the player's current Endurance toward their health.
+# The player is a Dark Elf Acrobat, who starts with Strength 40 and Endurance 40 + 10, so character creation gives
+# (40 + 50) / 2 = 45 health. At Endurance 60 and level 10, nine level ups add 6 each, for 45 + 54 = 99. Strength
+# doesn't count beyond its start. Without the setting, raising them by console leaves health as it was.
+launch --start "Seyda Neen" --set "Game.retroactive health=true"
+console "command=player->setstrength 50"
+console "command=player->setendurance 60"
+console "command=player->setlevel 10"
+wait frames=5
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(math.abs(h.base - 99) < 0.01)" true context=player
+
+launch --start "Seyda Neen"
+lua "code=_G.startHealth = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')).base" context=player
+console "command=player->setstrength 50"
+console "command=player->setendurance 60"
+console "command=player->setlevel 10"
+wait frames=5
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(h.base == _G.startHealth)" true context=player

@@ -13,6 +13,7 @@
 #include <components/esm3/stolenitems.hpp>
 
 #include <components/sceneutil/positionattitudetransform.hpp>
+#include <components/settings/values.hpp>
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
@@ -37,6 +38,7 @@
 #include "aipursue.hpp"
 #include "autocalcspell.hpp"
 #include "combat.hpp"
+#include "levelling.hpp"
 #include "npcstats.hpp"
 #include "spelleffects.hpp"
 #include "spellutil.hpp"
@@ -321,8 +323,51 @@ namespace MWMechanics
             mActors.addActor(ptr, true);
         }
 
+        updateRetroactiveHealth(ptr);
+
         mActors.update(duration, paused);
         mObjects.update(duration, paused);
+    }
+
+    void MechanicsManager::updateRetroactiveHealth(const MWWorld::Ptr& player)
+    {
+        if (!Settings::game().mRetroactiveHealth)
+        {
+            mRetroactiveHealthInputs.reset();
+            return;
+        }
+        NpcStats& stats = player.getClass().getNpcStats(player);
+        if (stats.isDead())
+            return;
+        const float strength = stats.getAttribute(ESM::Attribute::Strength).getBase();
+        const float endurance = stats.getAttribute(ESM::Attribute::Endurance).getBase();
+        const std::tuple<float, float, int> inputs{ strength, endurance, stats.getLevel() };
+        if (mRetroactiveHealthInputs == inputs)
+            return;
+        mRetroactiveHealthInputs = inputs;
+
+        // The Strength and Endurance that character creation gave, worked out again from the race and the class, so
+        // no save has to keep them.
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+        const ESM::NPC* record = player.get<ESM::NPC>()->mBase;
+        const ESM::Race* race = store.get<ESM::Race>().search(record->mRace);
+        const ESM::Class* playerClass = store.get<ESM::Class>().search(record->mClass);
+        const bool male = (record->mFlags & ESM::NPC::Female) == 0;
+        const float startingStrength
+            = startingAttribute(race, male, playerClass, ESM::Attribute::Strength, strength);
+        const float startingEndurance
+            = startingAttribute(race, male, playerClass, ESM::Attribute::Endurance, endurance);
+
+        const float healthPerEndurance
+            = store.get<ESM::GameSetting>().find("fLevelUpHealthEndMult")->mValue.getFloat();
+        DynamicStat<float> health = stats.getHealth();
+        const float base
+            = retroactiveHealth(startingStrength, startingEndurance, endurance, stats.getLevel(), healthPerEndurance);
+        // The player keeps the health they had, and gains or loses what the base gains or loses, as at a level up.
+        const float gain = base - health.getBase();
+        health.setBase(base);
+        health.setCurrent(std::max(1.f, health.getCurrent() + gain));
+        stats.setHealth(health);
     }
 
     void MechanicsManager::processChangedSettings(const Settings::CategorySettingVector& changed)
@@ -1850,6 +1895,7 @@ namespace MWMechanics
         mStolenItems.clear();
         mClassSelected = false;
         mRaceSelected = false;
+        mRetroactiveHealthInputs.reset();
     }
 
     void MechanicsManager::resurrect(const MWWorld::Ptr& ptr)

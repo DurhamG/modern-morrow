@@ -1,6 +1,9 @@
 #ifndef GAME_MWMECHANICS_MECHANICSMANAGERIMP_H
 #define GAME_MWMECHANICS_MECHANICSMANAGERIMP_H
 
+#include <optional>
+#include <tuple>
+
 #include <components/settings/settings.hpp>
 
 #include "../mwbase/mechanicsmanager.hpp"
@@ -29,6 +32,9 @@ namespace MWMechanics
         bool mClassSelected;
         bool mRaceSelected;
         bool mAI; ///< is AI active?
+        // The player's base Strength, base Endurance and level when the "retroactive health" setting last worked out
+        // their health, or nothing to work it out on the next update.
+        std::optional<std::tuple<float, float, int>> mRetroactiveHealthInputs;
 
         Objects mObjects;
         Actors mActors;
@@ -242,6 +248,8 @@ namespace MWMechanics
         void fastForwardAi() const override;
 
     private:
+        void updateRetroactiveHealth(const MWWorld::Ptr& player);
+
         bool canCommitCrimeAgainst(const MWWorld::Ptr& victim, const MWWorld::Ptr& attacker);
         bool canReportCrime(
             const MWWorld::Ptr& actor, const MWWorld::Ptr& victim, std::set<MWWorld::Ptr>& playerFollowers);

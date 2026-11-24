@@ -326,6 +326,28 @@ Game Settings
    Other actors, swimming and sneaking are not affected.
 
 .. omw-setting::
+   :title: retroactive health
+   :type: boolean
+   :range: true, false
+   :default: false
+   :location: :bdg-info:`In Game > Options > Prefs`
+
+   Whether every level up counts toward the player's health with their current Endurance.
+   In Morrowind, each level up adds a tenth of Endurance to health, at the Endurance the player has then,
+   so a player who raises Endurance late has less health for good. Players learn to raise it first.
+
+   When true, the player's base health is always the health character creation gave,
+   which is half of the starting Strength plus the starting Endurance,
+   plus fLevelUpHealthEndMult times the current Endurance for each level after the first.
+   The starting Strength and Endurance are worked out from the player's race and class, as character creation sets
+   them, so saves don't need to keep them. Each is no more than the attribute is now.
+   Health is worked out again whenever the player's base Strength, base Endurance or level changes,
+   and when the setting is turned on.
+   Base health that a script set some other way is replaced the next time it is worked out.
+   Turning the setting off keeps the health the player has, and later level ups follow Morrowind's rule.
+   Only the player is affected.
+
+.. omw-setting::
    :title: turn to movement direction
    :type: boolean
    :range: true, false
