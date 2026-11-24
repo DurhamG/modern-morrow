@@ -74,6 +74,17 @@ namespace
         const float scaled = (magnitude - deadzone) / (1.f - deadzone);
         return std::copysign(scaled * scaled, value);
     }
+
+    // A quest marker's image and size on the maps. A marker for a side step is hollow and smaller.
+    std::string_view questMarkerTexture(const MWGui::QuestMarkers::Marker& marker)
+    {
+        return marker.mOptional ? "textures\\omw\\quest_marker_optional.png" : "textures\\omw\\quest_marker.png";
+    }
+
+    unsigned short questMarkerSize(const MWGui::QuestMarkers::Marker& marker)
+    {
+        return marker.mOptional ? 14 : 16;
+    }
 }
 
 namespace MWGui
@@ -764,9 +775,10 @@ namespace MWGui
             {
                 MarkerUserData markerPos(mLocalMapRender);
                 MyGUI::ImageBox* markerWidget = mLocalMap->createWidget<MyGUI::ImageBox>("ImageBox",
-                    getMarkerCoordinates(quest.mPos.x(), quest.mPos.y(), markerPos, 16), MyGUI::Align::Default);
+                    getMarkerCoordinates(quest.mPos.x(), quest.mPos.y(), markerPos, questMarkerSize(quest)),
+                    MyGUI::Align::Default);
                 markerWidget->setDepth(Local_MarkerAboveFogLayer);
-                markerWidget->setImageTexture("textures\\omw\\quest_marker.png");
+                markerWidget->setImageTexture(questMarkerTexture(quest));
                 markerWidget->setNeedMouseFocus(false);
                 markerWidget->setUserData(markerPos);
                 mQuestMarkerWidgets.push_back(markerWidget);
@@ -805,7 +817,7 @@ namespace MWGui
         for (MyGUI::Widget* widget : mMagicMarkerWidgets)
             updateMarkerCoordinates(widget, 8);
         for (MyGUI::Widget* widget : mQuestMarkerWidgets)
-            updateMarkerCoordinates(widget, 16);
+            updateMarkerCoordinates(widget, static_cast<unsigned short>(widget->getWidth()));
     }
 
     // ------------------------------------------------------------------------------------------
@@ -1085,8 +1097,8 @@ namespace MWGui
             // The global map only shows the exterior, so pins inside buildings and caves stay on their local maps.
             if (!marker.mCell.is<ESM::ESM3ExteriorCellRefId>())
                 continue;
-            MyGUI::ImageBox* pin
-                = mGlobalMap->createWidget<MyGUI::ImageBox>("ImageBox", MyGUI::IntCoord(), MyGUI::Align::Default);
+            MyGUI::ImageBox* pin = mGlobalMap->createWidget<MyGUI::ImageBox>(
+                "ImageBox", MyGUI::IntCoord(0, 0, 16, 16), MyGUI::Align::Default);
             pin->setImageTexture("icons\\map_marker_red.dds");
             pin->setNeedMouseFocus(false);
             pin->setDepth(Global_CompassLayer);
@@ -1097,9 +1109,10 @@ namespace MWGui
         {
             for (const QuestMarkers::Marker& quest : quests->getWorldMarkers())
             {
-                MyGUI::ImageBox* pin
-                    = mGlobalMap->createWidget<MyGUI::ImageBox>("ImageBox", MyGUI::IntCoord(), MyGUI::Align::Default);
-                pin->setImageTexture("textures\\omw\\quest_marker.png");
+                const int size = questMarkerSize(quest);
+                MyGUI::ImageBox* pin = mGlobalMap->createWidget<MyGUI::ImageBox>(
+                    "ImageBox", MyGUI::IntCoord(0, 0, size, size), MyGUI::Align::Default);
+                pin->setImageTexture(questMarkerTexture(quest));
                 pin->setNeedMouseFocus(false);
                 pin->setDepth(Global_CompassLayer);
                 mGlobalMapPins.emplace_back(pin, osg::Vec2f(quest.mPos.x(), quest.mPos.y()));
@@ -1111,13 +1124,14 @@ namespace MWGui
 
     void MapWindow::placeGlobalMapPins()
     {
-        // The same size as on the local map, whatever the zoom.
-        constexpr int size = 16;
+        // Each pin keeps the size it was made with, the same as on the local map, whatever the zoom.
         for (const auto& [widget, position] : mGlobalMapPins)
         {
             float x, y;
             worldPosToGlobalMapImageSpace(position.x(), position.y(), x, y);
-            widget->setCoord(static_cast<int>(x) - size / 2, static_cast<int>(y) - size / 2, size, size);
+            const MyGUI::IntSize size = widget->getSize();
+            widget->setCoord(
+                static_cast<int>(x) - size.width / 2, static_cast<int>(y) - size.height / 2, size.width, size.height);
         }
     }
 
@@ -1952,7 +1966,7 @@ namespace MWGui
 
         if (const QuestMarkers* quests = MWBase::Environment::get().getWindowManager()->getQuestMarkers())
             for (const QuestMarkers::Marker& quest : quests->getLocalMarkers())
-                addMarker(quest.mPos, "textures\\omw\\quest_marker.png", 24);
+                addMarker(quest.mPos, questMarkerTexture(quest), questMarkerSize(quest) * 3 / 2);
     }
 
     void MapWindow::addMap3DDoors()

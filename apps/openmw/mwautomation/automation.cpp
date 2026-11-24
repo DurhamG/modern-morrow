@@ -789,6 +789,7 @@ namespace MWAutomation
                             { "targetCell", cellText(marker.mTargetCell) },
                             { "cell", cellText(marker.mCell) },
                             { "door", marker.mDoor },
+                            { "optional", marker.mOptional },
                         }));
                     return Json(std::move(result));
                 };

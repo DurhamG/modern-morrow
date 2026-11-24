@@ -398,7 +398,8 @@ namespace MWGui
             std::vector<osg::Vec3f> targets;
             if (const QuestMarkers* quests = winMgr->getQuestMarkers())
                 for (const QuestMarkers::Marker& marker : quests->getLocalMarkers())
-                    targets.push_back(marker.mPos);
+                    if (!marker.mOptional)
+                        targets.push_back(marker.mPos);
             mQuestCompass->update(heading, player.getRefData().getPosition().asVec3(), targets);
         }
 

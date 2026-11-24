@@ -42,6 +42,9 @@ namespace MWGui
             osg::Vec3f mPos;
             ESM::RefId mCell;
             bool mDoor = false;
+            // Whether the marker is for a side step the player can take or leave. It is drawn hollow and smaller, and
+            // the compass leaves it out.
+            bool mOptional = false;
         };
 
         QuestMarkers();
@@ -79,6 +82,7 @@ namespace MWGui
             std::string mName;
             osg::Vec3f mPos;
             ESM::RefId mCell;
+            bool mOptional = false;
         };
 
         void pollJournal();

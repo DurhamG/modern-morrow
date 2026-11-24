@@ -1,7 +1,9 @@
 """Draws the quest marker icons as PNG files, with no libraries beyond Python's own.
 
 The marker is a gold triangle pointing down with a dark outline, like the markers players know from Skyrim. The
-arrows say whether a target is above or below the player. Each shape is drawn four times larger and shrunk, so its
+optional marker, for side steps the player can take or leave, is the same triangle, hollow, with its middle dark so
+that a door marker under it doesn't show through. The arrows say
+whether a target is above or below the player. Each shape is drawn four times larger and shrunk, so its
 edges are smooth.
 
 Run it from the repository root: python ui-rework/tools/make_quest_icons.py
@@ -67,6 +69,12 @@ def main():
     write_png(OUT / "quest_marker.png", (32, 32), draw((32, 32), [
         (((2, 4), (30, 4), (16, 30)), DARK),
         (((6.5, 6.8), (25.5, 6.8), (16, 24.5)), GOLD),
+    ]))
+    # The optional marker: the same triangle, hollow, with a dark middle.
+    write_png(OUT / "quest_marker_optional.png", (32, 32), draw((32, 32), [
+        (((2, 4), (30, 4), (16, 30)), DARK),
+        (((6.5, 6.8), (25.5, 6.8), (16, 24.5)), GOLD),
+        (((10.4, 9.0), (21.6, 9.0), (16, 19.4)), DARK),
     ]))
     # The arrows: small triangles pointing up and down, outlined.
     write_png(OUT / "quest_arrow_up.png", (16, 16), draw((16, 16), [

@@ -373,6 +373,7 @@ namespace MWGui
             QuestCorrections::chooseWays(std::move(ways), mCorrections.find(quest, stage), rule))
         {
             // Kills, fetches and visits come first. The talk they lead to is marked once they're done.
+            const std::size_t first = targets.size();
             bool before = false;
             for (const QuestTargets::Objective& objective : way.mObjectives)
             {
@@ -381,6 +382,8 @@ namespace MWGui
                 if (addObjectiveTargets(objective, targets) && objective.mTask != Task::Talk)
                     before = true;
             }
+            for (std::size_t i = first; i < targets.size(); ++i)
+                targets[i].mOptional = way.mOptional;
         }
     }
 
@@ -414,7 +417,7 @@ namespace MWGui
                 for (const Target& target : targets)
                 {
                     Marker marker{ id, questName, objectiveText(target.mTask, target.mName), target.mTask, target.mId,
-                        target.mCell, target.mPos, target.mCell, false };
+                        target.mCell, target.mPos, target.mCell, false, target.mOptional };
                     // In the player's place, the marker goes on the target, or on the first door on the way to it.
                     if (const auto route = MWWorld::findDoorRoute(doors, mLastPlayerCell, target.mCell))
                     {
@@ -442,25 +445,35 @@ namespace MWGui
                 }
             }
         }
-        // Several targets behind one door share its marker.
+        // Several targets behind one door share its marker, which is optional only if they all are. An optional marker
+        // in the same place as another marker of the same quest isn't needed.
         const auto dedupe = [](std::vector<Marker>& markers) {
+            const auto samePlace = [](const Marker& l, const Marker& r) {
+                return l.mQuestId == r.mQuestId && (l.mPos - r.mPos).length2() < 1.f;
+            };
             std::vector<Marker> unique;
             for (Marker& marker : markers)
             {
-                const bool known = std::any_of(unique.begin(), unique.end(), [&](const Marker& other) {
-                    return other.mDoor && marker.mDoor && other.mQuest == marker.mQuest
-                        && (other.mPos - marker.mPos).length2() < 1.f;
-                });
-                if (!known)
+                const auto known = std::find_if(unique.begin(), unique.end(),
+                    [&](const Marker& other) { return samePlace(other, marker) && other.mDoor && marker.mDoor; });
+                if (known == unique.end())
                     unique.push_back(std::move(marker));
+                else if (!marker.mOptional)
+                    known->mOptional = false;
             }
+            std::erase_if(unique, [&](const Marker& marker) {
+                return marker.mOptional && std::any_of(unique.begin(), unique.end(), [&](const Marker& other) {
+                    return !other.mOptional && samePlace(other, marker);
+                });
+            });
             markers = std::move(unique);
         };
         dedupe(local);
         dedupe(outdoors);
         const auto same = [](const std::vector<Marker>& l, const std::vector<Marker>& r) {
             return std::equal(l.begin(), l.end(), r.begin(), r.end(), [](const Marker& a, const Marker& b) {
-                return a.mQuest == b.mQuest && a.mObjective == b.mObjective && (a.mPos - b.mPos).length2() < 1.f;
+                return a.mQuest == b.mQuest && a.mObjective == b.mObjective && a.mOptional == b.mOptional
+                    && (a.mPos - b.mPos).length2() < 1.f;
             });
         };
         if (same(local, mLocalMarkers) && same(outdoors, mWorldMarkers))

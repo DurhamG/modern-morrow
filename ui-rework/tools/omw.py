@@ -1026,19 +1026,24 @@ def check_line(connection, words, timeout, log=None):
         return None if output == words[2] else f"the code printed {output!r}"
     if command in ("expect-marker", "expect-no-marker"):
         if len(words) < 2:
-            raise HarnessError(f"{command} takes a target and optionally quest=ID and map=local or map=world")
+            raise HarnessError(f"{command} takes a target and optionally quest=ID, map=local or map=world, and "
+                               "optional=yes or optional=no")
         options = {}
         for word in words[2:]:
             key, _, value = word.partition("=")
-            if key not in ("quest", "map") or not value:
-                raise HarnessError(f"{command} takes quest=ID and map=local or map=world, not {word!r}")
+            if key not in ("quest", "map", "optional") or not value:
+                raise HarnessError(f"{command} takes quest=ID, map=local or map=world, and optional=yes or "
+                                   f"optional=no, not {word!r}")
             options[key] = value.lower()
+        if options.get("optional", "yes") not in ("yes", "no"):
+            raise HarnessError(f"{command}'s optional= must be yes or no")
         markers = request(cmd="quest-markers")
         lists = [options["map"]] if "map" in options else ["local", "world"]
         target = words[1].lower()
         found = [marker for name in lists for marker in markers.get(name, [])
                  if target in (marker["target"].lower(), marker["targetCell"].lower())
-                 and options.get("quest", marker["quest"].lower()) == marker["quest"].lower()]
+                 and options.get("quest", marker["quest"].lower()) == marker["quest"].lower()
+                 and ("optional" not in options or marker["optional"] == (options["optional"] == "yes"))]
         if command == "expect-marker" and not found:
             shown = sorted({marker["target"] or marker["targetCell"] for name in lists for marker in markers.get(name, [])})
             return f"no marker is for {words[1]!r}; the markers are for {shown}"
