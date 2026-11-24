@@ -9,6 +9,8 @@
 
 #include <components/esm/refid.hpp>
 
+#include "questtargets.hpp"
+
 namespace MWGui
 {
     /// Hand-made corrections to the quest markers, read from questcorrections.yaml. QuestTargets works out each
@@ -64,6 +66,13 @@ namespace MWGui
         /// must have at least one of them. A mod that renumbers a quest then gets the markers worked out from the
         /// content, not wrong ones.
         void check(Corrections& corrections, const Content& content, std::vector<std::string>& problems);
+
+        /// Chooses the ways forward to mark, as QuestTargets::chooseWays does, with a stage's entry if it has one. The
+        /// ways to the entry's hidden stages are left out. If the entry has next stages, only the ways to them are
+        /// marked, leaving out failures and ways out of reach. When none of those is left, such as when the person to
+        /// talk to is dead, the rule chooses among the rest.
+        std::vector<QuestTargets::Way> chooseWays(
+            std::vector<QuestTargets::Way> ways, const Entry* entry, QuestTargets::Rule rule);
     }
 }
 

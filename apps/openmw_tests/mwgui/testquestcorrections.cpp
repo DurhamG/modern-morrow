@@ -172,4 +172,73 @@ namespace
         EXPECT_EQ(corrections.find(quest, 2), nullptr);
         EXPECT_NE(corrections.find(quest, 10), nullptr);
     }
+
+    using MWGui::QuestTargets::Rule;
+    using MWGui::QuestTargets::Way;
+
+    Way way(int toStage, std::string_view person)
+    {
+        Way result;
+        result.mToStage = toStage;
+        result.mObjectives.push_back({ MWGui::QuestTargets::Task::Talk, ESM::RefId::stringRefId(person) });
+        return result;
+    }
+
+    // The ways forward from the main quest's first stage: Elone gives directions, the South Wall Cornerclub and
+    // Bacola Closcius are on the way, and Caius Cosades is where the player is sent.
+    std::vector<Way> firstStage()
+    {
+        return { way(2, "elone"), way(5, "south wall"), way(10, "bacola closcius"), way(14, "caius cosades") };
+    }
+
+    std::vector<int> stagesOf(const std::vector<Way>& ways)
+    {
+        std::vector<int> result;
+        for (const Way& item : ways)
+            result.push_back(item.mToStage);
+        return result;
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, withoutAnEntryTheRuleShouldChoose)
+    {
+        EXPECT_EQ(stagesOf(chooseWays(firstStage(), nullptr, Rule::LowestAndHighest)), (std::vector<int>{ 2, 14 }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, anEntrysNextStagesShouldBeTheOnlyOnesMarked)
+    {
+        Entry entry;
+        entry.mNext = { { 14, 14 } };
+        EXPECT_EQ(stagesOf(chooseWays(firstStage(), &entry, Rule::LowestAndHighest)), (std::vector<int>{ 14 }));
+        EXPECT_EQ(stagesOf(chooseWays(firstStage(), &entry, Rule::All)), (std::vector<int>{ 14 }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, hiddenStagesShouldBeLeftOutBeforeTheRuleChooses)
+    {
+        Entry entry;
+        entry.mHide = { { 2, 2 } };
+        EXPECT_EQ(stagesOf(chooseWays(firstStage(), &entry, Rule::Lowest)), (std::vector<int>{ 5 }));
+        EXPECT_EQ(stagesOf(chooseWays(firstStage(), &entry, Rule::All)), (std::vector<int>{ 5, 10, 14 }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, theRuleShouldChooseWhenNoNextWayIsLeft)
+    {
+        // Caius's way isn't among the ways left after the game's checks, such as when he is dead.
+        std::vector<Way> ways = firstStage();
+        ways.pop_back();
+        Entry entry;
+        entry.mNext = { { 14, 14 } };
+        entry.mHide = { { 2, 2 } };
+        EXPECT_EQ(stagesOf(chooseWays(ways, &entry, Rule::LowestAndHighest)), (std::vector<int>{ 5, 10 }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aNextWayThatIsAFailureShouldNotBeMarked)
+    {
+        std::vector<Way> ways = firstStage();
+        ways.back().mFailure = true;
+        Entry entry;
+        entry.mNext = { { 10, 14 } };
+        EXPECT_EQ(stagesOf(chooseWays(ways, &entry, Rule::LowestAndHighest)), (std::vector<int>{ 10 }));
+        ways[2].mOutOfReach = true;
+        EXPECT_EQ(stagesOf(chooseWays(ways, &entry, Rule::LowestAndHighest)), (std::vector<int>{ 2, 5 }));
+    }
 }

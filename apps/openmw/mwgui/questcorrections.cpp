@@ -226,4 +226,22 @@ namespace MWGui::QuestCorrections
                 ++quest;
         }
     }
+
+    std::vector<QuestTargets::Way> chooseWays(
+        std::vector<QuestTargets::Way> ways, const Entry* entry, QuestTargets::Rule rule)
+    {
+        if (entry == nullptr)
+            return QuestTargets::chooseWays(std::move(ways), rule);
+        std::erase_if(ways, [&](const QuestTargets::Way& way) { return contains(entry->mHide, way.mToStage); });
+        if (!entry->mNext.empty())
+        {
+            std::vector<QuestTargets::Way> next;
+            for (const QuestTargets::Way& way : ways)
+                if (contains(entry->mNext, way.mToStage) && !way.mFailure && !way.mOutOfReach)
+                    next.push_back(way);
+            if (!next.empty())
+                return QuestTargets::chooseWays(std::move(next), QuestTargets::Rule::All);
+        }
+        return QuestTargets::chooseWays(std::move(ways), rule);
+    }
 }
