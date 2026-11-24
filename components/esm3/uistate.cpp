@@ -39,6 +39,11 @@ namespace ESM
         mArchivedQuests.clear();
         while (esm.isNextSub("QARC"))
             mArchivedQuests.push_back(esm.getRefId());
+
+        mMorrowindHealth.reset();
+        float morrowindHealth = 0;
+        if (esm.getHNOT("MWHP", morrowindHealth))
+            mMorrowindHealth = morrowindHealth;
     }
 
     void UiState::save(ESMWriter& esm) const
@@ -66,5 +71,8 @@ namespace ESM
 
         for (const ESM::RefId& quest : mArchivedQuests)
             esm.writeHNRefId("QARC", quest);
+
+        if (mMorrowindHealth)
+            esm.writeHNT("MWHP", *mMorrowindHealth);
     }
 }

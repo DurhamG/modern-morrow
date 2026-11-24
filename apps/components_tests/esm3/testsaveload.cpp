@@ -451,8 +451,10 @@ namespace ESM
             };
             record.mPinnedQuests = { generateRandomRefId(), generateRandomRefId() };
             record.mArchivedQuests = { generateRandomRefId() };
+            record.mMorrowindHealth = 87.5f;
             UiState result;
             saveAndLoadRecord(record, GetParam(), result);
+            EXPECT_EQ(record.mMorrowindHealth, result.mMorrowindHealth);
             ASSERT_EQ(record.mRecentItems.size(), result.mRecentItems.size());
             for (std::size_t i = 0; i < record.mRecentItems.size(); ++i)
             {
@@ -471,6 +473,19 @@ namespace ESM
             }
             EXPECT_EQ(record.mPinnedQuests, result.mPinnedQuests);
             EXPECT_EQ(record.mArchivedQuests, result.mArchivedQuests);
+        }
+
+        TEST_P(Esm3SaveLoadRecordTest, uiStateWithoutMorrowindHealthShouldLoadWithoutIt)
+        {
+            if (GetParam() == CurrentContentFormatVersion)
+                return;
+            UiState record;
+            record.mPinnedQuests = { generateRandomRefId() };
+            UiState result;
+            result.mMorrowindHealth = 50.f;
+            saveAndLoadRecord(record, GetParam(), result);
+            EXPECT_EQ(result.mMorrowindHealth, std::nullopt);
+            EXPECT_EQ(record.mPinnedQuests, result.mPinnedQuests);
         }
 
         TEST_P(Esm3SaveLoadRecordTest, cellRefShouldNotChange)

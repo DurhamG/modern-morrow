@@ -1,0 +1,142 @@
+# Turning the "retroactive health" setting on and off in the Options menu, and what each change does to health. The
+# player is a Dark Elf Acrobat with Strength 50, Endurance 60 and level 10, who started with 35 health. The setting
+# gives (40 + 50) / 2 + 9 * 6 = 99, and current health changes by as much as base health does. Turning it off gives
+# back the health Morrowind's rule gives. A werewolf's extra health stays while the setting is on, and a level up
+# while it is on counts toward the health Morrowind's rule gives.
+launch --start "Addamasartus" --set "GUI.controller menus=true"
+lua "code=local types = require('openmw.types'); local cell = require('openmw.world').players[1].cell; for _, kind in ipairs({ types.NPC, types.Creature }) do for _, actor in ipairs(cell:getAll(kind)) do actor.enabled = false end end" context=global
+console "command=stopscript dbattackScript"
+console "command=player->setstrength 50"
+console "command=player->setendurance 60"
+console "command=player->setlevel 10"
+console "command=player->modcurrenthealth -10"
+wait frames=5
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(string.format('%.1f %.1f', h.base, h.current))" "35.0 25.0" context=player
+# Turn the setting on.
+pad button=start
+wait-mode MainMenu
+wait-text Options
+click-text Options
+wait frames=10
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpright
+wait frames=5
+expect-text "Retroactive Health"
+pad button=b
+pad button=b
+wait-no-mode
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(string.format('%.1f %.1f', h.base, h.current))" "99.0 89.0" context=player
+# A werewolf has twice the health, and loses it when they change back.
+console "command=player->becomewerewolf"
+wait frames=10
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(string.format('%.1f %.1f', h.base, h.current))" "198.0 198.0" context=player
+console "command=player->undowerewolf"
+wait frames=10
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(string.format('%.1f %.1f', h.base, h.current))" "99.0 99.0" context=player
+# Turning the setting off takes away the 64 it gave, but leaves at least 1 health.
+console "command=player->modcurrenthealth -95"
+wait frames=5
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(string.format('%.1f %.1f', h.base, h.current))" "99.0 4.0" context=player
+pad button=start
+wait-mode MainMenu
+wait-text Options
+click-text Options
+wait frames=10
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpright
+wait frames=5
+expect-text "Retroactive Health"
+pad button=b
+pad button=b
+wait-no-mode
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(string.format('%.1f %.1f', h.base, h.current))" "35.0 1.0" context=player
+# Turn it on again, and level up, raising Endurance to 63.
+pad button=start
+wait-mode MainMenu
+wait-text Options
+click-text Options
+wait frames=10
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpright
+wait frames=5
+expect-text "Retroactive Health"
+pad button=b
+pad button=b
+wait-no-mode
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(string.format('%.1f %.1f', h.base, h.current))" "99.0 65.0" context=player
+lua "code=local level = require('openmw.types').Actor.stats.level(require('openmw.self')) level.progress = 10 level.skillIncreasesForAttribute.strength = 14 level.skillIncreasesForAttribute.endurance = 6"
+key key=T
+wait frames=10
+wait-mode Rest
+pad button=rightshoulder
+pad button=a
+wait frames=300
+wait-mode LevelUp timeout=20
+pad button=a
+pad button=dpright
+pad button=dpright
+pad button=dpright
+pad button=a
+pad button=dpdown
+pad button=a
+wait frames=5
+wait-mode LevelUp timeout=20
+pad button=x
+wait frames=20
+wait-no-mode
+# At level 11 with Endurance 63 the setting gives 45 + 10 * 6.3 = 108. Under Morrowind's rule, the level up added
+# 6.3 to the 35, for 41.3.
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(string.format('%.1f', h.base))" "108.0" context=player
+pad button=start
+wait-mode MainMenu
+wait-text Options
+click-text Options
+wait frames=10
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+pad button=dpright
+wait frames=5
+expect-text "Retroactive Health"
+pad button=b
+pad button=b
+wait-no-mode
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(string.format('%.1f', h.base))" "41.3" context=player

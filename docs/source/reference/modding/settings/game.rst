@@ -344,7 +344,12 @@ Game Settings
    Health is worked out again whenever the player's base Strength, base Endurance or level changes,
    and when the setting is turned on.
    Base health that a script set some other way is replaced the next time it is worked out.
-   Turning the setting off keeps the health the player has, and later level ups follow Morrowind's rule.
+
+   While the setting is on, the game also keeps the base health the player would have under Morrowind's rule.
+   It starts as the base health the player has when the setting is turned on, and gains each level up's increase
+   and every other change to base health that the setting didn't make.
+   Turning the setting off gives the player that health back.
+   Saves keep it in Modern Morrow's own record, which other OpenMW versions skip.
    Only the player is affected.
 
 .. omw-setting::

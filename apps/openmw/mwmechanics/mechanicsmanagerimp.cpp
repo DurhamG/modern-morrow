@@ -331,21 +331,51 @@ namespace MWMechanics
 
     void MechanicsManager::updateRetroactiveHealth(const MWWorld::Ptr& player)
     {
-        if (!Settings::game().mRetroactiveHealth)
-        {
+        MWWorld::Player& playerData = MWBase::Environment::get().getWorld()->getPlayer();
+        std::optional<float> morrowindHealth = playerData.getMorrowindHealth();
+        const bool enabled = Settings::game().mRetroactiveHealth;
+        if (!enabled)
             mRetroactiveHealthInputs.reset();
+        if (!enabled && !morrowindHealth)
+        {
+            mLastRetroactiveHealth.reset();
             return;
         }
         NpcStats& stats = player.getClass().getNpcStats(player);
         if (stats.isDead())
             return;
-        const float strength = stats.getAttribute(ESM::Attribute::Strength).getBase();
-        const float endurance = stats.getAttribute(ESM::Attribute::Endurance).getBase();
-        const std::tuple<float, float, int> inputs{ strength, endurance, stats.getLevel() };
-        if (mRetroactiveHealthInputs == inputs)
-            return;
-        mRetroactiveHealthInputs = inputs;
 
+        // The health is worked out again only when the setting is turned on, or base Strength, base Endurance or the
+        // level changes, so other changes to base health, such as a werewolf's, last until then. A game saved with
+        // the setting on already has the health it gives, so loading it changes nothing.
+        std::optional<float> retroactive;
+        if (enabled)
+        {
+            const float strength = stats.getAttribute(ESM::Attribute::Strength).getBase();
+            const float endurance = stats.getAttribute(ESM::Attribute::Endurance).getBase();
+            const std::tuple<float, float, int> inputs{ strength, endurance, stats.getLevel() };
+            const bool justLoaded = morrowindHealth && !mLastRetroactiveHealth;
+            if (mRetroactiveHealthInputs != inputs && !justLoaded)
+                retroactive = workOutRetroactiveHealth(player, strength, endurance, stats.getLevel());
+            mRetroactiveHealthInputs = inputs;
+        }
+
+        DynamicStat<float> health = stats.getHealth();
+        const float base
+            = baseHealthToSet(morrowindHealth, mLastRetroactiveHealth, health.getBase(), enabled, retroactive);
+        playerData.setMorrowindHealth(morrowindHealth);
+        if (base == health.getBase())
+            return;
+        // The player keeps the health they had, and gains or loses what the base gains or loses, as at a level up.
+        const float gain = base - health.getBase();
+        health.setBase(base);
+        health.setCurrent(std::max(1.f, health.getCurrent() + gain));
+        stats.setHealth(health);
+    }
+
+    float MechanicsManager::workOutRetroactiveHealth(
+        const MWWorld::Ptr& player, float strength, float endurance, int level) const
+    {
         // The Strength and Endurance that character creation gave, worked out again from the race and the class, so
         // no save has to keep them.
         const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
@@ -353,21 +383,12 @@ namespace MWMechanics
         const ESM::Race* race = store.get<ESM::Race>().search(record->mRace);
         const ESM::Class* playerClass = store.get<ESM::Class>().search(record->mClass);
         const bool male = (record->mFlags & ESM::NPC::Female) == 0;
-        const float startingStrength
-            = startingAttribute(race, male, playerClass, ESM::Attribute::Strength, strength);
+        const float startingStrength = startingAttribute(race, male, playerClass, ESM::Attribute::Strength, strength);
         const float startingEndurance
             = startingAttribute(race, male, playerClass, ESM::Attribute::Endurance, endurance);
 
-        const float healthPerEndurance
-            = store.get<ESM::GameSetting>().find("fLevelUpHealthEndMult")->mValue.getFloat();
-        DynamicStat<float> health = stats.getHealth();
-        const float base
-            = retroactiveHealth(startingStrength, startingEndurance, endurance, stats.getLevel(), healthPerEndurance);
-        // The player keeps the health they had, and gains or loses what the base gains or loses, as at a level up.
-        const float gain = base - health.getBase();
-        health.setBase(base);
-        health.setCurrent(std::max(1.f, health.getCurrent() + gain));
-        stats.setHealth(health);
+        const float healthPerEndurance = store.get<ESM::GameSetting>().find("fLevelUpHealthEndMult")->mValue.getFloat();
+        return retroactiveHealth(startingStrength, startingEndurance, endurance, level, healthPerEndurance);
     }
 
     void MechanicsManager::processChangedSettings(const Settings::CategorySettingVector& changed)
@@ -1896,6 +1917,7 @@ namespace MWMechanics
         mClassSelected = false;
         mRaceSelected = false;
         mRetroactiveHealthInputs.reset();
+        mLastRetroactiveHealth.reset();
     }
 
     void MechanicsManager::resurrect(const MWWorld::Ptr& ptr)

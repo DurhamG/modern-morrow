@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <optional>
 
 #include <components/esm/refid.hpp>
 #include <components/esm3/loadclas.hpp>
@@ -19,8 +20,36 @@ namespace MWMechanics
     inline float retroactiveHealth(
         float startingStrength, float startingEndurance, float endurance, int level, float healthPerEndurance)
     {
-        return std::floor(0.5f * (startingStrength + startingEndurance))
-            + healthPerEndurance * endurance * (level - 1);
+        return std::floor(0.5f * (startingStrength + startingEndurance)) + healthPerEndurance * endurance * (level - 1);
+    }
+
+    /// The base health the player should have now, with the "retroactive health" setting on or off.
+    ///
+    /// base is the player's base health now. enabled says whether the setting is on. retroactive is what
+    /// retroactiveHealth gives, when the base health should change to it, and nothing to leave the base health as it
+    /// is. lastSet is the base health this function returned the last time, or nothing after a game loads.
+    ///
+    /// morrowindHealth is the base health the player would have under Morrowind's own rules. It is set while the
+    /// setting is on. When the setting is turned on, it starts as the base health the player has then. After that it
+    /// gains every change to base health that this function didn't make, since the base health no longer equals
+    /// lastSet. Those are each level up's tenth of Endurance, and changes such as a script's. When the setting is
+    /// turned off, the player gets morrowindHealth back, and it is reset.
+    inline float baseHealthToSet(std::optional<float>& morrowindHealth, std::optional<float>& lastSet, float base,
+        bool enabled, std::optional<float> retroactive)
+    {
+        if (morrowindHealth && lastSet)
+            *morrowindHealth += base - *lastSet;
+        if (!enabled)
+        {
+            const float result = morrowindHealth.value_or(base);
+            morrowindHealth.reset();
+            lastSet.reset();
+            return result;
+        }
+        if (!morrowindHealth)
+            morrowindHealth = base;
+        lastSet = retroactive.value_or(base);
+        return *lastSet;
     }
 
     /// A player's base attribute as character creation set it: their race's value for their sex, plus 10 if their

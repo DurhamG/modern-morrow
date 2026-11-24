@@ -2,6 +2,7 @@
 #define GAME_MWWORLD_PLAYER_H
 
 #include <map>
+#include <optional>
 
 #include "../mwworld/livecellref.hpp"
 
@@ -56,6 +57,9 @@ namespace MWWorld
         // Spells, and enchanted items or scrolls, that the player recently readied or cast, most recent first
         std::vector<ESM::RefId> mRecentSpells;
 
+        // While the "retroactive health" setting is on, the base health the player would have under Morrowind's rules
+        std::optional<float> mMorrowindHealth;
+
         // Saved stats prior to becoming a werewolf
         std::map<ESM::RefId, float> mSaveSkills;
         std::map<ESM::RefId, float> mSaveAttributes;
@@ -80,6 +84,12 @@ namespace MWWorld
         /// Moves a spell, or an enchanted item or scroll, to the front of the recently used spells.
         void addRecentSpell(const ESM::RefId& spellOrItem);
         const std::vector<ESM::RefId>& getRecentSpells() const { return mRecentSpells; }
+
+        /// While the "retroactive health" setting is on, the base health the player would have under Morrowind's
+        /// rules. MWMechanics::MechanicsManager keeps it up to date and puts it back when the setting is turned off.
+        std::optional<float> getMorrowindHealth() const { return mMorrowindHealth; }
+        void setMorrowindHealth(std::optional<float> health) { mMorrowindHealth = health; }
+
         void restoreStats();
         void setWerewolfStats();
 
@@ -130,7 +140,8 @@ namespace MWWorld
 
         bool readRecord(ESM::ESMReader& reader, uint32_t type);
 
-        /// Copies the recent items and spells into the controller menus' record of a save, or back from it.
+        /// Copies the recent items and spells, and the health under Morrowind's rules, into Modern Morrow's record of a
+        /// save, or back from it.
         void writeUiState(ESM::UiState& state) const;
         void readUiState(const ESM::UiState& state);
 

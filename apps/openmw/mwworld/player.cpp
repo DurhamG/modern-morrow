@@ -267,6 +267,7 @@ namespace MWWorld
         mPreviousItems.clear();
         mRecentItems.clear();
         mRecentSpells.clear();
+        mMorrowindHealth.reset();
         mLastKnownExteriorPosition = osg::Vec3f(0, 0, 0);
 
         mSaveSkills.clear();
@@ -513,12 +514,14 @@ namespace MWWorld
     {
         state.mRecentItems = mRecentItems;
         state.mRecentSpells = mRecentSpells;
+        state.mMorrowindHealth = mMorrowindHealth;
     }
 
     void Player::readUiState(const ESM::UiState& state)
     {
         mRecentItems = state.mRecentItems;
         mRecentSpells = state.mRecentSpells;
+        mMorrowindHealth = state.mMorrowindHealth;
     }
 
     void Player::addRecentItem(const ESM::RefId& item)

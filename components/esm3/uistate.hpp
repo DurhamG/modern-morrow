@@ -2,6 +2,7 @@
 #define OPENMW_ESM_UISTATE_H
 
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 #include <components/esm/refid.hpp>
@@ -45,6 +46,9 @@ namespace ESM
         std::vector<ESM::RefId> mPinnedQuests;
         // The quests the player moved to the journal's Archived group, out of the way
         std::vector<ESM::RefId> mArchivedQuests;
+        // While the "retroactive health" setting is on, the base health the player would have under Morrowind's own
+        // rules, which they get back when the setting is turned off
+        std::optional<float> mMorrowindHealth;
 
         void load(ESMReader& esm);
         void save(ESMWriter& esm) const;

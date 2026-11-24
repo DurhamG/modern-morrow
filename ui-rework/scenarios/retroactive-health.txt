@@ -16,3 +16,23 @@ console "command=player->setendurance 60"
 console "command=player->setlevel 10"
 wait frames=5
 expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(h.base == _G.startHealth)" true context=player
+
+# The save keeps the health the player would have under Morrowind's rules, and turning the setting off gives it back.
+# The console's setlevel adds no health in Morrowind, so that is the 35 the player started with.
+launch --start "Seyda Neen" --set "Game.retroactive health=true"
+console "command=player->setstrength 50"
+console "command=player->setendurance 60"
+console "command=player->setlevel 10"
+wait frames=5
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(math.abs(h.base - 99) < 0.01)" true context=player
+key key=F5
+wait frames=60
+expect-file "saves/*/*.omwsave"
+relaunch --set "Game.retroactive health=true"
+wait frames=60
+expect-state running
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(math.abs(h.base - 99) < 0.01)" true context=player
+relaunch
+wait frames=60
+expect-state running
+expect-lua "local h = require('openmw.types').Actor.stats.dynamic.health(require('openmw.self')); print(h.base)" 35 context=player

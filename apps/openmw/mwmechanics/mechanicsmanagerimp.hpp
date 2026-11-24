@@ -35,6 +35,8 @@ namespace MWMechanics
         // The player's base Strength, base Endurance and level when the "retroactive health" setting last worked out
         // their health, or nothing to work it out on the next update.
         std::optional<std::tuple<float, float, int>> mRetroactiveHealthInputs;
+        // The base health the setting last gave the player, or nothing since a game loaded
+        std::optional<float> mLastRetroactiveHealth;
 
         Objects mObjects;
         Actors mActors;
@@ -249,6 +251,7 @@ namespace MWMechanics
 
     private:
         void updateRetroactiveHealth(const MWWorld::Ptr& player);
+        float workOutRetroactiveHealth(const MWWorld::Ptr& player, float strength, float endurance, int level) const;
 
         bool canCommitCrimeAgainst(const MWWorld::Ptr& victim, const MWWorld::Ptr& attacker);
         bool canReportCrime(

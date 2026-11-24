@@ -59,6 +59,70 @@ namespace MWMechanics
             EXPECT_FLOAT_EQ(startingAttribute(nullptr, true, nullptr, ESM::Attribute::Strength, 35), 35);
         }
 
+        TEST(MWMechanicsBaseHealthToSetTest, turningTheSettingOnShouldRememberTheHealthBefore)
+        {
+            std::optional<float> morrowindHealth;
+            std::optional<float> lastSet;
+            EXPECT_FLOAT_EQ(baseHealthToSet(morrowindHealth, lastSet, 80, true, 99.f), 99);
+            EXPECT_EQ(morrowindHealth, 80.f);
+            EXPECT_EQ(lastSet, 99.f);
+        }
+
+        TEST(MWMechanicsBaseHealthToSetTest, turningTheSettingOffShouldGiveTheHealthBack)
+        {
+            std::optional<float> morrowindHealth = 80.f;
+            std::optional<float> lastSet = 99.f;
+            EXPECT_FLOAT_EQ(baseHealthToSet(morrowindHealth, lastSet, 99, false, std::nullopt), 80);
+            EXPECT_EQ(morrowindHealth, std::nullopt);
+            EXPECT_EQ(lastSet, std::nullopt);
+        }
+
+        TEST(MWMechanicsBaseHealthToSetTest, aLevelUpShouldCountTowardTheHealthUnderMorrowindsRules)
+        {
+            // The level up added 6, at Endurance 60, and the setting gives 105 at the new level.
+            std::optional<float> morrowindHealth = 80.f;
+            std::optional<float> lastSet = 99.f;
+            EXPECT_FLOAT_EQ(baseHealthToSet(morrowindHealth, lastSet, 105, true, 105.f), 105);
+            EXPECT_EQ(morrowindHealth, 86.f);
+            EXPECT_FLOAT_EQ(baseHealthToSet(morrowindHealth, lastSet, 105, false, std::nullopt), 86);
+        }
+
+        TEST(MWMechanicsBaseHealthToSetTest, otherChangesShouldStayAndCountTowardTheHealthUnderMorrowindsRules)
+        {
+            // A werewolf's health is half as much again, and goes back when they change back.
+            std::optional<float> morrowindHealth = 80.f;
+            std::optional<float> lastSet = 100.f;
+            EXPECT_FLOAT_EQ(baseHealthToSet(morrowindHealth, lastSet, 150, true, std::nullopt), 150);
+            EXPECT_EQ(morrowindHealth, 130.f);
+            EXPECT_FLOAT_EQ(baseHealthToSet(morrowindHealth, lastSet, 100, true, std::nullopt), 100);
+            EXPECT_EQ(morrowindHealth, 80.f);
+        }
+
+        TEST(MWMechanicsBaseHealthToSetTest, aChangeInTheFrameTheSettingIsTurnedOffShouldCount)
+        {
+            std::optional<float> morrowindHealth = 80.f;
+            std::optional<float> lastSet = 99.f;
+            EXPECT_FLOAT_EQ(baseHealthToSet(morrowindHealth, lastSet, 104, false, std::nullopt), 85);
+        }
+
+        TEST(MWMechanicsBaseHealthToSetTest, loadingAGameShouldKeepItsHealth)
+        {
+            // A game saved with the setting on has the health under Morrowind's rules, but not the last health set.
+            std::optional<float> morrowindHealth = 80.f;
+            std::optional<float> lastSet;
+            EXPECT_FLOAT_EQ(baseHealthToSet(morrowindHealth, lastSet, 99, true, std::nullopt), 99);
+            EXPECT_EQ(morrowindHealth, 80.f);
+            EXPECT_EQ(lastSet, 99.f);
+        }
+
+        TEST(MWMechanicsBaseHealthToSetTest, withTheSettingOffHealthShouldNotChange)
+        {
+            std::optional<float> morrowindHealth;
+            std::optional<float> lastSet;
+            EXPECT_FLOAT_EQ(baseHealthToSet(morrowindHealth, lastSet, 80, false, std::nullopt), 80);
+            EXPECT_EQ(morrowindHealth, std::nullopt);
+        }
+
         int morrowindMultiplier(int increases)
         {
             if (increases <= 4)
