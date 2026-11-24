@@ -46,6 +46,15 @@ expect-marker huleeya quest=a1_7huleeyainformant
 quest-track quest=a1_v_vivecinformants tracked=false
 expect-no-marker huleeya
 quest-track quest=a1_v_vivecinformants
+# Caius's line that finishes "Gra-Muzgob Informant" early is in a topic that only his lines for stage 20 on name,
+# so he isn't marked before then.
+console "command=journal a1_4_muzgobinformant 1"
+expect-marker "sharn gra-muzgob" quest=a1_4_muzgobinformant
+expect-no-marker "caius cosades" quest=a1_4_muzgobinformant
+console "command=journal a1_4_muzgobinformant 15"
+expect-no-marker "caius cosades" quest=a1_4_muzgobinformant
+console "command=journal a1_4_muzgobinformant 20"
+expect-marker "caius cosades" quest=a1_4_muzgobinformant
 # With Caius gone, the other ways forward are marked, so the player isn't left with nothing.
 console "command=setjournalindex a1_1_findspymaster 1"
 console "command=coc \"Balmora, Caius Cosades' House\""

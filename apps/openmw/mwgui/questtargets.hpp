@@ -23,6 +23,8 @@ namespace MWWorld
 
 namespace MWGui
 {
+    class TopicLearning;
+
     /// Works out where a quest goes next from the game's content. The journal only keeps a stage for each quest, so the
     /// places come from what in the content moves a quest from one stage to the next: a line of dialogue whose result
     /// script runs Journal, or a script that runs it. See ui-rework/design/quest-markers.md.
@@ -175,8 +177,13 @@ namespace MWGui
                 int mRank = 0;
             };
 
-            /// Adds the ways forward from a line of dialogue that isn't a journal entry.
-            void addDialogue(const ESM::DialInfo& info);
+            /// Adds the ways forward from a line of dialogue that isn't a journal entry. The topic is the line's, for
+            /// a line in a topic the player asks about.
+            void addDialogue(const ESM::DialInfo& info, std::string_view topic = {});
+
+            /// Notes when the player can first learn the topics of the lines added so far. A line in a topic the
+            /// player can only learn at a later stage of the same quest isn't a way forward before then.
+            void learnTopics(const TopicLearning& learning);
 
             /// Adds the ways forward from a script, and the objects it's on. A script on no object is a global
             /// script.
@@ -214,6 +221,10 @@ namespace MWGui
                 // The line's conditions, for a way that comes from dialogue.
                 std::vector<ESM::DialogueCondition> mConditions;
                 bool mDialogue = false;
+                // The topic of a line the player asks about, and the lowest stage of the quest at which they can
+                // learn it.
+                std::string mTopic;
+                int mLearnedAt = 0;
                 ESM::RefId mSpeaker;
                 ESM::RefId mFaction;
                 ESM::RefId mCell;

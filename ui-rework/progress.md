@@ -326,3 +326,10 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   Informants" the markers showed nothing, because Caius's report needs all three informants done. Now Addhiranirr,
   Huleeya and Mehra Milo are marked, then each one's own quest. The `quest-track` harness command tracks a quest or
   stops tracking it, for scenarios.
+- The topic rule, the fourth milestone of the quest marker corrections. A line in a topic that only lines for a later
+  stage of the same quest name, or add with AddTopic, isn't a way forward before then. It changed the default rule's
+  choice at 61 stages of the three games, such as Caius Cosades no longer being marked through "Gra-Muzgob
+  Informant", and later outcomes no longer marked early in "Bloodmoon Morale" and "Unrequited Love". The agreement with
+  Comprehensive Objective Mod's first objective barely moved, from 68.6% to 68.7% of stages, when the ways are taken as
+  the engine chooses them before the checks made while playing. Working out the quests now takes about 70 ms instead
+  of 45 ms, once a session.

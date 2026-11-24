@@ -1,4 +1,5 @@
 #include "apps/openmw/mwgui/questtargets.hpp"
+#include "apps/openmw/mwgui/topiclearning.hpp"
 
 #include <components/esm3/loadinfo.hpp>
 
@@ -220,7 +221,8 @@ namespace
     {
         const std::vector<std::pair<ESM::RefId, int>> taken = itemsTaken(
             "Player->RemoveItem \"ebony_bow_auriel\" 1\nRemoveItem misc_other 1\nplayer->removeitem, gold_001, 500");
-        const std::vector<std::pair<ESM::RefId, int>> expected{ { id("ebony_bow_auriel"), 1 }, { id("gold_001"), 500 } };
+        const std::vector<std::pair<ESM::RefId, int>> expected{ { id("ebony_bow_auriel"), 1 },
+            { id("gold_001"), 500 } };
         EXPECT_EQ(taken, expected);
     }
 
@@ -256,6 +258,21 @@ namespace
         EXPECT_EQ(ways[0].mToStage, 50);
     }
 
+    TEST(MWGuiQuestTargetsIndexTest, aLineInATopicThePlayerCantKnowYetIsNotAWayForward)
+    {
+        // Only the lines for stage 20 on name the topic that the line to 55 is in.
+        Index index;
+        index.addDialogue(line("caius cosades", "Journal FG_RatHunt 55"), "Blades Apprentice");
+        index.addDialogue(line("caius cosades", "Journal FG_RatHunt 30"), "Orders");
+        MWGui::TopicLearning learning;
+        learning.addTopic("Blades Apprentice");
+        learning.addLine("You are now a Blades Apprentice.", "", { stageIs(DialogueCondition::Comp_Ge, 20) });
+        index.learnTopics(learning);
+        EXPECT_EQ(index.waysForward(quest, 10, Rule::All).size(), 1u);
+        EXPECT_EQ(index.waysForward(quest, 10, Rule::All)[0].mToStage, 30);
+        EXPECT_EQ(index.waysForward(quest, 20, Rule::All).size(), 2u);
+    }
+
     TEST(MWGuiQuestTargetsIndexTest, aFailureCountsWhenItIsTheOnlyWay)
     {
         // Hanarai Assutlanipal attacks the player, and the quest goes on once she is dead.
@@ -274,8 +291,9 @@ namespace
         // Pemenie follows the player to Gnaar Mok. Her death is one way forward, and arriving is the other.
         Index index;
         index.addDialogue(line("pemenie", "AiFollow Player 0 0 0 0\nJournal Other_Quest 10"));
-        index.addScript("if ( OnDeath == 1 )\nJournal FG_RatHunt 110\nendif\n"
-                        "if ( GetPCCell \"Gnaar Mok\" == 1 )\nJournal FG_RatHunt 90\nendif",
+        index.addScript(
+            "if ( OnDeath == 1 )\nJournal FG_RatHunt 110\nendif\n"
+            "if ( GetPCCell \"Gnaar Mok\" == 1 )\nJournal FG_RatHunt 90\nendif",
             { Index::Carrier{ id("pemenie"), true } });
         EXPECT_TRUE(index.isCompanion(id("pemenie")));
         const std::vector<Way> ways = index.waysForward(quest, 60, Rule::LowestAndHighest);

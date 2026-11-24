@@ -31,6 +31,8 @@
 
 #include "../mwworld/esmstore.hpp"
 
+#include "topiclearning.hpp"
+
 namespace MWGui::QuestTargets
 {
     namespace
@@ -466,7 +468,7 @@ namespace MWGui::QuestTargets
         return true;
     }
 
-    void Index::addDialogue(const ESM::DialInfo& info)
+    void Index::addDialogue(const ESM::DialInfo& info, std::string_view topic)
     {
         const std::vector<std::pair<ESM::RefId, int>> taken = itemsTaken(info.mResultScript);
         for (const auto& [quest, stage] : journalChanges(info.mResultScript))
@@ -474,6 +476,7 @@ namespace MWGui::QuestTargets
             Source source;
             source.mToStage = stage;
             source.mDialogue = true;
+            source.mTopic = topic;
             source.mConditions = info.mSelects;
             source.mSpeaker = info.mActor;
             source.mFaction = info.mFaction;
@@ -488,6 +491,14 @@ namespace MWGui::QuestTargets
         if (!info.mActor.empty())
             speaker.push_back(info.mActor);
         addCompanions(info.mResultScript, speaker, mCompanions);
+    }
+
+    void Index::learnTopics(const TopicLearning& learning)
+    {
+        for (auto& [quest, sources] : mSources)
+            for (Source& source : sources)
+                if (!source.mTopic.empty())
+                    source.mLearnedAt = learning.learnedAt(source.mTopic, quest);
     }
 
     void Index::addScript(std::string_view text, const std::vector<Carrier>& carriers)
@@ -640,7 +651,7 @@ namespace MWGui::QuestTargets
             return ways;
         for (const Source& source : it->second)
         {
-            if (source.mToStage <= stage)
+            if (source.mToStage <= stage || source.mLearnedAt > stage)
                 continue;
             if (!allowsStage(source.mConditions, quest, stage))
                 continue;
@@ -677,13 +688,27 @@ namespace MWGui::QuestTargets
     Index Index::build(const MWWorld::ESMStore& store)
     {
         Index index;
+        TopicLearning learning;
         for (const ESM::Dialogue& dialogue : store.get<ESM::Dialogue>())
         {
             if (dialogue.mType == ESM::Dialogue::Journal)
                 continue;
+            const bool topic = dialogue.mType == ESM::Dialogue::Topic;
             for (const ESM::DialInfo& info : dialogue.mInfo)
-                index.addDialogue(info);
+            {
+                index.addDialogue(info, topic ? std::string_view(dialogue.mStringId) : std::string_view());
+                if (topic && !journalChanges(info.mResultScript).empty())
+                    learning.addTopic(dialogue.mStringId);
+            }
         }
+        // Only the topics noted above matter, so the lines are looked at once all are noted.
+        for (const ESM::Dialogue& dialogue : store.get<ESM::Dialogue>())
+            if (dialogue.mType != ESM::Dialogue::Journal)
+                for (const ESM::DialInfo& info : dialogue.mInfo)
+                    learning.addLine(info.mResponse, info.mResultScript, info.mSelects);
+        for (const ESM::Script& script : store.get<ESM::Script>())
+            learning.addScript(script.mScriptText);
+        index.learnTopics(learning);
 
         std::unordered_map<ESM::RefId, std::vector<Carrier>> carriers;
         addCarriers<ESM::NPC>(store, true, carriers);
