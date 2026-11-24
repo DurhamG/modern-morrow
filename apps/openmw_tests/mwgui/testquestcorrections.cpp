@@ -120,4 +120,56 @@ namespace
         EXPECT_EQ(problems.size(), 1);
         EXPECT_TRUE(corrections.mQuests.empty());
     }
+
+    Content mainQuest()
+    {
+        Content content;
+        content.mStages[quest] = { 1, 2, 5, 10, 11, 12, 14, 18, 20, 22 };
+        return content;
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, entriesThatMatchTheContentShouldBeKept)
+    {
+        std::vector<std::string> problems;
+        Corrections corrections = read(R"(
+  A1_1_FindSpymaster:
+    - stages: 1-2
+      next: 14
+      hide: [5, 10-12]
+)",
+            problems);
+        check(corrections, mainQuest(), problems);
+        EXPECT_TRUE(problems.empty());
+        EXPECT_NE(corrections.find(quest, 1), nullptr);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aQuestTheContentDoesntHaveShouldBeLeftOut)
+    {
+        std::vector<std::string> problems;
+        Corrections corrections = read("  MS_SomeoneElsesQuest:\n    - stages: 10\n", problems);
+        check(corrections, mainQuest(), problems);
+        EXPECT_EQ(problems.size(), 1);
+        EXPECT_TRUE(corrections.mQuests.empty());
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, anEntryNamingAStageTheContentDoesntHaveShouldBeLeftOut)
+    {
+        std::vector<std::string> problems;
+        Corrections corrections = read(R"(
+  A1_1_FindSpymaster:
+    - stages: 3
+    - stages: 1
+      next: 15
+    - stages: 2
+      hide: 15-17
+    - stages: 10
+      next: 13-15
+)",
+            problems);
+        check(corrections, mainQuest(), problems);
+        EXPECT_EQ(problems.size(), 3);
+        EXPECT_EQ(corrections.find(quest, 1), nullptr);
+        EXPECT_EQ(corrections.find(quest, 2), nullptr);
+        EXPECT_NE(corrections.find(quest, 10), nullptr);
+    }
 }

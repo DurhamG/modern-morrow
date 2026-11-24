@@ -1,6 +1,7 @@
 #ifndef MWGUI_QUESTCORRECTIONS_H
 #define MWGUI_QUESTCORRECTIONS_H
 
+#include <set>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -48,9 +49,21 @@ namespace MWGui
             const Entry* find(const ESM::RefId& quest, int stage) const;
         };
 
+        /// What the loaded content has, for checking the entries against: each quest's journal indices.
+        struct Content
+        {
+            std::unordered_map<ESM::RefId, std::set<int>> mStages;
+        };
+
         /// Reads the corrections from the text of questcorrections.yaml. An entry that can't be read is left out, and
         /// a line about it is added to the problems. A file that can't be read at all gives no corrections.
         Corrections parse(const std::string& text, std::vector<std::string>& problems);
+
+        /// Leaves out the entries for a quest the content doesn't have, and those that name journal indices it doesn't
+        /// have, adding a line about each to the problems. A single index must be one of the quest's, and a range
+        /// must have at least one of them. A mod that renumbers a quest then gets the markers worked out from the
+        /// content, not wrong ones.
+        void check(Corrections& corrections, const Content& content, std::vector<std::string>& problems);
     }
 }
 

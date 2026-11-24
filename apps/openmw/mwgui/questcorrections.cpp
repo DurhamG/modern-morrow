@@ -189,4 +189,41 @@ namespace MWGui::QuestCorrections
         }
         return corrections;
     }
+
+    void check(Corrections& corrections, const Content& content, std::vector<std::string>& problems)
+    {
+        for (auto quest = corrections.mQuests.begin(); quest != corrections.mQuests.end();)
+        {
+            const auto stages = content.mStages.find(quest->first);
+            if (stages == content.mStages.end())
+            {
+                problems.push_back(quest->first.getRefIdString() + " isn't in the content");
+                quest = corrections.mQuests.erase(quest);
+                continue;
+            }
+            const auto known = [&](const std::vector<Range>& ranges) {
+                return std::all_of(ranges.begin(), ranges.end(), [&](const Range& range) {
+                    const auto it = stages->second.lower_bound(range.mFirst);
+                    return it != stages->second.end() && *it <= range.mLast;
+                });
+            };
+            std::vector<Entry>& entries = quest->second;
+            for (std::size_t i = 0; i < entries.size();)
+            {
+                const Entry& entry = entries[i];
+                if (known(entry.mStages) && known(entry.mNext) && known(entry.mHide))
+                {
+                    ++i;
+                    continue;
+                }
+                problems.push_back(quest->first.getRefIdString() + "'s entry for stage "
+                    + std::to_string(entry.mStages.front().mFirst) + " names a stage the content doesn't have");
+                entries.erase(entries.begin() + i);
+            }
+            if (entries.empty())
+                quest = corrections.mQuests.erase(quest);
+            else
+                ++quest;
+        }
+    }
 }
