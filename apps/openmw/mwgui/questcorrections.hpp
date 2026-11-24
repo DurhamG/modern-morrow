@@ -48,6 +48,8 @@ namespace MWGui
             std::vector<Range> mStages;
             // Mark only the ways that lead to these stages. Empty leaves the choice to the default rule.
             std::vector<Range> mNext;
+            // Mark the ways that lead to these stages as optional, as side steps the player can take or leave.
+            std::vector<Range> mOptional;
             // Never mark the ways that lead to these stages.
             std::vector<Range> mHide;
         };
@@ -82,9 +84,10 @@ namespace MWGui
         Corrections load(const VFS::Manager& vfs, const MWWorld::ESMStore& store);
 
         /// Chooses the ways forward to mark, as QuestTargets::chooseWays does, with a stage's entry if it has one. The
-        /// ways to the entry's hidden stages are left out. If the entry has next stages, only the ways to them are
-        /// marked, leaving out failures and ways out of reach. When none of those is left, such as when the person to
-        /// talk to is dead, the rule chooses among the rest.
+        /// ways to the entry's hidden stages are left out. The ways to its optional stages are marked as optional,
+        /// unless they are failures or out of reach. Of the other ways, if the entry has next stages, only the ways to
+        /// them are marked, leaving out failures and ways out of reach. When none of those is left, such as when the
+        /// person to talk to is dead, the rule chooses among the other ways.
         std::vector<QuestTargets::Way> chooseWays(
             std::vector<QuestTargets::Way> ways, const Entry* entry, QuestTargets::Rule rule);
     }

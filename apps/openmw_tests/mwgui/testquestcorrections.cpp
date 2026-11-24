@@ -241,4 +241,59 @@ namespace
         ways[2].mOutOfReach = true;
         EXPECT_EQ(stagesOf(chooseWays(ways, &entry, Rule::LowestAndHighest)), (std::vector<int>{ 2, 5 }));
     }
+
+    std::vector<int> optionalStagesOf(const std::vector<Way>& ways)
+    {
+        std::vector<int> result;
+        for (const Way& item : ways)
+            if (item.mOptional)
+                result.push_back(item.mToStage);
+        return result;
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, optionalStagesShouldBeRead)
+    {
+        std::vector<std::string> problems;
+        Corrections corrections = read("  A1_1_FindSpymaster:\n    - stages: 1\n      optional: [5, 10]\n", problems);
+        EXPECT_TRUE(problems.empty());
+        ASSERT_NE(corrections.find(quest, 1), nullptr);
+        EXPECT_EQ(corrections.find(quest, 1)->mOptional, (std::vector<Range>{ { 5, 5 }, { 10, 10 } }));
+        corrections = read("  A1_1_FindSpymaster:\n    - stages: 1\n      optional: 13\n", problems);
+        check(corrections, mainQuest(), problems);
+        EXPECT_EQ(corrections.find(quest, 1), nullptr);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, optionalWaysShouldBeMarkedBesideTheNextOnes)
+    {
+        Entry entry;
+        entry.mNext = { { 14, 14 } };
+        entry.mOptional = { { 5, 5 }, { 10, 10 } };
+        const std::vector<Way> chosen = chooseWays(firstStage(), &entry, Rule::LowestAndHighest);
+        EXPECT_EQ(stagesOf(chosen), (std::vector<int>{ 5, 10, 14 }));
+        EXPECT_EQ(optionalStagesOf(chosen), (std::vector<int>{ 5, 10 }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, theRuleShouldChooseAmongTheWaysThatArentOptional)
+    {
+        Entry entry;
+        entry.mOptional = { { 2, 2 } };
+        const std::vector<Way> chosen = chooseWays(firstStage(), &entry, Rule::Lowest);
+        EXPECT_EQ(stagesOf(chosen), (std::vector<int>{ 2, 5 }));
+        EXPECT_EQ(optionalStagesOf(chosen), (std::vector<int>{ 2 }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, anOptionalWayThatIsAFailureShouldNotBeMarked)
+    {
+        std::vector<Way> ways = firstStage();
+        ways[1].mOutOfReach = true;
+        Entry entry;
+        entry.mNext = { { 14, 14 } };
+        entry.mOptional = { { 5, 5 } };
+        EXPECT_EQ(stagesOf(chooseWays(ways, &entry, Rule::LowestAndHighest)), (std::vector<int>{ 14 }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, waysShouldNotBeOptionalWithoutACorrection)
+    {
+        EXPECT_TRUE(optionalStagesOf(chooseWays(firstStage(), nullptr, Rule::All)).empty());
+    }
 }

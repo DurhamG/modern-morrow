@@ -97,6 +97,8 @@ namespace MWGui::QuestCorrections
                     ranges = &entry.mStages;
                 else if (key == "next")
                     ranges = &entry.mNext;
+                else if (key == "optional")
+                    ranges = &entry.mOptional;
                 else if (key == "hide")
                     ranges = &entry.mHide;
                 else
@@ -220,7 +222,7 @@ namespace MWGui::QuestCorrections
             for (std::size_t i = 0; i < entries.size();)
             {
                 const Entry& entry = entries[i];
-                if (known(entry.mStages) && known(entry.mNext) && known(entry.mHide))
+                if (known(entry.mStages) && known(entry.mNext) && known(entry.mOptional) && known(entry.mHide))
                 {
                     ++i;
                     continue;
@@ -264,16 +266,34 @@ namespace MWGui::QuestCorrections
     {
         if (entry == nullptr)
             return QuestTargets::chooseWays(std::move(ways), rule);
-        std::erase_if(ways, [&](const QuestTargets::Way& way) { return contains(entry->mHide, way.mToStage); });
-        if (!entry->mNext.empty())
+        const auto setAside = [](const QuestTargets::Way& way) { return way.mFailure || way.mOutOfReach; };
+        std::vector<QuestTargets::Way> optional;
+        std::vector<QuestTargets::Way> rest;
+        for (QuestTargets::Way& way : ways)
         {
-            std::vector<QuestTargets::Way> next;
-            for (const QuestTargets::Way& way : ways)
-                if (contains(entry->mNext, way.mToStage) && !way.mFailure && !way.mOutOfReach)
-                    next.push_back(way);
-            if (!next.empty())
-                return QuestTargets::chooseWays(std::move(next), QuestTargets::Rule::All);
+            if (contains(entry->mHide, way.mToStage))
+                continue;
+            if (contains(entry->mOptional, way.mToStage))
+            {
+                if (!setAside(way))
+                {
+                    way.mOptional = true;
+                    optional.push_back(std::move(way));
+                }
+                continue;
+            }
+            rest.push_back(std::move(way));
         }
-        return QuestTargets::chooseWays(std::move(ways), rule);
+        std::vector<QuestTargets::Way> chosen;
+        if (!entry->mNext.empty())
+            for (const QuestTargets::Way& way : rest)
+                if (contains(entry->mNext, way.mToStage) && !setAside(way))
+                    chosen.push_back(way);
+        if (chosen.empty())
+            chosen = QuestTargets::chooseWays(std::move(rest), rule);
+        chosen.insert(chosen.end(), std::make_move_iterator(optional.begin()), std::make_move_iterator(optional.end()));
+        std::stable_sort(chosen.begin(), chosen.end(),
+            [](const QuestTargets::Way& l, const QuestTargets::Way& r) { return l.mToStage < r.mToStage; });
+        return chosen;
     }
 }

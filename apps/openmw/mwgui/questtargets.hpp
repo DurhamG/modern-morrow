@@ -70,6 +70,9 @@ namespace MWGui
             // such as a blade that a later stage makes, or someone to talk to who is dead or gone. Only the game
             // while it runs can tell.
             bool mOutOfReach = false;
+            // Whether the way is a side step the player can take or leave, such as asking someone for directions. Only
+            // a correction marks a way as optional. See questcorrections.hpp.
+            bool mOptional = false;
             // The line's conditions on global variables, other quests' stages and the speaker's local variables,
             // which only the game while it runs can check.
             std::vector<ESM::DialogueCondition> mChecks;
