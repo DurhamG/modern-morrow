@@ -202,6 +202,22 @@ namespace MWGui::QuestCorrections
                     }
                     continue;
                 }
+                if (key == "follow")
+                {
+                    std::vector<YAML::Node> quests;
+                    if (field.second.IsSequence())
+                        for (const YAML::Node& quest : field.second)
+                            quests.push_back(quest);
+                    else
+                        quests.push_back(field.second);
+                    for (const YAML::Node& quest : quests)
+                    {
+                        if (!quest.IsScalar() || quest.Scalar().empty())
+                            return "has a \"follow\" that isn't a quest or a list of them";
+                        entry.mFollow.push_back(ESM::RefId::stringRefId(quest.Scalar()));
+                    }
+                    continue;
+                }
                 std::vector<Range>* ranges = nullptr;
                 if (key == "stages")
                     ranges = &entry.mStages;
@@ -344,6 +360,9 @@ namespace MWGui::QuestCorrections
                         if (target.mDone && !content.mStages.contains(target.mDone->mQuest))
                             return "the quest " + target.mDone->mQuest.getRefIdString();
                     }
+                    for (const ESM::RefId& followed : entry.mFollow)
+                        if (!content.mStages.contains(followed))
+                            return "the quest " + followed.getRefIdString();
                     return std::nullopt;
                 }();
                 if (!problem)
@@ -458,5 +477,14 @@ namespace MWGui::QuestCorrections
             ways.push_back(std::move(way));
         }
         return ways;
+    }
+
+    std::vector<ESM::RefId> followedQuests(const Entry& entry, const Progress& progress)
+    {
+        std::vector<ESM::RefId> result;
+        for (const ESM::RefId& quest : entry.mFollow)
+            if (progress.mStage(quest) > 0 && !progress.mFinished(quest))
+                result.push_back(quest);
+        return result;
     }
 }

@@ -81,6 +81,9 @@ namespace MWGui
             std::vector<Range> mHide;
             // Mark these too, until each is done.
             std::vector<Target> mTargets;
+            // Quests that help with this one, such as one for each person the journal sends the player to. While one
+            // has started and not finished, what it marks is marked too, as if it were tracked.
+            std::vector<ESM::RefId> mFollow;
         };
 
         /// Every quest's entries.
@@ -137,6 +140,9 @@ namespace MWGui
         /// A way to mark for each of an entry's targets that isn't done. Each way has the target as its only
         /// objective, and leads to no stage, since the content doesn't say what it leads to.
         std::vector<QuestTargets::Way> targetWays(const Entry& entry, const Progress& progress);
+
+        /// The quests an entry follows that have started and not finished.
+        std::vector<ESM::RefId> followedQuests(const Entry& entry, const Progress& progress);
     }
 }
 

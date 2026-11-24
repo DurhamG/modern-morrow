@@ -437,4 +437,41 @@ namespace
         EXPECT_EQ(ways[3].mObjectives.front().mCount, 2);
         EXPECT_FALSE(ways[0].mOptional);
     }
+
+    TEST(MWGuiQuestCorrectionsTest, followedQuestsShouldBeRead)
+    {
+        std::vector<std::string> problems;
+        Corrections corrections = read(R"(
+  A1_V_VivecInformants:
+    - stages: 1
+      follow: [A1_6_AddhiranirrInformant, A1_7HuleeyaInformant]
+)",
+            problems);
+        check(corrections, vivecContent(), problems);
+        EXPECT_TRUE(problems.empty());
+        ASSERT_NE(corrections.find(vivec, 1), nullptr);
+        EXPECT_EQ(corrections.find(vivec, 1)->mFollow, (std::vector<ESM::RefId>{ addhiranirrQuest, huleeyaQuest }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, followingAQuestTheContentDoesntHaveShouldLeaveTheEntryOut)
+    {
+        std::vector<std::string> problems;
+        Corrections corrections
+            = read("  A1_V_VivecInformants:\n    - stages: 1\n      follow: MS_SomeoneElsesQuest\n", problems);
+        check(corrections, vivecContent(), problems);
+        EXPECT_EQ(problems.size(), 1);
+        EXPECT_EQ(corrections.find(vivec, 1), nullptr);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, onlyStartedQuestsThatArentFinishedShouldBeFollowed)
+    {
+        Entry entry;
+        entry.mFollow = { addhiranirrQuest, huleeyaQuest };
+        EXPECT_TRUE(followedQuests(entry, progressOf({})).empty());
+        EXPECT_EQ(
+            followedQuests(entry, progressOf({ { huleeyaQuest, 1 } })), (std::vector<ESM::RefId>{ huleeyaQuest }));
+        EXPECT_EQ(
+            followedQuests(entry, progressOf({ { addhiranirrQuest, 5 }, { huleeyaQuest, 50 } }, { huleeyaQuest })),
+            (std::vector<ESM::RefId>{ addhiranirrQuest }));
+    }
 }
