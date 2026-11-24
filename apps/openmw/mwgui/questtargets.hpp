@@ -131,7 +131,8 @@ namespace MWGui
         /// The lines of a topic, in order, with what each answer in a conversation inherits from the lines that offer
         /// its choice. The game only gives the answer after one of those lines, so the answer needs what they all
         /// need: their shared conditions, other than choices and the stages of quests those lines move on, and their
-        /// speaker, faction and cell where the answer names none. For example, an answer that hands over an item needs
+        /// speaker, faction and cell where the answer names none. A quest that every offering line moves to the same
+        /// stage must be at that stage, since the answer only comes in that conversation. For example, an answer that hands over an item needs
         /// the item when the line offering it does. A line that isn't an answer, or whose choice no line offers, stays
         /// as it is.
         std::vector<ESM::DialInfo> withOfferingConditions(const std::vector<ESM::DialInfo>& lines);

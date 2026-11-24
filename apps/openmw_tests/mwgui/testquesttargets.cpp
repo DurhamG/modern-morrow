@@ -269,7 +269,7 @@ namespace
         EXPECT_TRUE(lines[2].mActor.empty());
     }
 
-    TEST(MWGuiQuestTargetsTest, anAnswerDoesntInheritTheStageOfAQuestTheOfferingLineMovesOn)
+    TEST(MWGuiQuestTargetsTest, anAnswerNeedsTheStageItsOfferingLineSetsNotTheOneItNeeds)
     {
         // Big Helende starts the quest and asks at once, so by the answer the quest is no longer at 0.
         const std::vector<ESM::DialInfo> lines = withOfferingConditions({
@@ -277,8 +277,26 @@ namespace
             line("", "Journal FG_RatHunt 20",
                 { condition(DialogueCondition::Function_Choice, "", DialogueCondition::Comp_Eq, 1) }),
         });
-        ASSERT_EQ(lines[1].mSelects.size(), 1u);
+        // The answer needs the stage the offering line sets, not the one it needs.
+        ASSERT_EQ(lines[1].mSelects.size(), 2u);
+        EXPECT_EQ(id(lines[1].mSelects[1].mVariable), id("FG_RatHunt"));
+        EXPECT_EQ(lines[1].mSelects[1].mComparison, DialogueCondition::Comp_Eq);
+        EXPECT_EQ(std::get<int32_t>(lines[1].mSelects[1].mValue), 10);
         EXPECT_EQ(lines[1].mActor, id("big helende"));
+    }
+
+    TEST(MWGuiQuestTargetsIndexTest, anAnswerIsOnlyAWayAtTheStageItsOfferingLineSets)
+    {
+        Index index;
+        for (const ESM::DialInfo& info : withOfferingConditions({
+                 line("big helende", "Journal FG_RatHunt 10\nChoice \"Yes\" 1"),
+                 line("", "Journal FG_RatHunt 20",
+                     { condition(DialogueCondition::Function_Choice, "", DialogueCondition::Comp_Eq, 1) }),
+             }))
+            index.addDialogue(info);
+        EXPECT_EQ(index.waysForward(quest, 10).size(), 1u);
+        // Later, the conversation that offered the answer is over.
+        EXPECT_TRUE(index.waysForward(quest, 15).empty());
     }
 
     TEST(MWGuiQuestTargetsIndexTest, goldALineNeedsIsACheckNotAFetch)

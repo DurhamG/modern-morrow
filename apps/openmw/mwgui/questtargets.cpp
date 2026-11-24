@@ -421,11 +421,36 @@ namespace MWGui::QuestTargets
                 continue;
             // The conditions every offering line has, as far as they are known by now.
             std::vector<ESM::DialogueCondition> shared;
-            // A quest whose stage an offering line changes is at another stage by the time the player answers.
+            // A quest whose stage an offering line changes is at that stage when the player answers, and the answer
+            // only comes in that conversation. So the answer needs the quest at that stage, when every offering line
+            // sets the same one.
             std::vector<ESM::RefId> moved;
+            std::map<ESM::RefId, std::set<int>> setStages;
             for (const ESM::DialInfo* line : offering)
                 for (const auto& [quest, stage] : journalChanges(line->mResultScript))
+                {
                     moved.push_back(quest);
+                    setStages[quest].insert(stage);
+                }
+            for (const auto& [quest, stages] : setStages)
+            {
+                const bool everyLine = std::all_of(offering.begin(), offering.end(), [&](const ESM::DialInfo* line) {
+                    const auto changes = journalChanges(line->mResultScript);
+                    return std::any_of(
+                        changes.begin(), changes.end(), [&](const auto& change) { return change.first == quest; });
+                });
+                if (stages.size() != 1 || !everyLine)
+                    continue;
+                ESM::DialogueCondition atStage;
+                atStage.mFunction = ESM::DialogueCondition::Function_Journal;
+                atStage.mVariable = quest.getRefIdString();
+                atStage.mComparison = ESM::DialogueCondition::Comp_Eq;
+                atStage.mValue = *stages.begin();
+                const bool known = std::any_of(answer.mSelects.begin(), answer.mSelects.end(),
+                    [&](const ESM::DialogueCondition& other) { return same(atStage, other); });
+                if (!known)
+                    answer.mSelects.push_back(std::move(atStage));
+            }
             for (const ESM::DialogueCondition& condition : offering.front()->mSelects)
             {
                 if (condition.mFunction == ESM::DialogueCondition::Function_Choice)
