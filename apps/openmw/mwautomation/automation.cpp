@@ -38,6 +38,7 @@
 
 #include "gamepad.hpp"
 #include "input.hpp"
+#include "questsheets.hpp"
 #include "screenshot.hpp"
 #include "uidump.hpp"
 
@@ -770,6 +771,21 @@ namespace MWAutomation
                     throw std::runtime_error("can't write " + path);
                 stream << Json(std::move(quests)).dump();
                 return Json::object({ { "stages", static_cast<double>(stageCount) } });
+            };
+        };
+
+        // Writes a review sheet for each quest into the folder "path", as writeQuestSheets describes. "quests" limits
+        // them to the quests whose IDs start with one of its comma-separated prefixes, such as "A1_,A2_".
+        mHandlers["quest-review"] = [](const Json& request) -> Poll {
+            const std::string path = request.getString("path");
+            if (path.empty())
+                throw std::runtime_error("quest-review needs a \"path\"");
+            std::vector<std::string> prefixes;
+            Misc::StringUtils::split(request.getString("quests"), prefixes, ",");
+            std::erase(prefixes, std::string());
+            return [path, prefixes]() -> std::optional<Json> {
+                const std::size_t written = writeQuestSheets(Files::pathFromUnicodeString(path), prefixes);
+                return Json::object({ { "sheets", static_cast<double>(written) } });
             };
         };
 
