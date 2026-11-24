@@ -398,7 +398,8 @@ namespace MWGui::QuestCorrections
             {
                 problems.push_back(quest->first.getRefIdString()
                     + " moves on differently in the loaded content than the entries were written for, such as after "
-                      "a mod changed it, so its entries are left out");
+                      "a mod changed it, so its entries are left out. Its fingerprint is now "
+                    + content.mFingerprint(quest->first) + ".");
                 quest = corrections.mQuests.erase(quest);
                 continue;
             }
