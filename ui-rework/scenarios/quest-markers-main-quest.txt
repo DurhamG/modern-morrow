@@ -1,15 +1,34 @@
 # What the quest markers mark in the main quest. Each check sets a quest's stage with the console, then looks at the
 # markers worked out for it.
-launch --start "Balmora" --set "GUI.quest markers=true"
-# The first stage: the player is to report to Caius Cosades in Balmora. Elone in Seyda Neen only gives directions,
-# so she isn't marked.
+launch --start "Balmora" --set "GUI.quest markers=true" --set "GUI.quest compass=true" --set "GUI.controller menus=true"
+# The first stage: the player is to report to Caius Cosades in Balmora, and can ask at the South Wall Cornerclub
+# where he lives. The cornerclub is a side step, so its marker is optional. Elone in Seyda Neen only gives
+# directions, so she isn't marked.
 console "command=journal a1_1_findspymaster 1"
-expect-marker "caius cosades" quest=a1_1_findspymaster
+expect-marker "caius cosades" quest=a1_1_findspymaster optional=no
+expect-marker "Balmora, South Wall Cornerclub" quest=a1_1_findspymaster optional=yes
 expect-no-marker elone
-# Being told to ask Bacola Closcius doesn't change where Caius is.
+# Wait for the "journal updated" message to go away, then look at the compass, the HUD's map, and both map tabs.
+wait frames=900
+shot hud
+pad button=b
+wait frames=10
+pad axis=lefttrigger value=1 hold=5
+wait frames=10
+wait-mode Interface
+wait frames=30
+shot map-local
+pad button=rightshoulder
+wait frames=10
+wait-mode Interface
+shot map-world
+pad button=b
+wait frames=10
+wait-no-mode
+# Being told to ask Bacola Closcius doesn't change where Caius is. Bacola is a side step.
 console "command=journal a1_1_findspymaster 5"
-expect-marker "caius cosades" quest=a1_1_findspymaster
-expect-no-marker "bacola closcius"
+expect-marker "caius cosades" quest=a1_1_findspymaster optional=no
+expect-marker "bacola closcius" quest=a1_1_findspymaster optional=yes
 # With Caius gone, the other ways forward are marked, so the player isn't left with nothing.
 console "command=setjournalindex a1_1_findspymaster 1"
 console "command=coc \"Balmora, Caius Cosades' House\""

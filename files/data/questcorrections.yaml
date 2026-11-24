@@ -6,10 +6,12 @@
 # stages not listed here keep the default rule.
 #
 # Each quest has a list of entries. The keys of an entry are:
-#   stages  The journal indices the entry is for: an index, a range such as 10-20, or a list of them.
-#   next    Mark only the ways that lead to these journal indices. If none of them is left after the checks made
-#           while playing, such as when the person to talk to has died, the default rule chooses instead.
-#   hide    Never mark the ways that lead to these journal indices. The default rule chooses among the rest.
+#   stages    The journal indices the entry is for: an index, a range such as 10-20, or a list of them.
+#   next      Mark only the ways that lead to these journal indices. If none of them is left after the checks made
+#             while playing, such as when the person to talk to has died, the default rule chooses instead.
+#   optional  Mark the ways that lead to these journal indices as optional: side steps the player can take or leave.
+#             They are drawn hollow and smaller on the maps, and the compass leaves them out.
+#   hide      Never mark the ways that lead to these journal indices. The default rule chooses among the rest.
 #
 # The file holds no text for players, only quest IDs and journal indices. An entry whose quest or journal indices
 # aren't in the loaded content is left out, with a warning in the log, so a mod that renumbers a quest gets the
@@ -23,12 +25,15 @@ quests:
 
   A1_1_FindSpymaster:
     # At stage 1 the default rule marks Elone, whose line leads to 2, and Caius Cosades, whose lines lead to 11, 12
-    # and 14. Journal 1 tells the player to report to Caius in Balmora. Elone's line in the topic "Balmora" has no
-    # conditions and only gives directions. Caius's answers to "Report to Caius Cosades" lead to 11, 12 and 14,
-    # and need only A1_2_AntabolisInformant below 1, so they work from stage 1.
+    # and 14. Journal 1 tells the player to report to Caius in Balmora, and to ask at the South Wall Cornerclub
+    # where he lives. Elone's line in the topic "Balmora" has no conditions and only gives directions. Anyone in
+    # the cell "Balmora, South Wall Cornerclub" can say the line that leads to 5. Caius's answers to "Report to
+    # Caius Cosades" lead to 11, 12 and 14, and need only A1_2_AntabolisInformant below 1, so they work from stage 1.
     - stages: 1-2
       next: 14
-    # Journal 5 names Bacola Closcius as someone who knows where Caius lives. Caius is placed once, in his house in
-    # Balmora, and the player can go straight there.
+      optional: 5
+    # Journal 5 names Bacola Closcius as someone who knows where Caius lives. His line in the topic "Caius Cosades"
+    # leads to 10. Caius is placed once, in his house in Balmora, and the player can go straight there.
     - stages: 5
       next: 14
+      optional: 10

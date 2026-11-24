@@ -316,3 +316,7 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   - The first entries are for "Report to Caius Cosades". At its first stage, Caius is marked and Elone in Seyda Neen,
     who only gives directions, isn't.
   - A way whose person to talk to is dead or disabled is set aside, so the other ways are marked instead.
+- Optional quest steps, the second milestone of the quest marker corrections. A correction's `optional` list marks
+  side steps the player can take or leave. Their markers are a gold outline with a dark middle, a little smaller than
+  the usual marker, on the local map, the 3D map and the world map, and the compass leaves them out. At the start of
+  the main quest, the South Wall Cornerclub and then Bacola Closcius are optional, beside Caius Cosades.
