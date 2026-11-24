@@ -11,6 +11,8 @@ short reason in the reviewer's own words, such as:
 
     A1_1_FindSpymaster 1 corrected Elone only gives directions; Caius is the goal
 
+A quest ID with spaces goes in double quotes.
+
     python ui-rework/tools/quest_records.py --sheets .automation/quest-review VERDICTS...
 
 It stops without writing anything when a verdict names a stage the sheet doesn't have, or when a sheet's stage has
@@ -35,7 +37,13 @@ def read_verdicts(paths):
         for number, line in enumerate(Path(path).read_text(encoding="utf-8").splitlines(), start=1):
             if not line.strip() or line.lstrip().startswith("#"):
                 continue
-            parts = line.split(None, 3)
+            # A quest ID with spaces is in double quotes.
+            stripped = line.strip()
+            if stripped.startswith('"') and '"' in stripped[1:]:
+                end = stripped.index('"', 1)
+                parts = [stripped[1:end]] + stripped[end + 1:].split(None, 2)
+            else:
+                parts = stripped.split(None, 3)
             if len(parts) < 3 or not parts[1].lstrip("-").isdigit() or parts[2] not in VERDICTS:
                 problems.append(f"{path}:{number}: not a verdict line: {line!r}")
                 continue

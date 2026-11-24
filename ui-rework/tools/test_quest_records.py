@@ -53,6 +53,14 @@ class QuestRecordsTest(unittest.TestCase):
         self.assertIn("  - stage: 10\n    verdict: right\n    marked:", text)
         self.assertTrue(text.startswith("# The reviewed quest markers of A1_1_FindSpymaster."))
 
+    def test_a_quest_id_with_spaces_is_read_in_quotes(self):
+        (self.folder / "11111 test journal.md").write_text(
+            SHEET.replace("A1_1_FindSpymaster", "11111 test journal"), encoding="utf-8")
+        verdicts = self.write_verdicts('"11111 test journal" 1 right nothing to do\n"11111 test journal" 10 right\n')
+        self.assertEqual(quest_records.main(["--sheets", str(self.folder), verdicts]), 0)
+        text = (self.records / "11111 test journal.yaml").read_text(encoding="utf-8")
+        self.assertIn("    verdict: right  # nothing to do", text)
+
     def test_a_stage_without_a_verdict_writes_nothing(self):
         verdicts = self.write_verdicts("A1_1_FindSpymaster 1 corrected Elone only gives directions\n")
         self.assertEqual(quest_records.main(["--sheets", str(self.folder), verdicts]), 1)
