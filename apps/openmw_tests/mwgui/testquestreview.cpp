@@ -147,4 +147,25 @@ stages:
         EXPECT_EQ(changes[0].mExpected, record.mStages[0].mShown);
         EXPECT_TRUE(changes[0].mActual.mMarked.contains("elone"));
     }
+
+    TEST(MWGuiQuestReviewTest, anEntryThatChangesNothingShouldBeFound)
+    {
+        std::vector<std::string> problems;
+        const MWGui::QuestCorrections::Corrections corrections = MWGui::QuestCorrections::parse(R"(
+version: 1
+quests:
+  A1_1_FindSpymaster:
+    - stages: 1
+      next: 14
+    - stages: 5
+      hide: 2
+)",
+            problems);
+        MWGui::QuestCorrections::Content content;
+        content.mStages[quest] = { 1, 2, 5, 14 };
+        // At stage 5, the way to 2 is behind the player anyway, so hiding it changes nothing.
+        EXPECT_EQ(
+            MWGui::QuestCorrections::entriesWithoutEffect(corrections, firstQuest(), content, Rule::LowestAndHighest),
+            (std::vector<std::string>{ "A1_1_FindSpymaster's entry for stage 5" }));
+    }
 }

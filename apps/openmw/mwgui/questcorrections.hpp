@@ -122,9 +122,14 @@ namespace MWGui
         /// then gets the markers worked out from the content, not wrong ones.
         void check(Corrections& corrections, const Content& content, std::vector<std::string>& problems);
 
+        /// What the loaded content has, for checking entries against it.
+        Content contentOf(const MWWorld::ESMStore& store);
+
         /// Reads questcorrections.yaml from the data files, and checks it against the loaded content. Each problem
-        /// goes in the log as a warning. A game without the file has no corrections.
-        Corrections load(const VFS::Manager& vfs, const MWWorld::ESMStore& store);
+        /// goes in the log as a warning, and in the problems when they are given. A game without the file has no
+        /// corrections.
+        Corrections load(
+            const VFS::Manager& vfs, const MWWorld::ESMStore& store, std::vector<std::string>* problems = nullptr);
 
         /// Chooses the ways forward to mark, as QuestTargets::chooseWays does, with a stage's entry if it has one. The
         /// ways to the entry's hidden stages are left out. The ways to its optional stages are marked as optional,
@@ -140,6 +145,11 @@ namespace MWGui
         /// A way to mark for each of an entry's targets that isn't done. Each way has the target as its only
         /// objective, and leads to no stage, since the content doesn't say what it leads to.
         std::vector<QuestTargets::Way> targetWays(const Entry& entry, const Progress& progress);
+
+        /// The entries that change nothing the rule would mark at any of their stages that the content has, and
+        /// have no targets and follow no quests. Each is named by its quest and the first of its stages.
+        std::vector<std::string> entriesWithoutEffect(const Corrections& corrections, const QuestTargets::Index& index,
+            const Content& content, QuestTargets::Rule rule);
 
         /// The quests an entry follows that have started and not finished.
         std::vector<ESM::RefId> followedQuests(const Entry& entry, const Progress& progress);

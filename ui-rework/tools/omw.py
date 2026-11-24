@@ -1024,6 +1024,24 @@ def check_line(connection, words, timeout, log=None):
             fields["context"] = value
         output = lua_output(request(**fields))
         return None if output == words[2] else f"the code printed {output!r}"
+    if command == "expect-quest-review":
+        need(1)
+        folder = Path(words[1])
+        if not folder.is_absolute():
+            folder = REPO_ROOT / folder
+        report = connection.request({"cmd": "quest-review-check", "path": str(folder)}, timeout=max(timeout, 120))
+        if not report.get("ok"):
+            raise HarnessError(report.get("error"))
+        report = report["result"]
+        lines = []
+        for change in report["changes"]:
+            lines.append(f"{change['quest']} stage {change['stage']}: the record says {change['expected']}, the "
+                         f"markers show {change['actual']}")
+        lines += report["problems"]
+        lines += [f"{entry} changes nothing" for entry in report["withoutEffect"]]
+        if report["records"] == 0:
+            lines.append(f"no review records in {folder}")
+        return "\n    ".join([f"{len(lines)} problem(s) in the quest review:"] + lines) if lines else None
     if command in ("expect-marker", "expect-no-marker"):
         if len(words) < 2:
             raise HarnessError(f"{command} takes a target and optionally quest=ID, map=local or map=world, and "

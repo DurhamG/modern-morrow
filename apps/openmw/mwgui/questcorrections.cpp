@@ -382,14 +382,8 @@ namespace MWGui::QuestCorrections
         }
     }
 
-    Corrections load(const VFS::Manager& vfs, const MWWorld::ESMStore& store)
+    Content contentOf(const MWWorld::ESMStore& store)
     {
-        constexpr VFS::Path::NormalizedView path("questcorrections.yaml");
-        if (!vfs.exists(path))
-            return {};
-        const std::string text(std::istreambuf_iterator<char>(*vfs.get(path)), {});
-        std::vector<std::string> problems;
-        Corrections corrections = parse(text, problems);
         Content content;
         content.mHasObject = [&](const ESM::RefId& id) { return store.find(id) != 0; };
         content.mHasCell = [&](const ESM::RefId& id) {
@@ -408,9 +402,22 @@ namespace MWGui::QuestCorrections
             for (const ESM::DialInfo& info : dialogue.mInfo)
                 stages.insert(info.mData.mJournalIndex);
         }
-        check(corrections, content, problems);
-        for (const std::string& problem : problems)
+        return content;
+    }
+
+    Corrections load(const VFS::Manager& vfs, const MWWorld::ESMStore& store, std::vector<std::string>* problems)
+    {
+        constexpr VFS::Path::NormalizedView path("questcorrections.yaml");
+        if (!vfs.exists(path))
+            return {};
+        const std::string text(std::istreambuf_iterator<char>(*vfs.get(path)), {});
+        std::vector<std::string> found;
+        Corrections corrections = parse(text, found);
+        check(corrections, contentOf(store), found);
+        for (const std::string& problem : found)
             Log(Debug::Warning) << "Quest marker corrections: " << problem;
+        if (problems != nullptr)
+            problems->insert(problems->end(), found.begin(), found.end());
         return corrections;
     }
 
@@ -485,6 +492,48 @@ namespace MWGui::QuestCorrections
         for (const ESM::RefId& quest : entry.mFollow)
             if (progress.mStage(quest) > 0 && !progress.mFinished(quest))
                 result.push_back(quest);
+        return result;
+    }
+
+    std::vector<std::string> entriesWithoutEffect(const Corrections& corrections, const QuestTargets::Index& index,
+        const Content& content, QuestTargets::Rule rule)
+    {
+        // The stages a choice leads to, with whether each way is optional.
+        const auto summary = [](const std::vector<QuestTargets::Way>& ways) {
+            std::vector<std::pair<int, bool>> result;
+            for (const QuestTargets::Way& way : ways)
+                result.emplace_back(way.mToStage, way.mOptional);
+            std::sort(result.begin(), result.end());
+            result.erase(std::unique(result.begin(), result.end()), result.end());
+            return result;
+        };
+        std::vector<std::string> result;
+        for (const auto& [quest, entries] : corrections.mQuests)
+        {
+            const auto stages = content.mStages.find(quest);
+            for (const Entry& entry : entries)
+            {
+                if (!entry.mTargets.empty() || !entry.mFollow.empty())
+                    continue;
+                bool effect = false;
+                if (stages != content.mStages.end())
+                    for (const int stage : stages->second)
+                    {
+                        if (!contains(entry.mStages, stage))
+                            continue;
+                        const std::vector<QuestTargets::Way> ways = index.waysForward(quest, stage);
+                        if (summary(chooseWays(ways, &entry, rule)) != summary(chooseWays(ways, nullptr, rule)))
+                        {
+                            effect = true;
+                            break;
+                        }
+                    }
+                if (!effect)
+                    result.push_back(
+                        quest.getRefIdString() + "'s entry for stage " + std::to_string(entry.mStages.front().mFirst));
+            }
+        }
+        std::sort(result.begin(), result.end());
         return result;
     }
 }

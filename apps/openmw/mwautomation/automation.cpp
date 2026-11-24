@@ -31,6 +31,7 @@
 #include "../mwgui/mode.hpp"
 #include "../mwgui/questcorrections.hpp"
 #include "../mwgui/questmarkers.hpp"
+#include "../mwgui/questreview.hpp"
 #include "../mwgui/questtargets.hpp"
 
 #include "../mwworld/esmstore.hpp"
@@ -771,6 +772,76 @@ namespace MWAutomation
                     throw std::runtime_error("can't write " + path);
                 stream << Json(std::move(quests)).dump();
                 return Json::object({ { "stages", static_cast<double>(stageCount) } });
+            };
+        };
+
+        // Checks the quest markers against the review records in the folder "path": the reviewed stages whose
+        // markers have changed, records that can't be read, correction entries that were left out because they
+        // don't match the content, and entries that change nothing.
+        mHandlers["quest-review-check"] = [](const Json& request) -> Poll {
+            const std::string path = request.getString("path");
+            if (path.empty())
+                throw std::runtime_error("quest-review-check needs a \"path\"");
+            return [path]() -> std::optional<Json> {
+                using namespace MWGui;
+                const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+                const QuestTargets::Index index = QuestTargets::Index::build(store);
+                std::vector<std::string> problems;
+                const QuestCorrections::Corrections corrections = QuestCorrections::load(
+                    *MWBase::Environment::get().getResourceSystem()->getVFS(), store, &problems);
+                const QuestCorrections::Content content = QuestCorrections::contentOf(store);
+                constexpr QuestTargets::Rule rule = QuestTargets::Rule::LowestAndHighest;
+                const auto describe = [](const QuestReview::Shown& shown) {
+                    Json::Array marked;
+                    for (const std::string& target : shown.mMarked)
+                        marked.emplace_back(target);
+                    Json::Array optional;
+                    for (const std::string& target : shown.mOptional)
+                        optional.emplace_back(target);
+                    return Json::object(
+                        { { "marked", Json(std::move(marked)) }, { "optional", Json(std::move(optional)) } });
+                };
+                Json::Array changes;
+                std::size_t records = 0;
+                std::size_t stages = 0;
+                std::vector<std::filesystem::path> files;
+                for (const auto& file : std::filesystem::directory_iterator(Files::pathFromUnicodeString(path)))
+                    if (file.path().extension() == ".yaml")
+                        files.push_back(file.path());
+                std::sort(files.begin(), files.end());
+                for (const std::filesystem::path& file : files)
+                {
+                    std::ifstream stream(file, std::ios::binary);
+                    const std::string text((std::istreambuf_iterator<char>(stream)), {});
+                    const std::string name = Files::pathToUnicodeString(file.filename());
+                    std::vector<std::string> recordProblems;
+                    const QuestReview::Record record = QuestReview::parseRecord(text, recordProblems);
+                    for (const std::string& problem : recordProblems)
+                        problems.push_back(name + ": " + problem);
+                    if (record.mQuest.empty())
+                        continue;
+                    if (!content.mStages.contains(record.mQuest))
+                    {
+                        problems.push_back(name + ": the quest isn't in the content");
+                        continue;
+                    }
+                    ++records;
+                    stages += record.mStages.size();
+                    for (const QuestReview::Change& change : QuestReview::compare(record, index, corrections, rule))
+                        changes.push_back(
+                            Json::object({ { "quest", record.mQuest.getRefIdString() }, { "stage", change.mStage },
+                                { "expected", describe(change.mExpected) }, { "actual", describe(change.mActual) } }));
+                }
+                Json::Array problemList;
+                for (const std::string& problem : problems)
+                    problemList.emplace_back(problem);
+                Json::Array unused;
+                for (const std::string& entry :
+                    QuestCorrections::entriesWithoutEffect(corrections, index, content, rule))
+                    unused.emplace_back(entry);
+                return Json::object({ { "records", static_cast<double>(records) },
+                    { "stages", static_cast<double>(stages) }, { "changes", Json(std::move(changes)) },
+                    { "problems", Json(std::move(problemList)) }, { "withoutEffect", Json(std::move(unused)) } });
             };
         };
 

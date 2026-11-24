@@ -333,3 +333,9 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   Comprehensive Objective Mod's first objective barely moved, from 68.6% to 68.7% of stages, when the ways are taken as
   the engine chooses them before the checks made while playing. Working out the quests now takes about 70 ms instead
   of 45 ms, once a session.
+- Review tooling, the fifth milestone of the quest marker corrections. The `quest-review` harness command writes a
+  review sheet per quest into `.automation/`, with the journal entries, what the markers show at each stage, each way
+  forward with its checks, the lines and scripts that move the quest on, and a review record to judge. A review record
+  in `ui-rework/quests/reviewed/<quest>.yaml` says what each reviewed stage should mark, worked out from the content
+  files and the corrections alone. The `quest-review` scenario fails when a reviewed stage marks something else, when a
+  correction entry doesn't match the content, or when an entry changes nothing, so `prerelease.py` catches them.

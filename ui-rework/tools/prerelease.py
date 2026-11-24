@@ -6,7 +6,8 @@
 3. components-tests and openmw-tests from the build folder.
 4. Upstream's Lua tests that need Morrowind's data, scripts/data/morrowind_tests, against the Morrowind folder named
    in the user's openmw.cfg.
-5. Every harness scenario, with its checks.
+5. Every harness scenario, with its checks. That includes the quest-review scenario, which checks every reviewed
+   quest stage's markers against its review record in ui-rework/quests/reviewed.
 
 The first three also run in CI. The last two need Morrowind's data, so they only run here.
 

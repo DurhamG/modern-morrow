@@ -1,0 +1,6 @@
+# Every reviewed quest stage still marks what its review record in ui-rework/quests/reviewed says, and the quest
+# marker corrections have no entries that were left out or that change nothing. When a change to the markers is
+# meant, write the quest's review sheet with the quest-review harness command, judge the stages again, and update
+# the record.
+launch
+expect-quest-review ui-rework/quests/reviewed
