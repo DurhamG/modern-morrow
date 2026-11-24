@@ -739,6 +739,17 @@ namespace MWAutomation
                     }
                     return Json(std::move(result));
                 };
+                // The ways the markers choose by default with the stage's correction, and the correction's targets,
+                // whatever their conditions.
+                const auto correctedWays = [&](const ESM::RefId& quest, int stage) {
+                    const MWGui::QuestCorrections::Entry* entry = corrections.find(quest, stage);
+                    std::vector<Way> ways = MWGui::QuestCorrections::chooseWays(
+                        index.waysForward(quest, stage), entry, Rule::LowestAndHighest);
+                    if (entry != nullptr)
+                        for (Way& way : MWGui::QuestCorrections::targetWays(*entry, nullptr))
+                            ways.push_back(std::move(way));
+                    return ways;
+                };
                 Json::Object quests;
                 std::size_t stageCount = 0;
                 for (const ESM::Dialogue& dialogue : store.get<ESM::Dialogue>())
@@ -757,10 +768,9 @@ namespace MWAutomation
                             { "ends", describeWays(index.waysForward(dialogue.mId, stage, Rule::LowestAndHighest)) },
                             // Every way forward, before the game's checks and the rule choose.
                             { "every", describeWays(index.waysForward(dialogue.mId, stage)) },
-                            // The ways the markers choose by default, with the stage's correction, if it has one.
-                            { "corrected",
-                                describeWays(MWGui::QuestCorrections::chooseWays(index.waysForward(dialogue.mId, stage),
-                                    corrections.find(dialogue.mId, stage), Rule::LowestAndHighest)) },
+                            // The ways the markers choose by default, with the stage's correction and its targets, if
+                            // it has one.
+                            { "corrected", describeWays(correctedWays(dialogue.mId, stage)) },
                             { "hasCorrection", corrections.find(dialogue.mId, stage) != nullptr },
                         }));
                         ++stageCount;
