@@ -2,6 +2,9 @@
 
 #include <gtest/gtest.h>
 
+#include <map>
+#include <set>
+
 namespace
 {
     using namespace MWGui::QuestCorrections;
@@ -295,5 +298,143 @@ namespace
     TEST(MWGuiQuestCorrectionsTest, waysShouldNotBeOptionalWithoutACorrection)
     {
         EXPECT_TRUE(optionalStagesOf(chooseWays(firstStage(), nullptr, Rule::All)).empty());
+    }
+
+    const ESM::RefId vivec = ESM::RefId::stringRefId("A1_V_VivecInformants");
+    const ESM::RefId addhiranirrQuest = ESM::RefId::stringRefId("A1_6_AddhiranirrInformant");
+    const ESM::RefId huleeyaQuest = ESM::RefId::stringRefId("A1_7HuleeyaInformant");
+
+    const std::string vivecEntry = R"(
+  A1_V_VivecInformants:
+    - stages: 1
+      targets:
+        - { task: talk, object: addhiranirr, done: { quest: A1_6_AddhiranirrInformant, started: true } }
+        - { task: talk, object: huleeya, done: { quest: A1_7HuleeyaInformant, atLeast: 50 } }
+        - { task: visit, cell: "Vivec, Library of Vivec", done: { quest: A1_7HuleeyaInformant, finished: true } }
+        - { task: fetch, object: bk_progressoftruth, count: 2 }
+)";
+
+    Content vivecContent()
+    {
+        Content content;
+        content.mStages[vivec] = { 1, 50, 55 };
+        content.mStages[addhiranirrQuest] = { 5, 10, 45, 60 };
+        content.mStages[huleeyaQuest] = { 1, 2, 20, 50 };
+        content.mHasObject = [](const ESM::RefId& id) { return id != ESM::RefId::stringRefId("nobody"); };
+        content.mHasCell
+            = [](const ESM::RefId& id) { return id == ESM::RefId::stringRefId("Vivec, Library of Vivec"); };
+        return content;
+    }
+
+    Progress progressOf(std::map<ESM::RefId, int> stages, std::set<ESM::RefId> finished = {})
+    {
+        Progress progress;
+        progress.mStage = [stages](const ESM::RefId& id) {
+            const auto it = stages.find(id);
+            return it == stages.end() ? 0 : it->second;
+        };
+        progress.mFinished = [finished](const ESM::RefId& id) { return finished.contains(id); };
+        return progress;
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, targetsShouldBeReadWithTheirDoneConditions)
+    {
+        std::vector<std::string> problems;
+        Corrections corrections = read(vivecEntry, problems);
+        check(corrections, vivecContent(), problems);
+        EXPECT_TRUE(problems.empty());
+        const Entry* entry = corrections.find(vivec, 1);
+        ASSERT_NE(entry, nullptr);
+        ASSERT_EQ(entry->mTargets.size(), 4);
+        EXPECT_EQ(entry->mTargets[0].mObject, ESM::RefId::stringRefId("addhiranirr"));
+        EXPECT_EQ(entry->mTargets[0].mDone, (Done{ addhiranirrQuest, 1, false }));
+        EXPECT_EQ(entry->mTargets[1].mDone, (Done{ huleeyaQuest, 50, false }));
+        EXPECT_EQ(entry->mTargets[2].mTask, MWGui::QuestTargets::Task::Visit);
+        EXPECT_EQ(entry->mTargets[2].mCell, ESM::RefId::stringRefId("Vivec, Library of Vivec"));
+        EXPECT_EQ(entry->mTargets[2].mDone, (Done{ huleeyaQuest, 0, true }));
+        EXPECT_EQ(entry->mTargets[3].mCount, 2);
+        EXPECT_FALSE(entry->mTargets[3].mDone);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aTargetThatCantBeReadShouldLeaveItsEntryOut)
+    {
+        const std::string targets[] = {
+            "{ object: huleeya }",
+            "{ task: chat, object: huleeya }",
+            "{ task: talk }",
+            "{ task: talk, object: huleeya, cell: Vivec }",
+            "{ task: talk, object: huleeya, done: { quest: A1_7HuleeyaInformant } }",
+            "{ task: talk, object: huleeya, done: { atLeast: 50 } }",
+            "{ task: talk, object: huleeya, done: { quest: A1_7HuleeyaInformant, atLeast: 50, finished: true } }",
+            "{ task: talk, object: huleeya, colour: green }",
+        };
+        for (const std::string& target : targets)
+        {
+            std::vector<std::string> problems;
+            const Corrections corrections
+                = read("  A1_V_VivecInformants:\n    - stages: 1\n      targets: [" + target + "]\n", problems);
+            EXPECT_EQ(problems.size(), 1) << target;
+            EXPECT_EQ(corrections.find(vivec, 1), nullptr) << target;
+        }
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aTargetTheContentDoesntHaveShouldLeaveItsEntryOut)
+    {
+        const std::string targets[] = {
+            "{ task: talk, object: nobody }",
+            "{ task: visit, cell: Nowhere }",
+            "{ task: talk, object: huleeya, done: { quest: MS_SomeoneElsesQuest, started: true } }",
+        };
+        for (const std::string& target : targets)
+        {
+            std::vector<std::string> problems;
+            Corrections corrections
+                = read("  A1_V_VivecInformants:\n    - stages: 1\n      targets: [" + target + "]\n", problems);
+            check(corrections, vivecContent(), problems);
+            EXPECT_EQ(problems.size(), 1) << target;
+            EXPECT_EQ(corrections.find(vivec, 1), nullptr) << target;
+        }
+    }
+
+    std::vector<ESM::RefId> targetsOf(const std::vector<Way>& ways)
+    {
+        std::vector<ESM::RefId> result;
+        for (const Way& item : ways)
+            for (const MWGui::QuestTargets::Objective& objective : item.mObjectives)
+                result.push_back(objective.mObject.empty() ? objective.mCell : objective.mObject);
+        return result;
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, targetsShouldBeMarkedUntilTheyAreDone)
+    {
+        std::vector<std::string> problems;
+        const Corrections corrections = read(vivecEntry, problems);
+        const Entry& entry = *corrections.find(vivec, 1);
+        const ESM::RefId addhiranirr = ESM::RefId::stringRefId("addhiranirr");
+        const ESM::RefId huleeya = ESM::RefId::stringRefId("huleeya");
+        const ESM::RefId library = ESM::RefId::stringRefId("Vivec, Library of Vivec");
+        const ESM::RefId book = ESM::RefId::stringRefId("bk_progressoftruth");
+
+        EXPECT_EQ(targetsOf(targetWays(entry, progressOf({}))),
+            (std::vector<ESM::RefId>{ addhiranirr, huleeya, library, book }));
+        // Addhiranirr's own quest has started, and Huleeya's hasn't reached 50.
+        EXPECT_EQ(targetsOf(targetWays(entry, progressOf({ { addhiranirrQuest, 5 }, { huleeyaQuest, 20 } }))),
+            (std::vector<ESM::RefId>{ huleeya, library, book }));
+        EXPECT_EQ(targetsOf(targetWays(entry, progressOf({ { huleeyaQuest, 50 } }))),
+            (std::vector<ESM::RefId>{ addhiranirr, library, book }));
+        // A finished quest counts as done whatever its stage.
+        EXPECT_EQ(targetsOf(targetWays(entry, progressOf({ { huleeyaQuest, 2 } }, { huleeyaQuest }))),
+            (std::vector<ESM::RefId>{ addhiranirr, book }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aTargetsWayShouldCarryItsTaskAndCount)
+    {
+        std::vector<std::string> problems;
+        const Corrections corrections = read(vivecEntry, problems);
+        const std::vector<Way> ways = targetWays(*corrections.find(vivec, 1), progressOf({}));
+        ASSERT_EQ(ways.size(), 4);
+        EXPECT_EQ(ways[3].mObjectives.front().mTask, MWGui::QuestTargets::Task::Fetch);
+        EXPECT_EQ(ways[3].mObjectives.front().mCount, 2);
+        EXPECT_FALSE(ways[0].mOptional);
     }
 }

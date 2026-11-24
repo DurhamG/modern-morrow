@@ -9,8 +9,10 @@
 #include <yaml-cpp/yaml.h>
 
 #include <components/debug/debuglog.hpp>
+#include <components/esm3/loadcell.hpp>
 #include <components/esm3/loaddial.hpp>
 #include <components/esm3/loadinfo.hpp>
+#include <components/misc/strings/algorithm.hpp>
 #include <components/vfs/manager.hpp>
 #include <components/vfs/pathutil.hpp>
 
@@ -84,6 +86,101 @@ namespace MWGui::QuestCorrections
             });
         }
 
+        std::optional<int> readNumber(const YAML::Node& node)
+        {
+            if (!node.IsScalar())
+                return std::nullopt;
+            return readIndex(node.Scalar());
+        }
+
+        bool isTrue(const YAML::Node& node)
+        {
+            return node.IsScalar() && node.Scalar() == "true";
+        }
+
+        // When a target is done: { quest: ID, atLeast: N }, { quest: ID, started: true } or
+        // { quest: ID, finished: true }. Returns the problem with it, or nothing when it was read.
+        std::optional<std::string> readDone(const YAML::Node& node, Done& done)
+        {
+            if (!node.IsMap())
+                return "a \"done\" that isn't a map";
+            int conditions = 0;
+            for (const auto& field : node)
+            {
+                const std::string key = field.first.as<std::string>();
+                if (key == "quest" && field.second.IsScalar())
+                    done.mQuest = ESM::RefId::stringRefId(field.second.Scalar());
+                else if (key == "atLeast" && readNumber(field.second))
+                {
+                    done.mAtLeast = *readNumber(field.second);
+                    ++conditions;
+                }
+                else if (key == "started" && isTrue(field.second))
+                {
+                    done.mAtLeast = 1;
+                    ++conditions;
+                }
+                else if (key == "finished" && isTrue(field.second))
+                {
+                    done.mFinished = true;
+                    ++conditions;
+                }
+                else
+                    return "a \"done\" with a wrong \"" + key + "\"";
+            }
+            if (done.mQuest.empty() || conditions != 1)
+                return "a \"done\" without a quest and one of atLeast, started or finished";
+            return std::nullopt;
+        }
+
+        // A target: { task: talk, object: ID } or { task: visit, cell: NAME }, with optionally a count and a done.
+        // Returns the problem with it, or nothing when it was read.
+        std::optional<std::string> readTarget(const YAML::Node& node, Target& target)
+        {
+            if (!node.IsMap())
+                return "a target that isn't a map";
+            bool hasTask = false;
+            for (const auto& field : node)
+            {
+                const std::string key = field.first.as<std::string>();
+                const std::string value = field.second.IsScalar() ? field.second.Scalar() : std::string();
+                if (key == "task")
+                {
+                    hasTask = true;
+                    if (value == "talk")
+                        target.mTask = QuestTargets::Task::Talk;
+                    else if (value == "kill")
+                        target.mTask = QuestTargets::Task::Kill;
+                    else if (value == "fetch")
+                        target.mTask = QuestTargets::Task::Fetch;
+                    else if (value == "visit")
+                        target.mTask = QuestTargets::Task::Visit;
+                    else
+                        return "a target with an unknown task \"" + value + "\"";
+                }
+                else if (key == "object" && !value.empty())
+                    target.mObject = ESM::RefId::stringRefId(value);
+                else if (key == "cell" && !value.empty())
+                    target.mCell = ESM::RefId::stringRefId(value);
+                else if (key == "count" && readNumber(field.second) && *readNumber(field.second) > 0)
+                    target.mCount = *readNumber(field.second);
+                else if (key == "done")
+                {
+                    Done done;
+                    if (std::optional<std::string> problem = readDone(field.second, done))
+                        return problem;
+                    target.mDone = std::move(done);
+                }
+                else
+                    return "a target with a wrong \"" + key + "\"";
+            }
+            if (!hasTask)
+                return "a target without a task";
+            if (target.mObject.empty() == target.mCell.empty())
+                return "a target without exactly one of object or cell";
+            return std::nullopt;
+        }
+
         // Reads one entry. Returns the problem with it, or nothing when it was read.
         std::optional<std::string> readEntry(const YAML::Node& node, Entry& entry)
         {
@@ -92,6 +189,19 @@ namespace MWGui::QuestCorrections
             for (const auto& field : node)
             {
                 const std::string key = field.first.as<std::string>();
+                if (key == "targets")
+                {
+                    if (!field.second.IsSequence())
+                        return "has \"targets\" that aren't a list";
+                    for (const YAML::Node& item : field.second)
+                    {
+                        Target target;
+                        if (std::optional<std::string> problem = readTarget(item, target))
+                            return "has " + *problem;
+                        entry.mTargets.push_back(std::move(target));
+                    }
+                    continue;
+                }
                 std::vector<Range>* ranges = nullptr;
                 if (key == "stages")
                     ranges = &entry.mStages;
@@ -222,13 +332,28 @@ namespace MWGui::QuestCorrections
             for (std::size_t i = 0; i < entries.size();)
             {
                 const Entry& entry = entries[i];
-                if (known(entry.mStages) && known(entry.mNext) && known(entry.mOptional) && known(entry.mHide))
+                const std::optional<std::string> problem = [&]() -> std::optional<std::string> {
+                    if (!known(entry.mStages) || !known(entry.mNext) || !known(entry.mOptional) || !known(entry.mHide))
+                        return "a stage";
+                    for (const Target& target : entry.mTargets)
+                    {
+                        if (!target.mObject.empty() && !(content.mHasObject && content.mHasObject(target.mObject)))
+                            return "the object " + target.mObject.getRefIdString();
+                        if (!target.mCell.empty() && !(content.mHasCell && content.mHasCell(target.mCell)))
+                            return "the cell " + target.mCell.getRefIdString();
+                        if (target.mDone && !content.mStages.contains(target.mDone->mQuest))
+                            return "the quest " + target.mDone->mQuest.getRefIdString();
+                    }
+                    return std::nullopt;
+                }();
+                if (!problem)
                 {
                     ++i;
                     continue;
                 }
                 problems.push_back(quest->first.getRefIdString() + "'s entry for stage "
-                    + std::to_string(entry.mStages.front().mFirst) + " names a stage the content doesn't have");
+                    + std::to_string(entry.mStages.front().mFirst) + " names " + *problem
+                    + " that the content doesn't have");
                 entries.erase(entries.begin() + i);
             }
             if (entries.empty())
@@ -247,6 +372,15 @@ namespace MWGui::QuestCorrections
         std::vector<std::string> problems;
         Corrections corrections = parse(text, problems);
         Content content;
+        content.mHasObject = [&](const ESM::RefId& id) { return store.find(id) != 0; };
+        content.mHasCell = [&](const ESM::RefId& id) {
+            const std::string& name = id.getRefIdString();
+            if (store.get<ESM::Cell>().search(name) != nullptr)
+                return true;
+            const MWWorld::Store<ESM::Cell>& cells = store.get<ESM::Cell>();
+            return std::any_of(cells.extBegin(), cells.extEnd(),
+                [&](const ESM::Cell& cell) { return Misc::StringUtils::ciEqual(cell.mName, name); });
+        };
         for (const ESM::Dialogue& dialogue : store.get<ESM::Dialogue>())
         {
             if (dialogue.mType != ESM::Dialogue::Journal)
@@ -295,5 +429,34 @@ namespace MWGui::QuestCorrections
         std::stable_sort(chosen.begin(), chosen.end(),
             [](const QuestTargets::Way& l, const QuestTargets::Way& r) { return l.mToStage < r.mToStage; });
         return chosen;
+    }
+
+    bool isDone(const Target& target, const Progress& progress)
+    {
+        if (!target.mDone)
+            return false;
+        const Done& done = *target.mDone;
+        if (progress.mFinished(done.mQuest))
+            return true;
+        return !done.mFinished && progress.mStage(done.mQuest) >= done.mAtLeast;
+    }
+
+    std::vector<QuestTargets::Way> targetWays(const Entry& entry, const Progress& progress)
+    {
+        std::vector<QuestTargets::Way> ways;
+        for (const Target& target : entry.mTargets)
+        {
+            if (isDone(target, progress))
+                continue;
+            QuestTargets::Way way;
+            QuestTargets::Objective objective;
+            objective.mTask = target.mTask;
+            objective.mObject = target.mObject;
+            objective.mCell = target.mCell;
+            objective.mCount = target.mCount;
+            way.mObjectives.push_back(std::move(objective));
+            ways.push_back(std::move(way));
+        }
+        return ways;
     }
 }
