@@ -773,6 +773,21 @@ namespace MWAutomation
             };
         };
 
+        // Tracks a quest's markers, or stops tracking them, as the journal does: "quest" names it and "tracked" says
+        // which, true by default.
+        mHandlers["quest-track"] = [](const Json& request) -> Poll {
+            const std::string quest = request.getString("quest");
+            if (quest.empty())
+                throw std::runtime_error("quest-track needs a \"quest\"");
+            const Json* trackedField = request.find("tracked");
+            const bool tracked = trackedField == nullptr || trackedField->isNull() || trackedField->asBool();
+            return [quest, tracked]() -> std::optional<Json> {
+                MWBase::Environment::get().getWindowManager()->getQuestMarkers()->setTracked(
+                    { ESM::RefId::stringRefId(quest) }, tracked);
+                return Json::object();
+            };
+        };
+
         // The quest markers shown now, worked out again first: the tracked quests, the markers in the player's place,
         // and the markers outdoors for the world map.
         mHandlers["quest-markers"] = [](const Json&) -> Poll {

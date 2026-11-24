@@ -424,7 +424,15 @@ namespace MWGui
             }
             MWBase::Journal* journal = MWBase::Environment::get().getJournal();
             const std::span<const MWWorld::DoorLink> doors = store.getTeleportDoors();
+            // A tracked quest's correction can follow quests that help with it, which are marked as if tracked.
+            std::vector<ESM::RefId> quests(mTracked.begin(), mTracked.end());
+            const QuestCorrections::Progress progress = questProgress();
             for (const ESM::RefId& id : mTracked)
+                if (const QuestCorrections::Entry* entry = mCorrections.find(id, journal->getJournalIndex(id)))
+                    for (const ESM::RefId& followed : QuestCorrections::followedQuests(*entry, progress))
+                        if (std::find(quests.begin(), quests.end(), followed) == quests.end())
+                            quests.push_back(followed);
+            for (const ESM::RefId& id : quests)
             {
                 const auto quest = journal->getQuests().find(id);
                 if (quest == journal->getQuests().end())

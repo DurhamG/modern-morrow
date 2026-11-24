@@ -320,3 +320,9 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   side steps the player can take or leave. Their markers are a gold outline with a dark middle, a little smaller than
   the usual marker, on the local map, the 3D map and the world map, and the compass leaves them out. At the start of
   the main quest, the South Wall Cornerclub and then Bacola Closcius are optional, beside Caius Cosades.
+- Targets and helper quests, the third milestone of the quest marker corrections. A correction's `targets` list marks
+  steps that no line or script names, each until a quest reaches a stage, starts or finishes. Its `follow` list marks
+  what helper quests mark, while they're under way, even when only the main quest is tracked. At the start of "Vivec
+  Informants" the markers showed nothing, because Caius's report needs all three informants done. Now Addhiranirr,
+  Huleeya and Mehra Milo are marked, then each one's own quest. The `quest-track` harness command tracks a quest or
+  stops tracking it, for scenarios.

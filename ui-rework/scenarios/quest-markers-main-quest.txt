@@ -30,7 +30,8 @@ console "command=journal a1_1_findspymaster 5"
 expect-marker "caius cosades" quest=a1_1_findspymaster optional=no
 expect-marker "bacola closcius" quest=a1_1_findspymaster optional=yes
 # In Vivec, Caius's report needs all three informants' quests done, so the content alone marks nothing at first.
-# Each informant is marked until their own quest starts, which then marks its own steps.
+# Each informant is marked until their own quest starts. Then that quest's own steps are marked, even if the
+# player doesn't track it, because "Vivec Informants" follows it.
 console "command=journal a1_v_vivecinformants 1"
 expect-marker addhiranirr quest=a1_v_vivecinformants
 expect-marker huleeya quest=a1_v_vivecinformants
@@ -40,6 +41,11 @@ console "command=journal a1_7huleeyainformant 1"
 expect-no-marker huleeya quest=a1_v_vivecinformants
 expect-marker huleeya quest=a1_7huleeyainformant
 expect-marker addhiranirr quest=a1_v_vivecinformants
+quest-track quest=a1_7huleeyainformant tracked=false
+expect-marker huleeya quest=a1_7huleeyainformant
+quest-track quest=a1_v_vivecinformants tracked=false
+expect-no-marker huleeya
+quest-track quest=a1_v_vivecinformants
 # With Caius gone, the other ways forward are marked, so the player isn't left with nothing.
 console "command=setjournalindex a1_1_findspymaster 1"
 console "command=coc \"Balmora, Caius Cosades' House\""
