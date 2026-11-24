@@ -120,6 +120,17 @@ namespace MWGui
         computeMarkers();
     }
 
+    void QuestMarkers::refresh()
+    {
+        const MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
+        if (player.isEmpty() || player.getCell() == nullptr)
+            return;
+        mLastPlayerCell = player.getCell()->getCell()->getId();
+        mTimer = 0.f;
+        pollJournal();
+        computeMarkers();
+    }
+
     void QuestMarkers::pollJournal()
     {
         MWBase::Journal* journal = MWBase::Environment::get().getJournal();
@@ -216,7 +227,7 @@ namespace MWGui
             // The place is where the player comes in, not where a door from one of its own rooms comes out.
             if (const MWWorld::DoorLink* door
                 = MWWorld::findDoorInto(store.getTeleportDoors(), mLastPlayerCell, cell->mId))
-                return Target{ task, cell->mName, door->mDestPos, cell->mId };
+                return Target{ task, ESM::RefId(), cell->mName, door->mDestPos, cell->mId };
             return std::nullopt;
         }
         // An exterior place, such as "Gnaar Mok", is the middle of its first cell, at the player's height.
@@ -229,7 +240,7 @@ namespace MWGui
                 ESM::ExteriorCellLocation(it->getGridX(), it->getGridY(), ESM::Cell::sDefaultWorldspaceId), true);
             const float height
                 = MWBase::Environment::get().getWorld()->getPlayerPtr().getRefData().getPosition().asVec3().z();
-            return Target{ task, it->mName, osg::Vec3f(centre.x(), centre.y(), height), it->mId };
+            return Target{ task, ESM::RefId(), it->mName, osg::Vec3f(centre.x(), centre.y(), height), it->mId };
         }
         return std::nullopt;
     }
@@ -244,8 +255,8 @@ namespace MWGui
         const auto add = [&](const MWWorld::Ptr& ptr, Task task, std::string name) {
             if (!isAlive(ptr) || ptr.getCell() == nullptr)
                 return false;
-            targets.push_back(Target{
-                task, std::move(name), ptr.getRefData().getPosition().asVec3(), ptr.getCell()->getCell()->getId() });
+            targets.push_back(Target{ task, ptr.getCellRef().getRefId(), std::move(name),
+                ptr.getRefData().getPosition().asVec3(), ptr.getCell()->getCell()->getId() });
             return true;
         };
 
@@ -269,8 +280,8 @@ namespace MWGui
                         if (!ptr.getRefData().isEnabled() || ptr.getCell() == nullptr
                             || ptr.getClass().getContainerStore(ptr).count(objective.mObject) <= 0)
                             continue;
-                        targets.push_back(Target{ Task::Fetch, itemName, ptr.getRefData().getPosition().asVec3(),
-                            ptr.getCell()->getCell()->getId() });
+                        targets.push_back(Target{ Task::Fetch, objective.mObject, itemName,
+                            ptr.getRefData().getPosition().asVec3(), ptr.getCell()->getCell()->getId() });
                         added = true;
                     }
             }
@@ -389,8 +400,8 @@ namespace MWGui
                 const std::string questName(quest->second.getName());
                 for (const Target& target : targets)
                 {
-                    Marker marker{ questName, objectiveText(target.mTask, target.mName), target.mTask, target.mPos,
-                        target.mCell, false };
+                    Marker marker{ id, questName, objectiveText(target.mTask, target.mName), target.mTask, target.mId,
+                        target.mCell, target.mPos, target.mCell, false };
                     // In the player's place, the marker goes on the target, or on the first door on the way to it.
                     if (const auto route = MWWorld::findDoorRoute(doors, mLastPlayerCell, target.mCell))
                     {

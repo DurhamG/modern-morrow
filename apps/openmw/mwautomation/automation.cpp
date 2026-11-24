@@ -28,6 +28,7 @@
 #include "../mwbase/world.hpp"
 
 #include "../mwgui/mode.hpp"
+#include "../mwgui/questmarkers.hpp"
 #include "../mwgui/questtargets.hpp"
 
 #include "../mwworld/esmstore.hpp"
@@ -42,6 +43,35 @@ namespace MWAutomation
 {
     namespace
     {
+        const char* questTaskName(MWGui::QuestTargets::Task task)
+        {
+            switch (task)
+            {
+                case MWGui::QuestTargets::Task::Talk:
+                    return "talk";
+                case MWGui::QuestTargets::Task::Kill:
+                    return "kill";
+                case MWGui::QuestTargets::Task::Fetch:
+                    return "fetch";
+                case MWGui::QuestTargets::Task::Visit:
+                    return "visit";
+            }
+            return "";
+        }
+
+        // A cell's name, or its grid position for an exterior cell without one.
+        std::string cellText(const ESM::RefId& id)
+        {
+            if (id.empty())
+                return {};
+            const ESM::Cell* cell = MWBase::Environment::get().getESMStore()->get<ESM::Cell>().search(id);
+            if (cell == nullptr)
+                return id.serializeText();
+            if (!cell->mName.empty())
+                return cell->mName;
+            return std::to_string(cell->getGridX()) + "," + std::to_string(cell->getGridY());
+        }
+
         // The same names Lua uses for UI modes (see mwlua/uibindings.cpp).
         std::string_view getModeName(MWGui::GuiMode mode)
         {
@@ -645,20 +675,6 @@ namespace MWAutomation
                 using namespace MWGui::QuestTargets;
                 const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
                 const Index index = Index::build(store);
-                const auto taskName = [](Task task) {
-                    switch (task)
-                    {
-                        case Task::Talk:
-                            return "talk";
-                        case Task::Kill:
-                            return "kill";
-                        case Task::Fetch:
-                            return "fetch";
-                        case Task::Visit:
-                            return "visit";
-                    }
-                    return "";
-                };
                 const auto describeWays = [&](const std::vector<Way>& ways) {
                     Json::Array result;
                     for (const Way& way : ways)
@@ -685,7 +701,7 @@ namespace MWAutomation
                                     members.push_back(Json::object(
                                         { { "id", member.serializeText() }, { "placed", store.getRefCount(member) } }));
                             objectives.push_back(Json::object({
-                                { "task", taskName(objective.mTask) },
+                                { "task", questTaskName(objective.mTask) },
                                 { "object", objective.mObject.serializeText() },
                                 { "faction", objective.mFaction.serializeText() },
                                 { "cell", objective.mCell.serializeText() },
@@ -745,6 +761,34 @@ namespace MWAutomation
                     throw std::runtime_error("can't write " + path);
                 stream << Json(std::move(quests)).dump();
                 return Json::object({ { "stages", static_cast<double>(stageCount) } });
+            };
+        };
+
+        // The quest markers shown now, worked out again first: the tracked quests, the markers in the player's place,
+        // and the markers outdoors for the world map.
+        mHandlers["quest-markers"] = [](const Json&) -> Poll {
+            return []() -> std::optional<Json> {
+                MWGui::QuestMarkers& markers = *MWBase::Environment::get().getWindowManager()->getQuestMarkers();
+                markers.refresh();
+                const auto describe = [](const std::vector<MWGui::QuestMarkers::Marker>& list) {
+                    Json::Array result;
+                    for (const MWGui::QuestMarkers::Marker& marker : list)
+                        result.push_back(Json::object({
+                            { "quest", marker.mQuestId.serializeText() },
+                            { "task", questTaskName(marker.mTask) },
+                            { "target", marker.mTarget.serializeText() },
+                            { "targetCell", cellText(marker.mTargetCell) },
+                            { "cell", cellText(marker.mCell) },
+                            { "door", marker.mDoor },
+                        }));
+                    return Json(std::move(result));
+                };
+                Json::Array tracked;
+                for (const ESM::RefId& quest : markers.getTracked())
+                    tracked.emplace_back(quest.serializeText());
+                return Json::object(
+                    { { "tracked", Json(std::move(tracked)) }, { "local", describe(markers.getLocalMarkers()) },
+                        { "world", describe(markers.getWorldMarkers()) } });
             };
         };
     }

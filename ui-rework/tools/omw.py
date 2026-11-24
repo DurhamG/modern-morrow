@@ -1024,6 +1024,27 @@ def check_line(connection, words, timeout, log=None):
             fields["context"] = value
         output = lua_output(request(**fields))
         return None if output == words[2] else f"the code printed {output!r}"
+    if command in ("expect-marker", "expect-no-marker"):
+        if len(words) < 2:
+            raise HarnessError(f"{command} takes a target and optionally quest=ID and map=local or map=world")
+        options = {}
+        for word in words[2:]:
+            key, _, value = word.partition("=")
+            if key not in ("quest", "map") or not value:
+                raise HarnessError(f"{command} takes quest=ID and map=local or map=world, not {word!r}")
+            options[key] = value.lower()
+        markers = request(cmd="quest-markers")
+        lists = [options["map"]] if "map" in options else ["local", "world"]
+        target = words[1].lower()
+        found = [marker for name in lists for marker in markers.get(name, [])
+                 if target in (marker["target"].lower(), marker["targetCell"].lower())
+                 and options.get("quest", marker["quest"].lower()) == marker["quest"].lower()]
+        if command == "expect-marker" and not found:
+            shown = sorted({marker["target"] or marker["targetCell"] for name in lists for marker in markers.get(name, [])})
+            return f"no marker is for {words[1]!r}; the markers are for {shown}"
+        if command == "expect-no-marker" and found:
+            return f"a marker of {found[0]['quest']!r} is for {words[1]!r}"
+        return None
     if command in ("expect-log", "expect-log-clean"):
         need(1 if command == "expect-log" else 0)
         if log is None:

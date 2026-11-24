@@ -29,9 +29,13 @@ namespace MWGui
         struct Marker
         {
             // The quest's name, and what to do there, such as "Talk to Caius Cosades".
+            ESM::RefId mQuestId;
             std::string mQuest;
             std::string mObjective;
             QuestTargets::Task mTask = QuestTargets::Task::Talk;
+            // What the marker is for: the object, or nothing for a place. And the cell the target is in.
+            ESM::RefId mTarget;
+            ESM::RefId mTargetCell;
             // Where the marker goes, and the cell that is in. For a target in another place, the marker goes on the
             // first door of the way there.
             osg::Vec3f mPos;
@@ -45,10 +49,14 @@ namespace MWGui
         /// Looks at the journal for quests that moved on, and works out the markers again, a few times a second.
         void update(float dt);
 
+        /// Looks at the journal and works out the markers now, without waiting for the next update.
+        void refresh();
+
         /// Forgets the tracked quests, such as when a game starts or loads. The newest quest is tracked again.
         void clear();
 
         bool isTracked(const ESM::RefId& quest) const;
+        const std::set<ESM::RefId>& getTracked() const { return mTracked; }
         void setTracked(const std::vector<ESM::RefId>& quests, bool tracked);
 
         /// The markers in the place the player is in: the targets there, and the doors on the way to the others.
@@ -65,6 +73,8 @@ namespace MWGui
         struct Target
         {
             QuestTargets::Task mTask;
+            // The object, or nothing for a place.
+            ESM::RefId mId;
             std::string mName;
             osg::Vec3f mPos;
             ESM::RefId mCell;

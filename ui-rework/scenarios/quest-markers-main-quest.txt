@@ -1,0 +1,7 @@
+# What the quest markers mark in the main quest. Each check sets a quest's stage with the console, then looks at the
+# markers worked out for it.
+launch --start "Balmora" --set "GUI.quest markers=true"
+# The first stage: the player is to report to Caius Cosades in Balmora. Elone in Seyda Neen only gives directions.
+console "command=journal a1_1_findspymaster 1"
+expect-marker "caius cosades" quest=a1_1_findspymaster
+expect-marker elone quest=a1_1_findspymaster
