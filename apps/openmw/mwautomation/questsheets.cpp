@@ -226,15 +226,23 @@ namespace MWAutomation
             QuestReview::Record record;
             record.mQuest = quest.mId;
             out << "## Stages\n\n";
+            // The journal's stages, and those that a line or script sets without a journal entry.
+            std::map<int, const ESM::DialInfo*> stages;
+            for (const int stage : index.stagesSet(quest.mId))
+                stages[stage] = nullptr;
             for (const ESM::DialInfo& info : quest.mInfo)
+                if (info.mQuestStatus != ESM::DialInfo::QS_Name)
+                    stages[info.mData.mJournalIndex] = &info;
+            for (const auto& [stage, info] : stages)
             {
-                if (info.mQuestStatus == ESM::DialInfo::QS_Name)
-                    continue;
-                const int stage = info.mData.mJournalIndex;
-                const bool finished = info.mQuestStatus == ESM::DialInfo::QS_Finished;
-                out << "### " << stage << (finished ? " (finishes the quest)" : "") << "\n\n";
-                quote(out, info.mResponse);
-                out << "\n";
+                const bool finished = info != nullptr && info->mQuestStatus == ESM::DialInfo::QS_Finished;
+                out << "### " << stage << (finished ? " (finishes the quest)" : "")
+                    << (info == nullptr ? " (no journal entry, but a line or script sets it)" : "") << "\n\n";
+                if (info != nullptr)
+                {
+                    quote(out, info->mResponse);
+                    out << "\n";
+                }
                 if (finished)
                     continue;
                 const QuestReview::Shown shown

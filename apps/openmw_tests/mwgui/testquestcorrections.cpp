@@ -713,4 +713,22 @@ namespace
         carried = 4;
         EXPECT_EQ(targetWays(entry, &progress).size(), 1);
     }
+
+    TEST(MWGuiQuestCorrectionsTest, anEntryCanNameAStageALineSetsWithoutAJournalEntry)
+    {
+        // Handing back the potion sets 110, which has no journal entry.
+        std::vector<std::string> problems;
+        Corrections corrections = read("  A1_1_FindSpymaster:\n    - stages: 110\n      hide: 22\n", problems);
+        Content content = mainQuest();
+        check(corrections, content, problems);
+        EXPECT_EQ(problems.size(), 1);
+        EXPECT_EQ(corrections.find(quest, 110), nullptr);
+
+        problems.clear();
+        corrections = read("  A1_1_FindSpymaster:\n    - stages: 110\n      hide: 22\n", problems);
+        content.mSetStages[quest] = { 14, 110 };
+        check(corrections, content, problems);
+        EXPECT_TRUE(problems.empty());
+        EXPECT_NE(corrections.find(quest, 110), nullptr);
+    }
 }

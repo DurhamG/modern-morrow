@@ -403,10 +403,15 @@ namespace MWGui::QuestCorrections
                 quest = corrections.mQuests.erase(quest);
                 continue;
             }
+            const auto set = content.mSetStages.find(quest->first);
+            const auto within = [](const std::set<int>& indices, const Range& range) {
+                const auto it = indices.lower_bound(range.mFirst);
+                return it != indices.end() && *it <= range.mLast;
+            };
             const auto known = [&](const std::vector<Range>& ranges) {
                 return std::all_of(ranges.begin(), ranges.end(), [&](const Range& range) {
-                    const auto it = stages->second.lower_bound(range.mFirst);
-                    return it != stages->second.end() && *it <= range.mLast;
+                    return within(stages->second, range)
+                        || (set != content.mSetStages.end() && within(set->second, range));
                 });
             };
             std::vector<Entry>& entries = quest->second;
@@ -512,6 +517,8 @@ namespace MWGui::QuestCorrections
             for (const ESM::DialInfo& info : dialogue.mInfo)
                 stages.insert(info.mData.mJournalIndex);
         }
+        for (const auto& [quest, stages] : content.mStages)
+            content.mSetStages[quest] = index.stagesSet(quest);
         content.mFingerprint = [stages = content.mStages, &index](const ESM::RefId& quest) {
             const auto it = stages.find(quest);
             return it == stages.end() ? std::string() : fingerprintOf(quest, it->second, index);

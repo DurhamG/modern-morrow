@@ -116,6 +116,8 @@ namespace MWGui
         struct Content
         {
             std::unordered_map<ESM::RefId, std::set<int>> mStages;
+            // The stages lines and scripts move each quest to, which can have no journal entry.
+            std::unordered_map<ESM::RefId, std::set<int>> mSetStages;
             std::function<bool(const ESM::RefId&)> mHasObject;
             std::function<bool(const ESM::RefId&)> mHasCell;
             std::function<bool(std::string_view)> mHasGlobal;
@@ -153,7 +155,8 @@ namespace MWGui
         /// Leaves out the entries for a quest whose fingerprint differs from the loaded content's, such as one a mod
         /// rewrote. Leaves out the entries for a quest the content doesn't have, and those that name journal indices,
         /// quests, objects or cells it doesn't have, adding a line about each to the problems. A single index must be
-        /// one of the quest's, and a range must have at least one of them. A mod that renumbers a quest or removes a
+        /// one of the quest's, and a range must have at least one of them. A stage that a line or script sets counts
+        /// as one of the quest's, even without a journal entry. A mod that renumbers a quest or removes a
         /// person then gets the markers worked out from the content, not wrong ones.
         void check(Corrections& corrections, const Content& content, std::vector<std::string>& problems);
 

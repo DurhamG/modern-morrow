@@ -1,6 +1,7 @@
 #ifndef MWGUI_QUESTTARGETS_H
 #define MWGUI_QUESTTARGETS_H
 
+#include <set>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -224,6 +225,10 @@ namespace MWGui
             /// own stage. A mod that changes those changes the facts. Each fact is a line of lowercase text, in a
             /// fixed order.
             std::vector<std::string> shapeOf(const ESM::RefId& quest) const;
+
+            /// The stages that the lines and scripts of the content move a quest to. A Journal command sets the
+            /// stage even when the quest has no journal entry for it, so some of these can have none.
+            std::set<int> stagesSet(const ESM::RefId& quest) const;
 
             /// Builds the index from every dialogue, script, inventory and faction member in the content.
             static Index build(const MWWorld::ESMStore& store);

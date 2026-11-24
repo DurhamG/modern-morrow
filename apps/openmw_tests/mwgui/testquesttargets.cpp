@@ -366,6 +366,15 @@ namespace
         EXPECT_EQ(ways[1].mChecks[0].mVariable, "B6_DrenHortator");
     }
 
+    TEST(MWGuiQuestTargetsIndexTest, theStagesSetAreEveryStageALineOrScriptMovesTheQuestTo)
+    {
+        Index index;
+        index.addDialogue(line("bulfim", "Journal FG_RatHunt 110"));
+        index.addDialogue(line("eydis fire-eye", "Journal FG_RatHunt 50"));
+        index.addScript("begin ratscript\nJournal FG_RatHunt 200\nend", {});
+        EXPECT_EQ(index.stagesSet(quest), (std::set<int>{ 50, 110, 200 }));
+    }
+
     TEST(MWGuiQuestTargetsIndexTest, aFailureCountsWhenItIsTheOnlyWay)
     {
         // Hanarai Assutlanipal attacks the player, and the quest goes on once she is dead.

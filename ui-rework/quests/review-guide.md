@@ -24,7 +24,8 @@ python ui-rework/tools/omw.py quit
 ```
 
 A sheet has, for each stage, the journal entry, what the markers show now ("Shows now"), the stage's correction if it
-has one, and every way forward the analysis found. A way leads to a higher stage, and lists its objectives: talk to,
+has one, and every way forward the analysis found. It also lists the stages that a line or script sets without a
+journal entry, because the game sets the stage all the same, and the markers then work from it. Judge those too. A way leads to a higher stage, and lists its objectives: talk to,
 kill or fetch an object, talk to anyone in a faction, or visit a cell. Each object's placement follows in brackets. A
 way's checks are its line's conditions on global variables, other quests' stages and the speaker's local variables.
 Only the running game can test them, so a way whose checks don't hold is left out while playing, and the rule then

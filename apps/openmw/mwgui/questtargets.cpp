@@ -814,6 +814,16 @@ namespace MWGui::QuestTargets
         return facts;
     }
 
+    std::set<int> Index::stagesSet(const ESM::RefId& quest) const
+    {
+        std::set<int> stages;
+        const auto it = mSources.find(quest);
+        if (it != mSources.end())
+            for (const Source& source : it->second)
+                stages.insert(source.mToStage);
+        return stages;
+    }
+
     Index Index::build(const MWWorld::ESMStore& store)
     {
         Index index;
