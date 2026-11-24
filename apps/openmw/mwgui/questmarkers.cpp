@@ -161,7 +161,9 @@ namespace MWGui
             const auto quest = journal->getQuests().find(it->mTopic);
             if (quest == journal->getQuests().end() || quest->second.isFinished())
                 continue;
-            mTracked.insert(it->mTopic);
+            for (const auto& [id, other] : journal->getQuests())
+                if (!other.isFinished() && other.getName() == quest->second.getName())
+                    mTracked.insert(id);
             break;
         }
     }

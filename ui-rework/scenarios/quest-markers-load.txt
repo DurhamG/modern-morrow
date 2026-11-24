@@ -1,0 +1,12 @@
+# When a game loads, the quest with the newest journal entry is tracked, and so are the quests that share its name,
+# since the journal shows them as one. Both quests here are called "Zainsubani Informant".
+launch --start "Balmora" --set "GUI.quest markers=true"
+console "command=journal a1_11_zainsubaniinformant 1"
+console "command=journal a1_11_zainsubanigift 1"
+key key=F5
+wait frames=60
+expect-file "saves/*/*.omwsave"
+relaunch --set "GUI.quest markers=true"
+wait frames=60
+expect-state running
+expect-marker "hassour zainsubani" quest=a1_11_zainsubaniinformant
