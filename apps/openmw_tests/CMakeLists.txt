@@ -33,6 +33,7 @@ file(GLOB UNITTEST_SRC_FILES
     mwgui/testquickkeyslots.cpp
     mwgui/testrunfatiguechoices.cpp
     mwgui/testtextpacking.cpp
+    mwgui/testtopiclearning.cpp
     mwgui/tooltips.cpp
     mwgui/weightedsearch.cpp
 
