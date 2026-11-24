@@ -80,5 +80,7 @@ waits for time to pass.
 
 ## Writing the record
 
-Take the record from the bottom of the quest's sheet, written after the corrections are in, add a `verdict` to each
-stage, and save it as `ui-rework/quests/reviewed/<quest>.yaml`, with a comment naming the quest.
+Write the sheets again once the quest's corrections are in, and put the verdicts in a text file, one line per stage:
+the quest ID, the stage, the verdict, and a short reason in your own words. Then
+`python ui-rework/tools/quest_records.py --sheets .automation/quest-review VERDICTS` copies each sheet's record into
+`ui-rework/quests/reviewed/<quest>.yaml`, with the verdicts and reasons. It writes nothing if a stage has no verdict.

@@ -339,3 +339,7 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   in `ui-rework/quests/reviewed/<quest>.yaml` says what each reviewed stage should mark, worked out from the content
   files and the corrections alone. The `quest-review` scenario fails when a reviewed stage marks something else, when a
   correction entry doesn't match the content, or when an entry changes nothing, so `prerelease.py` catches them.
+- Quest fingerprints, the last engine milestone of the quest marker corrections. Each corrected quest has a hash of its
+  journal indices and of who and what moves it on, from which stage to which. When the loaded content gives a
+  different hash, such as after a mod rewrote the quest, its corrections are left out with a warning. The
+  `quest_records.py` tool writes review records from the sheets and a file of verdicts.
