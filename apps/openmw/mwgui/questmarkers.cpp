@@ -384,6 +384,10 @@ namespace MWGui
                         return true;
                     return QuestTargets::compare(condition, world->getGlobalFloat(condition.mVariable));
                 }
+                if (condition.mFunction == ESM::DialogueCondition::Function_Item)
+                    return QuestTargets::compare(condition,
+                        static_cast<float>(player.getClass().getContainerStore(player).count(
+                            ESM::RefId::stringRefId(condition.mVariable))));
                 if (condition.mFunction == ESM::DialogueCondition::Function_Local)
                 {
                     const std::vector<MWWorld::Ptr> speaker

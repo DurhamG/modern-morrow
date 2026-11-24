@@ -73,8 +73,8 @@ namespace MWGui
             // Whether the way is a side step the player can take or leave, such as asking someone for directions. Only
             // a correction marks a way as optional. See questcorrections.hpp.
             bool mOptional = false;
-            // The line's conditions on global variables, other quests' stages and the speaker's local variables,
-            // which only the game while it runs can check.
+            // The line's conditions on global variables, other quests' stages, the speaker's local variables and the
+            // gold the player carries, which only the game while it runs can check.
             std::vector<ESM::DialogueCondition> mChecks;
             // Who says the line, whose local variables the checks can name.
             ESM::RefId mSpeaker;

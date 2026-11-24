@@ -127,6 +127,14 @@ namespace MWGui::QuestTargets
             }
         }
 
+        // Whether a condition is on the gold the player carries, which the game tests while playing. Gold isn't
+        // something to fetch from a place, so it is a check, not an objective.
+        bool isGoldCondition(const ESM::DialogueCondition& condition)
+        {
+            return condition.mFunction == ESM::DialogueCondition::Function_Item
+                && ESM::RefId::stringRefId(condition.mVariable) == ESM::RefId::stringRefId("gold_001");
+        }
+
         bool sameQuest(const std::string& variable, const ESM::RefId& quest)
         {
             return ESM::RefId::stringRefId(variable) == quest;
@@ -769,7 +777,8 @@ namespace MWGui::QuestTargets
                 else if (condition.mFunction == ESM::DialogueCondition::Function_Global
                     || condition.mFunction == ESM::DialogueCondition::Function_Local
                     || (condition.mFunction == ESM::DialogueCondition::Function_Journal
-                        && !sameQuest(condition.mVariable, quest)))
+                        && !sameQuest(condition.mVariable, quest))
+                    || isGoldCondition(condition))
                     way.mChecks.push_back(condition);
             }
             way.mSpeaker = source.mSpeaker;

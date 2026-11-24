@@ -281,6 +281,18 @@ namespace
         EXPECT_EQ(lines[1].mActor, id("big helende"));
     }
 
+    TEST(MWGuiQuestTargetsIndexTest, goldALineNeedsIsACheckNotAFetch)
+    {
+        Index index;
+        index.addDialogue(line("socucius ergalla", "Journal FG_RatHunt 50",
+            { condition(DialogueCondition::Function_Item, "Gold_001", DialogueCondition::Comp_Ge, 200) }));
+        const std::vector<Way> ways = index.waysForward(quest, 10);
+        ASSERT_EQ(ways.size(), 1u);
+        EXPECT_EQ(ways[0].mObjectives, (std::vector<Objective>{ talk("socucius ergalla") }));
+        ASSERT_EQ(ways[0].mChecks.size(), 1u);
+        EXPECT_EQ(ways[0].mChecks[0].mVariable, "Gold_001");
+    }
+
     TEST(MWGuiQuestTargetsIndexTest, anAnswerThatNeedsAnItemIsAFetchFirst)
     {
         Index index;
