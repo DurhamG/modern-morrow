@@ -440,7 +440,7 @@ namespace MWGui
                 pcStats.setAttribute(mSpentAttributes[i], attribute);
             }
 
-            pcStats.levelUp();
+            pcStats.levelUp(mSpentAttributes);
 
             MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Levelup);
         }

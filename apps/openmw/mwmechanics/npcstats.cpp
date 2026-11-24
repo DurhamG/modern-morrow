@@ -7,6 +7,7 @@
 #include <components/esm3/loadfact.hpp>
 #include <components/esm3/loadgmst.hpp>
 #include <components/esm3/npcstats.hpp>
+#include <components/settings/values.hpp>
 
 #include <MyGUI_TextIterator.h>
 
@@ -14,6 +15,8 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
+
+#include "levelling.hpp"
 
 MWMechanics::NpcStats::NpcStats()
     : mDisposition(0)
@@ -216,19 +219,48 @@ int MWMechanics::NpcStats::getLevelProgress() const
     return mLevelProgress;
 }
 
+namespace
+{
+    // The multiplier of an attribute at level up for a number of its skill increases, from iLevelUp01Mult to
+    // iLevelUp10Mult.
+    int levelupMultiplier(int increases)
+    {
+        const int num = std::clamp(increases, 0, 10);
+        if (num == 0)
+            return 1;
+        const std::string id = std::format("iLevelUp{:0>2}Mult", num);
+        if (const ESM::GameSetting* gmst = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>().search(id))
+            return gmst->mValue.getInteger();
+        return 1;
+    }
+}
+
 void MWMechanics::NpcStats::setLevelProgress(int progress)
 {
     mLevelProgress = progress;
 }
 
-void MWMechanics::NpcStats::levelUp()
+void MWMechanics::NpcStats::levelUp(const std::vector<ESM::RefId>& raised)
 {
     const MWWorld::Store<ESM::GameSetting>& gmst = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
 
     mLevelProgress -= gmst.find("iLevelUpTotal")->mValue.getInteger();
     mLevelProgress = std::max(0, mLevelProgress); // might be necessary when levelup was invoked via console
 
-    mSkillIncreases.clear();
+    if (Settings::game().mKeepLevelUpProgress)
+    {
+        for (const ESM::RefId& attribute : raised)
+        {
+            const auto it = mSkillIncreases.find(attribute);
+            if (it == mSkillIncreases.end())
+                continue;
+            it->second -= increasesSpent(it->second, levelupMultiplier);
+            if (it->second <= 0)
+                mSkillIncreases.erase(it);
+        }
+    }
+    else
+        mSkillIncreases.clear();
 
     const float endurance = getAttribute(ESM::Attribute::Endurance).getBase();
 
@@ -258,16 +290,7 @@ int MWMechanics::NpcStats::getLevelupAttributeMultiplier(ESM::RefId attribute) c
     const auto it = mSkillIncreases.find(attribute);
     if (it == mSkillIncreases.end())
         return 1;
-    const int num = std::clamp(it->second, 0, 10);
-    if (num == 0)
-        return 1;
-
-    // iLevelUp01Mult - iLevelUp10Mult
-    const std::string id = std::format("iLevelUp{:0>2}Mult", num);
-    if (const ESM::GameSetting* gmst = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>().search(id))
-        return gmst->mValue.getInteger();
-
-    return 1;
+    return levelupMultiplier(it->second);
 }
 
 int MWMechanics::NpcStats::getSkillIncreasesForAttribute(ESM::RefId attribute) const

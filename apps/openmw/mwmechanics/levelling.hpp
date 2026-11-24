@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 
 #include <components/esm/refid.hpp>
 #include <components/esm3/loadclas.hpp>
@@ -35,6 +36,23 @@ namespace MWMechanics
                 if (favoured == attribute)
                     value += 10;
         return std::min(value, now);
+    }
+
+    /// How many of an attribute's skill increases a level up spends when the player raises that attribute, with the
+    /// "keep level up progress" setting. It spends the fewest that give the same multiplier, so the rest count toward
+    /// the next level. multiplier(n) is the level up multiplier for n increases, from 1 to 10. Morrowind gives x2 for
+    /// 1 to 4, x3 for 5 to 7, x4 for 8 or 9 and x5 for 10, so 6 increases spend 5 for x3 and keep 1, and 14 spend 10
+    /// for x5 and keep 4.
+    inline int increasesSpent(int increases, const std::function<int(int)>& multiplier)
+    {
+        const int counted = std::clamp(increases, 0, 10);
+        if (counted == 0)
+            return 0;
+        const int wanted = multiplier(counted);
+        for (int spent = 1; spent < counted; ++spent)
+            if (multiplier(spent) == wanted)
+                return spent;
+        return counted;
     }
 }
 

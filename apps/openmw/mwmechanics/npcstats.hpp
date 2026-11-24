@@ -39,7 +39,7 @@ namespace MWMechanics
         std::map<ESM::RefId, int> mFactionReputation;
         int mLevelProgress; // 0-10
         std::map<ESM::RefId, int>
-            mSkillIncreases; // number of skill increases for each attribute (resets after leveling up)
+            mSkillIncreases; // number of skill increases for each attribute toward the next level up
         std::vector<int> mSpecIncreases; // number of skill increases for each specialization (accumulates throughout
                                          // the entire game)
         std::set<ESM::RefId> mUsedIds;
@@ -97,7 +97,10 @@ namespace MWMechanics
         int getSkillIncreasesForSpecialization(ESM::Class::Specialization spec) const;
         void setSkillIncreasesForSpecialization(ESM::Class::Specialization spec, int increases);
 
-        void levelUp();
+        /// Raises the level. With the "keep level up progress" setting, the skill increases that the raised
+        /// attributes' multipliers didn't need count toward the next level, and so do the increases of the
+        /// attributes that weren't raised. Without it, every attribute starts again from no increases.
+        void levelUp(const std::vector<ESM::RefId>& raised);
 
         void updateHealth();
         ///< Calculate health based on endurance and strength.

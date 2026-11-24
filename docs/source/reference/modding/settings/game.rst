@@ -348,6 +348,25 @@ Game Settings
    Only the player is affected.
 
 .. omw-setting::
+   :title: keep level up progress
+   :type: boolean
+   :range: true, false
+   :default: false
+   :location: :bdg-info:`In Game > Options > Prefs`
+
+   Whether skill increases that a level up doesn't use count toward the next one.
+   In Morrowind, each skill increase counts toward its attribute's multiplier at the next level up only.
+   The level up then forgets them all, including those of the attributes the player didn't raise,
+   and any past the 10 that give x5. To raise three attributes by 5 each level, players plan their skill increases.
+
+   When true, a level up spends only the increases that the raised attributes' multipliers need.
+   It spends the fewest that give the same multiplier, so with Morrowind's multipliers
+   6 increases spend 5 for x3 and keep 1, and 14 spend 10 for x5 and keep 4.
+   The attributes the player didn't raise keep all of theirs.
+   The level up screen and the multipliers are Morrowind's, set by the iLevelUp01Mult to iLevelUp10Mult game settings.
+   Only the player is affected.
+
+.. omw-setting::
    :title: turn to movement direction
    :type: boolean
    :range: true, false

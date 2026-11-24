@@ -58,5 +58,36 @@ namespace MWMechanics
             EXPECT_FLOAT_EQ(startingAttribute(&race, true, &warrior, ESM::Attribute::Strength, 30), 30);
             EXPECT_FLOAT_EQ(startingAttribute(nullptr, true, nullptr, ESM::Attribute::Strength, 35), 35);
         }
+
+        int morrowindMultiplier(int increases)
+        {
+            if (increases <= 4)
+                return 2;
+            if (increases <= 7)
+                return 3;
+            if (increases <= 9)
+                return 4;
+            return 5;
+        }
+
+        TEST(MWMechanicsIncreasesSpentTest, shouldSpendTheFewestForTheSameMultiplier)
+        {
+            EXPECT_EQ(increasesSpent(3, morrowindMultiplier), 1);
+            EXPECT_EQ(increasesSpent(5, morrowindMultiplier), 5);
+            EXPECT_EQ(increasesSpent(6, morrowindMultiplier), 5);
+            EXPECT_EQ(increasesSpent(9, morrowindMultiplier), 8);
+            EXPECT_EQ(increasesSpent(10, morrowindMultiplier), 10);
+        }
+
+        TEST(MWMechanicsIncreasesSpentTest, increasesPastTenShouldBeKept)
+        {
+            EXPECT_EQ(increasesSpent(14, morrowindMultiplier), 10);
+        }
+
+        TEST(MWMechanicsIncreasesSpentTest, noIncreasesShouldSpendNothing)
+        {
+            EXPECT_EQ(increasesSpent(0, morrowindMultiplier), 0);
+            EXPECT_EQ(increasesSpent(-2, morrowindMultiplier), 0);
+        }
     }
 }
