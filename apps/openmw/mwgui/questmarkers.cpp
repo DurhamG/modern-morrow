@@ -416,7 +416,8 @@ namespace MWGui
             {
                 const auto start = std::chrono::steady_clock::now();
                 mIndex = QuestTargets::Index::build(store);
-                mCorrections = QuestCorrections::load(*MWBase::Environment::get().getResourceSystem()->getVFS(), store);
+                mCorrections
+                    = QuestCorrections::load(*MWBase::Environment::get().getResourceSystem()->getVFS(), store, *mIndex);
                 Log(Debug::Info)
                     << "Worked out the quests' ways forward in "
                     << std::chrono::duration<float, std::milli>(std::chrono::steady_clock::now() - start).count()

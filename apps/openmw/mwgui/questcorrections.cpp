@@ -280,6 +280,22 @@ namespace MWGui::QuestCorrections
             problems.emplace_back("the file isn't version 1");
             return corrections;
         }
+        if (const YAML::Node fingerprints = root["fingerprints"])
+        {
+            if (!fingerprints.IsMap())
+                problems.emplace_back("\"fingerprints\" isn't a map");
+            else
+                for (const auto& quest : fingerprints)
+                {
+                    if (!quest.second.IsScalar())
+                    {
+                        problems.push_back(quest.first.as<std::string>() + "'s fingerprint isn't a text");
+                        continue;
+                    }
+                    corrections.mFingerprints[ESM::RefId::stringRefId(quest.first.as<std::string>())]
+                        = quest.second.Scalar();
+                }
+        }
         const YAML::Node quests = root["quests"];
         if (!quests)
             return corrections;
@@ -338,6 +354,16 @@ namespace MWGui::QuestCorrections
                 quest = corrections.mQuests.erase(quest);
                 continue;
             }
+            const auto expected = corrections.mFingerprints.find(quest->first);
+            if (expected != corrections.mFingerprints.end() && content.mFingerprint
+                && content.mFingerprint(quest->first) != expected->second)
+            {
+                problems.push_back(quest->first.getRefIdString()
+                    + " moves on differently in the loaded content than the entries were written for, such as after "
+                      "a mod changed it, so its entries are left out");
+                quest = corrections.mQuests.erase(quest);
+                continue;
+            }
             const auto known = [&](const std::vector<Range>& ranges) {
                 return std::all_of(ranges.begin(), ranges.end(), [&](const Range& range) {
                     const auto it = stages->second.lower_bound(range.mFirst);
@@ -382,7 +408,35 @@ namespace MWGui::QuestCorrections
         }
     }
 
-    Content contentOf(const MWWorld::ESMStore& store)
+    std::string fingerprint(std::vector<std::string> facts)
+    {
+        std::sort(facts.begin(), facts.end());
+        std::uint64_t hash = 14695981039346656037ull;
+        for (const std::string& fact : facts)
+        {
+            // Each fact ends with a newline, so facts that run together differently hash differently.
+            for (const char c : fact + "\n")
+            {
+                hash ^= static_cast<unsigned char>(c);
+                hash *= 1099511628211ull;
+            }
+        }
+        constexpr char digits[] = "0123456789abcdef";
+        std::string result(16, '0');
+        for (int i = 15; i >= 0; --i, hash >>= 4)
+            result[i] = digits[hash & 0xf];
+        return result;
+    }
+
+    std::string fingerprintOf(const ESM::RefId& quest, const std::set<int>& stages, const QuestTargets::Index& index)
+    {
+        std::vector<std::string> facts = index.shapeOf(quest);
+        for (const int stage : stages)
+            facts.push_back("stage|" + std::to_string(stage));
+        return fingerprint(std::move(facts));
+    }
+
+    Content contentOf(const MWWorld::ESMStore& store, const QuestTargets::Index& index)
     {
         Content content;
         content.mHasObject = [&](const ESM::RefId& id) { return store.find(id) != 0; };
@@ -402,10 +456,15 @@ namespace MWGui::QuestCorrections
             for (const ESM::DialInfo& info : dialogue.mInfo)
                 stages.insert(info.mData.mJournalIndex);
         }
+        content.mFingerprint = [stages = content.mStages, &index](const ESM::RefId& quest) {
+            const auto it = stages.find(quest);
+            return it == stages.end() ? std::string() : fingerprintOf(quest, it->second, index);
+        };
         return content;
     }
 
-    Corrections load(const VFS::Manager& vfs, const MWWorld::ESMStore& store, std::vector<std::string>* problems)
+    Corrections load(const VFS::Manager& vfs, const MWWorld::ESMStore& store, const QuestTargets::Index& index,
+        std::vector<std::string>* problems)
     {
         constexpr VFS::Path::NormalizedView path("questcorrections.yaml");
         if (!vfs.exists(path))
@@ -413,7 +472,7 @@ namespace MWGui::QuestCorrections
         const std::string text(std::istreambuf_iterator<char>(*vfs.get(path)), {});
         std::vector<std::string> found;
         Corrections corrections = parse(text, found);
-        check(corrections, contentOf(store), found);
+        check(corrections, contentOf(store, index), found);
         for (const std::string& problem : found)
             Log(Debug::Warning) << "Quest marker corrections: " << problem;
         if (problems != nullptr)

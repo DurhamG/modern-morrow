@@ -1,5 +1,7 @@
 #include "apps/openmw/mwgui/questcorrections.hpp"
 
+#include <components/esm3/loadinfo.hpp>
+
 #include <gtest/gtest.h>
 
 #include <map>
@@ -473,5 +475,101 @@ namespace
         EXPECT_EQ(
             followedQuests(entry, progressOf({ { addhiranirrQuest, 5 }, { huleeyaQuest, 50 } }, { huleeyaQuest })),
             (std::vector<ESM::RefId>{ addhiranirrQuest }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aFingerprintShouldNotDependOnTheOrderOfTheFacts)
+    {
+        EXPECT_EQ(fingerprint({ "a", "b", "c" }), fingerprint({ "c", "a", "b" }));
+        EXPECT_EQ(fingerprint({ "a" }).size(), 16);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aFingerprintShouldChangeWithAnyFact)
+    {
+        EXPECT_NE(fingerprint({ "a", "b" }), fingerprint({ "a", "c" }));
+        EXPECT_NE(fingerprint({ "a", "b" }), fingerprint({ "a", "b", "c" }));
+        EXPECT_NE(fingerprint({ "ab", "c" }), fingerprint({ "a", "bc" }));
+    }
+
+    ESM::DialInfo questLine(
+        std::string_view speaker, std::string_view result, std::vector<ESM::DialogueCondition> conditions = {})
+    {
+        ESM::DialInfo info;
+        info.mActor = ESM::RefId::stringRefId(speaker);
+        info.mResultScript = result;
+        info.mSelects = std::move(conditions);
+        return info;
+    }
+
+    ESM::DialogueCondition stageAtLeast(int value)
+    {
+        ESM::DialogueCondition condition;
+        condition.mFunction = ESM::DialogueCondition::Function_Journal;
+        condition.mVariable = "A1_1_FindSpymaster";
+        condition.mComparison = ESM::DialogueCondition::Comp_Ge;
+        condition.mValue = value;
+        return condition;
+    }
+
+    MWGui::QuestTargets::Index spymasterIndex()
+    {
+        MWGui::QuestTargets::Index index;
+        index.addDialogue(questLine("elone", "Journal A1_1_FindSpymaster 2"), "Balmora");
+        index.addDialogue(
+            questLine("caius cosades", "Journal A1_1_FindSpymaster 14", { stageAtLeast(1) }), "Report to Caius");
+        return index;
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aQuestsFingerprintShouldFollowItsShape)
+    {
+        const std::set<int> stages = { 1, 2, 14 };
+        const std::string original = fingerprintOf(quest, stages, spymasterIndex());
+        EXPECT_EQ(fingerprintOf(quest, stages, spymasterIndex()), original);
+        // Another journal index.
+        EXPECT_NE(fingerprintOf(quest, { 1, 2, 14, 16 }, spymasterIndex()), original);
+        // Another speaker.
+        MWGui::QuestTargets::Index moved;
+        moved.addDialogue(questLine("fargoth", "Journal A1_1_FindSpymaster 2"), "Balmora");
+        moved.addDialogue(
+            questLine("caius cosades", "Journal A1_1_FindSpymaster 14", { stageAtLeast(1) }), "Report to Caius");
+        EXPECT_NE(fingerprintOf(quest, stages, moved), original);
+        // Another condition on the quest's stage.
+        MWGui::QuestTargets::Index gated;
+        gated.addDialogue(questLine("elone", "Journal A1_1_FindSpymaster 2"), "Balmora");
+        gated.addDialogue(
+            questLine("caius cosades", "Journal A1_1_FindSpymaster 14", { stageAtLeast(2) }), "Report to Caius");
+        EXPECT_NE(fingerprintOf(quest, stages, gated), original);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, aQuestThatMovesOnDifferentlyShouldLoseItsEntries)
+    {
+        const MWGui::QuestTargets::Index index = spymasterIndex();
+        Content content = mainQuest();
+        content.mFingerprint = [&](const ESM::RefId& id) { return fingerprintOf(id, content.mStages[id], index); };
+        const std::string text = "  A1_1_FindSpymaster:\n    - stages: 1\n      next: 14\n";
+
+        std::vector<std::string> problems;
+        Corrections corrections = read(text, problems);
+        corrections.mFingerprints[quest] = content.mFingerprint(quest);
+        check(corrections, content, problems);
+        EXPECT_TRUE(problems.empty());
+        EXPECT_NE(corrections.find(quest, 1), nullptr);
+
+        corrections = read(text, problems);
+        corrections.mFingerprints[quest] = "0123456789abcdef";
+        check(corrections, content, problems);
+        EXPECT_EQ(problems.size(), 1);
+        EXPECT_EQ(corrections.find(quest, 1), nullptr);
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, fingerprintsShouldBeRead)
+    {
+        std::vector<std::string> problems;
+        const Corrections corrections = parse(
+            "version: 1\nfingerprints:\n  A1_1_FindSpymaster: 0123456789abcdef\nquests:\n  A1_1_FindSpymaster:\n"
+            "    - stages: 1\n",
+            problems);
+        EXPECT_TRUE(problems.empty());
+        ASSERT_TRUE(corrections.mFingerprints.contains(quest));
+        EXPECT_EQ(corrections.mFingerprints.at(quest), "0123456789abcdef");
     }
 }

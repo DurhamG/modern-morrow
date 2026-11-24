@@ -211,6 +211,12 @@ namespace MWGui
             /// The people in a faction of a rank or higher.
             std::vector<ESM::RefId> membersOf(const ESM::RefId& faction, int rank) const;
 
+            /// The facts that make up how a quest moves on, without any text: for each line or script that moves
+            /// it, its topic, who says it or what it's on, the stage it leads to, and its conditions on the quest's
+            /// own stage. A mod that changes those changes the facts. Each fact is a line of lowercase text, in a
+            /// fixed order.
+            std::vector<std::string> shapeOf(const ESM::RefId& quest) const;
+
             /// Builds the index from every dialogue, script, inventory and faction member in the content.
             static Index build(const MWWorld::ESMStore& store);
 

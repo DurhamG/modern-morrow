@@ -28,6 +28,15 @@
 # speakers, conditions and results, and where objects are placed.
 
 version: 1
+
+# The fingerprint of each corrected quest: a hash of its journal indices and of who and what moves it on, from which
+# stages to which, in Morrowind, Tribunal and Bloodmoon. When the loaded content moves a quest on differently, such as
+# after a mod rewrote it, the quest's entries are left out with a warning, and it gets the default rule. The
+# quest-review scenario lists a corrected quest without a fingerprint, with the value to add.
+fingerprints:
+  A1_1_FindSpymaster: d1ed1e20ebfa0d6a
+  A1_V_VivecInformants: c4c1a65109e8bf3c
+
 quests:
 
   A1_1_FindSpymaster:

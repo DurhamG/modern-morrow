@@ -685,6 +685,43 @@ namespace MWGui::QuestTargets
         return ways;
     }
 
+    std::vector<std::string> Index::shapeOf(const ESM::RefId& quest) const
+    {
+        const auto lower = [](const ESM::RefId& id) { return Misc::StringUtils::lowerCase(id.getRefIdString()); };
+        std::vector<std::string> facts;
+        const auto it = mSources.find(quest);
+        if (it == mSources.end())
+            return facts;
+        for (const Source& source : it->second)
+        {
+            std::string fact = source.mDialogue ? "line|" + Misc::StringUtils::lowerCase(source.mTopic) + "|"
+                    + lower(source.mSpeaker) + "|" + lower(source.mFaction) + "|" + lower(source.mCell)
+                                                : std::string("script|");
+            if (!source.mDialogue)
+            {
+                std::vector<std::string> carriers;
+                for (const Carrier& carrier : source.mCarriers)
+                    carriers.push_back(lower(carrier.mId));
+                std::sort(carriers.begin(), carriers.end());
+                for (const std::string& carrier : carriers)
+                    fact += carrier + ",";
+            }
+            fact += "|" + std::to_string(source.mToStage);
+            std::vector<std::string> conditions;
+            for (const ESM::DialogueCondition& condition : source.mConditions)
+                if (condition.mFunction == ESM::DialogueCondition::Function_Journal
+                    && sameQuest(condition.mVariable, quest))
+                    conditions.push_back(std::string(1, static_cast<char>(condition.mComparison))
+                        + std::to_string(static_cast<int>(valueOf(condition))));
+            std::sort(conditions.begin(), conditions.end());
+            for (const std::string& condition : conditions)
+                fact += "|" + condition;
+            facts.push_back(std::move(fact));
+        }
+        std::sort(facts.begin(), facts.end());
+        return facts;
+    }
+
     Index Index::build(const MWWorld::ESMStore& store)
     {
         Index index;

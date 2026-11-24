@@ -312,7 +312,7 @@ namespace MWAutomation
         const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
         const QuestTargets::Index index = QuestTargets::Index::build(store);
         const QuestCorrections::Corrections corrections
-            = QuestCorrections::load(*MWBase::Environment::get().getResourceSystem()->getVFS(), store);
+            = QuestCorrections::load(*MWBase::Environment::get().getResourceSystem()->getVFS(), store, index);
         std::filesystem::create_directories(dir);
         std::size_t written = 0;
         for (const ESM::Dialogue& dialogue : store.get<ESM::Dialogue>())

@@ -72,8 +72,11 @@ waits for time to pass.
 - An entry names only quest IDs, journal indices, object IDs and cell names. It never holds text for players.
 - The comment above each entry says where its facts come from: the journal index, the topic, the speaker, the
   conditions, the placement. Describe them in your own words. Don't copy the game's text.
+- Each corrected quest needs a fingerprint under `fingerprints` at the top of the file. It lets the game leave out
+  the quest's entries when a mod changes how the quest moves on.
 - After editing, rebuild so the data file is copied, then run `python ui-rework/tools/omw.py scenario quest-review`.
-  It reports entries that don't match the content and entries that change nothing.
+  It reports entries that don't match the content, entries that change nothing, and corrected quests without a
+  fingerprint, with the value to add.
 
 ## Writing the record
 

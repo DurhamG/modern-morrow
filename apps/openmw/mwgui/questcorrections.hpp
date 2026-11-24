@@ -90,6 +90,8 @@ namespace MWGui
         struct Corrections
         {
             std::unordered_map<ESM::RefId, std::vector<Entry>> mQuests;
+            // The fingerprint of each corrected quest's shape in the content the entries were written for.
+            std::unordered_map<ESM::RefId, std::string> mFingerprints;
 
             /// The entry for a stage of a quest, or nullptr.
             const Entry* find(const ESM::RefId& quest, int stage) const;
@@ -102,6 +104,8 @@ namespace MWGui
             std::unordered_map<ESM::RefId, std::set<int>> mStages;
             std::function<bool(const ESM::RefId&)> mHasObject;
             std::function<bool(const ESM::RefId&)> mHasCell;
+            // A quest's fingerprint in the loaded content.
+            std::function<std::string(const ESM::RefId&)> mFingerprint;
         };
 
         /// How far the player's quests have got, for working out whether a target is done.
@@ -116,20 +120,29 @@ namespace MWGui
         /// a line about it is added to the problems. A file that can't be read at all gives no corrections.
         Corrections parse(const std::string& text, std::vector<std::string>& problems);
 
-        /// Leaves out the entries for a quest the content doesn't have, and those that name journal indices, quests,
-        /// objects or cells it doesn't have, adding a line about each to the problems. A single index must be one of
-        /// the quest's, and a range must have at least one of them. A mod that renumbers a quest or removes a person
-        /// then gets the markers worked out from the content, not wrong ones.
+        /// A short text that changes when any of the facts change, whatever their order: a 64-bit FNV-1a hash of
+        /// the sorted facts, in hexadecimal.
+        std::string fingerprint(std::vector<std::string> facts);
+
+        /// A quest's fingerprint in the content: its journal indices and the facts of how it moves on.
+        std::string fingerprintOf(
+            const ESM::RefId& quest, const std::set<int>& stages, const QuestTargets::Index& index);
+
+        /// Leaves out the entries for a quest whose fingerprint differs from the loaded content's, such as one a mod
+        /// rewrote. Leaves out the entries for a quest the content doesn't have, and those that name journal indices,
+        /// quests, objects or cells it doesn't have, adding a line about each to the problems. A single index must be
+        /// one of the quest's, and a range must have at least one of them. A mod that renumbers a quest or removes a
+        /// person then gets the markers worked out from the content, not wrong ones.
         void check(Corrections& corrections, const Content& content, std::vector<std::string>& problems);
 
         /// What the loaded content has, for checking entries against it.
-        Content contentOf(const MWWorld::ESMStore& store);
+        Content contentOf(const MWWorld::ESMStore& store, const QuestTargets::Index& index);
 
         /// Reads questcorrections.yaml from the data files, and checks it against the loaded content. Each problem
         /// goes in the log as a warning, and in the problems when they are given. A game without the file has no
         /// corrections.
-        Corrections load(
-            const VFS::Manager& vfs, const MWWorld::ESMStore& store, std::vector<std::string>* problems = nullptr);
+        Corrections load(const VFS::Manager& vfs, const MWWorld::ESMStore& store, const QuestTargets::Index& index,
+            std::vector<std::string>* problems = nullptr);
 
         /// Chooses the ways forward to mark, as QuestTargets::chooseWays does, with a stage's entry if it has one. The
         /// ways to the entry's hidden stages are left out. The ways to its optional stages are marked as optional,

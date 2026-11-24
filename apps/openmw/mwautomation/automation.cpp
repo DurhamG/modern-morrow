@@ -679,8 +679,8 @@ namespace MWAutomation
                 using namespace MWGui::QuestTargets;
                 const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
                 const Index index = Index::build(store);
-                const MWGui::QuestCorrections::Corrections corrections
-                    = MWGui::QuestCorrections::load(*MWBase::Environment::get().getResourceSystem()->getVFS(), store);
+                const MWGui::QuestCorrections::Corrections corrections = MWGui::QuestCorrections::load(
+                    *MWBase::Environment::get().getResourceSystem()->getVFS(), store, index);
                 const auto describeWays = [&](const std::vector<Way>& ways) {
                     Json::Array result;
                     for (const Way& way : ways)
@@ -788,8 +788,22 @@ namespace MWAutomation
                 const QuestTargets::Index index = QuestTargets::Index::build(store);
                 std::vector<std::string> problems;
                 const QuestCorrections::Corrections corrections = QuestCorrections::load(
-                    *MWBase::Environment::get().getResourceSystem()->getVFS(), store, &problems);
-                const QuestCorrections::Content content = QuestCorrections::contentOf(store);
+                    *MWBase::Environment::get().getResourceSystem()->getVFS(), store, index, &problems);
+                const QuestCorrections::Content content = QuestCorrections::contentOf(store, index);
+                // Every corrected quest needs its fingerprint, so a mod that changes it drops its entries.
+                std::vector<std::string> fingerprintProblems;
+                for (const auto& [quest, entries] : corrections.mQuests)
+                    if (!corrections.mFingerprints.contains(quest))
+                        fingerprintProblems.push_back("questcorrections.yaml has no fingerprint for "
+                            + quest.getRefIdString() + ". Add \"" + quest.getRefIdString() + ": "
+                            + content.mFingerprint(quest) + "\" under fingerprints.");
+                for (const auto& [quest, value] : corrections.mFingerprints)
+                    if (!corrections.mQuests.contains(quest) && content.mStages.contains(quest)
+                        && content.mFingerprint(quest) == value)
+                        fingerprintProblems.push_back("questcorrections.yaml has a fingerprint for "
+                            + quest.getRefIdString() + ", which has no entries");
+                std::sort(fingerprintProblems.begin(), fingerprintProblems.end());
+                problems.insert(problems.end(), fingerprintProblems.begin(), fingerprintProblems.end());
                 constexpr QuestTargets::Rule rule = QuestTargets::Rule::LowestAndHighest;
                 const auto describe = [](const QuestReview::Shown& shown) {
                     Json::Array marked;
