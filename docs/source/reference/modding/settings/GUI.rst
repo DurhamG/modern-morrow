@@ -241,8 +241,10 @@ GUI Settings
    :default: false
    :location: :bdg-info:`In Game > Options > Prefs`
 
-   Marks where tracked quests go next, on the local map, the world map and the compass.
-   The places are worked out from what in the game's content moves each quest on, so they can be wrong.
+   Experimental. Marks where tracked quests go next, on the local map, the world map and the compass.
+   The places are worked out from what in the game's content moves each quest on, with hand-made corrections for
+   the quests of Morrowind, Tribunal and Bloodmoon, so they can still be wrong. Quests from mods get only the markers
+   worked out from their content.
 
 .. omw-setting::
    :title: quest markers auto track
