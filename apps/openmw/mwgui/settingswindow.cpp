@@ -46,6 +46,7 @@
 #include "../mwlua/luamanagerimp.hpp"
 
 #include "confirmationdialog.hpp"
+#include "runfatiguechoices.hpp"
 #include "weightedsearch.hpp"
 
 namespace
@@ -129,18 +130,10 @@ namespace
             box->setIndexSelected(MyGUI::ITEM_NONE);
     }
 
-    // The choices of the Run Fatigue list, in its order.
-    constexpr std::array<float, 4> sRunFatigueChoices = { 1.f, 0.5f, 0.25f, 0.f };
-
     void updateRunFatigueComboBox(MyGUI::ComboBox* box)
     {
         // A value set by hand in settings.cfg shows as the nearest choice.
-        const float runFatigue = Settings::game().mRunFatigue;
-        std::size_t nearest = 0;
-        for (std::size_t i = 1; i < sRunFatigueChoices.size(); ++i)
-            if (std::abs(sRunFatigueChoices[i] - runFatigue) < std::abs(sRunFatigueChoices[nearest] - runFatigue))
-                nearest = i;
-        box->setIndexSelected(nearest);
+        box->setIndexSelected(MWGui::nearestRunFatigueChoice(Settings::game().mRunFatigue));
     }
 
     void updateAnisotropyComboBox(MyGUI::ComboBox* box)
