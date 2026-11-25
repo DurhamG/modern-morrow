@@ -1,0 +1,14 @@
+# The reviewed quest markers of DA_Azura.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: DA_Azura
+stages:
+  - stage: 10
+    verdict: corrected  # Rayna Drolan is hidden because disturbing her fails the quest, so only Staada is marked to be killed
+    marked: ["golden saint_staada"]
+  - stage: 20
+    verdict: corrected  # Rayna is hidden, and Azura's statue is marked once the player carries Sheogorath's ring from Staada's body
+    marked: ["active_dae_azura", "sheogorath's signet ring"]
+  - stage: 25
+    verdict: right  # the wager is lost and nothing is left to do
+    marked: []

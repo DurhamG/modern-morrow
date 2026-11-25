@@ -1,0 +1,11 @@
+# The reviewed quest markers of MV_SkoomaCorpse.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_SkoomaCorpse
+stages:
+  - stage: 10
+    verdict: right  # Tsiya is marked for her choice
+    marked: ["bk_notefromernil", "tsiya"]
+  - stage: 15
+    verdict: right  # The pipe on Ernil's body is marked, then Tsiya once the player has it
+    marked: ["apparatus_a_spipe_tsiya", "tsiya"]

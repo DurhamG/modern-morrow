@@ -1,0 +1,17 @@
+# The reviewed quest markers of EB_TradeSpy.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_TradeSpy
+stages:
+  - stage: 10
+    verdict: right  # Mevure Hlen is marked
+    marked: ["mevure hlen"]
+  - stage: 20
+    verdict: right  # Mevure Hlen is marked for her choice
+    marked: ["mevure hlen"]
+  - stage: 30
+    verdict: corrected  # J'Zhirr's chest holding the price list is marked, then Mevure
+    marked: ["bk_letterfromllaalam2", "com_chest_02_jzhirr", "mevure hlen"]
+  - stage: 35
+    verdict: corrected  # nothing sets this stage, and it gets the markers of 30
+    marked: ["bk_letterfromllaalam2", "com_chest_02_jzhirr", "mevure hlen"]

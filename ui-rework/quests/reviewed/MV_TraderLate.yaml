@@ -1,0 +1,14 @@
+# The reviewed quest markers of MV_TraderLate.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_TraderLate
+stages:
+  - stage: 10
+    verdict: corrected  # Only Rasha is marked, not the clothier the journal hasn't named
+    marked: ["rasha"]
+  - stage: 20
+    verdict: corrected  # Rasha is marked for his choice
+    marked: ["rasha"]
+  - stage: 30
+    verdict: right  # Bivale Teneran is marked for the shirts
+    marked: ["bivale teneran", "exquisite_shirt_01_rasha"]

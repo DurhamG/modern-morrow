@@ -1,0 +1,44 @@
+# The reviewed quest markers of MV_BountyHunter.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_BountyHunter
+stages:
+  - stage: 10
+    verdict: corrected  # Daric is marked to hear his story, without his guide, who is secretly the slave.
+    marked: ["daric bielle"]
+  - stage: 20
+    verdict: corrected  # Daric is marked for his offer, without his guide, whose secret comes out at 80.
+    marked: ["daric bielle"]
+  - stage: 30
+    verdict: corrected  # Suran is marked to ask around, as the journal suggests, rather than the guide.
+    marked: ["cell:suran"]
+  - stage: 40
+    verdict: corrected  # The player turned the job down, so nothing is marked.
+    marked: []
+  - stage: 50
+    verdict: corrected  # Suran stays marked to ask more people, without the guide.
+    marked: ["cell:suran"]
+  - stage: 60
+    verdict: corrected  # The slaver Dranas is marked, as the townsfolk suggested, without the guide.
+    marked: ["dranas sarathram"]
+  - stage: 65
+    verdict: corrected  # The slaver Dranas is marked, as the townsfolk suggested, without the guide.
+    marked: ["dranas sarathram"]
+  - stage: 70
+    verdict: corrected  # Dranas is marked to ask about the Argonian language, without the guide.
+    marked: ["dranas sarathram"]
+  - stage: 80
+    verdict: corrected  # Both choices are marked: confront Hides His Eyes, or tell Daric.
+    marked: ["daric bielle", "hides_his_eyes"]
+  - stage: 90
+    verdict: corrected  # Both choices are marked: confront Hides His Eyes, or tell Daric, and not Dranas.
+    marked: ["daric bielle", "hides_his_eyes"]
+  - stage: 100
+    verdict: right  # Hides His Eyes and Daric are marked for the two choices.
+    marked: ["daric bielle", "hides_his_eyes"]
+  - stage: 110
+    verdict: right  # Hides His Eyes is marked for his choice, and Daric for telling him anyway.
+    marked: ["daric bielle", "hides_his_eyes"]
+  - stage: 130
+    verdict: right  # Daric is marked to be told.
+    marked: ["daric bielle"]

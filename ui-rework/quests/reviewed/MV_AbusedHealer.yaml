@@ -1,0 +1,29 @@
+# The reviewed quest markers of MV_AbusedHealer.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_AbusedHealer
+stages:
+  - stage: 1
+    verdict: corrected  # Only Hlormar is marked, not the axe Sosia carries, since nobody has mentioned the witch yet.
+    marked: ["hlormar wine-sot"]
+  - stage: 10
+    verdict: corrected  # Hlormar is marked for the choice to help or refuse, without the axe on the witch he hasn't led the player to.
+    marked: ["hlormar wine-sot"]
+  - stage: 30
+    verdict: corrected  # The player leads Hlormar to the witch, so Sosia at her camp is marked rather than Hlormar beside the player.
+    marked: ["sosia caristiana"]
+  - stage: 40
+    verdict: right  # Sosia and Hlormar stand together, and either can be asked next.
+    marked: ["cloudcleaver_unique", "hlormar wine-sot", "sosia caristiana"]
+  - stage: 50
+    verdict: corrected  # Hlormar is marked to hear Sosia's offer and choose a side, without the axe that marks Sosia.
+    marked: ["hlormar wine-sot"]
+  - stage: 60
+    verdict: right  # Sosia carries the axe the player now fights her for, and Hlormar takes it afterwards.
+    marked: ["cloudcleaver_unique", "hlormar wine-sot"]
+  - stage: 70
+    verdict: right  # Hlormar is the one to fight, and Sosia beside the player gives the reward.
+    marked: ["cloudcleaver_unique", "hlormar wine-sot", "sosia caristiana"]
+  - stage: 75
+    verdict: corrected  # Sosia's thanks close the player's part, so nothing is marked.
+    marked: []

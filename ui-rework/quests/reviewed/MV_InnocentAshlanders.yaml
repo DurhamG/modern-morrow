@@ -1,0 +1,47 @@
+# The reviewed quest markers of MV_InnocentAshlanders.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_InnocentAshlanders
+stages:
+  - stage: 10
+    verdict: corrected  # Marsus is marked to hear his story, without the thieves the journal hasn't named.
+    marked: ["marsus tullius"]
+  - stage: 20
+    verdict: corrected  # Marsus is marked to accept, without the thieves.
+    marked: ["marsus tullius"]
+  - stage: 30
+    verdict: corrected  # All four Ashlander camps are marked to ask at, as the journal suggests.
+    marked: ["cell:ahemmusa camp", "cell:erabenimsun camp", "cell:urshilaku camp", "cell:zainab camp"]
+  - stage: 45
+    verdict: corrected  # The camps still to ask are marked, without Marsus or the thieves.
+    marked: ["cell:ahemmusa camp", "cell:erabenimsun camp", "cell:urshilaku camp"]
+  - stage: 46
+    verdict: corrected  # The camps still to ask are marked, without Marsus or the thieves.
+    marked: ["cell:ahemmusa camp", "cell:erabenimsun camp"]
+  - stage: 47
+    verdict: corrected  # The Erabenimsun camp, the last to ask, is marked, without Marsus or the thieves.
+    marked: ["cell:erabenimsun camp"]
+  - stage: 50
+    verdict: right  # Tinti and Hairan, named by their tribe, are marked, and Marsus only once the hides are back.
+    marked: ["hairan", "ingred_guar_hide_marsus", "marsus tullius", "tinti"]
+  - stage: 60
+    verdict: right  # The same line sets 70 or 75 at once, so this stage never lasts.
+    marked: ["hairan", "ingred_guar_hide_marsus", "marsus tullius", "tinti"]
+  - stage: 70
+    verdict: right  # Tinti and Hairan are marked for the choice, and Marsus once the player has the hides.
+    marked: ["hairan", "ingred_guar_hide_marsus", "marsus tullius", "tinti"]
+  - stage: 75
+    verdict: right  # Tinti and Hairan carry the hides they refuse to give up, and Marsus is marked once the player has them.
+    marked: ["hairan", "ingred_guar_hide_marsus", "marsus tullius", "tinti"]
+  - stage: 80
+    verdict: corrected  # Marsus is marked to be told, not Tinti and Hairan again.
+    marked: ["marsus tullius"]
+  - stage: 85
+    verdict: right  # Marsus is marked to receive the hides.
+    marked: ["ingred_guar_hide_marsus", "marsus tullius"]
+  - stage: 100
+    verdict: right  # Stentus in Tel Aruhn is marked for the reward.
+    marked: ["stentus tullius"]
+  - stage: 105
+    verdict: right  # Stentus in Tel Aruhn is marked for the reward.
+    marked: ["stentus tullius"]

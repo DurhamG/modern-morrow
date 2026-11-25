@@ -1,0 +1,8 @@
+# The reviewed quest markers of VA_VampDust.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_VampDust
+stages:
+  - stage: 10
+    verdict: right  # the vampire dust is marked, mostly at merchants, and then Sirilonwe
+    marked: ["ingred_vampire_dust_01", "sirilonwe"]

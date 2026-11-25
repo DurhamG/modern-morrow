@@ -1,0 +1,15 @@
+# The reviewed quest markers of MS_Piernette.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_Piernette
+stages:
+  - stage: 1
+    verdict: corrected  # Piernette Beluelle, who shares the name on the bowl, is marked, with Ygfa's directions as optional
+    marked: ["misc_beluelle_silver_bowl", "piernette beluelle"]
+    optional: ["ygfa"]
+  - stage: 10
+    verdict: right  # Piernette is marked as Ygfa directed
+    marked: ["misc_beluelle_silver_bowl", "piernette beluelle"]
+  - stage: 90
+    verdict: right  # the player can still return the bowl to Piernette
+    marked: ["misc_beluelle_silver_bowl", "piernette beluelle"]

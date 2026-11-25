@@ -1,0 +1,33 @@
+# The reviewed quest markers of town_Sadrith.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: town_Sadrith
+stages:
+  - stage: 1
+    verdict: right  # Angaredhel is marked to ask about the ghost
+    marked: ["angaredhel"]
+  - stage: 5
+    verdict: corrected  # Angaredhel is marked for the haunting topic, and Arara Uvulas as optional
+    marked: ["angaredhel"]
+    optional: ["arara uvulas"]
+  - stage: 6
+    verdict: corrected  # Arara Uvulas is marked as the journal says
+    marked: ["arara uvulas"]
+  - stage: 8
+    verdict: corrected  # Arara Uvulas is marked as the journal says
+    marked: ["arara uvulas"]
+  - stage: 10
+    verdict: corrected  # Wolverine Hall is marked to ask for a Conjuration expert, and Uleni once a resident has named her
+    marked: ["cell:sadrith mora, wolverine hall", "uleni heleran"]
+  - stage: 15
+    verdict: corrected  # Uleni Heleran is marked, not Angaredhel's reward
+    marked: ["uleni heleran"]
+  - stage: 20
+    verdict: corrected  # Uleni Heleran is marked, not Angaredhel's reward
+    marked: ["uleni heleran"]
+  - stage: 30
+    verdict: corrected  # Uleni Heleran is marked to persuade, not Angaredhel's reward
+    marked: ["uleni heleran"]
+  - stage: 35
+    verdict: right  # Angaredhel is marked to report
+    marked: ["angaredhel"]

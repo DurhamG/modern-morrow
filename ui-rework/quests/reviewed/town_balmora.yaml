@@ -1,0 +1,31 @@
+# The reviewed quest markers of town_balmora.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: town_balmora
+stages:
+  - stage: 1
+    verdict: corrected  # Larrius Varro is marked; the rumor-givers and the unnamed Camonna Tong are left out
+    marked: ["larrius varro"]
+  - stage: 3
+    verdict: corrected  # Larrius Varro is marked; the rumor-givers and the unnamed Camonna Tong are left out
+    marked: ["larrius varro"]
+  - stage: 5
+    verdict: corrected  # Larrius Varro is marked; the rumor-givers and the unnamed Camonna Tong are left out
+    marked: ["larrius varro"]
+  - stage: 10
+    verdict: corrected  # Larrius Varro is marked; the unnamed Camonna Tong are left out
+    marked: ["larrius varro"]
+  - stage: 15
+    verdict: corrected  # Larrius Varro is marked for the bloodbath topic; the unnamed Camonna Tong are left out
+    marked: ["larrius varro"]
+  - stage: 20
+    verdict: corrected  # Thieves Guild members, who know the names, are optional; the kills wait for the names
+    marked: []
+    optional: ["faction:thieves guild"]
+  - stage: 27
+    verdict: corrected  # the Council Club is marked, and the Thieves Guild as optional for the names
+    marked: ["cell:balmora, council club"]
+    optional: ["faction:thieves guild"]
+  - stage: 29
+    verdict: right  # the five named Camonna Tong members are marked to kill, then Varro
+    marked: ["larrius varro", "madrale thirith", "marasa aren", "sovor trandel", "thanelen velas", "vadusa sathryon"]

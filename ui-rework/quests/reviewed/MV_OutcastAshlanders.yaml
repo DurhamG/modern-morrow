@@ -1,0 +1,32 @@
+# The reviewed quest markers of MV_OutcastAshlanders.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_OutcastAshlanders
+stages:
+  - stage: 10
+    verdict: corrected  # Girith is marked, without the thieves the journal names only at 60.
+    marked: ["athanden girith"]
+  - stage: 20
+    verdict: corrected  # Girith is marked to accept, without the thieves.
+    marked: ["athanden girith"]
+  - stage: 25
+    verdict: corrected  # Girith is marked, since his line offers the choice again, without the thieves the journal names only at 60.
+    marked: ["athanden girith"]
+  - stage: 30
+    verdict: corrected  # The Ahemmusa camp, where the Ashlanders know the thieves, is marked, without the thieves themselves.
+    marked: ["cell:ahemmusa camp"]
+  - stage: 60
+    verdict: right  # The two thieves and the hides are marked, then Girith.
+    marked: ["athanden girith", "emul-ran", "ingred_guar_hide_girith", "kashtes ilabael"]
+  - stage: 70
+    verdict: right  # No line sets this stage, and the thieves, the hides and then Girith are the remaining steps.
+    marked: ["athanden girith", "emul-ran", "ingred_guar_hide_girith", "kashtes ilabael"]
+  - stage: 100
+    verdict: right  # Berwen in Tel Mora is marked for the reward.
+    marked: ["berwen"]
+  - stage: 102
+    verdict: right  # Berwen in Tel Mora is marked for the reward.
+    marked: ["berwen"]
+  - stage: 105
+    verdict: right  # Berwen in Tel Mora is marked for the reward.
+    marked: ["berwen"]

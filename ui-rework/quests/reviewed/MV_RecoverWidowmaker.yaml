@@ -1,0 +1,20 @@
+# The reviewed quest markers of MV_RecoverWidowmaker.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_RecoverWidowmaker
+stages:
+  - stage: 10
+    verdict: corrected  # Only Botrir is marked, not the witch the journal hasn't named
+    marked: ["botrir"]
+  - stage: 20
+    verdict: corrected  # Botrir is marked for his choice, without giving away where the witch is
+    marked: ["botrir"]
+  - stage: 30
+    verdict: right  # Iveri, who carries the axe, is marked, and then Botrir
+    marked: ["botrir", "iveri llothri", "widowmaker_unique"]
+  - stage: 50
+    verdict: right  # Only Botrir is left to talk to, for the choice about the axe
+    marked: ["botrir", "iveri llothri", "widowmaker_unique"]
+  - stage: 60
+    verdict: corrected  # Botrir fights the player, so he is no longer marked to talk to
+    marked: []

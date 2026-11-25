@@ -1,0 +1,8 @@
+# The reviewed quest markers of VA_Shashev.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_Shashev
+stages:
+  - stage: 10
+    verdict: right  # Shashev is marked to be killed, then his key, then Sirilonwe
+    marked: ["key_shashev", "shashev", "sirilonwe"]

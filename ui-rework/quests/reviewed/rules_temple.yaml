@@ -1,0 +1,8 @@
+# The reviewed quest markers of rules_temple.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: rules_temple
+stages:
+  - stage: 1
+    verdict: right  # the rules of the faction; nothing to go to
+    marked: []

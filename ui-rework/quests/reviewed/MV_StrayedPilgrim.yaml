@@ -1,0 +1,44 @@
+# The reviewed quest markers of MV_StrayedPilgrim.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_StrayedPilgrim
+stages:
+  - stage: 10
+    verdict: right  # Thoronor is marked for his request
+    marked: ["thoronor"]
+  - stage: 15
+    verdict: corrected  # Edras Oril is marked, not Thoronor whom the journal hasn't named
+    marked: ["edras oril"]
+  - stage: 20
+    verdict: corrected  # Edras Oril is marked as the friend to find
+    marked: ["edras oril"]
+  - stage: 24
+    verdict: corrected  # Edras is marked, not Thoronor before Edras will move
+    marked: ["edras oril"]
+  - stage: 25
+    verdict: corrected  # The kagouti are marked to kill, then Edras
+    marked: ["edras oril", "kagouti_mating"]
+  - stage: 27
+    verdict: corrected  # Edras is marked for his offer to follow
+    marked: ["edras oril"]
+  - stage: 28
+    verdict: corrected  # Thoronor is marked as the place to lead Edras
+    marked: ["thoronor"]
+  - stage: 30
+    verdict: corrected  # Edras is marked, not Thoronor before Edras will move
+    marked: ["edras oril"]
+  - stage: 40
+    verdict: corrected  # Edras and the kagouti are marked, for invisibility or the kill
+    marked: ["edras oril", "kagouti_mating"]
+  - stage: 43
+    verdict: corrected  # Same as at 40
+    marked: ["edras oril", "kagouti_mating"]
+  - stage: 45
+    verdict: corrected  # Thoronor is marked, and the kagouti the player sneaks past are not
+    marked: ["thoronor"]
+  - stage: 48
+    verdict: right  # Thoronor is marked while Edras follows
+    marked: ["thoronor"]
+  - stage: 90
+    verdict: right  # Thoronor is marked for the reward
+    marked: ["thoronor"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of town_ald_ienas.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: town_ald_ienas
+stages:
+  - stage: 1
+    verdict: right  # a rumor about Ienas Sarandas; nothing to go to
+    marked: []

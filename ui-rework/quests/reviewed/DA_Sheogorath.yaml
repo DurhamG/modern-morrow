@@ -1,0 +1,24 @@
+# The reviewed quest markers of DA_Sheogorath.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: DA_Sheogorath
+stages:
+  - stage: 10
+    verdict: corrected  # Big Head is marked, and the Dagon Fel townsfolk who give directions are hollow
+    marked: ["big head"]
+    optional: ["cell:dagon fel"]
+  - stage: 20
+    verdict: corrected  # Big Head, now named, is marked
+    marked: ["big head"]
+  - stage: 30
+    verdict: corrected  # Big Head is marked for the Fork, and the netch is not marked before the player has the Fork
+    marked: ["big head", "fork_horripilation_unique"]
+  - stage: 40
+    verdict: corrected  # Big Head and the Fork are marked, and the netch once the player carries the Fork
+    marked: ["big head", "fork_horripilation_unique", "netch_giant_unique"]
+  - stage: 50
+    verdict: corrected  # the Fork is marked, then the netch once the player carries it
+    marked: ["fork_horripilation_unique", "netch_giant_unique"]
+  - stage: 60
+    verdict: corrected  # Sheogorath's statue in Ihinipalit is marked
+    marked: ["active_dae_sheogorath", "fork_horripilation_unique"]

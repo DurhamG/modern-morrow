@@ -1,0 +1,26 @@
+# The reviewed quest markers of MV_PoorPilgrim.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_PoorPilgrim
+stages:
+  - stage: 10
+    verdict: right  # Fonus Rathryon is marked for his request
+    marked: ["fonus rathryon"]
+  - stage: 20
+    verdict: corrected  # Only the Koal Cave door is marked while Fonus follows
+    marked: ["ex_cave_door_01_koal"]
+  - stage: 24
+    verdict: right  # The Koal Cave door is marked while Fonus follows
+    marked: ["ex_cave_door_01_koal"]
+  - stage: 25
+    verdict: corrected  # Only the Koal Cave door is marked, not the reminder greeting
+    marked: ["ex_cave_door_01_koal"]
+  - stage: 30
+    verdict: corrected  # Only the Koal Cave door is marked, not the reminder greeting
+    marked: ["ex_cave_door_01_koal"]
+  - stage: 35
+    verdict: corrected  # Only the Koal Cave door is marked, not the late outcome
+    marked: ["ex_cave_door_01_koal"]
+  - stage: 90
+    verdict: right  # Fonus is marked to pay the fee
+    marked: ["fonus rathryon"]

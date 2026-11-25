@@ -1,0 +1,18 @@
+# The reviewed quest markers of MS_VampireCure.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_VampireCure
+stages:
+  - stage: 10
+    verdict: corrected  # the Molag Bal statue at Bal Ur, named in the papers, is marked; Derar Hlervu is optional; the kills come later
+    marked: ["active_dae_molagbal2"]
+    optional: ["derar hlervu"]
+  - stage: 20
+    verdict: corrected  # the Molag Bal statue is marked; the kills come later
+    marked: ["active_dae_molagbal2"]
+  - stage: 30
+    verdict: right  # Molag Grunda and Nomeg Gwai are marked to kill
+    marked: ["atronach_frost_gwai_uni", "winged twilight_grunda_"]
+  - stage: 40
+    verdict: right  # the Molag Bal statue is marked to report
+    marked: ["active_dae_molagbal2"]

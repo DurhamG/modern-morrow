@@ -1,0 +1,11 @@
+# The reviewed quest markers of VA_VampAmulet.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_VampAmulet
+stages:
+  - stage: 10
+    verdict: right  # Volrina Quarra is marked for her choice
+    marked: ["volrina quarra"]
+  - stage: 20
+    verdict: right  # the materials are marked where they can be, mostly at merchants, then Volrina
+    marked: ["extravagant_amulet_01", "ingred_daedras_heart_01", "ingred_vampire_dust_01", "ingred_void_salts_01", "misc_skull00", "misc_skull10", "volrina quarra"]

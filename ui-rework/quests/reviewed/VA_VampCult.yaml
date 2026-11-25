@@ -1,0 +1,32 @@
+# The reviewed quest markers of VA_VampCult.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_VampCult
+stages:
+  - stage: 10
+    verdict: corrected  # Volrina Quarra is marked for her choice, not Irarak
+    marked: ["volrina quarra"]
+  - stage: 20
+    verdict: corrected  # Gnisis is marked, as the journal says
+    marked: ["cell:gnisis"]
+  - stage: 40
+    verdict: corrected  # Gnisis is marked for the answer that names the tombs
+    marked: ["cell:gnisis"]
+  - stage: 50
+    verdict: corrected  # Irarak in Ginith is marked to be killed
+    marked: ["irarak"]
+  - stage: 60
+    verdict: corrected  # Irarak is marked to be killed
+    marked: ["irarak"]
+  - stage: 70
+    verdict: corrected  # Irarak is marked to be killed
+    marked: ["irarak"]
+  - stage: 80
+    verdict: corrected  # Irarak is marked for his offer, and Volrina's line for sparing him is left out
+    marked: ["irarak"]
+  - stage: 100
+    verdict: corrected  # Irarak is marked to be killed
+    marked: ["irarak"]
+  - stage: 110
+    verdict: right  # Volrina Quarra is marked
+    marked: ["irarak", "volrina quarra"]

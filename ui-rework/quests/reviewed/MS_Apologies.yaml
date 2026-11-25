@@ -1,0 +1,17 @@
+# The reviewed quest markers of MS_Apologies.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_Apologies
+stages:
+  - stage: 1
+    verdict: right  # Tarer Braryn is marked to answer his request
+    marked: ["tarer braryn"]
+  - stage: 5
+    verdict: corrected  # Trebonius is marked to take the book, not the potion he carries or Tarer after it
+    marked: ["bk_aedra_tarer_unique", "trebonius artorius"]
+  - stage: 7
+    verdict: corrected  # the player turned Tarer down, so nothing is marked
+    marked: []
+  - stage: 10
+    verdict: right  # the player has the potion, and Tarer is marked
+    marked: ["p_cure_common_unique", "tarer braryn"]

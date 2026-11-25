@@ -1,0 +1,14 @@
+# The reviewed quest markers of VA_VampBlood.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_VampBlood
+stages:
+  - stage: 10
+    verdict: right  # Raxle Berne is marked
+    marked: ["raxle berne"]
+  - stage: 20
+    verdict: right  # the potion in Druscashti and then Raxle are marked
+    marked: ["p_quarrablood_unique", "raxle berne"]
+  - stage: 30
+    verdict: right  # the potion in Druscashti and then Raxle are marked
+    marked: ["p_quarrablood_unique", "raxle berne"]

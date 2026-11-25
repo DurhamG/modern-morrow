@@ -1,0 +1,20 @@
+# The reviewed quest markers of MV_WanderingPilgrim.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_WanderingPilgrim
+stages:
+  - stage: 10
+    verdict: corrected  # Nevrasa Dralor is marked, not the shrine before she follows
+    marked: ["nevrasa dralor"]
+  - stage: 20
+    verdict: corrected  # Nevrasa is marked for her choice, not the shrine before she follows
+    marked: ["nevrasa dralor"]
+  - stage: 30
+    verdict: right  # The Fields of Kummu shrine is marked while Nevrasa follows
+    marked: ["furn_shrine_vivec_cure_02"]
+  - stage: 40
+    verdict: corrected  # The player refused, so nothing is marked
+    marked: []
+  - stage: 90
+    verdict: right  # Nevrasa is marked for the payment
+    marked: ["nevrasa dralor"]

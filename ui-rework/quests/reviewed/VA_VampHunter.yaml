@@ -1,0 +1,23 @@
+# The reviewed quest markers of VA_VampHunter.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_VampHunter
+stages:
+  - stage: 10
+    verdict: corrected  # Dhaunayne Aundae is marked for her choice
+    marked: ["dhaunayne aundae"]
+  - stage: 20
+    verdict: corrected  # the Ald'ruhn Mages Guild is marked, not Ano Vando before he is named
+    marked: ["cell:ald-ruhn, guild of mages"]
+  - stage: 40
+    verdict: corrected  # the Mages Guild is marked for the answer that names the hunter
+    marked: ["cell:ald-ruhn, guild of mages"]
+  - stage: 50
+    verdict: right  # Ano Vando is marked to be killed
+    marked: ["ano vando"]
+  - stage: 60
+    verdict: right  # Dhaunayne Aundae is marked
+    marked: ["dhaunayne aundae"]
+  - stage: 70
+    verdict: right  # Dhaunayne Aundae is marked
+    marked: ["dhaunayne aundae"]

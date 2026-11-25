@@ -1,0 +1,14 @@
+# The reviewed quest markers of EB_Shipment.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_Shipment
+stages:
+  - stage: 10
+    verdict: corrected  # Alarvyne Indalas is marked for her choice, not loose limeware for Bolrin
+    marked: ["alarvyne indalas"]
+  - stage: 20
+    verdict: corrected  # the Chun-Ook's lower deck is marked, then Alarvyne once the player has five bowls and cups
+    marked: ["alarvyne indalas", "cell:chun-ook, lower level"]
+  - stage: 35
+    verdict: corrected  # Alarvyne is marked for the limeware the player kept
+    marked: ["alarvyne indalas", "misc_lw_bowl", "misc_lw_cup"]

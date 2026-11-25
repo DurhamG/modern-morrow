@@ -1,0 +1,23 @@
+# The reviewed quest markers of EB_Pest.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_Pest
+stages:
+  - stage: 10
+    verdict: right  # Audenian Valius and the rats in his back room are marked
+    marked: ["audenian valius", "rat_telvanni_unique", "rat_telvanni_unique_2"]
+  - stage: 20
+    verdict: right  # Audenian Valius is marked for his choice
+    marked: ["audenian valius", "rat_telvanni_unique"]
+  - stage: 25
+    verdict: right  # the back room rats and then Audenian are marked
+    marked: ["audenian valius", "rat_telvanni_unique", "rat_telvanni_unique_2"]
+  - stage: 26
+    verdict: corrected  # the player declined, so nothing is marked
+    marked: []
+  - stage: 30
+    verdict: corrected  # the Telvanni underworks are marked, because the ten rats there are too many to mark
+    marked: ["audenian valius", "cell:vivec, telvanni underworks", "rat_telvanni_unique", "rat_telvanni_unique_2"]
+  - stage: 35
+    verdict: right  # Audenian Valius is marked
+    marked: ["audenian valius", "rat_telvanni_unique", "rat_telvanni_unique_2"]

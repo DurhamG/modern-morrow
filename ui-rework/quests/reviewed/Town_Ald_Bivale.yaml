@@ -1,0 +1,8 @@
+# The reviewed quest markers of Town_Ald_Bivale.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: Town_Ald_Bivale
+stages:
+  - stage: 1
+    verdict: corrected  # Ienas Sarandas is marked for the shirt and pants he carries, not as a kill
+    marked: ["bivale teneran", "sarandas_pants_2", "sarandas_shirt_2"]

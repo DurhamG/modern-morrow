@@ -1,0 +1,23 @@
+# The reviewed quest markers of MV_BanditVictim.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_BanditVictim
+stages:
+  - stage: 10
+    verdict: right  # Aeta is marked to ask about the robbery.
+    marked: ["aeta wave-breaker"]
+  - stage: 20
+    verdict: right  # Aeta is marked to accept the job she just offered.
+    marked: ["aeta wave-breaker"]
+  - stage: 25
+    verdict: right  # Nothing can move the quest on from 25, since her choice needs an earlier stage and the return needs 30 or more, so nothing is marked.
+    marked: []
+  - stage: 30
+    verdict: corrected  # Dro'zhirr, who carries the jewels, is marked, and Aeta only once the player has them.
+    marked: ["aeta wave-breaker", "expensive_amulet_aeta", "expensive_ring_aeta"]
+  - stage: 50
+    verdict: right  # The player has the jewels, so Aeta is marked to return them.
+    marked: ["aeta wave-breaker", "expensive_amulet_aeta", "expensive_ring_aeta"]
+  - stage: 60
+    verdict: right  # No line sets this stage, and the jewels on Dro'zhirr then Aeta are the remaining steps.
+    marked: ["aeta wave-breaker", "expensive_amulet_aeta", "expensive_ring_aeta"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of MS_JobashaAbolitionist.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_JobashaAbolitionist
+stages:
+  - stage: 10
+    verdict: right  # Jobasha is marked once enough slaves are freed
+    marked: ["jobasha"]

@@ -1,0 +1,12 @@
+# The reviewed quest markers of town_Tel_Vos_ashur.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: town_Tel_Vos_ashur
+stages:
+  - stage: 1
+    verdict: corrected  # Ashur-Dan's advice to ask the tribe is optional
+    marked: []
+    optional: ["ashur-dan"]
+  - stage: 5
+    verdict: right  # nothing to go to; town_Tel_Vos marks the next steps
+    marked: []

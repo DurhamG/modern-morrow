@@ -1,0 +1,35 @@
+# The reviewed quest markers of EB_Unrequited.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_Unrequited
+stages:
+  - stage: 10
+    verdict: right  # Eraldil is marked as Gadayn asks, and Gadayn's choice is open
+    marked: ["eraldil", "gadayn andarys"]
+  - stage: 20
+    verdict: right  # Eraldil in the Hlaalu Waistworks is marked
+    marked: ["eraldil"]
+  - stage: 30
+    verdict: corrected  # the player declined, so nothing is marked
+    marked: []
+  - stage: 40
+    verdict: right  # Gadayn is marked
+    marked: ["gadayn andarys"]
+  - stage: 50
+    verdict: right  # Gadayn is marked
+    marked: ["gadayn andarys"]
+  - stage: 60
+    verdict: right  # Gadayn is marked for his choice
+    marked: ["gadayn andarys"]
+  - stage: 70
+    verdict: right  # Eraldil is marked for the potion the player carries
+    marked: ["eraldil", "p_lovepotion_unique"]
+  - stage: 80
+    verdict: right  # Gadayn is marked
+    marked: ["gadayn andarys"]
+  - stage: 90
+    verdict: corrected  # Gadayn is marked for the delivery, not the Glathel ending
+    marked: ["gadayn andarys"]
+  - stage: 95
+    verdict: corrected  # nothing is marked until Eraldil has moved in with Gadayn, then he is marked
+    marked: ["gadayn andarys"]

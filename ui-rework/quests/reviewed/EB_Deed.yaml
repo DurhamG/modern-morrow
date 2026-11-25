@@ -1,0 +1,17 @@
+# The reviewed quest markers of EB_Deed.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_Deed
+stages:
+  - stage: 10
+    verdict: right  # Alusaron is marked
+    marked: ["alusaron"]
+  - stage: 15
+    verdict: right  # Alusaron is marked
+    marked: ["alusaron"]
+  - stage: 20
+    verdict: right  # Alusaron is marked for his choice
+    marked: ["alusaron"]
+  - stage: 30
+    verdict: right  # the contract in Tilvur's shop and then Alusaron are marked
+    marked: ["alusaron", "bk_contract_ralen"]

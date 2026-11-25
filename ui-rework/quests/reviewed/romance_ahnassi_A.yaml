@@ -1,0 +1,8 @@
+# The reviewed quest markers of romance_ahnassi_A.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: romance_ahnassi_A
+stages:
+  - stage: 1
+    verdict: right  # Senyndie gave a book and offers training; nothing to go to
+    marked: []

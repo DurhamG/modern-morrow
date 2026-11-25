@@ -1,0 +1,11 @@
+# The reviewed quest markers of VA_VampBlood2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_VampBlood2
+stages:
+  - stage: 10
+    verdict: right  # the potion in Druscashti and then Raven Omayn are marked
+    marked: ["p_quarrablood_unique", "raven omayn"]
+  - stage: 15
+    verdict: corrected  # Raxle Berne, who has the potion now, is marked, then Raven Omayn
+    marked: ["p_quarrablood_unique", "raven omayn", "raxle berne"]

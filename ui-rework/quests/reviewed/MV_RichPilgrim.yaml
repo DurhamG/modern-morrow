@@ -1,0 +1,26 @@
+# The reviewed quest markers of MV_RichPilgrim.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_RichPilgrim
+stages:
+  - stage: 10
+    verdict: corrected  # Viatrix Petilia is marked, not the shrine before she follows
+    marked: ["viatrix petilia"]
+  - stage: 20
+    verdict: corrected  # Only the Ghostgate shrine is marked while Viatrix follows
+    marked: ["furn_shrine_vivec_cure_03"]
+  - stage: 30
+    verdict: corrected  # Viatrix never follows after the refusal, so nothing is marked
+    marked: []
+  - stage: 40
+    verdict: corrected  # Only the Ghostgate shrine is marked, not the reminders
+    marked: ["furn_shrine_vivec_cure_03"]
+  - stage: 50
+    verdict: corrected  # Only the Ghostgate shrine is marked, not the reminders
+    marked: ["furn_shrine_vivec_cure_03"]
+  - stage: 60
+    verdict: corrected  # Only the Ghostgate shrine is marked, not the late outcome
+    marked: ["furn_shrine_vivec_cure_03"]
+  - stage: 95
+    verdict: right  # Viatrix is marked to pay the tip
+    marked: ["viatrix petilia"]

@@ -368,3 +368,9 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   the player lacks or gold the player doesn't carry are left out while playing, an answer in a conversation only
   counts at the stage its offering line sets, and the review sheets say when a placement is somewhere the markers
   can't reach.
+- Morrowind's side quests are reviewed, the fifth batch: the miscellaneous Vvardenfell quests, vampire clans, Daedric
+  shrines, East Empire and town quests, and the rest, 548 stages in 130 quests. 297 were right, 250 corrected and 1
+  can't be marked well. Most corrections were escorts, whose destination was marked before the companion followed,
+  and declined jobs that kept their markers. Second reviewers disagreed at 25 stages. Engine changes from this batch:
+  a body the player is sent to is marked, the check for entries that change nothing looks at stages without a
+  journal entry too, and the review tool reads quest IDs with spaces.

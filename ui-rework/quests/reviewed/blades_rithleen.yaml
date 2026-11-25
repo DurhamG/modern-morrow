@@ -1,0 +1,8 @@
+# The reviewed quest markers of blades_rithleen.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: blades_rithleen
+stages:
+  - stage: 1
+    verdict: right  # Rithleen gave armor to sell; nothing to go to
+    marked: []

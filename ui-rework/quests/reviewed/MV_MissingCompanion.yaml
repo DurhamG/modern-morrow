@@ -1,0 +1,29 @@
+# The reviewed quest markers of MV_MissingCompanion.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_MissingCompanion
+stages:
+  - stage: 10
+    verdict: corrected  # Falanu is marked to hear her story, not her husband, whom she hasn't sent the player to.
+    marked: ["falanu indaren"]
+  - stage: 15
+    verdict: right  # Drerel is marked for his choice.
+    marked: ["drerel indaren"]
+  - stage: 20
+    verdict: right  # Falanu is marked for her choice.
+    marked: ["falanu indaren"]
+  - stage: 25
+    verdict: right  # No line sets this stage, so it never comes up.
+    marked: ["drerel indaren"]
+  - stage: 30
+    verdict: corrected  # Drerel is marked, as the one to search for, rather than Falanu.
+    marked: ["drerel indaren"]
+  - stage: 35
+    verdict: right  # Falanu is marked, as Drerel follows the player back to her.
+    marked: ["falanu indaren"]
+  - stage: 40
+    verdict: right  # Falanu is marked to lead Drerel back to.
+    marked: ["falanu indaren"]
+  - stage: 50
+    verdict: right  # Drerel is marked for his thanks.
+    marked: ["drerel indaren"]

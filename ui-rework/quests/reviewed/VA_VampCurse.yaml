@@ -1,0 +1,32 @@
+# The reviewed quest markers of VA_VampCurse.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_VampCurse
+stages:
+  - stage: 10
+    verdict: right  # Mastrius is marked
+    marked: ["mastrius"]
+  - stage: 20
+    verdict: right  # Mastrius is marked
+    marked: ["mastrius"]
+  - stage: 30
+    verdict: right  # Mastrius is marked for his choice
+    marked: ["mastrius"]
+  - stage: 40
+    verdict: right  # Mastrius is marked to say where Spell Breaker lies
+    marked: ["mastrius"]
+  - stage: 55
+    verdict: corrected  # Spell Breaker in Bthuand is marked, then Mastrius once the player has it and a daedra heart
+    marked: ["mastrius", "spell_breaker_unique"]
+  - stage: 60
+    verdict: right  # Mastrius is marked for his choice
+    marked: ["mastrius"]
+  - stage: 70
+    verdict: right  # Mastrius is marked
+    marked: ["mastrius"]
+  - stage: 80
+    verdict: right  # the player refused and nothing is left
+    marked: []
+  - stage: 90
+    verdict: right  # Mastrius attacks the player at once
+    marked: []

@@ -1,0 +1,14 @@
+# The reviewed quest markers of VA_VampCountess.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_VampCountess
+stages:
+  - stage: 10
+    verdict: right  # Raxle Berne is marked for his choice
+    marked: ["raxle berne"]
+  - stage: 20
+    verdict: right  # Merta in the Reloth tomb is marked to be killed
+    marked: ["merta"]
+  - stage: 40
+    verdict: right  # Raxle Berne is marked
+    marked: ["merta", "raxle berne"]

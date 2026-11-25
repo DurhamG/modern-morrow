@@ -1,0 +1,30 @@
+# The reviewed quest markers of town_Tel_Vos.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: town_Tel_Vos
+stages:
+  - stage: 1
+    verdict: right  # Turedus Talanian is marked to take the job
+    marked: ["turedus talanian"]
+  - stage: 5
+    verdict: right  # Turedus Talanian is marked to take the job
+    marked: ["turedus talanian"]
+  - stage: 10
+    verdict: corrected  # Ashur-Dan is marked, then Sonummu Zabamat as optional; Turedus once an answer is found
+    marked: ["ashur-dan", "turedus talanian"]
+    optional: ["sonummu zabamat"]
+  - stage: 13
+    verdict: right  # no line sets this stage; Turedus is marked once an answer is found
+    marked: ["turedus talanian"]
+  - stage: 15
+    verdict: right  # no line sets this stage; Turedus is marked once an answer is found
+    marked: ["turedus talanian"]
+  - stage: 20
+    verdict: right  # no line sets this stage; Turedus is marked once an answer is found
+    marked: ["turedus talanian"]
+  - stage: 25
+    verdict: right  # no line sets this stage; Turedus is marked to report
+    marked: ["turedus talanian"]
+  - stage: 30
+    verdict: right  # no line sets this stage; Turedus is marked to report
+    marked: ["turedus talanian"]

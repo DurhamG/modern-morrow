@@ -1,0 +1,20 @@
+# The reviewed quest markers of EB_DeadMen.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_DeadMen
+stages:
+  - stage: 10
+    verdict: right  # Moroni Uvelas is marked
+    marked: ["moroni uvelas"]
+  - stage: 20
+    verdict: right  # Moroni Uvelas is marked for her choice
+    marked: ["moroni uvelas"]
+  - stage: 30
+    verdict: right  # the stalker in the underworks is marked to be killed
+    marked: ["corprus_stalker_danar"]
+  - stage: 40
+    verdict: corrected  # the player declined, so the stalker is not marked
+    marked: []
+  - stage: 50
+    verdict: right  # the ring on the stalker's body and then Moroni are marked
+    marked: ["common_ring_danar", "moroni uvelas"]

@@ -1,0 +1,45 @@
+# The reviewed quest markers of VA_VampChild.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_VampChild
+stages:
+  - stage: 0
+    verdict: right  # Dhaunayne Aundae is marked
+    marked: ["dhaunayne aundae"]
+  - stage: 10
+    verdict: corrected  # only Dhaunayne is marked, not Sinyaramen
+    marked: ["dhaunayne aundae"]
+  - stage: 20
+    verdict: corrected  # Dhaunayne is marked for her choice, not Sinyaramen
+    marked: ["dhaunayne aundae"]
+  - stage: 30
+    verdict: corrected  # Tusamircil in the Sadrith Mora Mages Guild is marked, and Iniel is hollow
+    marked: ["extravagant_ring_aund_uni", "tusamircil"]
+    optional: ["iniel"]
+  - stage: 50
+    verdict: corrected  # Tusamircil is marked for the potion Sinyaramen needs
+    marked: ["extravagant_ring_aund_uni", "tusamircil"]
+  - stage: 60
+    verdict: corrected  # Tusamircil is marked to hand over the potion
+    marked: ["extravagant_ring_aund_uni", "tusamircil"]
+  - stage: 65
+    verdict: corrected  # Tusamircil is marked, since Sinyaramen won't talk without the potion
+    marked: ["extravagant_ring_aund_uni", "tusamircil"]
+  - stage: 66
+    verdict: right  # Sinyaramen at the Gateway Inn is marked
+    marked: ["p_sinyaramen_unique", "sinyaramen"]
+  - stage: 70
+    verdict: right  # Sinyaramen is marked
+    marked: ["sinyaramen"]
+  - stage: 80
+    verdict: right  # Sinyaramen is marked
+    marked: ["sinyaramen"]
+  - stage: 90
+    verdict: corrected  # Dhaunayne is marked for the report, not Kjeld before she orders his death
+    marked: ["dhaunayne aundae"]
+  - stage: 100
+    verdict: right  # Kjeld is marked to be killed, then Dhaunayne
+    marked: ["dhaunayne aundae", "kjeld"]
+  - stage: 110
+    verdict: right  # nothing sets this stage, and Kjeld then Dhaunayne are marked
+    marked: ["dhaunayne aundae", "kjeld"]

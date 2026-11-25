@@ -1,0 +1,26 @@
+# The reviewed quest markers of MV_FakeSlave.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_FakeSlave
+stages:
+  - stage: 10
+    verdict: corrected  # Tul is marked, not Sterdecan's farm, which does nothing until Tul follows.
+    marked: ["tul"]
+  - stage: 20
+    verdict: corrected  # Tul is marked to accept, since the farm does nothing until he follows.
+    marked: ["tul"]
+  - stage: 25
+    verdict: corrected  # Tul is marked to accept, since the search does nothing until he follows.
+    marked: ["tul"]
+  - stage: 40
+    verdict: corrected  # Sterdecan's farm, where Tul is to be led, is marked.
+    marked: ["sterdecan"]
+  - stage: 45
+    verdict: corrected  # The two locals who know of a Redguard are marked, not Sterdecan, whom nobody has named.
+    marked: ["drolora salen", "serer andrano"]
+  - stage: 55
+    verdict: right  # Sterdecan's farm, named by the local, is marked.
+    marked: ["sterdecan"]
+  - stage: 60
+    verdict: right  # Tul is marked to walk away or fight.
+    marked: ["tul"]

@@ -1,0 +1,45 @@
+# The reviewed quest markers of MV_DeadTaxman.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_DeadTaxman
+stages:
+  - stage: 10
+    verdict: corrected  # The tax record, then Socucius at the census office, are marked, not the murderer's ring or Thavere.
+    marked: ["bk_seydaneentaxrecord", "chargen class"]
+  - stage: 20
+    verdict: corrected  # Socucius is marked for the answer about the gold, without the ring or Thavere.
+    marked: ["bk_seydaneentaxrecord", "chargen class"]
+  - stage: 30
+    verdict: right  # The same answer sets 48 at once, so this stage never lasts.
+    marked: ["exquisite_ring_processus", "foryn gilnith", "thavere vedrano"]
+  - stage: 40
+    verdict: corrected  # The player lied and no bounty was offered, so nothing is marked.
+    marked: []
+  - stage: 45
+    verdict: corrected  # Nothing is marked until the player carries 200 gold again, and then Socucius, never the unnamed murderer or his ring.
+    marked: ["chargen class"]
+  - stage: 46
+    verdict: right  # The same line sets 48 at once, so this stage never lasts.
+    marked: ["exquisite_ring_processus", "foryn gilnith", "thavere vedrano"]
+  - stage: 48
+    verdict: corrected  # Seyda Neen is marked to ask around about the murder, without the murderer.
+    marked: ["cell:seyda neen"]
+  - stage: 50
+    verdict: corrected  # Thavere in the lighthouse is marked, as the townsfolk suggested, without the murderer.
+    marked: ["thavere vedrano"]
+  - stage: 60
+    verdict: right  # Foryn, whom Thavere named and who carries the ring she asked about, is marked.
+    marked: ["exquisite_ring_processus", "foryn gilnith", "thavere vedrano"]
+  - stage: 70
+    verdict: right  # Foryn is marked for the choice to spare him or punish him.
+    marked: ["exquisite_ring_processus", "foryn gilnith", "thavere vedrano"]
+  - stage: 80
+    verdict: right  # Thavere is marked to take the ring Foryn gave, and his kill is not marked.
+    marked: ["exquisite_ring_processus", "thavere vedrano"]
+  - stage: 85
+    verdict: corrected  # Foryn is marked to kill, and Socucius to report to, with the ring for Thavere as a side step.
+    marked: ["chargen class", "foryn gilnith"]
+    optional: ["exquisite_ring_processus", "thavere vedrano"]
+  - stage: 90
+    verdict: corrected  # Socucius is marked only once Foryn is dead, so a player who spared him is not sent to kill him.
+    marked: ["chargen class"]

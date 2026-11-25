@@ -1,0 +1,17 @@
+# The reviewed quest markers of MS_Umbra.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_Umbra
+stages:
+  - stage: 10
+    verdict: right  # Umbra, the madman on the hill, is marked
+    marked: ["umbra"]
+  - stage: 20
+    verdict: right  # Umbra is marked to talk to
+    marked: ["umbra"]
+  - stage: 30
+    verdict: right  # Umbra is marked to answer his wish
+    marked: ["umbra"]
+  - stage: 40
+    verdict: corrected  # Umbra is marked as a kill, which the journal says the player will do
+    marked: ["umbra"]

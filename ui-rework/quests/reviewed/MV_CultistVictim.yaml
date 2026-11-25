@@ -1,0 +1,29 @@
+# The reviewed quest markers of MV_CultistVictim.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_CultistVictim
+stages:
+  - stage: 10
+    verdict: corrected  # Sason is marked to hear his story, not his wife in a shrine the journal hasn't named.
+    marked: ["sason"]
+  - stage: 15
+    verdict: corrected  # Malexa is marked to ask how to help, not Sason, whom the journal doesn't name.
+    marked: ["malexa"]
+  - stage: 20
+    verdict: right  # Sason is marked for his request, the only way on.
+    marked: ["sason"]
+  - stage: 30
+    verdict: right  # Sason is marked for his choice.
+    marked: ["sason"]
+  - stage: 35
+    verdict: right  # Malexa is marked for her choice.
+    marked: ["malexa"]
+  - stage: 40
+    verdict: right  # Malexa in the shrine is marked.
+    marked: ["malexa"]
+  - stage: 45
+    verdict: right  # The same answer sets 50 at once, so this stage never lasts.
+    marked: ["malexa", "sason"]
+  - stage: 50
+    verdict: right  # Sason is marked to bring Malexa back to.
+    marked: ["sason"]

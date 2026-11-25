@@ -1,0 +1,14 @@
+# The reviewed quest markers of EB_Clients.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_Clients
+stages:
+  - stage: 10
+    verdict: right  # Bolrin is marked
+    marked: ["bolrin"]
+  - stage: 20
+    verdict: right  # Bolrin is marked for his choice
+    marked: ["bolrin"]
+  - stage: 30
+    verdict: right  # the client list and then Bolrin are marked
+    marked: ["bk_clientlist", "bolrin"]

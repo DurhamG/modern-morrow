@@ -1,0 +1,29 @@
+# The reviewed quest markers of DA_Boethiah.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: DA_Boethiah
+stages:
+  - stage: 10
+    verdict: corrected  # only the ruined head off Hla Oad is marked, not the sculptor the player hasn't heard of
+    marked: ["active_dae_b_bo_head", "active_dae_boethiah_ruin"]
+  - stage: 20
+    verdict: right  # Duma gro-Lag in Caldera is the sculptor the riddle points to, and his second self at Khartag Point is disabled
+    marked: ["duma gro-lag", "duma gro-lag2"]
+  - stage: 30
+    verdict: right  # Duma gro-Lag is marked for the topic the statue added
+    marked: ["duma gro-lag", "duma gro-lag2"]
+  - stage: 40
+    verdict: corrected  # Duma is marked for his choice, and the book the journal hasn't named is left out
+    marked: ["duma gro-lag"]
+  - stage: 45
+    verdict: corrected  # the player turned Duma down and no line offers the choice again, so nothing is marked
+    marked: ["duma gro-lag2"]
+  - stage: 50
+    verdict: corrected  # the book in Jobasha's shop is marked even before the player has the gold, then Duma
+    marked: ["bk_boethiah's glory_unique", "duma gro-lag", "duma gro-lag2"]
+  - stage: 60
+    verdict: right  # nothing shows while the shrine is built, then the finished shrine at Khartag Point is marked
+    marked: ["active_dae_boethiah", "duma gro-lag2", "ex_dae_boethiah_fixed"]
+  - stage: 61
+    verdict: right  # the finished shrine at Khartag Point is marked
+    marked: ["active_dae_boethiah", "ex_dae_boethiah_fixed"]

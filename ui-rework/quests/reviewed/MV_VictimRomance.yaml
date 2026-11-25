@@ -1,0 +1,26 @@
+# The reviewed quest markers of MV_VictimRomance.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_VictimRomance
+stages:
+  - stage: 10
+    verdict: right  # Maurrie Aurmine is marked to hear her story
+    marked: ["maurrie aurmine"]
+  - stage: 20
+    verdict: right  # Maurrie is marked
+    marked: ["maurrie aurmine"]
+  - stage: 30
+    verdict: right  # Maurrie is marked for her choice
+    marked: ["maurrie aurmine"]
+  - stage: 40
+    verdict: right  # Nelos Onmar in Pelagiad is marked for the glove
+    marked: ["extravagant_glove_left_maur", "nelos onmar"]
+  - stage: 60
+    verdict: right  # Maurrie is marked for the note
+    marked: ["bk_notefromnelos", "maurrie aurmine"]
+  - stage: 100
+    verdict: right  # Barnand Erelie is marked
+    marked: ["barnand erelie"]
+  - stage: 105
+    verdict: right  # Emusette Bracques is marked
+    marked: ["emusette bracques"]

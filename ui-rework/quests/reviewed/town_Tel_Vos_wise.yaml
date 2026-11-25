@@ -1,0 +1,8 @@
+# The reviewed quest markers of town_Tel_Vos_wise.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: town_Tel_Vos_wise
+stages:
+  - stage: 1
+    verdict: right  # the answer is found; town_Tel_Vos marks Turedus to report
+    marked: []

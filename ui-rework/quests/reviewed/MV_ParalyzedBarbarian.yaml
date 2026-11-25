@@ -1,0 +1,23 @@
+# The reviewed quest markers of MV_ParalyzedBarbarian.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_ParalyzedBarbarian
+stages:
+  - stage: 10
+    verdict: right  # Hisin Deep-Raed is marked to hear his story
+    marked: ["hisin deep-raed"]
+  - stage: 20
+    verdict: right  # Hisin is marked for his choice of cure
+    marked: ["hisin deep-raed"]
+  - stage: 40
+    verdict: corrected  # Hisin is marked once the player carries a cure potion, not every potion on the island
+    marked: ["hisin deep-raed"]
+  - stage: 60
+    verdict: corrected  # Hisin is marked for the spell, without the potion holders
+    marked: ["hisin deep-raed"]
+  - stage: 65
+    verdict: right  # Hisin is marked for his reward
+    marked: ["hisin deep-raed"]
+  - stage: 100
+    verdict: right  # The same line moves the quest on to the end, so nothing is left to mark
+    marked: []

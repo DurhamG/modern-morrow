@@ -1,0 +1,17 @@
+# The reviewed quest markers of EB_Express.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_Express
+stages:
+  - stage: 10
+    verdict: right  # Llaalam Dredil is marked for his choice
+    marked: ["llaalam dredil"]
+  - stage: 20
+    verdict: right  # J'Zhirr is marked for the letter the player carries
+    marked: ["bk_letterfromllaalam", "j'zhirr"]
+  - stage: 30
+    verdict: right  # the player declined and nothing is left
+    marked: []
+  - stage: 40
+    verdict: right  # Dredil is marked for J'Zhirr's note
+    marked: ["bk_letterfromjzhirr", "llaalam dredil"]

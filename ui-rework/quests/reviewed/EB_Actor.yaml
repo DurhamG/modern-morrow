@@ -1,0 +1,32 @@
+# The reviewed quest markers of EB_Actor.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_Actor
+stages:
+  - stage: 10
+    verdict: right  # Miun-Gei is marked
+    marked: ["miun_gei"]
+  - stage: 20
+    verdict: corrected  # Miun-Gei is marked for his choice, not Crassius Curio
+    marked: ["miun_gei"]
+  - stage: 30
+    verdict: corrected  # Marcel Maurard, whom the journal names, is marked
+    marked: ["marcel maurard"]
+  - stage: 35
+    verdict: corrected  # the player chose not to help, so nothing is marked
+    marked: []
+  - stage: 40
+    verdict: corrected  # asking around Vivec about a theatre troupe is marked, not Curio yet
+    marked: ["cell:vivec"]
+  - stage: 50
+    verdict: right  # Crassius Curio is marked
+    marked: ["crassius curio"]
+  - stage: 55
+    verdict: right  # Crassius Curio is marked
+    marked: ["crassius curio"]
+  - stage: 60
+    verdict: right  # Marcel Maurard is marked
+    marked: ["marcel maurard"]
+  - stage: 70
+    verdict: right  # Miun-Gei is marked for the reward
+    marked: ["miun_gei"]

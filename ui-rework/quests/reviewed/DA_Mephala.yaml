@@ -1,0 +1,23 @@
+# The reviewed quest markers of DA_Mephala.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: DA_Mephala
+stages:
+  - stage: 10
+    verdict: corrected  # Taros Dral is marked for his choice, not Balyn Omavel to be killed
+    marked: ["taros dral"]
+  - stage: 20
+    verdict: corrected  # nothing sets this stage, and it gets the markers of 40
+    marked: ["active_cauldron_balyn"]
+  - stage: 30
+    verdict: corrected  # the player declined and nothing can move the quest, so nothing is marked
+    marked: []
+  - stage: 40
+    verdict: corrected  # only Balyn's cauldron is marked, not the failures of being seen or killing him
+    marked: ["active_cauldron_balyn"]
+  - stage: 50
+    verdict: corrected  # the Mephala altar where Taros waits is marked
+    marked: ["active_dae_mephala", "active_velothi_altar_mephala"]
+  - stage: 55
+    verdict: corrected  # the poisoning failed and only the failure ending is left, so nothing is marked
+    marked: []

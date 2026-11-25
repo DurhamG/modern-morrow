@@ -1,0 +1,8 @@
+# The reviewed quest markers of blades_elone2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: blades_elone2
+stages:
+  - stage: 1
+    verdict: right  # Caius only says where Elone can be found; no task and nothing that could mark it done
+    marked: []

@@ -1,0 +1,67 @@
+# The reviewed quest markers of Romance_Ahnassi.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: Romance_Ahnassi
+stages:
+  - stage: 1
+    verdict: corrected  # Ahnassi is marked; Daren Adryn is disabled and unnamed
+    marked: ["ahnassi"]
+  - stage: 30
+    verdict: corrected  # Ahnassi is marked; Daren Adryn is disabled and unnamed
+    marked: ["ahnassi"]
+  - stage: 32
+    verdict: corrected  # Ahnassi is marked; Daren Adryn is disabled and unnamed
+    marked: ["ahnassi"]
+  - stage: 33
+    verdict: corrected  # Ahnassi is marked; Daren Adryn is disabled and unnamed
+    marked: ["ahnassi"]
+  - stage: 37
+    verdict: corrected  # Ahnassi is marked; Daren Adryn is disabled and unnamed
+    marked: ["ahnassi"]
+  - stage: 40
+    verdict: corrected  # Daren Adryn is marked to kill, then Ahnassi; talking to him first is optional
+    marked: ["ahnassi", "daren adryn"]
+  - stage: 42
+    verdict: right  # Daren Adryn is marked to kill, then Ahnassi
+    marked: ["ahnassi", "daren adryn"]
+  - stage: 45
+    verdict: corrected  # Ahnassi is marked; J'Dhannar and the book come later
+    marked: ["ahnassi"]
+  - stage: 50
+    verdict: corrected  # Ahnassi is marked; J'Dhannar and the book come later
+    marked: ["ahnassi"]
+  - stage: 60
+    verdict: corrected  # Ahnassi is marked; J'Dhannar and the book come later
+    marked: ["ahnassi"]
+  - stage: 65
+    verdict: corrected  # J'Dhannar is marked; the book no journal has named is left out
+    marked: ["j'dhannar"]
+  - stage: 70
+    verdict: corrected  # Jobasha, who names and sells the book, is optional; J'Dhannar once the player has it
+    marked: ["j'dhannar"]
+    optional: ["jobasha"]
+  - stage: 75
+    verdict: right  # Ahnassi is marked to hear J'Dhannar's message
+    marked: ["ahnassi"]
+  - stage: 80
+    verdict: right  # Ahnassi is marked
+    marked: ["ahnassi"]
+  - stage: 81
+    verdict: corrected  # Ahnassi is marked, and Senyndie as optional, as the journal suggests
+    marked: ["ahnassi"]
+    optional: ["senyndie"]
+  - stage: 82
+    verdict: right  # the flowers are marked where they can be had, then Ahnassi
+    marked: ["ahnassi", "ingred_bc_coda_flower", "ingred_gold_kanet_01"]
+  - stage: 83
+    verdict: right  # Ahnassi is marked
+    marked: ["ahnassi"]
+  - stage: 85
+    verdict: right  # the Flamemirror Robe in Mavon Drenim's closet is marked, then Ahnassi
+    marked: ["ahnassi", "flamemirror robe"]
+  - stage: 87
+    verdict: corrected  # Ahnassi is marked; the robe she now has is no longer marked
+    marked: ["ahnassi"]
+  - stage: 90
+    verdict: corrected  # the only way on needs the robe the player gave away, so nothing is marked
+    marked: []

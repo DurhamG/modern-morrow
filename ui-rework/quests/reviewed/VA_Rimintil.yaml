@@ -1,0 +1,8 @@
+# The reviewed quest markers of VA_Rimintil.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_Rimintil
+stages:
+  - stage: 10
+    verdict: right  # Rimintil is marked to be killed, then Raven Omayn
+    marked: ["raven omayn", "rimintil"]

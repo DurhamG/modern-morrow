@@ -1,0 +1,11 @@
+# The reviewed quest markers of Hospitality_Papers.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: Hospitality_Papers
+stages:
+  - stage: 1
+    verdict: right  # Angaredhel is marked to buy the papers from
+    marked: ["angaredhel"]
+  - stage: 50
+    verdict: right  # the papers are bought; nothing to go to
+    marked: []

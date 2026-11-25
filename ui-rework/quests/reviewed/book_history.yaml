@@ -1,0 +1,8 @@
+# The reviewed quest markers of book_history.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: book_history
+stages:
+  - stage: 1
+    verdict: right  # a book was given and another suggested; the other book is placed nowhere, so nothing to go to
+    marked: []

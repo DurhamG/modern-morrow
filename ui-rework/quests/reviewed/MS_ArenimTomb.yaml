@@ -1,0 +1,12 @@
+# The reviewed quest markers of MS_ArenimTomb.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_ArenimTomb
+stages:
+  - stage: 10
+    verdict: right  # Satyana is marked to answer her request
+    marked: ["satyana"]
+  - stage: 50
+    verdict: corrected  # the amulet on the corpse is marked, and the key as optional; Satyana only once the player has the amulet
+    marked: ["amulet_agustas_unique", "satyana"]
+    optional: ["key_arenim"]

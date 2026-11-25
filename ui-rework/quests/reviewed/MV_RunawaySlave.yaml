@@ -1,0 +1,30 @@
+# The reviewed quest markers of MV_RunawaySlave.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_RunawaySlave
+stages:
+  - stage: 10
+    verdict: right  # Reeh-Ja is marked to hear his story
+    marked: ["reeh_jah"]
+  - stage: 20
+    verdict: right  # Reeh-Ja is marked for his choice
+    marked: ["reeh_jah"]
+  - stage: 30
+    verdict: corrected  # Im-Kilaya at the Argonian Mission is marked while Reeh-Ja follows
+    marked: ["im_kilaya"]
+  - stage: 35
+    verdict: corrected  # Savile Imayn in Tel Aruhn is marked while Reeh-Ja follows
+    marked: ["savile imayn"]
+  - stage: 36
+    verdict: corrected  # Reeh-Ja doesn't follow, so nothing is marked
+    marked: []
+  - stage: 90
+    verdict: corrected  # Savile Imayn's bounty, the only way left to finish, is an optional marker, since only a player on the slaver path expects it
+    marked: []
+    optional: ["savile imayn"]
+  - stage: 97
+    verdict: right  # Im-Kilaya is marked for the reward
+    marked: ["im_kilaya"]
+  - stage: 103
+    verdict: right  # Savile Imayn is marked for the reward
+    marked: ["savile imayn"]

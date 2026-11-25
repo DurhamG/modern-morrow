@@ -89,6 +89,21 @@ fingerprints:
   C0_Act_C_Expo: d740bb3c16398018
   C3_DestroyDagoth: d9b495fa0ea19552
   CX_BackPath: f767cf1ca4fb7e5d
+  DA_Azura: 54f478d02d7e53e3
+  DA_Boethiah: 60381d40f62e23ec
+  DA_Malacath: 5329a55e5c9c87a5
+  DA_Mehrunes: c107fca47911c968
+  DA_Mephala: ada4bf56115c77d2
+  DA_Sheogorath: fdec5c79c31d84c2
+  EB_Actor: 477b3139709e822c
+  EB_Bone: 290d6c0093386e8c
+  EB_DeadMen: 4d1bf287be257140
+  EB_False: 9e4483a30f9494ab
+  EB_Invisible: b06a015d32ca301c
+  EB_Pest: 0df31c573b88b795
+  EB_Shipment: 70240877f3f6dd0a
+  EB_TradeSpy: ceab3d9c66db2c92
+  EB_Unrequited: d0c586850d78a721
   FG_AlofsFarm: 009ea078dda15b18
   FG_BeneranBounty: 193a56d06ae49df2
   FG_BigBosses: ea5f7a555c81a18d
@@ -225,7 +240,44 @@ fingerprints:
   MG_StopCompetition: 7bec1b49970bb565
   MG_VampireCure: 33f59692f64e1a52
   MG_WiseWoman: 711919db9dbec36c
+  MS_Apologies: eccaeedda5f40e68
+  MS_ArenimTomb: 5c3eafca82f80898
+  MS_Lookout: ba527331850504f3
+  MS_Nord_burial: f7d29ae9591034d1
+  MS_Piernette: e22a0d55b62fa298
+  MS_propylon: 10cef7cfb569bc6a
+  MS_RaGruzgob: b6a2532466ede5e0
+  MS_Umbra: 6eb36624d6703a17
+  MS_VampireCure: 826dfcc4eb8d527b
+  MS_VassirDidanat: 94ba16bd60e4e604
+  MS_WhiteGuar: ce8a17b12df8096c
   MT_DB_Contact: abb040e0b1f9c328
+  MV_AbusedHealer: 10ece39f8010cefc
+  MV_AngryTrader: 9ff63ec2ddd9b5ad
+  MV_BanditVictim: 117d8ad6a8d1cf26
+  MV_BountyHunter: 5e5d1ca7cfd9a7c7
+  MV_CultistVictim: 7f03b1176efaed7c
+  MV_DeadTaxman: 2174f55fb0149dcd
+  MV_FakeSlave: 6330600a4dbfffca
+  MV_InnocentAshlanders: d2dc611b277430ee
+  MV_LostRing: 1da7257e4ffe751b
+  MV_MissingCompanion: d648f568aff84e0e
+  MV_MonsterDisease: de65bc47efac6184
+  MV_OutcastAshlanders: c04d1cd319b97cd0
+  MV_ParalyzedBarbarian: c79e2308799b69de
+  MV_PoorPilgrim: 7dbdab98a9aeef6d
+  MV_RecoverWidowmaker: 8f46f5bdb8537efc
+  MV_RichPilgrim: 1842009a83256d39
+  MV_RichTrader: 64c1211c33b819a6
+  MV_RunawaySlave: 7b20856c20c4b884
+  MV_SlaveMule: 3e9a031e48dd71f2
+  MV_StrayedPilgrim: c8378b5fc69daaff
+  MV_ThiefTrader: ab5f7df6e834d186
+  MV_TraderAbandoned: 1b1ca6c13eacc7bd
+  MV_TraderLate: 88d6591642caf639
+  MV_TraderMissed: 3f0da0c7283697ef
+  MV_WanderingPilgrim: 0e52a2a49ceba839
+  Romance_Ahnassi: bac62244773abd7e
   TG_BalmoraDefenses: 8623480e07a6c7cd
   TG_BitterBribe: 4ca1f039ecd06dbd
   TG_BrotherBragor: 496247d798e7fff9
@@ -249,6 +301,17 @@ fingerprints:
   TG_SS_Yngling: ac1a1385310d916e
   TG_VintageBrandy: 2525774471537d4b
   TG_Withershins: 85675bc107445913
+  Town_Ald_Bevene: 3a0e1f19cf5c9ca2
+  Town_Ald_Bivale: 6e462af86d4e0383
+  Town_Ald_Daynes: 2051c35757570e31
+  Town_Ald_Llethri: a010d040d8c63773
+  Town_Ald_Tiras: e78f3c83e373daa5
+  Town_Aldruhn: 866b885830042b2d
+  town_balmora: b8de6993ec4f6851
+  town_Sadrith: a0214df826bbbc69
+  town_Tel_Vos: 101bd51a555f4066
+  town_Tel_Vos_ashur: fda3f3ce7ff0bbb1
+  town_Vivec: ca64959a3c74ec01
   TT_AldDaedroth: 9acc72ffa269aec0
   TT_Assarnibibi: 4dcbc01a4c0c8ff4
   TT_Compassion: d07d9afbdf371f6f
@@ -260,6 +323,13 @@ fingerprints:
   TT_MountKand: 3cc51451945c64b3
   TT_PilgrimsPath: bca3521b52c474cf
   TT_SevenGraces: 9dbca7832855cb73
+  VA_VampBlood2: 4a710cd43d03b238
+  VA_VampChild: 4fe27ae0485e871e
+  VA_VampCult: 24d965c8148b30dc
+  VA_VampCurse: eaec835d252b6776
+  VA_VampHunter: 421ff4192b3b1699
+  VA_VampMarara: 1c8f74b6181663b0
+  VA_VampRich: 2174d609c0442cfa
 
 quests:
 
@@ -3464,3 +3534,1183 @@ quests:
     # Getting the slave to wear it is no longer needed.
     - stages: 70
       next: 100
+
+  MV_AbusedHealer:
+    # Hlormar Wine-Sot's greeting sets 1, which has no journal entry, and his topic "festering witch" leads to 10.
+    # Journal 10 says he wants help finding the witch, and his answers in the same topic lead to 30 if the player
+    # helps and to 35 if not. At both stages the default rule also marks Cloudcleaver, which Sosia Caristiana
+    # carries, through the way to 85 at the end of the quest. So it points at the witch before anyone has mentioned
+    # her.
+    - stages: [1, 10]
+      next: [10, 30, 35]
+    # Journal 30 says Hlormar now follows the player to the witch's camp to the northwest. Sosia's topics "Hlormar"
+    # and "Cloudcleaver" lead to 40 and 50. The default rule also marks the axe and then Hlormar beside the player,
+    # through the way to 85 at the end of the quest.
+    - stages: 30
+      next: [40, 50]
+    # Journal 50 gives Sosia's offer, and Hlormar's answers in "Sosia's offer" lead to 60 or 70, as the player
+    # sides with him or with her. The default rule also marks the axe, and so Sosia, as if she had to be robbed.
+    - stages: 50
+      next: [60, 70]
+    # Journal 75 closes the player's part: Sosia thanked the player for protecting her from Hlormar. Hlormar's
+    # answers that lead to 80 and 85 are for the side that fought with him, so they are left out.
+    - stages: 75
+      hide: [80, 85]
+
+  MV_AngryTrader:
+    # Journals 5 and 10 are about meeting Tinos Drothan. His topic "stole all my goods" leads to 20. The default
+    # rule also marks the two guards in Beshara and the raw glass there, which the journal only names at 20.
+    - stages: [5, 10]
+      next: 20
+    # Journal 20 asks the player to kill both guards, Alvur Hleran and Dondir, and bring back the glass. They are
+    # placed in Beshara, and the glass is in a chest there. Tinos's line that leads to 110 needs the glass and both
+    # guards dead. The default rule also marks Tinos at once, through his answer that leads to 23. That answer
+    # comes with the choice in the same conversation, and accepting is not needed to finish.
+    - stages: [20, 23]
+      next: 110
+
+  MV_BanditVictim:
+    # Journal 30 says the player agreed to bring back Aeta Wave-Breaker's ring and amulet. Dro'zhirr carries both
+    # in Shushishi, and Aeta's line that leads to 100 takes them. The default rule also marks Dro'zhirr to talk to,
+    # through his answer in "Nord woman" that leads to 50. That is a bargain over the reward, which the journal
+    # doesn't offer. He is still marked as the one who carries the jewels.
+    - stages: 30
+      next: 100
+
+  MV_BountyHunter:
+    # Journal 10 is about meeting Daric Bielle. His topic "Stupid slaves" leads to 20. The default rule also marks
+    # his guide Hides His Eyes, through the way to 110. The guide is the escaped slave Haj-Ei, and journal 80 is the
+    # first to say so.
+    - stages: 10
+      next: 20
+    # Journal 20 is Daric's story. His line in "Stupid slaves" that sets 20 offers the choice that leads to 30 or
+    # 40. The default rule also marks Hides His Eyes, for the reason above.
+    - stages: 20
+      next: [30, 40]
+    # Journal 30 says Haj-Ei hides somewhere around Suran. Anyone in Suran can answer "Haj-Ei", which leads to 50
+    # or 60. The default rule also marks Hides His Eyes, through the way to 110.
+    - stages: 30
+      next: [50, 60]
+    # Journal 40 says the player turned the job down. Nothing is marked.
+    - stages: 40
+      hide: 50-130
+    # Journal 50 says no one in Suran knew much. Asking more people in Suran leads to 60.
+    - stages: 50
+      next: 60
+    # Journals 60 and 65 send the player to the slaver Dranas Sarathram. His answer in "Haj-Ei" leads to 70. The
+    # default rule also marks Hides His Eyes.
+    - stages: [60, 65]
+      next: 70
+    # Journal 70 says Dranas knows the Argonian language. His answer in "Not his real name" leads to 80. The default
+    # rule also marks Hides His Eyes.
+    - stages: 70
+      next: 80
+    # Journals 80 and 90 tell the player that Hides His Eyes is Haj-Ei. The player can confront him, which leads to
+    # 110, or tell Daric, which leads to 140. The default rule marks Daric and Dranas, through Dranas's line in
+    # "Haj-Ei" that leads to 100, and leaves out Hides His Eyes.
+    - stages: [80, 90]
+      next: [110, 140]
+
+  MV_CultistVictim:
+    # Journal 10 is about meeting Sason. His topics "taken by cultists" and "unholy ritual" lead to 20 and 30. The
+    # default rule marks only his wife Malexa in the shrine of Ashalmawia, through her lines that lead to 15 and 35,
+    # and the journal hasn't sent the player there.
+    - stages: 10
+      next: 30
+    # Journal 15 is about finding Malexa held in the shrine. Her topic "unholy ritual" leads to 35, where she asks
+    # for help. The default rule also marks Sason, whom the journal doesn't name.
+    - stages: 15
+      next: 35
+
+  MV_DeadTaxman:
+    # Journal 10 is about finding the corpse of the tax collector with his tax record. Socucius Ergalla, whose ID is
+    # chargen class, takes the record in "murder of Processus Vitellius", which leads to 20. The default rule also
+    # marks Processus's ring on Foryn Gilnith and the lighthouse keeper Thavere Vedrano, who are named much later.
+    - stages: 10
+      next: 20
+    # Journal 20 says Socucius asked about the 200 gold. His answers lead to 30, 40 or 45. The default rule also
+    # marks the ring and Thavere.
+    - stages: 20
+      next: [30, 40, 45]
+    # Journal 40 says the player kept the gold and Socucius let the matter drop. No bounty was offered. Nothing is
+    # marked.
+    - stages: 40
+      hide: 45-90
+    # Journal 45 says the player admitted losing the gold, and must bring Socucius the 200 gold. His line that takes
+    # it leads to 46 and 48 and needs 200 gold carried, so while playing it is left out until the player has the
+    # gold. The default rule would then mark Foryn Gilnith and the ring he carries, through the ways to 70 and 90,
+    # before anyone has named him. So those ways are hidden, and Socucius is marked once the player has the gold.
+    - stages: 45
+      hide: 70-90
+    # Journal 48 gives the bounty on the murderer. Anyone in Seyda Neen but Thavere can answer "murder of Processus
+    # Vitellius", which leads to 50. The default rule also marks the ring on Foryn Gilnith, the murderer.
+    - stages: 48
+      next: 50
+    # Journal 50 sends the player to Thavere Vedrano in the lighthouse. Her topic "seen him get angry" leads to 60.
+    # The default rule also marks the ring on Foryn Gilnith.
+    - stages: 50
+      next: 60
+    # Journal 85 says the player chose to punish Foryn, who now fights. The way to 100 kills him and reports to
+    # Socucius. Returning the ring to Thavere, which leads to 90, is a side step that she asked for at 60.
+    - stages: 85
+      next: 100
+      optional: 90
+    # At 90 the ring is back with Thavere. The only way on is to report Foryn's death to Socucius, which leads to
+    # 100. A player who believed Foryn at 80 has no reason to kill him, so Socucius is only marked once Foryn is
+    # dead.
+    - stages: 90
+      hide: 100
+      targets:
+        - { task: talk, object: chargen class, after: { dead: foryn gilnith },
+            done: { quest: MV_DeadTaxman, atLeast: 100 } }
+
+  MV_FakeSlave:
+    # Journal 10 is about meeting Tul. His topic "aid a poor Argonian" leads to 20 or 25. The default rule also
+    # marks Sterdecan's farm. Tul's script tulScript sets 60 only when Tul himself gets near Sterdecan, so the farm
+    # is pointless until Tul follows the player.
+    - stages: 10
+      next: [20, 25]
+    # Journal 20 says Tul wants to reach Sterdecan's farm. His answers lead to 40, where he follows the player, or to
+    # 50. The farm is not marked until he follows.
+    - stages: 20
+      next: [40, 50]
+    # Journal 25 says Tul wants to find an abolitionist. His answers lead to 45, where he follows the player, or to
+    # 50. The farm and the locals who know of it are not marked until he follows.
+    - stages: 25
+      next: [45, 50]
+    # Journal 40 says Tul follows the player to Sterdecan's farm. tulScript sets 60 when Tul gets near Sterdecan.
+    # The default rule also marks Tul beside the player, through his answer that leads to 50.
+    - stages: 40
+      next: 60
+    # Journal 45 says Tul follows the player while they look for an abolitionist whose home the player doesn't know.
+    # Drolora Salen and Serer Andrano, placed near Tul, answer "kindly Redguard", which leads to 55 and names
+    # Sterdecan. The default rule marks Sterdecan before anyone has named him.
+    - stages: 45
+      next: 55
+
+  MV_InnocentAshlanders:
+    # Journal 10 is about Marsus Tullius, who was robbed. His topic "thieving Ashlanders" leads to 20. The default
+    # rule also marks the hides, carried by Tinti and Hairan in the Erabenimsun Camp, through the way to 105,
+    # before the journal names them.
+    - stages: 10
+      next: 20
+    # Journal 20 is Marsus's request. His line in "thieving Ashlanders" that sets 20 offers the choice that leads to
+    # 30 or 40. The default rule also marks the hides, as at 10.
+    - stages: 20
+      next: [30, 40]
+    # Journal 30 says to ask at the Ashlander camps. Anyone in the Zainab, Urshilaku, Ahemmusa or Erabenimsun camp
+    # answers "guar hide shipment", which leads to 45, 46, 47 or 50. Only the Erabenimsun know the thieves, so all
+    # four camps are marked. The default rule marks Marsus and the hides on Tinti and Hairan instead.
+    - stages: 30
+      next: [45, 46, 47, 50]
+    # Journals 45, 46 and 47 each say one camp knew nothing. The camps whose answers lead higher are still
+    # marked. The default rule marks only the next camp, and also Marsus and the hides.
+    - stages: 45
+      next: [46, 47, 50]
+    - stages: 46
+      next: [47, 50]
+    - stages: 47
+      next: 50
+    # Journal 80 says the player left the hides with the tribe. Marsus's line in "guar hide shipment" that needs
+    # stage 80 leads to 110. The default rule also marks Tinti and Hairan, through their answers that lead to 85,
+    # which only come with the choice at 70.
+    - stages: 80
+      next: 110
+
+  MV_LostRing:
+    # Journal 20 says the player agreed to fetch Synette Jeline's ring from the pond. The ring
+    # expensive_ring_01_bill is placed there, at -12,13. Picking it up makes her and Tavynu Tedran attack, and her
+    # script BILL_synette_jeline sets 40 when the player hits her. So the ring is marked until carried, and
+    # nothing after. The default rule marks Synette instead, through that script's way to 40.
+    - stages: 20
+      hide: 40
+      targets:
+        - { task: fetch, object: expensive_ring_01_bill, done: { carried: expensive_ring_01_bill } }
+    # Journal 30 says the player turned her down. Nothing is marked.
+    - stages: 30
+      hide: 40
+
+  MV_MissingCompanion:
+    # Journal 10 is about meeting Falanu Indaren. Her topic "wild nix hounds" leads to 20. The default rule also
+    # marks her husband Drerel, through his line in the same topic that leads to 15, but the journal doesn't say
+    # where to find him.
+    - stages: 10
+      next: 20
+    # Journal 30 says to look for Drerel to the west. His greeting at stage 30 leads to 40, and he follows the
+    # player. The default rule also marks Falanu, through the way to 50. Drerel's script drerel_indaren sets 50
+    # near her only while he follows.
+    - stages: 30
+      next: 40
+
+  MV_MonsterDisease:
+    # Journals 10 and 20 are about meeting Din. His topic "muddled" leads to 30. The default rule also marks the
+    # healer Mehra Drora in Gnisis. Din's script dinScript sets 50 only when Din himself gets near her, and he only
+    # follows from 40 or 47.
+    - stages: [10, 20]
+      next: 30
+    # Journal 30 suggests Mehra Drora, but Din must agree to follow first. His answers in "muddled" lead to 40, 46
+    # or 48.
+    - stages: 30
+      next: [40, 46, 48]
+    # Journals 40 and 47 say Din follows the player to Gnisis. dinScript sets 50 when he gets near Mehra Drora in
+    # the Gnisis temple. The default rule also marks Din beside the player.
+    - stages: [40, 47]
+      next: 50
+    # Journal 46 says the player will try to cure Din with magic. dinScript sets 49 once he no longer has the
+    # disease and the player is close. The default rule also marks Mehra Drora.
+    - stages: 46
+      next: 49
+    # Journal 48 says the player left Din. Nothing is marked, not even the kill, which counts as a failure.
+    - stages: 48
+      hide: [49, 50, 70]
+
+  MV_OutcastAshlanders:
+    # Journals 10, 20 and 25 are about Athanden Girith, who was robbed. His line in "robbed me" sets 20 and offers
+    # the choice that leads to 30 or 40. The default rule also marks the thieves Emul-Ran and Kashtes Ilabael and
+    # the hides they carry, through the ways to 100, 102 and 105, but the journal names them only at 60. So those ways
+    # are hidden, and Girith is marked until the player has answered. The player can ask about "bastard Ashlanders"
+    # from his greeting and reach 25 before 20. His line in "robbed me" then offers the choice without moving the
+    # quest back to 20, so the analysis doesn't count its answers at 25. Without the target, nothing would be
+    # marked there.
+    - stages: [10, 20, 25]
+      hide: 100-105
+      targets:
+        - { task: talk, object: athanden girith, done: { quest: MV_OutcastAshlanders, atLeast: 30 } }
+    # Journal 30 says to ask the local Ashlanders. Only members of the Ashlanders faction in the Ahemmusa Camp
+    # answer "attack on a guar hide trader", which leads to 60. A faction marker would point at the nearest
+    # Ashlander. The two thieves are Ashlanders too, and are camped next to Girith. So the camp itself is marked
+    # until 60, and the ways to the thieves and to Girith are hidden.
+    - stages: 30
+      hide: [60, 100-105]
+      targets:
+        - { task: visit, cell: "Ahemmusa Camp", done: { quest: MV_OutcastAshlanders, atLeast: 60 } }
+
+  MV_ParalyzedBarbarian:
+    # Journal 40 says the player will look for a potion of Cure Common Disease for Hisin Deep-Raed. His answer in
+    # "potion of Cure Common Disease" leads to 100 and 110 and needs the potion carried. The potion p_cure_common_s
+    # is placed 41 times, so the fetch marks whoever holds one, such as chests in Shal and Maba-Ilu. The way to 65 is
+    # his script, which sets 65 when a spell cures him, and that is not what journal 40 asks. So all three ways are
+    # hidden, and Hisin is marked once the player carries a potion.
+    - stages: 40
+      hide: 65-110
+      targets:
+        - { task: talk, object: hisin deep-raed, after: { carried: p_cure_common_s }, done: { quest: MV_ParalyzedBarbarian, atLeast: 100 } }
+    # Journal 60 says the player will cure Hisin with a spell. His script hisin_deep_raed sets 65 once he no longer
+    # has the disease, so the way to 65 marks him. The potion ways to 100 and 110 would also mark every holder of
+    # the potion.
+    - stages: 60
+      next: 65
+
+  MV_PoorPilgrim:
+    # From 20 Fonus Rathryon follows the player to Koal Cave. His script fonus_rathryon sets 90 when he and the
+    # player reach the cave door ex_cave_door_01_koal. The ways to 25, 30, 35 and 110 are reminders and the late
+    # outcome, which his script forces as greetings while he follows. The way to 23 is an answer to his first
+    # choice, which isn't offered again. Those ways would only mark Fonus beside the player, so the cave door is
+    # the one marker.
+    - stages: 20-35
+      next: 90
+
+  MV_RecoverWidowmaker:
+    # At 10 Botrir has only greeted the player. His answer in "witch nearby" leads to 20. The default rule also
+    # marks Iveri Llothri and the axe she carries, through the way to 80, but journal 10 hasn't named her.
+    - stages: 10
+      next: 20
+    # Journal 20 records Botrir's request for help. His choice in "witch nearby" leads to 30 if the player agrees
+    # and to 40 if not. Journal 20 doesn't say where Iveri Llothri is.
+    - stages: 20
+      next: [30, 40]
+    # At 60 the player kept the axe and Botrir attacks. His answer in "Widowmaker" that leads to 80 needs a choice
+    # he no longer offers once he fights, so marking him to talk to is wrong. His script sets 90 when he dies, but
+    # it does nothing once the quest is past 50.
+    - stages: 60
+      hide: 80
+
+  MV_RichPilgrim:
+    # Viatrix Petilia's script viatrix_petilia sets 95 near the shrine furn_shrine_vivec_cure_03 at Ghostgate, but
+    # it returns early unless she follows the player. Her answer in "escort" that leads to 20 starts the follow. So
+    # the shrine isn't marked at 10.
+    - stages: 10
+      hide: 95
+    # From 20 she follows the player. Her script sets 40, 50, 60 and 120 as reminders and as the late outcome,
+    # with forced greetings, so those ways would only mark her beside the player. The shrine is the one marker.
+    - stages: [20, 40, 50, 60]
+      next: 95
+    # Journal 30 records that the player refused. She never follows, so her script can't set 95, and only her
+    # death, which leads to 130, is left. Nothing is marked.
+    - stages: 30
+      hide: [95, 130]
+
+  MV_RichTrader:
+    # Journal 10 says Teris Raledran wants an escort to Vivec. His choice in "be of some use" leads to 20. The
+    # default rule also marks his guar Rollie as a kill, through Rollie's script that sets 120 when he dies.
+    # Teris's script, which sets 80 and 90 on the way, returns early unless Teris follows the player.
+    - stages: 10
+      next: 20
+    # From 20 Teris follows the player. His script teris sets 80 on entering Vivec and 90 near the door
+    # in_velothismall_ndoor_agrippina of Agrippina Herennia's shop, which journal 10 names. The default rule marks
+    # Rollie as a kill, through the way to 120. At 20 it marks the whole of Vivec, through the way to 80, instead of
+    # the shop door.
+    - stages: [20, 80]
+      next: 90
+    # At 90 Teris pays in "compensation", which leads to 100. The ways to 105 and 120 need Rollie dead, so the
+    # default rule would mark him as a kill.
+    - stages: 90
+      next: 100
+
+  MV_RunawaySlave:
+    # Journal 30 says the player will escort Reeh-Ja to the Argonian Mission in Ebonheart. His answer in "must get
+    # home" makes him follow the player to "Ebonheart, Argonian Mission". His script reeh_jahScript sets 97 near
+    # Im-Kilaya there. The default rule also marks Reeh-Ja beside the player, through the way to 103, which his
+    # script sets near the slave trader in Tel Aruhn.
+    - stages: 30
+      next: 97
+    # Journal 35 says the player will take Reeh-Ja back to the slave trader in Tel Aruhn. His script sets 103 when he
+    # comes near Savile Imayn, who is placed in Tel Aruhn, and the analysis marks that way on Reeh-Ja, who follows the
+    # player. The other ways lead to the Mission or need Reeh-Ja dead. So Savile Imayn is marked as the place to
+    # bring him.
+    - stages: 35
+      hide: 36-105
+      targets:
+        - { task: talk, object: savile imayn, done: { quest: MV_RunawaySlave, atLeast: 103 } }
+    # Journal 36 says the player left Reeh-Ja alone. He doesn't follow, and his script returns early unless he
+    # follows, so the Mission and the slave market lead nowhere. Only killing him is left, and nothing asks for it.
+    - stages: 36
+      hide: 90-105
+    # Journal 90 records his death and asks nothing. Savile Imayn's line in "Reeh-Jah" that needs him dead pays a
+    # bounty, and it is the only way left to finish the quest. A player who took him to the slave trader from 35
+    # was told of her reward, but a player who was helping him wouldn't look for it. The analysis counts that way
+    # as a failure, because Reeh-Ja talks in the quest, so it is hidden, and Savile is an optional target instead.
+    - stages: 90
+      hide: 105
+      targets:
+        - { task: talk, object: savile imayn, optional: true, done: { quest: MV_RunawaySlave, atLeast: 105 } }
+
+  MV_SlaveMule:
+    # Journal 10 sends the player to Relam Arinith in Fatleg's Drop Off. His line in "deliver this slave" leads to 20.
+    # The default rule also marks the Argonian Mission in Ebonheart, through the escort at the end of the quest,
+    # which no journal entry has mentioned yet.
+    - stages: 10
+      next: 20
+    # Journal 20 explains the deal. Relam's choice in "deliver this slave" leads to 30 if the player agrees, and to
+    # 40 if not. Stage 40 has no journal entry, and after it nothing is left to do. So at 20 only Relam is marked,
+    # for the way to 30, and at 40 Rabinna's talk, the delivery and the Mission are all hidden.
+    - stages: [20, 40]
+      next: 30
+      hide: 65-114
+    # Journals 30 and 100 say the player will deliver Rabinna to Vorar Helas in Balmora. Relam's answer makes her
+    # follow the player to "Balmora, Vorar Helas' House". The script attack_slave sets 102 when she comes near Vorar
+    # there, and the analysis marks that way on Rabinna beside the player. Her talk about the moon sugar (65, 75) is a
+    # secret the journal hasn't hinted at, and the Mission is a spoiler. So the house is marked.
+    - stages: [30, 100]
+      hide: 40-114
+      targets:
+        - { task: visit, cell: "Balmora, Vorar Helas' House", done: { quest: MV_SlaveMule, atLeast: 101 } }
+    # Journal 65 says Rabinna carries the moon sugar inside her. Her answer in "hope of escape" leads to 75, and
+    # names Im-Kilaya. The Mission isn't named before that.
+    - stages: 65
+      next: 75
+    # Journal 75 says Rabinna asks to be taken to Im-Kilaya instead. Her choice in "hope of escape" leads to 95 or
+    # 100, and both are marked on her. The Mission is marked only once she follows the player there.
+    - stages: 75
+      next: [95, 100]
+    # Journal 95 says the player will take Rabinna to Ebonheart. She follows the player, and her script
+    # rabinna_death sets 114 in "Ebonheart, Argonian Mission". The default rule also marks her beside the player,
+    # through the way to 102, which attack_slave sets when she comes near Vorar Helas in Balmora.
+    - stages: 95
+      next: 114
+    # Journal 101 says Rabinna died on the way. Vorar Helas's line in "Relam Arinith" that needs her dead leads to
+    # 103. It counts as a failure, because Rabinna talks in the quest, but it is the only way on. Her script also
+    # puts the moon sugar in her body. The default rule marks her body and the Mission instead.
+    - stages: 101
+      next: 103
+    # Journal 102 says Vorar attacked Rabinna on arrival. If she dies, her script makes Vorar greet the player,
+    # and his line in "Relam Arinith" leads to 103 and 108. The Mission would need her to follow the player again,
+    # and the way to 109 fetches moon sugar, which is placed 32 times. So Vorar is marked.
+    - stages: 102
+      hide: [109, 114]
+    # At 103 and 105 Vorar wants the moon sugar from Rabinna's body, where her script put 20 of it when she died.
+    # His line in "Vorar's moon sugar" leads to 109 and needs 20 carried. The fetch marks every holder of moon sugar
+    # on the island, so her body is marked until the player carries 20, and then Vorar. No line sets 105.
+    - stages: [103, 105]
+      hide: 109-114
+      targets:
+        - { task: visit, object: rabinna, done: { carried: ingred_moon_sugar_01, atLeast: 20 } }
+        - { task: talk, object: vorar helas, after: { carried: ingred_moon_sugar_01, atLeast: 20 }, done: { quest: MV_SlaveMule, atLeast: 109 } }
+    # Journal 111 says Vorar is dead and Rabinna is grateful. Her choice in "hope of escape" leads to 112 or 113.
+    # The analysis counts both as failures, because they need Vorar dead, so the default rule marks only the
+    # Mission, which needs Rabinna to follow the player. One way to 113 also needs Im-Kilaya dead and would mark him
+    # as a kill, so only 112 is named. Its way marks Rabinna, since Vorar is already dead.
+    - stages: 111
+      next: 112
+
+  MV_StrayedPilgrim:
+    # Journal 15 says the player met Edras Oril first, and journal 20 says the player will look for him. His
+    # greeting leads to 30 from 10 up to 29. The default rule also marks the kagouti to kill, through Edras's line
+    # that leads to 24, and Thoronor, through the way to 90, which needs Edras brought to him.
+    - stages: 15-20
+      next: 30
+    # Journal 24 says Edras won't move while the kagouti are about. His script edras_oril sets 90 when he comes
+    # near Thoronor, so Thoronor isn't marked until Edras will follow.
+    - stages: 24
+      hide: 90
+    # Journal 25 says the player will get rid of the kagouti. Edras's greeting that leads to 48 needs both
+    # kagouti_mating dead, so they are marked to kill, and Edras after. The default rule marks Thoronor instead.
+    - stages: 25
+      next: 48
+    # At 27 the player made Edras invisible. His greeting at 27 offers to follow the player, which leads to 45.
+    - stages: 27
+      next: 45
+    # No line sets 28, which says the player will lead Edras back. Thoronor is where the script sets 90.
+    - stages: 28
+      next: 90
+    # Journal 30 says the kagouti stand between Edras and Thoronor. His line in "my friend" that leads to 40 asks the
+    # player to deal with them. Thoronor isn't marked until Edras will follow.
+    - stages: 30
+      next: 40
+    # Journal 40 says Edras refuses to move while the kagouti live. Killing both leads to 48, and making him
+    # invisible leads to 45 through his script or his answer. Both are marked. Journal 43 is the same, with a potion.
+    # No line sets 43.
+    - stages: 40-43
+      next: [45, 48]
+    # Journal 45 says Edras is invisible and follows the player past the kagouti. The default rule marks the
+    # kagouti as kills, through the way to 48. Thoronor is where the script sets 90.
+    - stages: 45
+      next: 90
+
+  MV_ThiefTrader:
+    # The way to 90 is the greeting of lucan ostorius2, who attacks a player who kept the weapons. He is not
+    # placed, and nothing asks the player to meet him.
+    - stages: [10, 15]
+      hide: 90
+    # Journals 20 and 25 say the player carries Lucan's weapons to Yak gro-Skandar at the Rat in the Pot in Ald'ruhn.
+    # His line in "Lucan's shipment" that leads to 100 needs the four weapons Lucan handed over. His line that leads
+    # to 105 also needs a silver staff, which Lucan doesn't give. The default rule marks that way too, and its fetch
+    # would mark every placed staff.
+    - stages: 20-25
+      next: 100
+
+  MV_TraderAbandoned:
+    # Journal 10 says Pemenie wants an escort to Gnaar Mok. Her script pemenieScript sets 90 there only while she
+    # follows the player, which her choice in "making a deal" starts at 20. The locals of Caldera and Gnaar Mok who
+    # answer "bounty" (40) are a side story the journal hasn't mentioned.
+    - stages: 10
+      next: 20
+    # At 20 Pemenie follows the player, so Gnaar Mok is the goal. The default rule also marks the locals of Caldera
+    # and Gnaar Mok, through their answers in "bounty" that lead to 40.
+    - stages: 20
+      next: 90
+    # Journal 30 says the player refused. She never follows, so Gnaar Mok leads nowhere, and only her death is left.
+    - stages: 30
+      hide: [40, 90, 110]
+    # Journals 40 to 60 come from asking about her bounty. Her answers in "bounty" lead to 50, 60 and 70, and the
+    # third one makes her stop following the player. The journal doesn't ask for this, so only Gnaar Mok is marked.
+    - stages: 40-60
+      hide: 50-70
+    # Journal 70 says she no longer follows the player, so her script can't set 90. Only her death is left.
+    - stages: 70
+      hide: [90, 110]
+
+  MV_TraderLate:
+    # At 10 Rasha has only greeted the player. His line in "pressing business" leads to 20. The default rule also
+    # marks Bivale Teneran in Ald'ruhn, whom journal 20 names first.
+    - stages: 10
+      next: 20
+    # Journal 20 records Rasha's offer. His choice in "pressing business" leads to 30 or 40.
+    - stages: 20
+      next: 30
+
+  MV_TraderMissed:
+    # Journal 10 says Paur Maston missed his partner Vanjirra. His line in "dangerous trip" leads to 20. The way to 95
+    # is his script paur_maston, which needs him to follow the player into Molag Mar.
+    - stages: 10
+      next: 20
+    # Journal 15 says the player met Vanjirra in Molag Mar first. It asks nothing, and doesn't say where Paur is.
+    # The Molag Mar way needs Paur to follow the player.
+    - stages: 15
+      hide: 20-95
+    # Journal 20 records Paur's request. His choice in "dangerous trip" leads to 30 or 40.
+    - stages: 20
+      next: 30
+
+  MV_WanderingPilgrim:
+    # At 10 and 20 Nevrasa Dralor hasn't asked for an escort yet. Her choice in "holy place" leads to 30, which
+    # makes her follow the player. Her script sets 90 when she comes near the shrine furn_shrine_vivec_cure_02 in
+    # the Fields of Kummu, so the shrine isn't marked until she follows. Journal 10 doesn't name the place.
+    - stages: 10-20
+      hide: 90
+    # Journal 40 says the player refused, so she doesn't follow, and the shrine leads nowhere.
+    - stages: 40
+      hide: 90
+
+  DA_Azura:
+    # Journal 10 tells the player to clear the island near Dagon Fel without disturbing Rayna Drolan. Her greeting
+    # sets 25 when the player speaks to her, and that is how the quest fails. So she is never marked. The default rule
+    # then marks the Golden Saint Staada, whose death sets 20 through staadaScript.
+    - stages: 10
+      hide: 25
+    # Journal 20 records Staada's death. Rayna Drolan stays hidden for the reason above. The way to 30 fetches
+    # Sheogorath's Signet Ring, which Staada carries. The script DaedraAzura on the statue active_dae_azura, placed in
+    # "Shrine of Azura", sets 30 when the player carries the ring there. The analysis sees only the fetch, so nothing
+    # is marked once the player holds the ring. The statue is marked from then on.
+    - stages: 20
+      hide: 25
+      targets:
+        - { task: visit, object: active_dae_azura, after: { carried: "sheogorath's signet ring" },
+            done: { quest: DA_Azura, atLeast: 30 } }
+
+  DA_Boethiah:
+    # Journal 10 says M'aiq told the player of a sunken shrine off the coast near Hla Oad. The ruined head
+    # active_dae_b_bo_head, placed at (-9,-4), carries the script DaedraBoethiah, which sets 20 and 30. The default
+    # rule also marks Duma's second self duma gro-lag2 at Khartag Point, through the way to 61. That way's check on
+    # his local variable fails until the shrine is built, so while playing the default rule marks Duma gro-Lag in
+    # Caldera instead, through his "sculptor" answer that leads to 40. The player only learns that topic from the
+    # statue, so he is a spoiler here.
+    - stages: 10
+      next: [20, 30]
+    # At 40 Duma gro-Lag offers a choice that leads to 45 or 50. His line that leads to 60 takes 2000 gold and the
+    # book bk_boethiah's glory_unique, which no journal entry has named yet. Without this entry the book in Jobasha's
+    # Rare Books would be marked for a player who carries the gold. The way to 61 is the greeting of Duma's second self
+    # duma gro-lag2 at Khartag Point. The script ShrineBoethiah, started at 60, enables him there, and his greeting
+    # needs the finished shrine, so it is hidden too.
+    - stages: 40
+      hide: [60, 61]
+    # Journal 45 records that the player turned Duma down. No line offers his choice again, and the way to 60 needs
+    # the book the journal never named. The way to 61 is left out while playing, because its check on duma
+    # gro-lag2's local variable fails until the shrine is built. So nothing is marked.
+    - stages: 45
+      hide: 60
+    # Journal 50 asks for 2000 gold and a book that shows how the shrine looked. Duma's line that leads to 60 checks
+    # the gold while playing, so a player without the gold would see nothing. The book, placed in "Vivec, Jobasha's
+    # Rare Books", is marked until the player has it. Duma is marked through the way to 60 once the player also has
+    # the gold.
+    - stages: 50
+      targets:
+        - { task: fetch, object: "bk_boethiah's glory_unique", done: { carried: "bk_boethiah's glory_unique" } }
+
+  DA_Malacath:
+    # Journals 10 and 20 send the player to Vivec to look for the last of the Oreyn line. Anyone in Vivec can answer
+    # the topic "Farvyn Oreyn", which leads to 30, or "Oreyn Bearclaw", which leads to 20. The default rule also marks
+    # Farvyn Oreyn himself, at (-8,2) off Gnaar Mok, which the journal hasn't pointed to yet.
+    - stages: 10-20
+      next: 30
+    # Journal 30 says Farvyn was heading for Gnaar Mok. Anyone in Gnaar Mok answers "Farvyn Oreyn" and leads to 40.
+    - stages: 30
+      next: 40
+    # Journal 40 says Farvyn is on an island near Gnaar Mok, and journal 10 asks for his death. farvynScript sets 60
+    # when he dies. That way is a failure, because he speaks a line of this quest. His line in "Kharag gro-Khar",
+    # which leads to 50, is talk the player can skip.
+    - stages: 40
+      next: 60
+
+  DA_Mehrunes:
+    # Journal 20 sends the player to the Alas tomb near Molag Mar for the Razor. The way to 25 is the refusal in the
+    # statue's message box, which no longer comes up. The rusty dagger lies on Varner Hleras's corpse in "Alas
+    # Ancestral Tomb". DaedraMehrunes on the statue active_dae_mehrunes, placed in "Yasammidan, Shrine", sets 30 when
+    # the player comes near it with the dagger. The analysis sees only the fetch, so the statue is marked once the
+    # player carries the dagger.
+    - stages: 20
+      next: 30
+      targets:
+        - { task: visit, object: active_dae_mehrunes, after: { carried: rusty_dagger_unique },
+            done: { quest: DA_Mehrunes, atLeast: 30 } }
+    # At 30 the player stands near the statue with the dagger. Activating the statue sets 40. The way to 40 only
+    # fetches the dagger, which the player already carries, so nothing would be marked.
+    - stages: 30
+      targets:
+        - { task: visit, object: active_dae_mehrunes, done: { quest: DA_Mehrunes, atLeast: 40 } }
+
+  DA_Mephala:
+    # At 10 Taros Dral offers a choice in "sensitive matters" that leads to 30 or 40. The default rule also marks
+    # Balyn Omavel to be killed, through the way to 57, which is how the quest fails.
+    - stages: 10
+      next: [30, 40]
+    # Journal 30 says the player declined. No line offers Taros's choice again, and poisonfoodScript only sets 50 at
+    # stage 40. Nothing is left to do.
+    - stages: 30
+      hide: [50, 57]
+    # Journal 40 asks the player to poison Balyn Omavel in Balmora. poisonfoodScript on his cauldron
+    # active_cauldron_balyn sets 50. Being seen at his door sets 55, and killing him another way leads to 57. Both are
+    # failures. No line or script sets 20, whose journal entry is the same task, so it gets the same markers.
+    - stages: [20, 40]
+      next: 50
+    # At 50 the pot is poisoned. DaedraMephala on the altar active_velothi_altar_mephala, placed in "Vivec, Arena
+    # Hidden Area" where Taros Dral waits, sets 60. The ways to 55 and 57 are the failures above.
+    - stages: 50
+      next: 60
+    # Journal 55 says Balyn saw the player. The poison can no longer be placed, and the only way left is killing him
+    # another way, which leads to 57 and fails the quest.
+    - stages: 55
+      hide: 57
+
+  DA_Sheogorath:
+    # Journal 10 sends the player to a mad hermit on an island far to the north. Anyone in Dagon Fel answers "mad
+    # hermit" and leads to 20, which only gives directions. Big Head's greeting in his shack leads to 30. The default
+    # rule would mark the Dagon Fel answer and the fork in his shack.
+    - stages: 10
+      next: 30
+      optional: 20
+    # Journal 20 names Big Head. His greeting leads to 30.
+    - stages: 20
+      next: 30
+    # Journal 30 hopes Big Head can lead the player to the Fork. His answers in "Fork of Horripilation" lead to 50.
+    # The default rule also marks the giant bull netch, through the way to 40. Journal 55 records that killing it
+    # without wielding the Fork fails the quest.
+    - stages: 30
+      next: 50
+    # At 40 Big Head has told of the netch at (1,24), and at 50 he has offered the Fork. da_forkScript sets 60 when
+    # the netch dies while the player wields the Fork, and 55 when they don't. The analysis shows those ways as visits
+    # to the Fork, so nothing is marked once the player picks it up. The netch is marked once the player carries the
+    # Fork. At 40 Big Head is still marked for the Fork.
+    - stages: 40
+      next: 50
+      targets:
+        - { task: kill, object: netch_giant_unique, after: { carried: fork_horripilation_unique },
+            done: { quest: DA_Sheogorath, atLeast: 55 } }
+    - stages: 50
+      hide: 55
+      targets:
+        - { task: kill, object: netch_giant_unique, after: { carried: fork_horripilation_unique },
+            done: { quest: DA_Sheogorath, atLeast: 55 } }
+    # Journal 60 says to return the Fork to Sheogorath. DaedraSheogorath on the statue active_dae_sheogorath, placed
+    # in "Ihinipalit, Shrine", sets 70 when the player carries the Fork there. The way to 70 only fetches the Fork,
+    # which the player carries, so nothing would be marked.
+    - stages: 60
+      targets:
+        - { task: visit, object: active_dae_sheogorath, done: { quest: DA_Sheogorath, atLeast: 70 } }
+
+  EB_Actor:
+    # At 20 Miun-Gei offers a choice in "annoying fool" that leads to 30 or 35. The default rule also marks Crassius
+    # Curio, through the way to 60, whom no journal entry has named yet.
+    - stages: 20
+      next: [30, 35]
+    # Journal 30 names the vendor Marcel Maurard, outside Miun-Gei's shop. His answer in "line of work" leads to 40.
+    # Crassius Curio's lines that lead to 55 and 60 come before the journal names him.
+    - stages: 30
+      next: 40
+    # Journal 35 says the player chose not to deal with the vendor. Nothing should be marked.
+    - stages: 35
+      hide: [40, 50, 55, 60, 90]
+    # Journal 40 says Marcel wants a part in a play. Anyone in Vivec answers "theater troupe" and leads to 50, which
+    # names Crassius Curio. Curio is a spoiler until then.
+    - stages: 40
+      next: 50
+
+  EB_Bone:
+    # Journal 80 asks the player to rid Jeanne of the dwarven spirit. boneScript enabled the spirit dwarven
+    # ghost_jeanne_u in her shop, and sets 90 when it dies, or 100 when the bone leaves the chest. Neither is a way
+    # the analysis sees. The kill is marked, and the chest is a hollow marker.
+    - stages: 80
+      targets:
+        - { task: kill, object: dwarven ghost_jeanne_u, done: { quest: EB_Bone, atLeast: 90 } }
+        - { task: visit, object: com_chest_02_jeanne_u, optional: true, done: { quest: EB_Bone, atLeast: 90 } }
+
+  EB_DeadMen:
+    # Journal 40 says the player declined. danarScript on the corprus stalker would still set 50 when he dies, but the
+    # player chose not to look for him.
+    - stages: 40
+      hide: 50
+
+  EB_False:
+    # Journal 10 says the player was handed a leaflet about a merchant. Aurane Frernis, the apothecary the leaflet is
+    # about, answers "leaflet" and leads to 20. Domalen's line that leads to 30 is in the topic "Belan makes the
+    # leaflets", which the player only learns from his answer about the leaflet. Journal 20 is the one that sends
+    # the player back to him.
+    - stages: 10
+      next: 20
+
+  EB_Invisible:
+    # Journal 10 says an invisible man spoke to the player. Cassius Olcinius's answer in "made invisible" leads to 20.
+    # The default rule also marks his father, through the father's answer in "debt to pay" that leads to 90, before
+    # any journal entry names the debt.
+    - stages: 10
+      next: 20
+    # At 20 Cassius offers a choice that leads to 30 or 40.
+    - stages: 20
+      next: [30, 40]
+    # Journal 30 says the player agreed to find a cure. Journal 20 named the wizard Fevyn Ralen, whose answer in
+    # "Cassius Olcinius" leads to 60. Telling the father, Lucretinaus Olcinius, leads to 50 and only earns some gold,
+    # so it is a side step. The way to 90 needs the debt, which comes later.
+    - stages: 30
+      next: 60
+      optional: 50
+    # Journal 40 says the player chose not to help. Nothing should be marked.
+    - stages: 40
+      hide: [50, 60, 70, 80, 90]
+    # Journal 50 says the father gave money towards a cure. Fevyn Ralen's answer leads to 60. The father's answer in
+    # "debt to pay" that leads to 90 needs the debt, which only Fevyn reveals.
+    - stages: 50
+      next: 60
+
+  EB_Pest:
+    # Journal 26 says the player chose not to bother. Nothing should be marked.
+    - stages: 26
+      hide: [30, 40]
+    # Journal 30 sends the player to the nest in the underworks. The ten rats rat_telvanni_unique are all placed in
+    # "Vivec, Telvanni Underworks", too many to mark. eb_pestScript on them sets 35 once ten have died. The cell is
+    # marked until then.
+    - stages: 30
+      targets:
+        - { task: visit, cell: "Vivec, Telvanni Underworks", done: { quest: EB_Pest, atLeast: 35 } }
+
+  EB_Shipment:
+    # At 10 Alarvyne Indalas offers a choice in "dwarven limeware" that leads to 20 or 30. The default rule also marks
+    # the limeware for Bolrin, through the way to 50, which journal 10 doesn't offer.
+    - stages: 10
+      next: [20, 30]
+    # Journal 20 sends the player to the Chun-Ook in Ebonheart. The five bowls and five cups are in the crate
+    # crate_01_limeware_uniqu in "Chun-Ook, Lower Level". The fetch of misc_lw_bowl marks its eight loose copies in
+    # unrelated places instead, so all ways are hidden. The ship is marked until the player carries the bowls.
+    # Alarvyne's line that leads to 40 needs five of each, and she is marked once the player has them. Bolrin's lines
+    # that lead to 35 and 50 are a choice the journal doesn't offer.
+    - stages: 20
+      hide: [35, 40, 50]
+      targets:
+        - { task: visit, cell: "Chun-Ook, Lower Level", done: { carried: misc_lw_bowl, atLeast: 5 } }
+        - { task: talk, object: alarvyne indalas,
+            after: [{ carried: misc_lw_bowl, atLeast: 5 }, { carried: misc_lw_cup, atLeast: 5 }],
+            done: { quest: EB_Shipment, atLeast: 40 } }
+    # Journal 35 says the player showed Bolrin the limeware but kept it. Alarvyne's line leads to 40. Bolrin has
+    # told the player to leave.
+    - stages: 35
+      next: 40
+
+  EB_TradeSpy:
+    # Journal 30 asks for a price list from the East Empire Company. Mevure Hlen's answer puts bk_letterfromllaalam2
+    # into the chest com_chest_02_jzhirr, placed in "Ebonheart, East Empire Company Hall". The analysis can't see a
+    # copy placed anywhere, so the fetch can't be marked and nothing would show. The chest is marked until the player
+    # has the list, and from then on Mevure is marked through the way to 50. No line or script sets 35, which says
+    # the same.
+    - stages: [30, 35]
+      targets:
+        - { task: visit, object: com_chest_02_jzhirr, done: { carried: bk_letterfromllaalam2 } }
+
+  EB_Unrequited:
+    # Journal 30 says the player declined to speak to Eraldil for Gadayn Andarys. Nothing should be marked.
+    - stages: 30
+      hide: 40
+    # At 90 and 95 the player has delivered the potion. Gadayn's line in "nothing could be better" leads to 110, the
+    # ending where he courts Glathel. That ending belongs to the player who talked him out of the potion at 80. At 95
+    # his greeting that leads to 100 needs his local variable eraldilhere, which holds once eraldilScript has moved
+    # Eraldil into his shop after ten days. So nothing is marked while the player waits.
+    - stages: [90, 95]
+      hide: 110
+
+  VA_VampBlood2:
+    # Journal 15 says the player gave the Blood of the Quarra to Raxle Berne, so he has it now. The way to 100
+    # fetches p_quarrablood_unique, which the analysis only finds in its old barrel in Druscashti. Raxle Berne, placed
+    # in "Galom Daeus, Observatory", is marked until the player carries the potion again. Raven Omayn is marked from
+    # then on through the way to 100.
+    - stages: 15
+      targets:
+        - { task: visit, object: raxle berne, done: { carried: p_quarrablood_unique } }
+
+  VA_VampChild:
+    # At 10 and 20 Dhaunayne Aundae is the next step. At 10 her topic "about my family" leads to 20, and at 20 her
+    # choice leads to 30 or 40. The way to 70 is Sinyaramen's answer in Sadrith Mora, which needs a potion the
+    # player gets much later.
+    - stages: 10-20
+      hide: 70
+    # Journal 30 says to show Dhaunayne's ring to the high elves of Sadrith Mora. Tusamircil in the Mages Guild
+    # answers "family crest" and leads to 60, where he offers the potion Sinyaramen ordered. Iniel in the same guild
+    # leads to 50 with only a hint about the Gateway Inn, so she is a side step. Sinyaramen, whose greeting leads to
+    # 70, won't talk without the potion.
+    - stages: 30
+      next: 60
+      optional: 50
+    # Journal 50 points to the Gateway Inn, where Sinyaramen is placed. His greeting only answers a player who
+    # carries the potion, which Tusamircil hands over at 60 and 66.
+    - stages: 50
+      next: 60
+    # At 60 Tusamircil offers the potion, and at 65 the player turned it down. Asking him about "family crest" again
+    # brings back the offer, and taking it leads to 66. Sinyaramen still wants the potion first.
+    - stages: [60, 65]
+      next: 66
+    # Journal 90 says Vilandon was killed by the vampire Kjeld. Dhaunayne's answer in "about my family" leads to 100,
+    # where she orders Kjeld's death. The default rule also marks Kjeld to be killed, through the way to 130, before
+    # anyone has asked for it.
+    - stages: 90
+      next: 100
+
+  VA_VampCult:
+    # At 10 Volrina Quarra offers a choice in "use to me" that leads to 20 or 30. The default rule also marks Irarak
+    # in Ginith Ancestral Tomb, through his line that leads to 80, before any journal entry has said where he is.
+    - stages: 10
+      next: [20, 30]
+    # Journal 20 says Irarak is near Gnisis. Anyone in Gnisis answers "latest rumors" and leads to 40.
+    - stages: 20
+      next: 40
+    # Journal 40 says his cult meets in the tombs near Gnisis. Anyone in Gnisis answers "ancestral burial tombs" and
+    # leads to 50, which names the tombs.
+    - stages: 40
+      next: 50
+    # From 50 the journal has named Ginith Ancestral Tomb, where Irarak is placed, and journal 20 asked for his death.
+    # irarakScript sets 110 when he dies. That way is a failure, because he speaks lines of this quest, so the
+    # default rule marks his talk instead. Nothing sets 70, which is the same step.
+    - stages: 50-70
+      next: 110
+    # At 80 Irarak offers to pay the player to spare him. Both his answers in "material gains" lead to 90. Killing him
+    # leads to 110. Volrina's line that leads to 130, for a player who spared him, is a later outcome.
+    - stages: 80
+      next: [90, 110]
+    # Journal 100 says the player won't let Irarak go on. No line or script sets it. His death leads to 110.
+    - stages: 100
+      next: 110
+
+  VA_VampCurse:
+    # Journal 55 says Spell Breaker lies in Bthuand, where spell_breaker_unique is placed. Mastrius's greeting that
+    # offers the topic "one thing further", which leads to 60, needs the shield and ingred_daedras_heart_01. The
+    # analysis doesn't see those items, so it marks Mastrius at once. The shield is marked until the player has it,
+    # and Mastrius once the player carries both. The heart is left to the player, because it is placed 17 times.
+    - stages: 55
+      hide: 60
+      targets:
+        - { task: fetch, object: spell_breaker_unique, done: { carried: spell_breaker_unique } }
+        - { task: talk, object: mastrius,
+            after: [{ carried: spell_breaker_unique }, { carried: ingred_daedras_heart_01 }],
+            done: { quest: VA_VampCurse, atLeast: 60 } }
+
+  VA_VampHunter:
+    # At 10 Dhaunayne Aundae offers a choice in "vampire hunter" that leads to 20 or 30. The default rule also marks
+    # the Mages Guild in Ald'ruhn, through the way to 50, before the player has taken the task.
+    - stages: 10
+      next: [20, 30]
+    # Journal 20 says the hunter, whose name the player doesn't know yet, works out of Ald'ruhn. Anyone in "Ald-ruhn,
+    # Guild of Mages" answers "latest rumors" (40) or "vampire hunter" (50). The default rule also marks Ano Vando to be
+    # killed, through the way to 70. Journal 50 is the first to name him.
+    - stages: 20
+      next: [40, 50]
+    # Journal 40 says there is a hunter nearby, still unnamed. The Mages Guild's answer in "vampire hunter" leads to
+    # 50.
+    - stages: 40
+      next: 50
+
+  VA_VampMarara:
+    # Journal 30 says the player chose to kill Marara, and her answer starts the fight. mararaScript sets 100 when
+    # she dies. That way is a failure, because she speaks lines of this quest, so the default rule marks her refusal
+    # answer that leads to 40 instead. That answer needs the choice she no longer offers.
+    - stages: 30
+      next: 100
+
+  VA_VampRich:
+    # Journal 10 says Sanvyn Llethri wants to become a vampire against his parents' wishes. His mother Fathasa's line
+    # in "because of my son" leads to 20. Sanvyn's answers that lead to 50 and 60 come after she asks for help.
+    - stages: 10
+      next: 20
+    # At 20 Fathasa offers a choice that leads to 30 or 40.
+    - stages: 20
+      next: [30, 40]
+    # Journal 40 says the player chose not to interfere. Nothing should be marked.
+    - stages: 40
+      hide: [50, 60, 90]
+    # Journal 60 says Sanvyn grows agitated. sanvynScript sets 65 when he has fought the player down to half health,
+    # and his death sets 90. The analysis shows both as kills, which would mark him to be killed. He is marked to
+    # talk to instead, until he has bested the player.
+    - stages: 60
+      hide: [65, 90]
+      targets:
+        - { task: talk, object: sanvyn llethri, done: { quest: VA_VampRich, atLeast: 65 } }
+
+  MS_Apologies:
+    # Journal 5 says the player agreed to take Tarer Braryn's book and apologies to Trebonius Artorius at the Vivec
+    # Mages Guild. Trebonius's line in "Apologies" takes the book and leads to 10. The default rule also marks the
+    # cure potion that Trebonius carries and then Tarer, through the way to 100, before Trebonius has handed it over.
+    - stages: 5
+      next: 10
+    # Journal 7 says the player turned Tarer down. The only ways left fetch the book Tarer kept, or the potion
+    # Trebonius has not handed over, so nothing is marked.
+    - stages: 7
+      hide: [10, 100]
+
+  MS_ArenimTomb:
+    # Journal 50 says Satyana's father's tomb is locked, that his partner buried in the same tomb has a key, and that
+    # Satyana will follow the player. The amulet is on the corpse contain_corpse_Arenim00, and Satyana's greeting
+    # that takes it leads to 100. Her greeting that leads to 110 is the player refusing to hand it over, so it is
+    # left out, and Satyana is only marked once the player has the amulet. The key key_Arenim lies loose in Arenim
+    # Ancestral Tomb. It is marked as optional, because the door can also be picked.
+    - stages: 50
+      next: 100
+      targets:
+        - { task: fetch, object: key_arenim, optional: true, done: { carried: key_arenim } }
+
+  MS_Lookout:
+    # Journal 20 says to watch Fargoth at night from the top of the Seyda Neen lighthouse, and then retrace his steps
+    # to the hidden money. lookoutScript runs on the activator active_lookout_unique, placed in Seyda Neen. At night,
+    # with the player near it, the script sets the global fargothwalk to 1 and walks Fargoth to the tree stump, then
+    # sets it to 2 once he has hidden the money there. treestumpScript sets 40 only when fargothwalk is 2 or more. So
+    # the lookout is marked until Fargoth starts walking, and the stump only after he has filled it.
+    - stages: 20
+      hide: 40
+      targets:
+        - { task: visit, object: active_lookout_unique, done: { global: fargothwalk, atLeast: 1 } }
+        - { task: visit, object: flora_treestump_unique, after: { global: fargothwalk, atLeast: 2 },
+            done: { quest: MS_Lookout, atLeast: 40 } }
+
+  MS_Nord_burial:
+    # Journal 1 says Ennbjof gave the player a key and believes the axe Stormkiss lies in a tomb on a small island
+    # off the west coast of the peninsula between Zaintiraris and Tel Branora. No line or script moves the quest on.
+    # The key is key_tukushapal_1, and Stormkiss is placed once, in "Tukushapal, Sepulcher", so it is marked until
+    # the player carries it.
+    - stages: 1
+      targets:
+        - { task: fetch, object: stormkiss, done: { carried: stormkiss } }
+
+  MS_Piernette:
+    # Journal 1 is the inscription on the silver bowl, which names Armond Beluelle. Piernette Beluelle, placed in
+    # Piernette's Farmhouse, takes the bowl in "missing silver bowl" and that leads to 100. Ygfa's line in
+    # "Beluelle's silver bowl" only gives directions to Piernette, so it is a side step. Piernette's answer that
+    # leads to 90 is the player keeping the bowl, which the journal hasn't offered.
+    - stages: 1
+      next: 100
+      optional: 10
+
+  MS_propylon:
+    # Journal 1 says a man carrying a propylon index went to the Daedric shrine Maelkashishi and never came back. No
+    # line or script moves the quest on. The Falensarano index, index_falen, is placed once, in "Maelkashishi,
+    # Shrine, Forgotten Galleries", next to a corpse. It is marked until the player carries it.
+    - stages: 1
+      targets:
+        - { task: fetch, object: index_falen, done: { carried: index_falen } }
+
+  MS_RaGruzgob:
+    # Journal 10 only says Ra'Gruzgob was pleased with the player. His line in "little secret" takes moon sugar and
+    # leads to 30. Moon sugar is placed 32 times, so the fetch would mark whoever carries some, and the journal
+    # never mentions it. His answer in "Khajiit" hints that he has a secret to tell, so he is marked as optional.
+    - stages: 10
+      hide: 30
+      targets:
+        - { task: talk, object: ra'gruzgob, optional: true, done: { quest: MS_RaGruzgob, atLeast: 30 } }
+    # Journal 30 says Ra'Gruzgob put something under his pillow. The robe Gambolpuddy, extravagant_rt_art_wild, is
+    # placed once, in his room in "Ald Daedroth, Antechamber". No line or script moves the quest on.
+    - stages: 30
+      targets:
+        - { task: fetch, object: extravagant_rt_art_wild, done: { carried: extravagant_rt_art_wild } }
+
+  MS_Umbra:
+    # Journal 40 says the player will give Umbra the death in battle he asked for. His answer that leads to 40 makes
+    # him attack the player. No way leads on from 40, and no line or script sets 60 when he dies. So Umbra is marked
+    # as a kill until he is dead.
+    - stages: 40
+      targets:
+        - { task: kill, object: umbra, done: { dead: umbra } }
+
+  MS_VampireCure:
+    # Journal 10 says Galur Rithari's papers point to Molag Bal. The papers name his altar under the pilgrim's shrine
+    # at Bal Ur. VampireMolag on the statue active_dae_molagbal2 sets 30 when a vampire activates it. Derar Hlervu's
+    # line in "lifeless one" leads to 20 and only sends the player to the statue, so she is a side step. The kills
+    # of Molag Grunda and Nomeg Gwai that lead to 40 are named only in journal 30.
+    - stages: 10
+      next: 30
+      optional: 20
+    # Journal 20 says only Molag Bal himself can help, so the statue is marked. The kills come after journal 30.
+    - stages: 20
+      next: 30
+
+  MS_VassirDidanat:
+    # Journal 100 records that Velanda Omani paid the player for the location of the mine. Dram Bero's and Nevena
+    # Ules's lines in "Vassir Didanat Mine" lead to 110 and 120, but no journal entry says they would pay for it
+    # too. So neither is marked.
+    - stages: 100
+      hide: [110, 120]
+    # Journal 110 records Dram Bero's reward. Nevena Ules is still not named by any journal entry.
+    - stages: 110
+      hide: 120
+
+  MS_WhiteGuar:
+    # Journal 10 says the player met the wise woman Urshamusa Rapli. Her line in "dreams and visions" leads to 20.
+    # Ashamanu and the white guar are disabled until 20, and no journal names them yet.
+    - stages: 10
+      next: 20
+    # Journal 20 says Urshamusa asks the player to find the white guar. Her answer in "dreams and visions" accepts
+    # the task and leads to 30.
+    - stages: 20
+      next: 30
+    # Journal 30 says the guar is near a forked trail by finger-shaped rocks. whiteguarScript sets 50 when the player
+    # comes near guar_white_unique. The default rule also marks Ashamanu's corpse, which the journal doesn't name,
+    # through the way to 65.
+    - stages: 30
+      next: 50
+    # Journal 50 says the guar started walking once the player came near. It escorts the player to Ashamanu's corpse,
+    # where the scripts set 60. If the player reaches the corpse without the guar, ashamanuScript sets 65. The guar is
+    # marked for the player to follow, rather than the corpse it leads to.
+    - stages: 50
+      hide: [60, 65]
+      targets:
+        - { task: visit, object: guar_white_unique, done: { quest: MS_WhiteGuar, atLeast: 60 } }
+
+  Romance_Ahnassi:
+    # Up to journal 37 the player is getting to know Ahnassi, whose lines in "share a care" and "share a gift" move
+    # the quest on. Daren Adryn's line in "Ahnassi" leads to 42, but he is disabled until Ahnassi's answer that
+    # leads to 40 enables him, and the journal names him only at 40.
+    - stages: 1-37
+      hide: 42
+    # Journal 40 says the player offered to take care of Daren Adryn, who threatened Ahnassi, at Nadene Rotheran's
+    # Shack in Gnaar Mok. Ahnassi's line in "share a care" that leads to 45 needs him dead. Talking to him first,
+    # which leads to 42, is a side step.
+    - stages: 40
+      next: 45
+      optional: 42
+    # Journals 45 to 60 lead on through Ahnassi's answers to 50, 60 and 65. J'Dhannar and the book
+    # 'Confessions of a Dunmer Skooma-Eater' come later, so the ways to 70 and 75 are hidden.
+    - stages: 45-60
+      hide: [70, 75]
+    # Journal 65 sends the player to find J'Dhannar in St. Olms. His line in "cure skooma addict" leads to 70.
+    # The way to 75 fetches bk_confessions, which no journal has mentioned yet.
+    - stages: 65
+      next: 70
+    # Journal 70 says J'Dhannar believes there is no cure, and the player should look for someone who knows one.
+    # Healers and Jobasha answer "cure skooma addict" by naming the book. Jobasha keeps a copy in his book chest,
+    # so he is marked as optional until the player has the book. J'Dhannar takes the book in the same topic, which
+    # leads to 75, so he is marked once the player carries it.
+    - stages: 70
+      hide: 75
+      targets:
+        - { task: talk, object: jobasha, optional: true, done: { carried: bk_confessions } }
+        - { task: talk, object: j'dhannar, after: { carried: bk_confessions },
+            done: { quest: Romance_Ahnassi, atLeast: 75 } }
+    # Journal 81 says Ahnassi wants the player to see her friend Senyndie at the Arena in Vivec. Senyndie's line in
+    # "Ahnassi" needs this quest at 80 or more and starts Romance_Ahnassi_A. The quest itself goes on with Ahnassi,
+    # so Senyndie is optional.
+    - stages: 81
+      targets:
+        - { task: talk, object: senyndie, optional: true, done: { quest: Romance_Ahnassi_A, started: true } }
+    # Journal 87 says the player gave Ahnassi the Flamemirror Robe. Her answer that leads to 95 needs the robe
+    # again, which she now has. Her line in "share a gift" that leads to 90 is the next step.
+    - stages: 87
+      next: 90
+    # Journal 90 is a tip about a glove in the Imperial Commission. The only way on needs the Flamemirror Robe the
+    # player already gave away, so nothing is marked.
+    - stages: 90
+      hide: 95
+
+  Town_Ald_Bevene:
+    # Journal 1 asks the player to get Bevene Releth's amulet back from Ienas Sarandas, or collect his payment. The
+    # way to 10 needs Ienas dead, which the journal doesn't ask for. Ienas carries the amulet, so the ways to 3 and
+    # 5 still mark him.
+    - stages: 1
+      hide: 10
+
+  Town_Ald_Bivale:
+    # Journal 1 asks the player to get Bivale Teneran's shirt and pants back from Ienas Sarandas, or collect his
+    # payment. The way to 10 needs Ienas dead, which the journal doesn't ask for. Ienas carries both, so the ways to
+    # 3 and 5 still mark him.
+    - stages: 1
+      hide: 10
+
+  Town_Ald_Daynes:
+    # Journal 1 asks the player to get Daynes Redothril's two rings back from Ienas Sarandas, or collect his
+    # payment. The way to 10 needs Ienas dead, which the journal doesn't ask for. Ienas carries both rings, so the
+    # ways to 3 and 5 still mark him.
+    - stages: 1
+      hide: 10
+
+  Town_Ald_Llethri:
+    # Journal 1 asks the player to get Llether Vari's shoes back from Ienas Sarandas, or collect his payment. The
+    # way to 10 needs Ienas dead, which the journal doesn't ask for. Ienas carries the shoes, so the ways to 3 and 5
+    # still mark him.
+    - stages: 1
+      hide: 10
+
+  Town_Ald_Tiras:
+    # Journal 1 asks the player to get Tiras Sadus's belt back from Ienas Sarandas, or collect his payment. The way
+    # to 10 needs Ienas dead, which the journal doesn't ask for. Ienas carries the belt, so the ways to 3 and 5 still
+    # mark him.
+    - stages: 1
+      hide: 10
+
+  Town_Aldruhn:
+    # Journal 45 says Ienas Sarandas handed over all the goods, and lists who gets what back. No line sets this
+    # quest above 45. Each creditor's line in "work" takes the goods and finishes their own quest at 3, 5 or 10.
+    # So each creditor is marked until their quest reaches 3.
+    - stages: 45
+      targets:
+        - { task: talk, object: bivale teneran, done: { quest: Town_Ald_Bivale, atLeast: 3 } }
+        - { task: talk, object: tiras sadus, done: { quest: Town_Ald_Tiras, atLeast: 3 } }
+        - { task: talk, object: daynes redothril, done: { quest: Town_Ald_Daynes, atLeast: 3 } }
+        - { task: talk, object: llether vari, done: { quest: Town_Ald_Llethri, atLeast: 3 } }
+        - { task: talk, object: bevene releth, done: { quest: Town_Ald_Bevene, atLeast: 3 } }
+
+  town_balmora:
+    # Journals 1, 3, 5 and 10 point the player to Larrius Varro at Fort Moonmoth. His lines in "little story" and
+    # "bloodbath" lead to 15 and 20. The default rule also marks the rumour lines that lead to 5 and 10, and the five
+    # Camonna Tong members to kill, whom no journal names until 29.
+    - stages: [1, 3, 5, 10]
+      next: [15, 20]
+    # Journal 15 is Varro's hint at a bloodbath. His line in "bloodbath" leads to 20.
+    - stages: 15
+      next: 20
+    # Journal 20 says Varro wants the names of five Camonna Tong members in Balmora. Only Thieves Guild members know
+    # them, through "Camonna Tong" (to 27) and "bad people" (to 29). The journal doesn't name the guild, so its
+    # members are optional. The kills are hidden until the names are known.
+    - stages: 20
+      optional: [27, 29]
+      hide: [30, 35]
+    # Journal 27 names the Council Club as the Camonna Tong's hangout in Balmora. It is marked until a Thieves Guild
+    # member names the five, which leads to 29. The kills are still hidden.
+    - stages: 27
+      optional: 29
+      hide: [30, 35]
+      targets:
+        - { task: visit, cell: "Balmora, Council Club", done: { quest: town_balmora, atLeast: 29 } }
+
+  town_Sadrith:
+    # Journal 5 is Angaredhel's account. His line in "Gateway haunting" leads to 6. Arara Uvulas, whom he mentions,
+    # answers the same topic and leads to 10, so she is a side step here.
+    - stages: 5
+      next: 6
+      optional: 10
+    # Journals 6 and 8 send the player to Arara Uvulas at the Telvanni Council House. Her line in "Gateway haunting"
+    # leads to 10.
+    - stages: [6, 8]
+      next: 10
+    # Journal 10 says a Conjuration expert may be behind the ghost. Anyone in Wolverine Hall answers "Conjuration
+    # expert" and leads to 15. Uleni Heleran's lines that lead to 35 need town_sadrith_expert at 1 or more, which a
+    # Sadrith Mora resident sets by naming her. So she is marked once someone has named her. The line about her
+    # that leads to 20 names her before the journal does.
+    - stages: 10
+      next: [15, 35]
+    # Journals 15 and 20 name Uleni Heleran at the Mages Guild. Her lines in "Gateway haunting" lead to 30 and 35.
+    - stages: [15, 20]
+      next: [30, 35]
+    # Journal 30 says Uleni brushed the player off. Her lines that lead to 35 need persuading her.
+    - stages: 30
+      next: 35
+
+  town_Tel_Vos:
+    # Journal 10 sends the player to the Zainab camp to learn what goods the tribe wants. This quest stays at 10 until
+    # Turedus Talanian takes the report. His lines that lead to 35 need town_Tel_Vos_wise or town_Tel_Vos_she at 1,
+    # so he is marked once one of them is set. Before that, nothing is marked. Ashur-Dan, the camp's trader, answers
+    # "trade goods wanted" in town_Tel_Vos_ashur, and his answer suggests asking the men and women of the tribe.
+    # Sonummu Zabamat, the wise woman, answers the same topic in town_Tel_Vos_wise, so she is optional after him.
+    - stages: 10
+      targets:
+        - { task: talk, object: ashur-dan, done: { quest: town_Tel_Vos_ashur, started: true } }
+        - { task: talk, object: sonummu zabamat, optional: true, after: { quest: town_Tel_Vos_ashur, started: true },
+            done: { quest: town_Tel_Vos_wise, started: true } }
+
+  town_Tel_Vos_ashur:
+    # Journal 1 says Ashur-Dan knew of no goods the tribe needs. His other answer in "trade goods wanted", which
+    # leads to 5, only adds the advice to ask the tribe, so it is a side step.
+    - stages: 1
+      optional: 5
+
+  town_Vivec:
+    # Journal 1 is a rumour that the Office of the Watch wants help with the killings. Elam Andas runs it, and his
+    # answer in "work" leads to 10. The default rule also marks the many people whose rumour leads to 5.
+    - stages: 1
+      next: 10
+    # Journal 20 describes a Dunmer woman with a dagger. People in the Foreign Quarter and a few Vivec shops and
+    # guilds answer "woman with a dagger", which leads to 25. They are places to ask around, so they are optional.
+    # Elam's answers that lead to 50 and 55 pay the reward once the killer, dreamer prophet, is dead, so he is
+    # marked only after that.
+    - stages: 20
+      optional: 25
+      hide: [50, 55]
+      targets:
+        - { task: talk, object: elam andas, after: { dead: dreamer prophet }, done: { quest: town_Vivec, atLeast: 50 } }
+    # Journal 25 says a Dunmer woman was seen in the Foreign Quarter Underworks. Elam's answer in "work" that led
+    # to 10 enabled dreamer prophet, who is placed there. She is marked to kill, and then Elam for the reward.
+    - stages: 25
+      hide: [50, 55]
+      targets:
+        - { task: kill, object: dreamer prophet, done: { dead: dreamer prophet } }
+        - { task: talk, object: elam andas, after: { dead: dreamer prophet }, done: { quest: town_Vivec, atLeast: 50 } }

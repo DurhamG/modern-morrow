@@ -1,0 +1,29 @@
+# The reviewed quest markers of MV_TraderAbandoned.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_TraderAbandoned
+stages:
+  - stage: 10
+    verdict: corrected  # Pemenie is marked, not Gnaar Mok before she follows
+    marked: ["pemenie"]
+  - stage: 20
+    verdict: corrected  # Gnaar Mok is marked while Pemenie follows
+    marked: ["cell:gnaar mok"]
+  - stage: 30
+    verdict: corrected  # The player refused, so nothing is marked
+    marked: []
+  - stage: 40
+    verdict: corrected  # Gnaar Mok is marked, and questioning Pemenie is left to the player
+    marked: ["cell:gnaar mok"]
+  - stage: 50
+    verdict: corrected  # Gnaar Mok is marked, and questioning Pemenie is left to the player
+    marked: ["cell:gnaar mok"]
+  - stage: 60
+    verdict: corrected  # Gnaar Mok is marked, not the question that makes her leave
+    marked: ["cell:gnaar mok"]
+  - stage: 70
+    verdict: corrected  # Pemenie no longer follows, so nothing is marked
+    marked: []
+  - stage: 90
+    verdict: right  # Pemenie is marked for the boots
+    marked: ["pemenie"]

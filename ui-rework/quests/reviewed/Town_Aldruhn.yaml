@@ -1,0 +1,74 @@
+# The reviewed quest markers of Town_Aldruhn.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: Town_Aldruhn
+stages:
+  - stage: 5
+    verdict: right  # Ienas Sarandas is marked; no line sets this stage
+    marked: ["ienas sarandas"]
+  - stage: 10
+    verdict: right  # Ienas Sarandas is marked; no line sets this stage
+    marked: ["ienas sarandas"]
+  - stage: 15
+    verdict: right  # Ienas Sarandas is marked; no line sets this stage
+    marked: ["ienas sarandas"]
+  - stage: 20
+    verdict: right  # Ienas Sarandas is marked; no line sets this stage
+    marked: ["ienas sarandas"]
+  - stage: 25
+    verdict: right  # Ienas Sarandas is marked; no line sets this stage
+    marked: ["ienas sarandas"]
+  - stage: 35
+    verdict: right  # Ienas Sarandas is marked to be persuaded
+    marked: ["ienas sarandas"]
+  - stage: 40
+    verdict: right  # Ienas Sarandas is marked to be persuaded
+    marked: ["ienas sarandas"]
+  - stage: 45
+    verdict: corrected  # the five creditors are marked until each takes back their goods
+    marked: ["bevene releth", "bivale teneran", "daynes redothril", "llether vari", "tiras sadus"]
+  - stage: 50
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 52
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 55
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 57
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 60
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 62
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 65
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 67
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 70
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 72
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 75
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 76
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 77
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 78
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []
+  - stage: 79
+    verdict: right  # no line sets this stage; each creditor's own quest marks them
+    marked: []

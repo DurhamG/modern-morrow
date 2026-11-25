@@ -1,0 +1,8 @@
+# The reviewed quest markers of fast_eddie.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: fast_eddie
+stages:
+  - stage: 1
+    verdict: right  # Caius only describes Fast Eddie; no task
+    marked: []

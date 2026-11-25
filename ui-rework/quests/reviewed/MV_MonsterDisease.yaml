@@ -1,0 +1,32 @@
+# The reviewed quest markers of MV_MonsterDisease.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_MonsterDisease
+stages:
+  - stage: 10
+    verdict: corrected  # Din is marked, not the healer, whom he hasn't agreed to see.
+    marked: ["din"]
+  - stage: 20
+    verdict: corrected  # Din is marked, not the healer, whom he hasn't agreed to see.
+    marked: ["din"]
+  - stage: 30
+    verdict: corrected  # Din is marked for his choice, since the healer does nothing until he follows.
+    marked: ["din"]
+  - stage: 40
+    verdict: corrected  # Mehra Drora in the Gnisis temple is marked, as Din follows the player there.
+    marked: ["mehra drora"]
+  - stage: 46
+    verdict: corrected  # Din is marked to be cured with magic, without the healer.
+    marked: ["din"]
+  - stage: 47
+    verdict: corrected  # Mehra Drora in the Gnisis temple is marked, as Din follows the player there.
+    marked: ["mehra drora"]
+  - stage: 48
+    verdict: corrected  # The player left Din, so nothing is marked.
+    marked: []
+  - stage: 49
+    verdict: right  # Din is marked for his thanks.
+    marked: ["din"]
+  - stage: 50
+    verdict: right  # Din is marked for his thanks.
+    marked: ["din"]

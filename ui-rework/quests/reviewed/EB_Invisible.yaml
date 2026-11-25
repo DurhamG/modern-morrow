@@ -1,0 +1,36 @@
+# The reviewed quest markers of EB_Invisible.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_Invisible
+stages:
+  - stage: 10
+    verdict: corrected  # Cassius is marked, not his father for a debt nobody has mentioned
+    marked: ["cassius olcinius"]
+  - stage: 20
+    verdict: corrected  # Cassius is marked for his choice
+    marked: ["cassius olcinius"]
+  - stage: 30
+    verdict: corrected  # Fevyn Ralen is marked, and the father is hollow as a side step
+    marked: ["fevyn ralen"]
+    optional: ["lucretinaus olcinius"]
+  - stage: 40
+    verdict: corrected  # the player declined, so nothing is marked
+    marked: []
+  - stage: 50
+    verdict: corrected  # Fevyn Ralen is marked, not the father's debt answer
+    marked: ["fevyn ralen"]
+  - stage: 60
+    verdict: right  # paying Fevyn or asking the father for the money are both marked
+    marked: ["fevyn ralen", "lucretinaus olcinius"]
+  - stage: 70
+    verdict: right  # the father is marked
+    marked: ["lucretinaus olcinius"]
+  - stage: 80
+    verdict: right  # the father is marked for the money
+    marked: ["lucretinaus olcinius"]
+  - stage: 90
+    verdict: right  # Fevyn Ralen is marked to take the payment
+    marked: ["fevyn ralen"]
+  - stage: 100
+    verdict: right  # the father is marked
+    marked: ["lucretinaus olcinius"]

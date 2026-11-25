@@ -1,0 +1,8 @@
+# The reviewed quest markers of blades_Elone.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: blades_Elone
+stages:
+  - stage: 1
+    verdict: right  # Elone gave the player a book; nothing to go to
+    marked: []

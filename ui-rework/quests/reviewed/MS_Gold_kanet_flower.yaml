@@ -1,0 +1,14 @@
+# The reviewed quest markers of MS_Gold_kanet_flower.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_Gold_kanet_flower
+stages:
+  - stage: 1
+    verdict: right  # Aurane Frernis is marked to accept her task
+    marked: ["aurane frernis"]
+  - stage: 5
+    verdict: right  # the Roland's Tear flowers near Ald Sotha are marked, then Aurane
+    marked: ["aurane frernis", "ingred_gold_kanet_unique"]
+  - stage: 10
+    verdict: right  # the flowers and then Aurane are marked; no line sets this stage
+    marked: ["aurane frernis", "ingred_gold_kanet_unique"]

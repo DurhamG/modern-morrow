@@ -1,0 +1,23 @@
+# The reviewed quest markers of DA_Malacath.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: DA_Malacath
+stages:
+  - stage: 10
+    verdict: corrected  # Vivec is marked as the statue said, and Farvyn's island is left out
+    marked: ["cell:vivec"]
+  - stage: 20
+    verdict: corrected  # anyone in Vivec who knows where Farvyn went is the next step
+    marked: ["cell:vivec"]
+  - stage: 30
+    verdict: corrected  # Gnaar Mok is marked, as the journal says
+    marked: ["cell:gnaar mok"]
+  - stage: 40
+    verdict: corrected  # Farvyn is marked to be killed, which is what the journal asks for
+    marked: ["farvyn oreyn"]
+  - stage: 50
+    verdict: right  # his death is the only way left and it is marked
+    marked: ["farvyn oreyn"]
+  - stage: 60
+    verdict: right  # Malacath's statue in Assurdirapal is marked
+    marked: ["active_dae_malacath"]

@@ -1,0 +1,14 @@
+# The reviewed quest markers of MV_LostRing.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_LostRing
+stages:
+  - stage: 10
+    verdict: right  # Synette is marked for her request.
+    marked: ["synette jeline"]
+  - stage: 20
+    verdict: corrected  # The ring in the pond is marked until the player picks it up, and then nothing, since the ambush follows.
+    marked: ["expensive_ring_01_bill"]
+  - stage: 30
+    verdict: corrected  # The player turned her down, so nothing is marked.
+    marked: []

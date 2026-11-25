@@ -1,0 +1,20 @@
+# The reviewed quest markers of MV_TraderMissed.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_TraderMissed
+stages:
+  - stage: 10
+    verdict: corrected  # Paur Maston is marked, not Molag Mar before he follows
+    marked: ["paur maston"]
+  - stage: 15
+    verdict: corrected  # The journal asks nothing and doesn't say where Paur is, so nothing is marked
+    marked: []
+  - stage: 20
+    verdict: corrected  # Paur is marked for his choice
+    marked: ["paur maston"]
+  - stage: 30
+    verdict: right  # Molag Mar and Vanjirra are marked while Paur follows
+    marked: ["cell:molag mar", "vanjirra"]
+  - stage: 95
+    verdict: right  # Vanjirra is marked for the reward
+    marked: ["vanjirra"]

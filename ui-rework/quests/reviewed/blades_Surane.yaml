@@ -1,0 +1,8 @@
+# The reviewed quest markers of blades_Surane.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: blades_Surane
+stages:
+  - stage: 1
+    verdict: right  # Surane only suggests learning a spell from Llaros Uvayn; nothing to go to
+    marked: []

@@ -1,0 +1,29 @@
+# The reviewed quest markers of VA_VampRich.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: VA_VampRich
+stages:
+  - stage: 10
+    verdict: corrected  # Fathasa Llethri is marked, who asks for help
+    marked: ["fathasa llethri"]
+  - stage: 20
+    verdict: corrected  # Fathasa is marked for her choice
+    marked: ["fathasa llethri"]
+  - stage: 30
+    verdict: right  # Sanvyn is marked to be talked out of it
+    marked: ["sanvyn llethri"]
+  - stage: 40
+    verdict: corrected  # the player declined, so nothing is marked
+    marked: []
+  - stage: 50
+    verdict: right  # Sanvyn is marked
+    marked: ["sanvyn llethri"]
+  - stage: 60
+    verdict: corrected  # Sanvyn is marked to talk to rather than to kill
+    marked: ["sanvyn llethri"]
+  - stage: 65
+    verdict: right  # Sanvyn is marked for his greeting
+    marked: ["sanvyn llethri"]
+  - stage: 70
+    verdict: right  # Fathasa is marked for the reward
+    marked: ["fathasa llethri"]

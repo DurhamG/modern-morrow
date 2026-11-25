@@ -1,0 +1,17 @@
+# The reviewed quest markers of MV_ThiefTrader.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_ThiefTrader
+stages:
+  - stage: 10
+    verdict: corrected  # Lucan is marked, without the unplaced ambusher
+    marked: ["lucan ostorius"]
+  - stage: 15
+    verdict: corrected  # Lucan is marked, without the unplaced ambusher
+    marked: ["lucan ostorius"]
+  - stage: 20
+    verdict: corrected  # Yak gro-Skandar is marked for the weapons the player carries
+    marked: ["silver flameblade", "silver war axe", "steel shortsword", "steel staff", "yak gro-skandar"]
+  - stage: 25
+    verdict: corrected  # Yak gro-Skandar is marked for the weapons the player carries
+    marked: ["silver flameblade", "silver war axe", "steel shortsword", "steel staff", "yak gro-skandar"]

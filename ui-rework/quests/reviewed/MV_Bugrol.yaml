@@ -1,0 +1,20 @@
+# The reviewed quest markers of MV_Bugrol.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_Bugrol
+stages:
+  - stage: 10
+    verdict: right  # Bugrol is marked, and Bashuk only once the player carries his note.
+    marked: ["bashuk gra-bat", "bk_notefrombugrol", "bugrol gro-bagul"]
+  - stage: 20
+    verdict: right  # Bashuk in Caldera is marked to receive the note.
+    marked: ["bashuk gra-bat", "bk_notefrombugrol"]
+  - stage: 30
+    verdict: right  # Bashuk is marked for her reply.
+    marked: ["bashuk gra-bat"]
+  - stage: 35
+    verdict: right  # Bugrol is marked to receive Bashuk's note.
+    marked: ["bk_notefrombashuk", "bugrol gro-bagul"]
+  - stage: 40
+    verdict: right  # Bugrol is marked for the present.
+    marked: ["bugrol gro-bagul"]

@@ -1,0 +1,26 @@
+# The reviewed quest markers of EB_False.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_False
+stages:
+  - stage: 10
+    verdict: corrected  # Aurane Frernis is marked, not Galuro Belan who isn't named yet
+    marked: ["aurane frernis"]
+  - stage: 20
+    verdict: right  # Domalen, who hands out the leaflets, is marked
+    marked: ["domalen"]
+  - stage: 30
+    verdict: right  # Frernis and Belan are both marked, as the player may report or confront
+    marked: ["aurane frernis", "galuro belan"]
+  - stage: 35
+    verdict: right  # nothing sets this stage, and its markers match 30
+    marked: ["aurane frernis", "galuro belan"]
+  - stage: 40
+    verdict: right  # nothing sets this stage
+    marked: ["aurane frernis"]
+  - stage: 50
+    verdict: right  # Belan's choice and Frernis are the two outcomes on offer
+    marked: ["aurane frernis", "galuro belan"]
+  - stage: 56
+    verdict: right  # Aurane Frernis is marked
+    marked: ["aurane frernis"]

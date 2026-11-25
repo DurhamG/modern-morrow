@@ -1,0 +1,36 @@
+# The reviewed quest markers of EB_Bone.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: EB_Bone
+stages:
+  - stage: 10
+    verdict: right  # Balen Andrano is marked
+    marked: ["balen andrano"]
+  - stage: 15
+    verdict: right  # Balen Andrano is marked for his choice
+    marked: ["balen andrano"]
+  - stage: 20
+    verdict: right  # Jeanne's chest and the bedroom door are marked, which is where the bone goes
+    marked: ["com_chest_02_jeanne_u", "in_velothismall_ndoor_01_jeanne"]
+  - stage: 30
+    verdict: right  # the player declined and nothing is left
+    marked: []
+  - stage: 40
+    verdict: right  # Balen Andrano is marked for the reward
+    marked: ["balen andrano"]
+  - stage: 50
+    verdict: right  # Jeanne greets the player at once, and Balen can hear the failure
+    marked: ["balen andrano", "jeanne"]
+  - stage: 55
+    verdict: right  # no line moves the quest on after Jeanne's warning
+    marked: []
+  - stage: 80
+    verdict: corrected  # the dwarven spirit is marked to be killed, and the chest with the bone is hollow
+    marked: ["dwarven ghost_jeanne_u"]
+    optional: ["com_chest_02_jeanne_u"]
+  - stage: 90
+    verdict: right  # Jeanne is marked for the reward
+    marked: ["jeanne"]
+  - stage: 100
+    verdict: right  # Jeanne is marked for the reward
+    marked: ["jeanne"]

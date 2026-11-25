@@ -1,0 +1,8 @@
+# The reviewed quest markers of blades_Gildan.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: blades_Gildan
+stages:
+  - stage: 1
+    verdict: right  # Gildan only suggests a shop for special weapons; nothing to go to
+    marked: []

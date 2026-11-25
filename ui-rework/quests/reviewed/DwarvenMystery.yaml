@@ -1,0 +1,8 @@
+# The reviewed quest markers of DwarvenMystery.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: DwarvenMystery
+stages:
+  - stage: 0
+    verdict: right  # a placeholder entry with nothing to go to
+    marked: []

@@ -1,0 +1,24 @@
+# The reviewed quest markers of town_Vivec.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: town_Vivec
+stages:
+  - stage: 1
+    verdict: corrected  # Elam Andas is marked, not the many rumor-givers and Foreign Quarter cells
+    marked: ["elam andas"]
+  - stage: 5
+    verdict: right  # Elam Andas is marked
+    marked: ["elam andas"]
+  - stage: 10
+    verdict: right  # Elam Andas is marked for the details of the killings
+    marked: ["elam andas"]
+  - stage: 15
+    verdict: right  # Elam Andas is marked for the witnesses
+    marked: ["elam andas"]
+  - stage: 20
+    verdict: corrected  # the places to ask about the woman are optional; Elam only after the killer is dead
+    marked: ["elam andas"]
+    optional: ["cell:vivec, agrippina herennia: clothier", "cell:vivec, black shalk cornerclub", "cell:vivec, foreign quarter", "cell:vivec, guild of fighters", "cell:vivec, guild of mages", "cell:vivec, j'rasha: healer", "cell:vivec, jeanne: trader", "cell:vivec, simine fralinie: bookseller"]
+  - stage: 25
+    verdict: corrected  # the killer in the Foreign Quarter Underworks is marked, then Elam
+    marked: ["dreamer prophet", "elam andas"]

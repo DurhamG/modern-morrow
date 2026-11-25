@@ -1,0 +1,11 @@
+# The reviewed quest markers of MV_Bastard.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_Bastard
+stages:
+  - stage: 10
+    verdict: right  # The Nord bandit near Hla Oad that the general warned of is marked.
+    marked: ["fjol"]
+  - stage: 100
+    verdict: right  # Fjol is marked for paying or fighting, and the general only after Fjol is dead.
+    marked: ["fjol"]

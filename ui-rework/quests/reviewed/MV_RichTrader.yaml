@@ -1,0 +1,20 @@
+# The reviewed quest markers of MV_RichTrader.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_RichTrader
+stages:
+  - stage: 10
+    verdict: corrected  # Teris Raledran is marked, and his guar is not marked as a kill
+    marked: ["teris raledran"]
+  - stage: 20
+    verdict: corrected  # Agrippina's shop door in Vivec is marked while Teris follows
+    marked: ["in_velothismall_ndoor_agrippina"]
+  - stage: 80
+    verdict: corrected  # Agrippina's shop door is marked, and the guar is not marked as a kill
+    marked: ["in_velothismall_ndoor_agrippina"]
+  - stage: 90
+    verdict: corrected  # Teris is marked for the fee, and the guar is not marked as a kill
+    marked: ["teris raledran"]
+  - stage: 120
+    verdict: right  # The guar is dead and the quest can't go on
+    marked: []

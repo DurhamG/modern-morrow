@@ -1,0 +1,50 @@
+# The reviewed quest markers of MV_SlaveMule.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MV_SlaveMule
+stages:
+  - stage: 10
+    verdict: corrected  # Relam Arinith is marked, not the Argonian Mission
+    marked: ["relam arinith"]
+  - stage: 20
+    verdict: corrected  # Relam is marked for his choice, not the Mission
+    marked: ["relam arinith"]
+  - stage: 30
+    verdict: corrected  # Vorar Helas's house is marked while Rabinna follows
+    marked: ["cell:balmora, vorar helas' house"]
+  - stage: 40
+    verdict: corrected  # The player refused, so nothing is marked
+    marked: []
+  - stage: 65
+    verdict: corrected  # Rabinna is marked for her plea, not the Mission she hasn't named yet
+    marked: ["rabinna"]
+  - stage: 75
+    verdict: corrected  # Rabinna is marked for her choice, not the Mission before she follows
+    marked: ["rabinna"]
+  - stage: 95
+    verdict: corrected  # Only the Argonian Mission is marked while Rabinna follows
+    marked: ["cell:ebonheart, argonian mission"]
+  - stage: 100
+    verdict: corrected  # Vorar Helas's house is marked while Rabinna follows
+    marked: ["cell:balmora, vorar helas' house"]
+  - stage: 101
+    verdict: corrected  # Vorar Helas is marked as the only way on after Rabinna's death
+    marked: ["rabinna", "vorar helas"]
+  - stage: 102
+    verdict: corrected  # Vorar Helas is marked, not the Mission or every holder of moon sugar
+    marked: ["vorar helas"]
+  - stage: 103
+    verdict: corrected  # Rabinna's body is marked for the moon sugar, then Vorar
+    marked: ["rabinna", "vorar helas"]
+  - stage: 105
+    verdict: corrected  # Rabinna's body is marked for the moon sugar, then Vorar
+    marked: ["rabinna", "vorar helas"]
+  - stage: 111
+    verdict: corrected  # Rabinna is marked for her choice after Vorar's death
+    marked: ["rabinna", "vorar helas"]
+  - stage: 112
+    verdict: right  # The Argonian Mission is marked while Rabinna follows
+    marked: ["cell:ebonheart, argonian mission"]
+  - stage: 114
+    verdict: right  # Im-Kilaya is marked for the reward
+    marked: ["im_kilaya"]

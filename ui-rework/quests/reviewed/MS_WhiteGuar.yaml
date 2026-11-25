@@ -1,0 +1,26 @@
+# The reviewed quest markers of MS_WhiteGuar.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_WhiteGuar
+stages:
+  - stage: 10
+    verdict: corrected  # only Urshamusa is marked; Ashamanu is disabled and unnamed
+    marked: ["urshamusa rapli"]
+  - stage: 20
+    verdict: corrected  # Urshamusa is marked to accept the task
+    marked: ["urshamusa rapli"]
+  - stage: 30
+    verdict: corrected  # the white guar is marked, not the corpse it leads to
+    marked: ["guar_white_unique"]
+  - stage: 50
+    verdict: corrected  # the guar is marked to follow, not the corpse it leads to
+    marked: ["guar_white_unique"]
+  - stage: 60
+    verdict: right  # the amulet on Ashamanu is marked, then Urshamusa
+    marked: ["amulet of ashamanu (unique)", "urshamusa rapli"]
+  - stage: 65
+    verdict: right  # the amulet on Ashamanu is marked, then Urshamusa
+    marked: ["amulet of ashamanu (unique)", "urshamusa rapli"]
+  - stage: 70
+    verdict: right  # Urshamusa is marked to take the amulet
+    marked: ["amulet of ashamanu (unique)", "urshamusa rapli"]
