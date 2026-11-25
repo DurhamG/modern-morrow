@@ -406,3 +406,5 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   pixels within 512 units, to show the player is nearly there. Height doesn't count. The compass is 6 pixels taller to
   fit the largest marker with its up or down arrow. The rule is
   `MWGui::Compass::markerSize`, with Google Tests.
+- The quest compass's up and down arrow now only shows for a target within a cell, across the ground. Farther away,
+  almost every target is more than a storey above or below the player, so the arrows were noise.

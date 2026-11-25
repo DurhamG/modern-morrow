@@ -35,11 +35,15 @@ namespace MWGui
             return Place{ offset / halfWidth, false };
         }
 
-        Level level(float height, Level shown)
+        Level level(float height, float distance, Level shown)
         {
+            // A cell.
+            constexpr float near = 8192.f;
             // About a storey.
             constexpr float storey = 256.f;
             constexpr float keep = 192.f;
+            if (distance > near)
+                return Level::Same;
             if (height > storey || (shown == Level::Above && height > keep))
                 return Level::Above;
             if (height < -storey || (shown == Level::Below && height < -keep))
@@ -161,11 +165,12 @@ namespace MWGui
                 continue;
             }
             const Compass::Place where = Compass::place(Compass::bearing(playerPos, targets[i]), heading, sHalfWidth);
-            mLevels[i] = Compass::level(targets[i].z() - playerPos.z(), mLevels[i]);
+            const osg::Vec3f offset = targets[i] - playerPos;
+            const float distance = osg::Vec2f(offset.x(), offset.y()).length();
+            mLevels[i] = Compass::level(offset.z(), distance, mLevels[i]);
             const bool above = mLevels[i] == Compass::Level::Above;
             const bool below = mLevels[i] == Compass::Level::Below;
-            const osg::Vec3f offset = targets[i] - playerPos;
-            const int size = Compass::markerSize(osg::Vec2f(offset.x(), offset.y()).length());
+            const int size = Compass::markerSize(distance);
             const int x = std::clamp(xOf(where.mPosition), size / 2, mWidth - size / 2);
             // The arrow sits right above or below its marker, so the two read as one sign rather than two markers.
             int markerY = (sHeight - size) / 2;
