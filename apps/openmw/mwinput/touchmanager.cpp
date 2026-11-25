@@ -281,6 +281,11 @@ namespace MWInput
             finger.mRole = Role::Edge;
         }
 
+        // The left thumb going down again stops auto-run, and then moves as usual.
+        if (mAutoRun
+            && (finger.mRole == Role::Move || (finger.mRole == Role::Edge && finger.mFallback == Role::Move)))
+            stopMovement();
+
         if (finger.mRole == Role::QuickLoad)
             mOverlay->showProgress("#{Interface:TouchQuickLoad}", 0.f);
 
@@ -454,6 +459,10 @@ namespace MWInput
                 break;
             case Role::Move:
                 stopMovement();
+                // A flick up turns on auto-run, so the player doesn't have to hold the thumb up to run forward.
+                if (inGame()
+                    && isFlickUp(finger.mStart, toPixels(arg), finger.mDownTime, arg.timestamp, pixelsPerMm()))
+                    startAutoRun();
                 break;
             case Role::Select:
                 closePicker(true);
@@ -575,8 +584,17 @@ namespace MWInput
         mMoving = true;
     }
 
+    void TouchManager::startAutoRun()
+    {
+        mBindingsManager->setTouchActionValue(A_MoveForwardBackward, 0.f);
+        mBindingsManager->setTouchActionValue(A_MoveLeftRight, 0.5f);
+        mMoving = true;
+        mAutoRun = true;
+    }
+
     void TouchManager::stopMovement()
     {
+        mAutoRun = false;
         if (!mMoving)
             return;
         mBindingsManager->clearTouchActionValue(A_MoveForwardBackward);

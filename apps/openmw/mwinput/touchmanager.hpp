@@ -166,6 +166,8 @@ namespace MWInput
         void turn(float yaw, float pitch);
         void act();
         void setMovement(const Finger& finger);
+        /// Runs forward, as the left thumb at full forward does, until stopMovement.
+        void startAutoRun();
         void stopMovement();
         void pressUse(bool pressed);
 
@@ -211,6 +213,7 @@ namespace MWInput
         int mUseFrames = 0;
         bool mUseHeld = false;
         bool mMoving = false;
+        bool mAutoRun = false;
         bool mPaused = false;
 
         /// Jump mode isn't something the player has out, so it's kept here.

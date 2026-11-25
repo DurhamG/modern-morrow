@@ -60,6 +60,14 @@ namespace MWInput::TouchGestures
         return upTime - downTime <= sTapTime && farthest < sSlopMm * pixelsPerMm;
     }
 
+    bool isFlickUp(const MyGUI::FloatPoint& start, const MyGUI::FloatPoint& end, std::uint32_t downTime,
+        std::uint32_t upTime, float pixelsPerMm)
+    {
+        const float up = start.top - end.top;
+        const float sideways = std::abs(end.left - start.left);
+        return upTime - downTime <= sFlickTime && up >= sFlickMm * pixelsPerMm && up > sideways;
+    }
+
     Movement movement(const MyGUI::FloatPoint& start, const MyGUI::FloatPoint& position, float pixelsPerMm)
     {
         const float right = (position.left - start.left) / pixelsPerMm;

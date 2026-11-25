@@ -17,6 +17,10 @@ namespace MWInput::TouchGestures
     // direction, like a stick. Half way there, the player runs.
     constexpr float sMoveDeadZoneMm = 2.f;
     constexpr float sMoveFullMm = 15.f;
+    // A left thumb that lifts within this time, in milliseconds, having moved at least this far up the screen, and
+    // more up than sideways, flicked up. That turns on auto-run.
+    constexpr std::uint32_t sFlickTime = 300;
+    constexpr float sFlickMm = 10.f;
     // How far the camera turns for each millimetre the right thumb drags, in radians, before the camera sensitivity
     // setting. That holds within a circle around where the thumb went down. Past its edge to either side, the camera
     // keeps turning that way, like a stick: from standing still at the edge, so there's no jump in speed there, rising
@@ -88,6 +92,11 @@ namespace MWInput::TouchGestures
         float mLeftRight = 0.5f;
     };
     Movement movement(const MyGUI::FloatPoint& start, const MyGUI::FloatPoint& position, float pixelsPerMm);
+
+    /// Whether a thumb that went down at start and lifted at end, at these times in milliseconds, flicked up the
+    /// screen.
+    bool isFlickUp(const MyGUI::FloatPoint& start, const MyGUI::FloatPoint& end, std::uint32_t downTime,
+        std::uint32_t upTime, float pixelsPerMm);
 
     /// How far the camera turns, in radians, for the right thumb's move from previous to position. Only the part of a
     /// sideways move inside the circle around where it went down turns the camera directly.

@@ -14,7 +14,8 @@ This is the design for playing on a phone or tablet without a gamepad, agreed wi
 | Gesture | Does |
 |---|---|
 | Left thumb drags | Moves, like a stick: up the screen is forward, down is back, and sideways strafes. The farther the drag, the faster, from walking to running. |
-| Left thumb taps | Nothing, for now. |
+| Left thumb flicks up | Runs forward without holding the thumb down, until the left thumb touches the screen again. That touch then moves as usual. |
+| Left thumb taps | Stops running forward after a flick. Otherwise nothing. |
 | Right thumb drags | Looks around, as the mouse does, within a circle around where the thumb went down. Held past the circle's edge to either side, it keeps turning that way, like a stick. |
 | Right thumb taps | Acts in the current mode: uses what's in front of you in use mode (A), attacks in attack mode, casts in magic mode, jumps in jump mode. |
 | Right thumb holds still | In attack mode, charges the attack, such as drawing a bow. The thumb can then drag to aim while it charges, and lifting releases it. Does nothing in the other modes. |
@@ -56,6 +57,7 @@ These are starting values to tune on the phone. Distances are in millimetres on 
 - **A tap** lifts within 250 ms and moves less than 3 mm.
 - **A drag** is anything that moves farther.
 - **The attack's charge** starts after the right thumb stays still for 180 ms in attack mode. A quick tap sends the press and release together, which gives a full swing because Modern Morrow always uses the best attack. A thumb that moves before 180 ms only looks, and lifting it does nothing. In Morrowind an attack can't be cancelled once wound up, so this delay is what keeps looking from swinging.
+- **A flick up** lifts within 300 ms, having moved at least 10 mm up the screen, and more up than sideways. A slower or shorter drag up only walks or runs while the thumb is down. Running forward after a flick holds the move action at full forward, as the thumb at full forward does, and stops when a menu opens.
 - **Movement** has a 2 mm dead zone around where the thumb went down, and reaches full speed 15 mm away in any direction, as a stick's circle does.
 - **An edge swipe** starts within 5 mm of a side edge, in the middle half of the screen's height, and moves 8 mm inwards, more in than up or down. A thumb that goes down there but moves up or down first, or lifts, does what it would have anywhere else on its half.
 - **Pinches are only for the map.** Two fingers that touch down there within 150 ms of each other zoom it.

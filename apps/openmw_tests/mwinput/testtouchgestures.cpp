@@ -116,6 +116,32 @@ namespace MWInput::TouchGestures
             EXPECT_FALSE(isTap(1000, 1100, 30, sMm));
         }
 
+        TEST(MWInputTouchGesturesTest, quickMoveUp10mmShouldBeAFlick)
+        {
+            EXPECT_TRUE(isFlickUp(at(500, 800), at(500, 700), 1000, 1300, sMm));
+            EXPECT_TRUE(isFlickUp(at(500, 800), at(560, 650), 1000, 1150, sMm));
+        }
+
+        TEST(MWInputTouchGesturesTest, slowMoveUpShouldNotBeAFlick)
+        {
+            EXPECT_FALSE(isFlickUp(at(500, 800), at(500, 600), 1000, 1301, sMm));
+        }
+
+        TEST(MWInputTouchGesturesTest, shortMoveUpShouldNotBeAFlick)
+        {
+            EXPECT_FALSE(isFlickUp(at(500, 800), at(500, 701), 1000, 1100, sMm));
+        }
+
+        TEST(MWInputTouchGesturesTest, flickMoreSidewaysThanUpShouldNotCount)
+        {
+            EXPECT_FALSE(isFlickUp(at(500, 800), at(650, 680), 1000, 1100, sMm));
+        }
+
+        TEST(MWInputTouchGesturesTest, flickDownShouldNotCount)
+        {
+            EXPECT_FALSE(isFlickUp(at(500, 700), at(500, 850), 1000, 1100, sMm));
+        }
+
         TEST(MWInputTouchGesturesTest, movementInsideTheDeadZoneShouldBeNone)
         {
             const Movement moved = movement(at(500, 500), at(510, 490), sMm);

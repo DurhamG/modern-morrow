@@ -2,6 +2,7 @@
 # the top left corner quicksaves. The tutorial shows first for a new game, and its second page over the inventory.
 launch --start "Seyda Neen" --set "Input.touch controls=true"
 wait-text "Touch controls"
+expect-text "Flick up to"
 touch action=tap x=640 y=780
 wait frames=10
 expect-no-text "Tap to continue"
@@ -17,3 +18,14 @@ expect-no-mode
 touch action=tap x=10 y=10
 wait frames=60
 expect-file "saves/*/Quicksave*.omwsave"
+# A quick flick up with the left thumb runs forward after the thumb lifts, and the left thumb touching again stops it.
+touch action=drag path=[[300,620],[300,580],[300,540],[300,500]] frames=2
+wait frames=30
+expect-lua "print(require('openmw.self').controls.movement)" 1 context=player
+touch action=tap x=300 y=620
+wait frames=10
+expect-lua "print(require('openmw.self').controls.movement)" 0 context=player
+# A slow drag up only walks while the thumb is down.
+touch action=drag path=[[300,620],[300,580],[300,540],[300,500]] frames=20
+wait frames=30
+expect-lua "print(require('openmw.self').controls.movement)" 0 context=player
