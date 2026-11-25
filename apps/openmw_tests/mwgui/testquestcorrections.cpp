@@ -687,6 +687,7 @@ namespace
         const std::vector<Way> ways = targetWays(entry, nullptr);
         ASSERT_EQ(ways.size(), 1);
         EXPECT_TRUE(ways[0].mOptional);
+        EXPECT_TRUE(ways[0].mHandMade);
     }
 
     TEST(MWGuiQuestCorrectionsTest, aTargetShouldWaitForAllItsAfterConditions)

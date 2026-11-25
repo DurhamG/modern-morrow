@@ -72,6 +72,8 @@ namespace MWGui
             bool mOutOfReach = false;
             // Whether the way's checks or the player's rank don't allow it yet, while playing.
             bool mWaiting = false;
+            // Whether the way is one of a correction's targets, not something the analysis found.
+            bool mHandMade = false;
             // Whether the way is a side step the player can take or leave, such as asking someone for directions. Only
             // a correction marks a way as optional. See questcorrections.hpp.
             bool mOptional = false;
@@ -172,9 +174,11 @@ namespace MWGui
         /// Whether a condition holds for a value, such as a global variable's.
         bool compare(const ESM::DialogueCondition& condition, float value);
 
-        /// Whether a target that is a dead actor is still marked for a task. Talking to the dead or killing them is
-        /// done or impossible, but going to a body, such as to search it, still needs a marker.
-        bool marksTheDead(Task task);
+        /// Whether a target that is a dead actor is still marked, for a way and one of its objectives. Talking to the
+        /// dead or killing them is done or impossible. Going to a body, such as to search it, still needs a marker
+        /// when a correction's target asks for it. The analysis's own visits to actors usually come from scripts
+        /// that wait for deaths, so a body there means the step is done.
+        bool marksTheDead(const Way& way, Task task);
 
         /// Whether the player's ranks in factions allow a way's line, as the game tests them in a conversation: the
         /// player must belong to the faction the line names, at its rank or higher.

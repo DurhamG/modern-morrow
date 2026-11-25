@@ -621,6 +621,7 @@ namespace MWGui::QuestCorrections
             objective.mCount = target.mCount;
             way.mObjectives.push_back(std::move(objective));
             way.mOptional = target.mOptional;
+            way.mHandMade = true;
             ways.push_back(std::move(way));
         }
         return ways;

@@ -258,7 +258,8 @@ namespace MWGui
         return std::nullopt;
     }
 
-    bool QuestMarkers::addObjectiveTargets(const QuestTargets::Objective& objective, std::vector<Target>& targets)
+    bool QuestMarkers::addObjectiveTargets(
+        const QuestTargets::Way& way, const QuestTargets::Objective& objective, std::vector<Target>& targets)
     {
         using QuestTargets::Task;
         const MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
@@ -266,7 +267,7 @@ namespace MWGui
             && player.getClass().getContainerStore(player).count(objective.mObject) >= objective.mCount)
             return false;
         const auto add = [&](const MWWorld::Ptr& ptr, Task task, std::string name) {
-            if (!isPresent(ptr) || (isDead(ptr) && !QuestTargets::marksTheDead(task)) || ptr.getCell() == nullptr)
+            if (!isPresent(ptr) || (isDead(ptr) && !QuestTargets::marksTheDead(way, task)) || ptr.getCell() == nullptr)
                 return false;
             targets.push_back(Target{ task, ptr.getCellRef().getRefId(), std::move(name),
                 ptr.getRefData().getPosition().asVec3(), ptr.getCell()->getCell()->getId() });
@@ -335,7 +336,7 @@ namespace MWGui
                 continue;
             if (player.getClass().getContainerStore(player).count(objective.mObject) >= objective.mCount)
                 continue;
-            if (!addObjectiveTargets(objective, found))
+            if (!addObjectiveTargets(way, objective, found))
                 return true;
         }
         return false;
@@ -429,7 +430,7 @@ namespace MWGui
             {
                 if (objective.mTask == Task::Talk && before)
                     continue;
-                if (addObjectiveTargets(objective, targets) && objective.mTask != Task::Talk)
+                if (addObjectiveTargets(way, objective, targets) && objective.mTask != Task::Talk)
                     before = true;
             }
             for (std::size_t i = first; i < targets.size(); ++i)

@@ -746,9 +746,9 @@ namespace MWGui::QuestTargets
         return objectives;
     }
 
-    bool marksTheDead(Task task)
+    bool marksTheDead(const Way& way, Task task)
     {
-        return task == Task::Visit || task == Task::Fetch;
+        return way.mHandMade && (task == Task::Visit || task == Task::Fetch);
     }
 
     bool playerRankAllows(const Way& way, const std::map<ESM::RefId, int>& ranks)

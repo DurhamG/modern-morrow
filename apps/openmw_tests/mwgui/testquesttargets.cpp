@@ -428,12 +428,16 @@ namespace
         EXPECT_EQ(ways[2].mPlayerRank, 2);
     }
 
-    TEST(MWGuiQuestTargetsTest, onlyGoingToABodyMarksTheDead)
+    TEST(MWGuiQuestTargetsTest, onlyACorrectionsVisitOrFetchMarksABody)
     {
-        EXPECT_TRUE(marksTheDead(Task::Visit));
-        EXPECT_TRUE(marksTheDead(Task::Fetch));
-        EXPECT_FALSE(marksTheDead(Task::Talk));
-        EXPECT_FALSE(marksTheDead(Task::Kill));
+        Way handMade;
+        handMade.mHandMade = true;
+        EXPECT_TRUE(marksTheDead(handMade, Task::Visit));
+        EXPECT_TRUE(marksTheDead(handMade, Task::Fetch));
+        EXPECT_FALSE(marksTheDead(handMade, Task::Talk));
+        EXPECT_FALSE(marksTheDead(handMade, Task::Kill));
+        // The analysis's visits to actors come from scripts that wait for their deaths.
+        EXPECT_FALSE(marksTheDead(Way{}, Task::Visit));
     }
 
     TEST(MWGuiQuestTargetsTest, thePlayersRankMustAllowTheWay)

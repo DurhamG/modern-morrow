@@ -91,7 +91,8 @@ namespace MWGui
         // How far the player's quests have got, for the corrections' targets.
         static QuestCorrections::Progress questProgress();
         // Adds where an objective's targets are now. Returns whether there were any.
-        bool addObjectiveTargets(const QuestTargets::Objective& objective, std::vector<Target>& targets);
+        bool addObjectiveTargets(
+            const QuestTargets::Way& way, const QuestTargets::Objective& objective, std::vector<Target>& targets);
         // Whether a way needs someone to talk to who is dead or gone, or an item that the player doesn't carry and that
         // can't be found anywhere.
         bool isOutOfReach(const QuestTargets::Way& way);
