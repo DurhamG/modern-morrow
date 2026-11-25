@@ -78,4 +78,22 @@ namespace
         EXPECT_EQ(level(-300.f, Level::Above), Level::Below);
         EXPECT_EQ(level(300.f, Level::Below), Level::Above);
     }
+
+    TEST(MWGuiCompassMarkerSizeTest, aFarTargetHasTheSmallestMarker)
+    {
+        EXPECT_EQ(markerSize(8192.f), 16);
+        EXPECT_EQ(markerSize(50000.f), 16);
+    }
+
+    TEST(MWGuiCompassMarkerSizeTest, aNearTargetHasTheLargestMarker)
+    {
+        EXPECT_EQ(markerSize(512.f), 24);
+        EXPECT_EQ(markerSize(0.f), 24);
+    }
+
+    TEST(MWGuiCompassMarkerSizeTest, theMarkerGrowsAsThePlayerGetsCloser)
+    {
+        EXPECT_EQ(markerSize(4352.f), 20);
+        EXPECT_LT(markerSize(6000.f), markerSize(3000.f));
+    }
 }

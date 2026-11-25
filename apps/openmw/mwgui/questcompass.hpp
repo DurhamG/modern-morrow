@@ -45,11 +45,16 @@ namespace MWGui
         /// within a storey, given what the compass shows now, so that walking on uneven ground doesn't make the arrow
         /// come and go.
         Level level(float height, Level shown);
+
+        /// The size in pixels of a marker for a target this far from the player, ignoring height. A marker grows as
+        /// the player gets closer: it is smallest a cell or more away, and largest close by.
+        int markerSize(float distance);
     }
 
     /// A compass along the top of the HUD, as in Skyrim. It shows north, east, south and west, and a marker for each
     /// tracked quest's target, or the door on the way to it. A marker past the compass's ends stays at the nearer end,
-    /// and an arrow right above or below it says whether the target is above or below.
+    /// and an arrow right above or below it says whether the target is above or below. A marker grows as the player
+    /// gets closer to its target.
     class QuestCompass
     {
     public:

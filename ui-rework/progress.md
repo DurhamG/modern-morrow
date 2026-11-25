@@ -400,3 +400,7 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   up the hill, it read as a marker for the cornerclub pointing the wrong way. It now sits right above or below its
   marker. It also came and went with each step, because the street's height wanders across the 256 units that turn it
   on. It now stays until the target is within 192 units. The rule is `MWGui::Compass::level`, with Google Tests.
+- Quest markers on the compass grow as the player gets closer, so the compass shows how near a target is. A marker is
+  16 pixels for a target a cell or more away and 24 within 512 units, growing evenly between. Height doesn't count.
+  The compass is 4 pixels taller to fit the largest marker with its up or down arrow. The rule is
+  `MWGui::Compass::markerSize`, with Google Tests.

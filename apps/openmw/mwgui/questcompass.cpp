@@ -9,6 +9,7 @@
 #include <MyGUI_TextBox.h>
 
 #include <osg/Math>
+#include <osg/Vec2f>
 
 #include "controllerscreen.hpp"
 
@@ -45,12 +46,22 @@ namespace MWGui
                 return Level::Below;
             return Level::Same;
         }
+
+        int markerSize(float distance)
+        {
+            // A cell, and about seven metres.
+            constexpr float far = 8192.f;
+            constexpr float near = 512.f;
+            constexpr int smallest = 16;
+            constexpr int largest = 24;
+            const float closeness = std::clamp((far - distance) / (far - near), 0.f, 1.f);
+            return smallest + static_cast<int>(std::round(closeness * (largest - smallest)));
+        }
     }
 
     namespace
     {
-        constexpr int sHeight = 32;
-        constexpr int sMarkerSize = 20;
+        constexpr int sHeight = 36;
         constexpr int sArrowSize = 10;
         constexpr int sLabelWidth = 32;
         // The compass shows this many degrees each side of the way the camera faces.
@@ -121,7 +132,7 @@ namespace MWGui
         while (mMarkers.size() < targets.size())
         {
             MyGUI::ImageBox* marker = mRoot->createWidget<MyGUI::ImageBox>("ImageBox",
-                MyGUI::IntCoord(0, (sHeight - sMarkerSize) / 2, sMarkerSize, sMarkerSize), MyGUI::Align::Default);
+                MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             marker->setImageTexture(sMarkerTexture);
             marker->setNeedMouseFocus(false);
             mMarkers.push_back(marker);
@@ -141,27 +152,29 @@ namespace MWGui
                 continue;
             }
             const Compass::Place where = Compass::place(Compass::bearing(playerPos, targets[i]), heading, sHalfWidth);
-            const int x = std::clamp(xOf(where.mPosition), sMarkerSize / 2, mWidth - sMarkerSize / 2);
             mLevels[i] = Compass::level(targets[i].z() - playerPos.z(), mLevels[i]);
             const bool above = mLevels[i] == Compass::Level::Above;
             const bool below = mLevels[i] == Compass::Level::Below;
+            const osg::Vec3f offset = targets[i] - playerPos;
+            const int size = Compass::markerSize(osg::Vec2f(offset.x(), offset.y()).length());
+            const int x = std::clamp(xOf(where.mPosition), size / 2, mWidth - size / 2);
             // The arrow sits right above or below its marker, so the two read as one sign rather than two markers.
-            int markerY = (sHeight - sMarkerSize) / 2;
+            int markerY = (sHeight - size) / 2;
             if (above)
-                markerY = sHeight - sMarkerSize - 1;
+                markerY = sHeight - size - 1;
             else if (below)
                 markerY = 1;
             const float alpha = where.mPinned ? 0.6f : 1.f;
             mMarkers[i]->setVisible(true);
             mMarkers[i]->setAlpha(alpha);
-            mMarkers[i]->setPosition(x - sMarkerSize / 2, markerY);
+            mMarkers[i]->setCoord(x - size / 2, markerY, size, size);
             mArrows[i]->setVisible(above || below);
             if (above || below)
             {
                 mArrows[i]->setImageTexture(
                     above ? "textures\\omw\\quest_arrow_up.png" : "textures\\omw\\quest_arrow_down.png");
                 mArrows[i]->setAlpha(alpha);
-                mArrows[i]->setPosition(x - sArrowSize / 2, above ? markerY - sArrowSize : markerY + sMarkerSize);
+                mArrows[i]->setPosition(x - sArrowSize / 2, above ? markerY - sArrowSize : markerY + size);
             }
         }
     }
