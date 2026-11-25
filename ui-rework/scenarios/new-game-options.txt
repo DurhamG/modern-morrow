@@ -1,0 +1,54 @@
+# In controller menus mode, New Game first shows the gameplay options. Each starts off, and the
+# player turns them on or off before the intro plays.
+launch --set "GUI.controller menus=true" --set "Game.retroactive health=false" --set "Game.keep level up progress=false" --set "Game.glancing blows=false" --set "Game.minimum run speed=false" --set "Game.run fatigue=1.0"
+wait-mode MainMenu
+click-name MainMenu_newgame
+wait-text "Gameplay Options"
+shot new-game-options
+expect-order "Gameplay Options" "Endurance Retroactively Raises Health" "Spare Skill Increases Carry to Next Level Up" "Glancing Blows Instead of Missing" "Increase Minimum Run Speed" "Run Fatigue"
+expect-text "Change"
+expect-text "Begin"
+expect-no-text "Back"
+# A turns the focused option on. Its description shows beside the list.
+pad button=a
+wait frames=5
+expect-order "Endurance Retroactively Raises Health" On "Spare Skill Increases Carry to Next Level Up" Off
+expect-text "earlier level ups"
+# Down moves to the next option, and its description shows instead.
+pad button=dpdown
+wait frames=5
+expect-text "count toward the next one"
+expect-no-text "earlier level ups"
+# Right steps Run Fatigue along its choices, and stops at none.
+pad button=dpdown
+pad button=dpdown
+pad button=dpdown
+wait frames=5
+expect-text "100%"
+pad button=dpright
+wait frames=5
+expect-text "50%"
+pad button=dpright
+pad button=dpright
+pad button=dpright
+wait frames=5
+expect-order "Run Fatigue" "0%"
+expect-no-text "50%"
+expect-no-text "25%"
+shot new-game-options-changed
+# B goes back to the main menu, and the options keep their new values.
+pad button=b
+wait frames=5
+expect-no-text "Gameplay Options"
+expect-mode MainMenu
+click-name MainMenu_newgame
+wait-text "Gameplay Options"
+expect-order "Endurance Retroactively Raises Health" On
+expect-no-text "50%"
+# X begins the game.
+pad button=x
+wait frames=30
+expect-no-text "Gameplay Options"
+expect-no-mode
+# The intro then plays. The test data has no intro video, so the game logs that it can't open it.
+expect-log "Failed to open video"

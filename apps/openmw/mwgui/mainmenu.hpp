@@ -22,6 +22,7 @@ namespace MWGui
 {
 
     class BackgroundImage;
+    class GameOptionsDialog;
     class PauseMenu;
     class VideoWidget;
     class MenuVideo
@@ -74,6 +75,7 @@ namespace MWGui
 
         void onButtonClicked(MyGUI::Widget* sender);
         void onNewGameConfirmed();
+        void onGameOptionsBegin();
         void onExitConfirmed();
 
         void showBackground(bool show);
@@ -81,6 +83,9 @@ namespace MWGui
         void updateMenu();
 
         std::unique_ptr<SaveGameDialog> mSaveGameDialog;
+
+        // In controller menus mode, a new game first offers the gameplay options.
+        std::unique_ptr<GameOptionsDialog> mGameOptionsDialog;
 
         // In controller menus mode, the menu during a game is drawn by this instead of the image buttons.
         std::unique_ptr<PauseMenu> mPauseMenu;

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- The gameplay options screen before a new game. It draws itself as a full screen panel in code, so this window is
+     only the modal it belongs to. -->
+<MyGUI type="Layout">
+    <Widget type="Widget" skin="" layer="Modal" position="0 0 0 0" name="_Main">
+        <Property key="Visible" value="false"/>
+    </Widget>
+</MyGUI>

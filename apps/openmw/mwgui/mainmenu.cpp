@@ -20,6 +20,7 @@
 
 #include "backgroundimage.hpp"
 #include "confirmationdialog.hpp"
+#include "gameoptionsdialog.hpp"
 #include "mainmenubuttons.hpp"
 #include "pausemenu.hpp"
 #include "savegamedialog.hpp"
@@ -182,6 +183,24 @@ namespace MWGui
 
     void MainMenu::onNewGameConfirmed()
     {
+        // The options screen is drawn as a controller screen, so it only shows in controller menus mode.
+        if (Settings::gui().mControllerMenus)
+        {
+            if (!mGameOptionsDialog)
+            {
+                mGameOptionsDialog = std::make_unique<GameOptionsDialog>();
+                mGameOptionsDialog->eventBegin += MyGUI::newDelegate(this, &MainMenu::onGameOptionsBegin);
+            }
+            mGameOptionsDialog->setVisible(true);
+            return;
+        }
+        onGameOptionsBegin();
+    }
+
+    void MainMenu::onGameOptionsBegin()
+    {
+        if (mGameOptionsDialog)
+            mGameOptionsDialog->setVisible(false);
         MWBase::Environment::get().getWindowManager()->removeGuiMode(MWGui::GM_MainMenu);
         MWBase::Environment::get().getStateManager()->newGame();
     }
