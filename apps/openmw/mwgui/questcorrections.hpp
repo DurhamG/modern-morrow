@@ -173,7 +173,8 @@ namespace MWGui
         /// ways to the entry's hidden stages are left out. The ways to its optional stages are marked as optional,
         /// unless they are failures or out of reach. Of the other ways, if the entry has next stages, only the ways to
         /// them are marked, leaving out ways out of reach, and failures unless every one of them is a failure. So a
-        /// kill the journal asks for, of someone who talks in the quest, is marked when the entry names its stage. When
+        /// kill the journal asks for, of someone who talks in the quest, is marked when the entry names its stage.
+        /// While the next ways are only waiting for their checks, nothing else is marked in their place. When
         /// none of those is left, such as when the person to talk to is dead, the rule chooses among the other ways.
         std::vector<QuestTargets::Way> chooseWays(
             std::vector<QuestTargets::Way> ways, const Entry* entry, QuestTargets::Rule rule);

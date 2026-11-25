@@ -557,7 +557,7 @@ namespace MWGui::QuestCorrections
                 continue;
             if (contains(entry->mOptional, way.mToStage))
             {
-                if (!setAside(way))
+                if (!setAside(way) && !way.mWaiting)
                 {
                     way.mOptional = true;
                     optional.push_back(std::move(way));
@@ -567,13 +567,22 @@ namespace MWGui::QuestCorrections
             rest.push_back(std::move(way));
         }
         std::vector<QuestTargets::Way> chosen;
+        bool waiting = false;
         if (!entry->mNext.empty())
             for (const QuestTargets::Way& way : rest)
                 if (contains(entry->mNext, way.mToStage) && !way.mOutOfReach)
-                    chosen.push_back(way);
+                {
+                    if (way.mWaiting)
+                        waiting = true;
+                    else
+                        chosen.push_back(way);
+                }
         if (!std::all_of(chosen.begin(), chosen.end(), [](const QuestTargets::Way& way) { return way.mFailure; }))
             std::erase_if(chosen, [](const QuestTargets::Way& way) { return way.mFailure; });
-        if (chosen.empty())
+        // When the next ways only wait for their checks, the journal's step is still to come, and the other ways
+        // would be spoilers or side steps. When none can happen any more, such as when the person to talk to has
+        // died, the rule chooses among the others.
+        if (chosen.empty() && !waiting)
             chosen = QuestTargets::chooseWays(std::move(rest), rule);
         chosen.insert(chosen.end(), std::make_move_iterator(optional.begin()), std::make_move_iterator(optional.end()));
         std::stable_sort(chosen.begin(), chosen.end(),

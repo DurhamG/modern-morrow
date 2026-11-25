@@ -70,6 +70,8 @@ namespace MWGui
             // such as a blade that a later stage makes, or someone to talk to who is dead or gone. Only the game
             // while it runs can tell.
             bool mOutOfReach = false;
+            // Whether the way's checks or the player's rank don't allow it yet, while playing.
+            bool mWaiting = false;
             // Whether the way is a side step the player can take or leave, such as asking someone for directions. Only
             // a correction marks a way as optional. See questcorrections.hpp.
             bool mOptional = false;
@@ -132,9 +134,9 @@ namespace MWGui
         /// its choice. The game only gives the answer after one of those lines, so the answer needs what they all
         /// need: their shared conditions, other than choices and the stages of quests those lines move on, and their
         /// speaker, faction and cell where the answer names none. A quest that every offering line moves to the same
-        /// stage must be at that stage, since the answer only comes in that conversation. For example, an answer that hands over an item needs
-        /// the item when the line offering it does. A line that isn't an answer, or whose choice no line offers, stays
-        /// as it is.
+        /// stage must be at that stage, since the answer only comes in that conversation. For example, an answer that
+        /// hands over an item needs the item when the line offering it does. A line that isn't an answer, or whose
+        /// choice no line offers, stays as it is.
         std::vector<ESM::DialInfo> withOfferingConditions(const std::vector<ESM::DialInfo>& lines);
 
         /// The items a script takes from the player, and how many, such as `Player->RemoveItem "misc_box" 1`.
@@ -178,8 +180,9 @@ namespace MWGui
         /// player must belong to the faction the line names, at its rank or higher.
         bool playerRankAllows(const Way& way, const std::map<ESM::RefId, int>& ranks);
 
-        /// Chooses the ways forward to mark, by the rule. Failures and ways out of reach only count when every way
-        /// forward is one, such as after the escorted pilgrim has died. The ways come out in stage order.
+        /// Chooses the ways forward to mark, by the rule. Ways that are waiting for their checks don't count. Failures
+        /// and ways out of reach only count when every way forward is one, such as after the escorted pilgrim has died.
+        /// The ways come out in stage order.
         std::vector<Way> chooseWays(std::vector<Way> ways, Rule rule);
 
         /// The ways forward of every quest in the content.

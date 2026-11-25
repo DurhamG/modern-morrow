@@ -248,6 +248,31 @@ namespace
         EXPECT_EQ(stagesOf(chooseWays(ways, &entry, Rule::LowestAndHighest)), (std::vector<int>{ 10 }));
     }
 
+    TEST(MWGuiQuestCorrectionsTest, aNextWayWaitingForItsChecksShouldMarkNothingElse)
+    {
+        // Caius's way needs another quest's stage that the player hasn't reached yet.
+        std::vector<Way> ways = firstStage();
+        ways.back().mWaiting = true;
+        Entry entry;
+        entry.mNext = { { 14, 14 } };
+        EXPECT_TRUE(chooseWays(ways, &entry, Rule::LowestAndHighest).empty());
+        // Once Caius is dead, his way can't happen, and the rule chooses among the others.
+        ways.back().mWaiting = false;
+        ways.back().mOutOfReach = true;
+        EXPECT_EQ(stagesOf(chooseWays(ways, &entry, Rule::LowestAndHighest)), (std::vector<int>{ 2, 10 }));
+    }
+
+    TEST(MWGuiQuestCorrectionsTest, waysWaitingForTheirChecksShouldNotBeMarked)
+    {
+        std::vector<Way> ways = firstStage();
+        ways.front().mWaiting = true;
+        EXPECT_EQ(stagesOf(chooseWays(ways, nullptr, Rule::LowestAndHighest)), (std::vector<int>{ 5, 14 }));
+        Entry entry;
+        entry.mOptional = { { 5, 5 } };
+        ways[1].mWaiting = true;
+        EXPECT_EQ(stagesOf(chooseWays(ways, &entry, Rule::LowestAndHighest)), (std::vector<int>{ 10, 14 }));
+    }
+
     TEST(MWGuiQuestCorrectionsTest, aNextWayOutOfReachShouldNotBeMarked)
     {
         std::vector<Way> ways = firstStage();

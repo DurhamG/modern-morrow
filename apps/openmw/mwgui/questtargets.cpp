@@ -379,7 +379,8 @@ namespace MWGui::QuestTargets
         std::vector<int> choices;
         for (const std::vector<std::string>& words : scriptWords(script))
         {
-            // Bloodmoon's lines often write the command with a colon, such as `Choice: "Yes" 1`, which the game accepts.
+            // Bloodmoon's lines often write the command with a colon, such as `Choice: "Yes" 1`, which the game
+            // accepts.
             if (words.empty() || (words[0] != "choice" && words[0] != "choice:"))
                 continue;
             // The answers' texts and numbers alternate.
@@ -760,6 +761,7 @@ namespace MWGui::QuestTargets
 
     std::vector<Way> chooseWays(std::vector<Way> ways, Rule rule)
     {
+        std::erase_if(ways, [](const Way& way) { return way.mWaiting; });
         const auto setAside = [](const Way& way) { return way.mFailure || way.mOutOfReach; };
         if (!std::all_of(ways.begin(), ways.end(), setAside))
             std::erase_if(ways, setAside);
