@@ -49,7 +49,7 @@ namespace MWGui
 
     /// A compass along the top of the HUD, as in Skyrim. It shows north, east, south and west, and a marker for each
     /// tracked quest's target, or the door on the way to it. A marker past the compass's ends stays at the nearer end,
-    /// and an arrow beside it says whether the target is above or below.
+    /// and an arrow right above or below it says whether the target is above or below.
     class QuestCompass
     {
     public:

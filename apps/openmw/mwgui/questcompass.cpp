@@ -142,20 +142,26 @@ namespace MWGui
             }
             const Compass::Place where = Compass::place(Compass::bearing(playerPos, targets[i]), heading, sHalfWidth);
             const int x = std::clamp(xOf(where.mPosition), sMarkerSize / 2, mWidth - sMarkerSize / 2);
-            mMarkers[i]->setVisible(true);
-            mMarkers[i]->setAlpha(where.mPinned ? 0.6f : 1.f);
-            mMarkers[i]->setPosition(x - sMarkerSize / 2, mMarkers[i]->getTop());
             mLevels[i] = Compass::level(targets[i].z() - playerPos.z(), mLevels[i]);
             const bool above = mLevels[i] == Compass::Level::Above;
             const bool below = mLevels[i] == Compass::Level::Below;
+            // The arrow sits right above or below its marker, so the two read as one sign rather than two markers.
+            int markerY = (sHeight - sMarkerSize) / 2;
+            if (above)
+                markerY = sHeight - sMarkerSize - 1;
+            else if (below)
+                markerY = 1;
+            const float alpha = where.mPinned ? 0.6f : 1.f;
+            mMarkers[i]->setVisible(true);
+            mMarkers[i]->setAlpha(alpha);
+            mMarkers[i]->setPosition(x - sMarkerSize / 2, markerY);
             mArrows[i]->setVisible(above || below);
             if (above || below)
             {
                 mArrows[i]->setImageTexture(
                     above ? "textures\\omw\\quest_arrow_up.png" : "textures\\omw\\quest_arrow_down.png");
-                const int arrowX = x + sMarkerSize / 2 > mWidth - sArrowSize ? x - sMarkerSize / 2 - sArrowSize
-                                                                             : x + sMarkerSize / 2;
-                mArrows[i]->setPosition(arrowX, mArrows[i]->getTop());
+                mArrows[i]->setAlpha(alpha);
+                mArrows[i]->setPosition(x - sArrowSize / 2, above ? markerY - sArrowSize : markerY + sMarkerSize);
             }
         }
     }

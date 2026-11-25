@@ -395,3 +395,8 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   still mark the wrong place or nothing at all. That figure comes from the review: the second reviewers disagreed
   with the first at about 5% of stages, and some mistakes surely slipped past both. The `new-game-options` scenario
   turns quest markers on and checks the description and that the value is kept.
+- The quest compass's up and down arrow no longer looks like a second marker or flickers. It was drawn beside its
+  marker, so on the street north of the South Wall Cornerclub in Balmora, where Caius Cosades' door is about 300 units
+  up the hill, it read as a marker for the cornerclub pointing the wrong way. It now sits right above or below its
+  marker. It also came and went with each step, because the street's height wanders across the 256 units that turn it
+  on. It now stays until the target is within 192 units. The rule is `MWGui::Compass::level`, with Google Tests.
