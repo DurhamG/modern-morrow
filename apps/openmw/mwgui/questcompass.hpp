@@ -41,8 +41,10 @@ namespace MWGui
         };
 
         /// Whether a target that is height units higher than the player, or lower when height is negative, is above
-        /// or below them.
-        Level level(float height);
+        /// or below them. A target is above or below once it is more than a storey away. It stays so until it is well
+        /// within a storey, given what the compass shows now, so that walking on uneven ground doesn't make the arrow
+        /// come and go.
+        Level level(float height, Level shown);
     }
 
     /// A compass along the top of the HUD, as in Skyrim. It shows north, east, south and west, and a marker for each
@@ -66,6 +68,7 @@ namespace MWGui
         std::vector<MyGUI::ImageBox*> mTicks;
         std::vector<MyGUI::ImageBox*> mMarkers;
         std::vector<MyGUI::ImageBox*> mArrows;
+        std::vector<Compass::Level> mLevels;
     };
 }
 

@@ -34,13 +34,14 @@ namespace MWGui
             return Place{ offset / halfWidth, false };
         }
 
-        Level level(float height)
+        Level level(float height, Level shown)
         {
             // About a storey.
-            constexpr float aboveBelow = 256.f;
-            if (height > aboveBelow)
+            constexpr float storey = 256.f;
+            constexpr float keep = 192.f;
+            if (height > storey || (shown == Level::Above && height > keep))
                 return Level::Above;
-            if (height < -aboveBelow)
+            if (height < -storey || (shown == Level::Below && height < -keep))
                 return Level::Below;
             return Level::Same;
         }
@@ -128,6 +129,7 @@ namespace MWGui
                 MyGUI::IntCoord(0, (sHeight - sArrowSize) / 2, sArrowSize, sArrowSize), MyGUI::Align::Default);
             arrow->setNeedMouseFocus(false);
             mArrows.push_back(arrow);
+            mLevels.push_back(Compass::Level::Same);
         }
         for (std::size_t i = 0; i < mMarkers.size(); ++i)
         {
@@ -135,6 +137,7 @@ namespace MWGui
             {
                 mMarkers[i]->setVisible(false);
                 mArrows[i]->setVisible(false);
+                mLevels[i] = Compass::Level::Same;
                 continue;
             }
             const Compass::Place where = Compass::place(Compass::bearing(playerPos, targets[i]), heading, sHalfWidth);
@@ -142,9 +145,9 @@ namespace MWGui
             mMarkers[i]->setVisible(true);
             mMarkers[i]->setAlpha(where.mPinned ? 0.6f : 1.f);
             mMarkers[i]->setPosition(x - sMarkerSize / 2, mMarkers[i]->getTop());
-            const Compass::Level level = Compass::level(targets[i].z() - playerPos.z());
-            const bool above = level == Compass::Level::Above;
-            const bool below = level == Compass::Level::Below;
+            mLevels[i] = Compass::level(targets[i].z() - playerPos.z(), mLevels[i]);
+            const bool above = mLevels[i] == Compass::Level::Above;
+            const bool below = mLevels[i] == Compass::Level::Below;
             mArrows[i]->setVisible(above || below);
             if (above || below)
             {

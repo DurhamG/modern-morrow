@@ -46,14 +46,36 @@ namespace
 
     TEST(MWGuiCompassLevelTest, aTargetWithinAStoreyIsLevel)
     {
-        EXPECT_EQ(level(0.f), Level::Same);
-        EXPECT_EQ(level(200.f), Level::Same);
-        EXPECT_EQ(level(-200.f), Level::Same);
+        EXPECT_EQ(level(0.f, Level::Same), Level::Same);
+        EXPECT_EQ(level(200.f, Level::Same), Level::Same);
+        EXPECT_EQ(level(-200.f, Level::Same), Level::Same);
     }
 
     TEST(MWGuiCompassLevelTest, aTargetMoreThanAStoreyAwayIsAboveOrBelow)
     {
-        EXPECT_EQ(level(300.f), Level::Above);
-        EXPECT_EQ(level(-300.f), Level::Below);
+        EXPECT_EQ(level(300.f, Level::Same), Level::Above);
+        EXPECT_EQ(level(-300.f, Level::Same), Level::Below);
+    }
+
+    // Walking on uneven ground moves the player up and down a little. A target near a storey away shouldn't make the
+    // arrow come and go with each step, as it did north of the South Wall Cornerclub in Balmora.
+    TEST(MWGuiCompassLevelTest, anArrowStaysUntilTheTargetIsWellWithinAStorey)
+    {
+        EXPECT_EQ(level(250.f, Level::Above), Level::Above);
+        EXPECT_EQ(level(-250.f, Level::Below), Level::Below);
+        EXPECT_EQ(level(150.f, Level::Above), Level::Same);
+        EXPECT_EQ(level(-150.f, Level::Below), Level::Same);
+    }
+
+    TEST(MWGuiCompassLevelTest, noArrowUntilTheTargetIsMoreThanAStoreyAway)
+    {
+        EXPECT_EQ(level(250.f, Level::Same), Level::Same);
+        EXPECT_EQ(level(-250.f, Level::Same), Level::Same);
+    }
+
+    TEST(MWGuiCompassLevelTest, anArrowTurnsOverAtOnce)
+    {
+        EXPECT_EQ(level(-300.f, Level::Above), Level::Below);
+        EXPECT_EQ(level(300.f, Level::Below), Level::Above);
     }
 }
