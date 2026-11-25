@@ -31,6 +31,18 @@ namespace MWGui
         /// Where a direction shows on a compass that spans halfWidth degrees each side of the heading. The direction
         /// and heading are in degrees clockwise from north.
         Place place(float direction, float heading, float halfWidth);
+
+        /// Whether a target is above or below the player, enough for the compass to show an arrow with its marker.
+        enum class Level
+        {
+            Same,
+            Above,
+            Below,
+        };
+
+        /// Whether a target that is height units higher than the player, or lower when height is negative, is above
+        /// or below them.
+        Level level(float height);
     }
 
     /// A compass along the top of the HUD, as in Skyrim. It shows north, east, south and west, and a marker for each

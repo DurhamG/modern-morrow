@@ -33,6 +33,17 @@ namespace MWGui
                 return Place{ offset > 0.f ? 1.f : -1.f, true };
             return Place{ offset / halfWidth, false };
         }
+
+        Level level(float height)
+        {
+            // About a storey.
+            constexpr float aboveBelow = 256.f;
+            if (height > aboveBelow)
+                return Level::Above;
+            if (height < -aboveBelow)
+                return Level::Below;
+            return Level::Same;
+        }
     }
 
     namespace
@@ -43,8 +54,6 @@ namespace MWGui
         constexpr int sLabelWidth = 32;
         // The compass shows this many degrees each side of the way the camera faces.
         constexpr float sHalfWidth = 90.f;
-        // A target this much higher or lower than the player gets an arrow.
-        constexpr float sAboveBelow = 256.f;
         constexpr const char* sMarkerTexture = "textures\\omw\\quest_marker.png";
 
         struct Label
@@ -133,9 +142,9 @@ namespace MWGui
             mMarkers[i]->setVisible(true);
             mMarkers[i]->setAlpha(where.mPinned ? 0.6f : 1.f);
             mMarkers[i]->setPosition(x - sMarkerSize / 2, mMarkers[i]->getTop());
-            const float height = targets[i].z() - playerPos.z();
-            const bool above = height > sAboveBelow;
-            const bool below = height < -sAboveBelow;
+            const Compass::Level level = Compass::level(targets[i].z() - playerPos.z());
+            const bool above = level == Compass::Level::Above;
+            const bool below = level == Compass::Level::Below;
             mArrows[i]->setVisible(above || below);
             if (above || below)
             {
