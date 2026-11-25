@@ -1,0 +1,17 @@
+# The reviewed quest markers of IL_RescueRagash.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_RescueRagash
+stages:
+  - stage: 10
+    verdict: right  # Baladas and Ragash, both in Arvs-Drelen, are marked.
+    marked: ["baladas demnevanni", "ragash gra-shuzgub"]
+  - stage: 40
+    verdict: right  # Ragash is marked to lead her out.
+    marked: ["ragash gra-shuzgub"]
+  - stage: 50
+    verdict: corrected  # The tower's door out to Gnisis is marked as the goal, with Ragash, who follows the player.
+    marked: ["cell:gnisis", "ragash gra-shuzgub"]
+  - stage: 70
+    verdict: right  # General Darius is marked to report.
+    marked: ["general darius"]

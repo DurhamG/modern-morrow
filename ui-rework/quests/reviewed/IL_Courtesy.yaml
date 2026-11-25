@@ -1,0 +1,14 @@
+# The reviewed quest markers of IL_Courtesy.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_Courtesy
+stages:
+  - stage: 10
+    verdict: right  # Salyn Sarethi in the Tower of Dusk is marked for the contest.
+    marked: ["salyn sarethi"]
+  - stage: 50
+    verdict: corrected  # After the win only Frald the White is marked; the losing answer from Salyn is hidden.
+    marked: ["frald the white"]
+  - stage: 70
+    verdict: right  # Frald the White is marked to report the loss.
+    marked: ["frald the white"]

@@ -1,0 +1,9 @@
+# The reviewed quest markers of HT_Muck.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_Muck
+stages:
+  - stage: 10
+    verdict: corrected  # The scattered muck holders are hidden, Anis Seloth is an optional seller, and Raven is marked once five are carried
+    marked: ["raven omayn"]
+    optional: ["anis seloth"]

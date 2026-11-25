@@ -1,0 +1,20 @@
+# The reviewed quest markers of IC16_Haunting.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC16_Haunting
+stages:
+  - stage: 1
+    verdict: corrected  # Only Nedhelas is marked. Kaye waits until the ghost is dead
+    marked: ["nedhelas"]
+  - stage: 5
+    verdict: corrected  # No line sets this stage, and the journal records giving up, so nothing is marked
+    marked: []
+  - stage: 10
+    verdict: corrected  # No line sets this stage. Only Nedhelas is marked, as at 1
+    marked: ["nedhelas"]
+  - stage: 12
+    verdict: corrected  # The ghost is marked, then Nedhelas. Kaye waits until the house is safe
+    marked: ["ancestor_guardian_heler", "nedhelas"]
+  - stage: 15
+    verdict: right  # Nedhelas has been told, and Kaye is marked to report
+    marked: ["kaye"]

@@ -1,0 +1,15 @@
+# The reviewed quest markers of IC29_Crusher.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC29_Crusher
+stages:
+  - stage: 1
+    verdict: corrected  # Only the savant Llaalam Dredil is marked, because the ruin isn't named yet
+    marked: ["llaalam dredil"]
+  - stage: 10
+    verdict: corrected  # The warhammer in the vaults is marked, and Llaalam's hint about the tombs is optional
+    marked: ["lalatia varian", "warhammer_crusher_unique"]
+    optional: ["llaalam dredil"]
+  - stage: 15
+    verdict: unfixable  # The warhammer is marked, then Lalatia. A player who skipped the scout hasn't heard of Anudnabia, and the stage can't tell
+    marked: ["lalatia varian", "warhammer_crusher_unique"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of HT_NchuleftKey.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_NchuleftKey
+stages:
+  - stage: 10
+    verdict: corrected  # The two copies outside Nchuleft are hidden, the ruin is marked, then Mallam Ryon
+    marked: ["cell:nchuleft", "mallam ryon"]

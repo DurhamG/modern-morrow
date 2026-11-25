@@ -3,9 +3,9 @@
 # questcorrections.yaml, and the reviewer's verdict.
 quest: B4_HeartFire
 stages:
-  - stage: 5
-    verdict: right  # the token was given back, and nothing is left to do in this quest
-    marked: []
   - stage: 1
     verdict: right  # Han-Ammu is marked only once the other two tokens are given, which is when the main Erabenimsun quest sends the player to him too
     marked: ["han-ammu", "heart_of_fire"]
+  - stage: 5
+    verdict: right  # the token was given back, and nothing is left to do in this quest
+    marked: []

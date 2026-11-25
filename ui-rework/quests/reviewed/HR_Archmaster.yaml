@@ -1,0 +1,14 @@
+# The reviewed quest markers of HR_Archmaster.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_Archmaster
+stages:
+  - stage: 10
+    verdict: right  # Bolvyn Venim's greeting issues the challenge, though no line sets this stage
+    marked: ["bolvyn venim"]
+  - stage: 50
+    verdict: corrected  # The duel only happens in the Arena Pit, so the pit is marked instead of his manor
+    marked: ["cell:vivec, arena pit"]
+  - stage: 70
+    verdict: unfixable  # The journal says to see Athyn Sarethi, but nothing ever sets 100, so no marker on him could go away
+    marked: []

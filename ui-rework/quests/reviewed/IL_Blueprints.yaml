@@ -1,0 +1,8 @@
+# The reviewed quest markers of IL_Blueprints.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_Blueprints
+stages:
+  - stage: 10
+    verdict: right  # The only copy of the Anumidium plans lies in Tel Vos, so the fetch marks it, and Darius once it is carried.
+    marked: ["general darius", "misc_dwrv_artifact30"]

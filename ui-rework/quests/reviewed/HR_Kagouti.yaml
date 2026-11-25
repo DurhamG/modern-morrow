@@ -1,0 +1,8 @@
+# The reviewed quest markers of HR_Kagouti.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_Kagouti
+stages:
+  - stage: 10
+    verdict: right  # The pack leader is marked to kill, then Theldyn Virith
+    marked: ["kagouti_hrk", "theldyn virith"]

@@ -1,0 +1,17 @@
+# The reviewed quest markers of HR_HonorChallenge.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_HonorChallenge
+stages:
+  - stage: 10
+    verdict: right  # Ondres Nerano is marked, and Athyn's murder line is left out while playing by its local check
+    marked: ["athyn sarethi", "ondres nerano"]
+  - stage: 50
+    verdict: right  # Ondres is marked during the duel, and the murder line stays out
+    marked: ["athyn sarethi", "ondres nerano"]
+  - stage: 70
+    verdict: right  # Ondres's forced greeting withdraws the slander at once, and Athyn is marked to report to
+    marked: ["athyn sarethi", "ondres nerano"]
+  - stage: 80
+    verdict: right  # Athyn is the one to report to
+    marked: ["athyn sarethi"]

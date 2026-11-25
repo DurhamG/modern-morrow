@@ -9,6 +9,9 @@ stages:
   - stage: 10
     verdict: corrected  # a dead end after a murder; Sarethi's refusal always wins, so his ways to 25 and 50 are hidden and nothing is marked
     marked: []
+  - stage: 25
+    verdict: corrected  # only reached after a murder, where Sarethi still refuses; his ways to 50 are hidden and nothing is marked
+    marked: []
   - stage: 50
     verdict: right  # Sarethi has named the player; the next steps belong to the other councilors' quests
     marked: []

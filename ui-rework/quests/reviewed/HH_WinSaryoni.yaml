@@ -1,0 +1,17 @@
+# The reviewed quest markers of HH_WinSaryoni.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_WinSaryoni
+stages:
+  - stage: 10
+    verdict: corrected  # Only Saryoni is marked, not the robe he asks for later
+    marked: ["tholer saryoni"]
+  - stage: 50
+    verdict: right  # The robe in Assemanu and then Saryoni are marked
+    marked: ["robe of st roris", "tholer saryoni"]
+  - stage: 70
+    verdict: right  # Duke Dren is marked
+    marked: ["vedam dren"]
+  - stage: 110
+    verdict: right  # Duke Dren heard that Berel Sala is dead before the task began, nothing more can be done, and nothing is marked
+    marked: []

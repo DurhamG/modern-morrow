@@ -6,6 +6,9 @@ stages:
   - stage: 10
     verdict: corrected  # marks Tenyeminwe to start the escort; the ship isn't marked until she follows
     marked: ["tenyeminwe"]
+  - stage: 30
+    verdict: corrected  # marks the ship at the docks once Tenyeminwe follows, as at 50
+    marked: ["gals arethi", "tenyeminwe"]
   - stage: 50
     verdict: corrected  # marks the ship at the docks, without reporting to Skink before she is safe
     marked: ["gals arethi", "tenyeminwe"]

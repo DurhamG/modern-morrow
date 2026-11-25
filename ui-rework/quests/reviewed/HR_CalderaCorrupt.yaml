@@ -1,0 +1,15 @@
+# The reviewed quest markers of HR_CalderaCorrupt.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_CalderaCorrupt
+stages:
+  - stage: 10
+    verdict: corrected  # Cunius Pelelius in the Governor's Hall is marked, Dahleena is optional, and the book waits for the key
+    marked: ["cunius pelelius", "garisa llethri"]
+    optional: ["dahleena"]
+  - stage: 30
+    verdict: corrected  # The book and then Garisa are marked; Dahleena's hint is no longer needed
+    marked: ["bk_calderarecordbook2", "garisa llethri"]
+  - stage: 70
+    verdict: right  # The book in Odral Helvi's chest and then Garisa are marked
+    marked: ["bk_calderarecordbook2", "garisa llethri"]

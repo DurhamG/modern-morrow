@@ -1,0 +1,17 @@
+# The reviewed quest markers of IL_ProtectEntius.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_ProtectEntius
+stages:
+  - stage: 10
+    verdict: right  # Saprius Entius in the Arena storage is marked.
+    marked: ["saprius entius"]
+  - stage: 40
+    verdict: right  # Saprius Entius is marked to talk to after the ambush.
+    marked: ["saprius entius"]
+  - stage: 50
+    verdict: right  # The Hawkmoth garrison is marked as the escort's goal.
+    marked: ["cell:ebonheart, hawkmoth legion garrison", "saprius entius"]
+  - stage: 70
+    verdict: right  # Frald the White is marked to report.
+    marked: ["frald the white"]

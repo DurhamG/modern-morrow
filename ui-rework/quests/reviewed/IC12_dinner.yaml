@@ -1,0 +1,12 @@
+# The reviewed quest markers of IC12_dinner.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC12_dinner
+stages:
+  - stage: 1
+    verdict: corrected  # The four Balmora publicans are marked until each gives, the Council Club is optional after Bacola's hint, and Iulus waits for five bottles
+    marked: ["bacola closcius", "banor seran", "benunius agrudilius", "dulnea ralaal", "iulus truptor"]
+    optional: ["cell:balmora, council club"]
+  - stage: 5
+    verdict: corrected  # No line sets this stage, and the journal records giving up, so nothing is marked
+    marked: []

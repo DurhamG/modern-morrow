@@ -1,0 +1,14 @@
+# The reviewed quest markers of HR_FindTharen.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_FindTharen
+stages:
+  - stage: 10
+    verdict: right  # Fedris Tharen at the Koal Cave entrance is marked
+    marked: ["fedris tharen"]
+  - stage: 50
+    verdict: right  # Both choices are marked: heal Fedris or report to Lloros
+    marked: ["fedris tharen", "lloros sarano"]
+  - stage: 70
+    verdict: right  # Lloros Sarano is marked to report back
+    marked: ["lloros sarano"]

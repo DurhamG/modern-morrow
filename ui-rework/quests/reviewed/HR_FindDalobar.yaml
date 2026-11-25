@@ -1,0 +1,20 @@
+# The reviewed quest markers of HR_FindDalobar.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_FindDalobar
+stages:
+  - stage: 10
+    verdict: right  # Mathis is marked in Rothan Tomb on the road to Maar Gan; the clue entries 20 and 30 are never set, so nothing else leads there
+    marked: ["mathis dalobar"]
+  - stage: 20
+    verdict: right  # Mathis is marked where he sheltered from the storm
+    marked: ["mathis dalobar"]
+  - stage: 30
+    verdict: right  # Mathis is marked in Rothan Tomb, which the journal names
+    marked: ["mathis dalobar"]
+  - stage: 50
+    verdict: right  # He follows the player, and the Maar Gan Shrine is marked
+    marked: ["cell:maar gan, shrine"]
+  - stage: 70
+    verdict: right  # Neminda is marked to report back
+    marked: ["neminda"]

@@ -1,0 +1,17 @@
+# The reviewed quest markers of IL_TalosTreason.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_TalosTreason
+stages:
+  - stage: 10
+    verdict: corrected  # Oritius Maro in the barracks is marked; the letter in the locked shrine is hidden.
+    marked: ["oritius maro"]
+  - stage: 20
+    verdict: corrected  # Arius Rulician is marked as the journal asks.
+    marked: ["arius rulician"]
+  - stage: 30
+    verdict: right  # The letter in the shrine is marked, then Darius.
+    marked: ["bk_talostreason", "general darius"]
+  - stage: 50
+    verdict: corrected  # The two traitors are marked to kill, then Darius; the letter Darius holds is left out.
+    marked: ["arius rulician", "general darius", "oritius maro"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC27_Oracle.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC27_Oracle
+stages:
+  - stage: 1
+    verdict: corrected  # Adusamsi in Rotheran is marked until her own quest starts, and that quest is followed. Lalatia and the Ice Blade show once the ring is returned
+    marked: ["adusamsi assurnarairan", "claymore_iceblade_unique", "lalatia varian"]

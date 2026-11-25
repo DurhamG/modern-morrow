@@ -1,0 +1,29 @@
+# The reviewed quest markers of HR_FindGiladren.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_FindGiladren
+stages:
+  - stage: 10
+    verdict: corrected  # Tralas Rendas at the Maar Gan shrine is marked, not the camp the journal hasn't named
+    marked: ["tralas rendas"]
+  - stage: 30
+    verdict: right  # Manat Shimmabadas at the camp is marked
+    marked: ["manat shimmabadas"]
+  - stage: 50
+    verdict: right  # Manat Shimmabadas is marked, though no line sets this stage
+    marked: ["manat shimmabadas"]
+  - stage: 55
+    verdict: corrected  # Only Beden is marked, as Manat suggested
+    marked: ["beden giladren"]
+  - stage: 60
+    verdict: right  # Manat is marked to accept the small ransom
+    marked: ["manat shimmabadas"]
+  - stage: 70
+    verdict: corrected  # Beden and Lloros are marked; the full ransom can't come up any more
+    marked: ["beden giladren", "lloros sarano"]
+  - stage: 75
+    verdict: right  # Beden and Lloros are marked
+    marked: ["beden giladren", "lloros sarano"]
+  - stage: 90
+    verdict: right  # Lloros Sarano is marked to report back
+    marked: ["lloros sarano"]

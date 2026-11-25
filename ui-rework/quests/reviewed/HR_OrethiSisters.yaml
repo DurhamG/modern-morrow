@@ -1,0 +1,20 @@
+# The reviewed quest markers of HR_OrethiSisters.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_OrethiSisters
+stages:
+  - stage: 10
+    verdict: right  # No line or script starts or moves this quest, so nothing is marked
+    marked: []
+  - stage: 20
+    verdict: right  # No line or script starts or moves this quest, so nothing is marked
+    marked: []
+  - stage: 30
+    verdict: right  # No line or script starts or moves this quest, so nothing is marked
+    marked: []
+  - stage: 50
+    verdict: right  # No line or script starts or moves this quest, so nothing is marked
+    marked: []
+  - stage: 70
+    verdict: right  # No line or script starts or moves this quest, so nothing is marked
+    marked: []

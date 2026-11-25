@@ -1,0 +1,17 @@
+# The reviewed quest markers of HR_MadMilk.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_MadMilk
+stages:
+  - stage: 10
+    verdict: corrected  # Llerar Mandas, then the rescue quest's markers, the locket and Arethan, instead of a kill marker on Arethan
+    marked: ["arethan mandas", "athyn sarethi", "delyna mandas", "llerar mandas"]
+  - stage: 30
+    verdict: corrected  # Nothing sets this stage, but it gets the same markers as stage 10
+    marked: ["arethan mandas", "athyn sarethi", "delyna mandas", "llerar mandas"]
+  - stage: 70
+    verdict: right  # Athyn Sarethi is the one to report to after the locket is given
+    marked: ["athyn sarethi"]
+  - stage: 90
+    verdict: right  # Nothing sets this stage, and Athyn would be the one to report to
+    marked: ["athyn sarethi"]

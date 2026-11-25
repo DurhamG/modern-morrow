@@ -1,0 +1,8 @@
+# The reviewed quest markers of IL_Necromancer.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_Necromancer
+stages:
+  - stage: 10
+    verdict: right  # Sorkvild is marked to kill, then Radd Hard-Heart.
+    marked: ["radd hard-heart", "sorkvild the raven"]

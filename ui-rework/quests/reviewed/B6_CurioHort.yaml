@@ -7,11 +7,11 @@ stages:
     verdict: corrected  # a councilor is dead, so Curio's refusal line always wins over his gift answers; nothing is marked
     marked: []
   - stage: 50
-    verdict: unfixable  # the belt step needs all four other votes, which one after condition can't test; the repeat vote is hidden, so nothing is marked
+    verdict: corrected  # the repeat vote is hidden; the belt step is marked through B6_HlaaluBook once all five councilors have voted
     marked: []
   - stage: 60
-    verdict: unfixable  # same as 50: the repeat vote is hidden, and the belt step after the other votes can't be marked
+    verdict: corrected  # same as 50: the repeat vote is hidden, and B6_HlaaluBook marks the belt step after all five votes
     marked: []
   - stage: 65
-    verdict: unfixable  # Curio has voted; the belt step after the other four votes moves only B6_HlaaluHort and can't wait for all four, so nothing is marked
+    verdict: right  # Curio has voted and nothing is left in his quest; B6_HlaaluBook marks the belt step after all five votes
     marked: []

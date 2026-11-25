@@ -1,0 +1,8 @@
+# The reviewed quest markers of TT_GalomDeus.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_GalomDeus
+stages:
+  - stage: 10
+    verdict: right  # Raxle Berne is marked to kill, then Tharer Rotheloth.
+    marked: ["raxle berne", "tharer rotheloth"]

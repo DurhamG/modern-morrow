@@ -1,0 +1,15 @@
+# The reviewed quest markers of HH_IndEsp4.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_IndEsp4
+stages:
+  - stage: 10
+    verdict: corrected  # Both choices are marked, Ponius and the mine boss, with the directions optional
+    marked: ["canctunian ponius", "darns tedalen", "nileno dorvayn"]
+  - stage: 20
+    verdict: right  # Ponius and the mine boss are both marked
+    marked: ["canctunian ponius", "darns tedalen", "nileno dorvayn"]
+  - stage: 50
+    verdict: corrected  # Nileno Dorvayn is marked, with the bonus kill optional
+    marked: ["nileno dorvayn"]
+    optional: ["darns tedalen"]

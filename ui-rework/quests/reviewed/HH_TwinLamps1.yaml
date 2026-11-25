@@ -1,0 +1,22 @@
+# The reviewed quest markers of HH_TwinLamps1.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_TwinLamps1
+stages:
+  - stage: 5
+    verdict: corrected  # Ilmeni Dren is optional, and the escort is not marked before it starts
+    marked: []
+    optional: ["ilmeni dren"]
+  - stage: 10
+    verdict: corrected  # Galyn Arvel is marked as the journal says
+    marked: ["galyn arvel"]
+  - stage: 30
+    verdict: corrected  # J'Saddha is marked, with the slavehunters as optional kills
+    marked: ["j_saddha"]
+    optional: ["anes hlaren", "garyn girith", "sadal doren"]
+  - stage: 50
+    verdict: right  # J'Saddha follows and Galyn Arvel at the boat is marked
+    marked: ["galyn arvel", "j_saddha"]
+  - stage: 70
+    verdict: right  # Ilmeni Dren is marked
+    marked: ["ilmeni dren"]

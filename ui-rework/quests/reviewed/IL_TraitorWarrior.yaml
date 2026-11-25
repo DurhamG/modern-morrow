@@ -1,0 +1,8 @@
+# The reviewed quest markers of IL_TraitorWarrior.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_TraitorWarrior
+stages:
+  - stage: 10
+    verdict: right  # Honthjolf is marked to kill, then Frald the White.
+    marked: ["frald the white", "honthjolf"]

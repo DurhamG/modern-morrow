@@ -1,0 +1,14 @@
+# The reviewed quest markers of HT_BaladasAlly.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_BaladasAlly
+stages:
+  - stage: 10
+    verdict: right  # Baladas Demnevanni is the one to persuade
+    marked: ["baladas demnevanni"]
+  - stage: 30
+    verdict: corrected  # Baladas is marked until the book quest starts, and the book quests are followed, since his own way waits for all three books
+    marked: ["baladas demnevanni"]
+  - stage: 50
+    verdict: right  # Aryon is the one to report to
+    marked: ["aryon"]

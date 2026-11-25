@@ -1,0 +1,28 @@
+# The reviewed quest markers of HT_DwemerLaw.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_DwemerLaw
+stages:
+  - stage: 5
+    verdict: corrected  # The test-cell fetch is hidden, Baladas is marked for each book carried, and sellers and the Nchuleft ruin are optional hints for both other books
+    marked: ["baladas demnevanni"]
+    optional: ["cell:nchuleft", "dorisa darvel", "ethes evos", "jobasha"]
+  - stage: 30
+    verdict: corrected  # No line sets this stage; it gets the same markers as stage 5
+    marked: ["baladas demnevanni"]
+    optional: ["cell:nchuleft", "dorisa darvel", "ethes evos", "jobasha"]
+  - stage: 31
+    verdict: corrected  # No line sets this stage; it gets the same markers as stage 5
+    marked: ["baladas demnevanni"]
+    optional: ["cell:nchuleft", "dorisa darvel", "ethes evos", "jobasha"]
+  - stage: 32
+    verdict: corrected  # No line sets this stage; it gets the same markers as stage 5, with Ethes Evos optional
+    marked: ["baladas demnevanni"]
+    optional: ["cell:nchuleft", "dorisa darvel", "ethes evos", "jobasha"]
+  - stage: 50
+    verdict: right  # The player carries Ethes Evos's copy and Baladas is marked
+    marked: ["baladas demnevanni", "bk_antecedantsdwemerlaw"]
+  - stage: 100
+    verdict: corrected  # The last-book ways that mark nothing or eight scattered copies are hidden, and Baladas and the hints for both remaining books are kept
+    marked: ["baladas demnevanni"]
+    optional: ["cell:nchuleft", "dorisa darvel", "jobasha"]

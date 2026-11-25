@@ -1,0 +1,11 @@
+# The reviewed quest markers of HR_HlaanoSlanders.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_HlaanoSlanders
+stages:
+  - stage: 10
+    verdict: right  # Meril Hlaano is marked, and killing him is set aside as a failure
+    marked: ["meril hlaano"]
+  - stage: 50
+    verdict: right  # Faral Retheran is the one to report to
+    marked: ["faral retheran"]

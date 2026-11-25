@@ -360,3 +360,11 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   made six corrections unnecessary; targets can wait for several conditions at once, a global variable, or several of
   an item; and a quest's warning about a changed fingerprint gives the new one. With these, the last steps of the
   Hlaalu and Telvanni Hortator chapters could be marked, but they still need entries.
+- The Imperial Cult, Imperial Legion and Tribunal Temple are reviewed, the third batch, and the three Great Houses,
+  the fourth. Batch 3 has 255 stages: 138 right, 115 corrected, 2 unfixable. Batch 4 has 343: 167 right, 174
+  corrected, 2 unfixable. Second reviewers disagreed at 16 and 13 stages. The last steps of the Hlaalu and Telvanni
+  Hortator chapters are now marked, on the stage of each chapter's book quest. Engine changes from these batches:
+  stages that a line sets without a journal entry are reviewed and can have entries, lines that need a faction rank
+  the player lacks or gold the player doesn't carry are left out while playing, an answer in a conversation only
+  counts at the stage its offering line sets, and the review sheets say when a placement is somewhere the markers
+  can't reach.

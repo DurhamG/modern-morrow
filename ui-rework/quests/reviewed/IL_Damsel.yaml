@@ -1,0 +1,14 @@
+# The reviewed quest markers of IL_Damsel.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_Damsel
+stages:
+  - stage: 10
+    verdict: right  # Dandsa in Abernanit is marked.
+    marked: ["dandsa"]
+  - stage: 50
+    verdict: unfixable  # The goal is the way out of the cave, which no target can name; only Dandsa, who follows the player, is marked.
+    marked: ["dandsa"]
+  - stage: 70
+    verdict: right  # Radd Hard-Heart is marked to report.
+    marked: ["radd hard-heart"]

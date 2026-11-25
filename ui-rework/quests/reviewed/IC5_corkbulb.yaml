@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC5_corkbulb.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC5_corkbulb
+stages:
+  - stage: 1
+    verdict: corrected  # The scattered holders are hidden, and Synnolian is marked once the player has five corkbulb roots
+    marked: ["synnolian tunifus"]

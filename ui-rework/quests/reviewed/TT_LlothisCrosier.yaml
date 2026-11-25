@@ -1,0 +1,8 @@
+# The reviewed quest markers of TT_LlothisCrosier.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_LlothisCrosier
+stages:
+  - stage: 10
+    verdict: right  # The crosier in Dagoth Ur's inner tower is marked, then Uvoo Llaren.
+    marked: ["crosierstllothis", "uvoo llaren"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of HH_SunkenTreasure.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_SunkenTreasure
+stages:
+  - stage: 10
+    verdict: right  # The wakizashi in the wreck is marked, then Edryno Arethi
+    marked: ["daedric wakizashi_hhst", "edryno arethi"]

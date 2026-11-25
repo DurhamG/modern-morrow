@@ -1,0 +1,8 @@
+# The reviewed quest markers of TT_PuzzleCanal.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_PuzzleCanal
+stages:
+  - stage: 50
+    verdict: right  # The shrine at the Puzzle Canal is marked.
+    marked: ["ac_shrine_puzzlecanal"]

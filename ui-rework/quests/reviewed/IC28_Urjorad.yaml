@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC28_Urjorad.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC28_Urjorad
+stages:
+  - stage: 1
+    verdict: right  # The scroll and the two priests are both marked, since the journal offers either, then Lalatia
+    marked: ["carecalmo", "lalatia varian", "meryaran", "sc_fiercelyroastthyenemy_unique"]

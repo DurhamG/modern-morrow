@@ -1,0 +1,11 @@
+# The reviewed quest markers of TT_SupplyMonk.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_SupplyMonk
+stages:
+  - stage: 10
+    verdict: right  # The player carries the food and drink, so Sendas Sathis is marked.
+    marked: ["food_kwama_egg_01", "potion_local_brew_01", "sendus sathis"]
+  - stage: 50
+    verdict: right  # Uvoo Llaren is marked to report.
+    marked: ["uvoo llaren"]

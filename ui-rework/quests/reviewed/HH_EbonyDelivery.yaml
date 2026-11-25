@@ -1,0 +1,17 @@
+# The reviewed quest markers of HH_EbonyDelivery.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_EbonyDelivery
+stages:
+  - stage: 10
+    verdict: corrected  # Drinar Varyon is marked as the journal says
+    marked: ["drinar varyon", "ingred_raw_ebony_01"]
+  - stage: 20
+    verdict: corrected  # Segunivus Mantedius is marked as the journal says
+    marked: ["ingred_raw_ebony_01", "segunivus mantedius"]
+  - stage: 50
+    verdict: corrected  # Odral Helvi is marked for the reward
+    marked: ["odral helvi"]
+  - stage: 60
+    verdict: corrected  # Crassius Curio is marked, since Odral has been arrested
+    marked: ["crassius curio"]

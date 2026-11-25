@@ -1,0 +1,11 @@
+# The reviewed quest markers of IL_TaxesBaladas.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_TaxesBaladas
+stages:
+  - stage: 10
+    verdict: right  # No line starts or moves this quest, so there is nothing to mark.
+    marked: []
+  - stage: 50
+    verdict: right  # No line starts or moves this quest, so there is nothing to mark.
+    marked: []

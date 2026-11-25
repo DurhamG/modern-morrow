@@ -1,0 +1,30 @@
+# The reviewed quest markers of HT_SpyBaladas.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_SpyBaladas
+stages:
+  - stage: 1
+    verdict: right  # Mallam Ryon, who explains the task, and Baladas, whom the journal names, are marked
+    marked: ["baladas demnevanni", "mallam ryon"]
+  - stage: 10
+    verdict: right  # Baladas Demnevanni is the one to ask
+    marked: ["baladas demnevanni"]
+  - stage: 50
+    verdict: right  # Baladas is still the one to ask
+    marked: ["baladas demnevanni"]
+  - stage: 51
+    verdict: right  # Baladas is still the one to ask
+    marked: ["baladas demnevanni"]
+  - stage: 60
+    verdict: right  # Baladas is still the one to ask
+    marked: ["baladas demnevanni"]
+  - stage: 61
+    verdict: right  # Baladas is still the one to ask
+    marked: ["baladas demnevanni"]
+  - stage: 70
+    verdict: corrected  # Mallam Ryon is marked to report to, and Baladas's fuller answer is optional
+    marked: ["mallam ryon"]
+    optional: ["baladas demnevanni"]
+  - stage: 71
+    verdict: right  # Mallam Ryon is the one to report to
+    marked: ["mallam ryon"]

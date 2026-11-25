@@ -1,0 +1,14 @@
+# The reviewed quest markers of HT_FireAndFaith.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_FireAndFaith
+stages:
+  - stage: 30
+    verdict: corrected  # The eight scattered copies are hidden and the Vivec temple's secret library with its copy is marked, then Baladas
+    marked: ["baladas demnevanni", "cell:vivec, hall of justice secret library"]
+  - stage: 31
+    verdict: corrected  # The eight scattered copies are hidden and Dorisa Darvel's shop is marked, then Baladas
+    marked: ["baladas demnevanni", "cell:balmora, dorisa darvel: bookseller"]
+  - stage: 100
+    verdict: right  # The book is delivered and nothing is left in this quest
+    marked: []

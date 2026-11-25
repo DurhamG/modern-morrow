@@ -1,0 +1,22 @@
+# The reviewed quest markers of HH_CaptureSpy.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_CaptureSpy
+stages:
+  - stage: 10
+    verdict: corrected  # The two suspects the townsfolk name are optional, and the thief is not given away
+    marked: ["odral helvi"]
+    optional: ["elmussa damori", "irgola"]
+  - stage: 20
+    verdict: corrected  # Same as at 10
+    marked: ["odral helvi"]
+    optional: ["elmussa damori", "irgola"]
+  - stage: 40
+    verdict: corrected  # The contracts and Odral Helvi are marked, not Elmussa again
+    marked: ["bk_calderaminingcontract", "odral helvi"]
+  - stage: 41
+    verdict: corrected  # The contracts and Odral Helvi are marked, not Crassius Curio
+    marked: ["bk_calderaminingcontract", "odral helvi"]
+  - stage: 50
+    verdict: right  # The contracts and Odral Helvi are marked
+    marked: ["bk_calderaminingcontract", "odral helvi"]

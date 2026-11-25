@@ -1,0 +1,14 @@
+# The reviewed quest markers of HH_AshlanderEbony.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_AshlanderEbony
+stages:
+  - stage: 10
+    verdict: right  # The Ashlanders in Zainab Camp are marked, and while playing the gulakhan in the camp the journal names; Edryno only for a player who killed a Zainab
+    marked: ["edryno arethi", "faction:ashlanders"]
+  - stage: 30
+    verdict: right  # Ashibaal is marked as the journal says
+    marked: ["ashibaal", "edryno arethi"]
+  - stage: 50
+    verdict: right  # Edryno Arethi is marked for the report
+    marked: ["edryno arethi"]

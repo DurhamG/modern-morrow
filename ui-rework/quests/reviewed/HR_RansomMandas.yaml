@@ -1,0 +1,22 @@
+# The reviewed quest markers of HR_RansomMandas.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_RansomMandas
+stages:
+  - stage: 20
+    verdict: corrected  # Delyna in Tel Fyr is marked, Divayth Fyr is optional, and Arethan's greeting in Milk is left out
+    marked: ["delyna mandas"]
+    optional: ["divayth fyr"]
+  - stage: 30
+    verdict: right  # Delyna Mandas is marked
+    marked: ["delyna mandas"]
+  - stage: 50
+    verdict: right  # Delyna follows the player, and the outside of Tel Fyr is marked
+    marked: ["cell:tel fyr"]
+  - stage: 70
+    verdict: corrected  # Llerar Mandas is marked, and Delyna's locket is optional
+    marked: ["llerar mandas"]
+    optional: ["delyna mandas"]
+  - stage: 90
+    verdict: right  # Llerar Mandas is the one to report to
+    marked: ["llerar mandas"]

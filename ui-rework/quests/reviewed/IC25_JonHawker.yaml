@@ -1,0 +1,14 @@
+# The reviewed quest markers of IC25_JonHawker.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC25_JonHawker
+stages:
+  - stage: 1
+    verdict: corrected  # Only the savant Llaalam Dredil is marked, because the riddle doesn't name Nammu yet
+    marked: ["llaalam dredil"]
+  - stage: 5
+    verdict: corrected  # The ring in Nammu is marked, then Lalatia. The second hint from Llaalam is left out
+    marked: ["lalatia varian", "ring_wind_unique"]
+  - stage: 10
+    verdict: right  # The ring in Nammu is marked, then Lalatia
+    marked: ["lalatia varian", "ring_wind_unique"]

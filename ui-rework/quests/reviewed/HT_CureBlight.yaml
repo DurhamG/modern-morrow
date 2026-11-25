@@ -1,0 +1,15 @@
+# The reviewed quest markers of HT_CureBlight.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_CureBlight
+stages:
+  - stage: 10
+    verdict: corrected  # The scattered potion chests are hidden, Andil is marked once three potions are carried, and the free potions from Pierlette are optional
+    marked: ["andil"]
+    optional: ["pierlette rostorard"]
+  - stage: 40
+    verdict: corrected  # Andil is marked while the three potions are carried, without the scattered potion chests
+    marked: ["andil"]
+  - stage: 50
+    verdict: right  # Galos Mathendis is the one to report to
+    marked: ["galos mathendis"]

@@ -1,0 +1,17 @@
+# The reviewed quest markers of HR_OldFlame.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_OldFlame
+stages:
+  - stage: 10
+    verdict: corrected  # Toris Saren is marked, without Hlaren's unrelated Nalvyna Sarinith answer
+    marked: ["toris saren"]
+  - stage: 30
+    verdict: corrected  # Toris Saren is marked, without Hlaren's unrelated Nalvyna Sarinith answer
+    marked: ["toris saren"]
+  - stage: 40
+    verdict: corrected  # Nalvilie Saren is marked, without Hlaren's unrelated Nalvyna Sarinith answer
+    marked: ["nalvilie saren"]
+  - stage: 50
+    verdict: right  # Hlaren Ramoran is the one to report to
+    marked: ["hlaren ramoran"]

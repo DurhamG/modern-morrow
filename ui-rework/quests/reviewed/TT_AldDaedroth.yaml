@@ -1,0 +1,8 @@
+# The reviewed quest markers of TT_AldDaedroth.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_AldDaedroth
+stages:
+  - stage: 10
+    verdict: corrected  # The glove is marked, then Sheogorath's statue once the player holds it.
+    marked: ["active_dae_sheogorath_ad", "extravagant_rt_art_wild"]

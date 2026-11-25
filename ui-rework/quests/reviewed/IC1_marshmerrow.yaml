@@ -1,0 +1,14 @@
+# The reviewed quest markers of IC1_marshmerrow.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC1_marshmerrow
+stages:
+  - stage: 1
+    verdict: corrected  # Balur Salvu is marked until the player has the marshmerrow, then Synnolian, without the far potion copies or scattered holders
+    marked: ["balur salvu", "synnolian tunifus"]
+  - stage: 10
+    verdict: corrected  # Balur's house, where the marshmerrow grows, is marked until the player has five, then Synnolian
+    marked: ["balur salvu", "synnolian tunifus"]
+  - stage: 15
+    verdict: corrected  # Balur's house is marked until the player has five marshmerrow, then Synnolian
+    marked: ["balur salvu", "synnolian tunifus"]

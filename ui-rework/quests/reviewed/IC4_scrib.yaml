@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC4_scrib.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC4_scrib
+stages:
+  - stage: 1
+    verdict: corrected  # The Shulk Egg Mine is marked until the player has five scrib jelly, then Synnolian
+    marked: ["cell:shulk egg mine", "synnolian tunifus"]

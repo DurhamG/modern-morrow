@@ -1,0 +1,50 @@
+# The reviewed quest markers of HT_Stronghold.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_Stronghold
+stages:
+  - stage: 5
+    verdict: corrected  # Only Llunela Hleran is marked, without the later book in Galom Daeus
+    marked: ["llunela hleran"]
+  - stage: 10
+    verdict: corrected  # Vedam Dren is marked for the contract and Llunela for the soul gems, without the book in Galom Daeus
+    marked: ["bk_stronghold_c_hlaalu", "llunela hleran", "vedam dren"]
+  - stage: 20
+    verdict: corrected  # Vedam Dren is marked for the contract and Llunela is optional after it, since the souls can't be marked
+    marked: ["bk_stronghold_c_hlaalu", "llunela hleran", "vedam dren"]
+  - stage: 50
+    verdict: corrected  # The building takes some days, and the book in Galom Daeus is hidden
+    marked: []
+  - stage: 55
+    verdict: corrected  # Only Llunela Hleran is marked
+    marked: ["llunela hleran"]
+  - stage: 60
+    verdict: corrected  # Only the foreman at Uvirith's Grave is marked
+    marked: ["gashnakh gra-mughol"]
+  - stage: 70
+    verdict: corrected  # Only Llunela Hleran is marked to report to
+    marked: ["llunela hleran"]
+  - stage: 90
+    verdict: corrected  # The building takes some days, and the book in Galom Daeus is hidden
+    marked: []
+  - stage: 100
+    verdict: corrected  # Only Llunela Hleran is marked to order the next stage
+    marked: ["llunela hleran"]
+  - stage: 105
+    verdict: corrected  # Only Llunela Hleran is marked to order the next stage
+    marked: ["llunela hleran"]
+  - stage: 110
+    verdict: corrected  # The schematics in Mzanchend are marked until carried, then Llunela once the gold is carried too
+    marked: ["llunela hleran", "misc_dwrv_artifact70"]
+  - stage: 170
+    verdict: corrected  # The building takes some days, and the book in Galom Daeus is hidden
+    marked: []
+  - stage: 200
+    verdict: corrected  # Only Llunela Hleran is marked, who names the book
+    marked: ["llunela hleran"]
+  - stage: 210
+    verdict: right  # The book in Galom Daeus is marked, then Llunela
+    marked: ["bk_secretsdwemeranimunculi", "llunela hleran"]
+  - stage: 270
+    verdict: right  # The last stage takes some days and nothing is to be done
+    marked: []

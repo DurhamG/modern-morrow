@@ -3,28 +3,28 @@
 # questcorrections.yaml, and the reviewer's verdict.
 quest: B4_KillWarLovers
 stages:
-  - stage: 43
-    verdict: right  # Han-Ammu is marked, to ask him to name the player Nerevarine
+  - stage: 1
+    verdict: right  # Manirai, the wise woman, is the only way forward after Ulath-Pal's refusal
+    marked: ["manirai"]
+  - stage: 5
+    verdict: corrected  # the four war chiefs to kill are marked, then Manirai; the analysis counted that way as a failure and marked Han-Ammu's later lines
+    marked: ["ahaz", "ashu-ahhe", "manirai", "ranabi", "ulath-pal"]
+  - stage: 10
+    verdict: corrected  # Han-Ammu is marked as the journal says; the token ways are optional, so the dead chiefs who carry the tokens get hollow markers
     marked: ["han-ammu"]
-  - stage: 42
+    optional: ["heart_of_fire", "robe_of_erur_dan", "war_axe_airan_ammu"]
+  - stage: 35
+    verdict: corrected  # only Han-Ammu is marked, to ask him to name the player; the token ways are spoilers
+    marked: ["han-ammu"]
+  - stage: 40
     verdict: corrected  # only Han-Ammu is marked, to ask him to name the player; giving more tokens is not needed
     marked: ["han-ammu"]
   - stage: 41
     verdict: corrected  # only Han-Ammu is marked, to ask him to name the player; giving more tokens is not needed
     marked: ["han-ammu"]
-  - stage: 40
+  - stage: 42
     verdict: corrected  # only Han-Ammu is marked, to ask him to name the player; giving more tokens is not needed
     marked: ["han-ammu"]
-  - stage: 35
-    verdict: corrected  # only Han-Ammu is marked, to ask him to name the player; the token ways are spoilers
+  - stage: 43
+    verdict: right  # Han-Ammu is marked, to ask him to name the player Nerevarine
     marked: ["han-ammu"]
-  - stage: 10
-    verdict: corrected  # Han-Ammu is marked as the journal says; the token ways are optional, so the dead chiefs who carry the tokens get hollow markers
-    marked: ["han-ammu"]
-    optional: ["heart_of_fire", "robe_of_erur_dan", "war_axe_airan_ammu"]
-  - stage: 5
-    verdict: corrected  # the four war chiefs to kill are marked, then Manirai; the analysis counted that way as a failure and marked Han-Ammu's later lines
-    marked: ["ahaz", "ashu-ahhe", "manirai", "ranabi", "ulath-pal"]
-  - stage: 1
-    verdict: right  # Manirai, the wise woman, is the only way forward after Ulath-Pal's refusal
-    marked: ["manirai"]

@@ -1,0 +1,24 @@
+# The reviewed quest markers of IL_RescueHermit.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_RescueHermit
+stages:
+  - stage: 10
+    verdict: corrected  # Zennammu, the outcast who holds Jocien, is marked; Assaba-Bentus is a side step.
+    marked: ["zennammu"]
+    optional: ["assaba-bentus"]
+  - stage: 20
+    verdict: right  # Assaba-Bentus is marked, whom Zennammu asked for.
+    marked: ["assaba-bentus"]
+  - stage: 25
+    verdict: corrected  # Zennammu's yurt is marked as the place to lead Assaba-Bentus.
+    marked: ["assaba-bentus", "cell:shashurari camp, zennammu's yurt"]
+  - stage: 30
+    verdict: right  # Zennammu is marked to free Jocien.
+    marked: ["zennammu"]
+  - stage: 50
+    verdict: right  # Jocien in the yurt and Radd Hard-Heart are both marked, and either finishes the rescue.
+    marked: ["jocien ancois", "radd hard-heart"]
+  - stage: 70
+    verdict: right  # Radd Hard-Heart is marked to report.
+    marked: ["radd hard-heart"]

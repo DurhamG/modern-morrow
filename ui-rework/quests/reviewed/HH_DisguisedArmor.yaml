@@ -1,0 +1,14 @@
+# The reviewed quest markers of HH_DisguisedArmor.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_DisguisedArmor
+stages:
+  - stage: 10
+    verdict: corrected  # Neminda is marked, not Nileno Dorvayn
+    marked: ["neminda"]
+  - stage: 11
+    verdict: right  # Neminda is marked
+    marked: ["neminda"]
+  - stage: 50
+    verdict: corrected  # Only Nileno Dorvayn is marked for the scroll
+    marked: ["bk_nemindasorders", "nileno dorvayn"]

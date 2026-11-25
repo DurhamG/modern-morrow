@@ -1,0 +1,14 @@
+# The reviewed quest markers of HR_GuardGuarHerds.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_GuardGuarHerds
+stages:
+  - stage: 10
+    verdict: corrected  # Only Drulene Falen is marked; the bandits' tomb comes later
+    marked: ["drulene falen"]
+  - stage: 20
+    verdict: right  # The bandits south of the herds, in Telvayn Ancestral Tomb, and then Drulene are marked
+    marked: ["bandit_scarred_de_hrggh", "bandit_scruffy_de_hrggh", "drulene falen"]
+  - stage: 50
+    verdict: right  # Neminda is marked to report back
+    marked: ["neminda"]

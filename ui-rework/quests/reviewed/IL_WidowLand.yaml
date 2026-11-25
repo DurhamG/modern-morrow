@@ -1,0 +1,20 @@
+# The reviewed quest markers of IL_WidowLand.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_WidowLand
+stages:
+  - stage: 10
+    verdict: right  # The widow and the deed in her hut are both marked, as two ways to get it.
+    marked: ["bk_widowdeed", "general darius", "widow vabdas"]
+  - stage: 30
+    verdict: right  # The widow is marked to ask about her husband, with the deed as the other way.
+    marked: ["bk_widowdeed", "general darius", "widow vabdas"]
+  - stage: 40
+    verdict: right  # The ghost in the eggmine's stream is marked, with the deed still a choice.
+    marked: ["ancestor_ghost_vabdas", "bk_widowdeed", "general darius"]
+  - stage: 50
+    verdict: right  # The axe is marked, then Darius, with the deed still a choice.
+    marked: ["bk_widowdeed", "general darius", "lugrub's axe"]
+  - stage: 70
+    verdict: corrected  # Only Lugrub is marked to kill, then Darius; the deed is dropped.
+    marked: ["general darius", "lugrub gro-ogdum"]

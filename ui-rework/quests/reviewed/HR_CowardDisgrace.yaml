@@ -1,0 +1,14 @@
+# The reviewed quest markers of HR_CowardDisgrace.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_CowardDisgrace
+stages:
+  - stage: 10
+    verdict: corrected  # Rothis is marked until he agrees, not five scattered potion copies or the arena
+    marked: ["rothis nethan"]
+  - stage: 50
+    verdict: corrected  # The Arena Pit, where the duel starts, is marked
+    marked: ["cell:vivec, arena pit"]
+  - stage: 70
+    verdict: right  # Faral Retheran is marked to report the duel
+    marked: ["faral retheran"]

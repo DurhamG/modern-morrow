@@ -1,0 +1,14 @@
+# The reviewed quest markers of HR_GuardSarethi.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_GuardSarethi
+stages:
+  - stage: 10
+    verdict: right  # The assassins stay disabled until Athyn's greeting, so Athyn is marked first, then the assassins, then Athyn again
+    marked: ["arsyn salas", "athyn sarethi", "gragus lleran"]
+  - stage: 30
+    verdict: right  # Nothing sets this stage, and it would mark the same as stage 10
+    marked: ["arsyn salas", "athyn sarethi", "gragus lleran"]
+  - stage: 50
+    verdict: right  # Neminda is the one to report to
+    marked: ["neminda"]

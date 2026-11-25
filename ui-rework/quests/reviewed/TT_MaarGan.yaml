@@ -1,0 +1,20 @@
+# The reviewed quest markers of TT_MaarGan.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_MaarGan
+stages:
+  - stage: 10
+    verdict: right  # The rock at the shrine is marked; the Dremora waits for 20, and the way to Tuls needs TT_Hassour done.
+    marked: ["ac_maar_gan_magic_rock", "dremora_ttmg", "tuls valen"]
+  - stage: 20
+    verdict: corrected  # The rock has been read, so the Dremora in the shrine is marked to taunt until the taunts are done.
+    marked: ["dremora_ttmg", "tuls valen"]
+  - stage: 30
+    verdict: right  # The rock and Tuls Valen are both marked, and either ends the pilgrimage.
+    marked: ["ac_maar_gan_magic_rock", "tuls valen"]
+  - stage: 50
+    verdict: right  # The Dremora is dead, and the rock and Tuls Valen are both marked, as either ends the pilgrimage.
+    marked: ["ac_maar_gan_magic_rock", "tuls valen"]
+  - stage: 60
+    verdict: right  # Tuls Valen is marked to report.
+    marked: ["tuls valen"]

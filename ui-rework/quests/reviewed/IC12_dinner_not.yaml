@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC12_dinner_not.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC12_dinner_not
+stages:
+  - stage: 1
+    verdict: right  # The player gave up the dinner, nothing moves this quest on, and nothing is marked
+    marked: []

@@ -1,0 +1,23 @@
+# The reviewed quest markers of HR_SixthHouseBase.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_SixthHouseBase
+stages:
+  - stage: 10
+    verdict: corrected  # Varvur Sarethi is marked, without Galtis and Hanarai, whom the journal hasn't named
+    marked: ["varvur sarethi"]
+  - stage: 20
+    verdict: corrected  # Galtis Guvron is marked, without the common ash statue's carriers or Hanarai
+    marked: ["galtis guvron"]
+  - stage: 30
+    verdict: corrected  # Galtis Guvron is marked, without the common ash statue's carriers or Hanarai
+    marked: ["galtis guvron"]
+  - stage: 50
+    verdict: corrected  # The note on Galtis's body, then Lloros Sarano, without Hanarai
+    marked: ["bk_galtisguvronsnote", "lloros sarano"]
+  - stage: 60
+    verdict: right  # Hanarai Assutlanipal is marked
+    marked: ["hanarai assutlanipal"]
+  - stage: 80
+    verdict: right  # Hanarai is marked to kill, then Lloros Sarano
+    marked: ["hanarai assutlanipal", "lloros sarano"]

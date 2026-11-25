@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC10_persius.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC10_persius
+stages:
+  - stage: 1
+    verdict: right  # The donor has given, and the Buckmoth quest marks what comes next
+    marked: []

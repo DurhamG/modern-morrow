@@ -1,0 +1,28 @@
+# The reviewed quest markers of HR_ClearSarethi.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_ClearSarethi
+stages:
+  - stage: 10
+    verdict: corrected  # Only Varvur is marked; the statue and Lloros come later
+    marked: ["varvur sarethi"]
+  - stage: 20
+    verdict: corrected  # The statue in Varvur's room, which he brings up, and then Varvur are marked
+    marked: ["misc_6th_ash_hrcs", "varvur sarethi"]
+  - stage: 30
+    verdict: corrected  # Lloros Sarano at the Temple takes the statue; Athyn's pointer to him is optional
+    marked: ["lloros sarano", "misc_6th_ash_hrcs"]
+    optional: ["athyn sarethi"]
+  - stage: 50
+    verdict: right  # Lloros Sarano is marked as Athyn suggested
+    marked: ["lloros sarano", "misc_6th_ash_hrcs"]
+  - stage: 80
+    verdict: right  # The statue and then Lloros are marked
+    marked: ["lloros sarano", "misc_6th_ash_hrcs"]
+  - stage: 90
+    verdict: corrected  # Only Varvur is marked, as the journal asks; Athyn's early ending is left out
+    marked: ["varvur sarethi"]
+  - stage: 95
+    verdict: corrected  # Lloros clears Varvur; reporting to Athyn is optional
+    marked: ["lloros sarano"]
+    optional: ["athyn sarethi"]

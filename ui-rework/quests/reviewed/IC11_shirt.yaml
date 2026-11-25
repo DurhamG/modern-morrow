@@ -1,0 +1,14 @@
+# The reviewed quest markers of IC11_shirt.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC11_shirt
+stages:
+  - stage: 1
+    verdict: corrected  # Falanaamo the clothier is marked, the tomb copies of the shirt are hidden, and Iulus waits for the shirt
+    marked: ["falanaamo", "iulus truptor"]
+  - stage: 5
+    verdict: corrected  # No line sets this stage, and the journal records giving up, so nothing is marked
+    marked: []
+  - stage: 10
+    verdict: corrected  # Iulus Truptor is marked once the player carries the shirt, and the tomb copies are hidden
+    marked: ["iulus truptor"]

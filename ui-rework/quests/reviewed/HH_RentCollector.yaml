@@ -1,0 +1,21 @@
+# The reviewed quest markers of HH_RentCollector.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_RentCollector
+stages:
+  - stage: 10
+    verdict: corrected  # Both farmers are marked, not Rovone Arvel or Crassius Curio
+    marked: ["llovyn andus", "manat varnan-adda"]
+  - stage: 50
+    verdict: corrected  # The second farmer is marked
+    marked: ["manat varnan-adda"]
+  - stage: 60
+    verdict: corrected  # The kills the journal asked for are marked, with Rovone Arvel optional
+    marked: ["llovyn andus", "manat varnan-adda", "odral helvi"]
+    optional: ["rovone arvel"]
+  - stage: 65
+    verdict: corrected  # Only Odral Helvi is marked for paying the rent
+    marked: ["odral helvi"]
+  - stage: 70
+    verdict: right  # Odral Helvi is marked
+    marked: ["odral helvi"]

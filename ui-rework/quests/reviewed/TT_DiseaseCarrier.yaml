@@ -1,0 +1,17 @@
+# The reviewed quest markers of TT_DiseaseCarrier.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_DiseaseCarrier
+stages:
+  - stage: 10
+    verdict: corrected  # Tanusea Veloth is marked; the sermons, whose only carrier is a test crate, are not.
+    marked: ["tanusea veloth"]
+  - stage: 30
+    verdict: corrected  # Tanusea Veloth stays marked until she agrees, without the kill or the sermons.
+    marked: ["tanusea veloth"]
+  - stage: 40
+    verdict: corrected  # Endryn Llethan is marked to report her death.
+    marked: ["endryn llethan", "tanusea veloth"]
+  - stage: 50
+    verdict: right  # Endryn Llethan is marked to report.
+    marked: ["endryn llethan"]

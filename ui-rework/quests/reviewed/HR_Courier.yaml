@@ -1,0 +1,18 @@
+# The reviewed quest markers of HR_Courier.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_Courier
+stages:
+  - stage: 10
+    verdict: corrected  # Theldyn Virith is marked; Neminda's directions are optional
+    marked: ["p_cure_common_s", "theldyn virith"]
+    optional: ["neminda"]
+  - stage: 20
+    verdict: right  # Theldyn Virith takes the potion the player carries
+    marked: ["p_cure_common_s", "theldyn virith"]
+  - stage: 30
+    verdict: right  # Theldyn Virith takes the potion the player carries
+    marked: ["p_cure_common_s", "theldyn virith"]
+  - stage: 40
+    verdict: right  # Neminda is marked to report back
+    marked: ["neminda"]

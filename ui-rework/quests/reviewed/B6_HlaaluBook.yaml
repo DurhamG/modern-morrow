@@ -4,9 +4,9 @@
 quest: B6_HlaaluBook
 stages:
   - stage: 1
-    verdict: corrected  # the book lists the councilors, so each one is marked until their quest starts; Nileno's paid hint is optional
+    verdict: corrected  # the book lists the councilors, so each one is marked until their quest starts; Nileno's paid hint is optional; Curio is marked for the belt once all five have voted
     marked: ["crassius curio", "nevena ules", "velanda omani", "yngling half-troll"]
     optional: ["nileno dorvayn"]
   - stage: 30
-    verdict: corrected  # journal names Curio and the book lists the rest, so each councilor is marked until their quest starts
+    verdict: corrected  # journal names Curio and the book lists the rest, so each councilor is marked until their quest starts, then Curio for the belt once all five have voted
     marked: ["crassius curio", "nevena ules", "velanda omani", "yngling half-troll"]

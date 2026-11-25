@@ -1,0 +1,17 @@
+# The reviewed quest markers of IC2_Muck.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC2_Muck
+stages:
+  - stage: 1
+    verdict: corrected  # Ogrul is marked, Shand's hut until the player has five muck, then Synnolian, without the scattered holders
+    marked: ["cell:gnisis, shand hut", "chaplain ogrul", "p_restore_health_b", "synnolian tunifus"]
+  - stage: 10
+    verdict: corrected  # Ogrul stays marked for the spell, Shand's hut until the muck is gathered, then Synnolian
+    marked: ["cell:gnisis, shand hut", "chaplain ogrul", "synnolian tunifus"]
+  - stage: 15
+    verdict: corrected  # Ogrul's decline choice is hidden, Shand's hut is marked until the muck is gathered, then Synnolian
+    marked: ["cell:gnisis, shand hut", "synnolian tunifus"]
+  - stage: 20
+    verdict: corrected  # Shand's hut is marked until the player has five muck, then Synnolian
+    marked: ["cell:gnisis, shand hut", "synnolian tunifus"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of IL_Smuggler.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_Smuggler
+stages:
+  - stage: 10
+    verdict: corrected  # Only the tube in Drinar Varyon's house and then Imsin are marked; the kills are hidden.
+    marked: ["imsin the dreamer", "misc_dwrv_artifact_ils"]

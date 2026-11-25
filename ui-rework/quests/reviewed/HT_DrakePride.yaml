@@ -1,0 +1,8 @@
+# The reviewed quest markers of HT_DrakePride.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_DrakePride
+stages:
+  - stage: 10
+    verdict: right  # The robe is marked on Senise Thindo in Tel Aruhn, then Neloth
+    marked: ["exquisite_robe_drake's pride", "neloth"]

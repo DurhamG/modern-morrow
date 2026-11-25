@@ -1,0 +1,8 @@
+# The reviewed quest markers of HT_FleshAmulet.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_FleshAmulet
+stages:
+  - stage: 10
+    verdict: right  # The amulet is marked on Berengeval, Neloth's archer captain, then Dratha
+    marked: ["amuletfleshmadewhole_uniq", "dratha"]

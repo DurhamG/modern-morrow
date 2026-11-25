@@ -1,0 +1,11 @@
+# The reviewed quest markers of IC14_Demand.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC14_Demand
+stages:
+  - stage: 1
+    verdict: right  # Mossanon refused to pay, and he is marked to ask again
+    marked: ["mossanon"]
+  - stage: 5
+    verdict: right  # Mossanon paid. The gold goes to Ponius, whom IC14_Ponius marks
+    marked: []

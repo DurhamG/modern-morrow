@@ -1,0 +1,11 @@
+# The reviewed quest markers of HH_NordSmugglers.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_NordSmugglers
+stages:
+  - stage: 10
+    verdict: right  # Velfred is marked to talk to, and killing him stays unmarked
+    marked: ["velfred"]
+  - stage: 50
+    verdict: right  # Crassius Curio is marked
+    marked: ["crassius curio"]

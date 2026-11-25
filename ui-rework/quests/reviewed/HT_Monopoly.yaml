@@ -1,0 +1,29 @@
+# The reviewed quest markers of HT_Monopoly.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_Monopoly
+stages:
+  - stage: 10
+    verdict: corrected  # All four councilors with a journal step are marked, with Sarethi optional
+    marked: ["aryon", "brara morvayn", "garisa llethri", "hlaren ramoran", "miner arobar"]
+    optional: ["athyn sarethi"]
+  - stage: 30
+    verdict: corrected  # No line sets this stage; it gets the same markers as stage 10
+    marked: ["aryon", "brara morvayn", "garisa llethri", "hlaren ramoran", "miner arobar"]
+    optional: ["athyn sarethi"]
+  - stage: 31
+    verdict: corrected  # The three councilors who have not agreed are marked, with Sarethi optional
+    marked: ["aryon", "garisa llethri", "hlaren ramoran", "miner arobar"]
+    optional: ["athyn sarethi"]
+  - stage: 32
+    verdict: corrected  # Llethri and Ramoran are marked, and Sarethi, Morvayn and Aryon are optional
+    marked: ["aryon", "garisa llethri", "hlaren ramoran"]
+    optional: ["athyn sarethi", "brara morvayn"]
+  - stage: 33
+    verdict: corrected  # Ramoran is marked, and the councilors who may not have agreed and Aryon are optional
+    marked: ["aryon", "hlaren ramoran"]
+    optional: ["athyn sarethi", "brara morvayn", "miner arobar"]
+  - stage: 34
+    verdict: corrected  # The councilors who may not have agreed and Aryon are optional, where nothing was marked before
+    marked: ["aryon"]
+    optional: ["athyn sarethi", "brara morvayn", "garisa llethri", "miner arobar"]

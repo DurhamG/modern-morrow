@@ -1,0 +1,11 @@
+# The reviewed quest markers of IC8_Heidmir.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC8_Heidmir
+stages:
+  - stage: 10
+    verdict: corrected  # Heidmir only says he gave already, so he is no longer marked
+    marked: []
+  - stage: 20
+    verdict: right  # Heidmir has given all he will
+    marked: []

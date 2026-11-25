@@ -1,0 +1,11 @@
+# The reviewed quest markers of HH_IndEsp2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_IndEsp2
+stages:
+  - stage: 10
+    verdict: right  # Rolasa Oren is marked
+    marked: ["rolasa oren"]
+  - stage: 50
+    verdict: right  # Nileno Dorvayn is marked
+    marked: ["nileno dorvayn"]

@@ -1,0 +1,11 @@
+# The reviewed quest markers of HH_LiteracyCampaign.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_LiteracyCampaign
+stages:
+  - stage: 10
+    verdict: right  # The books are marked where few enough copies exist, then Vala Catraso
+    marked: ["bk_abcs", "bk_annotatedanuad", "bk_childrensanuad", "vala catraso"]
+  - stage: 50
+    verdict: right  # Ilmeni Dren is marked
+    marked: ["ilmeni dren"]

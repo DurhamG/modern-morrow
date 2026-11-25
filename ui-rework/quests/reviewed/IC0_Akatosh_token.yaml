@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC0_Akatosh_token.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC0_Akatosh_token
+stages:
+  - stage: 5
+    verdict: right  # The ring is a gift and nothing is left to do
+    marked: []

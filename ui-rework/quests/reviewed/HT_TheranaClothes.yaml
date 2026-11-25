@@ -1,0 +1,17 @@
+# The reviewed quest markers of HT_TheranaClothes.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_TheranaClothes
+stages:
+  - stage: 10
+    verdict: corrected  # Therana is marked, without the slave trick that no journal suggests yet
+    marked: ["therana"]
+  - stage: 50
+    verdict: corrected  # No line sets this stage; it gets the same markers as stage 10
+    marked: ["therana"]
+  - stage: 70
+    verdict: corrected  # Felisa Ulessen is marked to report to, without the slave who no longer matters
+    marked: ["felisa ulessen"]
+  - stage: 72
+    verdict: right  # Felisa Ulessen is the one to report to
+    marked: ["felisa ulessen"]

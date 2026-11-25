@@ -1,0 +1,14 @@
+# The reviewed quest markers of HR_TaxCollector.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_TaxCollector
+stages:
+  - stage: 10
+    verdict: right  # Hetman Abelmawia is marked
+    marked: ["hetman abelmawia"]
+  - stage: 50
+    verdict: right  # Hlaren Ramoran is the one to give the taxes to
+    marked: ["hlaren ramoran"]
+  - stage: 70
+    verdict: corrected  # Hlaren refuses for good after the lie, so nothing is marked
+    marked: []

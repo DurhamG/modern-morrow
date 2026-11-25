@@ -1,0 +1,8 @@
+# The reviewed quest markers of HR_RedasTomb.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_RedasTomb
+stages:
+  - stage: 10
+    verdict: right  # The three treasures are marked in the tomb, then Faral Retheran
+    marked: ["dwarven war axe_redas", "extravagant_robe_01_red", "faral retheran", "misc_de_goblet_01_redas"]

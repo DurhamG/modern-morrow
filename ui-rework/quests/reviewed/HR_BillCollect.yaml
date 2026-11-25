@@ -1,0 +1,27 @@
+# The reviewed quest markers of HR_BillCollect.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_BillCollect
+stages:
+  - stage: 10
+    verdict: corrected  # Only Giras is marked; Tuveso needs the money and the brothers come later
+    marked: ["giras indaram"]
+  - stage: 20
+    verdict: corrected  # Asking the Buoyant Armigers in Molag Mar is the only lead, marked as a side step
+    marked: []
+    optional: ["cell:molag mar"]
+  - stage: 30
+    verdict: corrected  # Tidros is marked, since the journal names the brothers and Birer sends the player to him
+    marked: ["tidros indaram"]
+  - stage: 50
+    verdict: corrected  # Giras is marked for the duel; Tuveso waits for the money
+    marked: ["giras indaram"]
+  - stage: 60
+    verdict: corrected  # Giras is marked to accept the duel; Tuveso waits for the money
+    marked: ["giras indaram"]
+  - stage: 70
+    verdict: corrected  # Giras is marked for the duel itself; Tuveso waits until he has paid
+    marked: ["giras indaram"]
+  - stage: 90
+    verdict: right  # Tuveso Beleth takes the money
+    marked: ["tuveso beleth"]

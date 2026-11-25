@@ -1,0 +1,20 @@
+# The reviewed quest markers of TT_Compassion.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_Compassion
+stages:
+  - stage: 10
+    verdict: corrected  # Bulfim is marked to cure, not kill; the Moon-and-Star way set by mistake is hidden.
+    marked: ["bulfim_gra_shugarz"]
+  - stage: 50
+    verdict: corrected  # Only Tuls Valen is marked to report.
+    marked: ["tuls valen"]
+  - stage: 55
+    verdict: corrected  # Elvil's answer sets this by mistake, and only Tuls Valen can move the quest on, so only he is marked.
+    marked: ["tuls valen"]
+  - stage: 99
+    verdict: corrected  # Tuls Valen is asking about the potion, so only he is marked, without the potion copies or the kill.
+    marked: ["tuls valen"]
+  - stage: 110
+    verdict: corrected  # The potion was handed back and nothing is left to do; the kill of the cured Bulfim is hidden.
+    marked: []

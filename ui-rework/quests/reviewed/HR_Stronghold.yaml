@@ -1,0 +1,83 @@
+# The reviewed quest markers of HR_Stronghold.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_Stronghold
+stages:
+  - stage: 10
+    verdict: corrected  # Vedam Dren's contract, then Galsa Gindu, without the wife lines
+    marked: ["bk_stronghold_c_hlaalu", "galsa gindu"]
+  - stage: 50
+    verdict: corrected  # Nothing is marked while the build script runs, without the wife lines
+    marked: []
+  - stage: 55
+    verdict: corrected  # Galsa Gindu is marked, without the wife lines
+    marked: ["galsa gindu"]
+  - stage: 60
+    verdict: corrected  # The foreman Bugdul gro-Kharbush is marked, without the wife lines
+    marked: ["bugdul gro-kharbush"]
+  - stage: 70
+    verdict: corrected  # Galsa Gindu is marked, without the wife lines
+    marked: ["galsa gindu"]
+  - stage: 90
+    verdict: corrected  # Nothing is marked while the build script runs, without the wife lines
+    marked: []
+  - stage: 100
+    verdict: corrected  # Galsa Gindu is marked, without Persius before she sends the player to him
+    marked: ["galsa gindu"]
+  - stage: 110
+    verdict: corrected  # Persius Mercius is marked, without the wife lines
+    marked: ["persius mercius"]
+  - stage: 130
+    verdict: corrected  # Frelene Acques and the cell keys in the prison are marked, without the wife lines
+    marked: ["frelene acques", "key_vivec_hlaalu_cell"]
+  - stage: 140
+    verdict: corrected  # Frelene Acques and the cell keys in the prison are marked, without the wife lines
+    marked: ["frelene acques", "key_vivec_hlaalu_cell"]
+  - stage: 141
+    verdict: corrected  # The door out of the prison is marked while Frelene follows
+    marked: ["cell:vivec, hlaalu treasury"]
+  - stage: 144
+    verdict: corrected  # Persius Mercius is marked, without the cell key
+    marked: ["persius mercius"]
+  - stage: 145
+    verdict: corrected  # Persius Mercius is marked, without the wife lines
+    marked: ["persius mercius"]
+  - stage: 150
+    verdict: corrected  # Galsa Gindu is marked, without the wife lines
+    marked: ["galsa gindu"]
+  - stage: 170
+    verdict: corrected  # Nothing is marked while the build script runs, without the wife lines
+    marked: []
+  - stage: 200
+    verdict: corrected  # Galsa Gindu is marked, without Viras before she sends the player to him
+    marked: ["galsa gindu"]
+  - stage: 210
+    verdict: corrected  # Viras Guls is marked, without the wife lines
+    marked: ["viras guls"]
+  - stage: 220
+    verdict: corrected  # Aryni, Fathusa and Savile are marked, Helviane is optional, and Galyn is left out
+    marked: ["aryni orethi", "fathusa girethi", "savile imayn"]
+    optional: ["helviane desele"]
+  - stage: 231
+    verdict: corrected  # Fathusa or Savile are marked, Helviane is optional
+    marked: ["fathusa girethi", "savile imayn"]
+    optional: ["helviane desele"]
+  - stage: 232
+    verdict: corrected  # Viras Guls is marked, with Aryni optional in case she wasn't asked yet, and Savile and Helviane optional
+    marked: ["viras guls"]
+    optional: ["aryni orethi", "helviane desele", "savile imayn"]
+  - stage: 240
+    verdict: corrected  # Viras Guls is marked, without the other wife sources
+    marked: ["viras guls"]
+  - stage: 242
+    verdict: corrected  # Viras Guls is marked, without Galyn Arvel
+    marked: ["viras guls"]
+  - stage: 245
+    verdict: right  # Viras Guls is the one to report to
+    marked: ["viras guls"]
+  - stage: 250
+    verdict: right  # Galsa Gindu is the one to report to
+    marked: ["galsa gindu"]
+  - stage: 270
+    verdict: right  # Nothing is marked while the last build script runs
+    marked: []

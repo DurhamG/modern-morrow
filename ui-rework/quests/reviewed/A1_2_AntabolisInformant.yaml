@@ -3,18 +3,18 @@
 # questcorrections.yaml, and the reviewer's verdict.
 quest: A1_2_AntabolisInformant
 stages:
-  - stage: 15
-    verdict: right  # Carry the notes to Caius, who is marked once the player has them.
-    marked: ["bk_a1_2_antabolistocosades", "caius cosades"]
-  - stage: 10
-    verdict: right  # Hasphat is ready to talk about the Sixth House, and he is marked.
-    marked: ["hasphat antabolis"]
-  - stage: 7
-    verdict: right  # The player has the puzzle box and Hasphat is marked to take it.
-    marked: ["hasphat antabolis", "misc_dwrv_ark_cube00"]
-  - stage: 5
-    verdict: right  # The puzzle box in Arkngthand is marked, then Hasphat once it is fetched.
-    marked: ["hasphat antabolis", "misc_dwrv_ark_cube00"]
   - stage: 1
     verdict: corrected  # Only Hasphat is marked; the puzzle box isn't named until he asks for it.
     marked: ["hasphat antabolis"]
+  - stage: 5
+    verdict: right  # The puzzle box in Arkngthand is marked, then Hasphat once it is fetched.
+    marked: ["hasphat antabolis", "misc_dwrv_ark_cube00"]
+  - stage: 7
+    verdict: right  # The player has the puzzle box and Hasphat is marked to take it.
+    marked: ["hasphat antabolis", "misc_dwrv_ark_cube00"]
+  - stage: 10
+    verdict: right  # Hasphat is ready to talk about the Sixth House, and he is marked.
+    marked: ["hasphat antabolis"]
+  - stage: 15
+    verdict: right  # Carry the notes to Caius, who is marked once the player has them.
+    marked: ["bk_a1_2_antabolistocosades", "caius cosades"]

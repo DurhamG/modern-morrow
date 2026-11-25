@@ -1,0 +1,14 @@
+# The reviewed quest markers of HT_RecruitEddie.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_RecruitEddie
+stages:
+  - stage: 10
+    verdict: corrected  # Only Enar Releth and Raven Omayn, who name a candidate, are marked, not Eddie or staff carriers
+    marked: ["enar releth", "raven omayn"]
+  - stage: 30
+    verdict: corrected  # Fast Eddie is marked without the six unrelated carriers of the staff
+    marked: ["edd theman"]
+  - stage: 50
+    verdict: right  # Aryon is the one to report to
+    marked: ["aryon"]

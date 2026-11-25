@@ -1,0 +1,68 @@
+# The reviewed quest markers of HH_Stronghold.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_Stronghold
+stages:
+  - stage: 5
+    verdict: corrected  # Dondos Driler is marked, not the papers or the guard who comes later
+    marked: ["dondos driler"]
+  - stage: 10
+    verdict: corrected  # The papers and Dondos Driler are marked, and the guard is hidden
+    marked: ["bk_stronghold_c_hlaalu", "bk_stronghold_ld_hlaalu", "dondos driler"]
+  - stage: 50
+    verdict: corrected  # Nothing is marked while the build script waits
+    marked: []
+  - stage: 55
+    verdict: corrected  # Dondos Driler is marked, and the guard is hidden
+    marked: ["dondos driler"]
+  - stage: 60
+    verdict: corrected  # Durbul gro-Rush is marked, and the guard is hidden
+    marked: ["durbul gro-rush"]
+  - stage: 70
+    verdict: corrected  # Dondos Driler is marked, and the guard is hidden
+    marked: ["dondos driler"]
+  - stage: 90
+    verdict: corrected  # Nothing is marked while the build script waits
+    marked: []
+  - stage: 100
+    verdict: corrected  # Dondos Driler is marked, not the slaver in Tel Aruhn
+    marked: ["dondos driler"]
+  - stage: 105
+    verdict: corrected  # Same as at 100
+    marked: ["dondos driler"]
+  - stage: 110
+    verdict: corrected  # The blighted queen is marked, with Dondos's hints optional
+    marked: ["kwama queen_shurdan", "kwama queen_shurdan_c"]
+    optional: ["dondos driler"]
+  - stage: 120
+    verdict: corrected  # The queen is marked, with Hetman Abelmawia optional for the cure blight scroll; the seller of potions is left out
+    marked: ["kwama queen_shurdan", "kwama queen_shurdan_c"]
+    optional: ["dondos driler", "hetman abelmawia"]
+  - stage: 130
+    verdict: corrected  # The two miners are marked, with the queen optional
+    marked: ["ilasour tansumiran", "savile imayn"]
+    optional: ["kwama queen_shurdan", "kwama queen_shurdan_c"]
+  - stage: 140
+    verdict: corrected  # The two miners are marked, and the guard is hidden
+    marked: ["ilasour tansumiran", "savile imayn"]
+  - stage: 150
+    verdict: corrected  # Dondos Driler is marked, and the guard is hidden
+    marked: ["dondos driler"]
+  - stage: 170
+    verdict: corrected  # Nothing is marked while the build script waits
+    marked: []
+  - stage: 200
+    verdict: corrected  # Dondos Driler is marked, not the bandit leader no one has named yet
+    marked: ["dondos driler"]
+  - stage: 210
+    verdict: right  # Flaenia Amiulusus for the guard and the bandit leader to kill are marked, then Dondos Driler
+    marked: ["dondos driler", "flaenia amiulusus", "maros gimayn"]
+  - stage: 220
+    verdict: right  # Fjorgeir and the bandit leader are marked
+    marked: ["dondos driler", "fjorgeir", "maros gimayn"]
+  - stage: 250
+    verdict: right  # The bandit leader is marked to kill, then Dondos Driler
+    marked: ["dondos driler", "maros gimayn"]
+  - stage: 270
+    verdict: right  # Nothing is marked while the build script waits
+    marked: []

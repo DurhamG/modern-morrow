@@ -1,0 +1,25 @@
+# The reviewed quest markers of IC15_Missing_Limeware.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC15_Missing_Limeware
+stages:
+  - stage: 1
+    verdict: corrected  # Asking High Elves is optional, and Gnaar Mok and the bowl in Mournhold are left out
+    marked: []
+    optional: ["cell:ebonheart"]
+  - stage: 5
+    verdict: corrected  # No line sets this stage, and the journal records giving up, so nothing is marked
+    marked: []
+  - stage: 10
+    verdict: corrected  # Caryarel in Gnaar Mok is marked, the sailing directions are optional, and the bowl in Mournhold is left out
+    marked: ["caryarel", "kaye"]
+    optional: ["cell:ebonheart"]
+  - stage: 15
+    verdict: corrected  # Caryarel is marked and the bowl in Mournhold is left out. Kaye waits for the bowl
+    marked: ["caryarel", "kaye"]
+  - stage: 20
+    verdict: corrected  # No line sets this stage. Caryarel is marked as at 15
+    marked: ["caryarel", "kaye"]
+  - stage: 25
+    verdict: corrected  # Caryarel's shack is marked until the player has the bowl, and Kaye from then on
+    marked: ["cell:gnaar mok, caryarel's shack", "kaye"]

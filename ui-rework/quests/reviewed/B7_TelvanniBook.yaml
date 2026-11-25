@@ -4,5 +4,5 @@
 quest: B7_TelvanniBook
 stages:
   - stage: 1
-    verdict: corrected  # the book lists the councilors, so each one is marked until their quest starts
+    verdict: corrected  # the book lists the councilors, so each one is marked until their quest starts; Aryon is marked once the others have voted and Gothren is dead
     marked: ["aryon", "baladas demnevanni", "dratha", "gothren", "neloth", "therana"]

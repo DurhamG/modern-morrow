@@ -1,0 +1,8 @@
+# The reviewed quest markers of HT_DahrkMezalf.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_DahrkMezalf
+stages:
+  - stage: 10
+    verdict: right  # The ring is marked on Dahrk Mezalf in Bthungthumz, which the journal names, then Baladas
+    marked: ["baladas demnevanni", "ring_dahrkmezalf_uniq"]

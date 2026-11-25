@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC10_manis.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC10_manis
+stages:
+  - stage: 1
+    verdict: right  # No line sets this stage, and nothing is marked
+    marked: []

@@ -1,0 +1,11 @@
+# The reviewed quest markers of HR_FoundersHelm.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_FoundersHelm
+stages:
+  - stage: 10
+    verdict: corrected  # Alvis Teri is marked, not two unrelated copies of the helm; Neminda once a helm is carried
+    marked: ["alvis teri", "neminda"]
+  - stage: 50
+    verdict: right  # The player carries the helm, so Neminda is marked
+    marked: ["bonemold_founders_helm", "neminda"]

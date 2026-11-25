@@ -1,0 +1,11 @@
+# The reviewed quest markers of HH_BuriedTreasure.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_BuriedTreasure
+stages:
+  - stage: 10
+    verdict: corrected  # Murudius Flaeus is marked, not Edryno, who needs the money first
+    marked: ["murudius flaeus"]
+  - stage: 50
+    verdict: corrected  # The buried chest is marked along with Edryno Arethi
+    marked: ["com_chest_02_hhbt", "edryno arethi"]

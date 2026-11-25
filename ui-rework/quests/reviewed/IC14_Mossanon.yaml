@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC14_Mossanon.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC14_Mossanon
+stages:
+  - stage: 1
+    verdict: right  # No line sets this note, and it has no ways forward
+    marked: []

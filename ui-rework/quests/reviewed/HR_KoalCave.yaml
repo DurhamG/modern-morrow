@@ -1,0 +1,14 @@
+# The reviewed quest markers of HR_KoalCave.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_KoalCave
+stages:
+  - stage: 10
+    verdict: right  # Deval Beleth is marked to start the escort
+    marked: ["deval beleth"]
+  - stage: 50
+    verdict: right  # Deval follows the player, and the Koal Cave is marked
+    marked: ["cell:koal cave"]
+  - stage: 70
+    verdict: right  # Tuveso Beleth is the one to report to
+    marked: ["tuveso beleth"]

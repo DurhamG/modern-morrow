@@ -1,0 +1,21 @@
+# The reviewed quest markers of HR_ArobarKidnap.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_ArobarKidnap
+stages:
+  - stage: 10
+    verdict: corrected  # Sarethi gives the lead as an optional marker; Nartise stays marked because no later entry is ever set before 50
+    marked: ["nartise arobar"]
+    optional: ["athyn sarethi"]
+  - stage: 20
+    verdict: right  # Nartise Arobar in Tel Naga is who the player is sent to find
+    marked: ["nartise arobar"]
+  - stage: 45
+    verdict: right  # The journal sends the player to rescue Nartise in Tel Naga
+    marked: ["nartise arobar"]
+  - stage: 50
+    verdict: right  # The escort ends near Gals Arethi at the Sadrith Mora docks, which is marked
+    marked: ["gals arethi", "nartise arobar"]
+  - stage: 70
+    verdict: right  # Miner Arobar's greeting finishes the quest
+    marked: ["miner arobar"]

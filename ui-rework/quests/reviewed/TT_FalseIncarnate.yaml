@@ -1,0 +1,17 @@
+# The reviewed quest markers of TT_FalseIncarnate.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_FalseIncarnate
+stages:
+  - stage: 10
+    verdict: right  # Elvil Vidron in Suran is marked, for talk or a fight.
+    marked: ["elvil vidron"]
+  - stage: 50
+    verdict: right  # Tuls Valen is marked to report.
+    marked: ["tuls valen"]
+  - stage: 55
+    verdict: right  # Tuls Valen is marked to report.
+    marked: ["tuls valen"]
+  - stage: 60
+    verdict: right  # Tuls Valen is marked to report.
+    marked: ["tuls valen"]

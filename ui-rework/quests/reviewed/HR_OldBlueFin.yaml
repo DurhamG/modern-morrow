@@ -1,0 +1,8 @@
+# The reviewed quest markers of HR_OldBlueFin.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_OldBlueFin
+stages:
+  - stage: 20
+    verdict: right  # Old Blue Fin is marked to kill, then Theldyn Virith
+    marked: ["slaughterfish_hr_sfavd", "theldyn virith"]

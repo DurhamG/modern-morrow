@@ -3,42 +3,42 @@
 # questcorrections.yaml, and the reviewer's verdict.
 quest: A2_6_Incarnate
 stages:
-  - stage: 29
-    verdict: right  # only the Cavern is left to mark; it suits a player who heard the Ashlanders first, and is a spoiler for one who came through Nibani alone
+  - stage: 1
+    verdict: corrected  # Nibani is marked once her wait is over, and Sul-Matuul and the Cavern are hidden.
+    marked: ["nibani maesa"]
+  - stage: 3
+    verdict: corrected  # Only Nibani is marked, without Sul-Matuul and the Cavern, which come later.
+    marked: ["nibani maesa"]
+  - stage: 5
+    verdict: corrected  # Only Sul-Matuul is marked, without the Cavern spoiler.
+    marked: ["sul-matuul"]
+  - stage: 10
+    verdict: corrected  # Sul-Matuul plus the shield and goblet in Kogoruhn are marked, without the Cavern spoiler.
+    marked: ["misc_goblet_dagoth", "shadow_shield", "sul-matuul"]
+  - stage: 15
+    verdict: corrected  # the Ashlanders who know the Valley of the Wind are marked, Nibani is optional counsel, and the Cavern is hidden so the riddle isn't given away
+    marked: ["faction:ashlanders", "malipu_ataman's_belt"]
+    optional: ["nibani maesa"]
+  - stage: 20
+    verdict: corrected  # The Needle is named, so the Cavern is marked and further counsel is optional.
     marked: ["moon_and_star"]
-  - stage: 28
-    verdict: corrected  # the Cavern is the goal and Nibani's last answer is optional; a player who came through Nibani alone hasn't heard where the Cavern is, which no marker can tell apart
+    optional: ["faction:ashlanders", "malipu_ataman's_belt", "nibani maesa"]
+  - stage: 22
+    verdict: corrected  # The Valley of the Wind is named, so the Cavern is marked and further counsel is optional.
+    marked: ["moon_and_star"]
+    optional: ["faction:ashlanders", "malipu_ataman's_belt", "nibani maesa"]
+  - stage: 24
+    verdict: corrected  # The Ashlanders placed the cave at the Needle, so the Cavern is marked and Nibani's star hint is optional.
     marked: ["moon_and_star"]
     optional: ["nibani maesa"]
   - stage: 26
     verdict: corrected  # the Cavern is the goal and Nibani's next answer is optional; for a player who skipped the Ashlanders and came straight from 15 the Cavern is a spoiler, which no marker can avoid
     marked: ["moon_and_star"]
     optional: ["nibani maesa"]
-  - stage: 24
-    verdict: corrected  # The Ashlanders placed the cave at the Needle, so the Cavern is marked and Nibani's star hint is optional.
+  - stage: 28
+    verdict: corrected  # the Cavern is the goal and Nibani's last answer is optional; a player who came through Nibani alone hasn't heard where the Cavern is, which no marker can tell apart
     marked: ["moon_and_star"]
     optional: ["nibani maesa"]
-  - stage: 22
-    verdict: corrected  # The Valley of the Wind is named, so the Cavern is marked and further counsel is optional.
+  - stage: 29
+    verdict: right  # only the Cavern is left to mark; it suits a player who heard the Ashlanders first, and is a spoiler for one who came through Nibani alone
     marked: ["moon_and_star"]
-    optional: ["faction:ashlanders", "malipu_ataman's_belt", "nibani maesa"]
-  - stage: 20
-    verdict: corrected  # The Needle is named, so the Cavern is marked and further counsel is optional.
-    marked: ["moon_and_star"]
-    optional: ["faction:ashlanders", "malipu_ataman's_belt", "nibani maesa"]
-  - stage: 15
-    verdict: corrected  # the Ashlanders who know the Valley of the Wind are marked, Nibani is optional counsel, and the Cavern is hidden so the riddle isn't given away
-    marked: ["faction:ashlanders", "malipu_ataman's_belt"]
-    optional: ["nibani maesa"]
-  - stage: 10
-    verdict: corrected  # Sul-Matuul plus the shield and goblet in Kogoruhn are marked, without the Cavern spoiler.
-    marked: ["misc_goblet_dagoth", "shadow_shield", "sul-matuul"]
-  - stage: 5
-    verdict: corrected  # Only Sul-Matuul is marked, without the Cavern spoiler.
-    marked: ["sul-matuul"]
-  - stage: 3
-    verdict: corrected  # Only Nibani is marked, without Sul-Matuul and the Cavern, which come later.
-    marked: ["nibani maesa"]
-  - stage: 1
-    verdict: corrected  # Nibani is marked once her wait is over, and Sul-Matuul and the Cavern are hidden.
-    marked: ["nibani maesa"]

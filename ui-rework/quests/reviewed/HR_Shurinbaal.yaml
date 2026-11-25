@@ -1,0 +1,8 @@
+# The reviewed quest markers of HR_Shurinbaal.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_Shurinbaal
+stages:
+  - stage: 10
+    verdict: right  # Daroder Helni and Enjine are marked to kill, then Athyn Sarethi; a line sets this stage without a journal entry.
+    marked: ["athyn sarethi", "daroder helni", "enjine"]

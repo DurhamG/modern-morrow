@@ -1,0 +1,14 @@
+# The reviewed quest markers of IC18_Silver_Staff.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC18_Silver_Staff
+stages:
+  - stage: 1
+    verdict: corrected  # Mount Kand is marked instead of the two Telvanni who carry a staff, Kaye's hint is optional, and Kaye is marked once the player has a staff
+    marked: ["cell:mount kand", "kaye"]
+  - stage: 2
+    verdict: corrected  # Mount Kand is marked until the player has a staff, and Kaye from then on
+    marked: ["cell:mount kand", "kaye"]
+  - stage: 5
+    verdict: corrected  # No line sets this stage, and the journal records giving up, so nothing is marked
+    marked: []

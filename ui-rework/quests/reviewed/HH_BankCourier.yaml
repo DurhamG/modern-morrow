@@ -1,0 +1,11 @@
+# The reviewed quest markers of HH_BankCourier.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_BankCourier
+stages:
+  - stage: 10
+    verdict: right  # The player carries the report, and Baren Alen is marked
+    marked: ["baren alen", "bk_treasuryreport"]
+  - stage: 50
+    verdict: right  # Edryno Arethi is marked for the report
+    marked: ["edryno arethi"]

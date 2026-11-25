@@ -1,0 +1,11 @@
+# The reviewed quest markers of IC8_Bedraflod.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC8_Bedraflod
+stages:
+  - stage: 10
+    verdict: corrected  # Bedraflod only says he gave already, so he is no longer marked
+    marked: []
+  - stage: 20
+    verdict: right  # Bedraflod has given all he will
+    marked: []

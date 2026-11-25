@@ -1,0 +1,28 @@
+# The reviewed quest markers of HH_Retaliation.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_Retaliation
+stages:
+  - stage: 5
+    verdict: corrected  # Nileno Dorvayn and the servant Uryne Nirith in the manor are optional, and no suspect is marked to be killed
+    marked: []
+    optional: ["nileno dorvayn", "uryne nirith"]
+  - stage: 10
+    verdict: corrected  # The servant Uryne Nirith is marked as the lead, not the suspects
+    marked: ["nileno dorvayn", "uryne nirith"]
+  - stage: 15
+    verdict: corrected  # Same as at 10
+    marked: ["nileno dorvayn", "uryne nirith"]
+  - stage: 30
+    verdict: corrected  # Uryne Nirith is still the lead, and Nine-Toes is not marked on a rumor
+    marked: ["nileno dorvayn", "uryne nirith"]
+  - stage: 40
+    verdict: corrected  # Same as at 30
+    marked: ["nileno dorvayn", "uryne nirith"]
+  - stage: 50
+    verdict: corrected  # The townsfolk who match the description are marked, with Nileno optional for a player who already killed Thanelen
+    marked: ["cell:balmora"]
+    optional: ["nileno dorvayn"]
+  - stage: 60
+    verdict: corrected  # Thanelen Velas is marked to kill, then Nileno, for Hlaalu members and others, and Nine-Toes is not marked
+    marked: ["nileno dorvayn", "thanelen velas"]

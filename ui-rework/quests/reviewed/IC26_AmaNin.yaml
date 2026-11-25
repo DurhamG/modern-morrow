@@ -1,0 +1,15 @@
+# The reviewed quest markers of IC26_AmaNin.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC26_AmaNin
+stages:
+  - stage: 1
+    verdict: corrected  # The boots in Berandas are marked, which the prophecy names, and Llaalam's directions are optional
+    marked: ["boots_apostle_unique", "lalatia varian"]
+    optional: ["llaalam dredil"]
+  - stage: 5
+    verdict: corrected  # The boots in Berandas are marked. The repeated directions from Llaalam are left out
+    marked: ["boots_apostle_unique", "lalatia varian"]
+  - stage: 10
+    verdict: right  # The boots in Berandas are marked, then Lalatia
+    marked: ["boots_apostle_unique", "lalatia varian"]

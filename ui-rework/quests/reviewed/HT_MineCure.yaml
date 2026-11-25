@@ -1,0 +1,15 @@
+# The reviewed quest markers of HT_MineCure.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_MineCure
+stages:
+  - stage: 10
+    verdict: corrected  # The queen in the egg mine is marked, and Aryon's spell lesson is optional
+    marked: ["kwama queen_mudan"]
+    optional: ["aryon"]
+  - stage: 20
+    verdict: right  # The queen in the egg mine is marked
+    marked: ["kwama queen_mudan"]
+  - stage: 70
+    verdict: right  # Aryon is the one to report to
+    marked: ["aryon"]

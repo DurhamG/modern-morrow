@@ -1,0 +1,17 @@
+# The reviewed quest markers of HR_CalderaDisrupt.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_CalderaDisrupt
+stages:
+  - stage: 10
+    verdict: right  # The journal names no method, and both ways Garisa accepts are marked: freeing Dahleena or killing the two officials
+    marked: ["dahleena", "garisa llethri", "odral helvi", "stlennius vibato"]
+  - stage: 30
+    verdict: corrected  # Never set, but it would point at Dahleena as its journal says
+    marked: ["dahleena"]
+  - stage: 35
+    verdict: corrected  # Never set, but it would point at the two officials its journal names
+    marked: ["garisa llethri", "odral helvi", "stlennius vibato"]
+  - stage: 50
+    verdict: corrected  # Only Garisa is marked once Dahleena is free, not the two officials to kill
+    marked: ["garisa llethri"]

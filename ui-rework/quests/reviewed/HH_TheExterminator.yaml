@@ -1,0 +1,8 @@
+# The reviewed quest markers of HH_TheExterminator.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_TheExterminator
+stages:
+  - stage: 10
+    verdict: corrected  # The blighted rats are marked to kill, not their owner
+    marked: ["edryno arethi", "rat_cave_hhte2"]

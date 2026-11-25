@@ -1,0 +1,8 @@
+# The reviewed quest markers of IL_Grandmaster.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_Grandmaster
+stages:
+  - stage: 10
+    verdict: corrected  # The Arena pit is marked, where the duel happens, instead of Varus in Ebonheart.
+    marked: ["cell:vivec, arena pit"]

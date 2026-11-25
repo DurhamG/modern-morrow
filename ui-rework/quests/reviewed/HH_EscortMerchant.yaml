@@ -1,0 +1,14 @@
+# The reviewed quest markers of HH_EscortMerchant.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_EscortMerchant
+stages:
+  - stage: 10
+    verdict: right  # Tarvyn Faren is marked
+    marked: ["tarvyn faren"]
+  - stage: 50
+    verdict: right  # Tarvyn follows the player and the Halfway Tavern is marked
+    marked: ["cell:pelagiad, halfway tavern", "tarvyn faren"]
+  - stage: 70
+    verdict: right  # Edryno Arethi is marked
+    marked: ["edryno arethi"]

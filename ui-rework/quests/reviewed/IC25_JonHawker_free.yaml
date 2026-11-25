@@ -1,0 +1,11 @@
+# The reviewed quest markers of IC25_JonHawker_free.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC25_JonHawker_free
+stages:
+  - stage: 1
+    verdict: corrected  # The barrel in Nammu with Jon Hawker's scrolls is marked instead of three far-off dungeons, and Jon Hawker once the player has a scroll
+    marked: ["barrel_ic25_jon_hawker", "jon hawker"]
+  - stage: 5
+    verdict: right  # Jon Hawker escaped, and nothing is left to do
+    marked: []

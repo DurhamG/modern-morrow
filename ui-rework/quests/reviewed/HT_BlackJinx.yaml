@@ -1,0 +1,14 @@
+# The reviewed quest markers of HT_BlackJinx.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_BlackJinx
+stages:
+  - stage: 10
+    verdict: right  # The ring is marked on Alven Salas in Sadrith Mora, where Raven says it is, then Raven
+    marked: ["alven salas", "raven omayn", "ring_blackjinx_uniq"]
+  - stage: 30
+    verdict: right  # The ring is marked on Alven Salas at the Morag Tong guild, which the journal names
+    marked: ["alven salas", "raven omayn", "ring_blackjinx_uniq"]
+  - stage: 50
+    verdict: right  # The player has the ring and Raven Omayn is marked
+    marked: ["raven omayn", "ring_blackjinx_uniq"]

@@ -9,3 +9,9 @@ stages:
   - stage: 15
     verdict: right  # Both supporters must die for the reward, then Persius
     marked: ["eydis fire-eye", "lorbumol gro-aglakh", "persius mercius"]
+  - stage: 40
+    verdict: right  # Eydis is dead and Persius asked for Lorbumol too, so Lorbumol and then Persius are marked
+    marked: ["eydis fire-eye", "lorbumol gro-aglakh", "persius mercius"]
+  - stage: 60
+    verdict: right  # Lorbumol is dead and Persius asked for Eydis too, so Eydis and then Persius are marked
+    marked: ["eydis fire-eye", "lorbumol gro-aglakh", "persius mercius"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of HR_DagothTanis.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HR_DagothTanis
+stages:
+  - stage: 10
+    verdict: right  # Dagoth Tanis, the ancestor ring Faral asked for, and then Faral are marked
+    marked: ["dagoth tanis", "expensive_ring_01_hrdt", "faral retheran"]

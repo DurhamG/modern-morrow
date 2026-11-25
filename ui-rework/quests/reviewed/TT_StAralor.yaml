@@ -1,0 +1,11 @@
+# The reviewed quest markers of TT_StAralor.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_StAralor
+stages:
+  - stage: 10
+    verdict: right  # Bjadmund in Ihinipalit is marked to kill, then Endryn Llethan.
+    marked: ["bjadmund", "endryn llethan"]
+  - stage: 60
+    verdict: right  # Bjadmund is dead, so Endryn Llethan is marked.
+    marked: ["bjadmund", "endryn llethan"]

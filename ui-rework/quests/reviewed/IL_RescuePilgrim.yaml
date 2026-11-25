@@ -1,0 +1,20 @@
+# The reviewed quest markers of IL_RescuePilgrim.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_RescuePilgrim
+stages:
+  - stage: 10
+    verdict: corrected  # The yurt with Madura Seran and her captor is marked; the outpost waits for the escort.
+    marked: ["abassel asserbassalit", "madura seran"]
+  - stage: 30
+    verdict: corrected  # Abassel for the ransom and Madura are marked; the outpost waits for the escort.
+    marked: ["abassel asserbassalit", "madura seran"]
+  - stage: 40
+    verdict: corrected  # Madura is marked to start the escort; the outpost waits until she follows.
+    marked: ["madura seran"]
+  - stage: 50
+    verdict: right  # The Ald Velothi outpost is marked as the escort's goal.
+    marked: ["cell:ald velothi, outpost"]
+  - stage: 70
+    verdict: right  # General Darius is marked to report.
+    marked: ["general darius"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC14_Sinyaramen.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC14_Sinyaramen
+stages:
+  - stage: 1
+    verdict: right  # A clue note. IC14_Ponius marks Mossanon from here
+    marked: []

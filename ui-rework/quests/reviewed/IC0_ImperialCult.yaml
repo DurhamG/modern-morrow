@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC0_ImperialCult.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC0_ImperialCult
+stages:
+  - stage: 1
+    verdict: right  # Joining the cult leaves nothing to go to
+    marked: []

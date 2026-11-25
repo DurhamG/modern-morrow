@@ -1,0 +1,8 @@
+# The reviewed quest markers of TT_HairShirt.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_HairShirt
+stages:
+  - stage: 10
+    verdict: right  # Feril Salmyn, who carries the shirt, is marked, then Uvoo Llaren.
+    marked: ["expensive_shirt_hair", "uvoo llaren"]

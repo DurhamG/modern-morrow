@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC_8_Nord_alms.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC_8_Nord_alms
+stages:
+  - stage: 1
+    verdict: corrected  # The Skyrim Mission is marked until Heidmir gives alms, and Iulus from then on
+    marked: ["cell:ebonheart, skyrim mission", "iulus truptor"]

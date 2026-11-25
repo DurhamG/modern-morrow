@@ -1,0 +1,11 @@
+# The reviewed quest markers of HH_GuardMerchant.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_GuardMerchant
+stages:
+  - stage: 10
+    verdict: right  # Ralen Tilvur at his shop is marked
+    marked: ["ralen tilvur"]
+  - stage: 50
+    verdict: right  # The thief is marked to kill, then Edryno Arethi
+    marked: ["drarel andus", "edryno arethi"]

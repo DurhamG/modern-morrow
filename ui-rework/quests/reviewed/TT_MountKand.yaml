@@ -1,0 +1,26 @@
+# The reviewed quest markers of TT_MountKand.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_MountKand
+stages:
+  - stage: 10
+    verdict: corrected  # Only the fire atronach is marked, since the riddles go in order.
+    marked: ["atronach_flame_ttmk"]
+  - stage: 11
+    verdict: right  # No object runs the old script that sets this stage, so it never comes up.
+    marked: ["atronach_flame_ttmk", "atronach_storm_ttmk"]
+  - stage: 12
+    verdict: right  # No object runs the old script that sets this stage, so it never comes up.
+    marked: ["atronach_flame_ttmk", "atronach_storm_ttmk"]
+  - stage: 13
+    verdict: right  # No object runs the old script that sets this stage, so it never comes up.
+    marked: ["atronach_flame_ttmk", "atronach_storm_ttmk"]
+  - stage: 25
+    verdict: corrected  # Only the frost atronach is marked, since the riddles go in order.
+    marked: ["atronach_frost_ttmk"]
+  - stage: 50
+    verdict: right  # The storm atronach is marked.
+    marked: ["atronach_storm_ttmk"]
+  - stage: 75
+    verdict: right  # The triolith is marked.
+    marked: ["ac_mount_kand_triolith"]

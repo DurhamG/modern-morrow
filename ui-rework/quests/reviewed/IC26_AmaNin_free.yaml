@@ -1,0 +1,11 @@
+# The reviewed quest markers of IC26_AmaNin_free.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC26_AmaNin_free
+stages:
+  - stage: 1
+    verdict: corrected  # The far-off scrolls are left out, and Ama Nin is marked once the player has a scroll
+    marked: ["ama nin_disguisemara"]
+  - stage: 5
+    verdict: right  # Ama Nin escaped, and nothing is left to do
+    marked: []

@@ -1,0 +1,8 @@
+# The reviewed quest markers of HT_WizardSpells.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HT_WizardSpells
+stages:
+  - stage: 10
+    verdict: right  # The spells must be learned anywhere, and Aryon is marked once his check of them holds
+    marked: ["aryon"]

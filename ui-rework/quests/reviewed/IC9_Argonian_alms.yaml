@@ -1,0 +1,14 @@
+# The reviewed quest markers of IC9_Argonian_alms.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC9_Argonian_alms
+stages:
+  - stage: 1
+    verdict: corrected  # Only Im-Kilaya is marked. Iulus waits for 10, since most players already carry 100 gold of their own
+    marked: ["im_kilaya"]
+  - stage: 10
+    verdict: corrected  # Im-Kilaya only says the province has given, so only Iulus is marked
+    marked: ["iulus truptor"]
+  - stage: 20
+    verdict: right  # Iulus Truptor is marked for the delivery
+    marked: ["iulus truptor"]

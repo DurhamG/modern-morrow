@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC3_willow.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC3_willow
+stages:
+  - stage: 1
+    verdict: corrected  # Gurak gro-Bagrat's house is marked until the player has five willow anther, then Synnolian
+    marked: ["cell:gro-bagrat plantation", "synnolian tunifus"]

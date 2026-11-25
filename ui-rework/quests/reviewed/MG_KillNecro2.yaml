@@ -6,6 +6,9 @@ stages:
   - stage: 10
     verdict: corrected  # marks Tashpi in Maar Gan, without Ranis's answer to a lie; Ranis is marked once Tashpi is dead
     marked: ["tashpi ashibael"]
+  - stage: 40
+    verdict: corrected  # marks Tashpi, whose answers lead to her flight, as at 10
+    marked: ["tashpi ashibael"]
   - stage: 50
     verdict: right  # marks Ranis to report to
     marked: ["ranis athrys"]

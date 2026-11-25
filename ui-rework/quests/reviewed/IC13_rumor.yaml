@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC13_rumor.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC13_rumor
+stages:
+  - stage: 1
+    verdict: right  # The donation quest marks the mine from here
+    marked: []

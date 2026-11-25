@@ -1,0 +1,8 @@
+# The reviewed quest markers of HH_IndEsp1.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_IndEsp1
+stages:
+  - stage: 10
+    verdict: corrected  # The formulas and Nileno are marked, and Aurane is not marked to be killed
+    marked: ["bk_auranefrernis1", "bk_auranefrernis2", "bk_auranefrernis3", "nileno dorvayn"]

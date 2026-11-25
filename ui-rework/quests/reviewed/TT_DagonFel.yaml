@@ -1,0 +1,11 @@
+# The reviewed quest markers of TT_DagonFel.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TT_DagonFel
+stages:
+  - stage: 1
+    verdict: corrected  # Only Saryoni is marked; the hearts wait for his task.
+    marked: ["tholer saryoni"]
+  - stage: 10
+    verdict: corrected  # The Malacath statue is marked instead of heart carriers all over the island.
+    marked: ["active_dae_malacath_df"]

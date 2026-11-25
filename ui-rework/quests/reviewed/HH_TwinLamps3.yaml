@@ -1,0 +1,14 @@
+# The reviewed quest markers of HH_TwinLamps3.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_TwinLamps3
+stages:
+  - stage: 10
+    verdict: right  # Hides-His-Foot is marked
+    marked: ["hides_his_foot"]
+  - stage: 50
+    verdict: right  # He follows the player and Sterdecan's Farmhouse is marked
+    marked: ["cell:sterdecan's farmhouse", "hides_his_foot"]
+  - stage: 70
+    verdict: right  # Ilmeni Dren is marked
+    marked: ["ilmeni dren"]

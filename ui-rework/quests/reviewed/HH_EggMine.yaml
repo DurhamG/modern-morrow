@@ -1,0 +1,11 @@
+# The reviewed quest markers of HH_EggMine.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_EggMine
+stages:
+  - stage: 10
+    verdict: corrected  # The queen and Nileno Dorvayn are marked, not the rival who offers a bribe
+    marked: ["kwama queen_hhem", "nileno dorvayn"]
+  - stage: 200
+    verdict: unfixable  # Telling Nileno changes nothing, and the only way on is a double-cross the journal does not suggest, so it is hidden
+    marked: []

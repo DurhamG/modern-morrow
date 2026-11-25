@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC13_slave.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC13_slave
+stages:
+  - stage: 1
+    verdict: right  # The donation quest marks Cunius from here
+    marked: []

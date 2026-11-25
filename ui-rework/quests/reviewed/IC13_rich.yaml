@@ -1,0 +1,22 @@
+# The reviewed quest markers of IC13_rich.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC13_rich
+stages:
+  - stage: 1
+    verdict: corrected  # Only Cunius Pelelius is marked. Iulus waits until Cunius has given the ebony, since many players already carry 500 gold
+    marked: ["cunius pelelius"]
+  - stage: 10
+    verdict: corrected  # Cunius stays marked, Olumba is an optional hint, and the mine is marked after his rumor. The unmentioned ledger and Iulus are left out
+    marked: ["cell:caldera mine", "cunius pelelius"]
+    optional: ["olumba gro-boglar"]
+  - stage: 15
+    verdict: corrected  # The mine is marked after Olumba's rumor, and Cunius once a slave has talked. The unmentioned ledger and Iulus are left out
+    marked: ["cell:caldera mine", "cunius pelelius"]
+    optional: ["olumba gro-boglar"]
+  - stage: 40
+    verdict: corrected  # Cunius has nothing more to say and the ledger is hidden, so only Iulus is marked once the player has the 500 gold
+    marked: ["iulus truptor"]
+  - stage: 42
+    verdict: corrected  # Iulus Truptor is marked once the player has the 500 gold
+    marked: ["iulus truptor"]

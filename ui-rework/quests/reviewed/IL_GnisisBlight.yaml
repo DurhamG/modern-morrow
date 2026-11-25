@@ -1,0 +1,12 @@
+# The reviewed quest markers of IL_GnisisBlight.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_GnisisBlight
+stages:
+  - stage: 10
+    verdict: corrected  # The queen is marked to cure, not kill, with the hetman who sells cure blight scrolls as a side step.
+    marked: ["kwama queen_gnisis"]
+    optional: ["hetman abelmawia"]
+  - stage: 50
+    verdict: corrected  # Only Darius is marked for the reward; the kill of the cured queen is hidden.
+    marked: ["general darius"]

@@ -1,0 +1,17 @@
+# The reviewed quest markers of IC17_Witch.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC17_Witch
+stages:
+  - stage: 1
+    verdict: corrected  # The witch is marked until she dies, and Kaye from then on
+    marked: ["kaye", "thelsa dral"]
+  - stage: 5
+    verdict: corrected  # No line sets this stage, and the journal records refusing the task, so nothing is marked
+    marked: []
+  - stage: 10
+    verdict: corrected  # No line sets this stage. The witch is marked, then Kaye, as at 1
+    marked: ["kaye", "thelsa dral"]
+  - stage: 15
+    verdict: corrected  # No line sets this stage. The witch is marked, then Kaye, as at 1
+    marked: ["kaye", "thelsa dral"]

@@ -1,0 +1,26 @@
+# The reviewed quest markers of IL_KnightShield.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_KnightShield
+stages:
+  - stage: 10
+    verdict: corrected  # The shrine door is marked; the thief and the next relic stay hidden until the journal names them.
+    marked: ["in_impsmall_door_01_shrine", "varus vatinius"]
+  - stage: 30
+    verdict: corrected  # Only the mail on Furius and then Varus are marked; Chrysamere is left out.
+    marked: ["lords_cuirass_unique", "varus vatinius"]
+  - stage: 40
+    verdict: corrected  # Furius has died after naming the mail, so only the mail and then Varus are marked; Chrysamere is left out.
+    marked: ["lords_cuirass_unique", "varus vatinius"]
+  - stage: 50
+    verdict: corrected  # Varus is marked for the next task; Draramu Hloran waits until journal 60 names her.
+    marked: ["varus vatinius"]
+  - stage: 60
+    verdict: right  # Draramu Hloran, who carries Chrysamere, is marked, then Varus.
+    marked: ["claymore_chrysamere_unique", "draramu hloran", "varus vatinius"]
+  - stage: 70
+    verdict: right  # Draramu Hloran in Abanabi is marked, then Varus.
+    marked: ["claymore_chrysamere_unique", "draramu hloran", "varus vatinius"]
+  - stage: 80
+    verdict: right  # Draramu Hloran is dead, so only the blade and then Varus are marked.
+    marked: ["claymore_chrysamere_unique", "varus vatinius"]

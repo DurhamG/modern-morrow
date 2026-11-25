@@ -1,0 +1,11 @@
+# The reviewed quest markers of IC4_scrib_A.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC4_scrib_A
+stages:
+  - stage: 1
+    verdict: right  # No line can set this stage, since the line that sets 2 names an index without an entry, and Dinok still gives jelly
+    marked: ["dinok"]
+  - stage: 2
+    verdict: right  # Dinok has given his jelly and nothing more comes from him. IC4_scrib marks what comes next
+    marked: []

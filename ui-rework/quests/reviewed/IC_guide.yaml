@@ -1,0 +1,12 @@
+# The reviewed quest markers of IC_guide.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC_guide
+stages:
+  - stage: 1
+    verdict: corrected  # Joining is optional, since the journal only says the handbook may help the player decide
+    marked: []
+    optional: ["faction:imperial cult", "ygfa"]
+  - stage: 2
+    verdict: right  # The player joined the cult, and nothing is left to do here
+    marked: []

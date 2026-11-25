@@ -1,0 +1,23 @@
+# The reviewed quest markers of HH_Odirniran.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_Odirniran
+stages:
+  - stage: 10
+    verdict: corrected  # Remasa Othril is marked, not the necromancer no one has named yet
+    marked: ["remasa othril"]
+  - stage: 30
+    verdict: right  # The necromancer and the hostage are marked as the journal asks
+    marked: ["edryno arethi", "milyn faram", "vedelea othril"]
+  - stage: 50
+    verdict: right  # The escort to Remasa and the necromancer are marked
+    marked: ["edryno arethi", "milyn faram", "remasa othril"]
+  - stage: 70
+    verdict: right  # The necromancer if alive, then Remasa and Edryno, are marked
+    marked: ["edryno arethi", "milyn faram", "remasa othril"]
+  - stage: 80
+    verdict: corrected  # Only Edryno Arethi is marked for the report
+    marked: ["edryno arethi", "milyn faram"]
+  - stage: 90
+    verdict: right  # Edryno Arethi is marked
+    marked: ["edryno arethi", "milyn faram"]

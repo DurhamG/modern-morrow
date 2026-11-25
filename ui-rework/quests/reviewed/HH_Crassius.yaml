@@ -1,0 +1,8 @@
+# The reviewed quest markers of HH_Crassius.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_Crassius
+stages:
+  - stage: 10
+    verdict: right  # Crassius Curio is marked
+    marked: ["crassius curio"]

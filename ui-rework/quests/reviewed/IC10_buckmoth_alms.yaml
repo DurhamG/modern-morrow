@@ -1,0 +1,11 @@
+# The reviewed quest markers of IC10_buckmoth_alms.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC10_buckmoth_alms
+stages:
+  - stage: 1
+    verdict: corrected  # The Ald'ruhn donors are marked until each gives, since collecting from them is the step, and Iulus once the player carries 100 gold
+    marked: ["aengoth", "baradras", "cienne sintieve", "codus callonus", "dular gro-buzga", "edwinna elbert", "erranil", "estoril", "galthragoth", "hoki", "iulus truptor", "lirielle stoine", "malpenix blonia", "merthierry laelippe", "persius mercius", "tauryon", "tongue_toad", "yak gro-skandar"]
+  - stage: 5
+    verdict: corrected  # No line sets this stage, and the journal records giving up, so nothing is marked
+    marked: []

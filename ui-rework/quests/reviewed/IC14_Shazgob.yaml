@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC14_Shazgob.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC14_Shazgob
+stages:
+  - stage: 1
+    verdict: right  # A clue note. IC14_Ponius marks the guild guide in Vivec from here
+    marked: []

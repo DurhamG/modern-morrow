@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC14_Tell.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC14_Tell
+stages:
+  - stage: 1
+    verdict: right  # A note about what the player told Ponius. Nothing is left to do here
+    marked: []

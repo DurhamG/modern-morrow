@@ -1,0 +1,14 @@
+# The reviewed quest markers of HH_WinCamonna.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_WinCamonna
+stages:
+  - stage: 5
+    verdict: right  # Duke Dren is marked once the quest that comes before is done
+    marked: ["vedam dren"]
+  - stage: 10
+    verdict: right  # Orvas Dren and the blackmail evidence are marked as the real choices
+    marked: ["bk_drenblackmail", "orvas dren druglord", "vedam dren"]
+  - stage: 50
+    verdict: right  # Duke Dren is marked
+    marked: ["vedam dren"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of HH_DestroyTelUvirith.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: HH_DestroyTelUvirith
+stages:
+  - stage: 10
+    verdict: right  # Reynel Uvirith is marked to kill, then Crassius Curio
+    marked: ["crassius curio", "reynel uvirith"]

@@ -1,0 +1,14 @@
+# The reviewed quest markers of IL_MaidenToken.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IL_MaidenToken
+stages:
+  - stage: 10
+    verdict: right  # Varona Nelas, who holds the glove, is marked.
+    marked: ["expensive_glove_left_ilmeni", "imsin the dreamer", "varona nelas"]
+  - stage: 50
+    verdict: right  # Both owners of the choice are marked: Ilmeni Dren in Vivec and Imsin the Dreamer.
+    marked: ["expensive_glove_left_ilmeni", "ilmeni dren", "imsin the dreamer"]
+  - stage: 70
+    verdict: corrected  # Only Imsin is marked for the report; the fetch of the given-away glove is hidden.
+    marked: ["imsin the dreamer"]

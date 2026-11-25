@@ -1,0 +1,8 @@
+# The reviewed quest markers of IC9_slave_hiding.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC9_slave_hiding
+stages:
+  - stage: 5
+    verdict: right  # The alms quest keeps Im-Kilaya marked, and nothing else is needed here
+    marked: []

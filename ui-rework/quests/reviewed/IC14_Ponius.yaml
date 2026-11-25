@@ -1,0 +1,35 @@
+# The reviewed quest markers of IC14_Ponius.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: IC14_Ponius
+stages:
+  - stage: 1
+    verdict: corrected  # Only Ponius is marked. Iulus waits until Ponius has paid the pledge
+    marked: ["canctunian ponius"]
+  - stage: 10
+    verdict: corrected  # Only Ponius is marked, so the player can offer to help him
+    marked: ["canctunian ponius"]
+  - stage: 15
+    verdict: corrected  # Only Ponius is marked, to ask him about the missing clerk
+    marked: ["canctunian ponius"]
+  - stage: 18
+    verdict: corrected  # Only Ponius is marked, to ask him about Mossanon
+    marked: ["canctunian ponius"]
+  - stage: 20
+    verdict: corrected  # The employees Ponius suggested are marked, then each person or place the clues name, then Mossanon, then Ponius once the gold is recovered
+    marked: ["canctunian ponius", "cell:sadrith mora", "flacassia fauseius", "mossanon", "okan_shei", "shazgob gra-luzgan"]
+  - stage: 25
+    verdict: corrected  # The search was given up, so only Iulus is marked, to report
+    marked: ["iulus truptor"]
+  - stage: 30
+    verdict: corrected  # Ponius has the gold and is marked to hand over the pledge. Iulus waits for it
+    marked: ["canctunian ponius"]
+  - stage: 35
+    verdict: corrected  # Ponius has the gold and is marked to hand over the pledge. Iulus waits for it
+    marked: ["canctunian ponius"]
+  - stage: 40
+    verdict: corrected  # Ponius has the gold and is marked to hand over the pledge. Iulus waits for it
+    marked: ["canctunian ponius"]
+  - stage: 45
+    verdict: right  # The player has the pledge, and Iulus is marked to take it
+    marked: ["iulus truptor"]
