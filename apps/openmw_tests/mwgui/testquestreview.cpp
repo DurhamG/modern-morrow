@@ -168,4 +168,23 @@ quests:
             MWGui::QuestCorrections::entriesWithoutEffect(corrections, firstQuest(), content, Rule::LowestAndHighest),
             (std::vector<std::string>{ "A1_1_FindSpymaster's entry for stage 5" }));
     }
+
+    TEST(MWGuiQuestReviewTest, anEntryOnAStageWithoutAJournalEntryCanHaveAnEffect)
+    {
+        std::vector<std::string> problems;
+        const MWGui::QuestCorrections::Corrections corrections = MWGui::QuestCorrections::parse(R"(
+version: 1
+quests:
+  A1_1_FindSpymaster:
+    - stages: 3
+      next: 14
+)",
+            problems);
+        MWGui::QuestCorrections::Content content;
+        content.mStages[quest] = { 1, 2, 5, 14 };
+        content.mSetStages[quest] = { 2, 3, 5, 14 };
+        EXPECT_TRUE(
+            MWGui::QuestCorrections::entriesWithoutEffect(corrections, firstQuest(), content, Rule::LowestAndHighest)
+                .empty());
+    }
 }

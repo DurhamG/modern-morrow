@@ -641,24 +641,28 @@ namespace MWGui::QuestCorrections
         std::vector<std::string> result;
         for (const auto& [quest, entries] : corrections.mQuests)
         {
-            const auto stages = content.mStages.find(quest);
+            // The journal's stages, and those a line or script sets without a journal entry.
+            std::set<int> stages;
+            if (const auto it = content.mStages.find(quest); it != content.mStages.end())
+                stages = it->second;
+            if (const auto it = content.mSetStages.find(quest); it != content.mSetStages.end())
+                stages.insert(it->second.begin(), it->second.end());
             for (const Entry& entry : entries)
             {
                 if (!entry.mTargets.empty() || !entry.mFollow.empty())
                     continue;
                 bool effect = false;
-                if (stages != content.mStages.end())
-                    for (const int stage : stages->second)
+                for (const int stage : stages)
+                {
+                    if (!contains(entry.mStages, stage))
+                        continue;
+                    const std::vector<QuestTargets::Way> ways = index.waysForward(quest, stage);
+                    if (summary(chooseWays(ways, &entry, rule)) != summary(chooseWays(ways, nullptr, rule)))
                     {
-                        if (!contains(entry.mStages, stage))
-                            continue;
-                        const std::vector<QuestTargets::Way> ways = index.waysForward(quest, stage);
-                        if (summary(chooseWays(ways, &entry, rule)) != summary(chooseWays(ways, nullptr, rule)))
-                        {
-                            effect = true;
-                            break;
-                        }
+                        effect = true;
+                        break;
                     }
+                }
                 if (!effect)
                     result.push_back(
                         quest.getRefIdString() + "'s entry for stage " + std::to_string(entry.mStages.front().mFirst));
