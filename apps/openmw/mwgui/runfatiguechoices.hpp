@@ -1,6 +1,7 @@
 #ifndef OPENMW_MWGUI_RUNFATIGUECHOICES_H
 #define OPENMW_MWGUI_RUNFATIGUECHOICES_H
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -19,6 +20,19 @@ namespace MWGui
             if (std::abs(sRunFatigueChoices[i] - value) < std::abs(sRunFatigueChoices[nearest] - value))
                 nearest = i;
         return nearest;
+    }
+
+    /// The choice that steps from the one nearest a value, delta places along the list. Past either end, it wraps
+    /// round when wrap is true, and stops at the end otherwise.
+    inline float stepRunFatigueChoice(float value, int delta, bool wrap)
+    {
+        const int count = static_cast<int>(sRunFatigueChoices.size());
+        int index = static_cast<int>(nearestRunFatigueChoice(value)) + delta;
+        if (wrap)
+            index = ((index % count) + count) % count;
+        else
+            index = std::clamp(index, 0, count - 1);
+        return sRunFatigueChoices[static_cast<std::size_t>(index)];
     }
 }
 
