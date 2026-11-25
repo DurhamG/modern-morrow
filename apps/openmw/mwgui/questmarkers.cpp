@@ -45,11 +45,19 @@ namespace MWGui
         // An exterior cell, for routes that start outdoors.
         const ESM::RefId sOutdoors = ESM::RefId::esm3ExteriorCell(0, 0);
 
+        bool isPresent(const MWWorld::Ptr& ptr)
+        {
+            return ptr.getRefData().isEnabled() && ptr.getCellRef().getCount() > 0;
+        }
+
+        bool isDead(const MWWorld::Ptr& ptr)
+        {
+            return ptr.getClass().isActor() && ptr.getClass().getCreatureStats(ptr).isDead();
+        }
+
         bool isAlive(const MWWorld::Ptr& ptr)
         {
-            if (!ptr.getRefData().isEnabled() || ptr.getCellRef().getCount() <= 0)
-                return false;
-            return !ptr.getClass().isActor() || !ptr.getClass().getCreatureStats(ptr).isDead();
+            return isPresent(ptr) && !isDead(ptr);
         }
 
         std::string objectiveText(QuestTargets::Task task, std::string_view name)
@@ -258,7 +266,7 @@ namespace MWGui
             && player.getClass().getContainerStore(player).count(objective.mObject) >= objective.mCount)
             return false;
         const auto add = [&](const MWWorld::Ptr& ptr, Task task, std::string name) {
-            if (!isAlive(ptr) || ptr.getCell() == nullptr)
+            if (!isPresent(ptr) || (isDead(ptr) && !QuestTargets::marksTheDead(task)) || ptr.getCell() == nullptr)
                 return false;
             targets.push_back(Target{ task, ptr.getCellRef().getRefId(), std::move(name),
                 ptr.getRefData().getPosition().asVec3(), ptr.getCell()->getCell()->getId() });

@@ -744,6 +744,11 @@ namespace MWGui::QuestTargets
         return objectives;
     }
 
+    bool marksTheDead(Task task)
+    {
+        return task == Task::Visit || task == Task::Fetch;
+    }
+
     bool playerRankAllows(const Way& way, const std::map<ESM::RefId, int>& ranks)
     {
         if (way.mPlayerFaction.empty())

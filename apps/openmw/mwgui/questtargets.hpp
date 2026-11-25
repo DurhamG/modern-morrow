@@ -170,6 +170,10 @@ namespace MWGui
         /// Whether a condition holds for a value, such as a global variable's.
         bool compare(const ESM::DialogueCondition& condition, float value);
 
+        /// Whether a target that is a dead actor is still marked for a task. Talking to the dead or killing them is
+        /// done or impossible, but going to a body, such as to search it, still needs a marker.
+        bool marksTheDead(Task task);
+
         /// Whether the player's ranks in factions allow a way's line, as the game tests them in a conversation: the
         /// player must belong to the faction the line names, at its rank or higher.
         bool playerRankAllows(const Way& way, const std::map<ESM::RefId, int>& ranks);

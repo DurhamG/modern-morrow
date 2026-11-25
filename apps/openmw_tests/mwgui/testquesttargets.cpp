@@ -427,6 +427,14 @@ namespace
         EXPECT_EQ(ways[2].mPlayerRank, 2);
     }
 
+    TEST(MWGuiQuestTargetsTest, onlyGoingToABodyMarksTheDead)
+    {
+        EXPECT_TRUE(marksTheDead(Task::Visit));
+        EXPECT_TRUE(marksTheDead(Task::Fetch));
+        EXPECT_FALSE(marksTheDead(Task::Talk));
+        EXPECT_FALSE(marksTheDead(Task::Kill));
+    }
+
     TEST(MWGuiQuestTargetsTest, thePlayersRankMustAllowTheWay)
     {
         Way way;
