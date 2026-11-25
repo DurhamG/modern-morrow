@@ -125,7 +125,10 @@ namespace MWAutomation
             MyGUI::Widget* widget = enumerator.current();
             if (!options.mRoot.empty())
                 findByName(widget, options.mRoot, roots);
-            else if (options.mHidden || widget->getVisible())
+            else if (options.mHidden)
+                roots.push_back(widget);
+            // A widget on no layer isn't drawn, such as a Lua settings page the options window hasn't shown yet.
+            else if (widget->getVisible() && widget->getLayer() != nullptr)
                 roots.push_back(widget);
         }
 

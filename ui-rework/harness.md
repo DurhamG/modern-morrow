@@ -82,7 +82,7 @@ The `pad` command connects a virtual gamepad, which stays connected. OpenMW read
 The client adds these commands of its own:
 
 - `omw.py screenshot [path] [--scale S] [--crop X Y W H]` waits two frames, then captures to `shots/` in the profile folder or to the given path.
-- `omw.py ui [--root NAME] [--depth N] [--hidden] [--json]` prints the widget tree, one widget per line.
+- `omw.py ui [--root NAME] [--depth N] [--hidden] [--json]` prints the widget tree, one widget per line. Without `--hidden`, it leaves out hidden widgets, and widgets on no layer, which are never drawn. The options window builds its Lua settings pages that way, before it shows them.
 - `omw.py click-text TEXT` clicks the visible widget that shows TEXT. `--name` matches the widget name instead.
 - `omw.py run FILE` runs a file of commands against a running game.
 - `omw.py scenario NAMES -r RESOLUTIONS` launches, runs and quits scenarios. Use `all` for every scenario or every resolution.
