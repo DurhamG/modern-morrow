@@ -49,19 +49,28 @@ namespace MWGui
 
         int markerSize(float distance)
         {
-            // A cell, and about seven metres.
-            constexpr float far = 8192.f;
+            // From ten cells away, which is farther than from Seyda Neen to Balmora, to one cell away, a marker grows
+            // slowly, so that markers in the same direction at different distances, such as two towns, have
+            // different sizes. In the last cell it grows faster, to show the player is nearly there. It is largest
+            // within about seven metres.
+            constexpr float cell = 8192.f;
+            constexpr float far = 10 * cell;
             constexpr float near = 512.f;
-            constexpr int smallest = 16;
-            constexpr int largest = 24;
-            const float closeness = std::clamp((far - distance) / (far - near), 0.f, 1.f);
-            return smallest + static_cast<int>(std::round(closeness * (largest - smallest)));
+            constexpr float smallest = 8.f;
+            constexpr float atOneCell = 20.f;
+            constexpr float largest = 26.f;
+            float size = 0.f;
+            if (distance >= cell)
+                size = smallest + std::clamp((far - distance) / (far - cell), 0.f, 1.f) * (atOneCell - smallest);
+            else
+                size = atOneCell + std::clamp((cell - distance) / (cell - near), 0.f, 1.f) * (largest - atOneCell);
+            return static_cast<int>(std::round(size));
         }
     }
 
     namespace
     {
-        constexpr int sHeight = 36;
+        constexpr int sHeight = 38;
         constexpr int sArrowSize = 10;
         constexpr int sLabelWidth = 32;
         // The compass shows this many degrees each side of the way the camera faces.

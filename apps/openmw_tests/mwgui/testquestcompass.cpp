@@ -81,19 +81,27 @@ namespace
 
     TEST(MWGuiCompassMarkerSizeTest, aFarTargetHasTheSmallestMarker)
     {
-        EXPECT_EQ(markerSize(8192.f), 16);
-        EXPECT_EQ(markerSize(50000.f), 16);
+        EXPECT_EQ(markerSize(81920.f), 8);
+        EXPECT_EQ(markerSize(200000.f), 8);
     }
 
     TEST(MWGuiCompassMarkerSizeTest, aNearTargetHasTheLargestMarker)
     {
-        EXPECT_EQ(markerSize(512.f), 24);
-        EXPECT_EQ(markerSize(0.f), 24);
+        EXPECT_EQ(markerSize(512.f), 26);
+        EXPECT_EQ(markerSize(0.f), 26);
     }
 
     TEST(MWGuiCompassMarkerSizeTest, theMarkerGrowsAsThePlayerGetsCloser)
     {
-        EXPECT_EQ(markerSize(4352.f), 20);
-        EXPECT_LT(markerSize(6000.f), markerSize(3000.f));
+        EXPECT_EQ(markerSize(45056.f), 14);
+        EXPECT_EQ(markerSize(8192.f), 20);
+        EXPECT_LT(markerSize(60000.f), markerSize(40000.f));
+    }
+
+    TEST(MWGuiCompassMarkerSizeTest, theLastCellGrowsTheMarkerFaster)
+    {
+        EXPECT_EQ(markerSize(4352.f), 23);
+        EXPECT_EQ(markerSize(8192.f) - markerSize(9 * 8192.f), 11);
+        EXPECT_EQ(markerSize(512.f) - markerSize(8192.f), 6);
     }
 }

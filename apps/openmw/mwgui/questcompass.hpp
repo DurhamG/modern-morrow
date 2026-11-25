@@ -47,7 +47,8 @@ namespace MWGui
         Level level(float height, Level shown);
 
         /// The size in pixels of a marker for a target this far from the player, ignoring height. A marker grows as
-        /// the player gets closer: it is smallest a cell or more away, and largest close by.
+        /// the player gets closer: it is smallest ten cells or more away, grows slowly to one cell away, and grows faster in
+        /// the last cell, to be largest close by.
         int markerSize(float distance);
     }
 

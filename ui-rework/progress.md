@@ -401,6 +401,8 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   marker. It also came and went with each step, because the street's height wanders across the 256 units that turn it
   on. It now stays until the target is within 192 units. The rule is `MWGui::Compass::level`, with Google Tests.
 - Quest markers on the compass grow as the player gets closer, so the compass shows how near a target is. A marker is
-  16 pixels for a target a cell or more away and 24 within 512 units, growing evenly between. Height doesn't count.
-  The compass is 4 pixels taller to fit the largest marker with its up or down arrow. The rule is
+  8 pixels for a target ten cells or more away. It grows slowly to 20 pixels at one cell away, so markers in the same
+  direction at different distances, such as two towns, have different sizes. In the last cell it grows faster, to 26
+  pixels within 512 units, to show the player is nearly there. Height doesn't count. The compass is 6 pixels taller to
+  fit the largest marker with its up or down arrow. The rule is
   `MWGui::Compass::markerSize`, with Google Tests.
