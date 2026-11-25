@@ -1,0 +1,11 @@
+# The reviewed quest markers of TR08_Hlaalu_Berano_A.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR08_Hlaalu_Berano_A
+stages:
+  - stage: 1
+    verdict: right  # Forven Berano is already dead, so no marker is shown while playing
+    marked: ["forven berano"]
+  - stage: 5
+    verdict: right  # Forven Berano is dead and nothing is left to do
+    marked: []

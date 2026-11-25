@@ -1,0 +1,17 @@
+# The reviewed quest markers of BM_CursedCaptain.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_CursedCaptain
+stages:
+  - stage: 10
+    verdict: corrected  # Thormoor is marked to hear about his curse, not his Thirsk double, which is disabled.
+    marked: ["thormoor gray-wave"]
+  - stage: 30
+    verdict: corrected  # Geilir is marked until the player takes on his errand, and then the errand's steps.
+    marked: ["geilir the mumbling"]
+  - stage: 40
+    verdict: corrected  # Thormoor at his watch is marked, not his Thirsk double, which is disabled.
+    marked: ["thormoor gray-wave"]
+  - stage: 50
+    verdict: right  # Thormoor in Thirsk is marked, as he asked.
+    marked: ["thormoor_out", "thormoor_thirsk"]

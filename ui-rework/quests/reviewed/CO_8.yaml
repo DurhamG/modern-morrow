@@ -1,0 +1,20 @@
+# The reviewed quest markers of CO_8.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_8
+stages:
+  - stage: 10
+    verdict: corrected  # Graring at the camp is marked to talk to, without a kill marker on an attacker the journal hasn't mentioned.
+    marked: ["graring"]
+  - stage: 20
+    verdict: right  # Graring is marked, as the journal asks.
+    marked: ["graring"]
+  - stage: 30
+    verdict: corrected  # The mine with the Stalhrim block is marked, since the player already has the pick.
+    marked: ["bm nordic pick", "cell:raven rock, mine"]
+  - stage: 40
+    verdict: right  # Graring is marked for the Stalhrim the player carries.
+    marked: ["graring", "ingred_raw_stalhrim_01"]
+  - stage: 50
+    verdict: right  # Falco is marked to hear of the deal.
+    marked: ["falco galenus"]

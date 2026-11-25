@@ -1,0 +1,18 @@
+# The reviewed quest markers of Merc_Calvus.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: Merc_Calvus
+stages:
+  - stage: 1
+    verdict: corrected  # Calvus follows the player and the contract ends with time, so nothing is marked
+    marked: []
+  - stage: 10
+    verdict: corrected  # re-hiring Calvus is an optional choice, and the end of a second contract is hidden
+    marked: []
+    optional: ["calvus horatius"]
+  - stage: 11
+    verdict: corrected  # Calvus follows the player again and the contract ends with time, so nothing is marked
+    marked: []
+  - stage: 20
+    verdict: right  # the second contract is over and nothing is left to do
+    marked: []

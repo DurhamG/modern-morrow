@@ -1,0 +1,14 @@
+# The reviewed quest markers of BM_FurArmor.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_FurArmor
+stages:
+  - stage: 5
+    verdict: right  # Brynjolfr, who makes the armor, is marked.
+    marked: ["brynjolfr"]
+  - stage: 7
+    verdict: right  # Brynjolfr, who makes the armor, is marked.
+    marked: ["brynjolfr"]
+  - stage: 10
+    verdict: right  # The armor is a standing offer that needs pelts from anywhere, so there is nothing to mark.
+    marked: []

@@ -1,0 +1,11 @@
+# The reviewed quest markers of MS_BattleBots2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_BattleBots2
+stages:
+  - stage: 1
+    verdict: right  # Ignatius is marked inside the house the journal says to investigate.
+    marked: ["ignatius_flaccus2"]
+  - stage: 10
+    verdict: corrected  # The eight bots are marked to be destroyed, then Ignatius for the reward.
+    marked: ["centurion_sphere_bbot1", "centurion_sphere_bbot5", "centurion_sphere_bbot6", "centurion_spider_bbot3", "centurion_spider_bbot7", "centurion_steam_bbot2", "centurion_steam_bbot4", "centurion_steam_bbot8", "ignatius_flaccus2"]

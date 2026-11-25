@@ -1,0 +1,38 @@
+# The reviewed quest markers of TR_ShowPower.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_ShowPower
+stages:
+  - stage: 10
+    verdict: corrected  # Almalexia is marked, not the weather machine
+    marked: ["almalexia"]
+  - stage: 20
+    verdict: corrected  # Almalexia is marked, not the weather machine
+    marked: ["almalexia"]
+  - stage: 30
+    verdict: corrected  # Meralyn Othan is marked
+    marked: ["meralyn othan"]
+  - stage: 40
+    verdict: corrected  # Meralyn Othan is marked
+    marked: ["meralyn othan"]
+  - stage: 50
+    verdict: corrected  # Eno Romari is marked
+    marked: ["eno romari"]
+  - stage: 55
+    verdict: corrected  # Eno Romari is marked
+    marked: ["eno romari"]
+  - stage: 60
+    verdict: corrected  # Almalexia is marked
+    marked: ["almalexia"]
+  - stage: 70
+    verdict: corrected  # Almalexia is marked
+    marked: ["almalexia"]
+  - stage: 80
+    verdict: right  # the junction box and the weather machine are marked
+    marked: ["act_dwe_powerbox00", "act_dwe_weather00"]
+  - stage: 90
+    verdict: right  # the weather machine is marked
+    marked: ["act_dwe_weather00"]
+  - stage: 95
+    verdict: right  # Almalexia is marked
+    marked: ["almalexia"]

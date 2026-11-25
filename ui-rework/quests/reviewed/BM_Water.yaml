@@ -1,0 +1,17 @@
+# The reviewed quest markers of BM_Water.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Water
+stages:
+  - stage: 10
+    verdict: corrected  # the Swimmer on the island; the cave is not mentioned yet
+    marked: ["bm_horker_swim_unique"]
+  - stage: 50
+    verdict: right  # the cave entrance the Swimmer leads to, and the Waters inside
+    marked: ["bm_ka_door_dark_sg", "bm_waterlife_unique1"]
+  - stage: 60
+    verdict: right  # the Waters of Life in the cave
+    marked: ["bm_waterlife_unique1"]
+  - stage: 70
+    verdict: corrected  # the Water Stone, which the fetch alone never marked
+    marked: ["act_bm_stone_water_01", "bm_waterlife_unique1"]

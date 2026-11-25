@@ -1,0 +1,38 @@
+# The reviewed quest markers of TR09_Journalist.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR09_Journalist
+stages:
+  - stage: 1
+    verdict: corrected  # the pawnbroker Weerhat is marked, and Trels's hidden office is no longer given away
+    marked: ["ten-tongues_weerhat"]
+  - stage: 10
+    verdict: corrected  # the hint points at a pawnbroker, so only Weerhat is marked
+    marked: ["ten-tongues_weerhat"]
+  - stage: 20
+    verdict: corrected  # the Craftsmen's Hall is marked, as Weerhat said, before Trels himself
+    marked: ["cell:mournhold, craftsmen's hall"]
+  - stage: 30
+    verdict: right  # Trels is marked once the journal says he hides in the hall
+    marked: ["trels varis"]
+  - stage: 40
+    verdict: corrected  # Trels attacks, so the kill is marked
+    marked: ["trels varis"]
+  - stage: 50
+    verdict: corrected  # Trels only sends the player away at this stage, so killing him is the way left
+    marked: ["trels varis"]
+  - stage: 60
+    verdict: corrected  # only Tienius is marked for the report
+    marked: ["tienius delitian"]
+  - stage: 70
+    verdict: right  # Tienius is marked for the report
+    marked: ["tienius delitian"]
+  - stage: 80
+    verdict: corrected  # only Tienius is marked, not the pawnbroker
+    marked: ["tienius delitian"]
+  - stage: 90
+    verdict: corrected  # Tienius is marked once TR08_Hlaalu ends and he asks about the writer; Weerhat is a detour
+    marked: ["tienius delitian"]
+  - stage: 95
+    verdict: right  # Tienius is marked for the report
+    marked: ["tienius delitian"]

@@ -1,0 +1,26 @@
+# The reviewed quest markers of BM_Retribution.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Retribution
+stages:
+  - stage: 10
+    verdict: corrected  # Kolfinna's answer comes first; she only says where Sigvatr hunts at 30
+    marked: ["kolfinna"]
+  - stage: 20
+    verdict: corrected  # the player refused, so nothing is marked
+    marked: []
+  - stage: 30
+    verdict: right  # Sigvatr and his gem at the Altar of Thrond
+    marked: ["ingred_emerald_pinetear", "kolfinna", "sigvatr the strong"]
+  - stage: 40
+    verdict: right  # Sigvatr still has the gem
+    marked: ["ingred_emerald_pinetear", "kolfinna", "sigvatr the strong"]
+  - stage: 50
+    verdict: right  # Kolfinna takes the gem
+    marked: ["ingred_emerald_pinetear", "kolfinna"]
+  - stage: 60
+    verdict: right  # the gem on the corpse and then Kolfinna
+    marked: ["ingred_emerald_pinetear", "kolfinna"]
+  - stage: 70
+    verdict: right  # Kolfinna takes the gem
+    marked: ["ingred_emerald_pinetear", "kolfinna"]

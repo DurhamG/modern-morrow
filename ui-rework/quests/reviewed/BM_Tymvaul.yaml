@@ -1,0 +1,23 @@
+# The reviewed quest markers of BM_Tymvaul.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Tymvaul
+stages:
+  - stage: 10
+    verdict: right  # Lassnr's choice
+    marked: ["lassnr"]
+  - stage: 20
+    verdict: right  # the player refused and nothing is marked
+    marked: []
+  - stage: 30
+    verdict: right  # Tymvaul in Rimhull
+    marked: ["tymvaul"]
+  - stage: 40
+    verdict: right  # Tymvaul's choice
+    marked: ["tymvaul"]
+  - stage: 50
+    verdict: right  # Lassnr
+    marked: ["lassnr"]
+  - stage: 60
+    verdict: right  # Lassnr
+    marked: ["lassnr"]

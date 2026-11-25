@@ -1,0 +1,29 @@
+# The reviewed quest markers of CO_9a.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_9a
+stages:
+  - stage: 10
+    verdict: corrected  # Hroldar is marked, without the messenger before Hroldar has shown the spot.
+    marked: ["hroldar the strange_b"]
+  - stage: 20
+    verdict: corrected  # Hroldar, who escorts the player to the spot, is marked alone.
+    marked: ["hroldar the strange_b"]
+  - stage: 30
+    verdict: right  # The messenger is marked, as the journal asks.
+    marked: ["tirvel balen"]
+  - stage: 40
+    verdict: corrected  # Hroldar's spot is marked as where to lead the messenger, not the messenger as someone to kill.
+    marked: ["hroldar the strange_b"]
+  - stage: 50
+    verdict: right  # Hroldar is marked, who hands over Carnius's package.
+    marked: ["hroldar the strange_b"]
+  - stage: 60
+    verdict: right  # Hroldar is marked, who hands over Carnius's package.
+    marked: ["hroldar the strange_b"]
+  - stage: 70
+    verdict: right  # Carnius's note asks for Hroldar's death, so he is marked to kill, and then Carnius.
+    marked: ["carnius magius", "hroldar the strange_b"]
+  - stage: 80
+    verdict: right  # Carnius is marked to hear of it.
+    marked: ["carnius magius"]

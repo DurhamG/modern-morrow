@@ -1,0 +1,21 @@
+# The reviewed quest markers of MS_Warlords_a.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_Warlords_a
+stages:
+  - stage: 10
+    verdict: right  # Felvan Ienith is marked, to be talked round first; Olvyne's answer only counts from stage 20.
+    marked: ["felvan ienith"]
+  - stage: 20
+    verdict: right  # Olvyne is marked, to be talked round.
+    marked: ["olvyne dobar"]
+  - stage: 30
+    verdict: right  # Both agreed to turn themselves in, so nothing is marked while time passes.
+    marked: []
+  - stage: 35
+    verdict: corrected  # Only Dovor's body in the Vacant Manor is marked; the jail isn't named yet.
+    marked: ["dovor oren"]
+  - stage: 40
+    verdict: corrected  # Felvan and Olvyne in the jail are optional, as no journal says where they went.
+    marked: []
+    optional: ["felvan ienith", "olvyne dobar"]

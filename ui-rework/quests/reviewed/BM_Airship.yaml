@@ -1,0 +1,39 @@
+# The reviewed quest markers of BM_Airship.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Airship
+stages:
+  - stage: 5
+    verdict: corrected  # Louis is marked for the captain's journal, without the amulet the journal hasn't named yet.
+    marked: ["bk_airship_captains_journal", "louis beauchamp"]
+  - stage: 10
+    verdict: corrected  # Only Louis is marked to hear about his missing airship, not the amulet he hasn't asked for yet.
+    marked: ["louis beauchamp"]
+  - stage: 20
+    verdict: corrected  # Louis is marked for the choice to take the job, without the amulet and journal the player hasn't agreed to find.
+    marked: ["louis beauchamp"]
+  - stage: 30
+    verdict: corrected  # The player turned the job down, so only Louis is marked, as a side step, in case the player changes their mind.
+    marked: []
+    optional: ["louis beauchamp"]
+  - stage: 40
+    verdict: right  # The wreck with the captain's journal and the amulet in Hrothmund's Barrow are both marked, then Louis.
+    marked: ["amulet of infectious charm", "bk_airship_captains_journal", "louis beauchamp"]
+  - stage: 60
+    verdict: right  # The captain's journal goes back to Louis, and the amulet in the barrow is still asked for.
+    marked: ["amulet of infectious charm", "bk_airship_captains_journal", "louis beauchamp"]
+  - stage: 70
+    verdict: corrected  # The amulet in Hrothmund's Barrow and then Louis are marked, not the journal Louis already keeps.
+    marked: ["amulet of infectious charm", "louis beauchamp"]
+  - stage: 75
+    verdict: right  # The line that sets this stage finishes the quest at once.
+    marked: ["amulet of infectious charm", "bk_airship_captains_journal", "louis beauchamp"]
+  - stage: 80
+    verdict: right  # While playing the amulet Louis keeps can't be found, so only the journal at the wreck and Louis are marked.
+    marked: ["amulet of infectious charm", "bk_airship_captains_journal", "louis beauchamp"]
+  - stage: 85
+    verdict: right  # The line that sets this stage finishes the quest at once.
+    marked: ["amulet of infectious charm", "bk_airship_captains_journal", "louis beauchamp"]
+  - stage: 90
+    verdict: right  # The line that sets this stage finishes the quest at once.
+    marked: ["amulet of infectious charm", "bk_airship_captains_journal", "louis beauchamp"]

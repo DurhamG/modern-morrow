@@ -1,0 +1,38 @@
+# The reviewed quest markers of MS_Warlords.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_Warlords
+stages:
+  - stage: 10
+    verdict: right  # Dovor Oren is marked for the help he asked about.
+    marked: ["dovor oren"]
+  - stage: 20
+    verdict: right  # Dovor is marked for his task.
+    marked: ["dovor oren"]
+  - stage: 30
+    verdict: corrected  # Soscean's gear is marked, then Dovor once the player has it.
+    marked: ["dovor oren", "ebony shortsword_soscean", "ebony_cuirass_soscean", "soscean"]
+  - stage: 40
+    verdict: right  # Dovor is marked, as he said there was more to do.
+    marked: ["dovor oren"]
+  - stage: 50
+    verdict: corrected  # Only Felvan Ienith is marked.
+    marked: ["felvan ienith"]
+  - stage: 60
+    verdict: corrected  # Elanande's gear is marked, then Felvan once the player has it.
+    marked: ["ebony war axe_elanande", "elanande", "extravagant_robe_02_elanande", "felvan ienith"]
+  - stage: 70
+    verdict: right  # Dovor is marked for the next task.
+    marked: ["dovor oren"]
+  - stage: 80
+    verdict: corrected  # Only Olvyne Dobar is marked.
+    marked: ["olvyne dobar"]
+  - stage: 90
+    verdict: corrected  # Bels Uvenim's gear is marked, then Olvyne once the player has it.
+    marked: ["bels uvenim", "olvyne dobar", "silver spear_uvenim", "silver_helm_uvenim"]
+  - stage: 100
+    verdict: right  # Dovor is marked for the last task.
+    marked: ["dovor oren"]
+  - stage: 110
+    verdict: corrected  # Suldreni Salandas's gear is marked, then Dovor once the player has it.
+    marked: ["amulet_salandas", "dovor oren", "dwarven mace_salandas", "suldreni salandas"]

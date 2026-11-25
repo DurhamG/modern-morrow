@@ -1,0 +1,50 @@
+# The reviewed quest markers of BM_Smugglers.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Smugglers
+stages:
+  - stage: 10
+    verdict: corrected  # Carius names the two soldiers first
+    marked: ["falx carius"]
+  - stage: 20
+    verdict: corrected  # Lusius and Artoria are the choice; the soldier needs Artoria chosen
+    marked: ["gaea artoria", "saenus lusius"]
+  - stage: 30
+    verdict: corrected  # Lusius suggests whom to ask; the cave is not named yet
+    marked: ["saenus lusius"]
+  - stage: 35
+    verdict: corrected  # Artoria's advice comes first; the cave is not named yet
+    marked: ["gaea artoria"]
+  - stage: 40
+    verdict: corrected  # Zeno Faustus in the Armory is named
+    marked: ["zeno faustus"]
+  - stage: 45
+    verdict: corrected  # the soldiers are whom Artoria wants to question
+    marked: ["faction:imperial legion"]
+  - stage: 50
+    verdict: corrected  # Zeno Faustus is named; the cave is not
+    marked: ["zeno faustus"]
+  - stage: 60
+    verdict: corrected  # Zeno Faustus will talk
+    marked: ["zeno faustus"]
+  - stage: 65
+    verdict: corrected  # Zeno Faustus is still the one to persuade
+    marked: ["zeno faustus"]
+  - stage: 70
+    verdict: right  # the Gandrung Caverns
+    marked: ["active_bm_smugglers", "gualtierus spurius"]
+  - stage: 80
+    verdict: right  # Gualtierus offers a deal
+    marked: ["gualtierus spurius"]
+  - stage: 90
+    verdict: right  # Gualtierus offers the choice
+    marked: ["gualtierus spurius"]
+  - stage: 93
+    verdict: right  # the fort, where the attack is found on the way to Carius
+    marked: ["active_frostattack_unique"]
+  - stage: 95
+    verdict: corrected  # the five smugglers are to be killed, not the fort visited
+    marked: ["gualtierus spurius", "mazorn gro-gar", "mol gro-shat", "mus roscius", "sorian"]
+  - stage: 97
+    verdict: right  # the fort, on the way to Carius
+    marked: ["active_frostattack_unique"]

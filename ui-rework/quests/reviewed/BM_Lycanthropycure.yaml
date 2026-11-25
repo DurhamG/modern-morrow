@@ -1,0 +1,8 @@
+# The reviewed quest markers of BM_Lycanthropycure.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Lycanthropycure
+stages:
+  - stage: 10
+    verdict: corrected  # The scroll inside the fake rock in the Gloomy Cave is marked until the player has it.
+    marked: ["sc_lycanthropycure"]

@@ -1,0 +1,8 @@
+# The reviewed quest markers of Merc_Calvus_Quit.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: Merc_Calvus_Quit
+stages:
+  - stage: 1
+    verdict: right  # Calvus quit for good and nothing is left to do
+    marked: []

@@ -1,0 +1,26 @@
+# The reviewed quest markers of CO_13a.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_13a
+stages:
+  - stage: 5
+    verdict: right  # Carnius is marked to explain his plan.
+    marked: ["carnius magius"]
+  - stage: 10
+    verdict: corrected  # The two bags in the hall are marked, then Toralf once he arrives in the evening.
+    marked: ["com_sack_01_colony", "com_sack_02_colony", "toralf"]
+  - stage: 20
+    verdict: corrected  # Toralf's five men are marked, who each take a set of equipment.
+    marked: ["alfbrand", "audmund", "bryngrim", "ormvard", "valgeir"]
+  - stage: 25
+    verdict: right  # Toralf is marked for his own set, which the player carries.
+    marked: ["bm huntsman war axe", "bm wolf cuirass", "bm wolf greaves", "toralf"]
+  - stage: 30
+    verdict: corrected  # Toralf is marked to kill as well as his men.
+    marked: ["alfbrand", "audmund", "bryngrim", "ormvard", "toralf", "valgeir"]
+  - stage: 40
+    verdict: corrected  # Carnius is marked to talk to rather than to kill, since the journal hasn't asked for his death.
+    marked: ["carnius magius"]
+  - stage: 50
+    verdict: right  # Constans is marked, who makes the player Factor.
+    marked: ["constans atrius"]

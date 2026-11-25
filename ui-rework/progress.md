@@ -374,3 +374,19 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
   and declined jobs that kept their markers. Second reviewers disagreed at 25 stages. Engine changes from this batch:
   a body the player is sent to is marked, the check for entries that change nothing looks at stages without a
   journal entry too, and the review tool reads quest IDs with spaces.
+- Tribunal and Bloodmoon are reviewed, the last two batches: 293 Tribunal stages (124 right, 169 corrected) and 397
+  Bloodmoon stages (207 right, 190 corrected). Every stage of all 758 quests in the three games is now reviewed:
+  2,480 stages, 1,304 right as they were, 1,166 corrected, 10 that can't be marked well. Engine changes from these
+  batches: choices written "Choice:" with a colon are read, only a correction's own visit marks a body, and while a
+  correction's next ways wait for their checks nothing else is marked in their place.
+- A live check, the quest-live-check harness command, sets every reviewed stage in a running game with only that quest
+  tracked and compares what the markers show with the record. The first run found 64 stages showing a target their
+  review didn't expect, mostly a correction falling back to spoilers while its next step waited for a check. After the
+  fixes, 21 remain, nearly all caused by the test itself, which leaves every other quest at stage 0 and the player
+  with no gold. On the static comparison with Comprehensive Objective Mod's first objective over all 2,071 stages it
+  covers, the corrected markers agree at 70.3%, up from 67.8%, and point somewhere else at 18.9%, down from 22.9%,
+  with 1.64 markers per stage instead of 1.80. That mod is itself wrong at about 10% of stages and often picks the
+  goal where the review keeps a side step as optional, so the review records are the better measure.
+- Known limits: a stage the game marks as finishing a quest can still have a report to give, but a finished quest
+  isn't tracked; people a script places, such as Ranes Ienith, can't be marked; and a target can't test another
+  actor's local variable.

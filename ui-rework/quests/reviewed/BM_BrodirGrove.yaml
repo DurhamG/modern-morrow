@@ -1,0 +1,26 @@
+# The reviewed quest markers of BM_BrodirGrove.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_BrodirGrove
+stages:
+  - stage: 10
+    verdict: corrected  # Ulfgar is marked, not his ghost, which stays hidden until he dies.
+    marked: ["ulfgar the unending"]
+  - stage: 20
+    verdict: corrected  # Bereditte Jastal, who carries the book on Sovngarde, is marked, then Ulfgar once the player has it.
+    marked: ["bk_sovngarde", "ulfgar the unending"]
+  - stage: 30
+    verdict: corrected  # Ulfgar is marked to receive the book, not his ghost.
+    marked: ["bk_sovngarde", "ulfgar the unending"]
+  - stage: 40
+    verdict: corrected  # Ulfgar is marked for his request to fight, not his ghost.
+    marked: ["ulfgar the unending"]
+  - stage: 50
+    verdict: corrected  # Ulfgar is marked in case the player changes their mind, not his ghost.
+    marked: ["ulfgar the unending"]
+  - stage: 60
+    verdict: corrected  # Ulfgar is marked for the fight, not his ghost.
+    marked: ["ulfgar the unending"]
+  - stage: 90
+    verdict: right  # The ghost of Ulfgar at Brodir Grove is marked, as he promised.
+    marked: ["ulfgar_ghost"]

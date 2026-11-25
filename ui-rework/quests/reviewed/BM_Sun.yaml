@@ -1,0 +1,17 @@
+# The reviewed quest markers of BM_Sun.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Sun
+stages:
+  - stage: 10
+    verdict: right  # the Halls of Penumbra
+    marked: ["active_bm_penumbra", "bm_ice_wall"]
+  - stage: 20
+    verdict: right  # deeper into the Halls of Penumbra
+    marked: ["active_bm_penumbra2", "bm_ice_wall"]
+  - stage: 30
+    verdict: corrected  # the ice troll carries the flaming eye that breaks the wall
+    marked: ["bm_ice_wall", "ingred_eyeball_unique"]
+  - stage: 40
+    verdict: right  # the Sun Stone
+    marked: ["act_bm_stone_sun_01"]

@@ -1,0 +1,38 @@
+# The reviewed quest markers of TR_Assassins.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_Assassins
+stages:
+  - stage: 10
+    verdict: corrected  # only the informant at the Winged Guar is marked
+    marked: ["bakh gro-sham"]
+  - stage: 20
+    verdict: corrected  # the informant is marked and Mero is optional
+    marked: ["bakh gro-sham"]
+    optional: ["plitinius mero"]
+  - stage: 30
+    verdict: corrected  # the informant is marked, as Mero suggests
+    marked: ["bakh gro-sham"]
+  - stage: 40
+    verdict: corrected  # the informant is marked, and the assassins are hidden until they appear
+    marked: ["bakh gro-sham"]
+  - stage: 50
+    verdict: corrected  # King Helseth is marked, with Barenziah and Mero optional
+    marked: ["king hlaalu helseth"]
+    optional: ["barenziah", "plitinius mero"]
+  - stage: 60
+    verdict: corrected  # King Helseth is marked, with Mero optional
+    marked: ["king hlaalu helseth"]
+    optional: ["plitinius mero"]
+  - stage: 70
+    verdict: corrected  # King Helseth is marked
+    marked: ["king hlaalu helseth"]
+  - stage: 80
+    verdict: corrected  # the waiting spot outside Barenziah's chambers is marked
+    marked: ["active_assassin_unique"]
+  - stage: 85
+    verdict: right  # the three assassins are marked
+    marked: ["hels_assassin1", "hels_assassin2", "hels_assassin3"]
+  - stage: 90
+    verdict: right  # King Helseth is marked for the report
+    marked: ["king hlaalu helseth"]

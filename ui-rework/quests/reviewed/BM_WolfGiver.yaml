@@ -1,0 +1,38 @@
+# The reviewed quest markers of BM_WolfGiver.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_WolfGiver
+stages:
+  - stage: 10
+    verdict: corrected  # the raven at the Altar of Thrond; the innocent comes much later
+    marked: ["glenmoril_raven"]
+  - stage: 20
+    verdict: corrected  # the player refused, so nothing is marked
+    marked: []
+  - stage: 30
+    verdict: corrected  # Ettiene in the Gloomy Cave
+    marked: ["glenmoril_witch_cave"]
+  - stage: 40
+    verdict: corrected  # Fallaise gives the first errand
+    marked: ["glenmoril_witch_cave_2"]
+  - stage: 50
+    verdict: corrected  # the wolfsbane on Hvitkald Peak, not the copy in Lassnr's house, then Fallaise; Isobel too
+    marked: ["flora_bm_wolfsbane_01", "glenmoril_witch_cave_2", "glenmoril_witch_cave_3"]
+  - stage: 60
+    verdict: corrected  # the wolfsbane and Fallaise; Isobel once the player has the berries, which can't be marked
+    marked: ["flora_bm_wolfsbane_01", "glenmoril_witch_cave_2", "glenmoril_witch_cave_3"]
+  - stage: 70
+    verdict: corrected  # Ettiene once Isobel has the berries; the innocent is left out
+    marked: ["glenmoril_witch_cave", "glenmoril_witch_cave_3"]
+  - stage: 80
+    verdict: corrected  # Ettiene at the Altar of Thrond
+    marked: ["glenmoril_witch_altar_2"]
+  - stage: 90
+    verdict: right  # the innocent to kill, then Ettiene with the heart
+    marked: ["bm_werewolf_ritual", "glenmoril_witch_altar_2", "ingred_innocent_heart", "wolfgiver_f_nord"]
+  - stage: 100
+    verdict: right  # the innocent's body for the heart
+    marked: ["bm_werewolf_ritual", "wolfender_f_imperial", "wolfender_f_nord", "wolfgiver_f_nord"]
+  - stage: 105
+    verdict: right  # Ettiene
+    marked: ["bm_werewolf_ritual", "glenmoril_witch_altar_2", "wolfgiver_f_nord"]

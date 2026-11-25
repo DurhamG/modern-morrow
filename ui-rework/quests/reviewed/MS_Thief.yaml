@@ -1,0 +1,29 @@
+# The reviewed quest markers of MS_Thief.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_Thief
+stages:
+  - stage: 10
+    verdict: corrected  # Only Alvan Llarys is marked; Golena's hideout isn't known yet.
+    marked: ["alvan llarys"]
+  - stage: 20
+    verdict: corrected  # Only Elbert Nermarc is marked.
+    marked: ["elbert nermarc"]
+  - stage: 30
+    verdict: corrected  # Only Alvan is marked.
+    marked: ["alvan llarys"]
+  - stage: 40
+    verdict: corrected  # Only the trap door in Sadri Manor is marked.
+    marked: ["ex_mh_sewer_trapdoor_sadri", "tadera andules"]
+  - stage: 50
+    verdict: right  # Golena is marked in the Forgotten Sewer, past the trap door the journal mentions.
+    marked: ["golena sadri_a", "tadera andules"]
+  - stage: 60
+    verdict: right  # Golena is marked.
+    marked: ["golena sadri_a"]
+  - stage: 70
+    verdict: right  # Golena is marked.
+    marked: ["golena sadri_a"]
+  - stage: 80
+    verdict: right  # Alvan is marked for the news.
+    marked: ["alvan llarys"]

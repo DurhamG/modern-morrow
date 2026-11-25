@@ -1,0 +1,8 @@
+# The reviewed quest markers of TR05_People_Ravani.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR05_People_Ravani
+stages:
+  - stage: 1
+    verdict: right  # a note from Ravani with nothing to do
+    marked: []

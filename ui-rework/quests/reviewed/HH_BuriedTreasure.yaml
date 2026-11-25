@@ -7,5 +7,5 @@ stages:
     verdict: corrected  # Murudius Flaeus is marked, not Edryno, who needs the money first
     marked: ["murudius flaeus"]
   - stage: 50
-    verdict: corrected  # The buried chest is marked along with Edryno Arethi
+    verdict: corrected  # The buried chest is marked along with Edryno Arethi, and killing Murudius is never marked.
     marked: ["com_chest_02_hhbt", "edryno arethi"]

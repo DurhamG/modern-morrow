@@ -1,0 +1,20 @@
+# The reviewed quest markers of MS_ClutterCollector.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_ClutterCollector
+stages:
+  - stage: 1
+    verdict: corrected  # The two items are marked, then Detritus Caria once the player has them.
+    marked: ["detritus caria", "misc_clothbolt_02", "misc_imp_silverware_pitcher"]
+  - stage: 10
+    verdict: right  # Detritus is marked, since he said to come back for more work.
+    marked: ["detritus caria"]
+  - stage: 20
+    verdict: right  # The five items are marked, then Detritus once the player has them.
+    marked: ["detritus caria", "misc_com_metal_plate_03", "misc_com_silverware_fork", "misc_com_silverware_knife", "misc_com_silverware_spoon", "misc_de_pot_redware_04"]
+  - stage: 30
+    verdict: right  # Detritus is marked, since he said to come back for more work.
+    marked: ["detritus caria"]
+  - stage: 40
+    verdict: right  # The Dwemer tableware is marked, then Detritus once the player has it.
+    marked: ["detritus caria", "misc_dwrv_bowl00", "misc_dwrv_goblet00", "misc_dwrv_goblet10", "misc_dwrv_mug00", "misc_dwrv_pitcher00"]

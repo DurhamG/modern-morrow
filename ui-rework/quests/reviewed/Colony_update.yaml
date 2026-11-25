@@ -1,0 +1,26 @@
+# The reviewed quest markers of Colony_update.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: Colony_update
+stages:
+  - stage: 0
+    verdict: right  # The quest's name, with nothing to go to.
+    marked: []
+  - stage: 10
+    verdict: corrected  # Carnius is marked, as the journal asks, until his next assignment starts.
+    marked: ["carnius magius"]
+  - stage: 20
+    verdict: corrected  # Carnius is marked, as the journal asks, until his next assignment starts.
+    marked: ["carnius magius"]
+  - stage: 30
+    verdict: corrected  # Falco at the colony is marked, and Carnius on his side, until the next assignment starts.
+    marked: ["carnius magius", "falco galenus"]
+  - stage: 40
+    verdict: corrected  # The boss of the player's side is marked until the next assignment starts.
+    marked: ["carnius magius", "falco galenus"]
+  - stage: 60
+    verdict: right  # The quest was already marked finished at 50, and the next assignment's quest marks the way.
+    marked: []
+  - stage: 70
+    verdict: right  # A stage with no journal entry on a finished quest, and the estate quest marks the way.
+    marked: []

@@ -1,0 +1,44 @@
+# The reviewed quest markers of BM_BearHunt1.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_BearHunt1
+stages:
+  - stage: 10
+    verdict: corrected  # Korst is marked for the topic that sends the player to Rolf, without the bear's heart the journal hasn't named.
+    marked: ["korst wind-eye"]
+  - stage: 15
+    verdict: corrected  # Rolf at Lake Fjalding is marked, without the bear's heart, which is all that would be left beside him while playing.
+    marked: ["rolf long-tooth"]
+  - stage: 20
+    verdict: corrected  # Rolf is marked to explain the player's part, without the heart of the bear that hasn't appeared yet.
+    marked: ["rolf long-tooth"]
+  - stage: 25
+    verdict: corrected  # Rolf is marked while the player follows him, without the hunters whose deaths haven't happened yet.
+    marked: ["korst wind-eye", "rolf long-tooth"]
+  - stage: 30
+    verdict: corrected  # Sattir, whose path the screams came from, is marked, not Rolf, who sent the player there.
+    marked: ["sattir the bold"]
+  - stage: 40
+    verdict: right  # Rolf is marked to hear about Sattir's death.
+    marked: ["korst wind-eye", "rolf long-tooth"]
+  - stage: 45
+    verdict: corrected  # Rolf is marked while the player follows him, without Grerid, who hasn't been attacked yet.
+    marked: ["korst wind-eye", "rolf long-tooth"]
+  - stage: 50
+    verdict: corrected  # Grerid, whom Rolf sent the player to find, is marked, not Rolf.
+    marked: ["grerid axe-wife"]
+  - stage: 55
+    verdict: right  # Rolf is marked to hear about Grerid's death.
+    marked: ["korst wind-eye", "rolf long-tooth"]
+  - stage: 60
+    verdict: corrected  # The Spirit Bear and Rolf are marked, not the hidden object that springs the werewolf ambush.
+    marked: ["bm_bear_spr_unique", "korst wind-eye", "rolf long-tooth"]
+  - stage: 70
+    verdict: corrected  # The Spirit Bear is marked, without Rolf, who now follows the player.
+    marked: ["bm_bear_spr_unique", "bm_bearheart_unique"]
+  - stage: 75
+    verdict: corrected  # The heart on the bear's body and then Korst are marked, without Rolf beside the player.
+    marked: ["bm_bearheart_unique", "korst wind-eye"]
+  - stage: 80
+    verdict: corrected  # Korst is marked to receive the heart, without Rolf beside the player.
+    marked: ["bm_bearheart_unique", "korst wind-eye"]

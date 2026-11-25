@@ -1,0 +1,30 @@
+# The reviewed quest markers of TR_KillGoblins.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_KillGoblins
+stages:
+  - stage: 10
+    verdict: corrected  # only Fedris Hler is marked
+    marked: ["fedris hler"]
+  - stage: 20
+    verdict: corrected  # the player asks around Mournhold, with Hler optional, and the goblins aren't given away
+    marked: ["cell:mournhold"]
+    optional: ["fedris hler"]
+  - stage: 30
+    verdict: corrected  # asking around is marked, not the trainers
+    marked: ["cell:mournhold"]
+  - stage: 40
+    verdict: corrected  # the warchiefs are marked, with the trainers optional
+    marked: ["goblin_warchief1", "goblin_warchief2"]
+    optional: ["armion", "yarnar"]
+  - stage: 50
+    verdict: right  # Hler is marked, and the trainers as the bonus journal 30 asked for
+    marked: ["armion", "fedris hler", "goblin_warchief1", "goblin_warchief2", "yarnar"]
+  - stage: 57
+    verdict: corrected  # the living warchiefs are marked, Yarnar is optional, and Hler only once both warchiefs are dead
+    marked: ["fedris hler", "goblin_warchief1", "goblin_warchief2"]
+    optional: ["yarnar"]
+  - stage: 58
+    verdict: corrected  # the living warchiefs are marked, Armion is optional, and Hler only once both warchiefs are dead
+    marked: ["fedris hler", "goblin_warchief1", "goblin_warchief2"]
+    optional: ["armion"]

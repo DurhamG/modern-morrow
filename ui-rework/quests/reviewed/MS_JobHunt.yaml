@@ -1,0 +1,15 @@
+# The reviewed quest markers of MS_JobHunt.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_JobHunt
+stages:
+  - stage: 1
+    verdict: corrected  # Bols Indalen is marked as optional instead of a kill of his apprentice.
+    marked: []
+    optional: ["bols indalen"]
+  - stage: 10
+    verdict: right  # Therdon is marked as the one person looking for work.
+    marked: ["therdon"]
+  - stage: 20
+    verdict: right  # Therdon is marked at the Craftsmen's Hall where he went to apply.
+    marked: ["therdon2"]

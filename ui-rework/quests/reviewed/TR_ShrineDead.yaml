@@ -1,0 +1,32 @@
+# The reviewed quest markers of TR_ShrineDead.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_ShrineDead
+stages:
+  - stage: 10
+    verdict: corrected  # only Gavas Drin is marked
+    marked: ["fedris hler", "gavas drin"]
+  - stage: 20
+    verdict: corrected  # only Gavas Drin is marked
+    marked: ["gavas drin"]
+  - stage: 30
+    verdict: corrected  # only Gavas Drin is marked
+    marked: ["gavas drin"]
+  - stage: 40
+    verdict: right  # the Profane liches and Urvel Dulni are marked
+    marked: ["lich_profane_unique", "urvel dulni"]
+  - stage: 50
+    verdict: right  # Urvel Dulni is marked
+    marked: ["urvel dulni"]
+  - stage: 60
+    verdict: right  # Gavas Drin is marked
+    marked: ["gavas drin"]
+  - stage: 70
+    verdict: right  # Gavas Drin is marked for the report
+    marked: ["gavas drin", "urvel dulni"]
+  - stage: 115
+    verdict: right  # nothing is left to do
+    marked: []
+  - stage: 116
+    verdict: right  # nothing is left to do
+    marked: []

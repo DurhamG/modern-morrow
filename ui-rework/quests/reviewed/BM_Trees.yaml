@@ -1,0 +1,17 @@
+# The reviewed quest markers of BM_Trees.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Trees
+stages:
+  - stage: 10
+    verdict: corrected  # the Riekling who stole the seeds; the plot needs the seeds first
+    marked: ["bm_riekling_st_unique", "bm_seeds_unique"]
+  - stage: 20
+    verdict: corrected  # the seeds the Riekling carries
+    marked: ["bm_seeds_unique"]
+  - stage: 30
+    verdict: right  # the clearing where the seeds are planted
+    marked: ["act_bm_garden_plot_01"]
+  - stage: 40
+    verdict: right  # the Tree Stone
+    marked: ["act_bm_stone_tree_01"]

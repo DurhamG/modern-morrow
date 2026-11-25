@@ -1,0 +1,8 @@
+# The reviewed quest markers of TR08_Hlaalu_Berano.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR08_Hlaalu_Berano
+stages:
+  - stage: 1
+    verdict: right  # Forven escaped, and the main quest marks the report to Tienius
+    marked: []

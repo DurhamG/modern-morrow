@@ -1,0 +1,20 @@
+# The reviewed quest markers of BM_Beasts.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Beasts
+stages:
+  - stage: 10
+    verdict: right  # The wounded bear to the south, the Good Beast the stone speaks of, is marked.
+    marked: ["bm_arrow_riekling_uni", "bm_bear_be_unique"]
+  - stage: 20
+    verdict: right  # The bear is marked, and the Rieklings attacking it are beside it.
+    marked: ["bm_arrow_riekling_uni", "bm_bear_be_unique"]
+  - stage: 30
+    verdict: right  # The bear that carries the Riekling arrow is marked.
+    marked: ["bm_arrow_riekling_uni"]
+  - stage: 40
+    verdict: right  # The bear is marked, to stay with it or heal it.
+    marked: ["bm_bear_be_unique"]
+  - stage: 50
+    verdict: right  # The Beast Stone is marked to return to with the bear.
+    marked: ["act_bm_stone_beast_01"]

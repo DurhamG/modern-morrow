@@ -1,0 +1,35 @@
+# The reviewed quest markers of CO_10.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_10
+stages:
+  - stage: 10
+    verdict: corrected  # The Spriggans are marked to kill, and Unel only once they are dead.
+    marked: ["bm_spriggan_co1", "bm_spriggan_co2", "bm_spriggan_co3", "bm_spriggan_co4"]
+  - stage: 20
+    verdict: corrected  # The Spriggans are marked to kill, and Unel only once they are dead.
+    marked: ["bm_spriggan_co1", "bm_spriggan_co2", "bm_spriggan_co3", "bm_spriggan_co4"]
+  - stage: 30
+    verdict: right  # Unel in the bar is marked.
+    marked: ["unel lloran"]
+  - stage: 40
+    verdict: corrected  # The miners in the mine are marked, who know where the roots are.
+    marked: ["faction:east empire company"]
+  - stage: 50
+    verdict: corrected  # The roots in the abandoned shaft are marked, as the journal describes.
+    marked: ["act_ex_colony_root_3"]
+  - stage: 55
+    verdict: right  # Unel is marked to hear about the roots.
+    marked: ["unel lloran"]
+  - stage: 60
+    verdict: right  # The roots are marked, where Unel has to be led.
+    marked: ["act_ex_colony_root_4"]
+  - stage: 70
+    verdict: right  # Unel is marked, who now asks for the petals.
+    marked: ["unel lloran"]
+  - stage: 80
+    verdict: right  # The petals are only found off Solstheim, so their sellers are marked, then Unel.
+    marked: ["ingred_bittergreen_petals_01", "unel lloran"]
+  - stage: 90
+    verdict: right  # Falco or Carnius is marked to hear the news, by the player's side.
+    marked: ["carnius magius", "falco galenus"]

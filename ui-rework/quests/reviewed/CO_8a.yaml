@@ -1,0 +1,20 @@
+# The reviewed quest markers of CO_8a.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_8a
+stages:
+  - stage: 1
+    verdict: corrected  # Carnius is marked for the rest of his orders, without Graring before anyone has named him.
+    marked: ["carnius magius"]
+  - stage: 10
+    verdict: corrected  # The three Nords and their pick are marked, without Carnius after only Graring has died.
+    marked: ["aenar", "bm nordic pick", "graring", "hidar"]
+  - stage: 20
+    verdict: right  # Carnius is marked, as the journal asks.
+    marked: ["carnius magius", "graring"]
+  - stage: 30
+    verdict: corrected  # The mine with the Stalhrim block is marked, since the player already has the pick.
+    marked: ["bm nordic pick", "cell:raven rock, mine"]
+  - stage: 40
+    verdict: right  # Carnius is marked for the Stalhrim the player carries.
+    marked: ["carnius magius", "ingred_raw_stalhrim_01"]

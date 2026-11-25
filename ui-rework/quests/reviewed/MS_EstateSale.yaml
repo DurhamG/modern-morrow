@@ -1,0 +1,32 @@
+# The reviewed quest markers of MS_EstateSale.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_EstateSale
+stages:
+  - stage: 10
+    verdict: right  # Geon Auline is marked for his request.
+    marked: ["geon auline"]
+  - stage: 20
+    verdict: corrected  # Only Arnsa Thendas is marked; Geon's refusal answer is left out.
+    marked: ["arnsa thendas"]
+  - stage: 23
+    verdict: corrected  # Only Arnsa is marked, for buying the dagger.
+    marked: ["arnsa thendas"]
+  - stage: 25
+    verdict: corrected  # Arnsa won't talk, so the dagger in her chest is marked instead of Geon.
+    marked: ["silver dagger_droth_unique"]
+  - stage: 30
+    verdict: corrected  # Only Geon is marked for handing over the stolen dagger.
+    marked: ["geon auline", "silver dagger_droth_unique"]
+  - stage: 35
+    verdict: corrected  # Only Arnsa is marked for the dagger she will give.
+    marked: ["arnsa thendas"]
+  - stage: 40
+    verdict: corrected  # Only Geon is marked for handing over the dagger.
+    marked: ["geon auline", "silver dagger_droth_unique"]
+  - stage: 50
+    verdict: right  # Geon is marked for handing over the dagger.
+    marked: ["geon auline"]
+  - stage: 80
+    verdict: corrected  # The quest finished at 70, so nothing is marked.
+    marked: []

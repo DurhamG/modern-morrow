@@ -1,0 +1,14 @@
+# The reviewed quest markers of TR05_People.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR05_People
+stages:
+  - stage: 1
+    verdict: corrected  # the people who mention the broadside are marked, and the copies of it wait until it is named
+    marked: ["anrel", "cell:mournhold", "cell:mournhold, great bazaar", "donus serethi", "tienius delitian"]
+  - stage: 50
+    verdict: corrected  # only Tienius is marked, since he asks for a copy only when the player reports
+    marked: ["tienius delitian"]
+  - stage: 100
+    verdict: right  # the broadside copies are marked, then Tienius
+    marked: ["bk_commontongue", "bk_commontongue_irano", "tienius delitian"]

@@ -1,0 +1,11 @@
+# The reviewed quest markers of CO_Choice.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_Choice
+stages:
+  - stage: 22
+    verdict: right  # Falco, who asks for help, and Carnius, who makes a rival offer, are both marked.
+    marked: ["carnius magius", "falco galenus"]
+  - stage: 25
+    verdict: right  # Falco and Carnius are both marked, since the player picks one.
+    marked: ["carnius magius", "falco galenus"]

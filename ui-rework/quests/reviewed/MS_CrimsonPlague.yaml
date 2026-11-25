@@ -1,0 +1,61 @@
+# The reviewed quest markers of MS_CrimsonPlague.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_CrimsonPlague
+stages:
+  - stage: 10
+    verdict: corrected  # Only Nerile Andaren is marked; the lich isn't named yet.
+    marked: ["nerile andaren"]
+  - stage: 20
+    verdict: corrected  # Only Geon Auline and the potion are marked for the delivery.
+    marked: ["geon auline", "p_cure_common_s"]
+  - stage: 30
+    verdict: corrected  # Nerile is marked for the report, where the rats attack; Athelyn and the lich aren't named yet.
+    marked: ["nerile andaren"]
+  - stage: 40
+    verdict: corrected  # Only Nerile is marked for the favour she asked about.
+    marked: ["nerile andaren"]
+  - stage: 49
+    verdict: corrected  # Nerile sent the player away after Geon's death, so nothing is marked.
+    marked: []
+  - stage: 50
+    verdict: corrected  # Only Athelyn Malas and the potion are marked for the delivery.
+    marked: ["athelyn malas", "p_cure_common_s"]
+  - stage: 60
+    verdict: corrected  # Only Nerile is marked for the report.
+    marked: ["nerile andaren"]
+  - stage: 69
+    verdict: corrected  # Nerile sent the player away after Athelyn's death, so nothing is marked.
+    marked: []
+  - stage: 70
+    verdict: corrected  # Nothing sets this stage; Nerile is marked as at 60.
+    marked: ["nerile andaren"]
+  - stage: 80
+    verdict: corrected  # Only Shunari Eye-Fly in the basement is marked; the lich isn't named yet.
+    marked: ["shunari eye-fly"]
+  - stage: 100
+    verdict: corrected  # Nerile is marked for the scroll, with curing Shunari directly optional.
+    marked: ["nerile andaren"]
+    optional: ["shunari eye-fly"]
+  - stage: 105
+    verdict: corrected  # Only Shunari in the Temple Gardens is marked, to be cured.
+    marked: ["shunari eye-fly"]
+  - stage: 110
+    verdict: corrected  # Only Shunari is marked for what she knows; the lich isn't named yet.
+    marked: ["shunari eye-fly"]
+  - stage: 120
+    verdict: corrected  # Shunari is marked for the secret passage the lich hides behind.
+    marked: ["shunari eye-fly"]
+  - stage: 130
+    verdict: corrected  # Only the rock wall that opens the passage is marked.
+    marked: ["act_plague_rock3"]
+  - stage: 140
+    verdict: right  # The lich is marked to be killed.
+    marked: ["lich_relvel"]
+  - stage: 150
+    verdict: corrected  # Nerile is marked to finish, and Shunari's farewell is optional.
+    marked: ["nerile andaren"]
+    optional: ["shunari eye-fly"]
+  - stage: 160
+    verdict: right  # Nerile is marked to finish the quest.
+    marked: ["nerile andaren"]

@@ -1,0 +1,11 @@
+# The reviewed quest markers of TR08_Hlaalu_Ravani.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR08_Hlaalu_Ravani
+stages:
+  - stage: 1
+    verdict: right  # a note about Ravani with nothing to do
+    marked: []
+  - stage: 5
+    verdict: right  # a note about Ravani with nothing to do
+    marked: []

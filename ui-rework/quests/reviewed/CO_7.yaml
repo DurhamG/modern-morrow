@@ -1,0 +1,28 @@
+# The reviewed quest markers of CO_7.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_7
+stages:
+  - stage: 10
+    verdict: corrected  # Seler in the bar is marked, with his wife as a side step.
+    marked: ["seler favelnim"]
+    optional: ["dralora favelnim"]
+  - stage: 20
+    verdict: corrected  # Seler in the bar is marked, with his wife as a side step.
+    marked: ["seler favelnim"]
+    optional: ["dralora favelnim"]
+  - stage: 30
+    verdict: right  # Seler is marked.
+    marked: ["seler favelnim"]
+  - stage: 40
+    verdict: right  # Seler is marked, whom the player fights until he tires.
+    marked: ["seler favelnim"]
+  - stage: 50
+    verdict: right  # Seler is marked, to talk down or to kill as he asks.
+    marked: ["seler favelnim"]
+  - stage: 60
+    verdict: right  # Falco or Carnius is marked to hear the news, by the player's side.
+    marked: ["carnius magius", "falco galenus"]
+  - stage: 70
+    verdict: right  # Falco or Carnius is marked to hear of Seler's death, by the player's side.
+    marked: ["carnius magius", "falco galenus"]

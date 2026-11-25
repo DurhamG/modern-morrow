@@ -1,0 +1,55 @@
+# The reviewed quest markers of TR_Blade.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_Blade
+stages:
+  - stage: 10
+    verdict: right  # Almalexia is marked
+    marked: ["almalexia", "nerevarblade_01_flame"]
+  - stage: 15
+    verdict: right  # Almalexia is marked
+    marked: ["almalexia", "nerevarblade_01_flame"]
+  - stage: 20
+    verdict: corrected  # Barenziah is marked, with Torasa optional
+    marked: ["barenziah"]
+    optional: ["torasa aram"]
+  - stage: 25
+    verdict: corrected  # King Helseth is marked for the duel, then Karrod after it
+    marked: ["karrod", "king hlaalu helseth"]
+    optional: ["torasa aram"]
+  - stage: 30
+    verdict: right  # Karrod is marked
+    marked: ["almalexia", "karrod", "nerevarblade_01_flame"]
+  - stage: 35
+    verdict: right  # Torasa Aram, the curator who holds the shield, is marked
+    marked: ["almalexia", "nerevarblade_01_flame", "torasa aram"]
+  - stage: 40
+    verdict: corrected  # Torasa is marked as optional until the donations are made, and King Helseth for Karrod's piece until the duel starts
+    marked: ["king hlaalu helseth", "torasa aram"]
+  - stage: 45
+    verdict: corrected  # the smiths of Mournhold are marked for the loose spike, and King Helseth until the duel starts
+    marked: ["bols indalen", "catia sosia", "daron", "dwemer_shield_battle_unique", "king hlaalu helseth", "yagak gro-gluk"]
+  - stage: 50
+    verdict: corrected  # the pieces and Yagak gro-Gluk are marked, and King Helseth until the duel for Karrod's piece starts
+    marked: ["almalexia", "bladepiece_01", "bladepiece_02", "bladepiece_03", "king hlaalu helseth", "nerevarblade_01_flame", "yagak gro-gluk"]
+  - stage: 55
+    verdict: corrected  # the pieces and Yagak gro-Gluk are marked, and King Helseth until the duel for Karrod's piece starts
+    marked: ["almalexia", "bladepiece_01", "bladepiece_02", "bladepiece_03", "king hlaalu helseth", "nerevarblade_01_flame", "yagak gro-gluk"]
+  - stage: 60
+    verdict: corrected  # nothing is marked during the two days the smith needs
+    marked: ["yagak gro-gluk"]
+  - stage: 65
+    verdict: right  # Yagak is marked
+    marked: ["almalexia", "nerevarblade_01_flame", "yagak gro-gluk"]
+  - stage: 70
+    verdict: right  # Radac's ghost is marked
+    marked: ["almalexia", "dwarven ghost_radac", "nerevarblade_01_flame"]
+  - stage: 75
+    verdict: corrected  # the Pyroil Tar is marked, and the ghost's directions are optional
+    marked: ["dwarven ghost_radac", "nerevarblade_01", "pyroil_tar_unique"]
+  - stage: 77
+    verdict: right  # the tar is marked, then the ghost
+    marked: ["almalexia", "dwarven ghost_radac", "nerevarblade_01", "nerevarblade_01_flame", "pyroil_tar_unique"]
+  - stage: 80
+    verdict: right  # Almalexia is marked
+    marked: ["almalexia", "nerevarblade_01_flame"]

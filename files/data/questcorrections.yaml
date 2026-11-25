@@ -85,9 +85,58 @@ fingerprints:
   B8_BackDoor6: 646e7f84549e80e1
   B8_MeetVivec: 1964f3b918e1e672
   B8_Nibani_2_Vivec: 4a87f3f2889b4098
+  BM_Airship: 78abe668899d8507
+  BM_BearHunt1: 9553f10f91201bfc
+  BM_BearHunt2: 757f062f0a0660cb
+  BM_BrodirGrove: 5f39e9946a3c8cd0
+  BM_CariusGone: 1a48e01128d00641
+  BM_Ceremony2: 902b8b301d4db845
+  BM_CursedCaptain: 465b48f34ebcfd6a
+  BM_Draugr: cd122fb76b59b4f7
+  BM_Falmer: 7f1b273b693ffea6
+  BM_FrostGiant1: 4df29a68e4a7715b
+  BM_FrostGiant2: 422b0460ec47006c
+  BM_Lycanthropycure: 9f644839a584cc5e
+  BM_MeadHall: a965548338edd53e
+  BM_Missionary: 83c5b0ccc67a99a0
+  BM_MoonSugar: e1d806094041b76d
+  BM_Morale: 0f8d30235302ab68
+  BM_Retribution: 71ada5bcc324f52a
+  BM_Rumors: c22c9a12e7ba0b76
+  BM_SadSeer: 59a856bc3f6bd985
+  BM_SkaalAttack: d231b9a63d4c6fba
+  BM_Smugglers: a5187cdd47a92e66
+  BM_Stones: 5d93dbd12f82c96d
+  BM_Sun: e4f90b373a69abbc
+  BM_Trees: 0848e83696d59fa8
+  BM_Trial: addfed4e33db636c
+  BM_Water: 27ceed9c17e9ffcd
+  BM_WildHunt: 5fbb8a3fc3d4dc25
+  BM_WolfGiver: 34f2b59b63210a03
+  BM_WomanScorned: 43223b5ec5a986c6
   C0_Act_C: 1ddc5211ddd5da16
   C0_Act_C_Expo: d740bb3c16398018
   C3_DestroyDagoth: d9b495fa0ea19552
+  CO_1: f8e9b4cac730c058
+  CO_10: 3309dd105faec423
+  CO_11: 8f509d6cfc54b7a6
+  CO_12: 423e3e1e6fc19991
+  CO_12a: 47c139f63f70a2d2
+  CO_13: cb387d658a3e84f9
+  CO_13a: e4d858b9f86043b6
+  CO_2: 34a1c88dc14592e8
+  CO_3: 427195dc713a4ab6
+  CO_3a: 8cae39c3ea2afb5f
+  CO_4: d93d67560ac7eba6
+  CO_5: 9c8d1b2d6e98d9d9
+  CO_6: 22ed13a659399690
+  CO_6a: 1b2d2b71a6540a83
+  CO_7: 12285f6973ad72eb
+  CO_8: 8a16722ae90244a7
+  CO_8a: ee98848c5368ba38
+  CO_9a: c64d30753fec8278
+  CO_Estate: ab47242848311d45
+  Colony_update: dab82c204843120a
   CX_BackPath: f767cf1ca4fb7e5d
   DA_Azura: 54f478d02d7e53e3
   DA_Boethiah: 60381d40f62e23ec
@@ -220,6 +269,7 @@ fingerprints:
   IL_Smuggler: 27fca7de40605ab9
   IL_TalosTreason: cf598a9dea6be983
   IL_WidowLand: 959780d571c85519
+  Merc_Calvus: 802a541a39c1d550
   MG_Advancement: 2ec39f1734ae3860
   MG_Apprentice: 84b993e662455650
   MG_Bethamez: 47d4b98b9d527a0b
@@ -240,16 +290,34 @@ fingerprints:
   MG_StopCompetition: 7bec1b49970bb565
   MG_VampireCure: 33f59692f64e1a52
   MG_WiseWoman: 711919db9dbec36c
+  MS_Adulterer: 5d117f66dc730adc
   MS_Apologies: eccaeedda5f40e68
   MS_ArenimTomb: 5c3eafca82f80898
+  MS_BadPets: 739a07a310e877fd
+  MS_BarbarianBook: e4902b5420e61678
+  MS_BattleBots2: 834c2d8905039077
+  MS_BlackDart: 139e7bd1fa26425b
+  MS_Bouncer: 0b938b0666df3bce
+  MS_ClutterCollector: 0338d76b8819701a
+  MS_CrimsonPlague: 6470830158d1b344
+  MS_EstateSale: f089eaa182650b2e
+  MS_HolyElf: d61d6383674f3591
+  MS_JobHunt: fe83ffb156c9de77
   MS_Lookout: ba527331850504f3
+  MS_MatchMaker: ff66caaab52ef899
+  MS_Natural: 8fd0c86ae8373c41
   MS_Nord_burial: f7d29ae9591034d1
+  MS_Performers: c9f10c732af1bbf2
   MS_Piernette: e22a0d55b62fa298
   MS_propylon: 10cef7cfb569bc6a
   MS_RaGruzgob: b6a2532466ede5e0
+  MS_ScrollSales: 98a9dc863e4b9355
+  MS_Thief: 0230f85936363008
   MS_Umbra: 6eb36624d6703a17
   MS_VampireCure: 826dfcc4eb8d527b
   MS_VassirDidanat: 94ba16bd60e4e604
+  MS_Warlords: 26db59b9d41b3d52
+  MS_Warlords_a: 7ee42c23d26f0718
   MS_WhiteGuar: ce8a17b12df8096c
   MT_DB_Contact: abb040e0b1f9c328
   MV_AbusedHealer: 10ece39f8010cefc
@@ -312,6 +380,23 @@ fingerprints:
   town_Tel_Vos: 101bd51a555f4066
   town_Tel_Vos_ashur: fda3f3ce7ff0bbb1
   town_Vivec: ca64959a3c74ec01
+  TR05_People: 11a933dff0d32fb9
+  TR07_Guard: dfcbbed649e20670
+  TR08_Hlaalu: 1da4d2b356bb9507
+  TR09_Journalist: 727568cb77f0a519
+  TR09_Varis: 5bcce5ebaa707086
+  TR_Assassins: 8e6169e53e277093
+  TR_Bamz: bb7cf64f5db7e46c
+  TR_Blade: c35c5cf22431fade
+  TR_Champion: 0af111100b91e558
+  TR_KillGoblins: 3a42408e5221f22d
+  TR_MazedBand: 40b0916e70b105d9
+  TR_MHAttack: a6ac0096447fc805
+  TR_MissingHand_01: 0a967711fa177e99
+  TR_MissingHand_02: de6e420dd50c0c09
+  TR_ShowPower: db879c99a9594066
+  TR_ShrineDead: 8f425da17ab02008
+  TR_SothaSil: a9a54334be9c94a3
   TT_AldDaedroth: 9acc72ffa269aec0
   TT_Assarnibibi: 4dcbc01a4c0c8ff4
   TT_Compassion: d07d9afbdf371f6f
@@ -2638,7 +2723,10 @@ quests:
     # Journal 50 says the money is in a chest under Fadila's house, and Murudius gave the key. That chest is
     # com_chest_02_hhbt, placed outside in Hla Oad, and it holds 943 gold. No line or script names it, so it is a
     # target until the player reports to Edryno Arethi, who stays marked as well.
+    # Edryno's answer needs 800 gold on the player. Until the player has it, the only way left while playing is the
+    # one that kills Murudius (110), which would then be marked. It is hidden.
     - stages: 50
+      hide: 110
       targets:
         - { task: visit, object: com_chest_02_hhbt, done: { quest: HH_BuriedTreasure, atLeast: 100 } }
 
@@ -4714,3 +4802,1765 @@ quests:
       targets:
         - { task: kill, object: dreamer prophet, done: { dead: dreamer prophet } }
         - { task: talk, object: elam andas, after: { dead: dreamer prophet }, done: { quest: town_Vivec, atLeast: 50 } }
+
+  MS_Adulterer:
+    # Journal 30 says the player should report to Deldrise Andoren. Her line in "see my husband" leads to 150. Taren
+    # Andoren's greeting that leads to 110 needs his local tooclose at 2, which no longer happens once he stops
+    # walking, so while playing the default rule would mark the kill of Velyna Seran that leads to 130. The journal
+    # never asks for that kill.
+    - stages: 30
+      next: 150
+    # Journal 100 says the player turned Deldrise down. Nothing should be marked, so the caught greeting, the kill of
+    # Taren and the kill of Velyna are all left out.
+    - stages: 100
+      hide: [110, 120, 130]
+    # Journal 110 says Taren caught the player and Deldrise won't like the news. Her line in "see my husband" leads to
+    # 170. The default rule would also mark the kill of Velyna, which the journal doesn't ask for.
+    - stages: 110
+      next: 170
+    # Journal 120 says to report Taren's death to his wife. Her greeting and her line in "see my husband" lead to 160.
+    # The kill of Velyna that leads to 130 isn't asked for.
+    - stages: 120
+      next: 160
+
+  MS_BadPets:
+    # Journal 10 only says Rerlas Mon sells trained pets. Buying one from him in "selling off" leads to 100 or 110,
+    # so he is marked as an optional side step. The ways to 150 need six of the player's own pets dead, which no
+    # journal asks for.
+    - stages: 10
+      optional: [100, 110]
+      hide: 150
+    # Journal 100 says the player bought a pet. Buying a pack rat as well, which leads to 110, is optional.
+    - stages: 100
+      optional: 110
+      hide: 150
+    # Journal 110 says the player bought a pack rat. Only the ways that need six dead pets are left.
+    - stages: 110
+      hide: 150
+
+  MS_BarbarianBook:
+    # Journal 10 says Thrud is looking for his friend Dilborn. Thrud's answer in "Dilborn" leads to 20. The default
+    # rule also marks Dilborn in the Residential Sewers, which no journal entry has named yet.
+    - stages: 10
+      next: 20
+    # Journal 40 says Drathas Nerus lowered the ransom to 1000 gold. Paying him in "owe me money" leads to 110, and
+    # killing his men leads to 160, which the sheet marks on Dilborn. The default rule marks Thrud instead, through
+    # his refusal answer that leads to 100. That answer is only given right after his greeting at stage 10, and
+    # Thrud is following the player at this point anyway.
+    - stages: 40
+      next: [110, 160]
+    # Journal 100 says the player refused to help. Thrud's greeting still offers the request again, and accepting it
+    # in "Dilborn" makes him follow the player, while the stage stays at 100 because the Journal command never lowers
+    # it. So Thrud is an optional talk target, and paying Drathas Nerus (110) and the rescue (160) stay as optional
+    # ways for a player who changes their mind. The kills that lead to 140 and 150 are left out.
+    - stages: 100
+      optional: [110, 160]
+      hide: [140, 150]
+      targets:
+        - { task: talk, object: thrud, optional: true }
+
+  MS_BattleBots2:
+    # Journal 10 says Ignatius Flaccus wants every bot in his house disabled. His greeting that pays the player and
+    # leads to 20 needs his local DisabledBots at 1. IgnatiusScript2 sets it once all eight bots are dead, and the
+    # sheet's lines don't name them. All eight are placed in "Mournhold, Ignatius Flaccus' House".
+    - stages: 10
+      targets:
+        - { task: kill, object: centurion_sphere_bbot1, done: { dead: centurion_sphere_bbot1 } }
+        - { task: kill, object: centurion_steam_bbot2, done: { dead: centurion_steam_bbot2 } }
+        - { task: kill, object: centurion_spider_bbot3, done: { dead: centurion_spider_bbot3 } }
+        - { task: kill, object: centurion_steam_bbot4, done: { dead: centurion_steam_bbot4 } }
+        - { task: kill, object: centurion_sphere_bbot5, done: { dead: centurion_sphere_bbot5 } }
+        - { task: kill, object: centurion_sphere_bbot6, done: { dead: centurion_sphere_bbot6 } }
+        - { task: kill, object: centurion_spider_bbot7, done: { dead: centurion_spider_bbot7 } }
+        - { task: kill, object: centurion_steam_bbot8, done: { dead: centurion_steam_bbot8 } }
+
+  MS_BlackDart:
+    # Journal 1, 5, 10 and 15 each say Variner's ghost has a message, and Narisa Adus's answers say to speak to him
+    # if the player sees him. The ghost's line in "message" leads to 25. Narisa's line in "Variner's ghost" leads to
+    # 20 and only repeats her request, so she is a side step. The kills of the four gang members, which lead to 100
+    # through Narisa, only become a goal once the ghost asks for revenge at 25.
+    - stages: [1, 5, 10, 15]
+      next: 25
+      optional: 20
+    # Journal 20 is Narisa's request to listen to the ghost. The ghost's line in "message" leads to 25.
+    - stages: 20
+      next: 25
+    # Journal 25 says the ghost told the player to pull a torch-holder lever at the east end of Temple Sewers West to
+    # flood the gang's room. The lever is act_torch_lever_UNI, placed there. Its script torch_lever weakens the four
+    # gang members and raises the water, so the lever is marked until Black Dart Gilur, one of the four, is dead.
+    # The default rule already marks the gang and Narisa, who wants the ghost's message.
+    - stages: [25, 35]
+      targets:
+        - { task: visit, object: act_torch_lever_uni, done: { dead: black dart gilur } }
+    # Journal 30 says Narisa got the message. Her line in "Variner's ghost" that leads to 35 needs her local
+    # daysPassed, and no journal asks the player to come back to her. The gang and the lever stay marked.
+    - stages: 30
+      hide: 35
+      targets:
+        - { task: visit, object: act_torch_lever_uni, done: { dead: black dart gilur } }
+
+  MS_Bouncer:
+    # Journal 10 says to talk to every patron of the Winged Guar and throw out troublemakers. The default rule marks
+    # the drunk Denegor. The hustler Galms Seles is the other troublemaker. His answer in "game of shells" sets
+    # MS_Bouncer_Galms to 50, which raises Hession's pay in "all the problems out there". He is marked as optional,
+    # because the player must first hear the rumours about him.
+    - stages: 10
+      targets:
+        - { task: talk, object: galms seles, optional: true, done: { quest: MS_Bouncer_Galms, atLeast: 50 } }
+    # Journal 20 says Denegor calmed down. Hession's answers in "all the problems out there" lead to 110, 120 and
+    # 130. The default rule also marks Denegor again, through the knockout that leads to 30.
+    - stages: 20
+      next: [110, 120, 130]
+      targets:
+        - { task: talk, object: galms seles, optional: true, done: { quest: MS_Bouncer_Galms, atLeast: 50 } }
+    # Journal 30 and 40 say Denegor was knocked out or killed. Hession is marked by the default rule, and Galms
+    # stays optional.
+    - stages: [30, 40]
+      targets:
+        - { task: talk, object: galms seles, optional: true, done: { quest: MS_Bouncer_Galms, atLeast: 50 } }
+
+  MS_ClutterCollector:
+    # Journal 1 asks for a bolt of rat hair fabric and a brushed silver pitcher. Detritus Caria's answer in "my
+    # collection" that takes both leads to 10. His refusal answer that leads to 100 marks him before the player has
+    # the items.
+    - stages: 1
+      next: 10
+
+  MS_CrimsonPlague:
+    # Journal 10 says to ask Nerile Andaren at the Temple about the disease. Her line in "Cure Disease potion" leads
+    # to 20. The default rule also marks the lich Gedna Relvel, through the kill that leads to 150, which no journal
+    # names until 120.
+    - stages: 10
+      next: 20
+    # Journal 20 says to take the potion to Geon Auline in Godsreach. His answer in "Cure Disease potion" leads to 30.
+    - stages: 20
+      next: 30
+    # Journal 30 says to report back to Nerile. PlagueHallRat1 and PlagueHallRat1a enable rats in the Hall of
+    # Ministry at 30, and each rat's death raises the global PlagueStage. Nerile's greeting leads to 40 once
+    # PlagueStage reaches 7. Until then the default rule would mark Athelyn Malas and the lich, which no journal has
+    # named yet. Nerile is marked instead, and the rats attack the player near her.
+    - stages: 30
+      hide: 49-150
+      targets:
+        - { task: talk, object: nerile andaren, done: { quest: MS_CrimsonPlague, atLeast: 40 } }
+    # Journal 40 says the rats are dead. Nerile's greeting asked for another favour, and her line in "Cure Disease
+    # potion" leads to 50.
+    - stages: 40
+      next: 50
+    # Stage 49 has no journal entry. Nerile's line in "Geon Auline" sets it when Geon is dead, and she sends the
+    # player away. Nothing should be marked.
+    - stages: 49
+      hide: 60-150
+    # Journal 50 says to take a potion to Athelyn Malas in the Temple Courtyard. His answer in "Cure Disease potion"
+    # leads to 60.
+    - stages: 50
+      next: 60
+    # Journal 60 says to report back to Nerile, and journal 70 records thanks from her. Her answer in "Crimson
+    # Plague" leads to 80. Nothing sets 70, so it gets the same choice.
+    - stages: [60, 70]
+      next: 80
+    # Stage 69 has no journal entry. Nerile's line in "Cure Disease potion" sets it when Athelyn is dead, and she
+    # sends the player away. Nothing should be marked.
+    - stages: 69
+      hide: 80-150
+    # Journal 80 says the rats come through the Temple's basement. Shunari_Plague enables Shunari Eye-Fly there at 80,
+    # and her line in "help Shunari" leads to 100. The lich isn't named yet.
+    - stages: 80
+      next: 100
+    # Journal 100 says to consult Nerile and then cure Shunari with a spell or a scroll. Nerile's line in "help
+    # Shunari" gives the scroll and leads to 105. Curing Shunari with the player's own spell leads to 110, so that is
+    # optional.
+    - stages: 100
+      next: 105
+      optional: 110
+    # Stage 105 has no journal entry. The player has Nerile's scroll, and Shunari_Plague moves Shunari to the Temple
+    # Gardens. Curing her leads to 110.
+    - stages: 105
+      next: 110
+    # Journal 110 says Shunari is cured. Her line in "Crimson Plague" leads to 120. The lich isn't named yet.
+    - stages: 110
+      next: 120
+    # Journal 120 names the lich. The secret passage into her tomb only opens from 130, when PlagueRock3 starts to
+    # react, so Shunari's line in "secret passage" that leads to 130 is the next step.
+    - stages: 120
+      next: 130
+    # Journal 130 says to stand in front of a rock wall in the tomb's bottom chamber. PlagueRock3 on act_plague_rock3
+    # sets 140. Shunari's line says the lich went through that wall, so only the rock is marked.
+    - stages: 130
+      next: 140
+    # Journal 150 says the lich is dead. Nerile's line leads to 170 and finishes the quest. Shunari's farewell in
+    # "Gedna Relvel" that leads to 160 is a side step.
+    - stages: 150
+      optional: 160
+
+  MS_EstateSale:
+    # Journal 20 says to go to Thendas Manor. Arnsa Thendas's answers in "know my husband" lead to 23, 25 and 35, and
+    # buying the dagger in "particular item" leads to 50. The default rule also marks Geon Auline, through his
+    # refusal answer that leads to 90.
+    - stages: 20
+      next: [23, 25, 35, 50]
+    # Stage 23 has no journal entry. The player told Arnsa they never met her husband. Her lines still lead to 25,
+    # 35 and 50.
+    - stages: 23
+      next: [25, 35, 50]
+    # Journal 25 says Arnsa won't speak to the player any more. The only way left is taking the dagger from the chest
+    # com_chest_02_thendas1 in Thendas Manor. DrothDagger sets 30 once the player carries it. The default rule marks
+    # Geon instead, through his refusal answer.
+    - stages: 25
+      next: 30
+    # Journal 30 says the player stole the dagger. Handing it to Geon in "Droth Dagger" leads to 70. The default rule
+    # also marks Arnsa.
+    - stages: 30
+      next: 70
+    # Stage 35 has no journal entry. The player lied that they knew her husband. Arnsa's line in "particular item"
+    # gives the dagger and leads to 40, and buying it leads to 50.
+    - stages: 35
+      next: [40, 50]
+    # Journal 40 says to take the dagger to Geon. His answer in "Droth Dagger" leads to 70.
+    - stages: 40
+      next: 70
+    # Stage 80 has no journal entry. DrothPost sets it after the quest finished at 70. Geon's refusal answer is the
+    # only way left.
+    - stages: 80
+      hide: 90
+
+  MS_HolyElf:
+    # Journal 20 says High-Pockets and the player will teach Holmar some manners. Holmar's answers in "back for
+    # another round" lead to 130 and 150, and knocking him out leads to 160. The default rule also marks High-Pockets
+    # and Saryoni's Sermons, through his refusal answer and the book that lead to 110 and 30.
+    - stages: 20
+      next: [130, 150, 160]
+    # Nothing sets 40 or 50, and both entries say the matter is over. Only the knockout and the kills of Holmar are
+    # left.
+    - stages: [40, 50]
+      hide: [120, 140, 160]
+
+  MS_JobHunt:
+    # Journal 1 says the apprentice Ilnori Faustus plans to leave. Bols Indalen's line in "Ilnori Faustus" leads to 10
+    # once Bols's local change is 1, or once Ilnori is dead. Until then only the kill is left, which the journal
+    # doesn't ask for. Bols, Ilnori's master in the same hall, is marked as optional instead.
+    - stages: 1
+      hide: 10
+      targets:
+        - { task: talk, object: bols indalen, optional: true, done: { quest: MS_JobHunt, atLeast: 10 } }
+
+  MS_MatchMaker:
+    # Journal 10, 20 and 30 each say the player met someone. Marena Gilnith's story in "Meet someone new" leads to 50.
+    # She is marked as optional, because these journal entries don't name her. The other single men, and the later
+    # steps of the matchmaking, aren't named yet.
+    - stages: 10
+      optional: 50
+      hide: [20, 30, 60-200]
+    - stages: 20
+      optional: 50
+      hide: [30, 60-200]
+    - stages: 30
+      optional: 50
+      hide: 60-200
+    # Journal 40 says the player met Marena. Nothing sets 40, but her story would lead to 50.
+    - stages: 40
+      next: 50
+    # Journal 50 says Marena wants to meet a single man. Fons Beren, Sunel Hlas and Goval Ralen each agree to meet
+    # her when the player suggests her, which sets their global MatchMakeFons, MatchMakeSunel or MatchMakeGoval to 2.
+    # They are optional, because no journal names them. Only then does Marena take a name in "Meet someone new",
+    # which leads to 60, 70 or 80. Her insult answer that leads to 200 is left out.
+    - stages: 50
+      hide: 60-200
+      targets:
+        - { task: talk, object: fons beren, optional: true, done: { global: MatchMakeFons, atLeast: 2 } }
+        - { task: talk, object: sunel hlas, optional: true, done: { global: MatchMakeSunel, atLeast: 2 } }
+        - { task: talk, object: goval ralen, optional: true, done: { global: MatchMakeGoval, atLeast: 2 } }
+        - { task: talk, object: marena gilnith, after: { global: MatchMakeFons, atLeast: 2 },
+            done: { quest: MS_MatchMaker, atLeast: 60 } }
+        - { task: talk, object: marena gilnith, after: { global: MatchMakeSunel, atLeast: 2 },
+            done: { quest: MS_MatchMaker, atLeast: 60 } }
+        - { task: talk, object: marena gilnith, after: { global: MatchMakeGoval, atLeast: 2 },
+            done: { quest: MS_MatchMaker, atLeast: 60 } }
+    # Journal 60, 70 and 80 say to set up a meeting with Fons, Sunel or Goval. Each man's line in "Marena Gilnith"
+    # leads to 90, 100 or 110.
+    - stages: 60
+      next: 90
+    - stages: 70
+      next: 100
+    - stages: 80
+      next: 110
+    # Journal 90, 100 and 110 say the meeting is arranged. MatchMakerTimer holds it in Godsreach after two days and
+    # sets 118 after the third. Until then there is nothing to do, so the other men and Marena's insult answer are
+    # left out. Her lines that lead to 120 and 150 need the date's result.
+    - stages: 90
+      hide: [100, 110, 200]
+    - stages: 100
+      hide: [110, 200]
+    - stages: 110
+      hide: 200
+
+  MS_Natural:
+    # Journal 10 says Gaenor threatened the player and won't speak again. Attacking him leads to 15 and 20, where he
+    # vanishes. GaenorTimer sets 25 two days later, and Gaenor_bScript then enables gaenor_b.
+    # He greets the player when near. Until journal 30 says he is back, there is nothing to go to.
+    - stages: 10
+      hide: [15, 40]
+    - stages: 15
+      hide: [20, 40]
+    - stages: [20, 25]
+      hide: 40
+
+  MS_Performers:
+    # Journal 10 and 20 say to report to Meryn Othralas for the play. His greeting leads to 30. The kill of the lead
+    # actress Gureryne Selvilo, which leads to 160, isn't a goal.
+    - stages: [10, 20]
+      next: 30
+    # Journal 30 says the player is ready to perform. Meryn's greeting said to stand on the mark in the middle of the
+    # rug, which is script_playscript in the Great Bazaar. playScript runs the play while the player stands within
+    # 100 units of it, and sets 150 if the player stays away. The assassin Dravil Indrano, whose death leads to 50,
+    # is a surprise in the middle of the play. So the mark is marked until he is dead.
+    - stages: 30
+      hide: [50, 150, 160]
+      targets:
+        - { task: visit, object: script_playscript, done: { quest: MS_Performers, atLeast: 50 } }
+    # Journal 50 says to speak with Meryn about the attack. His answers in "assassin would attack" lead to 120.
+    - stages: 50
+      next: 120
+
+  MS_ScrollSales:
+    # Journal 10 says Ten-Tongues Weerhat has special offers. His lines in "Special Offers" and "Ahnia" lead to 20 and
+    # 30. The default rule also marks the note bk_ahnia, which AhniaNote keeps disabled until 30.
+    - stages: 10
+      next: [20, 30]
+    # Journal 20 says Weerhat mentioned Ahnia. His line in "Ahnia" leads to 30.
+    - stages: 20
+      next: 30
+    # Stage 35 has no journal entry. The player read the note, and Ahnia was made to greet the player and attack.
+    # Her death leads to 40.
+    - stages: 35
+      next: 40
+    # Journal 40 says Ahnia is dead. Weerhat's line in "Ahnia" leads to 60. Reading the note, if the player hasn't,
+    # leads to 50 and is optional. The fetch that leads to 100 goes to Elbert Nermarc, whom no journal names.
+    - stages: 40
+      next: 60
+      optional: 50
+
+  MS_Thief:
+    # At stages 10 to 40 the next steps are talks with Alvan Llarys and Elbert Nermarc, and then a search of Sadri
+    # Manor. The kill of golena sadri_a in "Old Mournhold: Forgotten Sewer" leads to 80, but no journal points
+    # below the manor until the trap door is found at 50.
+    - stages: 10-40
+      hide: 80
+
+  MS_Warlords:
+    # Journal 30 says to bring Soscean's sword and cuirass to Dovor Oren. His answer in "Soscean" that takes them leads
+    # to 40. His refusal answer that leads to 200 marks him before the player has the items.
+    - stages: 30
+      next: 40
+    # Journal 50 says to speak with Felvan Ienith. His greeting leads to 60. The default rule also marks Dovor,
+    # through the refusal answer.
+    - stages: 50
+      next: 60
+    # Journal 60 says to bring Elanande's robe and axe to Felvan. His answer in "Elanande" leads to 70.
+    - stages: 60
+      next: 70
+    # Journal 80 says to speak with Olvyne Dobar. Her greeting leads to 90.
+    - stages: 80
+      next: 90
+    # Journal 90 says to bring Bels Uvenim's spear and helmet to Olvyne. Her answer in "Bels Uvenim" leads to 100.
+    - stages: 90
+      next: 100
+    # Journal 110 says to bring Suldreni Salandas's amulet and mace to Dovor. His answer in "Suldreni Salandas" leads
+    # to 120.
+    - stages: 110
+      next: 120
+
+  MS_Warlords_a:
+    # Stage 35 has no journal entry. Warlord_aScript killed Dovor Oren in the Vacant Manor and moved Felvan Ienith and
+    # Olvyne Dobar to the Royal Palace jail. Activating Dovor's body in WarlordOren leads to 40. The jail isn't named
+    # until 50.
+    - stages: 35
+      next: 40
+    # Journal 40 says Felvan and Olvyne are nowhere to be found. Their greetings in the Royal Palace jail lead to 50.
+    # They are optional, because no journal says where they went.
+    - stages: 40
+      optional: 50
+
+  Merc_Calvus:
+    # Journal 1 says Calvus Horatius now follows the player. His script Mercenary_Calvus sets 10 or 20 when the
+    # thirty-day contract runs out, which is a matter of time, not of going anywhere. Re-hiring him leads to 11 and
+    # is not offered while he is under contract. So nothing is marked while he follows the player.
+    - stages: 1
+      hide: [10, 11, 20]
+    # Journal 10 says his first contract is over and he has left. His answer in "available for hire" leads to 11
+    # and needs 250 gold. Hiring him again is the player's choice, so he is optional. The way to 20 is the end of a
+    # second contract, which can only come after re-hiring him.
+    - stages: 10
+      optional: 11
+      hide: 20
+    # Journal 11 says he has been hired again. The way to 20 is his script ending the new contract after thirty days.
+    - stages: 11
+      hide: 20
+
+  TR05_People:
+    # Journal 1 asks the player to speak to people about King Llethan's death. Donus Serethi and Anrel in Llethan
+    # Manor, and anyone in Mournhold or the Great Bazaar, answer the topic and lead to 50. Tienius Delitian's line
+    # that leads to 100 needs TR05_People_Ravani at 1, which Ravani Llethan sets when she tells the player the same
+    # thing. The fetches of "The Common Tongue" that lead to 110 come before any journal entry names the broadside.
+    - stages: 1
+      next: [50, 100]
+    # Journal 50 says to report the rumor to Tienius Delitian. His answer in "King Llethan's death" leads to 100 and
+    # needs stage 50 or more. In that answer he first asks for a copy of the broadside, so the fetches wait.
+    - stages: 50
+      next: 100
+
+  TR07_Guard:
+    # Journal 1 asks the player to sound out the guards and look for evidence. Ivulen Irano's answers in "join the
+    # Royal Guards" lead to 5 and 10, and Aleri Aren's leads to 15 once Irano has named her. The note bk_irano_note in
+    # the Guards' Quarters sets 50 when activated. Its script Irano_note enables it from stage 1. The journal points
+    # at the guards first and only says to look for evidence, so the note is optional until 15. At 15 the journal
+    # makes Irano the suspect, and the default rule marks his note.
+    - stages: 1-10
+      optional: 50
+
+  TR08_Hlaalu:
+    # Journal 60 says the player turned down Tienius Delitian's request to execute the three traitors. He asks the
+    # player to speak to him again if they change their mind. His line in "evidence of conspiracy" offers the choice
+    # again, needing stage 50 or more and the letter bk_alen_note, and the answer that leads to 70 takes the job. It
+    # is the player's choice, so it is optional.
+    - stages: 60
+      optional: 70
+
+  TR09_Journalist:
+    # Journals 1 and 10 send the player to shady people who deal in writing, such as a pawnbroker. 'Ten-Tongues'
+    # Weerhat, the pawnbroker, answers "anonymous writer" and leads to 20. The default rule also marks Trels Varis in
+    # his hidden office, whom no journal entry has named yet.
+    - stages: [1, 10]
+      next: 20
+    # Journal 20 names Trels Varis and says Weerhat first heard of him in the Craftsmen's Hall. Anyone there who is
+    # asked about Trels Varis denies he is there, which leads to 30. His office is a secret behind a locked door, so
+    # Trels himself is marked from 30, when the journal says he must be hidden in the hall.
+    - stages: 20
+      next: 30
+    # Journal 40 says Trels Varis is attacking the player. His script VarisDead sets 80 when he dies. At 50 he let the
+    # player go, and his greeting at exactly 50 only sends the player away, so none of his answers that lead to 60
+    # or 70 can be reached. Tienius Delitian has no line for 50. Killing Trels is the only way on from either stage.
+    - stages: [40, 50]
+      next: 80
+    # Journal 60 says Trels gave his word and to report to Tienius Delitian. Tienius's answers in "anonymous writer"
+    # lead to 100 and 110. The default rule also marks Trels, through his answer that threatens his parents and
+    # leads to 70, which the player no longer needs.
+    - stages: 60
+      next: [100, 110]
+    # Journal 80 says the player killed Trels and should report to Tienius Delitian. His line that leads to 130
+    # needs stage 80 or more. Weerhat's line that leads to 95 only says who Trels was, which the player knows.
+    - stages: 80
+      next: 130
+    # At 90 Trels Varis died before the quest started. Tienius Delitian first asks about the anonymous writer when
+    # the player finishes TR08_Hlaalu, and his line in "anonymous writer" that needs stage 80 or more comes before
+    # the one that gives the task, so asking him then pays the reward and leads to 130. Weerhat's line that leads
+    # to 95 is a detour the player has no reason to take. So every way is hidden, and Tienius is marked once
+    # TR08_Hlaalu has finished.
+    - stages: 90
+      hide: 95-130
+      targets:
+        - { task: talk, object: tienius delitian, after: { quest: TR08_Hlaalu, finished: true } }
+
+  TR09_Varis:
+    # Journal 50 says threatening Granny and Gee-Pop Varis may persuade their son Trels Varis to stop printing lies.
+    # The threat is an answer Trels gives in his greeting, which needs this quest at exactly 50 and leads
+    # TR09_Journalist to 70. Trels is marked once TR09_Journalist reaches 30, when its journal says he hides in the
+    # Craftsmen's Hall. The marker goes at 40, when he either attacks or lets the player go, and the threat can no
+    # longer be made.
+    - stages: 50
+      targets:
+        - { task: talk, object: trels varis, after: { quest: TR09_Journalist, atLeast: 30 }, done: { quest: TR09_Journalist, atLeast: 40 } }
+
+  TR_Assassins:
+    # Journal 10 asks the player to find King Helseth's orc informant at the Winged Guar and ask about his uncle's
+    # farm. Bakh gro-Sham's line in "uncle's farm" leads to 40. Barenziah and Plitinius Mero come later, and the
+    # three assassins in Barenziah's Chambers are disabled by helsAssScript until 85.
+    - stages: 10
+      next: 40
+    # Journal 20 says Barenziah suggests her friend Plitinius Mero. His line in "plot" leads to 30. It is a side
+    # step, because the task is still the informant. Bakh gro-Sham leads to 40 through "uncle's farm", and to 50
+    # through "disturbing information", which needs the global HelAss at 1.
+    - stages: 20
+      next: [40, 50]
+      optional: 30
+    # Journal 30 says Mero suggests speaking with the informant.
+    - stages: 30
+      next: [40, 50]
+    # Journal 40 says the player has found Bakh gro-Sham. His line in "disturbing information" leads to 50.
+    - stages: 40
+      next: 50
+    # Journal 50 says the plot is against Barenziah. King Helseth answers "plot" once HelAss is 2, which brings up
+    # "protect Barenziah", whose line leads to 80. Asking Barenziah or Mero about the plot leads to 60 and 70 and
+    # only gives their opinions, so they are optional.
+    - stages: 50
+      next: 80
+      optional: [60, 70]
+    # Journal 60 records Barenziah's view. Mero's answer that leads to 70 is still a side step.
+    - stages: 60
+      next: 80
+      optional: 70
+    # Journal 70 records Mero's view. King Helseth leads to 80.
+    - stages: 70
+      next: 80
+    # Journal 80 tells the player to wait outside Barenziah's chambers the next night. barAssScript on the activator
+    # active_assassin_unique sets 85 when the player is near it at night. The assassins appear only at 85.
+    - stages: 80
+      next: 85
+
+  TR_Bamz:
+    # Journal 10, from Fedris Hler, sends the player to explore Bamz-Amschend and report to Drin. Tienius
+    # Delitian's greeting at exactly 10 leads to 12 and only adds that he wants a report too. The fight the player
+    # must see is in Hearthfire Hall, where the activator fab_cent_fight_watcher sets 50.
+    - stages: 10
+      hide: 12
+    # Journal 15 is the same task from Tienius Delitian. Fedris Hler's greeting at exactly 15 leads to 17 and is
+    # the same kind of side step.
+    - stages: 15
+      hide: 17
+
+  TR_Blade:
+    # Journal 20 says the other two pieces of the blade are in Mournhold, and Almalexia's line in "pieces of the
+    # blade" tells the player to ask trusted people in the city. Barenziah answers "Karrod" and "pieces of the
+    # blade", which lead to 25 or 30 depending on TR_Champion. Torasa Aram's line in "compensation" leads to 40, and
+    # she holds the shield with the third piece, but only says so when asked. She is optional. The default rule
+    # would mark only Barenziah.
+    - stages: 20
+      next: [25, 30]
+      optional: 40
+    # Journal 25 says the player must convince King Helseth to allow a duel with Karrod. The duel is TR_Champion,
+    # which starts when Helseth answers "Karrod". He is marked until that quest starts, and from then on what it
+    # marks is marked too. Karrod's line in "pieces of the blade" leads to 35 and needs TR_Champion at 80, after the
+    # duel. Torasa Aram stays optional. The rest are hidden, so that until the duel the default rule doesn't mark
+    # the smith, the ghost in Bamz-Amschend or Karrod's piece.
+    - stages: 25
+      next: 35
+      optional: 40
+      hide: [30, 45, 50, 60, 65, 75, 77, 80, 100]
+      targets:
+        - { task: talk, object: king hlaalu helseth, done: { quest: TR_Champion, started: true } }
+      follow: [TR_Champion]
+    # Journal 40 asks the player to donate to Torasa Aram's museum. Her line in "compensation" that leads to 45 needs
+    # the global MuseumDonations at 2 or more. The player raises it by giving her unique artifacts found anywhere in
+    # the world. Until then nothing is marked, so she is an optional target. Karrod's piece is still to find, and
+    # Barenziah's lines in "Karrod" that lead to 25 need a stage below 25, so a player who went to Torasa first gets
+    # no journal entry about the duel. King Helseth is marked until TR_Champion, the duel, starts, as at 25, and
+    # from then on what that quest marks is marked too.
+    - stages: 40
+      next: 45
+      targets:
+        - { task: talk, object: torasa aram, optional: true, done: { quest: TR_Blade, atLeast: 45 } }
+        - { task: talk, object: king hlaalu helseth, done: { quest: TR_Champion, started: true } }
+      follow: [TR_Champion]
+    # Journal 45 says a competent smith should look at the shield's loose spike. The line in "Dwemer Battle Shield"
+    # that leads to 50 is said by anyone of the class Smith while the player carries dwemer_shield_battle_unique.
+    # The analysis sees only the shield, which the player already carries. The Smiths in Mournhold are Bols Indalen
+    # and Yagak gro-Gluk in the Craftsmen's Hall, Daron in the Great Bazaar, and Catia Sosia in the Armory. King
+    # Helseth is marked for Karrod's piece until TR_Champion starts, as at 40.
+    - stages: 45
+      next: 50
+      targets:
+        - { task: talk, object: yagak gro-gluk, done: { quest: TR_Blade, atLeast: 50 } }
+        - { task: talk, object: bols indalen, done: { quest: TR_Blade, atLeast: 50 } }
+        - { task: talk, object: daron, done: { quest: TR_Blade, atLeast: 50 } }
+        - { task: talk, object: catia sosia, done: { quest: TR_Blade, atLeast: 50 } }
+        - { task: talk, object: king hlaalu helseth, done: { quest: TR_Champion, started: true } }
+      follow: [TR_Champion]
+    # At 50 and 55 the fetch of the three pieces marks Karrod, who carries bladepiece_01, but his line in "pieces of
+    # the blade" only hands it over once TR_Champion reaches 80, after the duel. A player who went to Torasa Aram
+    # before Barenziah has no journal entry about the duel. King Helseth is marked until TR_Champion starts, as at
+    # 40, and from then on what that quest marks is marked too.
+    - stages: [50, 55]
+      targets:
+        - { task: talk, object: king hlaalu helseth, done: { quest: TR_Champion, started: true } }
+      follow: [TR_Champion]
+    # Journal 60 says Yagak gro-Gluk needs two days. His line that leads to 65 needs the global bladefix at 2. His
+    # line at 60 sets it to 1 and starts bladefixScript, and while it is 1 he only tells the player to wait. The
+    # other ways come later. With them hidden, nothing is marked while the player waits.
+    - stages: 60
+      hide: [70, 75, 77, 80, 100]
+    # Journal 75 sends the player for the Pyroil Tar in the caves of Myn Dhrur. Two copies of pyroil_tar_unique are
+    # placed in Norenen-dur, The Wailingdelve. The ghost's line in "Pyroil Tar" leads to 80 once the player carries
+    # the tar and the blade. His line in "Myn Dhrur" that leads to 77 only gives directions.
+    - stages: 75
+      next: 80
+      optional: 77
+
+  TR_Champion:
+    # The two ways to 110 need TR_SothaSil at 110, the end of the Tribunal main quest, which can happen while this
+    # quest is still open. One of them needs vivec_god dead, so the default rule would then mark Vivec for a
+    # kill. King Helseth is marked through the other ways at these stages.
+    - stages: [10, 40, 50, 60, 70, 80]
+      hide: 110
+    # Journal 20 says to come back the next day for the duel. King Helseth's line in "fight my champion" leads to 70
+    # once the global KarrodFightStart is 2, on the day of the duel. Barenziah's line in "Karrod", which leads to
+    # 30, only says where Karrod drinks, so she is optional. Ra'Tesh at the Winged Guar comes later.
+    - stages: 20
+      optional: 30
+      hide: [40, 110]
+    # Journal 30 says Karrod drinks at the Winged Guar. Ra'Tesh, the bartender there, answers "losing a new customer"
+    # and leads to 40. He offers help in the duel, which is a side step.
+    - stages: 30
+      optional: 40
+      hide: 110
+    # Journal 100 asks the player to learn what they can about Almalexia, and to report only when done. King
+    # Helseth's lines in "learn more about the attacks" lead to 110 and need TR_SothaSil at 110. He is marked from
+    # then on, without the way that needs Vivec dead.
+    - stages: 100
+      hide: 110
+      targets:
+        - { task: talk, object: king hlaalu helseth, after: { quest: TR_SothaSil, atLeast: 110 }, done: { quest: TR_Champion, atLeast: 110 } }
+
+  TR_KillGoblins:
+    # Journal 10 says King Helseth is recruiting goblins. Fedris Hler's line in "goblin army" leads to 20. The
+    # default rule also marks Yarnar, one of the trainers, whom no journal entry has named.
+    - stages: 10
+      next: 20
+    # Journal 20 asks the player to kill the two warchiefs, and suggests asking the locals where the goblins are.
+    # Anyone in Mournhold answers "goblins" and leads to 40. Hler's line in "Altmer trainers" leads to 30 and only
+    # adds the trainers as a bonus, so he is optional. The warchiefs and trainers are spoilers until the journal
+    # says where the goblins are.
+    - stages: 20
+      next: 40
+      optional: 30
+    # Journal 30 adds the two Altmer trainers. Asking around still leads to 40.
+    - stages: 30
+      next: 40
+    # Journal 40 points to the sewers under Godsreach. The two warchiefs are in Tears of Amun-Shae, and their scripts
+    # set 50 when both are dead. The trainers Armion and Yarnar in Teran Hall set 57 and 58 when they die. Killing
+    # them is a bonus journal 30 asked for, so they are optional.
+    - stages: 40
+      next: 50
+      optional: [57, 58]
+    # Journal 57 says the player killed the trainer Armion. If the warchiefs are still alive, their scripts set 50,
+    # which doesn't lower the stage, so it stays at 57. Hler's line in "goblin army" that needs stage 50 or more and
+    # Armion dead then ends the quest without the warchiefs that journal 20 asked for. So the way to 100 is hidden,
+    # the warchiefs are kill targets until they die, Yarnar stays an optional kill, and Hler is marked once both
+    # warchiefs are dead.
+    - stages: 57
+      optional: 58
+      hide: 100
+      targets:
+        - { task: kill, object: goblin_warchief1, done: { dead: goblin_warchief1 } }
+        - { task: kill, object: goblin_warchief2, done: { dead: goblin_warchief2 } }
+        - { task: talk, object: fedris hler, after: [{ dead: goblin_warchief1 }, { dead: goblin_warchief2 }] }
+    # Journal 58 says the player killed the trainer Yarnar. As at 57, the stage stays at 58 when the warchiefs die
+    # later, and Armion's script sets 57, which doesn't lower it either. So the warchiefs are kill targets, Armion is
+    # an optional kill while he lives, and Hler is marked once both warchiefs are dead.
+    - stages: 58
+      hide: 100
+      targets:
+        - { task: kill, object: goblin_warchief1, done: { dead: goblin_warchief1 } }
+        - { task: kill, object: goblin_warchief2, done: { dead: goblin_warchief2 } }
+        - { task: kill, object: armion, optional: true, done: { dead: armion } }
+        - { task: talk, object: fedris hler, after: [{ dead: goblin_warchief1 }, { dead: goblin_warchief2 }] }
+
+  TR_MazedBand:
+    # Journal 10 says Fedris Hler wants to speak to the player. His lines in "Barilzar's Mazed Band" lead to 20. The
+    # default rule also marks the band, which the lich Barilzar carries.
+    - stages: 10
+      next: 20
+    # Journal 20 sends the player to the Abandoned Crypt for the band, which lich_barilzar carries. The band sets 70
+    # when the player picks it up. Gavas Drin's line that leads to 40 only tells its history, which journal 30
+    # suggests asking about, so he is optional.
+    - stages: 20-30
+      next: 70
+      optional: 40
+    # Journal 40 records what Drin knows. Barenziah, Plitinius Mero and Torasa Aram answer about the band and lead to
+    # 50, 53 and 55, but the journal hasn't named them.
+    - stages: 40
+      next: 70
+    # At 50 Barenziah suggests Torasa Aram, whose line leads to 55. It only adds lore, so she is optional. Journal 53
+    # records Mero's view. Torasa stays optional for players who asked Barenziah first.
+    - stages: [50, 53]
+      next: 70
+      optional: 55
+    # Journal 70 says the player has the band. Fedris Hler gave the task, and his line at exactly 70 leads to 80.
+    # Gavas Drin's line that leads to 90 is marked from 80, when Hler sends the player to him.
+    - stages: 70
+      next: 80
+
+  TR_MHAttack:
+    # Journals 10 and 20 describe the attack on the Plaza Brindisi Dorom. TribFabAttackCheck sets 30 when all four
+    # fabricant_hulkin_attack and four fabricant_verm_attack are dead. The guards' scripts set 20 and 25 when the
+    # player comes near them, which needs nothing from the player.
+    - stages: [10, 20]
+      next: 30
+    # Journal 30 says the creatures are beaten. Greetings from guards and priests lead to 100 or 105 and only tell
+    # the player whom to report to. Tienius Delitian's greeting leads to 110 and Fedris Hler's to 115, and either
+    # finishes the quest.
+    - stages: 30
+      next: [110, 115]
+    # Journal 100 says to report to Tienius Delitian. The default rule marks a priest, whose greeting leads to 105,
+    # and Fedris Hler.
+    - stages: 100
+      next: 110
+    # Journal 105 says to report to Fedris Hler. The default rule also marks Tienius Delitian.
+    - stages: 105
+      next: 115
+
+  TR_MissingHand_01:
+    # The player met Salas Valor, who says he was one of Almalexia's Hands. His lines in "splendid armor" and "Her
+    # Hands" lead to 10 and 20 and only tell his story, which journal 1 doesn't ask for, so they are optional. His
+    # script SalasDead sets 90 when he dies. No journal entry asks the player to kill him.
+    - stages: 1
+      optional: [10, 20]
+      hide: 90
+    - stages: 10
+      optional: 20
+      hide: 90
+    - stages: 20
+      hide: 90
+
+  TR_MissingHand_02:
+    # Journal 1 sends the player to deal with Salas Valor in Godsreach. His greeting leads to 10. Almalexia's answers
+    # that lead to 100 and 110 are the reward after he is dead.
+    - stages: 1
+      next: 10
+    # Journal 10 says Salas Valor attacked the player. SalasDead sets 90 when he dies.
+    - stages: 10
+      next: 90
+
+  TR_ShowPower:
+    # At 10 and 20 Almalexia's lines lead on. The default rule also marks the Karstangz-Bcharn weather machine in
+    # Bamz-Amschend, through the visits that lead to 90 and 95. The junction box needs the coherer Almalexia only
+    # gives at 80.
+    - stages: [10, 20]
+      hide: [90, 95]
+    # Journal 30 sends the player to Meralyn Othan in the Great Bazaar. Her lines in "Sevil" and "End of Times" lead
+    # to 40 and 50.
+    - stages: 30
+      next: [40, 50]
+    # Journal 40 records her grief. Her line in "End of Times" leads to 50.
+    - stages: 40
+      next: 50
+    # Journal 50 says Eno Romari can be found in Godsreach. His line in "End of Times" leads to 55.
+    - stages: 50
+      next: 55
+    # Journal 55 records what Eno Romari said. His line in "the Cleansing" at exactly 55 leads to 60.
+    - stages: 55
+      next: 60
+    # Journal 60 says to report to Almalexia. Her line in "lesson in power" leads to 70.
+    - stages: 60
+      next: 70
+    # Journal 70 says she wants to show her power. Her line in "Ashstorms in Mournhold" leads to 80 and gives the
+    # coherer.
+    - stages: 70
+      next: 80
+
+  TR_ShrineDead:
+    # Journal 10 says to speak with Gavas Drin. His line in "service to our Lady" leads to 20. The default rule also
+    # marks Urvel Dulni, whose script sets 60 once he cleanses the shrine, which comes after the escort.
+    - stages: 10
+      next: 20
+    # Journals 20 and 30 are Drin's explanations. His lines in "Shrine of the Dead" and "must be cleansed" lead to 30
+    # and 40. Drin assigns the escort in "must be cleansed", so Dulni and the Profane liches wait until 40.
+    - stages: 20
+      next: [30, 40]
+    - stages: 30
+      next: 40
+
+  TR_SothaSil:
+    # Journal 10 says Almalexia will send the player to the Clockwork City. Her answer in "must be stopped" leads to
+    # 20. The default rule also marks Azura's spirit outside the Temple, which TribEnd enables only at 100.
+    - stages: 10
+      next: 20
+    # Journal 20 says the player is in the Clockwork City. Activating Sotha Sil's body in_sotha_sil00 sets 50.
+    - stages: 20
+      next: 50
+    # Journal 50 says the player found Sotha Sil's corpse. Almalexia's script Sotha_Alma makes her appear when the
+    # player comes near her spot in the Dome of Sotha Sil, the same room as the body, and sets 70 when she has
+    # spoken. The journal hasn't named her, and there is nothing for the player to go to.
+    - stages: 50
+      hide: [70, 100, 110]
+    # Journal 70 says Almalexia has revealed herself. Her script sets 100 when she dies. Azura's visit comes after.
+    - stages: 70
+      next: 100
+
+  BM_Airship:
+    # Journal 5 comes from reading the captain's journal at the wreck before meeting Louis Beauchamp, and says to
+    # take the journal to him. His greeting at stage 5, for a player who carries the journal and has not spoken
+    # with him before, offers the answer that leads to 70. His topic "my airship" leads to 10. The default rule
+    # also marks the Amulet of Infectious Charm in Hrothmund's Barrow, through the answer that hands over both the
+    # amulet and the journal. Journal 5 only speaks of some magic item, so the amulet waits until Louis names it.
+    - stages: 5
+      next: [10, 70]
+    # Journal 10 is about meeting Louis, and his topic "crew has failed me" leads to 20, where he offers the job.
+    # The default rule also marks the amulet, through the answer that hands over the amulet and the journal,
+    # before the player has agreed to look for either.
+    - stages: 10
+      next: 20
+    # Journal 20 says Louis wants to hire the player. The answers to his offer lead to 30 and 40. The default rule
+    # also marks the amulet and the captain's journal, as if the player had already agreed.
+    - stages: 20
+      next: [30, 40]
+    # Journal 30 says the player turned the job down. Every way the analysis sees from here hands over the amulet
+    # or the captain's journal, so the default rule marks both as if the player had agreed. Louis said to come back
+    # on a change of mind, and asking him again about "crew has failed me" offers the job again. So he is marked
+    # as a side step until the player accepts at 40.
+    - stages: 30
+      hide: 70-100
+      targets:
+        - { task: talk, object: louis beauchamp, optional: true, done: { quest: BM_Airship, atLeast: 40 } }
+    # Journal 70 says Louis rewarded the player for the captain's journal and still wants the amulet. His greeting
+    # at stage 70, for a player carrying the amulet, offers the answer that leads to 85. The default rule also
+    # marks the captain's journal, which Louis now keeps, through the answer that hands over both.
+    - stages: 70
+      next: 85
+
+  BM_BearHunt1:
+    # Journal 10 says the Ristaag will be held soon. Korst Wind-Eye's topic "Ristaag" leads to 15. His other line in
+    # that topic, which leads to 105, needs BM_BearHunt2 at 30 or more, so it is left out while playing for a player
+    # who isn't hunting for Hircine. The furthest way is then the fetch of the Spirit Bear's heart (80), which the
+    # journal hasn't mentioned. Only the way to 15 is marked.
+    - stages: 10
+      next: 15
+    # Journals 15 and 20 send the player to Rolf Long-Tooth at Lake Fjalding, whose topics "Ristaag" and "ensure our
+    # success" lead to 20 and 25. The way to 105 is left out while playing as at 10, and the default rule would then
+    # mark the heart, which the Spirit Bear carries while its script keeps it disabled until 60.
+    - stages: 15
+      next: [20, 25]
+    - stages: 20
+      next: 25
+    # Journal 25 tells the player to stay with Rolf Long-Tooth and follow his orders. Rolf's greeting that leads to
+    # 30 needs his local variable rolfstate at 10, which the hunt's tracker script sets when the first screams
+    # sound, and Rolf greets the player at once then. Until then the default rule marks Sattir the Bold, because
+    # the tracker script sets 40 when the player reaches his body, before anything has happened to him. The
+    # entry also leaves out the ways to Grerid Axe-Wife, to the hidden object active_bm_tracker1 and to the
+    # Spirit Bear's heart, which belong to later stages. Rolf is marked until his greeting sets 30.
+    - stages: 25
+      hide: 40-80
+      targets:
+        - { task: talk, object: rolf long-tooth, done: { quest: BM_BearHunt1, atLeast: 30 } }
+    # Journal 30 says Rolf sent the player to look into the screams. His greeting at 25 said they came from
+    # Sattir's path, and the tracker script sets 40 when the player reaches Sattir. The default rule also marks
+    # Rolf, through his script that ends the hunt at daybreak.
+    - stages: 30
+      next: 40
+    # Journal 45 tells the player to keep following Rolf. His greeting that leads to 50 needs rolfstate at 20,
+    # which the tracker script sets at the second screams. Until then the default rule marks Grerid Axe-Wife,
+    # because the tracker script sets 55 when the player reaches her body, before anything has happened to her.
+    # Those later steps are left out, and Rolf is marked until his greeting sets 50.
+    - stages: 45
+      hide: 55-80
+      targets:
+        - { task: talk, object: rolf long-tooth, done: { quest: BM_BearHunt1, atLeast: 50 } }
+    # Journal 50 says Rolf sent the player to look into the new screams. His greeting at 45 named Grerid
+    # Axe-Wife, and the tracker script sets 55 when the player reaches her. The default rule also marks Rolf.
+    - stages: 50
+      next: 55
+    # Journal 60 says the player and Rolf must find the Spirit Bear and bring back its heart. The default rule
+    # marks active_bm_tracker1, the hidden object whose script sets 70 when werewolves ambush the pair, and Rolf.
+    # The bear is enabled from stage 60, and killing it leads to 75, so the bear is marked instead of the hidden
+    # object.
+    - stages: 60
+      hide: 70
+    # From journal 70 Rolf follows the player, and journals 75 and 80 send the player back to Korst Wind-Eye with
+    # the bear's heart. The way to 105 is Rolf's script that ends the hunt at daybreak, which marks Rolf beside
+    # the player, and Korst's topic "Ristaag" for a failed hunt, which needs BM_BearHunt2 at 30 or more.
+    - stages: 70-80
+      hide: 105
+
+  BM_BearHunt2:
+    # Journal 10 asks the player to kill the Skaal trackers hunting the Spirit Bear. Their scripts add one to the
+    # global trackersdead at each death, and set 30 at 10 deaths. weretrackerScript keeps placing new copies of
+    # skaal_tracker, skaal_tracker2 and skaal_tracker3 until then. The analysis reads those scripts as visits to the
+    # trackers, so they would be marked as places to go to. They are kill targets instead, until 10 have died.
+    - stages: 10
+      hide: 30
+      targets:
+        - { task: kill, object: skaal_tracker, done: { global: trackersdead, atLeast: 10 } }
+        - { task: kill, object: skaal_tracker2, done: { global: trackersdead, atLeast: 10 } }
+        - { task: kill, object: skaal_tracker3, done: { global: trackersdead, atLeast: 10 } }
+
+  BM_BrodirGrove:
+    # The way to 100 is the greeting of Ulfgar's ghost at Brodir Grove. Its script keeps the ghost disabled until
+    # stage 90, when Ulfgar dies, and journal 90 is the first to send the player there. At 10 Ulfgar's topic
+    # "failed in our quest" leads to 20. At 30 the player brings him the book, and from 40 to 60 the fight
+    # with him leads to 90.
+    - stages: [10, 30-60]
+      hide: 100
+    # Journal 20 says Ulfgar has never found the entrance to Sovngarde. The only way forward is the book
+    # "Sovngarde, a Reexamination", bk_sovngarde. No copy lies anywhere, and Bereditte Jastal in Thirsk carries
+    # it. Reading it leads to 30, and handing it to Ulfgar leads to 40. The default rule marks the book, and
+    # also Ulfgar's ghost, as the way to 100, and Ulfgar, through his answers about the fight, which he has not
+    # offered yet.
+    - stages: 20
+      next: [30, 40]
+
+  BM_CariusGone:
+    # Journals 20 and 25 send the player to the Nords on the northern coast. Any Skaal in Skaal Village other than
+    # Tharsten Heart-Fang greets the player with the line that leads to 30, which names Tharsten as their leader.
+    # The default rule also marks Tharsten, whom the journal names only at 30.
+    - stages: 20-25
+      next: 30
+
+  BM_Ceremony2:
+    # Journal 50 says the player killed all the Skaal hunters who came for the Totem of Claw and Fang. What
+    # remains is a dream from Hircine, which a werewolf script plays when the player sleeps. The way to 105 is a
+    # hunter's script that fails the quest when a hunter escapes through the tomb's door, and it marks that door.
+    - stages: 50
+      hide: 105
+
+  BM_CursedCaptain:
+    # The way to 100 is the greeting of thormoor_out outside Thirsk. His script keeps him disabled until stage 50,
+    # and journal 50 is the first to send the player to Thirsk. At 10 Thormoor's topic "eternal wakefulness" leads
+    # to 30. At 40 his greeting leads to 50.
+    - stages: [10, 40]
+      hide: 100
+    # Journal 30 says Geilir the Mumbling cursed Thormoor, and asks the player to get Geilir to lift the curse.
+    # Geilir's topic "eternal wakefulness" leads to 40, but it needs BM_SadSeer at 40 or more. BM_SadSeer is
+    # Geilir's own errand, in which the player brings back Oddfrid White-Lip. His topic "my only friend" offers it
+    # while BM_SadSeer is below 40, even after the player turned it down at 20. So Geilir is marked until the player
+    # has taken the errand on at 30, and from then on what BM_SadSeer marks is marked. The way to 100 is hidden as
+    # above.
+    - stages: 30
+      hide: 100
+      targets:
+        - { task: talk, object: geilir the mumbling, done: { quest: BM_SadSeer, atLeast: 30 } }
+      follow: [BM_SadSeer]
+
+  BM_Draugr:
+    # Journal 10 says Tharsten Heart-Fang wants a test of strength. His topic "prove your strength" leads to 20.
+    # The default rule also marks the frost atronachs in Aesliip's Lair, whose deaths lead to 80, which the
+    # journal reaches only once the player has agreed to fight beside Aesliip at 70.
+    - stages: 10
+      next: 20
+    # From journal 20 to journal 67, the player meets Korst Wind-Eye at Lake Fjalding and then Aesliip in the ice
+    # caves. Korst's lines and Aesliip's lines lead from stage to stage. The default rule also marks the frost
+    # atronachs behind Aesliip's barrier, whose deaths lead to 80. Aesliip names them only at 62, and the player
+    # fights them only after agreeing to at 70.
+    - stages: 20-67
+      hide: 80
+    # Journal 70 says the player agreed to fight beside Aesliip. BMFrostDaedraScript on each of the 10 frost
+    # atronachs in Aesliip's Lair adds one to the global deaddaedra at its death, and sets 80 at 10. The analysis
+    # reads that script as a visit to the atronachs, so they would be marked as places to go to. They are kill
+    # targets instead. Killing Aesliip, which leads to 90, breaks the agreement and is hidden.
+    - stages: 70
+      hide: [80, 90]
+      targets:
+        - { task: kill, object: atronach_frost_bm, done: { global: deaddaedra, atLeast: 10 } }
+    # Journal 75 says the player is honor-bound to kill Aesliip. His script sets 90 when he dies. That way needs
+    # someone who talks in the quest dead, so the default rule marks the frost atronachs instead.
+    - stages: 75
+      next: 90
+
+  BM_Falmer:
+    # Journal 40 says the player turned down Athellor's offer. Athellor said the job stays open, and the answer
+    # that leads to 50 is still offered while the quest is below 50. So he is marked as a side step. The way to
+    # 100 hands over the book "Fall of the Snow Prince", and the greeting that offers that answer needs the quest
+    # at 50 or more, so it is left out.
+    - stages: 40
+      optional: 50
+      hide: 100
+
+  BM_FrostGiant1:
+    # Journal 30 sends the player to the underwater entrance north of Castle Karstaag. The script of
+    # active_bm_karstaag in the Caverns of Karstaag sets 40 when the player comes near it. The default rule also
+    # marks the Riekling Krish in the caverns, whom the journal names only at 50.
+    - stages: 30
+      next: 40
+    # Journal 75 says Krish will take the player into the castle once they fight past the grahl. Krish's greeting
+    # that leads to 80 needs the global trollsdead at 8. Each of the 8 grahl placed in the Caverns of Karstaag,
+    # bm_icetroll_fg_uni, adds one to it when it dies. Until then the only way left kills Krish, so the default
+    # rule would mark Krish to be killed. The grahl are marked until all 8 are dead.
+    - stages: 75
+      hide: 85
+      targets:
+        - { task: kill, object: bm_icetroll_fg_uni, done: { global: trollsdead, atLeast: 8 } }
+
+  BM_FrostGiant2:
+    # Journal 50 asks the player to kill the grahl in the caverns and the Riekling Krish. The grahl scripts set 70
+    # when the global krishcount reaches 9, which counts the 8 grahl and Krish. The analysis reads those scripts as
+    # a visit to the grahl, so they would be marked as places to go to. That way is hidden, and the grahl are kill
+    # targets until krishcount reaches 9, as at BM_FrostGiant1's stage 75. Krish is a kill target until he dies.
+    - stages: 50
+      hide: 70
+      targets:
+        - { task: kill, object: bm_icetroll_fg_uni, done: { global: krishcount, atLeast: 9 } }
+        - { task: kill, object: bm_riekling_krish_uniqu, done: { dead: bm_riekling_krish_uniqu } }
+
+  BM_Lycanthropycure:
+    # Journal 10 says the cure scroll is hidden in an icicle in the witches' Gloomy Cave. No copy of
+    # sc_lycanthropycure is placed. It is inside the container Contain_BM_fakerock_2 in "Solstheim, Gloomy Cave".
+    # The analysis's way to 20 is a visit to the scroll, which finds nothing while playing, so the scroll is a fetch
+    # target until the player carries it. Reading it then cures the player and sets 20.
+    - stages: 10
+      targets:
+        - { task: fetch, object: sc_lycanthropycure, done: { carried: sc_lycanthropycure } }
+
+  BM_MeadHall:
+    # The way to 60 is the topic "one more task" of svenja_outside, who stands outside Thirsk. Her script keeps
+    # her disabled until stage 40. At 10 Svenja Snow-Song's answers in the topic "beast must be stopped" lead to
+    # 20 and 30. At 30 killing the Udyrfrykte in its lair leads to 40.
+    - stages: [10, 30]
+      hide: 60
+    # Journal 20 says the player refused Svenja. Her offer in the topic "beast must be stopped" stays open while
+    # the quest is at 20 or below, and the answer that accepts leads to 30. So she is a side step. The way to 60
+    # is hidden as above.
+    - stages: 20
+      hide: 60
+      optional: 30
+    # Journal 40 says to take a trophy from the Udyrfrykte to Svenja at Thirsk. The greeting of svenja_outside
+    # takes its heart and leads to 50. The heart on the mead hall's pedestal stays disabled until stage 70, so the
+    # heart on the corpse is marked. The default rule also marks Hrothmund's axe in his barrow, because its
+    # script sets 70 from stage 40 on. Svenja names the axe only at 60, in her topic "one more task".
+    - stages: 40
+      next: 50
+    # Journal 50 says one task remains. The topic "one more task" of svenja_outside leads to 60. The default rule
+    # also marks Hrothmund's axe, which she names only in that answer.
+    - stages: 50
+      next: 60
+
+  BM_Missionary:
+    # Journal 10 says Jeleen suggests searching around Lake Fjalding. Brandr and Erna the Quiet, placed at (-21,24),
+    # and Ingmar, placed at (-20,20), answer "Mirisa never returned" with what they saw, which leads to 20. The
+    # default rule also marks Mirisa in Thirsk, through her answer that leads to 60. The journal hasn't named Thirsk
+    # yet.
+    - stages: 10
+      next: 20
+    # Journal 20 says Mirisa was last seen heading for the Thirsk mead hall. Erich the Unworthy and Brynjolfr answer
+    # "Mirisa never returned" in Thirsk, which leads to 30. The default rule also marks Mirisa herself, locked in
+    # Erich's room, which the journal only names at 30.
+    - stages: 20
+      next: 30
+
+  BM_MoonSugar:
+    # Journal 30 says to question Jeleen in the Cult shrine before leaving Frostmoth. His answer in "silly song" leads
+    # to 40 and needs only stage 30. The default rule also marks the white helm, which only Uncle Sweetshare carries.
+    # That points straight at the culprit's workshop before the player has any lead.
+    - stages: 30
+      next: 40
+
+  BM_Morale:
+    # Journal 20 says to speak with the soldiers. Anyone in Fort Frostmoth answers "dry fort", which leads to 40.
+    # The default rule also marks the six kinds of liquor that the "booze" answers to 30 take. Each is placed over
+    # a hundred times across Vvardenfell, so the fetch marks far-off places. The journal doesn't ask for liquor.
+    - stages: 20
+      next: 40
+    # Journals 50 and 55 say to speak with the soldiers again to find who starts the rumors. Anyone in Fort
+    # Frostmoth, its Armory or its Imperial Cult Shrine answers "Antonius Nuncius", which leads to 60 and names him.
+    # The default rule also marks Antonius Nuncius himself, the culprit, and at 50 the liquor fetches above.
+    - stages: 50-55
+      next: 60
+    # Journal 60 sends the player to find Antonius Nuncius in the shrine or his office above the Armory. His answer
+    # in "shipments stopped arriving" leads to 70 while the global FoundBooze is 0, and to 90 while it is 1. The
+    # desk's script sets FoundBooze to 1 when the player opens it before stage 50. While playing, the answer that
+    # doesn't hold is left out, and the default rule then also marks his desk de_p_desk_nuncius, which hides the
+    # liquor, while journal 70 is the first to suggest searching further. So every way is hidden, including the
+    # kills that lead to the failure 200, and Nuncius is a target until one of his answers moves the quest on.
+    - stages: 60
+      hide: [70, 80, 90, 200]
+      targets:
+        - { task: talk, object: antonius nuncius, done: { quest: BM_Morale, atLeast: 70 } }
+
+  BM_Retribution:
+    # At 10 Kolfinna has just asked for help, and her line in "wergild" that sets 10 offers the choice. Her answer
+    # that accepts leads to 30. The default rule also marks the gem Pinetear, which only Sigvatr the Strong carries
+    # at the Altar of Thrond. The journal only says where he hunts at 30.
+    - stages: 10
+      next: 30
+    # Journal 20 says the player refused Kolfinna. Nothing is marked.
+    - stages: 20
+      hide: 40-100
+
+  BM_Rumors:
+    # Journal 50 says a boat in Khuul now sails to Solstheim. S'virr, placed in Khuul, is the one who offers that
+    # passage, but no line in this quest names him. He is a target while the quest waits at 50.
+    - stages: 50
+      targets:
+        - { task: talk, object: "s'virr" }
+
+  BM_SadSeer:
+    # Journal 20 says the player refused to rescue Oddfrid White-Lip. Nothing is marked.
+    - stages: 20
+      hide: 37
+
+  BM_SkaalAttack:
+    # Journal 10 says to go outside and defend the village. skaalwere1Script on each of the seven werewolves outside
+    # sets 20 once the global werewolfdead reaches 7. The analysis reads it as a visit to each werewolf, so they
+    # would be marked as places to go to. The default rule also marks the werewolf bm_werewolf_skaal2a in the
+    # Greathall, which is disabled until 20, and Korst Wind-Eye for the end of a later cure. All those ways are
+    # hidden, and the seven werewolves are kill targets until each dies.
+    - stages: 10
+      hide: [20, 25, 30, 105]
+      targets:
+        - { task: kill, object: bm_werewolf_skaal1a3, done: { dead: bm_werewolf_skaal1a3 } }
+        - { task: kill, object: bm_werewolf_skaal1b3, done: { dead: bm_werewolf_skaal1b3 } }
+        - { task: kill, object: bm_werewolf_skaal1c3, done: { dead: bm_werewolf_skaal1c3 } }
+        - { task: kill, object: bm_werewolf_skaal1d3, done: { dead: bm_werewolf_skaal1d3 } }
+        - { task: kill, object: bm_werewolf_skaal1e3, done: { dead: bm_werewolf_skaal1e3 } }
+        - { task: kill, object: bm_werewolf_skaal1f3, done: { dead: bm_werewolf_skaal1f3 } }
+        - { task: kill, object: bm_werewolf_skaal1g3, done: { dead: bm_werewolf_skaal1g3 } }
+    # Journal 20 says the werewolves outside are beaten. Any Skaal greets the player with news of one in the Greathall,
+    # which leads to 25 once the global SkaalAttack is 3, which the same script sets. The Greathall werewolves come
+    # after that warning.
+    - stages: 20
+      next: 25
+
+  BM_Smugglers:
+    # Journal 10 records Carius's suspicion. His answer in "bit of help" leads to 20 and names Saenus Lusius and
+    # Gaea Artoria. The journal hasn't named them yet.
+    - stages: 10
+      next: 20
+    # Journal 20 says to speak with Saenus Lusius or Gaea Artoria. Their answers in "assist you" lead to 30 and 35.
+    # The default rule also marks the nearest Imperial Legion soldier, whose line that leads to 50 needs the global
+    # artoriachosen, which only Gaea's answer sets.
+    - stages: 20
+      next: [30, 35]
+    # Journal 30 says the player now works with Saenus Lusius, who follows the player. His answer in "weapons being
+    # smuggled" leads to 40, where he names Zeno Faustus. The default rule also marks Gualtierus Spurius in the
+    # Gandrung Caverns, which no journal has named yet.
+    - stages: 30
+      next: 40
+    # Journal 35 says the player now works with Gaea Artoria, who follows the player. Her answer in "weapons being
+    # smuggled" leads to 45. Gualtierus Spurius is left out for the reason above.
+    - stages: 35
+      next: 45
+    # Journal 40 sends the player to Zeno Faustus in the Armory. His answers in "weapons being smuggled" lead to 70.
+    # The default rule would mark the nearest soldier and Gualtierus Spurius instead.
+    - stages: 40
+      next: 70
+    # Journal 45 says Gaea Artoria wants to lean on the soldiers. Any Imperial Legion soldier in Fort Frostmoth
+    # answers "weapons being smuggled" by naming Zeno Faustus, which leads to 50.
+    - stages: 45
+      next: 50
+    # Journals 50, 60 and 65 point to Zeno Faustus in the Armory. His answers that lead to 70 need the player to
+    # work with Lusius or Artoria, which holds on either path. His answer that sets 65 only refuses, and comes from
+    # the same topic. The default rule also marks Gualtierus Spurius.
+    - stages: 50-65
+      next: 70
+    # Journal 95 says the player turned Gualtierus Spurius down and must kill him and all his companions. The
+    # script smugdeadScript sets 97 once five smugglers are dead: Mus Roscius, Sorian, Mol gro-Shat, Mazorn
+    # gro-Gar and Gualtierus Spurius, all placed in the Gandrung Caverns. The default rule marks the attacked fort
+    # instead, through the script that sets 100 near it from 93 on.
+    - stages: 95
+      hide: 100
+      targets:
+        - { task: kill, object: mus roscius, done: { dead: mus roscius } }
+        - { task: kill, object: sorian, done: { dead: sorian } }
+        - { task: kill, object: mol gro-shat, done: { dead: mol gro-shat } }
+        - { task: kill, object: mazorn gro-gar, done: { dead: mazorn gro-gar } }
+        - { task: kill, object: gualtierus spurius, done: { dead: gualtierus spurius } }
+
+  BM_Stones:
+    # Each standing stone's script sets 80 once the global stones reaches 6, after all six rituals. The analysis
+    # reads that as a visit to any stone. So the default rule marks all six stones from stage 10, before anyone has
+    # mentioned them. Journals 10 and 20 lead to Tharsten Heart-Fang's answers, and journal 30 to Korst Wind-Eye's.
+    # The stone visits that lead to 60 to 70 need each ritual's own quest at its last stage, so they can stay.
+    - stages: 10-30
+      hide: 80
+    # Journal 40 says to visit each of the six stones and perform a ritual. Activating a stone from stage 30 on
+    # starts that stone's own quest, BM_Beasts, BM_Earth, BM_Sun, BM_Trees, BM_Water or BM_Wind. Each stone is a
+    # target until its quest starts, and then that quest's markers are followed. Korst Wind-Eye's answer in "Ritual
+    # of the Gifts", which leads to 50, hands over a map of the stones, so it is a side step.
+    - stages: 40
+      optional: 50
+      hide: 80
+      targets:
+        - { task: visit, object: act_bm_stone_beast_01, done: { quest: BM_Beasts, started: true } }
+        - { task: visit, object: act_bm_stone_earth_01, done: { quest: BM_Earth, started: true } }
+        - { task: visit, object: act_bm_stone_sun_01, done: { quest: BM_Sun, started: true } }
+        - { task: visit, object: act_bm_stone_tree_01, done: { quest: BM_Trees, started: true } }
+        - { task: visit, object: act_bm_stone_water_01, done: { quest: BM_Water, started: true } }
+        - { task: visit, object: act_bm_stone_wind_01, done: { quest: BM_Wind, started: true } }
+      follow: [BM_Beasts, BM_Earth, BM_Sun, BM_Trees, BM_Water, BM_Wind]
+    # From 50 to 70 the player has Korst's map and works through the rituals in any order. The stage is the index
+    # of the last ritual finished. The stones and the rituals' quests are marked as at 40.
+    - stages: 50-70
+      hide: 80
+      targets:
+        - { task: visit, object: act_bm_stone_beast_01, done: { quest: BM_Beasts, started: true } }
+        - { task: visit, object: act_bm_stone_earth_01, done: { quest: BM_Earth, started: true } }
+        - { task: visit, object: act_bm_stone_sun_01, done: { quest: BM_Sun, started: true } }
+        - { task: visit, object: act_bm_stone_tree_01, done: { quest: BM_Trees, started: true } }
+        - { task: visit, object: act_bm_stone_water_01, done: { quest: BM_Water, started: true } }
+        - { task: visit, object: act_bm_stone_wind_01, done: { quest: BM_Wind, started: true } }
+      follow: [BM_Beasts, BM_Earth, BM_Sun, BM_Trees, BM_Water, BM_Wind]
+
+  BM_Sun:
+    # Journal 30 says the glowing object lies behind a wall of ice. The wall's script icewallScript only lets the
+    # player break it while carrying the flaming eye ingred_eyeball_unique, and sets 40. The eye isn't placed. The
+    # ice troll bm_ice_troll_sun in the Halls of Penumbra carries it. So the troll is marked until the player
+    # carries the eye, and the wall after that.
+    - stages: 30
+      hide: 40
+      targets:
+        - { task: fetch, object: ingred_eyeball_unique, done: { carried: ingred_eyeball_unique } }
+        - { task: visit, object: bm_ice_wall, after: { carried: ingred_eyeball_unique } }
+
+  BM_Trees:
+    # Journals 10 and 20 send the player after the Riekling who stole the seeds. The garden plot act_bm_garden_plot_01
+    # only takes the seeds once the player carries them, and journal 30 is the first to mention the clearing. Its way
+    # to 40 is hidden until then. The Riekling and the seeds he carries stay marked.
+    - stages: 10-20
+      hide: 40
+
+  BM_Water:
+    # Journal 10 says to find the Swimmer on a small island to the west. The black horker bm_horker_swim_unique,
+    # placed at (-27,24), sets 50 when the player comes near. The default rule also marks the Waters of Life inside
+    # the underwater cave, which the journal doesn't mention yet.
+    - stages: 10
+      next: 50
+    # Journal 70 says to bring the Waters of Life back to the Water Stone. The stone's script stoneWaterScript ends
+    # the ritual when the player activates the stone while carrying them. The analysis only sees the fetch, which is
+    # done once the player carries them, so nothing would be marked. The stone is a target.
+    - stages: 70
+      targets:
+        - { task: visit, object: act_bm_stone_water_01 }
+
+  BM_Trial:
+    # Journal 20 says to speak with the people of the Skaal Village. Any Skaal answers "Engar Ice-Mane", which leads
+    # to 30. Korst Wind-Eye's answer in the same topic leads to 40, and Risi Ice-Mane's answer in "investigate a
+    # crime" leads to 45. They are among the people the journal means, so they are optional. The default rule also
+    # marks the note bk_bmtrial_unique in Ice-Mane's hut, which the journal only mentions at 50.
+    - stages: 20
+      next: 30
+      optional: [40, 45]
+    # Journal 30 only says the Skaal doubt Engar is a thief. Korst Wind-Eye and Risi Ice-Mane are the ones left to
+    # ask, through the answers that lead to 40 and 45. The note is left out for the reason above.
+    - stages: 30
+      next: [40, 45]
+    # Journal 40 says Korst suggests speaking with Risi Ice-Mane. Her answer leads to 45.
+    - stages: 40
+      next: 45
+    # Journal 50 says to show the note to Risi Ice-Mane. Her answer in "Rigmor Halfhand" leads to 55 while the
+    # player carries the note. The default rule also marks Rigmor Halfhand, whom journal 55 sends the player to.
+    - stages: 50
+      next: 55
+
+  BM_WildHunt:
+    # At 20 and 25 the player has woken in the Entry of the Mortrag Glacier. The script wildhuntStartScript makes
+    # Hircine speak there, and his script sets 30 when he is done. The default rule also marks the last gate
+    # bm_mazegate_03 and the Aspects in the Huntsman's Hall, at the end of the glacier.
+    - stages: 20-25
+      next: 30
+    # Journal 30 names Falx Carius as one of the hunters who went ahead. He is placed in the Outer Ring, and his
+    # answers in "find our way" lead to 42 and 44, and need only stage 30 or more. Journal 40 says the player has met
+    # him, and the choice is still open. The default rule also marks the last gate.
+    - stages: 30-40
+      next: [42, 44]
+    # At 42 Carius follows the player and says a key opens the gate in the center of the maze. The key key_hircine1
+    # is in the chest com_chest_01_hircine in the Outer Ring, and carrying it sets 50. The default rule would also
+    # mark Carius again, through his answer that leads to 44.
+    - stages: 42
+      next: 50
+    # Journal 44 says the player must fight Carius. His script sets 49 when he dies.
+    - stages: 44
+      next: 49
+    # Journal 49 says Carius is dead. The key in the Outer Ring chest is the way on, as at 42.
+    - stages: 49
+      next: 50
+    # Journal 50 says the key opens the gate in the center of the maze. That gate, bm_mazegate_01, leads from the
+    # Outer Ring to the Inner Ring, where Tharsten Heart-Fang greets the player, which leads to 60. No line names
+    # the gate, so it is a target. Carius's greeting at the gate, which leads to 55, needs him to follow the player
+    # there.
+    - stages: 50
+      hide: 55-100
+      targets:
+        - { task: visit, object: bm_mazegate_01 }
+    # Journal 55 says Carius stays at the gate and warns about Heart-Fang. Heart-Fang, placed in the Inner Ring,
+    # greets the player, which leads to 60, or to 66 when the player is a werewolf.
+    - stages: 55
+      next: 60-66
+    # Journal 60 says Heart-Fang wants to work together. His answers in "fight through" lead to 62 and 64.
+    - stages: 60
+      next: [62, 64]
+    # At 62 Heart-Fang follows the player. The chest com_chest_01_hircine2 in the Inner Ring is empty. Its script
+    # hircinechestScript makes Heart-Fang greet the player, which leads to 65. Journal 65 then says he has the key.
+    # So the chest is a target. His answer that leads to 64, the key he carries and the kill are left out until he
+    # turns on the player.
+    - stages: 62
+      hide: [64, 66-100]
+      targets:
+        - { task: visit, object: com_chest_01_hircine2 }
+    # Journals 64, 65 and 66 say Heart-Fang will fight the player in his true form. His script sets 69 when he dies.
+    - stages: 64-66
+      next: 69
+    # Journal 69 says Heart-Fang is dead. He carried the second key, key_hircine2, and carrying it sets 70.
+    - stages: 69
+      next: 70
+    # Journal 70 says the second key lets the player go on. It opens bm_mazegate_02, the gate from the Inner Ring to
+    # the Huntsman's Hall, where the frost giant's script sets 80 when the player comes near. No line names the
+    # gate, so it is a target.
+    - stages: 70
+      hide: 80-100
+      targets:
+        - { task: visit, object: bm_mazegate_02 }
+    # Journal 80 names the frost giant Karstaag. His script sets 82 when he dies.
+    - stages: 80
+      next: 82
+    # At 82 Hircine's script makes him appear when the player comes near, and his speech sets 85 to 89. The last
+    # gate needs the key that the Aspect carries.
+    - stages: 82
+      next: 85-89
+    # Journal 85 asks the player to choose. Hircine's message box sets 87, 88 or 89.
+    - stages: 85
+      next: 87-89
+    # Journal 87 records the choice of Strength. Hircine's script then enables the Aspect of Strength, whose death
+    # sets 92. The other two Aspects stay disabled. The default rule would mark Hircine again.
+    - stages: 87
+      next: 92
+    # Journal 88 records the choice of Speed. Its Aspect's death sets 93.
+    - stages: 88
+      next: 93
+    # Journal 89 records the choice of Guile. Its Aspect's death sets 94. The default rule would mark the Aspect of
+    # Strength.
+    - stages: 89
+      next: 94
+    # Journal 90 says the player is to face one of the Aspects, without saying which. Each Aspect's death leads to
+    # 92, 93 or 94. Only the chosen one is enabled.
+    - stages: 90
+      next: 92-94
+
+  BM_WolfGiver:
+    # Journal 10 says a raven has been seen at the Altar of Thrond. The raven's answers to her greeting lead to 20
+    # and 30. The default rule also marks the innocent wolfgiver_f_nord at the altar, who is disabled until 80, as
+    # a kill.
+    - stages: 10
+      next: [20, 30]
+    # Journal 20 says the player turned the raven's offer down. Nothing is marked.
+    - stages: 20
+      hide: 30-120
+    # At 30 the raven's answer has started GlenmorilCaveTeleport, which takes the player to the Gloomy Cave. Ettiene,
+    # glenmoril_witch_cave, greets the player there, which leads to 40.
+    - stages: 30
+      next: 40
+    # Journal 40 says to talk to Ettiene's sisters. Fallaise, glenmoril_witch_cave_2, greets the player with her
+    # errand, which leads to 50. Isobel's greeting needs stage 50 or more.
+    - stages: 40
+      next: 50
+    # Journal 50 sends the player to the top of Hvitkald Peak for wolfsbane, for Fallaise. The only placed
+    # ingred_wolfsbane_01 lies in Lassnr's House in the Skaal Village, so the fetch that leads to 70 marks that
+    # house. The flower flora_bm_wolfsbane_01 on Hvitkald Peak holds the petals the journal means. So the flower is
+    # a target until the player carries wolfsbane, and Fallaise after that. Isobel's greeting with her own errand
+    # leads to 60 and stays marked. The innocent at the Altar of Thrond is left out for the reason above.
+    - stages: 50
+      hide: [70, 105-120]
+      targets:
+        - { task: visit, object: flora_bm_wolfsbane_01, done: { carried: ingred_wolfsbane_01 } }
+        - { task: talk, object: glenmoril_witch_cave_2, after: { carried: ingred_wolfsbane_01 } }
+    # Journal 60 adds Isobel's errand: ripened belladonna berries, ingred_belladonna_01, which grow near barrows. The
+    # analysis has no way for it, because it is handed in through BM_WolfGiver_a, whose greeting sets that quest to
+    # 10. So Isobel is a target once the player carries the berries, until BM_WolfGiver_a reaches 10. The berries
+    # grow in too many places to mark. The wolfsbane is marked as at 50.
+    - stages: 60
+      hide: [70, 105-120]
+      targets:
+        - { task: visit, object: flora_bm_wolfsbane_01, done: { carried: ingred_wolfsbane_01 } }
+        - { task: talk, object: glenmoril_witch_cave_2, after: { carried: ingred_wolfsbane_01 } }
+        - { task: talk, object: glenmoril_witch_cave_3, after: { carried: ingred_belladonna_01 }, done: { quest: BM_WolfGiver_a, atLeast: 10 } }
+    # Journal 70 sends the player to Ettiene. Her greeting that leads to 80 needs BM_WolfGiver_a at 10, so it is
+    # only marked once Isobel has the berries. Fallaise also sets 70 when Isobel's errand is still open, so Isobel
+    # is a target as at 60.
+    - stages: 70
+      hide: 105-120
+      targets:
+        - { task: talk, object: glenmoril_witch_cave_3, after: { carried: ingred_belladonna_01 }, done: { quest: BM_WolfGiver_a, atLeast: 10 } }
+    # Journal 80 sends the player to meet Ettiene at the Altar of Thrond. Her greeting there leads to 90. The
+    # innocent is enabled from 80, but the journal only asks for her death at 90.
+    - stages: 80
+      next: 90
+
+  BM_WomanScorned:
+    # Journal 30 says Erna the Quiet can probably be found at her house in the Skaal Village. Her note sc_erna in
+    # that house leads to 40 and says where she went. The default rule also marks Erna's ring, which she carries
+    # by the river at (-21,24).
+    - stages: 30
+      next: 40
+    # Journal 40 says Erna is walking by the river. Her death leads to 50, and her ring, which she carries, then
+    # goes to Kjolver, which leads to 100. The default rule also marks Brandr as a kill, which leads to 45. The
+    # journal hopes he isn't there.
+    - stages: 40
+      next: [50, 100]
+
+  CO_1:
+    # Journal 10 sends the player to Gidar Verothan by the dock south of Fort Frostmoth. His answer in "ready to go"
+    # leads to 20. The default rule also marks Gamin Girith and Sabinus Oranius to kill, because their scripts set
+    # the failure stage 300 when they die. They don't talk in the quest, so those kills aren't set aside as failures.
+    - stages: 10
+      next: 20
+    # At 20 Gidar follows the player since his answer, and the other two miners follow him. GidarScript sets 30 when
+    # he comes near Falco Galenus at Raven Rock, so Falco is marked. The kills that lead to 300 are left out for the
+    # reason above.
+    - stages: 20
+      next: 30
+    # Journal 40 asks for four more pieces of raw ebony, on top of the one Falco gave. Carnius Magius's "assignment"
+    # line that leads to 50 needs five. The ebony is placed 37 times, none of them on Solstheim, so the fetch marks
+    # every container and person that holds a piece, most of them on Vvardenfell. Four of those containers are at the
+    # colony site in Raven Rock: rock_ebony_02_colony, rock_ebony_05_colony, rock_ebony_06_colony and
+    # rock_ebony_07_colony each hold one piece. Only they are marked, until the player carries five, and then Carnius
+    # until 50.
+    - stages: 40
+      hide: 50
+      targets:
+        - { task: visit, object: rock_ebony_02_colony, done: { carried: ingred_raw_ebony_01, atLeast: 5 } }
+        - { task: visit, object: rock_ebony_05_colony, done: { carried: ingred_raw_ebony_01, atLeast: 5 } }
+        - { task: visit, object: rock_ebony_06_colony, done: { carried: ingred_raw_ebony_01, atLeast: 5 } }
+        - { task: visit, object: rock_ebony_07_colony, done: { carried: ingred_raw_ebony_01, atLeast: 5 } }
+        - { task: talk, object: carnius magius, after: { carried: ingred_raw_ebony_01, atLeast: 5 },
+            done: { quest: CO_1, atLeast: 50 } }
+
+  CO_2:
+    # Journal 10 sends the player to Falco Galenus at Raven Rock. His "get rid of him" line leads to 20. The default
+    # rule also marks Hroldar the Strange, through his greeting that leads to 50. That greeting needs his local
+    # hroldarbeaten, which HroldarScript sets only once the player has beaten him.
+    - stages: 10
+      next: 20
+    # Journal 20 sends the player to talk to Hroldar. His greeting at 20 leads to 30. Falco's answer in "get rid of
+    # him" that leads to 40 is listed at every stage from 10 to 30. While playing, Hroldar's way to 50 is left out,
+    # so the default rule would mark Falco as the furthest way.
+    - stages: 20
+      next: 30
+    # Journal 30 sends the player back to Falco. His "get rid of him" lines lead to 40. Hroldar's way to 50 is left
+    # out while playing, for the reason above.
+    - stages: 30
+      next: 40
+    # Journal 40 lets the player punch Hroldar, and forbids killing him. HroldarScript sets hroldarbeaten when his
+    # fatigue runs low, and then he greets the player and sets 50. Until then that way is left out while playing.
+    # Only the kill that leads to 60 would be left, so Hroldar would be marked to kill. The kill is hidden, and
+    # Hroldar is marked to talk to until 50.
+    - stages: 40
+      hide: 60
+      targets:
+        - { task: talk, object: hroldar the strange, done: { quest: CO_2, atLeast: 50 } }
+
+  CO_3:
+    # Journal 30 says Gamin Girith saw a light to the northwest, and that the player should tell Falco Galenus. His
+    # line in "seen anything" leads to 40. The default rule also marks the wreck ex_co_shipwreck at (-27,21), whose
+    # script sets 50 when the player comes near. The journal hasn't said yet where the ship is.
+    - stages: 30
+      next: 40
+    # Journal 35 has Falco ask the player to look into the light. His "seen anything" line that leads to 40 only
+    # repeats that request, so the wreck is marked alone.
+    - stages: 35
+      next: 50
+
+  CO_3a:
+    # Journal 10 says Falco Galenus will pay for pick axes salvaged from the shipwreck. His lines in "pick axes" that
+    # lead to 20 need picks in the player's inventory, and his local picks counts the ones already handed in. Miner's
+    # picks are placed 29 times, so the fetch marks whoever carries one, mostly miners on Vvardenfell. The content
+    # places six of them in the cell "Raven Rock, Supply Ship", the wreck. The wreck is marked until the player
+    # carries six, and Falco from the first pick the player carries until 20.
+    - stages: 10
+      hide: 20
+      targets:
+        - { task: visit, cell: "Raven Rock, Supply Ship", done: { carried: "miner's pick", atLeast: 6 } }
+        - { task: talk, object: falco galenus, after: { carried: "miner's pick" }, done: { quest: CO_3a, atLeast: 20 } }
+
+  CO_4:
+    # Journal 20 asks the player to choose between a smith and a trader, and report the choice. Who asked depends on
+    # the global ColonySide: Falco Galenus on his own side (1), Carnius Magius on Carnius's side (2). Falco's answers in
+    # "decision" lead to 30 and 40 and need ColonySide 1. Carnius's answers lead to 60 and 70 and have no checks, so
+    # on Falco's side the default rule would mark Carnius too. On Carnius's side, Falco's ways wait for their check,
+    # and nothing else is marked in their place, so Carnius is a target once ColonySide is 2.
+    - stages: 20
+      next: [30, 40]
+      targets:
+        - { task: talk, object: carnius magius, after: { global: ColonySide, atLeast: 2 }, done: { quest: CO_4, atLeast: 60 } }
+    # Journal 30 asks the player to tell Carnius that a smithy was chosen. His "decision" line that leads to 50 needs
+    # ColonySide 1. Falco's answer that leads to 40 also needs only ColonySide 1, so the default rule would mark Falco
+    # again, although the choice has been made.
+    - stages: 30
+      next: 50
+    # Journals 50 and 60 say to come back when the building is done, in a few days. The script ColonyServTimer then
+    # sets 80 or 90. Carnius's answers in "decision" that lead to 60 and 70 have no checks, so the default rule would
+    # mark him while the player waits.
+    - stages: [50, 60]
+      hide: [60, 70]
+
+  CO_5:
+    # Journal 10 sends the player to Falco Galenus, whose "assignment" and "extra payment" lines lead to 20. The
+    # default rule also marks Baro Egnatius, through his "his saber" line that leads to 60. That line needs his local
+    # saberout, which ColonyBaro sets only while the player holds Elberoth's saber drawn near him.
+    - stages: 10
+      next: 20
+    # Journal 20 sends the player to Baro at the dock. His "extra payment" line leads to 30. While playing, his way
+    # to 60 is left out, so the default rule would mark Falco as the furthest way, through his "Elberoth" line that
+    # leads to 55. The journal hasn't named Elberoth yet.
+    - stages: 20
+      next: 30
+    # Journal 30 records Baro's demand. Falco's "extra payment" line that leads to 40 needs CO_3b at 20, which holds
+    # when the player brought Apronia Alfena back from the wreck. When it doesn't hold, his "Elberoth" line, which
+    # needs only stage 10 or more, leads to 55 instead. Both ways are Falco, so he is marked either way.
+    - stages: 30
+      next: [40, 55]
+    # Journal 40 sends the player to ask Apronia about Elberoth. Her "his saber" line leads to 50. Falco's "Elberoth"
+    # line that leads to 55 is about the saber she hasn't handed over yet.
+    - stages: 40
+      next: 50
+    # Journal 50 records the saber. Falco's "Elberoth" line at 50 leads to 55, where he suggests showing it to Baro.
+    # Baro's way to 60 is left out while playing until the player holds the saber near him.
+    - stages: 50
+      next: 55
+    # Journal 55 asks the player to show the saber to Baro. His way to 60 is left out until the player draws it near
+    # him, so only the kill that leads to the failure stage 200 would be left, and Baro would be marked to kill. The
+    # kill is hidden, and Baro is marked to talk to until 60.
+    - stages: 55
+      hide: 200
+      targets:
+        - { task: talk, object: baro egnatius, done: { quest: CO_5, atLeast: 60 } }
+
+  CO_6:
+    # Carnius Magius's "explanation" line leads to 70 with only the check that ColonySide is 1, which holds for this
+    # whole quest. So the default rule marks him from the start, before the player has any proof against Uryn Maren.
+    # Journal 10 sends the player to Falco Galenus, whose "Uryn Maren" line leads to 20. Journal 20 sends the player
+    # to the chest com_chest_02_maryn in Uryn's house, which leads to 30. Journal 30 leaves the player to report the
+    # empty chest to Falco, whose line leads to 40.
+    - stages: 10-30
+      hide: 70
+    # Journal 40 asks the player to follow Uryn in the mine without being seen. ColonyUryn sets 50 when he reaches
+    # the storeroom with the player close by. His greeting at 40 leads to 100, where the player's cover is blown, so
+    # it must not be marked as the way to go.
+    - stages: 40
+      next: 50
+    # Journal 50 says the player followed Uryn to the storeroom. His "explanation" line at 50 leads to 60. Carnius's
+    # lines that lead to 70 come before the confession.
+    - stages: 50
+      next: 60
+    # Journal 60 records Uryn's confession. Falco, who gave the job, leads to 65 in "Uryn Maren", and journal 65 then
+    # sends the player to Carnius. Carnius's lines that lead to 70 skip the report to Falco.
+    - stages: 60
+      next: 65
+
+  CO_6a:
+    # Journal 10 asks the player to take the ore out of the locked chest in Uryn Maren's house. ColonyChestMaryn sets
+    # 20 once the chest holds no ebony. Uryn's "distract the guard" line leads to 40 with no checks, but it is the
+    # task journal 30 gives later.
+    - stages: 10
+      next: 20
+    # Journal 20 asks the player to report to Carnius Magius. His "Uryn Maren" line takes the five pieces of ebony and
+    # leads to 30. Uryn's way to 40 is left out for the reason above.
+    - stages: 20
+      next: 30
+    # Journal 40 says Uryn will sneak into the storeroom once the guard is gone. In "distract the guard", Uryn gives
+    # the player whiskey for the guard, Aldam Berendus, and asks the player to stay near Aldam. Aldam's answer in
+    # "boring" takes the whiskey, and ColonyAldam then walks him away. Uryn's greeting that leads to 50 waits for his
+    # local urynmove to reach 22, so nothing is marked while playing. Aldam is marked until 50.
+    - stages: 40
+      targets:
+        - { task: talk, object: aldam berendus, done: { quest: CO_6a, atLeast: 50 } }
+
+  CO_7:
+    # Journals 10 and 20 send the player to deal with Seler Favelnim in the Raven Rock bar. His greeting leads to 40,
+    # and ColonySeler sets 50 when the fight has tired him. His wife Dralora Favelnim's "my husband" line leads to 30.
+    # It only asks the player not to hurt him, so she is a side step. Journal 10 comes from Falco Galenus on his side,
+    # and Carnius Magius's "assignment" line that leads to 20 needs ColonySide 2, so it never holds at 10.
+    - stages: [10, 20]
+      optional: 30
+      hide: 20
+
+  CO_8:
+    # Journal 10 sends the player to Graring, at the camp where two rivers meet northeast of the colony.
+    # ColonyCoventina enables Coventina Celata there at 10 to fight Graring, and sets 20 when she dies. The default rule
+    # marks her to kill before the journal has said anyone attacks. The kills of Graring that lead to 100 and 150 are
+    # failures. Graring is marked to talk to instead, at the same camp, until 20.
+    - stages: 10
+      hide: [20, 100, 150]
+      targets:
+        - { task: talk, object: graring, done: { quest: CO_8, atLeast: 20 } }
+    # Journal 30 asks the player to chip Stalhrim off the block in the mine, with the pick Graring gave. The script
+    # ColonyStalhrim on the Stalhrim containers sets 40 when the player opens one carrying the pick. The analysis
+    # counts that as fetching the pick, which the player already carries, so nothing is marked. One of those
+    # containers is placed in the cell "Raven Rock, Mine", which is marked until 40.
+    - stages: 30
+      targets:
+        - { task: visit, cell: "Raven Rock, Mine", done: { quest: CO_8, atLeast: 40 } }
+
+  CO_8a:
+    # Carnius Magius's "assignment" line sets 1, which has no journal entry, and his "Stalhrim" line leads to 10. The
+    # default rule also marks Graring to kill, through Carnius's "Graring" line that leads to 30 once Graring is dead.
+    # Carnius hasn't named the Nords yet.
+    - stages: 1
+      next: 10
+    # Journal 10 asks the player to kill the three Nords and take their pick. ColonyNordAxe sets 20 when Graring,
+    # Aenar and Hidar are dead and the player carries the pick. Carnius's "Graring" line leads to 30 once Graring
+    # alone is dead, so the default rule would mark Carnius before the other two are killed.
+    - stages: 10
+      next: 20
+    # Journal 30 asks the player to chip Stalhrim off the block in the mine. As in CO_8, the way to 40 is counted as
+    # fetching the pick the player carries, so nothing is marked. The cell "Raven Rock, Mine", where one of the
+    # Stalhrim containers is placed, is marked until 40.
+    - stages: 30
+      targets:
+        - { task: visit, cell: "Raven Rock, Mine", done: { quest: CO_8a, atLeast: 40 } }
+
+  CO_9a:
+    # Journal 10 asks the player to follow Hroldar into the wilderness first, and then bring the messenger to him.
+    # Hroldar's greeting leads to 20. Tirvel Balen's answer in "report" leads to 40 with no checks, so the default
+    # rule would mark the messenger before Hroldar has shown the spot.
+    - stages: 10
+      next: 20
+    # At 20 Hroldar escorts the player to the spot. ColonyHroldar_B sets 30 when the escort ends there.
+    - stages: 20
+      next: 30
+    # Journal 40 asks the player to bring the messenger close to Hroldar, so that his wolves kill him. ColonyWolfKill
+    # on Tirvel sets 50 when something other than the player kills him, and 60 when the player does. Both ways are
+    # kills of Tirvel, who talks in the quest, so the default rule would mark him to kill. They are hidden, and
+    # Hroldar, who waits at the spot, is marked until 50.
+    - stages: 40
+      hide: [50, 60]
+      targets:
+        - { task: visit, object: hroldar the strange_b, done: { quest: CO_9a, atLeast: 50 } }
+
+  CO_10:
+    # Journals 10 and 20 ask the player to kill the Spriggans at the colony, and then talk to Unel Lloran.
+    # ColonySpriggan4 sets 30 once bm_spriggan_co1 to bm_spriggan_co4 have each died three times. Unel's line in
+    # "grove" that leads to 40 has no checks, so the default rule would mark him while the Spriggans live, and at 10
+    # also Falco Galenus's line that leads to 20. With only the way to 30, the fourth Spriggan is marked, and the
+    # other three are marked to kill until 30. Spriggans that their scripts haven't enabled yet get no marker.
+    - stages: [10, 20]
+      next: 30
+      targets:
+        - { task: kill, object: bm_spriggan_co1, done: { quest: CO_10, atLeast: 30 } }
+        - { task: kill, object: bm_spriggan_co2, done: { quest: CO_10, atLeast: 30 } }
+        - { task: kill, object: bm_spriggan_co3, done: { quest: CO_10, atLeast: 30 } }
+    # Journal 40 has Unel say the roots are too deep to reach. Any East Empire Company member in the cell
+    # "Raven Rock, Mine" can answer "roots" at 40, which leads to 50 and says where the roots are. The visit to the
+    # roots act_ex_colony_root_3, which leads to 55, comes before anyone has said where they are. Unel's answers lead
+    # to 60 and 90.
+    - stages: 40
+      next: 50
+    # Journal 50 says the roots are at the bottom of the mine. ColonyRoot1a on act_ex_colony_root_3, in
+    # "Raven Rock, Abandoned Mine Shaft", sets 55 when the player comes near.
+    - stages: 50
+      next: 55
+
+  CO_11:
+    # Journals 10 and 20 ask the player to find colonists who will be guards, for Carnius Magius on his side and for
+    # Falco Galenus on Falco's. Afer Flaccus, Gratian Caerellius and Garnas Uvalen accept in "hire guards". Their lines
+    # lead to 30, 40 and 50, and set the globals aferguard, gratianguard and garnasguard. Carnius's answers that lead
+    # to 70, and one of Falco's that leads to 60, have no checks, so the default rule marks Carnius at once on either
+    # side. The three colonists are marked instead.
+    - stages: [10, 20]
+      next: [30, 40, 50]
+    # From 30 on, at least one colonist has volunteered, and the player can report. Asking another colonist only
+    # moves the quest to their stage if it is higher, so the quest's own ways don't cover everyone left. Those ways
+    # are hidden. The colonists who haven't volunteered are optional until their global is set. The report is marked
+    # with Falco on his side, which CO_9 having started shows, and with Carnius when ColonySide is 2.
+    - stages: 30-50
+      hide: 40-70
+      targets:
+        - { task: talk, object: afer flaccus, optional: true, done: { global: aferguard, atLeast: 1 } }
+        - { task: talk, object: gratian caerellius, optional: true, done: { global: gratianguard, atLeast: 1 } }
+        - { task: talk, object: garnas uvalen, optional: true, done: { global: garnasguard, atLeast: 1 } }
+        - { task: talk, object: falco galenus, after: { quest: CO_9, started: true },
+            done: { quest: CO_11, atLeast: 60 } }
+        - { task: talk, object: carnius magius, after: { global: ColonySide, atLeast: 2 },
+            done: { quest: CO_11, atLeast: 60 } }
+
+  CO_12:
+    # Journal 10 asks the player to stay close to Falco Galenus. About ten seconds later, ColonyAssassin enables the
+    # attacker Baslod and sets 20. It enables Capiton Popillius and Cimber Valerius after Baslod runs off, and sets
+    # 100 when both are dead. At 10 those two are still disabled and get no marker, so Falco is marked until 20.
+    - stages: 10
+      hide: 100
+      targets:
+        - { task: visit, object: falco galenus, done: { quest: CO_12, atLeast: 20 } }
+
+  CO_12a:
+    # Carnius Magius's "assassinated" line sets 5, which has no journal entry, and his "Baslod" line leads to 10.
+    # ColonyFalco sets 40 when Falco is poisoned and blinded, but the player only hears that plan in the "Baslod"
+    # line.
+    - stages: 5
+      next: 10
+    # Journal 10 asks the player to climb the mining office tower and draw the bow left there. ColonyAssassin sets 20
+    # when the player stands on the rug ac_furn_rug_colony2 with the bow steel longbow_carnius drawn. Both are placed
+    # at Raven Rock. The analysis doesn't see that step, so it marks Falco, whose death leads to 40, before the
+    # signal. The rug is marked until 20.
+    - stages: 10
+      hide: 40
+      targets:
+        - { task: visit, object: ac_furn_rug_colony2, done: { quest: CO_12a, atLeast: 20 } }
+    # Journals 20 and 30 follow the signal, and the plan is to shoot Falco Galenus from the tower. ColonyFalco sets
+    # 40 when he is poisoned and blinded. The analysis reads that as a visit to Falco, so he would be marked as a
+    # place to go to, and at 30 ColonyAssassin sets the failure 150 when the player comes within 512 units of him.
+    # So that way is hidden, and Falco is a kill target until 40.
+    - stages: [20, 30]
+      hide: 40
+      targets:
+        - { task: kill, object: falco galenus, done: { quest: CO_12a, atLeast: 40 } }
+
+  CO_13:
+    # Journal 5 sends the player back to Falco Galenus with the swords. His "Skaal attack" line leads to 10 while the
+    # global ColonyNord is below 10. The default rule also marks the note bk_colony_toralf, for his line that leads
+    # to 20 once ColonyNord is 10, before any attack has been mentioned.
+    - stages: 5
+      next: 10
+    # Journal 10 asks the player to clear the attackers out of the mine. Falco's line that leads to 20 needs
+    # ColonyNord at 10, so it is left out while playing, and nothing is marked. The cell "Raven Rock, Mine" is marked
+    # until ColonyNord reaches 10.
+    - stages: 10
+      targets:
+        - { task: visit, cell: "Raven Rock, Mine", done: { global: ColonyNord, atLeast: 10 } }
+
+  CO_13a:
+    # Journal 10 asks the player to deliver equipment to Carnius Magius's mercenaries. His "slaughter" line says it is
+    # in two bags in the hall. In "Fort Frostmoth, Imperial Cult Shrine", com_sack_01_colony holds the armor and
+    # com_sack_02_colony holds six war axes. Each bag is marked until the player carries what it holds. Toralf's
+    # "equipment" line at 10 leads to 20. He and his men at (-20,17) are only enabled once the hour is between 20:00
+    # and 22:00, so until that first evening he gets no marker.
+    - stages: 10
+      targets:
+        - { task: visit, object: com_sack_01_colony, done: { carried: bm bear cuirass, atLeast: 5 } }
+        - { task: visit, object: com_sack_02_colony, done: { carried: bm huntsman war axe, atLeast: 6 } }
+    # Journal 20 asks the player to hand the equipment out to Toralf's men. Alfbrand, Audmund, Bryngrim, Ormvard and
+    # Valgeir each take a set in "equipment" and set a local of their own. ColonyNordEquip sets 25 once all five
+    # locals are set. No line names that step, so nothing is marked. The five are marked until 25.
+    - stages: 20
+      targets:
+        - { task: talk, object: alfbrand, done: { quest: CO_13a, atLeast: 25 } }
+        - { task: talk, object: audmund, done: { quest: CO_13a, atLeast: 25 } }
+        - { task: talk, object: bryngrim, done: { quest: CO_13a, atLeast: 25 } }
+        - { task: talk, object: ormvard, done: { quest: CO_13a, atLeast: 25 } }
+        - { task: talk, object: valgeir, done: { quest: CO_13a, atLeast: 25 } }
+    # Journal 30 says Toralf attacked the player. Each Nord's script sets 40 when the last of the six dies. The ways
+    # that need Toralf dead are failures, since he talks in the quest. The one way left lists the other five Nords
+    # but not Toralf, so he gets no marker. He is marked to kill until he dies.
+    - stages: 30
+      targets:
+        - { task: kill, object: toralf, done: { dead: toralf } }
+    # Journal 40 says the Nords are dead. Carnius's greeting at 40 attacks the player, and ColonyCarnius sets 50 when
+    # he dies. The default rule marks him to kill, which the journal hasn't asked for. He is marked to talk to until
+    # 50.
+    - stages: 40
+      hide: 50
+      targets:
+        - { task: talk, object: carnius magius, done: { quest: CO_13a, atLeast: 50 } }
+
+  CO_Estate:
+    # Journal 30 asks the player to lead Aldam to the site for the estate. He follows the player, so his own marker
+    # doesn't show where to go. His greeting at 30 checks his local torch, which says which of the three torches he
+    # stands at, and his answers that lead to 40 come from there. The torches Colony_torch_1, Colony_torch_2 and
+    # Colony_torch_3 are placed at Raven Rock, and are all marked until 40, since the player chooses one.
+    - stages: 30
+      targets:
+        - { task: visit, object: colony_torch_1, done: { quest: CO_Estate, atLeast: 40 } }
+        - { task: visit, object: colony_torch_2, done: { quest: CO_Estate, atLeast: 40 } }
+        - { task: visit, object: colony_torch_3, done: { quest: CO_Estate, atLeast: 40 } }
+
+  Colony_update:
+    # The script ColonyTimer sets every stage of this quest, and no line moves it on, so nothing is marked. Journal 10
+    # says to ask Carnius Magius for work. His "assignment" line then starts CO_2, so he is marked until CO_2 starts.
+    - stages: 10
+      targets:
+        - { task: talk, object: carnius magius, done: { quest: CO_2, started: true } }
+    # Journal 20 says to see Carnius again. His "assignment" line then starts CO_3.
+    - stages: 20
+      targets:
+        - { task: talk, object: carnius magius, done: { quest: CO_3, started: true } }
+    # Journal 30 says to check in at the colony. Falco Galenus's greeting there leads into CO_Choice, where the
+    # player picks a side. CO_4 then comes from Falco on his side, or from Carnius when ColonySide is 2. Falco is marked
+    # until CO_4 starts, and Carnius too once ColonySide is 2.
+    - stages: 30
+      targets:
+        - { task: talk, object: falco galenus, done: { quest: CO_4, started: true } }
+        - { task: talk, object: carnius magius, after: { global: ColonySide, atLeast: 2 },
+            done: { quest: CO_4, started: true } }
+    # Journal 40 says to check in at the colony again. CO_7 then comes from Falco's "Seler Favelnim" line on his
+    # side, which CO_6 having started shows, and from Carnius's "assignment" line when ColonySide is 2.
+    - stages: 40
+      targets:
+        - { task: talk, object: falco galenus, after: { quest: CO_6, started: true },
+            done: { quest: CO_7, started: true } }
+        - { task: talk, object: carnius magius, after: { global: ColonySide, atLeast: 2 },
+            done: { quest: CO_7, started: true } }

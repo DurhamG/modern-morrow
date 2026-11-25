@@ -1,0 +1,20 @@
+# The reviewed quest markers of BM_Earth.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Earth
+stages:
+  - stage: 10
+    verdict: right  # The Chamber of Song in the Cave of the Hidden Music is marked.
+    marked: ["act_bm_pipe_05"]
+  - stage: 20
+    verdict: right  # The stalagmites to strike are marked.
+    marked: ["act_bm_pipe_01", "act_bm_pipe_02", "act_bm_pipe_03", "act_bm_pipe_05"]
+  - stage: 30
+    verdict: right  # The markers stay in the Chamber of Song, where the player plays the stalagmites in order, which no marker can show.
+    marked: ["act_bm_pipe_05", "active_bm_stalreset"]
+  - stage: 40
+    verdict: right  # The markers stay in the Chamber of Song, where the player repeats the new pattern, which no marker can show.
+    marked: ["act_bm_pipe_05"]
+  - stage: 50
+    verdict: right  # The Earth Stone is marked to return to.
+    marked: ["act_bm_stone_earth_01"]

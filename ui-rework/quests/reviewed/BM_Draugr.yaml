@@ -1,0 +1,47 @@
+# The reviewed quest markers of BM_Draugr.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Draugr
+stages:
+  - stage: 10
+    verdict: corrected  # Tharsten is marked for the test of strength, not the frost atronachs far ahead.
+    marked: ["tharsten heart-fang"]
+  - stage: 20
+    verdict: corrected  # Korst at Lake Fjalding is marked, not the frost atronachs.
+    marked: ["korst wind-eye"]
+  - stage: 30
+    verdict: corrected  # Korst is marked to explain the test, not the frost atronachs.
+    marked: ["korst wind-eye"]
+  - stage: 40
+    verdict: corrected  # Korst and Aesliip in the caves are marked, not the frost atronachs.
+    marked: ["draugr_aesliip", "korst wind-eye"]
+  - stage: 50
+    verdict: corrected  # Aesliip in the ice caves is marked, not the frost atronachs.
+    marked: ["draugr_aesliip"]
+  - stage: 60
+    verdict: corrected  # Aesliip is marked to hear his story, not the frost atronachs.
+    marked: ["draugr_aesliip"]
+  - stage: 62
+    verdict: corrected  # Aesliip is marked to hear his story, not the frost atronachs.
+    marked: ["draugr_aesliip"]
+  - stage: 65
+    verdict: corrected  # Aesliip is marked for his request, not the frost atronachs.
+    marked: ["draugr_aesliip"]
+  - stage: 67
+    verdict: corrected  # Aesliip is marked for the choice to fight with him or against him.
+    marked: ["draugr_aesliip"]
+  - stage: 70
+    verdict: corrected  # The frost atronachs the player agreed to fight are marked as kills; killing Aesliip is left out.
+    marked: ["atronach_frost_bm"]
+  - stage: 75
+    verdict: corrected  # Aesliip is marked to be killed, as the journal says, not the frost atronachs.
+    marked: ["draugr_aesliip"]
+  - stage: 80
+    verdict: right  # Aesliip is marked, and he greets the player once the fight ends.
+    marked: ["draugr_aesliip"]
+  - stage: 85
+    verdict: right  # Korst is marked to hear what happened.
+    marked: ["korst wind-eye"]
+  - stage: 90
+    verdict: right  # Korst is marked to hear what happened.
+    marked: ["korst wind-eye"]

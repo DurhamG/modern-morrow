@@ -1,0 +1,29 @@
+# The reviewed quest markers of BM_Missionary.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Missionary
+stages:
+  - stage: 10
+    verdict: corrected  # the witnesses at Lake Fjalding are the lead; Mirisa in Thirsk is not named yet
+    marked: ["brandr", "erna the quiet", "ingmar"]
+  - stage: 20
+    verdict: corrected  # Erich and Brynjolfr in Thirsk say where she is; her room is only named at 30
+    marked: ["brynjolfr", "erich the unworthy"]
+  - stage: 30
+    verdict: right  # Mirisa is marked in Erich's room as the journal says
+    marked: ["mirisa"]
+  - stage: 40
+    verdict: right  # Mirisa is still to be freed
+    marked: ["mirisa"]
+  - stage: 50
+    verdict: right  # Mirisa asks to travel together
+    marked: ["mirisa"]
+  - stage: 60
+    verdict: right  # Mirisa already follows, so the shrine is the goal
+    marked: ["cell:fort frostmoth, imperial cult shrine"]
+  - stage: 100
+    verdict: right  # Jeleen gives the reward
+    marked: ["jeleen"]
+  - stage: 120
+    verdict: right  # Jeleen is the one to tell
+    marked: ["jeleen"]

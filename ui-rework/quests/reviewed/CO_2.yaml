@@ -1,0 +1,29 @@
+# The reviewed quest markers of CO_2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_2
+stages:
+  - stage: 10
+    verdict: corrected  # Falco is marked alone, without Hroldar's greeting that only comes after he is beaten.
+    marked: ["falco galenus"]
+  - stage: 20
+    verdict: corrected  # Hroldar is marked, without Falco's later answer that would be marked as the furthest way.
+    marked: ["hroldar the strange"]
+  - stage: 30
+    verdict: corrected  # Falco is marked alone, as the journal asks.
+    marked: ["falco galenus"]
+  - stage: 40
+    verdict: corrected  # Hroldar is marked to talk to rather than to kill, since the journal forbids killing him.
+    marked: ["hroldar the strange"]
+  - stage: 50
+    verdict: right  # Falco is marked for his reward.
+    marked: ["falco galenus"]
+  - stage: 60
+    verdict: right  # Falco is marked, who has to hear that Hroldar died.
+    marked: ["falco galenus"]
+  - stage: 70
+    verdict: right  # Carnius is marked, as the journal asks.
+    marked: ["carnius magius"]
+  - stage: 80
+    verdict: right  # Carnius is marked, as the journal asks.
+    marked: ["carnius magius"]

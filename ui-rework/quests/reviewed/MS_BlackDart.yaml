@@ -1,0 +1,36 @@
+# The reviewed quest markers of MS_BlackDart.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_BlackDart
+stages:
+  - stage: 1
+    verdict: corrected  # The ghost is marked for his message, and Narisa Adus as optional; the gang isn't a goal yet.
+    marked: ["ancestor_ghost_variner"]
+    optional: ["narisa adus"]
+  - stage: 5
+    verdict: corrected  # The ghost is marked for his message, and Narisa as optional; the gang isn't a goal yet.
+    marked: ["ancestor_ghost_variner"]
+    optional: ["narisa adus"]
+  - stage: 10
+    verdict: corrected  # The ghost is marked for his message, and Narisa as optional; the gang isn't a goal yet.
+    marked: ["ancestor_ghost_variner"]
+    optional: ["narisa adus"]
+  - stage: 15
+    verdict: corrected  # The ghost is marked for his message, and Narisa as optional; the gang isn't a goal yet.
+    marked: ["ancestor_ghost_variner"]
+    optional: ["narisa adus"]
+  - stage: 20
+    verdict: corrected  # Only the ghost is marked, as Narisa asked the player to listen to him.
+    marked: ["ancestor_ghost_variner"]
+  - stage: 25
+    verdict: corrected  # The flooding lever is marked as well as the gang and Narisa.
+    marked: ["act_torch_lever_uni", "black dart adren", "black dart gilur", "black dart malar", "black dart urvyn", "narisa adus"]
+  - stage: 30
+    verdict: corrected  # The gang and the lever stay marked; Narisa's next-day remark is left out.
+    marked: ["act_torch_lever_uni", "black dart adren", "black dart gilur", "black dart malar", "black dart urvyn", "narisa adus"]
+  - stage: 35
+    verdict: corrected  # The gang and the lever stay marked, then Narisa once the gang is dead.
+    marked: ["act_torch_lever_uni", "black dart adren", "black dart gilur", "black dart malar", "black dart urvyn", "narisa adus"]
+  - stage: 50
+    verdict: right  # Nothing sets this stage; the gang is dead, so only Narisa is marked for the reward.
+    marked: ["black dart adren", "black dart gilur", "black dart malar", "black dart urvyn", "narisa adus"]

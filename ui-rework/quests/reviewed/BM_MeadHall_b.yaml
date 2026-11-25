@@ -1,0 +1,8 @@
+# The reviewed quest markers of BM_MeadHall_b.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_MeadHall_b
+stages:
+  - stage: 10
+    verdict: right  # Svenja is marked once a week has passed and the mead has arrived
+    marked: ["svenja snow-song"]

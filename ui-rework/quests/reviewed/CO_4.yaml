@@ -1,0 +1,29 @@
+# The reviewed quest markers of CO_4.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_4
+stages:
+  - stage: 20
+    verdict: corrected  # Only the person who asked for the choice is marked, Falco or Carnius by the side the player took.
+    marked: ["carnius magius", "falco galenus"]
+  - stage: 30
+    verdict: corrected  # Carnius is marked alone to hear of the smithy.
+    marked: ["carnius magius"]
+  - stage: 40
+    verdict: right  # Carnius is marked to hear of the trader's outpost.
+    marked: ["carnius magius"]
+  - stage: 50
+    verdict: corrected  # Nothing is marked while the building goes on, instead of Carnius's choice answers.
+    marked: []
+  - stage: 60
+    verdict: corrected  # Nothing is marked while the smithy is built, instead of Carnius's other choice answer.
+    marked: []
+  - stage: 70
+    verdict: right  # Nothing is marked while the trader's outpost is built.
+    marked: []
+  - stage: 80
+    verdict: right  # Carnius is marked to hear the smithy is nearly done.
+    marked: ["carnius magius"]
+  - stage: 90
+    verdict: right  # Carnius is marked to hear the outpost is nearly done.
+    marked: ["carnius magius"]

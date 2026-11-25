@@ -1,0 +1,38 @@
+# The reviewed quest markers of BM_FrostGiant1.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_FrostGiant1
+stages:
+  - stage: 10
+    verdict: right  # Korst is marked to ask about Castle Karstaag.
+    marked: ["korst wind-eye"]
+  - stage: 20
+    verdict: right  # Korst is marked to ask about Castle Karstaag.
+    marked: ["korst wind-eye"]
+  - stage: 30
+    verdict: corrected  # The way into the caverns is marked, without the Riekling the journal hasn't named yet.
+    marked: ["active_bm_karstaag"]
+  - stage: 40
+    verdict: right  # Krish, who greets the player in the caverns, is marked.
+    marked: ["bm_riekling_krish_uniqu"]
+  - stage: 50
+    verdict: right  # Krish is marked to ask about his problems.
+    marked: ["bm_riekling_krish_uniqu"]
+  - stage: 60
+    verdict: right  # Krish is marked to ask about his takeover.
+    marked: ["bm_riekling_krish_uniqu"]
+  - stage: 70
+    verdict: right  # Krish is marked to ask how to get upstairs.
+    marked: ["bm_riekling_krish_uniqu"]
+  - stage: 75
+    verdict: corrected  # The grahl are marked until all are dead, and then Krish, not Krish as someone to kill.
+    marked: ["bm_icetroll_fg_uni", "bm_riekling_krish_uniqu"]
+  - stage: 80
+    verdict: right  # Dulk in the throne room is marked.
+    marked: ["bm_riekling_dulk_unique"]
+  - stage: 81
+    verdict: right  # Dulk in the throne room is marked.
+    marked: ["bm_riekling_dulk_unique"]
+  - stage: 85
+    verdict: right  # Dulk in the throne room is marked.
+    marked: ["bm_riekling_dulk_unique"]

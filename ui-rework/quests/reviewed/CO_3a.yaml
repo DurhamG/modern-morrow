@@ -1,0 +1,8 @@
+# The reviewed quest markers of CO_3a.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_3a
+stages:
+  - stage: 10
+    verdict: corrected  # The wreck is marked for the picks instead of miners on Vvardenfell, then Falco once the player has one.
+    marked: ["cell:raven rock, supply ship", "falco galenus"]

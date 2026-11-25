@@ -1,0 +1,17 @@
+# The reviewed quest markers of MS_Performers.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_Performers
+stages:
+  - stage: 10
+    verdict: corrected  # Only Meryn Othralas is marked; the lead actress's death is left out.
+    marked: ["bk_playscript", "meryn othralas"]
+  - stage: 20
+    verdict: corrected  # Only Meryn is marked; the lead actress's death is left out.
+    marked: ["bk_playscript", "meryn othralas"]
+  - stage: 30
+    verdict: corrected  # The mark on the stage is marked; the assassin stays a surprise.
+    marked: ["script_playscript"]
+  - stage: 50
+    verdict: corrected  # Only Meryn is marked to talk about the attack.
+    marked: ["meryn othralas"]

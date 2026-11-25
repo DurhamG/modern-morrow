@@ -1,0 +1,26 @@
+# The reviewed quest markers of CO_3.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_3
+stages:
+  - stage: 10
+    verdict: right  # Falco is marked, who should have the manifest.
+    marked: ["falco galenus"]
+  - stage: 20
+    verdict: right  # Gamin is the only colonist who saw anything, and asking around is what the journal asks.
+    marked: ["gamin girith"]
+  - stage: 30
+    verdict: corrected  # Falco is marked, without the wreck the journal hasn't located yet.
+    marked: ["falco galenus"]
+  - stage: 35
+    verdict: corrected  # Falco has asked the player to look, so the wreck is marked alone.
+    marked: ["ex_co_shipwreck"]
+  - stage: 40
+    verdict: right  # The wreck to the northwest is marked.
+    marked: ["ex_co_shipwreck"]
+  - stage: 50
+    verdict: right  # Falco is marked to hear of the wreck.
+    marked: ["falco galenus"]
+  - stage: 60
+    verdict: right  # Carnius is marked, as the journal asks.
+    marked: ["carnius magius"]

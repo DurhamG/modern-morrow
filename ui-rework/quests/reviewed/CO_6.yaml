@@ -1,0 +1,29 @@
+# The reviewed quest markers of CO_6.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_6
+stages:
+  - stage: 10
+    verdict: corrected  # Falco is marked, without Carnius, whom the player can't yet accuse of anything.
+    marked: ["falco galenus"]
+  - stage: 20
+    verdict: corrected  # The chest in Uryn's house is marked, without Carnius.
+    marked: ["com_chest_02_maryn"]
+  - stage: 30
+    verdict: corrected  # Falco is marked to hear the chest was empty, without Carnius.
+    marked: ["falco galenus"]
+  - stage: 40
+    verdict: corrected  # Uryn is marked to follow, not to talk to, since talking blows the player's cover.
+    marked: ["uryn maren"]
+  - stage: 50
+    verdict: corrected  # Uryn is marked to confess, without Carnius before the confession.
+    marked: ["uryn maren"]
+  - stage: 60
+    verdict: corrected  # Falco, who gave the job, is marked before Carnius.
+    marked: ["falco galenus"]
+  - stage: 65
+    verdict: right  # Carnius is marked, as the journal asks.
+    marked: ["carnius magius"]
+  - stage: 70
+    verdict: right  # Falco is marked to hear Carnius's answer.
+    marked: ["falco galenus"]

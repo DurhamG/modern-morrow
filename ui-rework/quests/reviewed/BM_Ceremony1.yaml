@@ -1,0 +1,14 @@
+# The reviewed quest markers of BM_Ceremony1.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Ceremony1
+stages:
+  - stage: 10
+    verdict: right  # Korst is marked to ask about the totem.
+    marked: ["korst wind-eye"]
+  - stage: 20
+    verdict: right  # The totem in the Tombs of Skaalara is marked.
+    marked: ["misc_bm_clawfang_unique"]
+  - stage: 30
+    verdict: right  # Korst is marked to receive the totem.
+    marked: ["korst wind-eye", "misc_bm_clawfang_unique"]

@@ -1,0 +1,42 @@
+# The reviewed quest markers of TR_MazedBand.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_MazedBand
+stages:
+  - stage: 10
+    verdict: corrected  # only Fedris Hler is marked
+    marked: ["fedris hler"]
+  - stage: 20
+    verdict: corrected  # the band in the crypt is marked, with Drin optional
+    marked: ["mazed_band"]
+    optional: ["gavas drin"]
+  - stage: 30
+    verdict: corrected  # the band is marked, with Drin optional
+    marked: ["mazed_band"]
+    optional: ["gavas drin"]
+  - stage: 40
+    verdict: corrected  # the band is marked, not people the journal hasn't named
+    marked: ["mazed_band"]
+  - stage: 50
+    verdict: corrected  # the band is marked, with Torasa optional
+    marked: ["mazed_band"]
+    optional: ["torasa aram"]
+  - stage: 53
+    verdict: corrected  # the band is marked, with Torasa optional
+    marked: ["mazed_band"]
+    optional: ["torasa aram"]
+  - stage: 55
+    verdict: right  # the lich and the band are marked
+    marked: ["lich_barilzar", "mazed_band"]
+  - stage: 60
+    verdict: right  # the band the lich carries is marked
+    marked: ["mazed_band"]
+  - stage: 70
+    verdict: corrected  # Fedris Hler, who gave the task, is marked
+    marked: ["fedris hler"]
+  - stage: 80
+    verdict: right  # Gavas Drin is marked
+    marked: ["gavas drin", "mazed_band"]
+  - stage: 90
+    verdict: right  # Almalexia is marked
+    marked: ["almalexia", "mazed_band"]

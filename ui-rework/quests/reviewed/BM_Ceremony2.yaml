@@ -1,0 +1,11 @@
+# The reviewed quest markers of BM_Ceremony2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Ceremony2
+stages:
+  - stage: 10
+    verdict: right  # The tomb door is marked, which leads the player to the Tombs of Skaalara where the hunters come.
+    marked: ["ex_bm_tomb_door_skaalara", "skaal_hunter"]
+  - stage: 50
+    verdict: corrected  # Nothing is marked while the player waits for Hircine's dream, not the tomb door hunters escape through.
+    marked: []

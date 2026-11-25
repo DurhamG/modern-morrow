@@ -1,0 +1,20 @@
+# The reviewed quest markers of MS_HolyElf.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_HolyElf
+stages:
+  - stage: 10
+    verdict: right  # High-Pockets is marked for his request.
+    marked: ["high_pockets"]
+  - stage: 20
+    verdict: corrected  # Only Holmar is marked, for the confrontation.
+    marked: ["holmar"]
+  - stage: 30
+    verdict: right  # High-Pockets is marked once he has read the book.
+    marked: ["high_pockets"]
+  - stage: 40
+    verdict: corrected  # Nothing sets this stage; the matter is over, so nothing is marked.
+    marked: []
+  - stage: 50
+    verdict: corrected  # Nothing sets this stage; the matter is over, so nothing is marked.
+    marked: []

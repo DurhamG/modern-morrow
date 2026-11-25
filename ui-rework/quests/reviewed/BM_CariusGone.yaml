@@ -1,0 +1,17 @@
+# The reviewed quest markers of BM_CariusGone.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_CariusGone
+stages:
+  - stage: 10
+    verdict: right  # Gaea Artoria and Saenus Lusius both say where the Nord village is, and either is a real choice.
+    marked: ["gaea artoria", "saenus lusius"]
+  - stage: 20
+    verdict: corrected  # The Skaal villagers are marked, without their leader Tharsten, whom the journal hasn't named yet.
+    marked: ["faction:skaal"]
+  - stage: 25
+    verdict: corrected  # The Skaal villagers are marked, without their leader Tharsten, whom the journal hasn't named yet.
+    marked: ["faction:skaal"]
+  - stage: 30
+    verdict: right  # Tharsten in the Greathall is marked, as the villagers said.
+    marked: ["tharsten heart-fang"]

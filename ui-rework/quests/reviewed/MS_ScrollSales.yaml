@@ -1,0 +1,27 @@
+# The reviewed quest markers of MS_ScrollSales.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_ScrollSales
+stages:
+  - stage: 10
+    verdict: corrected  # Only Ten-Tongues Weerhat is marked; Ahnia's note is still hidden.
+    marked: ["ten-tongues_weerhat"]
+  - stage: 20
+    verdict: corrected  # Only Weerhat is marked, to ask about Ahnia.
+    marked: ["ten-tongues_weerhat"]
+  - stage: 30
+    verdict: right  # The note in the sewers under the Bazaar is marked, which brings Ahnia out.
+    marked: ["bk_ahnia"]
+  - stage: 35
+    verdict: corrected  # Only Ahnia is marked, as she attacks.
+    marked: ["ahnia"]
+  - stage: 40
+    verdict: corrected  # Weerhat is marked, with Ahnia's note optional; the book's owner isn't known yet.
+    marked: ["ten-tongues_weerhat"]
+    optional: ["bk_ahnia"]
+  - stage: 50
+    verdict: right  # Only Weerhat is marked, as the note says; both ways lead to him.
+    marked: ["ten-tongues_weerhat"]
+  - stage: 60
+    verdict: right  # Elbert Nermarc is marked; the book shows its owner's name.
+    marked: ["bk_nermarcnotes", "elbert nermarc"]

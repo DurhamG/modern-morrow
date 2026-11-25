@@ -1,0 +1,23 @@
+# The reviewed quest markers of CO_12a.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_12a
+stages:
+  - stage: 5
+    verdict: corrected  # Carnius is marked to explain the plan, without Falco before the plan is known.
+    marked: ["carnius magius"]
+  - stage: 10
+    verdict: corrected  # The rug on top of the tower is marked, where the player must draw the bow, without Falco.
+    marked: ["ac_furn_rug_colony2"]
+  - stage: 20
+    verdict: corrected  # Falco is marked as a kill, to be shot from the tower.
+    marked: ["falco galenus"]
+  - stage: 30
+    verdict: corrected  # Falco is marked as a kill, to be shot from the tower, since walking up to him fails the quest.
+    marked: ["falco galenus"]
+  - stage: 40
+    verdict: right  # Carnius is marked, who expects the news.
+    marked: ["carnius magius"]
+  - stage: 100
+    verdict: right  # The chance has passed, and there is nothing to go to.
+    marked: []

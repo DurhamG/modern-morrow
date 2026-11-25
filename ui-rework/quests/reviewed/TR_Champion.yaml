@@ -1,0 +1,34 @@
+# The reviewed quest markers of TR_Champion.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_Champion
+stages:
+  - stage: 10
+    verdict: corrected  # King Helseth is marked, not a kill of Vivec
+    marked: ["king hlaalu helseth"]
+  - stage: 20
+    verdict: corrected  # King Helseth is marked for the duel, with Barenziah optional
+    marked: ["king hlaalu helseth"]
+    optional: ["barenziah"]
+  - stage: 30
+    verdict: corrected  # King Helseth is marked, with Ra'Tesh optional
+    marked: ["king hlaalu helseth"]
+    optional: ["ra'tesh"]
+  - stage: 40
+    verdict: corrected  # Ra'Tesh and Helseth are marked, not a kill of Vivec
+    marked: ["king hlaalu helseth", "ra'tesh"]
+  - stage: 50
+    verdict: corrected  # King Helseth is marked, not a kill of Vivec
+    marked: ["king hlaalu helseth"]
+  - stage: 60
+    verdict: corrected  # King Helseth is marked, not a kill of Vivec
+    marked: ["king hlaalu helseth"]
+  - stage: 70
+    verdict: corrected  # King Helseth is marked, not a kill of Vivec
+    marked: ["king hlaalu helseth"]
+  - stage: 80
+    verdict: corrected  # King Helseth is marked, not a kill of Vivec
+    marked: ["king hlaalu helseth"]
+  - stage: 100
+    verdict: corrected  # nothing until the Tribunal main quest ends, then King Helseth
+    marked: ["king hlaalu helseth"]

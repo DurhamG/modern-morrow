@@ -1,0 +1,18 @@
+# The reviewed quest markers of TR08_Hlaalu.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR08_Hlaalu
+stages:
+  - stage: 1
+    verdict: right  # the letter in Llethan Manor is marked, where the journal sends the player
+    marked: ["bk_alen_note"]
+  - stage: 50
+    verdict: right  # the letter and Tienius are marked
+    marked: ["bk_alen_note", "tienius delitian"]
+  - stage: 60
+    verdict: corrected  # the player declined, so Tienius is only optional
+    marked: []
+    optional: ["bk_alen_note", "tienius delitian"]
+  - stage: 70
+    verdict: right  # the three traitors are marked, then Tienius once they are dealt with
+    marked: ["bedal alen", "forven berano", "hloggar the bloody", "tienius delitian"]

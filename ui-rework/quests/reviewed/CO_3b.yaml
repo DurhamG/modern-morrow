@@ -1,0 +1,8 @@
+# The reviewed quest markers of CO_3b.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_3b
+stages:
+  - stage: 10
+    verdict: right  # Apronia follows the player, and Falco, where she must be taken, is marked.
+    marked: ["falco galenus"]

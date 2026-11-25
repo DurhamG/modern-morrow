@@ -1,0 +1,11 @@
+# The reviewed quest markers of TR09_Gee-Pop.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR09_Gee-Pop
+stages:
+  - stage: 10
+    verdict: right  # Gee-Pop is marked only once Granny has contradicted him
+    marked: ["gee-pop varis"]
+  - stage: 20
+    verdict: right  # nothing is left to ask him
+    marked: []

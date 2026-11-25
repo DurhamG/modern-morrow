@@ -1,0 +1,14 @@
+# The reviewed quest markers of TR_MissingHand_02.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_MissingHand_02
+stages:
+  - stage: 1
+    verdict: corrected  # Salas Valor is marked, not the reward
+    marked: ["salas valor"]
+  - stage: 10
+    verdict: corrected  # Salas attacked, so the kill is marked
+    marked: ["salas valor"]
+  - stage: 90
+    verdict: right  # Almalexia is marked for the report
+    marked: ["almalexia"]

@@ -1,0 +1,26 @@
+# The reviewed quest markers of BM_MoonSugar.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_MoonSugar
+stages:
+  - stage: 10
+    verdict: right  # Severia offers the task
+    marked: ["severia gratius"]
+  - stage: 20
+    verdict: right  # Severia can still be asked again
+    marked: ["severia gratius"]
+  - stage: 30
+    verdict: corrected  # Jeleen is the step the journal names; the helm would point at the culprit
+    marked: ["jeleen"]
+  - stage: 40
+    verdict: right  # only the culprit's workshop is left, and the helm and Sweetshare both point there
+    marked: ["fur_colovian_helm_white", "severia gratius", "uncle sweetshare"]
+  - stage: 50
+    verdict: right  # Sweetshare can give the helm or be killed for it
+    marked: ["fur_colovian_helm_white", "severia gratius", "uncle sweetshare"]
+  - stage: 70
+    verdict: right  # Severia takes the helm the player carries
+    marked: ["fur_colovian_helm_white", "severia gratius"]
+  - stage: 80
+    verdict: right  # the helm on the corpse and then Severia
+    marked: ["fur_colovian_helm_white", "severia gratius"]

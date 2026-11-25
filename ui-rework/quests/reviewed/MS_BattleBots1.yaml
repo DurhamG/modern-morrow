@@ -1,0 +1,14 @@
+# The reviewed quest markers of MS_BattleBots1.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_BattleBots1
+stages:
+  - stage: 1
+    verdict: right  # The scrap metal is marked, then Ignatius Flaccus once the player has ten pieces.
+    marked: ["ignatius_flaccus", "ingred_scrap_metal_01"]
+  - stage: 10
+    verdict: right  # The Dwemer cogs are marked, then Ignatius once the player has three.
+    marked: ["ignatius_flaccus", "misc_dwrv_gear00"]
+  - stage: 20
+    verdict: right  # Ignatius is marked for the bot fight he invited the player to.
+    marked: ["ignatius_flaccus"]

@@ -1,0 +1,42 @@
+# The reviewed quest markers of BM_Stones.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Stones
+stages:
+  - stage: 10
+    verdict: corrected  # Heart-Fang is the next talk; the stones are not mentioned yet
+    marked: ["tharsten heart-fang"]
+  - stage: 20
+    verdict: corrected  # Heart-Fang is the next talk
+    marked: ["tharsten heart-fang"]
+  - stage: 30
+    verdict: corrected  # Wind-Eye explains the ritual first
+    marked: ["act_bm_stone_wind_01", "korst wind-eye"]
+  - stage: 40
+    verdict: corrected  # each stone until its ritual starts, then that ritual's own markers; the map is optional
+    marked: ["act_bm_stone_beast_01", "act_bm_stone_earth_01", "act_bm_stone_sun_01", "act_bm_stone_tree_01", "act_bm_stone_water_01", "act_bm_stone_wind_01", "bm_waterlife_unique1"]
+    optional: ["korst wind-eye"]
+  - stage: 50
+    verdict: corrected  # each stone until its ritual starts, then that ritual's own markers
+    marked: ["act_bm_stone_beast_01", "act_bm_stone_earth_01", "act_bm_stone_sun_01", "act_bm_stone_tree_01", "act_bm_stone_water_01", "act_bm_stone_wind_01", "bm_waterlife_unique1"]
+  - stage: 60
+    verdict: corrected  # the rituals left, through their stones and their own quests
+    marked: ["act_bm_stone_beast_01", "act_bm_stone_earth_01", "act_bm_stone_sun_01", "act_bm_stone_tree_01", "act_bm_stone_water_01", "act_bm_stone_wind_01"]
+  - stage: 62
+    verdict: corrected  # the rituals left, through their stones and their own quests
+    marked: ["act_bm_stone_beast_01", "act_bm_stone_earth_01", "act_bm_stone_sun_01", "act_bm_stone_tree_01", "act_bm_stone_water_01", "act_bm_stone_wind_01"]
+  - stage: 64
+    verdict: corrected  # the rituals left, through their stones and their own quests
+    marked: ["act_bm_stone_beast_01", "act_bm_stone_earth_01", "act_bm_stone_sun_01", "act_bm_stone_tree_01", "act_bm_stone_water_01", "act_bm_stone_wind_01"]
+  - stage: 66
+    verdict: corrected  # the rituals left, through their stones and their own quests
+    marked: ["act_bm_stone_beast_01", "act_bm_stone_earth_01", "act_bm_stone_sun_01", "act_bm_stone_tree_01", "act_bm_stone_water_01", "act_bm_stone_wind_01"]
+  - stage: 68
+    verdict: corrected  # the rituals left, through their stones and their own quests
+    marked: ["act_bm_stone_beast_01", "act_bm_stone_earth_01", "act_bm_stone_sun_01", "act_bm_stone_tree_01", "act_bm_stone_water_01", "act_bm_stone_wind_01"]
+  - stage: 70
+    verdict: corrected  # the rituals left, through their stones and their own quests
+    marked: ["act_bm_stone_beast_01", "act_bm_stone_earth_01", "act_bm_stone_sun_01", "act_bm_stone_tree_01", "act_bm_stone_water_01", "act_bm_stone_wind_01"]
+  - stage: 80
+    verdict: right  # Heart-Fang
+    marked: ["tharsten heart-fang"]

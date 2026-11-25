@@ -1,0 +1,27 @@
+# The reviewed quest markers of BM_MeadHall.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_MeadHall
+stages:
+  - stage: 10
+    verdict: corrected  # Svenja is marked for the choice to hunt the beast, not her disabled double outside.
+    marked: ["svenja snow-song"]
+  - stage: 20
+    verdict: corrected  # The player refused, so Svenja is marked only as a side step, in case the player changes their mind.
+    marked: ["svenja_outside"]
+    optional: ["svenja snow-song"]
+  - stage: 30
+    verdict: corrected  # The Udyrfrykte in its lair is marked, not Svenja's disabled double outside.
+    marked: ["bm_udyrfrykte"]
+  - stage: 40
+    verdict: corrected  # The heart on the beast's body and then Svenja outside are marked, without Hrothmund's axe.
+    marked: ["ingred_udyrfrykte_heart", "svenja_outside"]
+  - stage: 50
+    verdict: corrected  # Svenja outside is marked for the last task, without the axe she hasn't named yet.
+    marked: ["svenja_outside"]
+  - stage: 60
+    verdict: right  # Hrothmund's axe in his barrow is marked.
+    marked: ["act_bm_axe_hrothmund"]
+  - stage: 70
+    verdict: right  # Svenja in the mead hall is marked to name the player chieftain.
+    marked: ["svenja snow-song"]

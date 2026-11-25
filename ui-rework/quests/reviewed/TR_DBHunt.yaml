@@ -1,0 +1,11 @@
+# The reviewed quest markers of TR_DBHunt.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_DBHunt
+stages:
+  - stage: 1
+    verdict: right  # Dandras Vules, who carries the contract, is marked
+    marked: ["bk_dbcontract", "dandras vules"]
+  - stage: 100
+    verdict: right  # the contract on Vules's body is marked
+    marked: ["bk_dbcontract"]

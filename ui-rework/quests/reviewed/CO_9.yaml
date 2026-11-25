@@ -1,0 +1,23 @@
+# The reviewed quest markers of CO_9.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_9
+stages:
+  - stage: 10
+    verdict: right  # Constans at the fort is marked, who says where Carnius went.
+    marked: ["constans atrius"]
+  - stage: 20
+    verdict: right  # Carnius is marked where he now is, at Brodir Grove.
+    marked: ["bk_colonyreport", "carnius magius"]
+  - stage: 30
+    verdict: right  # Carnius is marked where he now is, near the shipwreck.
+    marked: ["bk_colonyreport", "carnius magius"]
+  - stage: 40
+    verdict: right  # Carnius is marked where he now is, on the east coast.
+    marked: ["bk_colonyreport", "carnius magius"]
+  - stage: 50
+    verdict: right  # Falco is marked, as the journal asks.
+    marked: ["falco galenus"]
+  - stage: 100
+    verdict: right  # Falco is marked to hear the report was late.
+    marked: ["falco galenus"]

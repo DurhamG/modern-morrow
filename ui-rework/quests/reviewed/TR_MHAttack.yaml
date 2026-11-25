@@ -1,0 +1,23 @@
+# The reviewed quest markers of TR_MHAttack.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_MHAttack
+stages:
+  - stage: 10
+    verdict: corrected  # the creatures are marked
+    marked: ["fabricant_hulkin_attack", "fabricant_verm_attack"]
+  - stage: 20
+    verdict: corrected  # the creatures are marked
+    marked: ["fabricant_hulkin_attack", "fabricant_verm_attack"]
+  - stage: 25
+    verdict: right  # the creatures are marked
+    marked: ["fabricant_hulkin_attack", "fabricant_verm_attack", "faction:temple"]
+  - stage: 30
+    verdict: corrected  # Tienius and Fedris Hler are both marked for the report
+    marked: ["fedris hler", "tienius delitian"]
+  - stage: 100
+    verdict: corrected  # Tienius is marked as the journal says
+    marked: ["tienius delitian"]
+  - stage: 105
+    verdict: corrected  # Fedris Hler is marked as the journal says
+    marked: ["fedris hler"]

@@ -1,0 +1,23 @@
+# The reviewed quest markers of TR07_Guard.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR07_Guard
+stages:
+  - stage: 1
+    verdict: corrected  # Ivulen Irano is marked and the duty roster note is optional until he is the suspect
+    marked: ["ivulen irano"]
+    optional: ["bk_irano_note"]
+  - stage: 5
+    verdict: corrected  # Irano is marked and the note is optional
+    marked: ["ivulen irano"]
+    optional: ["bk_irano_note"]
+  - stage: 10
+    verdict: corrected  # Aleri Aren is marked as the journal asks, and the note is optional
+    marked: ["aleri aren"]
+    optional: ["bk_irano_note"]
+  - stage: 15
+    verdict: right  # the journal now makes Irano the suspect, so his note is marked
+    marked: ["bk_irano_note"]
+  - stage: 50
+    verdict: right  # the note and Tienius are marked for the report
+    marked: ["bk_irano_note", "tienius delitian"]

@@ -1,0 +1,11 @@
+# The reviewed quest markers of TR06_Temple.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR06_Temple
+stages:
+  - stage: 1
+    verdict: right  # Galsa Andrano in the Temple is the only discontented informant
+    marked: ["galsa andrano"]
+  - stage: 50
+    verdict: right  # Tienius is marked for the report
+    marked: ["tienius delitian"]

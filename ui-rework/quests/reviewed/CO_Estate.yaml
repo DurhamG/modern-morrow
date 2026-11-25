@@ -1,0 +1,20 @@
+# The reviewed quest markers of CO_Estate.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_Estate
+stages:
+  - stage: 0
+    verdict: right  # Only the person who tells of the estate is marked, Falco or Constans by side.
+    marked: ["constans atrius", "falco galenus"]
+  - stage: 10
+    verdict: right  # Aldam is marked, as the journal asks.
+    marked: ["aldam berendus"]
+  - stage: 20
+    verdict: right  # Aldam is marked, who must be asked to follow.
+    marked: ["aldam berendus"]
+  - stage: 30
+    verdict: corrected  # The three torches are marked, since Aldam follows the player and one site must be chosen.
+    marked: ["aldam berendus", "colony_torch_1", "colony_torch_2", "colony_torch_3"]
+  - stage: 40
+    verdict: right  # Nothing is marked while the estate is built.
+    marked: []

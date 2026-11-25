@@ -1,0 +1,23 @@
+# The reviewed quest markers of BM_SkaalAttack.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_SkaalAttack
+stages:
+  - stage: 10
+    verdict: corrected  # the werewolves outside, as kills; the Greathall werewolf is disabled until 20
+    marked: ["bm_werewolf_skaal1a3", "bm_werewolf_skaal1b3", "bm_werewolf_skaal1c3", "bm_werewolf_skaal1d3", "bm_werewolf_skaal1e3", "bm_werewolf_skaal1f3", "bm_werewolf_skaal1g3"]
+  - stage: 20
+    verdict: corrected  # a Skaal warns about the Greathall first
+    marked: ["faction:skaal"]
+  - stage: 25
+    verdict: right  # the werewolves in the Greathall
+    marked: ["bm_werewolf_skaal2a", "korst wind-eye"]
+  - stage: 30
+    verdict: right  # any Skaal sends the player to Wind-Eye, who is back in the village
+    marked: ["faction:skaal", "korst wind-eye"]
+  - stage: 40
+    verdict: right  # Wind-Eye
+    marked: ["korst wind-eye"]
+  - stage: 50
+    verdict: right  # nothing until cured, then Wind-Eye; a cure can come from anywhere
+    marked: ["korst wind-eye"]

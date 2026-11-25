@@ -1,0 +1,14 @@
+# The reviewed quest markers of BM_BearHunt2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_BearHunt2
+stages:
+  - stage: 10
+    verdict: corrected  # The Skaal trackers the dream says to kill are marked as kills until ten are dead.
+    marked: ["skaal_tracker", "skaal_tracker2", "skaal_tracker3"]
+  - stage: 30
+    verdict: right  # The Spirit Bear the dream says to kill is marked.
+    marked: ["bm_bear_spr_unique"]
+  - stage: 50
+    verdict: right  # Hircine's reward comes in a dream, so there is nothing to go to.
+    marked: []

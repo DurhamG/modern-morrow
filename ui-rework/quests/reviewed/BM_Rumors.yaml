@@ -1,0 +1,11 @@
+# The reviewed quest markers of BM_Rumors.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Rumors
+stages:
+  - stage: 10
+    verdict: right  # Fort Frostmoth is the place the journal names
+    marked: ["basks_in_the_sun", "cell:fort frostmoth"]
+  - stage: 50
+    verdict: corrected  # S'virr in Khuul is the boat the journal names
+    marked: ["basks_in_the_sun", "cell:fort frostmoth", "s'virr"]

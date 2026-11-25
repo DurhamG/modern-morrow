@@ -1,0 +1,23 @@
+# The reviewed quest markers of BM_WomanScorned.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_WomanScorned
+stages:
+  - stage: 10
+    verdict: right  # Kjolver's choice
+    marked: ["kjolver"]
+  - stage: 20
+    verdict: right  # the player refused and nothing is marked
+    marked: []
+  - stage: 30
+    verdict: corrected  # Erna's house, as the journal says; the note there says where she is
+    marked: ["sc_erna"]
+  - stage: 40
+    verdict: corrected  # Erna by the river; Brandr is not a target
+    marked: ["erna the quiet", "expensive_ring_erna", "kjolver"]
+  - stage: 45
+    verdict: right  # Erna and her ring
+    marked: ["erna the quiet", "expensive_ring_erna", "kjolver"]
+  - stage: 50
+    verdict: right  # the ring on her body, then Kjolver
+    marked: ["expensive_ring_erna", "kjolver"]

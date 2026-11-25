@@ -1,0 +1,26 @@
+# The reviewed quest markers of CO_13.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_13
+stages:
+  - stage: 1
+    verdict: right  # Constans at the fort is marked, as the journal asks.
+    marked: ["constans atrius"]
+  - stage: 5
+    verdict: corrected  # Falco is marked, without the note from attackers the journal hasn't mentioned yet.
+    marked: ["falco galenus"]
+  - stage: 10
+    verdict: corrected  # The mine is marked until the attackers are dead, then the note and Falco.
+    marked: ["bk_colony_toralf", "cell:raven rock, mine", "falco galenus"]
+  - stage: 20
+    verdict: right  # Falco is marked, who has the note.
+    marked: ["falco galenus"]
+  - stage: 30
+    verdict: right  # Carnius is marked, as the journal asks.
+    marked: ["carnius magius"]
+  - stage: 40
+    verdict: right  # Carnius attacked the player, so he is marked to kill.
+    marked: ["carnius magius"]
+  - stage: 60
+    verdict: right  # Falco is marked to hear of Carnius's death.
+    marked: ["falco galenus"]

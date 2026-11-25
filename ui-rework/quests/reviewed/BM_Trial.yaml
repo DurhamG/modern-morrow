@@ -1,0 +1,39 @@
+# The reviewed quest markers of BM_Trial.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Trial
+stages:
+  - stage: 10
+    verdict: right  # Heart-Fang
+    marked: ["tharsten heart-fang"]
+  - stage: 20
+    verdict: corrected  # any Skaal, with Wind-Eye and Risi as optional; the note comes later
+    marked: ["faction:skaal"]
+    optional: ["korst wind-eye", "risi ice-mane"]
+  - stage: 30
+    verdict: corrected  # Wind-Eye and Risi are left to ask; the note comes later
+    marked: ["korst wind-eye", "risi ice-mane"]
+  - stage: 40
+    verdict: corrected  # Risi, as Wind-Eye suggests
+    marked: ["risi ice-mane"]
+  - stage: 45
+    verdict: right  # the note in Ice-Mane's hut, then Risi
+    marked: ["bk_bmtrial_unique", "risi ice-mane"]
+  - stage: 50
+    verdict: corrected  # Risi, as the journal says; Halfhand comes at 55
+    marked: ["bk_bmtrial_unique", "risi ice-mane"]
+  - stage: 55
+    verdict: right  # Halfhand
+    marked: ["bk_bmtrial_unique", "rigmor halfhand"]
+  - stage: 60
+    verdict: right  # Heart-Fang
+    marked: ["tharsten heart-fang"]
+  - stage: 70
+    verdict: right  # Heart-Fang
+    marked: ["tharsten heart-fang"]
+  - stage: 80
+    verdict: right  # Heart-Fang's choice
+    marked: ["tharsten heart-fang"]
+  - stage: 200
+    verdict: right  # the quest is over and nothing is marked
+    marked: []

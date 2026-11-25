@@ -1,0 +1,14 @@
+# The reviewed quest markers of CO_12.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_12
+stages:
+  - stage: 10
+    verdict: corrected  # Falco is marked, whom the player should stay near, since the attackers aren't there yet.
+    marked: ["falco galenus"]
+  - stage: 20
+    verdict: right  # The two attackers are marked to kill once they appear.
+    marked: ["capiton popillius", "cimber valerius"]
+  - stage: 100
+    verdict: right  # Falco is marked for his thanks.
+    marked: ["falco galenus"]

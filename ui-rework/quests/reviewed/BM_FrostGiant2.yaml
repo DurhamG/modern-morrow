@@ -1,0 +1,14 @@
+# The reviewed quest markers of BM_FrostGiant2.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_FrostGiant2
+stages:
+  - stage: 10
+    verdict: right  # Dulk, who greets the player inside Castle Karstaag, is marked.
+    marked: ["bm_riekling_dulk_unique"]
+  - stage: 50
+    verdict: corrected  # The grahl and Krish are both marked as kills, as the journal says to kill them all.
+    marked: ["bm_icetroll_fg_uni", "bm_riekling_krish_uniqu"]
+  - stage: 70
+    verdict: right  # Hircine's reward comes in a dream, so there is nothing to go to.
+    marked: []

@@ -1,0 +1,44 @@
+# The reviewed quest markers of BM_Morale.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Morale
+stages:
+  - stage: 10
+    verdict: right  # Carius explains more
+    marked: ["falx carius"]
+  - stage: 20
+    verdict: corrected  # the soldiers are the step; the liquor fetch marked copies all over Vvardenfell
+    marked: ["cell:fort frostmoth"]
+  - stage: 30
+    verdict: right  # the soldiers are still the step
+    marked: ["cell:fort frostmoth"]
+  - stage: 40
+    verdict: right  # report to Carius
+    marked: ["falx carius"]
+  - stage: 50
+    verdict: corrected  # the soldiers name Nuncius; marking him or the liquor came too early
+    marked: ["cell:fort frostmoth", "cell:fort frostmoth, armory", "cell:fort frostmoth, imperial cult shrine"]
+  - stage: 55
+    verdict: corrected  # the soldiers name Nuncius; marking him came too early
+    marked: ["cell:fort frostmoth", "cell:fort frostmoth, armory", "cell:fort frostmoth, imperial cult shrine"]
+  - stage: 60
+    verdict: corrected  # Nuncius himself, for whichever answer the found liquor allows; his desk is only a lead from 70
+    marked: ["antonius nuncius"]
+  - stage: 70
+    verdict: right  # the desk in his office is the further investigation
+    marked: ["antonius nuncius", "de_p_desk_nuncius"]
+  - stage: 80
+    verdict: right  # confront Nuncius with the liquor
+    marked: ["antonius nuncius"]
+  - stage: 90
+    verdict: right  # Nuncius offers the choice
+    marked: ["antonius nuncius"]
+  - stage: 93
+    verdict: right  # report to Carius
+    marked: ["falx carius"]
+  - stage: 95
+    verdict: right  # report to Carius
+    marked: ["falx carius"]
+  - stage: 200
+    verdict: right  # the quest is over and nothing is marked
+    marked: []

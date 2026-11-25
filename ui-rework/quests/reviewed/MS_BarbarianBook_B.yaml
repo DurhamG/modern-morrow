@@ -1,0 +1,8 @@
+# The reviewed quest markers of MS_BarbarianBook_B.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_BarbarianBook_B
+stages:
+  - stage: 1
+    verdict: right  # The captors are dead, so only Dilborn is marked while playing.
+    marked: ["alam merys", "dilborn", "drathas nerus", "melur savil"]

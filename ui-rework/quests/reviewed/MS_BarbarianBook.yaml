@@ -1,0 +1,21 @@
+# The reviewed quest markers of MS_BarbarianBook.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_BarbarianBook
+stages:
+  - stage: 10
+    verdict: corrected  # Only Thrud is marked, for accepting his request; Dilborn isn't named yet.
+    marked: ["thrud"]
+  - stage: 20
+    verdict: right  # Dilborn and Drathas Nerus are both in the sewers the journal sends the player to.
+    marked: ["dilborn", "drathas nerus"]
+  - stage: 30
+    verdict: right  # Drathas, who holds Dilborn for ransom, and Dilborn are marked for paying, haggling or fighting.
+    marked: ["dilborn", "drathas nerus"]
+  - stage: 40
+    verdict: corrected  # Drathas is marked for the lowered ransom and Dilborn for the fight; Thrud's refusal is left out.
+    marked: ["dilborn", "drathas nerus"]
+  - stage: 100
+    verdict: corrected  # The player refused, so Thrud, who still offers the request, and the ransom and rescue are only optional markers.
+    marked: []
+    optional: ["dilborn", "drathas nerus", "thrud"]

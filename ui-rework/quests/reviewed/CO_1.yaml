@@ -1,0 +1,20 @@
+# The reviewed quest markers of CO_1.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_1
+stages:
+  - stage: 10
+    verdict: corrected  # Only Gidar at the dock is marked, without kill markers on the two miners the player must protect.
+    marked: ["gidar verothan"]
+  - stage: 20
+    verdict: corrected  # The escort has started, so Falco at the site is marked, without the kill markers on the miners.
+    marked: ["falco galenus"]
+  - stage: 30
+    verdict: right  # Falco is marked, as the journal asks.
+    marked: ["falco galenus"]
+  - stage: 40
+    verdict: corrected  # The four ebony rocks at the colony site are marked instead of every chest and miner on Vvardenfell, then Carnius once five are carried.
+    marked: ["carnius magius", "rock_ebony_02_colony", "rock_ebony_05_colony", "rock_ebony_06_colony", "rock_ebony_07_colony"]
+  - stage: 300
+    verdict: right  # The miners died, and either Falco or Carnius can fire the player.
+    marked: ["carnius magius", "falco galenus"]

@@ -1,0 +1,45 @@
+# The reviewed quest markers of MS_MatchMaker.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: MS_MatchMaker
+stages:
+  - stage: 10
+    verdict: corrected  # Marena Gilnith is optional; the other men and later steps aren't named yet.
+    marked: []
+    optional: ["marena gilnith"]
+  - stage: 20
+    verdict: corrected  # Marena is optional; the other men and later steps aren't named yet.
+    marked: []
+    optional: ["marena gilnith"]
+  - stage: 30
+    verdict: corrected  # Marena is optional; the later steps aren't named yet.
+    marked: []
+    optional: ["marena gilnith"]
+  - stage: 40
+    verdict: corrected  # Nothing sets this stage; Marena is marked for her story.
+    marked: ["marena gilnith"]
+  - stage: 50
+    verdict: corrected  # The three single men are optional, and Marena is marked once one has agreed.
+    marked: ["marena gilnith"]
+    optional: ["fons beren", "goval ralen", "sunel hlas"]
+  - stage: 60
+    verdict: corrected  # Only Fons Beren is marked, to set up the meeting.
+    marked: ["fons beren"]
+  - stage: 70
+    verdict: corrected  # Only Sunel Hlas is marked, to set up the meeting.
+    marked: ["sunel hlas"]
+  - stage: 80
+    verdict: corrected  # Only Goval Ralen is marked, to set up the meeting.
+    marked: ["goval ralen"]
+  - stage: 90
+    verdict: corrected  # The meeting is set, so nothing is marked while the player waits.
+    marked: ["marena gilnith"]
+  - stage: 100
+    verdict: corrected  # The meeting is set, so nothing is marked while the player waits.
+    marked: ["marena gilnith"]
+  - stage: 110
+    verdict: corrected  # The meeting is set, so nothing is marked while the player waits.
+    marked: ["marena gilnith"]
+  - stage: 118
+    verdict: right  # Marena is marked for the outcome of the meeting.
+    marked: ["marena gilnith"]

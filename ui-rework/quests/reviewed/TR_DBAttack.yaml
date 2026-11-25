@@ -1,0 +1,23 @@
+# The reviewed quest markers of TR_DBAttack.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_DBAttack
+stages:
+  - stage: 10
+    verdict: right  # the dart on the assassin is marked, and Mournhold can't be marked before the player gets there
+    marked: ["cell:mournhold", "ebony dart_db_unique", "faction:royal guard"]
+  - stage: 20
+    verdict: right  # anyone takes the report, and Mournhold can't be marked yet
+    marked: ["cell:mournhold", "ebony dart_db_unique", "faction:royal guard"]
+  - stage: 30
+    verdict: right  # Apelles Matius is marked
+    marked: ["apelles matius", "cell:mournhold", "faction:royal guard"]
+  - stage: 40
+    verdict: right  # Apelles Matius is marked
+    marked: ["apelles matius", "cell:mournhold", "faction:royal guard"]
+  - stage: 50
+    verdict: right  # Asciene Rane is marked
+    marked: ["asciene rane", "cell:mournhold", "faction:royal guard"]
+  - stage: 60
+    verdict: right  # the Royal Guard in Mournhold are marked
+    marked: ["cell:mournhold", "faction:royal guard"]

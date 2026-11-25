@@ -1,0 +1,8 @@
+# The reviewed quest markers of TR08_Hlaalu_A.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR08_Hlaalu_A
+stages:
+  - stage: 5
+    verdict: right  # Tienius's advice, and the main quest marks Llethan Manor's letter
+    marked: []

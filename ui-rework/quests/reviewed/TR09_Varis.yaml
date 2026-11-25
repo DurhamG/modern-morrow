@@ -1,0 +1,8 @@
+# The reviewed quest markers of TR09_Varis.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR09_Varis
+stages:
+  - stage: 50
+    verdict: corrected  # Trels is marked for the threat once the journal has found his hiding place
+    marked: ["trels varis"]

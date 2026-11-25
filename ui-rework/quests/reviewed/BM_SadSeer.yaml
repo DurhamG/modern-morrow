@@ -1,0 +1,23 @@
+# The reviewed quest markers of BM_SadSeer.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_SadSeer
+stages:
+  - stage: 10
+    verdict: right  # Geilir offers the task
+    marked: ["geilir the mumbling"]
+  - stage: 20
+    verdict: corrected  # the player refused, so the skull is not marked
+    marked: []
+  - stage: 30
+    verdict: right  # the skull in Kolbjorn Barrow
+    marked: ["geilir the mumbling", "misc_skull_oddfrid"]
+  - stage: 35
+    verdict: right  # the skull in Kolbjorn Barrow
+    marked: ["geilir the mumbling", "misc_skull_oddfrid"]
+  - stage: 37
+    verdict: right  # bring the skull to Geilir
+    marked: ["geilir the mumbling", "misc_skull_oddfrid"]
+  - stage: 40
+    verdict: right  # Geilir tells the future
+    marked: ["geilir the mumbling"]

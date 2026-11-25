@@ -1,0 +1,20 @@
+# The reviewed quest markers of BM_Ingmar.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Ingmar
+stages:
+  - stage: 10
+    verdict: right  # Ingmar is marked for the choice to help him.
+    marked: ["ingmar"]
+  - stage: 30
+    verdict: right  # The draugr in the barrow is marked, where Ingmar follows the player.
+    marked: ["draugr_valbrandr"]
+  - stage: 40
+    verdict: right  # Ingmar's reaction and the draugr still to be killed are both real next steps.
+    marked: ["draugr_valbrandr", "ingmar"]
+  - stage: 50
+    verdict: right  # Ingmar is marked to speak after the fight.
+    marked: ["ingmar"]
+  - stage: 60
+    verdict: right  # Ingmar is marked, and he goes home to the Skaal village.
+    marked: ["ingmar"]

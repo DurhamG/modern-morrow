@@ -1,0 +1,19 @@
+# The reviewed quest markers of TR_MissingHand_01.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: TR_MissingHand_01
+stages:
+  - stage: 1
+    verdict: corrected  # Salas's story is optional and no kill is marked
+    marked: []
+    optional: ["salas valor"]
+  - stage: 10
+    verdict: corrected  # Salas's story is optional and no kill is marked
+    marked: []
+    optional: ["salas valor"]
+  - stage: 20
+    verdict: corrected  # nothing is asked, so no kill is marked
+    marked: []
+  - stage: 90
+    verdict: right  # Salas is dead
+    marked: []

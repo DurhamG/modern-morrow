@@ -1,0 +1,24 @@
+# The reviewed quest markers of BM_Falmer.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_Falmer
+stages:
+  - stage: 10
+    verdict: right  # Athellor is marked, and the book is left out while playing because its answer needs the job taken first.
+    marked: ["athellor", "bk_snowprince"]
+  - stage: 20
+    verdict: right  # Athellor is marked for his story and his offer.
+    marked: ["athellor", "bk_snowprince"]
+  - stage: 30
+    verdict: right  # Athellor is marked for his offer.
+    marked: ["athellor", "bk_snowprince"]
+  - stage: 40
+    verdict: corrected  # The player turned Athellor down, so he is marked only as a side step.
+    marked: []
+    optional: ["athellor"]
+  - stage: 50
+    verdict: right  # The book in Jolgeirr Barrow, the evidence the journal asks for, is marked, then Athellor.
+    marked: ["athellor", "bk_snowprince"]
+  - stage: 60
+    verdict: right  # Athellor is marked to receive the book.
+    marked: ["athellor", "bk_snowprince"]

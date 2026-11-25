@@ -1,0 +1,20 @@
+# The reviewed quest markers of CO_6a.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_6a
+stages:
+  - stage: 10
+    verdict: corrected  # The chest is marked, without Uryn's task that comes later.
+    marked: ["com_chest_02_maryn"]
+  - stage: 20
+    verdict: corrected  # Carnius is marked for the ore, without Uryn's later task.
+    marked: ["carnius magius", "ingred_raw_ebony_01"]
+  - stage: 30
+    verdict: right  # Uryn in the mine is marked, as the journal asks.
+    marked: ["uryn maren"]
+  - stage: 40
+    verdict: corrected  # Aldam, the guard Uryn asked the player to give the whiskey to and stay near, is marked until Uryn is done.
+    marked: ["aldam berendus", "uryn maren"]
+  - stage: 50
+    verdict: right  # Carnius is marked, as the journal asks.
+    marked: ["carnius magius"]

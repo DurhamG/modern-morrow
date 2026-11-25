@@ -1,0 +1,89 @@
+# The reviewed quest markers of BM_WildHunt.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: BM_WildHunt
+stages:
+  - stage: 10
+    verdict: right  # Wind-Eye; glacier markers only show inside the glacier
+    marked: ["bm_mazegate_03", "korst wind-eye"]
+  - stage: 15
+    verdict: right  # nothing to do until the dream; glacier markers only show inside it
+    marked: ["bm_hircine", "bm_mazegate_03"]
+  - stage: 20
+    verdict: corrected  # Hircine, who speaks at once; not the last gate
+    marked: ["bm_hircine"]
+  - stage: 25
+    verdict: corrected  # Hircine, who speaks at once; not the last gate
+    marked: ["bm_hircine"]
+  - stage: 30
+    verdict: corrected  # Carius, the first hunter met; not the last gate
+    marked: ["falx carius2"]
+  - stage: 40
+    verdict: corrected  # Carius's choice
+    marked: ["falx carius2"]
+  - stage: 42
+    verdict: corrected  # the key chest Carius speaks of
+    marked: ["key_hircine1"]
+  - stage: 44
+    verdict: corrected  # fight Carius
+    marked: ["falx carius2"]
+  - stage: 49
+    verdict: corrected  # the key chest
+    marked: ["key_hircine1"]
+  - stage: 50
+    verdict: corrected  # the gate the key opens
+    marked: ["bm_mazegate_01"]
+  - stage: 55
+    verdict: corrected  # Heart-Fang in the Inner Ring
+    marked: ["tharsten heart-fang2"]
+  - stage: 60
+    verdict: corrected  # Heart-Fang's choice
+    marked: ["tharsten heart-fang2"]
+  - stage: 62
+    verdict: corrected  # the empty chest that makes Heart-Fang turn
+    marked: ["com_chest_01_hircine2", "tharsten heart-fang2"]
+  - stage: 64
+    verdict: corrected  # fight Heart-Fang
+    marked: ["tharsten heart-fang2"]
+  - stage: 65
+    verdict: corrected  # fight Heart-Fang
+    marked: ["tharsten heart-fang2"]
+  - stage: 66
+    verdict: corrected  # fight Heart-Fang
+    marked: ["tharsten heart-fang2"]
+  - stage: 69
+    verdict: corrected  # the key on Heart-Fang's body
+    marked: ["key_hircine2"]
+  - stage: 70
+    verdict: corrected  # the gate the second key opens
+    marked: ["bm_mazegate_02"]
+  - stage: 80
+    verdict: corrected  # kill Karstaag
+    marked: ["bm_frost_giant"]
+  - stage: 82
+    verdict: corrected  # Hircine, who appears nearby; the gate needs a key not yet had
+    marked: ["bm_hircine2"]
+  - stage: 85
+    verdict: corrected  # Hircine's choice
+    marked: ["bm_hircine2"]
+  - stage: 87
+    verdict: corrected  # the Aspect of Strength
+    marked: ["bm_hircine_straspect"]
+  - stage: 88
+    verdict: corrected  # the Aspect of Speed
+    marked: ["bm_hircine_spdaspect"]
+  - stage: 89
+    verdict: corrected  # the Aspect of Guile
+    marked: ["bm_hircine_huntaspect"]
+  - stage: 90
+    verdict: corrected  # the Aspects; only the chosen one is enabled
+    marked: ["bm_hircine_huntaspect", "bm_hircine_spdaspect", "bm_hircine_straspect"]
+  - stage: 92
+    verdict: right  # the last gate; the key is on the Aspect's body
+    marked: ["bm_mazegate_03"]
+  - stage: 93
+    verdict: right  # the last gate; the key is on the Aspect's body
+    marked: ["bm_mazegate_03"]
+  - stage: 94
+    verdict: right  # the last gate; the key is on the Aspect's body
+    marked: ["bm_mazegate_03"]

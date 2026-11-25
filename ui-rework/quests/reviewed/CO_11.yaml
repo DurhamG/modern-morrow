@@ -1,0 +1,23 @@
+# The reviewed quest markers of CO_11.
+# Each stage lists the targets the markers should show, worked out from the content files and
+# questcorrections.yaml, and the reviewer's verdict.
+quest: CO_11
+stages:
+  - stage: 10
+    verdict: corrected  # The three colonists who volunteer are marked, without the report before anyone has volunteered.
+    marked: ["afer flaccus", "garnas uvalen", "gratian caerellius"]
+  - stage: 20
+    verdict: corrected  # The three colonists who volunteer are marked, without the report before anyone has volunteered.
+    marked: ["afer flaccus", "garnas uvalen", "gratian caerellius"]
+  - stage: 30
+    verdict: corrected  # The player's boss is marked for the report, with the colonists not yet asked as side steps.
+    marked: ["carnius magius", "falco galenus"]
+    optional: ["afer flaccus", "garnas uvalen", "gratian caerellius"]
+  - stage: 40
+    verdict: corrected  # The player's boss is marked for the report, with the colonists not yet asked as side steps.
+    marked: ["carnius magius", "falco galenus"]
+    optional: ["afer flaccus", "garnas uvalen", "gratian caerellius"]
+  - stage: 50
+    verdict: corrected  # The player's boss is marked for the report, with the colonists not yet asked as side steps.
+    marked: ["carnius magius", "falco galenus"]
+    optional: ["afer flaccus", "garnas uvalen", "gratian caerellius"]
