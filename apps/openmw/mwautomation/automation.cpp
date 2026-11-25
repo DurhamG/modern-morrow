@@ -23,6 +23,7 @@
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/journal.hpp"
 #include "../mwbase/luamanager.hpp"
 #include "../mwbase/statemanager.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -866,6 +867,85 @@ namespace MWAutomation
                 return Json::object({ { "records", static_cast<double>(records) },
                     { "stages", static_cast<double>(stages) }, { "changes", Json(std::move(changes)) },
                     { "problems", Json(std::move(problemList)) }, { "withoutEffect", Json(std::move(unused)) } });
+            };
+        };
+
+        // Sets every stage of every review record in the folder "path" in the running game, one at a time with
+        // only that quest tracked, and compares the markers shown with the record. Writes the stages that differ to
+        // "out": targets shown that the record doesn't have ("unexpected"), and targets the record marks that aren't
+        // shown ("missing"). The game's own checks and where the player is make some differences, so it is a spot
+        // check, not a test. Stages whose record names a faction are left out of the unexpected targets, since any
+        // member may be marked.
+        mHandlers["quest-live-check"] = [](const Json& request) -> Poll {
+            const std::string path = request.getString("path");
+            const std::string out = request.getString("out");
+            if (path.empty() || out.empty())
+                throw std::runtime_error("quest-live-check needs a \"path\" and an \"out\"");
+            return [path, out]() -> std::optional<Json> {
+                using namespace MWGui;
+                MWBase::Journal& journal = *MWBase::Environment::get().getJournal();
+                QuestMarkers& markers = *MWBase::Environment::get().getWindowManager()->getQuestMarkers();
+                std::vector<std::filesystem::path> files;
+                for (const auto& file : std::filesystem::directory_iterator(Files::pathFromUnicodeString(path)))
+                    if (file.path().extension() == ".yaml")
+                        files.push_back(file.path());
+                std::sort(files.begin(), files.end());
+                Json::Array differences;
+                std::size_t stages = 0;
+                std::size_t unexpectedStages = 0;
+                std::size_t missingStages = 0;
+                for (const std::filesystem::path& file : files)
+                {
+                    std::ifstream stream(file, std::ios::binary);
+                    const std::string text((std::istreambuf_iterator<char>(stream)), {});
+                    std::vector<std::string> problems;
+                    const QuestReview::Record record = QuestReview::parseRecord(text, problems);
+                    if (record.mQuest.empty())
+                        continue;
+                    journal.getOrStartQuest(record.mQuest);
+                    for (const QuestReview::Stage& stage : record.mStages)
+                    {
+                        journal.setJournalIndex(record.mQuest, stage.mStage);
+                        const std::set<ESM::RefId> tracked = markers.getTracked();
+                        markers.setTracked({ tracked.begin(), tracked.end() }, false);
+                        markers.setTracked({ record.mQuest }, true);
+                        markers.refresh();
+                        std::set<std::string> shown;
+                        for (const auto* list : { &markers.getLocalMarkers(), &markers.getWorldMarkers() })
+                            for (const QuestMarkers::Marker& marker : *list)
+                                if (marker.mQuestId == record.mQuest)
+                                    shown.insert(Misc::StringUtils::lowerCase(marker.mTarget.empty()
+                                            ? "cell:" + cellText(marker.mTargetCell)
+                                            : marker.mTarget.getRefIdString()));
+                        const QuestReview::Shown& expected = stage.mShown;
+                        const bool faction = std::any_of(expected.mMarked.begin(), expected.mMarked.end(),
+                            [](const std::string& target) { return target.starts_with("faction:"); });
+                        Json::Array unexpected;
+                        if (!faction)
+                            for (const std::string& target : shown)
+                                if (!expected.mMarked.contains(target) && !expected.mOptional.contains(target))
+                                    unexpected.emplace_back(target);
+                        Json::Array missing;
+                        for (const std::string& target : expected.mMarked)
+                            if (!target.starts_with("faction:") && !shown.contains(target))
+                                missing.emplace_back(target);
+                        ++stages;
+                        unexpectedStages += unexpected.empty() ? 0 : 1;
+                        missingStages += missing.empty() ? 0 : 1;
+                        if (!unexpected.empty() || !missing.empty())
+                            differences.push_back(Json::object({ { "quest", record.mQuest.getRefIdString() },
+                                { "stage", stage.mStage }, { "unexpected", Json(std::move(unexpected)) },
+                                { "missing", Json(std::move(missing)) } }));
+                    }
+                    journal.setJournalIndex(record.mQuest, 0);
+                }
+                std::ofstream report(Files::pathFromUnicodeString(out));
+                if (!report)
+                    throw std::runtime_error("can't write " + out);
+                report << Json(std::move(differences)).dump();
+                return Json::object({ { "stages", static_cast<double>(stages) },
+                    { "unexpected", static_cast<double>(unexpectedStages) },
+                    { "missing", static_cast<double>(missingStages) } });
             };
         };
 
