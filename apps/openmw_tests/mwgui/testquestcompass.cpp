@@ -43,4 +43,17 @@ namespace
         EXPECT_FLOAT_EQ(left.mPosition, -1.f);
         EXPECT_TRUE(left.mPinned);
     }
+
+    TEST(MWGuiCompassLevelTest, aTargetWithinAStoreyIsLevel)
+    {
+        EXPECT_EQ(level(0.f), Level::Same);
+        EXPECT_EQ(level(200.f), Level::Same);
+        EXPECT_EQ(level(-200.f), Level::Same);
+    }
+
+    TEST(MWGuiCompassLevelTest, aTargetMoreThanAStoreyAwayIsAboveOrBelow)
+    {
+        EXPECT_EQ(level(300.f), Level::Above);
+        EXPECT_EQ(level(-300.f), Level::Below);
+    }
 }
