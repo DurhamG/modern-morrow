@@ -30,6 +30,8 @@ namespace MWGui
             MinimumRunSpeed,
             RunFatigue,
             ExclusiveChoices,
+            QuestMarkers,
+            QuestCompass,
         };
 
         struct OptionText
@@ -39,7 +41,7 @@ namespace MWGui
             const char* mDescription;
         };
 
-        constexpr std::array<OptionText, 6> sOptions = { {
+        constexpr std::array<OptionText, 8> sOptions = { {
             { Option::RetroactiveHealth, "#{OMWEngine:RetroactiveHealth}",
                 "#{Interface:GameOptionsRetroactiveHealthText}" },
             { Option::KeepLevelUpProgress, "#{OMWEngine:KeepLevelUpProgress}",
@@ -49,6 +51,8 @@ namespace MWGui
             { Option::RunFatigue, "#{OMWEngine:RunFatigue}", "#{Interface:GameOptionsRunFatigueText}" },
             { Option::ExclusiveChoices, "#{OMWEngine:WarnBeforeExclusiveChoices}",
                 "#{Interface:GameOptionsExclusiveChoicesText}" },
+            { Option::QuestMarkers, "#{OMWEngine:QuestMarkers}", "#{Interface:GameOptionsQuestMarkersText}" },
+            { Option::QuestCompass, "#{OMWEngine:QuestCompass}", "#{Interface:GameOptionsQuestCompassText}" },
         } };
 
         Settings::SettingValue<bool>* boolSetting(Option option)
@@ -65,6 +69,10 @@ namespace MWGui
                     return &Settings::game().mMinimumRunSpeed;
                 case Option::ExclusiveChoices:
                     return &Settings::game().mWarnBeforeExclusiveChoices;
+                case Option::QuestMarkers:
+                    return &Settings::gui().mQuestMarkers;
+                case Option::QuestCompass:
+                    return &Settings::gui().mQuestCompass;
                 case Option::RunFatigue:
                     break;
             }

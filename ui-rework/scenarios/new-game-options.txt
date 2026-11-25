@@ -1,11 +1,11 @@
 # In controller menus mode, New Game first shows the gameplay options. Each starts off, and the
 # player turns them on or off before the intro plays.
-launch --set "GUI.controller menus=true" --set "Game.retroactive health=false" --set "Game.keep level up progress=false" --set "Game.glancing blows=false" --set "Game.minimum run speed=false" --set "Game.run fatigue=1.0" --set "Game.warn before exclusive choices=false"
+launch --set "GUI.controller menus=true" --set "Game.retroactive health=false" --set "Game.keep level up progress=false" --set "Game.glancing blows=false" --set "Game.minimum run speed=false" --set "Game.run fatigue=1.0" --set "Game.warn before exclusive choices=false" --set "GUI.quest markers=false" --set "GUI.quest compass=false"
 wait-mode MainMenu
 click-name MainMenu_newgame
 wait-text "Gameplay Options"
 shot new-game-options
-expect-order "Gameplay Options" "Endurance Retroactively Raises Health" "Spare Skill Increases Carry to Next Level Up" "Glancing Blows Instead of Missing" "Increase Minimum Run Speed" "Run Fatigue" "Warn Before Exclusive Choices"
+expect-order "Gameplay Options" "Endurance Retroactively Raises Health" "Spare Skill Increases Carry to Next Level Up" "Glancing Blows Instead of Missing" "Increase Minimum Run Speed" "Run Fatigue" "Warn Before Exclusive Choices" "Quest Markers (Experimental)" "Quest Compass"
 expect-text "Change"
 expect-text "Begin"
 expect-no-text "Back"
@@ -42,6 +42,13 @@ expect-text "quietly close"
 pad button=a
 wait frames=5
 expect-order "Warn Before Exclusive Choices" On
+# A turns quest markers on, and the description says they're experimental.
+pad button=dpdown
+wait frames=5
+expect-text "1 in 20 quest steps"
+pad button=a
+wait frames=5
+expect-order "Quest Markers (Experimental)" On "Quest Compass" Off
 shot new-game-options-changed
 # B goes back to the main menu, and the options keep their new values.
 pad button=b
@@ -52,6 +59,7 @@ click-name MainMenu_newgame
 wait-text "Gameplay Options"
 expect-order "Endurance Retroactively Raises Health" On
 expect-no-text "50%"
+expect-order "Quest Markers (Experimental)" On "Quest Compass" Off
 # X begins the game.
 pad button=x
 wait frames=30

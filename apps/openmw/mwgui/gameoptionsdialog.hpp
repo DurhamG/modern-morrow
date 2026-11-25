@@ -6,8 +6,8 @@
 
 namespace MWGui
 {
-    /// The gameplay options a new game offers before the intro plays: the options that change Morrowind's rules,
-    /// such as Glancing Blows Instead of Missing. Each row shows an option and its value, and the focused option's
+    /// The gameplay options a new game offers before the intro plays: the options that fix common complaints with
+    /// Morrowind, such as Glancing Blows Instead of Missing and Quest Markers. Each row shows an option and its value, and the focused option's
     /// description shows beside the list. The player turns them on or off, then begins the game. It only shows in
     /// controller menus mode, since it is drawn as a controller screen.
     class GameOptionsDialog : public WindowModal

@@ -390,3 +390,8 @@ Next: the user tries the quick keys. Still left: crafting, and creating a custom
 - Known limits: a stage the game marks as finishing a quest can still have a report to give, but a finished quest
   isn't tracked; people a script places, such as Ranes Ienith, can't be marked; and a target can't test another
   actor's local variable.
+- The Gameplay Options screen that New Game shows now lists Quest Markers (Experimental) and Quest Compass too, after
+  Warn Before Exclusive Choices. The Quest Markers description says the option is experimental and that about 1 in 20 quest steps may
+  still mark the wrong place or nothing at all. That figure comes from the review: the second reviewers disagreed
+  with the first at about 5% of stages, and some mistakes surely slipped past both. The `new-game-options` scenario
+  turns quest markers on and checks the description and that the value is kept.
