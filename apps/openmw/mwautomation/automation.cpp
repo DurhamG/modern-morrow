@@ -1,6 +1,7 @@
 #include "automation.hpp"
 
 #include <chrono>
+#include <cmath>
 #include <fstream>
 #include <stdexcept>
 
@@ -985,7 +986,11 @@ namespace MWAutomation
             return []() -> std::optional<Json> {
                 MWGui::QuestMarkers& markers = *MWBase::Environment::get().getWindowManager()->getQuestMarkers();
                 markers.refresh();
-                const auto describe = [](const std::vector<MWGui::QuestMarkers::Marker>& list) {
+                const auto position = [](const osg::Vec3f& pos) {
+                    return Json(Json::Array{ Json(std::round(pos.x())), Json(std::round(pos.y())),
+                        Json(std::round(pos.z())) });
+                };
+                const auto describe = [&](const std::vector<MWGui::QuestMarkers::Marker>& list) {
                     Json::Array result;
                     for (const MWGui::QuestMarkers::Marker& marker : list)
                         result.push_back(Json::object({
@@ -996,15 +1001,18 @@ namespace MWAutomation
                             { "cell", cellText(marker.mCell) },
                             { "door", marker.mDoor },
                             { "optional", marker.mOptional },
+                            { "pos", position(marker.mPos) },
                         }));
                     return Json(std::move(result));
                 };
                 Json::Array tracked;
                 for (const ESM::RefId& quest : markers.getTracked())
                     tracked.emplace_back(quest.serializeText());
-                return Json::object(
-                    { { "tracked", Json(std::move(tracked)) }, { "local", describe(markers.getLocalMarkers()) },
-                        { "world", describe(markers.getWorldMarkers()) } });
+                const MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
+                return Json::object({ { "tracked", Json(std::move(tracked)) },
+                    { "player", position(player.getRefData().getPosition().asVec3()) },
+                    { "local", describe(markers.getLocalMarkers()) },
+                    { "world", describe(markers.getWorldMarkers()) } });
             };
         };
     }
