@@ -379,7 +379,8 @@ namespace MWGui::QuestTargets
         std::vector<int> choices;
         for (const std::vector<std::string>& words : scriptWords(script))
         {
-            if (words.empty() || words[0] != "choice")
+            // Bloodmoon's lines often write the command with a colon, such as `Choice: "Yes" 1`, which the game accepts.
+            if (words.empty() || (words[0] != "choice" && words[0] != "choice:"))
                 continue;
             // The answers' texts and numbers alternate.
             for (std::size_t i = 2; i < words.size(); i += 2)

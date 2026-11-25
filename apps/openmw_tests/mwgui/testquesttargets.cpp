@@ -231,6 +231,7 @@ namespace
         EXPECT_EQ(choicesOffered("Choice \"Yes, here it is.\" 1 \"Not yet.\" 2"), (std::vector<int>{ 1, 2 }));
         EXPECT_EQ(choicesOffered("ModDisposition 5\nchoice, \"Take it\", 3 ; a comment"), (std::vector<int>{ 3 }));
         EXPECT_TRUE(choicesOffered("Journal FG_RatHunt 10").empty());
+        EXPECT_EQ(choicesOffered("Choice: \"Help the colony\" 1 \"Refuse\" 2"), (std::vector<int>{ 1, 2 }));
     }
 
     TEST(MWGuiQuestTargetsTest, anAnswerInheritsTheConditionsOfTheLineThatOffersIt)
