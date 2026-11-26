@@ -299,6 +299,44 @@ p {
     transform: rotate(45deg);
 }
 
+.options {
+    display: grid;
+    gap: 24px;
+    align-items: start;
+}
+
+.options .shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.options .lede {
+    display: grid;
+    gap: 12px;
+    font-size: 20px;
+}
+
+.option-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: 18px 28px;
+}
+
+.option-list div {
+    border-left: 2px solid var(--gold);
+    padding: 2px 0 2px 14px;
+}
+
+.option-list h3 {
+    font-size: 20px;
+}
+
+.option-list p {
+    color: var(--ink-soft);
+    font-size: 17px;
+}
+
 .android {
     display: grid;
     gap: 24px;
@@ -473,7 +511,8 @@ code {
         grid-template-columns: 1fr;
     }
 
-    .android {
+    .android,
+    .options {
         grid-template-columns: 1.3fr 1fr;
     }
 }
