@@ -1,11 +1,11 @@
 # In controller menus mode, New Game first shows the gameplay options. Each starts off, and the
 # player turns them on or off before the intro plays.
-launch --set "GUI.controller menus=true" --set "Game.retroactive health=false" --set "Game.keep level up progress=false" --set "Game.glancing blows=false" --set "Game.minimum run speed=false" --set "Game.run fatigue=1.0"
+launch --set "GUI.controller menus=true" --set "Game.retroactive health=false" --set "Game.keep level up progress=false" --set "Game.glancing blows=false" --set "Game.minimum run speed=false" --set "Game.run fatigue=1.0" --set "Game.warn before exclusive choices=false"
 wait-mode MainMenu
 click-name MainMenu_newgame
 wait-text "Gameplay Options"
 shot new-game-options
-expect-order "Gameplay Options" "Endurance Retroactively Raises Health" "Spare Skill Increases Carry to Next Level Up" "Glancing Blows Instead of Missing" "Increase Minimum Run Speed" "Run Fatigue"
+expect-order "Gameplay Options" "Endurance Retroactively Raises Health" "Spare Skill Increases Carry to Next Level Up" "Glancing Blows Instead of Missing" "Increase Minimum Run Speed" "Run Fatigue" "Warn Before Exclusive Choices"
 expect-text "Change"
 expect-text "Begin"
 expect-no-text "Back"
@@ -35,6 +35,13 @@ wait frames=5
 expect-order "Run Fatigue" "0%"
 expect-no-text "50%"
 expect-no-text "25%"
+# Down shows the warnings option's description, and A turns it on.
+pad button=dpdown
+wait frames=5
+expect-text "quietly close"
+pad button=a
+wait frames=5
+expect-order "Warn Before Exclusive Choices" On
 shot new-game-options-changed
 # B goes back to the main menu, and the options keep their new values.
 pad button=b

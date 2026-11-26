@@ -29,6 +29,7 @@ namespace MWGui
             GlancingBlows,
             MinimumRunSpeed,
             RunFatigue,
+            ExclusiveChoices,
         };
 
         struct OptionText
@@ -38,7 +39,7 @@ namespace MWGui
             const char* mDescription;
         };
 
-        constexpr std::array<OptionText, 5> sOptions = { {
+        constexpr std::array<OptionText, 6> sOptions = { {
             { Option::RetroactiveHealth, "#{OMWEngine:RetroactiveHealth}",
                 "#{Interface:GameOptionsRetroactiveHealthText}" },
             { Option::KeepLevelUpProgress, "#{OMWEngine:KeepLevelUpProgress}",
@@ -46,6 +47,8 @@ namespace MWGui
             { Option::GlancingBlows, "#{OMWEngine:GlancingBlows}", "#{Interface:GameOptionsGlancingBlowsText}" },
             { Option::MinimumRunSpeed, "#{OMWEngine:MinimumRunSpeed}", "#{Interface:GameOptionsMinimumRunSpeedText}" },
             { Option::RunFatigue, "#{OMWEngine:RunFatigue}", "#{Interface:GameOptionsRunFatigueText}" },
+            { Option::ExclusiveChoices, "#{OMWEngine:WarnBeforeExclusiveChoices}",
+                "#{Interface:GameOptionsExclusiveChoicesText}" },
         } };
 
         Settings::SettingValue<bool>* boolSetting(Option option)
@@ -60,6 +63,8 @@ namespace MWGui
                     return &Settings::game().mGlancingBlows;
                 case Option::MinimumRunSpeed:
                     return &Settings::game().mMinimumRunSpeed;
+                case Option::ExclusiveChoices:
+                    return &Settings::game().mWarnBeforeExclusiveChoices;
                 case Option::RunFatigue:
                     break;
             }
