@@ -19,8 +19,22 @@ questStages:
   - { quest: FG_KillBosses, stage: 10, warning: LockoutKillThievesBosses }
   # Sjoring Hard-Heart orders the Fighters Guild to kill Gentleman Jim Stacey, the Master Thief.
   - { quest: FG_BigBosses, stage: 10, warning: LockoutKillMasterThief }
-  # Gentleman Jim Stacey orders the Thieves Guild to kill Sjoring Hard-Heart, the Master of the Fighters Guild.
+  # Gentleman Jim Stacey orders the Thieves Guild to kill Sjoring Hard-Heart, the Master of the Fighters Guild. Once that
+  # is done, Stacey's next job makes the player Master Thief and he leaves, which also ends his Bal Molagmer quests.
   - { quest: TG_KillHardHeart, stage: 10, warning: LockoutKillHardHeart }
+  # Percius Mercius orders the Fighters Guild to kill Sjoring Hard-Heart's supporters, Eydis Fire-Eye and then
+  # Lorbumol gro-Aglakh, who give many of its quests. From then on Lorbumol attacks the player on sight.
+  - { quest: FG_KillCronies, stage: 10, warning: LockoutKillCronies }
+  # Handing Sottilde's code book to Eydis Fire-Eye costs 10 reputation with the Thieves Guild, whose first rank needs
+  # 0, so a player who hasn't joined it can't any more.
+  - { quest: FG_Sottilde, stage: 100, warning: LockoutCodeBook }
+  # Eno Hlaalu offers to retire or fight, and either way he leaves the Morag Tong. He is the only one who takes back
+  # the Threads of the Webspinner. Mephala's quest can't be started by a Grandmaster either.
+  - { quest: MT_Grandmaster, stage: 20, warning: LockoutMoragTongGrandmaster }
+  # The Temple orders the player to kill Raxle Berne, who gives the Berne vampire clan's quests.
+  - { quest: TT_GalomDeus, stage: 10, warning: LockoutKillRaxleBerne }
+  # Master Aryon names the player Archmagister of House Telvanni, after which Fast Eddie no longer offers his chores.
+  - { quest: HT_Archmagister, stage: 100, warning: LockoutArchmagister }
   # In Bloodmoon, agreeing to help Falco Galenus or Carnius Magius at Raven Rock ends the other's assignments.
   - { quest: CO_Choice, stage: 40, warning: LockoutRavenRock }
   - { quest: CO_Choice, stage: 50, warning: LockoutRavenRock }
