@@ -55,6 +55,9 @@ set(BUILTIN_DATA_FILES
     # Default animation blending config
     animations/animation-config.yaml
 
+    # Dialogue choices that close off other content
+    lockouts.yaml
+
     # Month names and date formatting
     l10n/Calendar/de.yaml
     l10n/Calendar/en.yaml

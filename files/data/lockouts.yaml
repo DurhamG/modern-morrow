@@ -1,0 +1,26 @@
+# Dialogue choices that close off other content, for the "warn before exclusive choices" setting. When a line the
+# player picks would make one of these choices, the game asks before going ahead. Each warning is a key in the
+# Interface localisation context.
+#
+# factionGroups: factions of which the player can only join one. A line whose script joins one of them warns while the
+# player is in none of them.
+#
+# questStages: quest stages that close off other content. A line whose script sets the quest to that stage, with
+# Journal or SetJournalIndex, warns while the quest hasn't reached it.
+
+factionGroups:
+  # Each Great House only accepts members who haven't joined another.
+  - factions: [Hlaalu, Redoran, Telvanni]
+    warning: LockoutGreatHouses
+
+questStages:
+  # Sjoring Hard-Heart orders the Fighters Guild to kill the Thieves Guild's bosses in Balmora, Ald'ruhn and Sadrith
+  # Mora, who give most of its quests.
+  - { quest: FG_KillBosses, stage: 10, warning: LockoutKillThievesBosses }
+  # Sjoring Hard-Heart orders the Fighters Guild to kill Gentleman Jim Stacey, the Master Thief.
+  - { quest: FG_BigBosses, stage: 10, warning: LockoutKillMasterThief }
+  # Gentleman Jim Stacey orders the Thieves Guild to kill Sjoring Hard-Heart, the Master of the Fighters Guild.
+  - { quest: TG_KillHardHeart, stage: 10, warning: LockoutKillHardHeart }
+  # In Bloodmoon, agreeing to help Falco Galenus or Carnius Magius at Raven Rock ends the other's assignments.
+  - { quest: CO_Choice, stage: 40, warning: LockoutRavenRock }
+  - { quest: CO_Choice, stage: 50, warning: LockoutRavenRock }

@@ -19,6 +19,7 @@ file(GLOB UNITTEST_SRC_FILES
 
     mwdialogue/testjournal.cpp
     mwdialogue/testkeywordsearch.cpp
+    mwdialogue/testlockouts.cpp
 
     mwgui/testjournallinks.cpp
     mwgui/testlayouts.cpp
