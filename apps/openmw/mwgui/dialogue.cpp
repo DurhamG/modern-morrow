@@ -921,6 +921,18 @@ namespace MWGui
         if (mPanel != nullptr)
             mPanel->onFrame(dt);
 
+        // The player's answer when asked before a line that closes off other content.
+        MWBase::DialogueManager* dialogueManager = MWBase::Environment::get().getDialogueManager();
+        if (dialogueManager->isAskingBeforeLockout())
+        {
+            const int button = MWBase::Environment::get().getWindowManager()->readPressedButton();
+            if (button != -1)
+            {
+                dialogueManager->answerLockout(button);
+                updateTopics();
+            }
+        }
+
         if (mChoices != MWBase::Environment::get().getDialogueManager()->getChoices()
             || mGoodbye != MWBase::Environment::get().getDialogueManager()->isGoodbye())
             updateHistory();

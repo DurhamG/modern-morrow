@@ -411,6 +411,25 @@ Game Settings
    Sneaking, walking and actors other than the player are unchanged.
 
 .. omw-setting::
+   :title: warn before exclusive choices
+   :type: boolean
+   :range: true, false
+   :default: false
+   :location: :bdg-info:`In Game > Options > Prefs`
+
+   Whether the game asks before a dialogue choice that closes off other content.
+   In Morrowind, some choices quietly do this. Joining one Great House means the other two won't accept the player.
+   Some Fighters Guild and Thieves Guild orders are to kill the other guild's leaders.
+   In Bloodmoon, agreeing to help one side at Raven Rock ends the other side's assignments.
+
+   When true, picking a topic or an answer whose line would make one of these choices first says that it is a major
+   choice that closes off other paths, without saying which, so as not to spoil anything.
+   It asks whether to go ahead, with a third answer that explains what would be lost and asks again.
+   Declining leaves things as if the topic or answer had not been picked.
+   The choices are listed in ``lockouts.yaml`` in the game's data, which mods can replace with their own list.
+   Each is a group of factions of which the player can only join one, or a quest stage that closes off other content.
+
+.. omw-setting::
    :title: turn to movement direction
    :type: boolean
    :range: true, false

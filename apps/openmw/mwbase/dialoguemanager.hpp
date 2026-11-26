@@ -74,6 +74,14 @@ namespace MWBase
         virtual void goodbyeSelected() = 0;
         virtual void questionAnswered(int answer, ResponseCallback* callback) = 0;
 
+        /// Whether the player is being asked before a line that closes off other content, such as joining a Great
+        /// House. See MWDialogue::Lockouts.
+        virtual bool isAskingBeforeLockout() const = 0;
+        /// The button the player pressed when asked. The first goes ahead and says the line, as if picked again. The
+        /// second doesn't, and nothing happens, as if the topic or answer had not been picked. The third, offered only
+        /// at first, explains the choice in full, with spoilers, and asks again.
+        virtual void answerLockout(int button) = 0;
+
         enum TopicType
         {
             Specific = 1,

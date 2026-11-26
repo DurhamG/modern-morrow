@@ -1,0 +1,44 @@
+# With "warn before exclusive choices" on, joining a Great House first says it's a major choice, without spoiling what
+# it closes off, and asks whether to go ahead. Not Now leaves the choice open. Explain says the other two Houses won't
+# accept the player and asks again, and Continue joins.
+launch --start "Balmora, Hlaalu Council Manor" --set "Game.warn before exclusive choices=true" --set "GUI.controller menus=true"
+# House Hlaalu's first rank needs Speed and Agility of 30.
+console "command=player->setspeed 50"
+console "command=player->setagility 50"
+console "command=addtopic \"join House Hlaalu\""
+console "command=\"nileno dorvayn\"->forcegreeting"
+wait-mode Dialogue
+click-text "join House Hlaalu"
+wait-text "Are you interested in joining"
+click-text "Yes."
+wait-text "This is a major choice"
+expect-no-text "only join one of the three Great Houses"
+expect-order Continue "Not Now" "Explain (Spoilers)"
+shot asked
+click-text "Not Now"
+wait frames=10
+expect-no-text "This is a major choice"
+expect-no-text "You are now a member of"
+expect-text "No, nevermind."
+expect-lua "print(#require('openmw.types').NPC.getFactions(require('openmw.self')))" 0 context=player
+click-text "Yes."
+wait-text "This is a major choice"
+click-text "Explain (Spoilers)"
+wait-text "only join one of the three Great Houses"
+expect-no-text "Explain (Spoilers)"
+shot explained
+click-text "Continue"
+wait-text "You are now a member of"
+expect-lua "print(require('openmw.types').NPC.getFactions(require('openmw.self'))[1])" hlaalu context=player
+# With the setting off, the player joins straight away, as in Morrowind.
+launch --start "Balmora, Hlaalu Council Manor" --set "GUI.controller menus=true"
+console "command=player->setspeed 50"
+console "command=player->setagility 50"
+console "command=addtopic \"join House Hlaalu\""
+console "command=\"nileno dorvayn\"->forcegreeting"
+wait-mode Dialogue
+click-text "join House Hlaalu"
+wait-text "Are you interested in joining"
+click-text "Yes."
+wait-text "You are now a member of"
+expect-no-text "This is a major choice"

@@ -18,6 +18,7 @@
 #include "../mwworld/ptr.hpp"
 
 #include "keywordsearch.hpp"
+#include "lockouts.hpp"
 
 namespace ESM
 {
@@ -63,6 +64,22 @@ namespace MWDialogue
 
         std::vector<std::pair<std::string, int>> mChoices;
 
+        // A topic or answer the player picked whose line closes off other content, while the player is asked whether
+        // to go ahead.
+        struct PendingLockout
+        {
+            ESM::RefId mTopic;
+            std::optional<int> mAnswer;
+            ResponseCallback* mCallback = nullptr;
+            // The key of the explanation in the Interface localisation context, and whether the player asked for it.
+            std::string mWarning;
+            bool mExplained = false;
+        };
+        std::optional<PendingLockout> mPendingLockout;
+        // Set while a line the player agreed to is said, so they aren't asked again.
+        bool mLockoutConfirmed = false;
+        std::optional<Lockouts::Data> mLockouts;
+
         int mOriginalDisposition;
         int mCurrentDisposition;
         int mPermanentDispositionChange;
@@ -82,12 +99,22 @@ namespace MWDialogue
 
         void updateOriginalDisposition();
 
+        /// The explanation for a line that closes off other content, if the setting is on and the player should be
+        /// asked before it.
+        std::optional<std::string> lockoutWarning(const ESM::DialInfo& info);
+        /// Asks the player whether to go ahead, and keeps the line waiting for the answer. At first the question only
+        /// says that the choice is a major one, so as not to spoil anything.
+        void askBeforeLockout(PendingLockout pending);
+
     public:
         DialogueManager(const Compiler::Extensions& extensions, Translation::Storage& translationDataStorage);
 
         void clear() override;
 
         bool isInChoice() const override;
+
+        bool isAskingBeforeLockout() const override;
+        void answerLockout(int button) override;
 
         bool startDialogue(const MWWorld::Ptr& actor, ResponseCallback* callback) override;
 

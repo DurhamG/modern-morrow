@@ -1,6 +1,7 @@
 #include "dialoguemanagerimp.hpp"
 
 #include <algorithm>
+#include <iterator>
 #include <list>
 #include <optional>
 #include <sstream>
@@ -25,6 +26,9 @@
 #include <components/interpreter/interpreter.hpp>
 
 #include <components/misc/resourcehelpers.hpp>
+#include <components/resource/resourcesystem.hpp>
+#include <components/vfs/manager.hpp>
+#include <components/vfs/pathutil.hpp>
 
 #include <components/settings/values.hpp>
 
@@ -80,6 +84,7 @@ namespace MWDialogue
         mPermanentDispositionChange = 0;
         mKeywordSearch.clear();
         mKeywordSearchInitialized = false;
+        mPendingLockout.reset();
     }
 
     void DialogueManager::addTopic(const ESM::RefId& topic)
@@ -155,6 +160,7 @@ namespace MWDialogue
         mIsInChoice = false;
         mGoodbye = false;
         mChoices.clear();
+        mPendingLockout.reset();
 
         mActor = actor;
 
@@ -294,6 +300,12 @@ namespace MWDialogue
 
         if (info)
         {
+            if (std::optional<std::string> warning = lockoutWarning(*info))
+            {
+                askBeforeLockout(PendingLockout{ topic, std::nullopt, callback, std::move(*warning) });
+                return;
+            }
+
             std::string_view title;
             if (dialogue.mType == ESM::Dialogue::Persuasion)
             {
@@ -442,6 +454,82 @@ namespace MWDialogue
         return mIsInChoice;
     }
 
+    namespace
+    {
+        Lockouts::Data loadLockouts()
+        {
+            constexpr VFS::Path::NormalizedView path("lockouts.yaml");
+            const VFS::Manager* vfs = MWBase::Environment::get().getResourceSystem()->getVFS();
+            if (!vfs->exists(path))
+                return {};
+            try
+            {
+                const std::string text(std::istreambuf_iterator<char>(*vfs->get(path)), {});
+                return Lockouts::parse(text);
+            }
+            catch (const std::exception& e)
+            {
+                Log(Debug::Error) << "Can't read " << path << ": " << e.what();
+                return {};
+            }
+        }
+    }
+
+    std::optional<std::string> DialogueManager::lockoutWarning(const ESM::DialInfo& info)
+    {
+        if (mLockoutConfirmed || !Settings::game().mWarnBeforeExclusiveChoices || info.mResultScript.empty())
+            return std::nullopt;
+        if (!mLockouts)
+            mLockouts = loadLockouts();
+        const MWWorld::Ptr player = MWMechanics::getPlayer();
+        const MWMechanics::NpcStats& stats = player.getClass().getNpcStats(player);
+        const MWBase::Journal* journal = MWBase::Environment::get().getJournal();
+        return Lockouts::warning(*mLockouts, Lockouts::readEffects(info.mResultScript),
+            mActor.getClass().getPrimaryFaction(mActor),
+            [&](const ESM::RefId& faction) { return stats.isInFaction(faction); },
+            [&](const ESM::RefId& quest) { return journal->getJournalIndex(quest); });
+    }
+
+    void DialogueManager::askBeforeLockout(PendingLockout pending)
+    {
+        MWBase::WindowManager* windowManager = MWBase::Environment::get().getWindowManager();
+        if (pending.mExplained)
+            windowManager->interactiveMessageBox(
+                "#{Interface:" + pending.mWarning + "}\n\n#{Interface:LockoutQuestion}",
+                { "#{Interface:LockoutContinue}", "#{Interface:LockoutNotNow}" });
+        else
+            windowManager->interactiveMessageBox("#{Interface:LockoutMajorChoice}\n\n#{Interface:LockoutQuestion}",
+                { "#{Interface:LockoutContinue}", "#{Interface:LockoutNotNow}", "#{Interface:LockoutExplain}" });
+        mPendingLockout = std::move(pending);
+    }
+
+    bool DialogueManager::isAskingBeforeLockout() const
+    {
+        return mPendingLockout.has_value();
+    }
+
+    void DialogueManager::answerLockout(int button)
+    {
+        if (!mPendingLockout)
+            return;
+        PendingLockout pending = std::move(*mPendingLockout);
+        mPendingLockout.reset();
+        if (button == 2 && !pending.mExplained)
+        {
+            pending.mExplained = true;
+            askBeforeLockout(std::move(pending));
+            return;
+        }
+        if (button != 0)
+            return;
+        mLockoutConfirmed = true;
+        if (pending.mAnswer)
+            questionAnswered(*pending.mAnswer, pending.mCallback);
+        else
+            executeTopic(pending.mTopic, pending.mCallback);
+        mLockoutConfirmed = false;
+    }
+
     void DialogueManager::goodbyeSelected()
     {
         // Apply disposition change to NPC's base disposition if we **think** we need to change something
@@ -479,6 +567,14 @@ namespace MWDialogue
                 const auto [responseTopic, info] = filter.search(*dialogue, true);
                 if (info)
                 {
+                    // Declining leaves the choice open.
+                    if (std::optional<std::string> warning = lockoutWarning(*info))
+                    {
+                        askBeforeLockout(PendingLockout{ ESM::RefId(), answer, callback, std::move(*warning) });
+                        mChoice = -1;
+                        return;
+                    }
+
                     const std::string& text = info->mResponse;
                     addTopicsFromText(text);
 
